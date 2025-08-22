@@ -6,8 +6,8 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts"
 import { useAppSelector } from "@/lib/store"
 
 const COLORS = {
-  "Broken Machine": "#3b82f6", // blue
-  "Missing Parts": "#f59e0b", // amber
+  "Broken Machine": "#0068BD", // ProDairy blue
+  "Missing Parts": "#A7CF48", // ProDairy green
   Service: "#ef4444", // red
 }
 
@@ -30,20 +30,25 @@ export function DowntimeChart() {
       </CardHeader>
       <CardContent>
         <div className="flex items-center justify-between h-[200px]">
-          <div className="flex-1">
+          <div className="flex-1 h-full">
             <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
+              <PieChart width={200} height={200}>
                 <Pie
                   data={downtimeChart}
                   cx="50%"
                   cy="50%"
-                  innerRadius={40}
-                  outerRadius={80}
-                  paddingAngle={2}
+                  innerRadius={30}
+                  outerRadius={70}
+                  paddingAngle={3}
                   dataKey="count"
+                  startAngle={90}
+                  endAngle={450}
                 >
                   {downtimeChart.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[entry.cause as keyof typeof COLORS]} />
+                    <Cell 
+                      key={`cell-${index}`} 
+                      fill={COLORS[entry.cause as keyof typeof COLORS] || "#8884d8"} 
+                    />
                   ))}
                 </Pie>
                 <Tooltip
@@ -51,11 +56,11 @@ export function DowntimeChart() {
                     if (active && payload && payload.length) {
                       const data = payload[0].payload
                       return (
-                        <div className="rounded-lg border bg-background p-2 shadow-sm">
+                        <div className="rounded-lg border bg-background p-3 shadow-lg">
                           <div className="flex items-center space-x-2">
                             <div
                               className="h-3 w-3 rounded-full"
-                              style={{ backgroundColor: COLORS[data.cause as keyof typeof COLORS] }}
+                              style={{ backgroundColor: COLORS[data.cause as keyof typeof COLORS] || "#8884d8" }}
                             />
                             <span className="font-medium">{data.cause}</span>
                             <span className="text-muted-foreground">: {data.count}</span>

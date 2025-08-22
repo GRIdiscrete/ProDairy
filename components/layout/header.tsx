@@ -1,6 +1,7 @@
 "use client"
 
-import { Search, Bell, MapPin, ChevronDown } from "lucide-react"
+import { Search, Bell, MapPin, ChevronDown, LogOut, User, Settings, HelpCircle } from "lucide-react"
+import { useRouter } from "next/navigation"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -22,6 +23,14 @@ interface HeaderProps {
 
 export function Header({ title = "Dashboard", subtitle = "Welcome back!" }: HeaderProps) {
   const currentUser = useAppSelector((state) => state.user.currentUser)
+  const router = useRouter()
+
+  const handleLogout = () => {
+    // Clear authentication cookie
+    document.cookie = "auth-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT"
+    // Redirect to login page
+    router.push("/login")
+  }
 
   return (
     <header className="flex h-16 items-center justify-between border-b bg-background px-6">
@@ -37,7 +46,7 @@ export function Header({ title = "Dashboard", subtitle = "Welcome back!" }: Head
         <div className="flex items-center space-x-1 text-sm text-muted-foreground">
           <MapPin className="h-4 w-4" />
           <span>42°C</span>
-          <span>Gazipur</span>
+          <span>Harare</span>
         </div>
 
         {/* Search */}
@@ -55,31 +64,46 @@ export function Header({ title = "Dashboard", subtitle = "Welcome back!" }: Head
         {/* User Menu */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="flex items-center space-x-2 px-2">
+            <button className="flex items-center space-x-2 px-2 py-2 rounded-md hover:bg-accent cursor-pointer transition-colors">
               <Avatar className="h-8 w-8">
                 <AvatarImage src={currentUser?.avatar || "/placeholder.svg"} alt={currentUser?.name} />
                 <AvatarFallback>
                   {currentUser?.name
                     ?.split(" ")
                     .map((n) => n[0])
-                    .join("") || "JA"}
+                    .join("") || "BM"}
                 </AvatarFallback>
               </Avatar>
               <div className="text-left">
-                <p className="text-sm font-medium">{currentUser?.name || "Jubayer Alam"}</p>
-                <p className="text-xs text-muted-foreground">{currentUser?.email || "jubayer@email.com"}</p>
+                <p className="text-sm font-medium">{currentUser?.name || "Blessing Mwale"}</p>
+                <p className="text-xs text-muted-foreground">{currentUser?.email || "blessingmwalein@gmail.com"}</p>
               </div>
               <ChevronDown className="h-4 w-4" />
-            </Button>
+            </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
+          <DropdownMenuContent align="end" className="w-56" sideOffset={5}>
             <DropdownMenuLabel>My Account</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>Profile</DropdownMenuItem>
-            <DropdownMenuItem>Settings</DropdownMenuItem>
-            <DropdownMenuItem>Support</DropdownMenuItem>
+            <DropdownMenuItem className="cursor-pointer">
+              <User className="mr-2 h-4 w-4" />
+              Profile
+            </DropdownMenuItem>
+            <DropdownMenuItem className="cursor-pointer">
+              <Settings className="mr-2 h-4 w-4" />
+              Settings
+            </DropdownMenuItem>
+            <DropdownMenuItem className="cursor-pointer">
+              <HelpCircle className="mr-2 h-4 w-4" />
+              Support
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>Log out</DropdownMenuItem>
+            <DropdownMenuItem 
+              onClick={handleLogout} 
+              className="text-red-600 focus:text-red-600 cursor-pointer hover:bg-red-50 focus:bg-red-50"
+            >
+              <LogOut className="mr-2 h-4 w-4" />
+              Log out
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

@@ -19,7 +19,7 @@ const siloSchema = yup.object({
   capacity: yup.number().positive("Capacity must be positive").required("Capacity is required"),
   milk_volume: yup.number().min(0, "Volume cannot be negative").required("Current volume is required"),
   status: yup.string().required("Status is required"),
-  description: yup.string(),
+  description: yup.string().optional(),
 })
 
 type SiloFormData = yup.InferType<typeof siloSchema>
@@ -62,7 +62,7 @@ export function SiloFormDrawer({ open, onOpenChange, silo, mode }: SiloFormDrawe
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-[500px] overflow-y-auto">
+      <SheetContent className="!w-[50vw] !max-w-[50vw] overflow-y-auto" style={{ width: '50vw', maxWidth: '50vw' }}>
         <div className="p-6">
           <SheetHeader>
             <SheetTitle>{mode === "create" ? "Add New Silo" : "Edit Silo"}</SheetTitle>
@@ -71,82 +71,102 @@ export function SiloFormDrawer({ open, onOpenChange, silo, mode }: SiloFormDrawe
             </SheetDescription>
           </SheetHeader>
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 mt-6">
-            <div className="space-y-2">
-              <Label htmlFor="name">Silo Name</Label>
-              <Input id="name" {...register("name")} />
-              {errors.name && <p className="text-sm text-red-500">{errors.name.message}</p>}
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-8 mt-6">
+            {/* Basic Information */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium text-foreground border-b pb-2">Basic Information</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Silo Name</Label>
+                  <Input id="name" {...register("name")} />
+                  {errors.name && <p className="text-sm text-red-500">{errors.name.message}</p>}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="serial_no">Serial Number</Label>
+                  <Input id="serial_no" {...register("serial_no")} />
+                  {errors.serial_no && <p className="text-sm text-red-500">{errors.serial_no.message}</p>}
+                </div>
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="serial_no">Serial Number</Label>
-              <Input id="serial_no" {...register("serial_no")} />
-              {errors.serial_no && <p className="text-sm text-red-500">{errors.serial_no.message}</p>}
+            {/* Category & Location */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium text-foreground border-b pb-2">Category & Location</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="category">Category</Label>
+                  <Select onValueChange={(value) => setValue("category", value)} defaultValue={watch("category")}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Pasteurizing Silos">Pasteurizing Silos</SelectItem>
+                      <SelectItem value="Storage Silos">Storage Silos</SelectItem>
+                      <SelectItem value="Cooling Silos">Cooling Silos</SelectItem>
+                      <SelectItem value="Processing Silos">Processing Silos</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {errors.category && <p className="text-sm text-red-500">{errors.category.message}</p>}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="location">Location</Label>
+                  <Select onValueChange={(value) => setValue("location", value)} defaultValue={watch("location")}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select location" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="PD1">Production Department 1</SelectItem>
+                      <SelectItem value="PD2">Production Department 2</SelectItem>
+                      <SelectItem value="PD3">Production Department 3</SelectItem>
+                      <SelectItem value="WH1">Warehouse 1</SelectItem>
+                      <SelectItem value="WH2">Warehouse 2</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {errors.location && <p className="text-sm text-red-500">{errors.location.message}</p>}
+                </div>
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="category">Category</Label>
-              <Select onValueChange={(value) => setValue("category", value)} defaultValue={watch("category")}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select category" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Pasteurizing Silos">Pasteurizing Silos</SelectItem>
-                  <SelectItem value="Storage Silos">Storage Silos</SelectItem>
-                  <SelectItem value="Cooling Silos">Cooling Silos</SelectItem>
-                  <SelectItem value="Processing Silos">Processing Silos</SelectItem>
-                </SelectContent>
-              </Select>
-              {errors.category && <p className="text-sm text-red-500">{errors.category.message}</p>}
+            {/* Capacity & Volume */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium text-foreground border-b pb-2">Capacity & Volume</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="capacity">Capacity (Liters)</Label>
+                  <Input id="capacity" type="number" step="0.01" {...register("capacity", { valueAsNumber: true })} />
+                  {errors.capacity && <p className="text-sm text-red-500">{errors.capacity.message}</p>}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="milk_volume">Current Volume (Liters)</Label>
+                  <Input id="milk_volume" type="number" step="0.01" {...register("milk_volume", { valueAsNumber: true })} />
+                  {errors.milk_volume && <p className="text-sm text-red-500">{errors.milk_volume.message}</p>}
+                </div>
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="location">Location</Label>
-              <Select onValueChange={(value) => setValue("location", value)} defaultValue={watch("location")}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select location" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="PD1">Production Department 1</SelectItem>
-                  <SelectItem value="PD2">Production Department 2</SelectItem>
-                  <SelectItem value="PD3">Production Department 3</SelectItem>
-                  <SelectItem value="WH1">Warehouse 1</SelectItem>
-                  <SelectItem value="WH2">Warehouse 2</SelectItem>
-                </SelectContent>
-              </Select>
-              {errors.location && <p className="text-sm text-red-500">{errors.location.message}</p>}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="capacity">Capacity (Liters)</Label>
-              <Input id="capacity" type="number" step="0.01" {...register("capacity", { valueAsNumber: true })} />
-              {errors.capacity && <p className="text-sm text-red-500">{errors.capacity.message}</p>}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="milk_volume">Current Volume (Liters)</Label>
-              <Input id="milk_volume" type="number" step="0.01" {...register("milk_volume", { valueAsNumber: true })} />
-              {errors.milk_volume && <p className="text-sm text-red-500">{errors.milk_volume.message}</p>}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="status">Status</Label>
-              <Select onValueChange={(value) => setValue("status", value)} defaultValue={watch("status")}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Active">Active</SelectItem>
-                  <SelectItem value="Maintenance">Maintenance</SelectItem>
-                  <SelectItem value="Inactive">Inactive</SelectItem>
-                </SelectContent>
-              </Select>
-              {errors.status && <p className="text-sm text-red-500">{errors.status.message}</p>}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="description">Description (Optional)</Label>
-              <Textarea id="description" {...register("description")} />
+            {/* Status & Additional Info */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium text-foreground border-b pb-2">Status & Additional Info</h3>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="status">Status</Label>
+                  <Select onValueChange={(value) => setValue("status", value)} defaultValue={watch("status")}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Active">Active</SelectItem>
+                      <SelectItem value="Maintenance">Maintenance</SelectItem>
+                      <SelectItem value="Inactive">Inactive</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {errors.status && <p className="text-sm text-red-500">{errors.status.message}</p>}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="description">Description (Optional)</Label>
+                  <Textarea id="description" {...register("description")} />
+                </div>
+              </div>
             </div>
 
             <div className="flex justify-end space-x-2 pt-4">

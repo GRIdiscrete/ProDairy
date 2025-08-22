@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import Image from "next/image"
 import { usePathname } from "next/navigation"
 import { useState } from "react"
 import { cn } from "@/lib/utils"
@@ -83,17 +84,23 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
   return (
     <div
       className={cn(
-        "flex h-screen flex-col bg-sidebar border-r border-sidebar-border transition-all duration-300",
+        "flex min-h-screen flex-col bg-sidebar border-r border-sidebar-border transition-all duration-300",
         collapsed ? "w-16" : "w-64",
       )}
     >
       {/* Logo and Toggle */}
       <div className="flex h-16 items-center justify-between px-4 border-b border-sidebar-border">
         {!collapsed && (
-          <div className="flex items-center space-x-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded bg-primary">
-              <span className="text-sm font-bold text-primary-foreground">PD</span>
-            </div>
+          <div className="flex items-center space-x-3">
+            {/* <div className="relative h-10 w-10">
+              <Image
+                src="/Prodairy-3D-Logo.png"
+                alt="ProDairy Logo"
+                fill
+                className="object-contain"
+                priority
+              />
+            </div> */}
             <span className="text-lg font-semibold text-sidebar-foreground">ProDairy Admin</span>
           </div>
         )}
@@ -177,22 +184,7 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
       </nav>
 
       {/* Premium Section */}
-      {!collapsed && (
-        <div className="p-4">
-          <div className="rounded-lg bg-primary p-4 text-center">
-            <div className="mb-2 flex justify-center">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-foreground/20">
-                <Zap className="h-4 w-4 text-primary-foreground" />
-              </div>
-            </div>
-            <h3 className="mb-1 text-sm font-semibold text-primary-foreground">Premium</h3>
-            <p className="mb-3 text-xs text-primary-foreground/80">Get access to all features on ProDairy Admin</p>
-            <Button size="sm" variant="secondary" className="w-full">
-              Get Pro Now!
-            </Button>
-          </div>
-        </div>
-      )}
+      
     </div>
   )
 }

@@ -8,41 +8,55 @@ export function ProductionOverview() {
   const metrics = useAppSelector((state) => state.dashboard.metrics)
 
   if (!metrics) {
-    return <div>Loading...</div>
+    return (
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        {[...Array(4)].map((_, i) => (
+          <div key={i} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 animate-pulse">
+            <div className="flex items-start justify-between mb-4">
+              <div className="flex-1">
+                <div className="h-4 bg-gray-200 rounded w-24 mb-2"></div>
+                <div className="h-8 bg-gray-200 rounded w-16"></div>
+              </div>
+              <div className="w-12 h-12 bg-gray-200 rounded-xl"></div>
+            </div>
+          </div>
+        ))}
+      </div>
+    )
   }
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
       <MetricCard
         title="Production Target"
         value={metrics.production.targetProduction}
         unit="kg"
         icon={Target}
-        iconColor="text-blue-600"
-        className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200"
+        iconBgColor="bg-gradient-to-br from-[#4f46e5] to-[#6366f1]"
+        change={{ value: 2.5, type: "increase" }}
       />
       <MetricCard
         title="Production Achieved"
         value={metrics.production.actualProduction}
         unit="kg"
         icon={Award}
-        iconColor="text-orange-600"
-        className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200"
+        iconBgColor="bg-gradient-to-br from-[#f59e0b] to-[#f97316]"
+        change={{ value: 1.8, type: "increase" }}
       />
       <MetricCard
         title="Machine Status"
-        value={`${metrics.machines.running}/out of ${metrics.machines.total}`}
+        value={`${metrics.machines.running} /out of ${metrics.machines.total}`}
         icon={Settings}
-        iconColor="text-green-600"
-        className="bg-gradient-to-br from-green-50 to-green-100 border-green-200"
+        iconBgColor="bg-gradient-to-br from-[#10b981] to-[#059669]"
+        change={{ value: 0.5, type: "increase" }}
       />
       <MetricCard
         title="Wastage"
         value={metrics.production.wastage}
         unit="kg"
         icon={AlertTriangle}
-        iconColor="text-red-600"
-        className="bg-gradient-to-br from-red-50 to-red-100 border-red-200"
+        iconBgColor="bg-gradient-to-br from-[#ef4444] to-[#dc2626]"
+        change={{ value: 0.3, type: "decrease" }}
       />
     </div>
   )

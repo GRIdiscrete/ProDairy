@@ -66,8 +66,8 @@ interface UserState {
 const initialState: UserState = {
   currentUser: {
     id: "1",
-    name: "Jubayer Alam",
-    email: "jubayer@email.com",
+    name: "Blessing Mwale",
+    email: "blessingmwalein@gmail.com",
     role: "admin",
     department: "Management",
     avatar: "/placeholder.svg?height=40&width=40",

@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import { MainLayout } from "@/components/layout/main-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -7,9 +8,61 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { DataTable } from "@/components/ui/data-table"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Cpu, Wifi, WifiOff } from "lucide-react"
+import { Plus, Cpu, Wifi, WifiOff, Eye, Edit, Trash2 } from "lucide-react"
+import { DeviceFormDrawer } from "@/components/forms/device-form-drawer"
+import { DeviceViewDrawer } from "@/components/forms/device-view-drawer"
+import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-dialog"
 
-const columns = [
+// Mock data for devices
+const mockDevices = [
+  {
+    id: "1",
+    name: "Temperature Sensor 01",
+    device_id: "TEMP001",
+    type: "Temperature Sensor",
+    status: "Online",
+    location: "Production Line A",
+    last_seen: "2024-01-15T10:30:00Z",
+    configuration: '{"interval": 30, "threshold": 25}',
+    description: "Monitors temperature in the main production line"
+  },
+  {
+    id: "2",
+    name: "Flow Meter 02",
+    device_id: "FLOW002",
+    type: "Flow Meter",
+    status: "Online",
+    location: "Pasteurization Unit",
+    last_seen: "2024-01-15T10:29:45Z",
+    configuration: '{"units": "L/min", "calibration": 1.05}',
+    description: "Measures milk flow rate during pasteurization"
+  },
+  {
+    id: "3",
+    name: "Pressure Gauge 03",
+    device_id: "PRES003",
+    type: "Pressure Gauge",
+    status: "Offline",
+    location: "Storage Tank 1",
+    last_seen: "2024-01-15T08:15:22Z",
+    configuration: '{"range": "0-10 bar", "accuracy": 0.1}',
+    description: "Monitors pressure levels in storage tank"
+  },
+]
+
+export default function DevicesPage() {
+  const [selectedDevice, setSelectedDevice] = useState<any>(null)
+  const [formDrawerOpen, setFormDrawerOpen] = useState(false)
+  const [viewDrawerOpen, setViewDrawerOpen] = useState(false)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [formMode, setFormMode] = useState<"create" | "edit">("create")
+  const [searchTerm, setSearchTerm] = useState("")
+  const [typeFilter, setTypeFilter] = useState("all")
+  const [statusFilter, setStatusFilter] = useState("all")
+  const [loading, setLoading] = useState(false)
+
+  // Define columns inside component to access state functions
+  const columns = [
   {
     accessorKey: "name",
     header: "Device Name",
@@ -56,57 +109,84 @@ const columns = [
       return date.toLocaleString()
     },
   },
-  {
-    id: "actions",
-    header: "Actions",
-    cell: ({ row }: any) => (
-      <div className="flex space-x-2">
-        <Button variant="outline" size="sm">
-          Configure
-        </Button>
-        <Button variant="outline" size="sm">
-          Edit
-        </Button>
-        <Button variant="destructive" size="sm">
-          Delete
-        </Button>
-      </div>
-    ),
-  },
-]
+    {
+      id: "actions",
+      header: "Actions",
+      cell: ({ row }: any) => {
+        const device = row.original
+        return (
+          <div className="flex space-x-1">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => {
+                setSelectedDevice(device)
+                setViewDrawerOpen(true)
+              }}
+            >
+              <Eye className="h-4 w-4" />
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => {
+                setSelectedDevice(device)
+                setFormMode("edit")
+                setFormDrawerOpen(true)
+              }}
+            >
+              <Edit className="h-4 w-4" />
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => {
+                setSelectedDevice(device)
+                setDeleteDialogOpen(true)
+              }}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
+        )
+      },
+    },
+  ]
 
-// Mock data for devices
-const mockDevices = [
-  {
-    id: "1",
-    name: "Temperature Sensor 01",
-    device_id: "TEMP001",
-    type: "Temperature Sensor",
-    status: "Online",
-    location: "Production Line A",
-    last_seen: "2024-01-15T10:30:00Z",
-  },
-  {
-    id: "2",
-    name: "Flow Meter 02",
-    device_id: "FLOW002",
-    type: "Flow Meter",
-    status: "Online",
-    location: "Pasteurization Unit",
-    last_seen: "2024-01-15T10:29:45Z",
-  },
-  {
-    id: "3",
-    name: "Pressure Gauge 03",
-    device_id: "PRES003",
-    type: "Pressure Gauge",
-    status: "Offline",
-    location: "Storage Tank 1",
-    last_seen: "2024-01-15T08:15:22Z",
-  },
-]
+  // Filter devices based on search and filters
+  const filteredDevices = mockDevices.filter((device) => {
+    const matchesSearch = device.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         device.device_id.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesType = typeFilter === "all" || device.type === typeFilter
+    const matchesStatus = statusFilter === "all" || device.status === statusFilter
+    return matchesSearch && matchesType && matchesStatus
+  })
 
-export default function DevicesPage() {
+  const handleAddDevice = () => {
+    setSelectedDevice(null)
+    setFormMode("create")
+    setFormDrawerOpen(true)
+  }
+
+  const handleEditFromView = () => {
+    setViewDrawerOpen(false)
+    setFormMode("edit")
+    setFormDrawerOpen(true)
+  }
+
+  const handleDelete = async () => {
+    setLoading(true)
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 1000))
+      console.log("Deleting device:", selectedDevice?.name)
+      setDeleteDialogOpen(false)
+      setSelectedDevice(null)
+    } catch (error) {
+      console.error("Error deleting device:", error)
+    } finally {
+      setLoading(false)
+    }
+  }
   return (
     <MainLayout>
       <div className="space-y-6">
@@ -115,7 +195,7 @@ export default function DevicesPage() {
             <h1 className="text-3xl font-bold text-foreground">Devices Management</h1>
             <p className="text-muted-foreground">Manage IoT devices and sensors</p>
           </div>
-          <Button>
+          <Button onClick={handleAddDevice}>
             <Plus className="mr-2 h-4 w-4" />
             Add Device
           </Button>
@@ -174,27 +254,33 @@ export default function DevicesPage() {
           </CardHeader>
           <CardContent>
             <div className="flex space-x-4">
-              <Input placeholder="Search devices..." className="flex-1" />
-              <Select>
+              <Input 
+                placeholder="Search devices..." 
+                className="flex-1" 
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+              <Select value={typeFilter} onValueChange={setTypeFilter}>
                 <SelectTrigger className="w-48">
                   <SelectValue placeholder="Filter by type" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Types</SelectItem>
-                  <SelectItem value="temperature-sensor">Temperature Sensor</SelectItem>
-                  <SelectItem value="flow-meter">Flow Meter</SelectItem>
-                  <SelectItem value="pressure-gauge">Pressure Gauge</SelectItem>
-                  <SelectItem value="ph-sensor">pH Sensor</SelectItem>
+                  <SelectItem value="Temperature Sensor">Temperature Sensor</SelectItem>
+                  <SelectItem value="Flow Meter">Flow Meter</SelectItem>
+                  <SelectItem value="Pressure Gauge">Pressure Gauge</SelectItem>
+                  <SelectItem value="pH Sensor">pH Sensor</SelectItem>
                 </SelectContent>
               </Select>
-              <Select>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className="w-48">
                   <SelectValue placeholder="Filter by status" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="online">Online</SelectItem>
-                  <SelectItem value="offline">Offline</SelectItem>
+                  <SelectItem value="Online">Online</SelectItem>
+                  <SelectItem value="Offline">Offline</SelectItem>
+                  <SelectItem value="Maintenance">Maintenance</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -206,9 +292,35 @@ export default function DevicesPage() {
             <CardTitle>Devices List</CardTitle>
           </CardHeader>
           <CardContent>
-            <DataTable columns={columns} data={mockDevices} loading={false} searchKey="name" />
+            <DataTable columns={columns} data={filteredDevices} searchKey="name" />
           </CardContent>
         </Card>
+
+        {/* Form Drawer */}
+        <DeviceFormDrawer
+          open={formDrawerOpen}
+          onOpenChange={setFormDrawerOpen}
+          device={selectedDevice}
+          mode={formMode}
+        />
+
+        {/* View Drawer */}
+        <DeviceViewDrawer
+          open={viewDrawerOpen}
+          onOpenChange={setViewDrawerOpen}
+          device={selectedDevice}
+          onEdit={handleEditFromView}
+        />
+
+        {/* Delete Confirmation Dialog */}
+        <DeleteConfirmationDialog
+          open={deleteDialogOpen}
+          onOpenChange={setDeleteDialogOpen}
+          onConfirm={handleDelete}
+          loading={loading}
+          title="Delete Device"
+          description={`Are you sure you want to delete "${selectedDevice?.name}"? This action cannot be undone.`}
+        />
       </div>
     </MainLayout>
   )

@@ -16,11 +16,11 @@ export function MainLayout({ children, title, subtitle }: MainLayoutProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
 
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex min-h-screen from-[#f8f9ff] via-[#f0f2ff] to-[#e8ebff]">
       <Sidebar collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed(!sidebarCollapsed)} />
-      <div className="flex flex-1 flex-col overflow-hidden">
+      <div className="flex flex-1 flex-col">
         <Header title={title} subtitle={subtitle} />
-        <main className="flex-1 overflow-auto p-6">{children}</main>
+        <main className="flex-1 p-6">{children}</main>
       </div>
     </div>
   )

@@ -71,10 +71,10 @@ export function ProductionCostChart() {
               <Line
                 type="monotone"
                 dataKey="cost"
-                stroke="hsl(var(--primary))"
+                stroke="#0068BD"
                 strokeWidth={3}
-                dot={{ fill: "hsl(var(--primary))", strokeWidth: 2, r: 4 }}
-                activeDot={{ r: 6, stroke: "hsl(var(--primary))", strokeWidth: 2, fill: "hsl(var(--background))" }}
+                dot={{ fill: "#0068BD", strokeWidth: 2, r: 4 }}
+                activeDot={{ r: 6, stroke: "#0068BD", strokeWidth: 2, fill: "#ffffff" }}
               />
             </LineChart>
           </ResponsiveContainer>

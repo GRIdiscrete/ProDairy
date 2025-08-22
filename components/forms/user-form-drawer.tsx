@@ -62,7 +62,7 @@ export function UserFormDrawer({ open, onOpenChange, user, mode }: UserFormDrawe
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-[500px] overflow-y-auto">
+      <SheetContent className="w-[50vw] sm:max-w-[50vw] overflow-y-auto">
         <div className="p-6">
           <SheetHeader>
             <SheetTitle>{mode === "create" ? "Add New User" : "Edit User"}</SheetTitle>
@@ -72,64 +72,76 @@ export function UserFormDrawer({ open, onOpenChange, user, mode }: UserFormDrawe
           </SheetHeader>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 mt-6">
-            <div className="space-y-2">
-              <Label htmlFor="name">Full Name</Label>
-              <Input id="name" {...register("name")} />
-              {errors.name && <p className="text-sm text-red-500">{errors.name.message}</p>}
+            {/* Basic Information */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Basic Information</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Full Name</Label>
+                  <Input id="name" {...register("name")} />
+                  {errors.name && <p className="text-sm text-red-500">{errors.name.message}</p>}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input id="email" type="email" {...register("email")} />
+                  {errors.email && <p className="text-sm text-red-500">{errors.email.message}</p>}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <Input id="password" type="password" {...register("password")} />
+                {errors.password && <p className="text-sm text-red-500">{errors.password.message}</p>}
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" {...register("email")} />
-              {errors.email && <p className="text-sm text-red-500">{errors.email.message}</p>}
+            {/* Role & Department */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Role & Department</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="role">Role</Label>
+                  <Select onValueChange={(value) => setValue("role", value)} defaultValue={watch("role")}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Admin">Admin</SelectItem>
+                      <SelectItem value="Manager">Manager</SelectItem>
+                      <SelectItem value="Operator">Operator</SelectItem>
+                      <SelectItem value="Technician">Technician</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {errors.role && <p className="text-sm text-red-500">{errors.role.message}</p>}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="department">Department</Label>
+                  <Select onValueChange={(value) => setValue("department", value)} defaultValue={watch("department")}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select department" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Production">Production</SelectItem>
+                      <SelectItem value="Quality">Quality</SelectItem>
+                      <SelectItem value="Maintenance">Maintenance</SelectItem>
+                      <SelectItem value="Sales">Sales</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {errors.department && <p className="text-sm text-red-500">{errors.department.message}</p>}
+                </div>
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input id="password" type="password" {...register("password")} />
-              {errors.password && <p className="text-sm text-red-500">{errors.password.message}</p>}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="role">Role</Label>
-              <Select onValueChange={(value) => setValue("role", value)} defaultValue={watch("role")}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select role" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Admin">Admin</SelectItem>
-                  <SelectItem value="Manager">Manager</SelectItem>
-                  <SelectItem value="Operator">Operator</SelectItem>
-                  <SelectItem value="Technician">Technician</SelectItem>
-                </SelectContent>
-              </Select>
-              {errors.role && <p className="text-sm text-red-500">{errors.role.message}</p>}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="department">Department</Label>
-              <Select onValueChange={(value) => setValue("department", value)} defaultValue={watch("department")}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select department" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Production">Production</SelectItem>
-                  <SelectItem value="Quality">Quality</SelectItem>
-                  <SelectItem value="Maintenance">Maintenance</SelectItem>
-                  <SelectItem value="Sales">Sales</SelectItem>
-                </SelectContent>
-              </Select>
-              {errors.department && <p className="text-sm text-red-500">{errors.department.message}</p>}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="phone">Phone (Optional)</Label>
-              <Input id="phone" {...register("phone")} />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="address">Address (Optional)</Label>
-              <Textarea id="address" {...register("address")} />
+            {/* Contact Information */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Contact Information (Optional)</h3>
+              <div className="space-y-2">
+                <Label htmlFor="phone">Phone Number</Label>
+                <Input id="phone" {...register("phone")} placeholder="+1 (555) 123-4567" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="address">Address</Label>
+                <Textarea id="address" {...register("address")} placeholder="Enter full address" rows={3} />
+              </div>
             </div>
 
             <div className="flex justify-end space-x-2 pt-4">

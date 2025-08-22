@@ -114,7 +114,7 @@ export function RoleFormDrawer({ open, onOpenChange, role, mode }: RoleFormDrawe
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-[600px] overflow-y-auto">
+      <SheetContent className="w-[50vw] sm:max-w-[50vw] overflow-y-auto">
         <div className="p-6">
           <SheetHeader>
             <SheetTitle>{mode === "create" ? "Add New Role" : "Edit Role"}</SheetTitle>
@@ -124,60 +124,89 @@ export function RoleFormDrawer({ open, onOpenChange, role, mode }: RoleFormDrawe
           </SheetHeader>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 mt-6">
-            <div className="space-y-2">
-              <Label htmlFor="name">Role Name</Label>
-              <Input id="name" {...register("name")} />
-              {errors.name && <p className="text-sm text-red-500">{errors.name.message}</p>}
+            {/* Basic Information */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Basic Information</h3>
+              <div className="space-y-2">
+                <Label htmlFor="name">Role Name</Label>
+                <Input id="name" {...register("name")} placeholder="Enter role name (e.g., Manager, Operator)" />
+                {errors.name && <p className="text-sm text-red-500">{errors.name.message}</p>}
+              </div>
             </div>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Feature Permissions</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {featureOptions.map((feature) => (
-                  <div key={feature.key} className="space-y-2">
-                    <Label className="text-sm font-medium">{feature.label}</Label>
-                    <div className="flex flex-wrap gap-4">
-                      {actionOptions.map((action) => (
-                        <div key={action} className="flex items-center space-x-2">
-                          <Checkbox
-                            id={`${feature.key}-${action}`}
-                            checked={selectedFeatures[feature.key]?.includes(action) || false}
-                            onCheckedChange={(checked) => handleFeatureChange(feature.key, action, checked as boolean)}
-                          />
-                          <Label htmlFor={`${feature.key}-${action}`} className="text-sm">
-                            {action}
-                          </Label>
-                        </div>
-                      ))}
-                    </div>
+            {/* Permission Matrix */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Permission Matrix</h3>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base flex items-center">
+                    <span>Feature Permissions</span>
+                    <span className="ml-2 text-sm text-gray-500">({Object.keys(selectedFeatures).length} features configured)</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="overflow-x-auto">
+                    <table className="w-full border-collapse">
+                      <thead>
+                        <tr className="border-b">
+                          <th className="text-left p-2 font-medium">Feature</th>
+                          {actionOptions.map((action) => (
+                            <th key={action} className="text-center p-2 font-medium min-w-[80px]">
+                              {action}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {featureOptions.map((feature, index) => (
+                          <tr key={feature.key} className={`border-b ${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}`}>
+                            <td className="p-2 font-medium">{feature.label}</td>
+                            {actionOptions.map((action) => (
+                              <td key={action} className="text-center p-2">
+                                <Checkbox
+                                  id={`${feature.key}-${action}`}
+                                  checked={selectedFeatures[feature.key]?.includes(action) || false}
+                                  onCheckedChange={(checked) => handleFeatureChange(feature.key, action, checked as boolean)}
+                                />
+                              </td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
-                ))}
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </div>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">View Permissions</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 gap-4">
-                  {viewOptions.map((view) => (
-                    <div key={view.key} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={view.key}
-                        checked={selectedViews.includes(view.key)}
-                        onCheckedChange={(checked) => handleViewChange(view.key, checked as boolean)}
-                      />
-                      <Label htmlFor={view.key} className="text-sm">
-                        {view.label}
-                      </Label>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+            {/* View Permissions */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">View Permissions</h3>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base flex items-center">
+                    <span>Accessible Views</span>
+                    <span className="ml-2 text-sm text-gray-500">({selectedViews.length} views selected)</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 gap-3">
+                    {viewOptions.map((view) => (
+                      <div key={view.key} className="flex items-center space-x-2 p-2 border rounded-lg hover:bg-gray-50">
+                        <Checkbox
+                          id={view.key}
+                          checked={selectedViews.includes(view.key)}
+                          onCheckedChange={(checked) => handleViewChange(view.key, checked as boolean)}
+                        />
+                        <Label htmlFor={view.key} className="text-sm cursor-pointer flex-1">
+                          {view.label}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
 
             <div className="flex justify-end space-x-2 pt-4">
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
