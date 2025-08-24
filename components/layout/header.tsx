@@ -42,15 +42,7 @@ export function Header({ title = "Dashboard", subtitle = "Welcome back!" }: Head
       />
       <div className="flex h-16 items-center justify-between px-3 md:px-6">
         {/* Left: Title */}
-        <div className="min-w-0 pr-2">
-          <div className="flex items-center gap-3">
-            <h1 className="truncate text-xl md:text-2xl font-light tracking-wide text-zinc-900">
-              {title}
-            </h1>
-            <span className="hidden h-1 w-14 rounded-full bg-gradient-to-r from-blue-500 to-lime-500 md:block" />
-          </div>
-          <p className="truncate text-xs md:text-sm text-zinc-500 tracking-wider">{subtitle}</p>
-        </div>
+       
 
         {/* Center: Search (desktop) */}
         <div className="hidden md:block flex-1 px-6">

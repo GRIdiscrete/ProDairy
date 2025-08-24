@@ -17,7 +17,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion"
 
 const navigation = [
-  // { name: "Dashboard", href: "/", icon: LayoutDashboard, current: false },
+  { name: "Dashboard", href: "/", icon: LayoutDashboard, current: false },
   {
     name: "Configuration",
     href: "/configuration",
