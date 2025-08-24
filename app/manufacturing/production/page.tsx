@@ -16,7 +16,7 @@ export default function ProductionPage() {
   }, [dispatch])
 
   return (
-    <MainLayout title="Production Management" subtitle="Monitor and manage production batches">
+    <MainLayout title="Production Management" subtitle="Monitor and manage production plans">
       <div className="space-y-6">
         {/* Production Metrics */}
         <ProductionMetrics />

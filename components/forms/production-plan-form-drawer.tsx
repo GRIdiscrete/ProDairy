@@ -16,14 +16,10 @@ import { CalendarIcon } from "lucide-react"
 import { format } from "date-fns"
 
 const productionPlanSchema = yup.object({
-  batch_id: yup.string().required("Batch ID is required"),
   product_type: yup.string().required("Product type is required"),
   quantity: yup.number().positive("Quantity must be positive").required("Quantity is required"),
   unit: yup.string().required("Unit is required"),
   priority: yup.string().required("Priority is required"),
-  machine_id: yup.string().required("Machine is required"),
-  operator_id: yup.string().required("Operator is required"),
-  estimated_duration: yup.number().positive("Duration must be positive").required("Estimated duration is required"),
   notes: yup.string(),
 })
 
@@ -147,39 +143,7 @@ export function ProductionPlanFormDrawer({ open, onOpenChange, plan, mode }: Pro
               {errors.priority && <p className="text-sm text-red-500">{errors.priority.message}</p>}
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="machine_id">Machine</Label>
-                <Select onValueChange={(value) => setValue("machine_id", value)} defaultValue={watch("machine_id")}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select machine" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="M/C 01">M/C 01</SelectItem>
-                    <SelectItem value="M/C 02">M/C 02</SelectItem>
-                    <SelectItem value="M/C 03">M/C 03</SelectItem>
-                    <SelectItem value="M/C 04">M/C 04</SelectItem>
-                  </SelectContent>
-                </Select>
-                {errors.machine_id && <p className="text-sm text-red-500">{errors.machine_id.message}</p>}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="operator_id">Operator</Label>
-                <Select onValueChange={(value) => setValue("operator_id", value)} defaultValue={watch("operator_id")}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select operator" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="brooklyn_simmons">Brooklyn Simmons</SelectItem>
-                    <SelectItem value="dianne_russell">Dianne Russell</SelectItem>
-                    <SelectItem value="marvin_mckinney">Marvin McKinney</SelectItem>
-                    <SelectItem value="cameron_williamson">Cameron Williamson</SelectItem>
-                  </SelectContent>
-                </Select>
-                {errors.operator_id && <p className="text-sm text-red-500">{errors.operator_id.message}</p>}
-              </div>
-            </div>
+           
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -213,16 +177,7 @@ export function ProductionPlanFormDrawer({ open, onOpenChange, plan, mode }: Pro
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="estimated_duration">Estimated Duration (Hours)</Label>
-              <Input
-                id="estimated_duration"
-                type="number"
-                {...register("estimated_duration", { valueAsNumber: true })}
-              />
-              {errors.estimated_duration && <p className="text-sm text-red-500">{errors.estimated_duration.message}</p>}
-            </div>
-
+            
             <div className="space-y-2">
               <Label htmlFor="notes">Notes (Optional)</Label>
               <Textarea id="notes" {...register("notes")} />

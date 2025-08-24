@@ -123,3 +123,19 @@
     @apply bg-background text-foreground;
   }
 }
+
+
+  @keyframes flow { to { stroke-dashoffset: -2000; } }
+  .animate-flow { stroke-dasharray: 12 10; animation: flow 18s linear infinite; }
+
+  @keyframes floaty {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-6px); }
+  }
+  .float-slow { animation: floaty 6s ease-in-out infinite; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .animate-flow { animation: none; }
+    .float-slow { animation: none; }
+  }
+
