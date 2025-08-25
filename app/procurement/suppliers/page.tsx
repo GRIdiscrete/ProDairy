@@ -1,196 +1,384 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { useDispatch, useSelector } from "react-redux"
-import type { RootState, AppDispatch } from "@/lib/store"
-import { fetchSuppliers, setSupplierFilters } from "@/lib/store/slices/supplierSlice"
+import { useState, useEffect, useRef } from "react"
 import { MainLayout } from "@/components/layout/main-layout"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Plus, Search, Filter, Edit, Trash2, Phone, Mail, Eye } from "lucide-react"
+import { LoadingButton } from "@/components/ui/loading-button"
+import { Input } from "@/components/ui/input"
 import { DataTable } from "@/components/ui/data-table"
+import { Badge } from "@/components/ui/badge"
+import { Plus, Users, UserCheck, TrendingUp, Eye, Edit, Trash2, Phone, Mail, MapPin, Truck } from "lucide-react"
 import { SupplierFormDrawer } from "@/components/forms/supplier-form-drawer"
 import { SupplierViewDrawer } from "@/components/forms/supplier-view-drawer"
+import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-dialog"
+import { useAppDispatch, useAppSelector } from "@/lib/store"
+import { fetchSuppliers, deleteSupplier, clearError } from "@/lib/store/slices/supplierSlice"
+import { toast } from "sonner"
 
 export default function SuppliersPage() {
-  const dispatch = useDispatch<AppDispatch>()
-  const { suppliers, loading, filters } = useSelector((state: RootState) => state.supplier)
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false)
-  const [isViewDrawerOpen, setIsViewDrawerOpen] = useState(false)
-  const [editingSupplier, setEditingSupplier] = useState(null)
-  const [viewingSupplier, setViewingSupplier] = useState(null)
-
+  const dispatch = useAppDispatch()
+  const { suppliers, loading, error, operationLoading } = useAppSelector((state) => state.supplier)
+  
+  const [searchTerm, setSearchTerm] = useState("")
+  const hasFetchedRef = useRef(false)
+  
+  // Load suppliers on component mount - prevent duplicate calls with ref
   useEffect(() => {
-    dispatch(fetchSuppliers())
-  }, [dispatch])
+    if (!hasFetchedRef.current && !operationLoading.fetch) {
+      hasFetchedRef.current = true
+      dispatch(fetchSuppliers({}))
+    }
+  }, [dispatch, operationLoading.fetch])
+  
+  // Handle errors with toast notifications
+  useEffect(() => {
+    if (error) {
+      toast.error(error)
+      dispatch(clearError())
+    }
+  }, [error, dispatch])
+  
+  // Drawer states
+  const [formDrawerOpen, setFormDrawerOpen] = useState(false)
+  const [viewDrawerOpen, setViewDrawerOpen] = useState(false)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  
+  // Selected supplier and mode
+  const [selectedSupplier, setSelectedSupplier] = useState<any>(null)
+  const [formMode, setFormMode] = useState<"create" | "edit">("create")
 
+  // Filter suppliers
+  const filteredSuppliers = suppliers.filter(supplier => 
+    supplier.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    supplier.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    supplier.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    supplier.raw_product.toLowerCase().includes(searchTerm.toLowerCase())
+  )
+
+  // Action handlers
   const handleAddSupplier = () => {
-    setEditingSupplier(null)
-    setIsDrawerOpen(true)
+    setSelectedSupplier(null)
+    setFormMode("create")
+    setFormDrawerOpen(true)
   }
 
   const handleEditSupplier = (supplier: any) => {
-    setEditingSupplier(supplier)
-    setIsDrawerOpen(true)
+    setSelectedSupplier(supplier)
+    setFormMode("edit")
+    setFormDrawerOpen(true)
   }
 
   const handleViewSupplier = (supplier: any) => {
-    setViewingSupplier(supplier)
-    setIsViewDrawerOpen(true)
+    setSelectedSupplier(supplier)
+    setViewDrawerOpen(true)
   }
 
+  const handleDeleteSupplier = (supplier: any) => {
+    setSelectedSupplier(supplier)
+    setDeleteDialogOpen(true)
+  }
+
+  const confirmDelete = async () => {
+    if (!selectedSupplier) return
+    
+    try {
+      await dispatch(deleteSupplier(selectedSupplier.id)).unwrap()
+      toast.success('Supplier deleted successfully')
+      setDeleteDialogOpen(false)
+      setSelectedSupplier(null)
+    } catch (error: any) {
+      // Backend error message will be used from the thunk
+      toast.error(error || 'Failed to delete supplier')
+    }
+  }
+
+  // Calculate metrics
+  const totalVolumeSupplied = suppliers.reduce((total, s) => total + s.volume_supplied, 0)
+  const totalVolumeRejected = suppliers.reduce((total, s) => total + s.volume_rejected, 0)
+  const acceptanceRate = totalVolumeSupplied > 0 ? ((totalVolumeSupplied - totalVolumeRejected) / totalVolumeSupplied) * 100 : 0
+
+  // Table columns with actions
   const columns = [
     {
       accessorKey: "name",
-      header: "Supplier Name",
+      header: "Supplier",
+      cell: ({ row }: any) => {
+        const supplier = row.original
+        return (
+          <div className="flex items-center space-x-3">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#059669] to-[#10b981] flex items-center justify-center">
+              <Users className="w-4 h-4 text-white" />
+            </div>
+            <div>
+              <div className="flex items-center space-x-2">
+                <span className="font-medium">{supplier.first_name} {supplier.last_name}</span>
+              </div>
+              <p className="text-sm text-gray-500 mt-1">Product: {supplier.raw_product}</p>
+            </div>
+          </div>
+        )
+      },
     },
     {
-      accessorKey: "contactPerson",
-      header: "Contact Person",
+      accessorKey: "contact",
+      header: "Contact",
+      cell: ({ row }: any) => {
+        const supplier = row.original
+        return (
+          <div className="space-y-1">
+            <div className="flex items-center space-x-1 text-sm">
+              <Phone className="w-3 h-3 text-gray-400" />
+              <span>{supplier.phone_number}</span>
+            </div>
+            <div className="flex items-center space-x-1 text-sm">
+              <Mail className="w-3 h-3 text-gray-400" />
+              <span className="truncate max-w-[150px]">{supplier.email}</span>
+            </div>
+          </div>
+        )
+      },
     },
     {
-      accessorKey: "phone",
-      header: "Phone",
-      cell: ({ row }: any) => (
-        <div className="flex items-center gap-1">
-          <Phone className="h-3 w-3" />
-          {row.original.phone}
-        </div>
-      ),
+      accessorKey: "location",
+      header: "Location",
+      cell: ({ row }: any) => {
+        const supplier = row.original
+        return (
+          <div className="flex items-center space-x-1 text-sm">
+            <MapPin className="w-3 h-3 text-gray-400" />
+            <span className="truncate max-w-[120px]">{supplier.physical_address}</span>
+          </div>
+        )
+      },
     },
     {
-      accessorKey: "email",
-      header: "Email",
-      cell: ({ row }: any) => (
-        <div className="flex items-center gap-1">
-          <Mail className="h-3 w-3" />
-          {row.original.email}
-        </div>
-      ),
+      accessorKey: "volume",
+      header: "Volume Stats",
+      cell: ({ row }: any) => {
+        const supplier = row.original
+        const rejectionRate = supplier.volume_supplied > 0 ? (supplier.volume_rejected / supplier.volume_supplied) * 100 : 0
+        return (
+          <div className="space-y-1">
+            <div className="flex items-center space-x-2">
+              <span className="text-sm font-medium">{supplier.volume_supplied.toLocaleString()}L</span>
+              <Badge variant="outline" className={rejectionRate > 10 ? "text-red-600" : rejectionRate > 5 ? "text-yellow-600" : "text-green-600"}>
+                {rejectionRate.toFixed(1)}% rejected
+              </Badge>
+            </div>
+            <p className="text-xs text-gray-500">Rejected: {supplier.volume_rejected.toLocaleString()}L</p>
+          </div>
+        )
+      },
     },
     {
-      accessorKey: "status",
-      header: "Status",
-      cell: ({ row }: any) => (
-        <Badge variant={row.original.status === "active" ? "default" : "secondary"}>{row.original.status}</Badge>
-      ),
-    },
-    {
-      accessorKey: "rating",
-      header: "Rating",
-      cell: ({ row }: any) => (
-        <div className="flex items-center">
-          <span className="text-yellow-500">★</span>
-          <span className="ml-1">{row.original.rating}</span>
-        </div>
-      ),
+      accessorKey: "created_at",
+      header: "Added",
+      cell: ({ row }: any) => {
+        const supplier = row.original
+        return (
+          <div className="space-y-1">
+            <p className="text-sm font-medium">{new Date(supplier.created_at).toLocaleDateString()}</p>
+            <p className="text-xs text-gray-500">Updated: {new Date(supplier.updated_at).toLocaleDateString()}</p>
+          </div>
+        )
+      },
     },
     {
       id: "actions",
       header: "Actions",
-      cell: ({ row }: any) => (
-        <div className="flex gap-2">
-          <Button variant="ghost" size="sm" onClick={() => handleViewSupplier(row.original)}>
-            <Eye className="h-4 w-4" />
-          </Button>
-          <Button variant="ghost" size="sm" onClick={() => handleEditSupplier(row.original)}>
-            <Edit className="h-4 w-4" />
-          </Button>
-          <Button variant="ghost" size="sm">
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        </div>
-      ),
+      cell: ({ row }: any) => {
+        const supplier = row.original
+        return (
+          <div className="flex space-x-2">
+            <LoadingButton variant="outline" size="sm" onClick={() => handleViewSupplier(supplier)}>
+              <Eye className="w-4 h-4" />
+            </LoadingButton>
+            <LoadingButton variant="outline" size="sm" onClick={() => handleEditSupplier(supplier)}>
+              <Edit className="w-4 h-4" />
+            </LoadingButton>
+            <LoadingButton 
+              variant="destructive" 
+              size="sm" 
+              onClick={() => handleDeleteSupplier(supplier)}
+              loading={operationLoading.delete}
+              disabled={operationLoading.delete}
+            >
+              <Trash2 className="w-4 h-4" />
+            </LoadingButton>
+          </div>
+        )
+      },
     },
   ]
 
   return (
-    <MainLayout title="Supplier Management" subtitle="Manage supplier relationships and contracts">
+    <MainLayout>
       <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-bold">Supplier Management</h1>
-          <Button onClick={handleAddSupplier}>
-            <Plus className="h-4 w-4 mr-2" />
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">Supplier Management</h1>
+            <p className="text-muted-foreground">Manage supplier relationships and track performance</p>
+          </div>
+          <LoadingButton onClick={handleAddSupplier}>
+            <Plus className="mr-2 h-4 w-4" />
             Add Supplier
-          </Button>
+          </LoadingButton>
         </div>
 
+        {/* Counter Widgets with Icons */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <Card>
-            <CardHeader className="pb-2">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Suppliers</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{suppliers.length}</div>
+              {operationLoading.fetch ? (
+                <div className="animate-pulse">
+                  <div className="h-8 bg-gray-200 rounded w-16 mb-1"></div>
+                  <div className="h-3 bg-gray-200 rounded w-24"></div>
+                </div>
+              ) : (
+                <>
+                  <div className="text-2xl font-bold">{suppliers.length}</div>
+                  <p className="text-xs text-muted-foreground">Registered suppliers</p>
+                </>
+              )}
             </CardContent>
           </Card>
           <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Active</CardTitle>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Active Products</CardTitle>
+              <Truck className="h-4 w-4 text-blue-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-600">
-                {suppliers.filter((s) => s.status === "active").length}
-              </div>
+              {operationLoading.fetch ? (
+                <div className="animate-pulse">
+                  <div className="h-8 bg-gray-200 rounded w-16 mb-1"></div>
+                  <div className="h-3 bg-gray-200 rounded w-32"></div>
+                </div>
+              ) : (
+                <>
+                  <div className="text-2xl font-bold text-blue-600">
+                    {new Set(suppliers.map(s => s.raw_product)).size}
+                  </div>
+                  <p className="text-xs text-muted-foreground">Product types</p>
+                </>
+              )}
             </CardContent>
           </Card>
           <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Pending</CardTitle>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Volume</CardTitle>
+              <TrendingUp className="h-4 w-4 text-green-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-yellow-600">
-                {suppliers.filter((s) => s.status === "pending").length}
-              </div>
+              {operationLoading.fetch ? (
+                <div className="animate-pulse">
+                  <div className="h-8 bg-gray-200 rounded w-16 mb-1"></div>
+                  <div className="h-3 bg-gray-200 rounded w-32"></div>
+                </div>
+              ) : (
+                <>
+                  <div className="text-2xl font-bold text-green-600">
+                    {totalVolumeSupplied.toLocaleString()}L
+                  </div>
+                  <p className="text-xs text-muted-foreground">Total supplied</p>
+                </>
+              )}
             </CardContent>
           </Card>
           <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Avg Rating</CardTitle>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Acceptance Rate</CardTitle>
+              <UserCheck className="h-4 w-4 text-purple-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
-                {suppliers.length > 0
-                  ? (suppliers.reduce((acc, s) => acc + s.rating, 0) / suppliers.length).toFixed(1)
-                  : "0.0"}
-              </div>
+              {operationLoading.fetch ? (
+                <div className="animate-pulse">
+                  <div className="h-8 bg-gray-200 rounded w-16 mb-1"></div>
+                  <div className="h-3 bg-gray-200 rounded w-32"></div>
+                </div>
+              ) : (
+                <>
+                  <div className="text-2xl font-bold text-purple-600">
+                    {acceptanceRate.toFixed(1)}%
+                  </div>
+                  <p className="text-xs text-muted-foreground">Quality acceptance</p>
+                </>
+              )}
             </CardContent>
           </Card>
         </div>
 
         <Card>
           <CardHeader>
-            <div className="flex justify-between items-center">
-              <CardTitle>Suppliers</CardTitle>
-              <div className="flex gap-2">
-                <div className="relative">
-                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search suppliers..."
-                    className="pl-8 w-64"
-                    value={filters.search}
-                    onChange={(e) => dispatch(setSupplierFilters({ search: e.target.value }))}
-                  />
-                </div>
-                <Button variant="outline" size="sm">
-                  <Filter className="h-4 w-4 mr-2" />
-                  Filter
-                </Button>
-              </div>
-            </div>
+            <CardTitle>Supplier Filters</CardTitle>
           </CardHeader>
           <CardContent>
-            <DataTable columns={columns} data={suppliers} loading={loading} />
+            <div className="flex items-center space-x-4">
+              <div className="flex-1">
+                <Input
+                  placeholder="Search suppliers..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="max-w-sm"
+                />
+              </div>
+            </div>
           </CardContent>
         </Card>
 
-        <SupplierFormDrawer open={isDrawerOpen} onClose={() => setIsDrawerOpen(false)} supplier={editingSupplier} />
+        <Card>
+          <CardHeader>
+            <CardTitle>Suppliers</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {operationLoading.fetch ? (
+              <div className="flex items-center justify-center h-64">
+                <div className="flex flex-col items-center space-y-4">
+                  <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                  <p className="text-muted-foreground">Loading suppliers...</p>
+                </div>
+              </div>
+            ) : (
+              <DataTable
+                columns={columns}
+                data={filteredSuppliers}
+                searchKey="first_name"
+                searchPlaceholder="Search suppliers..."
+              />
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Form Drawer */}
+        <SupplierFormDrawer 
+          open={formDrawerOpen} 
+          onOpenChange={setFormDrawerOpen} 
+          supplier={selectedSupplier}
+          mode={formMode} 
+        />
+
+        {/* View Drawer */}
         <SupplierViewDrawer
-          open={isViewDrawerOpen}
-          onClose={() => setIsViewDrawerOpen(false)}
-          supplier={viewingSupplier}
+          open={viewDrawerOpen}
+          onClose={() => setViewDrawerOpen(false)}
+          supplier={selectedSupplier}
+          onEdit={() => {
+            setViewDrawerOpen(false)
+            handleEditSupplier(selectedSupplier)
+          }}
+        />
+
+        {/* Delete Confirmation Dialog */}
+        <DeleteConfirmationDialog
+          open={deleteDialogOpen}
+          onOpenChange={setDeleteDialogOpen}
+          title="Delete Supplier"
+          description={`Are you sure you want to delete ${selectedSupplier?.first_name} ${selectedSupplier?.last_name}? This action cannot be undone and will remove all related data.`}
+          onConfirm={confirmDelete}
+          loading={operationLoading.delete}
         />
       </div>
     </MainLayout>

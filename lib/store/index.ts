@@ -6,6 +6,10 @@ import laboratoryReducer from "./slices/laboratorySlice"
 import machineReducer from "./slices/machineSlice"
 import supplierReducer from "./slices/supplierSlice"
 import userReducer from "./slices/userSlice"
+import rolesReducer from "./slices/rolesSlice"
+import usersReducer from "./slices/usersSlice"
+import siloReducer from "./slices/siloSlice"
+import rawMaterialReducer from "./slices/rawMaterialSlice"
 
 export const store = configureStore({
   reducer: {
@@ -15,6 +19,10 @@ export const store = configureStore({
     machine: machineReducer,
     supplier: supplierReducer,
     user: userReducer,
+    roles: rolesReducer,
+    users: usersReducer,
+    silo: siloReducer,
+    rawMaterial: rawMaterialReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

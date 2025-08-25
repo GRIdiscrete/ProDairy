@@ -1,28 +1,54 @@
 "use client"
 
-import { useState } from "react"
-import { useForm } from "react-hook-form"
+import { useState, useEffect } from "react"
+import { useForm, Controller } from "react-hook-form"
 import { yupResolver } from "@hookform/resolvers/yup"
 import * as yup from "yup"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
-import { Button } from "@/components/ui/button"
+import { LoadingButton } from "@/components/ui/loading-button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { useAppDispatch, useAppSelector } from "@/lib/store"
+import { createRole, updateRole } from "@/lib/store/slices/rolesSlice"
+import { toast } from "sonner"
+import { UserRole } from "@/lib/types/roles"
 
 const roleSchema = yup.object({
-  name: yup.string().required("Role name is required"),
+  role_name: yup.string().required("Role name is required"),
   features: yup.object({
-    user: yup.array().of(yup.string()),
-    role: yup.array().of(yup.string()),
-    machine_item: yup.array().of(yup.string()),
-    silo_item: yup.array().of(yup.string()),
-    supplier: yup.array().of(yup.string()),
-    process: yup.array().of(yup.string()),
-    devices: yup.array().of(yup.string()),
+    user: yup.object({
+      operations: yup.array().of(yup.string()).default([]),
+    }).default({ operations: [] }),
+    role: yup.object({
+      operations: yup.array().of(yup.string()).default([]),
+    }).default({ operations: [] }),
+    machine_item: yup.object({
+      operations: yup.array().of(yup.string()).default([]),
+    }).default({ operations: [] }),
+    silo_item: yup.object({
+      operations: yup.array().of(yup.string()).default([]),
+    }).default({ operations: [] }),
+    supplier: yup.object({
+      operations: yup.array().of(yup.string()).default([]),
+    }).default({ operations: [] }),
+    process: yup.object({
+      operations: yup.array().of(yup.string()).default([]),
+    }).default({ operations: [] }),
+    devices: yup.object({
+      operations: yup.array().of(yup.string()).default([]),
+    }).default({ operations: [] }),
+  }).default({
+    user: { operations: [] },
+    role: { operations: [] },
+    machine_item: { operations: [] },
+    silo_item: { operations: [] },
+    supplier: { operations: [] },
+    process: { operations: [] },
+    devices: { operations: [] },
   }),
-  views: yup.array().of(yup.string()),
+  views: yup.array().of(yup.string()).default([]),
 })
 
 type RoleFormData = yup.InferType<typeof roleSchema>
@@ -30,7 +56,7 @@ type RoleFormData = yup.InferType<typeof roleSchema>
 interface RoleFormDrawerProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  role?: any
+  role?: UserRole | null
   mode: "create" | "edit"
 }
 
@@ -44,10 +70,11 @@ const featureOptions = [
   { key: "devices", label: "Device Management" },
 ]
 
-const actionOptions = ["Create", "Update", "Delete", "View"]
+const actionOptions = ["create", "read", "update", "delete"]
 
 const viewOptions = [
-  { key: "admin_panel", label: "Admin Panel" },
+  { key: "dashboard", label: "Dashboard" },
+  { key: "settings", label: "Settings" },
   { key: "user_tab", label: "User Tab" },
   { key: "role_tab", label: "Role Tab" },
   { key: "machine_tab", label: "Machine Tab" },
@@ -58,59 +85,105 @@ const viewOptions = [
 ]
 
 export function RoleFormDrawer({ open, onOpenChange, role, mode }: RoleFormDrawerProps) {
-  const [loading, setLoading] = useState(false)
-  const [selectedFeatures, setSelectedFeatures] = useState<Record<string, string[]>>(role?.features || {})
-  const [selectedViews, setSelectedViews] = useState<string[]>(role?.views || [])
+  const dispatch = useAppDispatch()
+  const { operationLoading } = useAppSelector((state) => state.roles)
 
   const {
-    register,
+    control,
     handleSubmit,
     formState: { errors },
     reset,
+    watch,
+    setValue,
   } = useForm<RoleFormData>({
     resolver: yupResolver(roleSchema),
-    defaultValues: role || { features: {}, views: [] },
+    defaultValues: {
+      role_name: "",
+      features: {
+        user: { operations: [] },
+        role: { operations: [] },
+        machine_item: { operations: [] },
+        silo_item: { operations: [] },
+        supplier: { operations: [] },
+        process: { operations: [] },
+        devices: { operations: [] },
+      },
+      views: [],
+    },
   })
 
   const onSubmit = async (data: RoleFormData) => {
-    setLoading(true)
     try {
-      const formData = {
-        ...data,
-        features: selectedFeatures,
-        views: selectedViews,
+      console.log('Form data submitted:', data)
+      
+      // Clean and transform the data to ensure proper types
+      const cleanedData = {
+        role_name: data.role_name?.trim() || '',
+        features: {
+          user: { operations: (data.features?.user?.operations?.filter(Boolean) || []) as string[] },
+          role: { operations: (data.features?.role?.operations?.filter(Boolean) || []) as string[] },
+          machine_item: { operations: (data.features?.machine_item?.operations?.filter(Boolean) || []) as string[] },
+          silo_item: { operations: (data.features?.silo_item?.operations?.filter(Boolean) || []) as string[] },
+          supplier: { operations: (data.features?.supplier?.operations?.filter(Boolean) || []) as string[] },
+          process: { operations: (data.features?.process?.operations?.filter(Boolean) || []) as string[] },
+          devices: { operations: (data.features?.devices?.operations?.filter(Boolean) || []) as string[] },
+        },
+        views: (data.views?.filter(Boolean) || []) as string[],
       }
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-      console.log(`${mode === "create" ? "Creating" : "Updating"} role:`, formData)
+
+      console.log('Cleaned data:', cleanedData)
+
+      if (mode === "create") {
+        await dispatch(createRole(cleanedData)).unwrap()
+        toast.success('Role created successfully')
+      } else if (role) {
+        await dispatch(updateRole({
+          ...cleanedData,
+          id: role.id,
+          updated_at: role.updated_at,
+        })).unwrap()
+        toast.success('Role updated successfully')
+      }
       onOpenChange(false)
       reset()
-    } catch (error) {
-      console.error("Error saving role:", error)
-    } finally {
-      setLoading(false)
+    } catch (error: any) {
+      // Backend error message will be used from the thunk
+      toast.error(error || (mode === "create" ? 'Failed to create role' : 'Failed to update role'))
     }
   }
 
-  const handleFeatureChange = (feature: string, action: string, checked: boolean) => {
-    setSelectedFeatures((prev) => {
-      const current = prev[feature] || []
-      if (checked) {
-        return { ...prev, [feature]: [...current, action] }
-      } else {
-        return { ...prev, [feature]: current.filter((a) => a !== action) }
-      }
-    })
-  }
 
-  const handleViewChange = (view: string, checked: boolean) => {
-    setSelectedViews((prev) => {
-      if (checked) {
-        return [...prev, view]
-      } else {
-        return prev.filter((v) => v !== view)
-      }
-    })
-  }
+  useEffect(() => {
+    if (open && role && mode === "edit") {
+      reset({
+        role_name: role.role_name || "",
+        features: {
+          user: { operations: role.user_operations || [] },
+          role: { operations: role.role_operations || [] },
+          machine_item: { operations: role.machine_item_operations || [] },
+          silo_item: { operations: role.silo_item_operations || [] },
+          supplier: { operations: role.supplier_operations || [] },
+          process: { operations: role.process_operations || [] },
+          devices: { operations: role.devices_operations || [] },
+        },
+        views: role.views || [],
+      })
+    } else if (open && mode === "create") {
+      reset({
+        role_name: "",
+        features: {
+          user: { operations: [] },
+          role: { operations: [] },
+          machine_item: { operations: [] },
+          silo_item: { operations: [] },
+          supplier: { operations: [] },
+          process: { operations: [] },
+          devices: { operations: [] },
+        },
+        views: [],
+      })
+    }
+  }, [open, role, mode, reset])
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -128,9 +201,21 @@ export function RoleFormDrawer({ open, onOpenChange, role, mode }: RoleFormDrawe
             <div className="space-y-4">
               <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Basic Information</h3>
               <div className="space-y-2">
-                <Label htmlFor="name">Role Name</Label>
-                <Input id="name" {...register("name")} placeholder="Enter role name (e.g., Manager, Operator)" />
-                {errors.name && <p className="text-sm text-red-500">{errors.name.message}</p>}
+                <Label htmlFor="role_name">Role Name</Label>
+                <Controller
+                  name="role_name"
+                  control={control}
+                  render={({ field }) => (
+                    <Input
+                      id="role_name"
+                      {...field}
+                      placeholder="Enter role name"
+                    />
+                  )}
+                />
+                {errors.role_name && (
+                  <p className="text-sm text-red-500">{errors.role_name.message}</p>
+                )}
               </div>
             </div>
 
@@ -141,7 +226,7 @@ export function RoleFormDrawer({ open, onOpenChange, role, mode }: RoleFormDrawe
                 <CardHeader>
                   <CardTitle className="text-base flex items-center">
                     <span>Feature Permissions</span>
-                    <span className="ml-2 text-sm text-gray-500">({Object.keys(selectedFeatures).length} features configured)</span>
+                    <span className="ml-2 text-sm text-gray-500">(Feature permissions)</span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -151,7 +236,7 @@ export function RoleFormDrawer({ open, onOpenChange, role, mode }: RoleFormDrawe
                         <tr className="border-b">
                           <th className="text-left p-2 font-medium">Feature</th>
                           {actionOptions.map((action) => (
-                            <th key={action} className="text-center p-2 font-medium min-w-[80px]">
+                            <th key={action} className="text-center p-2 font-medium min-w-[80px] capitalize">
                               {action}
                             </th>
                           ))}
@@ -161,15 +246,35 @@ export function RoleFormDrawer({ open, onOpenChange, role, mode }: RoleFormDrawe
                         {featureOptions.map((feature, index) => (
                           <tr key={feature.key} className={`border-b ${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}`}>
                             <td className="p-2 font-medium">{feature.label}</td>
-                            {actionOptions.map((action) => (
-                              <td key={action} className="text-center p-2">
-                                <Checkbox
-                                  id={`${feature.key}-${action}`}
-                                  checked={selectedFeatures[feature.key]?.includes(action) || false}
-                                  onCheckedChange={(checked) => handleFeatureChange(feature.key, action, checked as boolean)}
-                                />
-                              </td>
-                            ))}
+                            {actionOptions.map((action) => {
+                              const allFeatures = watch('features')
+                              const currentFeatures = allFeatures?.[feature.key as keyof typeof allFeatures]?.operations || []
+                              const isChecked = currentFeatures.includes(action)
+                              
+                              return (
+                                <td key={action} className="text-center p-2">
+                                  <div className="flex items-center justify-center">
+                                    <Checkbox
+                                      id={`${feature.key}-${action}`}
+                                      checked={isChecked}
+                                      onCheckedChange={(checked) => {
+                                        const updatedFeatures = { ...allFeatures }
+                                        if (!updatedFeatures[feature.key as keyof typeof updatedFeatures]) {
+                                          updatedFeatures[feature.key as keyof typeof updatedFeatures] = { operations: [] }
+                                        }
+                                        const current = updatedFeatures[feature.key as keyof typeof updatedFeatures].operations
+                                        if (checked) {
+                                          updatedFeatures[feature.key as keyof typeof updatedFeatures].operations = [...current, action]
+                                        } else {
+                                          updatedFeatures[feature.key as keyof typeof updatedFeatures].operations = current.filter(a => a !== action)
+                                        }
+                                        setValue('features', updatedFeatures)
+                                      }}
+                                    />
+                                  </div>
+                                </td>
+                              )
+                            })}
                           </tr>
                         ))}
                       </tbody>
@@ -186,35 +291,51 @@ export function RoleFormDrawer({ open, onOpenChange, role, mode }: RoleFormDrawe
                 <CardHeader>
                   <CardTitle className="text-base flex items-center">
                     <span>Accessible Views</span>
-                    <span className="ml-2 text-sm text-gray-500">({selectedViews.length} views selected)</span>
+                    <span className="ml-2 text-sm text-gray-500">(View permissions)</span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-2 gap-3">
-                    {viewOptions.map((view) => (
-                      <div key={view.key} className="flex items-center space-x-2 p-2 border rounded-lg hover:bg-gray-50">
-                        <Checkbox
-                          id={view.key}
-                          checked={selectedViews.includes(view.key)}
-                          onCheckedChange={(checked) => handleViewChange(view.key, checked as boolean)}
-                        />
-                        <Label htmlFor={view.key} className="text-sm cursor-pointer flex-1">
-                          {view.label}
-                        </Label>
-                      </div>
-                    ))}
+                    {viewOptions.map((view) => {
+                      const currentViews = watch('views') as string[]
+                      const isChecked = currentViews?.includes(view.key)
+                      
+                      return (
+                        <div key={view.key} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`view-${view.key}`}
+                            checked={isChecked}
+                            onCheckedChange={(checked) => {
+                              const current = currentViews || []
+                              if (checked) {
+                                setValue('views', [...current, view.key])
+                              } else {
+                                setValue('views', current.filter(v => v !== view.key))
+                              }
+                            }}
+                          />
+                          <Label htmlFor={`view-${view.key}`} className="text-sm">
+                            {view.label}
+                          </Label>
+                        </div>
+                      )
+                    })}
                   </div>
                 </CardContent>
               </Card>
             </div>
 
             <div className="flex justify-end space-x-2 pt-4">
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              <LoadingButton type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Cancel
-              </Button>
-              <Button type="submit" disabled={loading}>
-                {loading ? "Saving..." : mode === "create" ? "Create Role" : "Update Role"}
-              </Button>
+              </LoadingButton>
+              <LoadingButton 
+                type="submit" 
+                loading={mode === "create" ? operationLoading.create : operationLoading.update}
+                loadingText={mode === "create" ? "Creating..." : "Updating..."}
+              >
+                {mode === "create" ? "Create Role" : "Update Role"}
+              </LoadingButton>
             </div>
           </form>
         </div>

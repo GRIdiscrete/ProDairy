@@ -4,12 +4,13 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Edit, Shield, Settings, Eye, CheckCircle } from "lucide-react"
+import { Edit, Shield, Settings, Eye, CheckCircle, Calendar, Clock } from "lucide-react"
+import { UserRole } from "@/lib/types/roles"
 
 interface RoleViewDrawerProps {
   open: boolean
   onClose: () => void
-  role: any
+  role: UserRole | null
   onEdit?: () => void
 }
 
@@ -24,6 +25,8 @@ const featureLabels: Record<string, string> = {
 }
 
 const viewLabels: Record<string, string> = {
+  dashboard: "Dashboard",
+  settings: "Settings",
   admin_panel: "Admin Panel",
   user_tab: "User Tab",
   role_tab: "Role Tab",
@@ -35,10 +38,10 @@ const viewLabels: Record<string, string> = {
 }
 
 const actionColors: Record<string, string> = {
-  Create: "bg-green-100 text-green-800",
-  Update: "bg-blue-100 text-blue-800", 
-  Delete: "bg-red-100 text-red-800",
-  View: "bg-gray-100 text-gray-800",
+  create: "bg-green-100 text-green-800",
+  read: "bg-blue-100 text-blue-800",
+  update: "bg-yellow-100 text-yellow-800", 
+  delete: "bg-red-100 text-red-800",
 }
 
 export function RoleViewDrawer({ open, onClose, role, onEdit }: RoleViewDrawerProps) {
@@ -46,14 +49,51 @@ export function RoleViewDrawer({ open, onClose, role, onEdit }: RoleViewDrawerPr
 
   const getRoleColor = (roleName: string) => {
     switch (roleName?.toLowerCase()) {
-      case "admin":
+      case "administrator":
         return "bg-purple-100 text-purple-800"
       case "manager":
         return "bg-blue-100 text-blue-800"
-      case "operator":
+      case "editor":
         return "bg-green-100 text-green-800"
       default:
         return "bg-gray-100 text-gray-800"
+    }
+  }
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    })
+  }
+
+  const getAllOperations = () => {
+    if (!role) return []
+    return [
+      ...role.user_operations,
+      ...role.role_operations,
+      ...role.machine_item_operations,
+      ...role.silo_item_operations,
+      ...role.supplier_operations,
+      ...role.process_operations,
+      ...role.devices_operations
+    ]
+  }
+
+  const getFeatureOperations = (featureKey: string) => {
+    if (!role) return []
+    switch (featureKey) {
+      case 'user': return role.user_operations
+      case 'role': return role.role_operations
+      case 'machine_item': return role.machine_item_operations
+      case 'silo_item': return role.silo_item_operations
+      case 'supplier': return role.supplier_operations
+      case 'process': return role.process_operations
+      case 'devices': return role.devices_operations
+      default: return []
     }
   }
 
@@ -68,8 +108,8 @@ export function RoleViewDrawer({ open, onClose, role, onEdit }: RoleViewDrawerPr
               </div>
               <div>
                 <SheetTitle className="flex items-center space-x-2">
-                  <span>{role.name} Role</span>
-                  <Badge className={getRoleColor(role.name)}>{role.name}</Badge>
+                  <span>{role.role_name} Role</span>
+                  <Badge className={getRoleColor(role.role_name)}>{role.role_name}</Badge>
                 </SheetTitle>
               </div>
             </div>
@@ -92,27 +132,40 @@ export function RoleViewDrawer({ open, onClose, role, onEdit }: RoleViewDrawerPr
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4">
                 <div>
                   <label className="text-sm font-medium text-gray-500">Role Name</label>
-                  <p className="text-sm font-semibold">{role.name}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Total Features</label>
-                  <p className="text-sm font-semibold">{Object.keys(role.features || {}).length} Features</p>
+                  <p className="text-sm font-semibold">{role.role_name}</p>
                 </div>
               </div>
               
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium text-gray-500">Total Views</label>
-                  <p className="text-sm font-semibold">{(role.views || []).length} Views</p>
+                  <p className="text-sm font-semibold">{role.views.length} Views</p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-500">Total Permissions</label>
+                  <label className="text-sm font-medium text-gray-500">Total Operations</label>
                   <p className="text-sm font-semibold">
-                    {Object.values(role.features || {}).reduce((total: number, actions: any) => total + actions.length, 0)} Permissions
+                    {getAllOperations().length} Operations
                   </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-gray-500 flex items-center">
+                    <Calendar className="w-4 h-4 mr-1" />
+                    Created At
+                  </label>
+                  <p className="text-sm">{formatDate(role.created_at)}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-500 flex items-center">
+                    <Clock className="w-4 h-4 mr-1" />
+                    Updated At
+                  </label>
+                  <p className="text-sm">{formatDate(role.updated_at)}</p>
                 </div>
               </div>
             </CardContent>
@@ -124,36 +177,36 @@ export function RoleViewDrawer({ open, onClose, role, onEdit }: RoleViewDrawerPr
               <CardTitle className="text-lg">Feature Permissions</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {Object.keys(role.features || {}).length > 0 ? (
-                Object.entries(role.features || {}).map(([featureKey, actions]) => (
+              {Object.keys(featureLabels).map((featureKey) => {
+                const operations = getFeatureOperations(featureKey)
+                return (
                   <div key={featureKey} className="border rounded-lg p-4">
                     <div className="flex items-center justify-between mb-3">
                       <h4 className="font-medium text-gray-900">
-                        {featureLabels[featureKey] || featureKey}
+                        {featureLabels[featureKey]}
                       </h4>
                       <Badge variant="outline">
-                        {(actions as string[]).length} {(actions as string[]).length === 1 ? 'Permission' : 'Permissions'}
+                        {operations.length} {operations.length === 1 ? 'Operation' : 'Operations'}
                       </Badge>
                     </div>
                     <div className="flex flex-wrap gap-2">
-                      {(actions as string[]).map((action) => (
-                        <Badge 
-                          key={action} 
-                          className={actionColors[action] || "bg-gray-100 text-gray-800"}
-                        >
-                          <CheckCircle className="w-3 h-3 mr-1" />
-                          {action}
-                        </Badge>
-                      ))}
+                      {operations.length > 0 ? (
+                        operations.map((operation) => (
+                          <Badge 
+                            key={operation} 
+                            className={actionColors[operation] || "bg-gray-100 text-gray-800"}
+                          >
+                            <CheckCircle className="w-3 h-3 mr-1" />
+                            {operation.charAt(0).toUpperCase() + operation.slice(1)}
+                          </Badge>
+                        ))
+                      ) : (
+                        <span className="text-sm text-gray-500 italic">No operations assigned</span>
+                      )}
                     </div>
                   </div>
-                ))
-              ) : (
-                <div className="text-center py-8 text-gray-500">
-                  <Settings className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p>No feature permissions assigned</p>
-                </div>
-              )}
+                )
+              })}
             </CardContent>
           </Card>
 
@@ -163,13 +216,13 @@ export function RoleViewDrawer({ open, onClose, role, onEdit }: RoleViewDrawerPr
               <CardTitle className="text-lg">View Permissions</CardTitle>
             </CardHeader>
             <CardContent>
-              {(role.views || []).length > 0 ? (
+              {role.views.length > 0 ? (
                 <div className="grid grid-cols-2 gap-3">
-                  {(role.views || []).map((viewKey: string) => (
+                  {role.views.map((viewKey: string) => (
                     <div key={viewKey} className="flex items-center space-x-2 p-2 border rounded-lg">
                       <Eye className="w-4 h-4 text-blue-500" />
                       <span className="text-sm font-medium">
-                        {viewLabels[viewKey] || viewKey}
+                        {viewLabels[viewKey] || viewKey.charAt(0).toUpperCase() + viewKey.slice(1)}
                       </span>
                     </div>
                   ))}

@@ -4,6 +4,7 @@ import { Inter } from "next/font/google"
 import "./globals.css"
 import { ReduxProvider } from "@/lib/providers/redux-provider"
 import { ThemeProvider } from "@/components/theme-provider"
+import { ToastProvider } from "@/components/providers/toast-provider"
 
 const inter = Inter({
   subsets: ["latin"],
@@ -26,7 +27,10 @@ export default function RootLayout({
     <html lang="en" className={inter.variable}>
       <body className="font-sans antialiased">
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
-          <ReduxProvider>{children}</ReduxProvider>
+          <ReduxProvider>
+            {children}
+            <ToastProvider />
+          </ReduxProvider>
         </ThemeProvider>
       </body>
     </html>

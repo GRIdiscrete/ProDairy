@@ -1,279 +1,210 @@
 "use client"
 
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Progress } from "@/components/ui/progress"
-import { Database, MapPin, Calendar, Edit, AlertTriangle, Droplets } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Edit, Database, Settings, Eye, Calendar, MapPin, Gauge, Activity } from "lucide-react"
+import { Silo } from "@/lib/types"
 
 interface SiloViewDrawerProps {
   open: boolean
-  onOpenChange: (open: boolean) => void
-  silo: any
+  onClose: () => void
+  silo: Silo | null
   onEdit?: () => void
 }
 
-// Animated Silo Component
-function AnimatedSilo({ capacity, currentVolume, status }: { capacity: number; currentVolume: number; status: string }) {
-  const fillPercentage = (currentVolume / capacity) * 100
-  const liquidHeight = Math.max(fillPercentage, 5) // Minimum 5% for visibility
-  
-  const getLiquidColor = () => {
-    if (status === "Maintenance") return "#ef4444" // red
-    if (fillPercentage > 80) return "#3b82f6" // blue
-    if (fillPercentage > 50) return "#06b6d4" // cyan
-    return "#0ea5e9" // sky blue
-  }
-
-  return (
-    <div className="flex flex-col items-center space-y-4">
-      <div className="relative">
-        {/* Silo Container */}
-        <div className="relative w-32 h-48 bg-gray-200 rounded-t-lg border-4 border-gray-400 overflow-hidden">
-          {/* Animated Liquid */}
-          <div 
-            className="absolute bottom-0 left-0 right-0 transition-all duration-1000 ease-in-out rounded-t-lg"
-            style={{
-              height: `${liquidHeight}%`,
-              backgroundColor: getLiquidColor(),
-              opacity: 0.7,
-              animation: currentVolume > 0 ? 'liquid-wave 3s ease-in-out infinite' : 'none'
-            }}
-          >
-            {/* Wave effect */}
-            <div 
-              className="absolute top-0 left-0 right-0 h-2"
-              style={{
-                background: `linear-gradient(90deg, transparent, ${getLiquidColor()}, transparent)`,
-                animation: currentVolume > 0 ? 'wave-motion 2s linear infinite' : 'none'
-              }}
-            />
-          </div>
-          
-          {/* Volume indicators */}
-          <div className="absolute right-1 top-2 bottom-2 w-1 bg-gray-300 rounded">
-            <div className="absolute right-2 top-0 text-xs text-gray-500 whitespace-nowrap">
-              {capacity.toFixed(0)}L
-            </div>
-            <div className="absolute right-2 top-1/2 text-xs text-gray-500 whitespace-nowrap">
-              {(capacity / 2).toFixed(0)}L
-            </div>
-            <div className="absolute right-2 bottom-0 text-xs text-gray-500 whitespace-nowrap">
-              0L
-            </div>
-          </div>
-        </div>
-        
-        {/* Silo Base */}
-        <div className="w-36 h-6 bg-gray-400 rounded-b-lg -mt-1 border-4 border-gray-400 border-t-0" />
-        
-        {/* Pipes */}
-        <div className="absolute -right-4 top-8 w-8 h-4 bg-gray-400 rounded-r-lg" />
-        <div className="absolute -left-4 bottom-16 w-8 h-4 bg-gray-400 rounded-l-lg" />
-      </div>
-      
-      {/* Status Indicator */}
-      <div className="flex items-center space-x-2">
-        <div 
-          className={`w-3 h-3 rounded-full ${
-            status === "Active" ? "bg-green-500 animate-pulse" : 
-            status === "Maintenance" ? "bg-red-500 animate-pulse" : 
-            "bg-gray-400"
-          }`} 
-        />
-        <span className="text-sm font-medium">{status}</span>
-      </div>
-      
-      {/* Volume Display */}
-      <div className="text-center">
-        <div className="text-2xl font-bold text-blue-600">
-          {currentVolume.toFixed(1)}L
-        </div>
-        <div className="text-sm text-muted-foreground">
-          {fillPercentage.toFixed(1)}% Full
-        </div>
-      </div>
-      
-      <style jsx>{`
-        @keyframes liquid-wave {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-2px); }
-        }
-        
-        @keyframes wave-motion {
-          0% { transform: translateX(-100%); }
-          100% { transform: translateX(100%); }
-        }
-      `}</style>
-    </div>
-  )
-}
-
-export function SiloViewDrawer({ open, onOpenChange, silo, onEdit }: SiloViewDrawerProps) {
+export function SiloViewDrawer({ open, onClose, silo, onEdit }: SiloViewDrawerProps) {
   if (!silo) return null
 
-  const fillPercentage = (silo.milk_volume / silo.capacity) * 100
-  const isLowVolume = fillPercentage < 20
-  const isHighVolume = fillPercentage > 90
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "Active": return "bg-green-100 text-green-800"
-      case "Maintenance": return "bg-red-100 text-red-800"
-      case "Inactive": return "bg-gray-100 text-gray-800"
-      default: return "bg-gray-100 text-gray-800"
+  const getStatusVariant = (status: string) => {
+    switch (status?.toLowerCase()) {
+      case "active":
+        return "default"
+      case "maintenance":
+        return "secondary"
+      case "offline":
+        return "destructive"
+      case "inactive":
+        return "destructive"
+      default:
+        return "outline"
     }
   }
 
-  const getCategoryColor = (category: string) => {
-    switch (category) {
-      case "Pasteurizing Silos": return "bg-orange-100 text-orange-800"
-      case "Storage Silos": return "bg-blue-100 text-blue-800"
-      case "Cooling Silos": return "bg-cyan-100 text-cyan-800"
-      case "Processing Silos": return "bg-purple-100 text-purple-800"
-      default: return "bg-gray-100 text-gray-800"
-    }
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    })
   }
+
+  const fillPercentage = silo.capacity > 0 ? (silo.milk_volume / silo.capacity) * 100 : 0
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="!w-[50vw] !max-w-[50vw] overflow-y-auto" style={{ width: '50vw', maxWidth: '50vw' }}>
-        <div className="p-6">
-          <SheetHeader>
-            <div className="flex items-center justify-between">
+    <Sheet open={open} onOpenChange={onClose}>
+      <SheetContent className="w-[50vw] sm:max-w-[50vw] p-6 overflow-y-auto">
+        <SheetHeader className="mb-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#4f46e5] to-[#7c3aed] flex items-center justify-center">
+                <Database className="w-5 h-5 text-white" />
+              </div>
               <div>
                 <SheetTitle className="flex items-center space-x-2">
-                  <Database className="h-5 w-5 text-blue-500" />
                   <span>{silo.name}</span>
+                  <Badge variant={getStatusVariant(silo.status)}>{silo.status}</Badge>
                 </SheetTitle>
-                <SheetDescription>Detailed silo information and status</SheetDescription>
+                <p className="text-sm text-gray-500 mt-1">Serial: {silo.serial_number}</p>
               </div>
-              {onEdit && (
-                <Button onClick={onEdit} size="sm">
-                  <Edit className="h-4 w-4 mr-2" />
-                  Edit
-                </Button>
-              )}
             </div>
-          </SheetHeader>
-
-          <div className="space-y-6 mt-6">
-            {/* Alerts */}
-            {(isLowVolume || isHighVolume || silo.status === "Maintenance") && (
-              <Card className="border-orange-200 bg-orange-50">
-                <CardContent className="p-4">
-                  <div className="flex items-center space-x-2">
-                    <AlertTriangle className="h-5 w-5 text-orange-500" />
-                    <div>
-                      <p className="font-medium text-orange-800">Attention Required</p>
-                      <div className="text-sm text-orange-700 space-y-1">
-                        {silo.status === "Maintenance" && <p>• Silo is currently under maintenance</p>}
-                        {isLowVolume && <p>• Low volume alert: {fillPercentage.toFixed(1)}% capacity</p>}
-                        {isHighVolume && <p>• High volume alert: {fillPercentage.toFixed(1)}% capacity</p>}
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+            {onEdit && (
+              <Button variant="outline" size="sm" onClick={onEdit}>
+                <Edit className="w-4 h-4 mr-2" />
+                Edit Silo
+              </Button>
             )}
+          </div>
+        </SheetHeader>
 
-            {/* Silo Visualization */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Droplets className="h-5 w-5 text-blue-500" />
-                  <span>Silo Visualization</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex justify-center">
-                  <AnimatedSilo 
-                    capacity={silo.capacity}
-                    currentVolume={silo.milk_volume}
-                    status={silo.status}
+        <div className="space-y-6">
+          {/* Basic Information */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center">
+                <Settings className="w-5 h-5 mr-2" />
+                Basic Information
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Silo Name</label>
+                  <p className="text-sm font-semibold">{silo.name}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Category</label>
+                  <p className="text-sm font-semibold">{silo.category}</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Serial Number</label>
+                  <p className="text-sm font-mono bg-gray-100 px-2 py-1 rounded">{silo.serial_number}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Location</label>
+                  <p className="text-sm font-semibold flex items-center">
+                    <MapPin className="w-4 h-4 mr-1" />
+                    {silo.location}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Capacity & Volume Information */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center">
+                <Gauge className="w-5 h-5 mr-2" />
+                Capacity & Volume
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-3 border rounded-lg">
+                  <label className="text-sm font-medium text-gray-500">Total Capacity</label>
+                  <p className="text-2xl font-bold text-blue-600">{silo.capacity.toLocaleString()}L</p>
+                </div>
+                <div className="p-3 border rounded-lg">
+                  <label className="text-sm font-medium text-gray-500">Current Volume</label>
+                  <p className="text-2xl font-bold text-purple-600">{silo.milk_volume.toLocaleString()}L</p>
+                </div>
+              </div>
+              
+              {/* Fill Percentage Indicator */}
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <label className="text-sm font-medium text-gray-500">Fill Percentage</label>
+                  <span className={`text-sm font-semibold ${
+                    fillPercentage > 80 ? 'text-red-600' : 
+                    fillPercentage > 60 ? 'text-yellow-600' : 
+                    'text-green-600'
+                  }`}>
+                    {fillPercentage.toFixed(1)}%
+                  </span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-3">
+                  <div 
+                    className={`h-3 rounded-full transition-all duration-300 ${
+                      fillPercentage > 80 ? 'bg-red-500' : 
+                      fillPercentage > 60 ? 'bg-yellow-500' : 
+                      'bg-green-500'
+                    }`}
+                    style={{ width: `${Math.min(fillPercentage, 100)}%` }}
                   />
                 </div>
-              </CardContent>
-            </Card>
+              </div>
 
-            {/* Basic Information */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Basic Information</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Silo Name</p>
-                    <p className="text-lg font-semibold">{silo.name}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Serial Number</p>
-                    <code className="text-sm bg-muted px-2 py-1 rounded">{silo.serial_no}</code>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Status</p>
-                    <Badge className={getStatusColor(silo.status)}>{silo.status}</Badge>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Category</p>
-                    <Badge className={getCategoryColor(silo.category)}>{silo.category}</Badge>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+              {/* Available Space */}
+              <div className="p-3 bg-gray-50 rounded-lg">
+                <label className="text-sm font-medium text-gray-500">Available Space</label>
+                <p className="text-lg font-semibold text-gray-700">
+                  {(silo.capacity - silo.milk_volume).toLocaleString()}L
+                </p>
+              </div>
+            </CardContent>
+          </Card>
 
-            {/* Location & Capacity */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Location & Capacity</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center space-x-2">
-                  <MapPin className="h-4 w-4 text-muted-foreground" />
-                  <span className="font-medium">Location:</span>
-                  <span>{silo.location}</span>
-                </div>
-                
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span>Current Volume:</span>
-                    <span className="font-medium">{silo.milk_volume.toFixed(1)}L</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span>Total Capacity:</span>
-                    <span className="font-medium">{silo.capacity.toFixed(1)}L</span>
-                  </div>
-                  <Progress value={fillPercentage} className="h-3" />
-                  <div className="text-center text-sm text-muted-foreground">
-                    {fillPercentage.toFixed(1)}% Full
+          {/* Status Information */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center">
+                <Activity className="w-5 h-5 mr-2" />
+                Status Information
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Current Status</label>
+                  <div className="flex items-center space-x-2 mt-1">
+                    <Badge variant={getStatusVariant(silo.status)} className="capitalize">
+                      {silo.status}
+                    </Badge>
+                    {silo.status === "active" && (
+                      <span className="text-xs text-green-600">Operational</span>
+                    )}
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-
-            {/* Additional Information */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Additional Information</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center space-x-2">
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                  <span className="font-medium">Created:</span>
-                  <span>{new Date(silo.created_at).toLocaleDateString()}</span>
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Category</label>
+                  <p className="text-sm font-semibold mt-1">{silo.category}</p>
                 </div>
-                
-                {silo.description && (
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground mb-2">Description</p>
-                    <p className="text-sm bg-muted p-3 rounded">{silo.description}</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-gray-500 flex items-center">
+                    <Calendar className="w-4 h-4 mr-1" />
+                    Created At
+                  </label>
+                  <p className="text-sm">{formatDate(silo.created_at)}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-500 flex items-center">
+                    <Calendar className="w-4 h-4 mr-1" />
+                    Updated At
+                  </label>
+                  <p className="text-sm">{formatDate(silo.updated_at)}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </SheetContent>
     </Sheet>
