@@ -1,270 +1,50 @@
-import type { ApiResponse, Machine, MachineInspection, TableFilters } from "@/lib/types"
+import type { ApiResponse, Machine, TableFilters } from "@/lib/types"
+import { apiRequest, API_CONFIG } from '../config/api'
 
 export const machineApi = {
+  // Get all machines
   async getMachines(params: {
     filters?: TableFilters
-  }): Promise<ApiResponse<{ machines: Machine[]; inspections: MachineInspection[] }>> {
-    await new Promise((resolve) => setTimeout(resolve, 500))
+  } = {}): Promise<ApiResponse<Machine[]>> {
+    return apiRequest<ApiResponse<Machine[]>>(API_CONFIG.ENDPOINTS.MACHINES)
+  },
 
-    const mockMachines: Machine[] = [
-      {
-        id: "m01",
-        serialNumber: "PST-2024-001",
-        name: "Pasteurizer Unit 1",
-        code: "M/C 01",
-        category: "pasteurizer",
-        type: "pasteurizer",
-        location: "Production Line A",
-        floor: "Floor 01",
-        warehouse: "Warehouse 01",
-        status: "running",
-        operator: "John Smith",
-        manufacturer: "DairyTech Solutions",
-        model: "PST-5000X",
-        installationDate: "2023-06-15",
-        temperature: 85,
-        pressure: 2.5,
-        speed: 1200,
-        efficiency: 96,
-        lastMaintenanceDate: "2024-01-15",
-        nextMaintenanceDate: "2024-02-15",
-        specifications: {
-          capacity: "5000L/hr",
-          powerConsumption: "150kW",
-          operatingTemperature: "80-90°C",
-          operatingPressure: "2.0-3.0 bar",
-        },
-        notes: "Primary pasteurization unit for milk processing"
-      },
-      {
-        id: "m02",
-        serialNumber: "SEP-2024-002",
-        name: "Cream Separator A",
-        code: "M/C 02",
-        category: "separator",
-        type: "separator",
-        location: "Production Line A",
-        floor: "Floor 01",
-        warehouse: "Warehouse 01",
-        status: "running",
-        operator: "Sarah Johnson",
-        manufacturer: "MilkFlow Industries",
-        model: "SEP-3000",
-        installationDate: "2023-07-20",
-        temperature: 45,
-        pressure: 1.8,
-        speed: 8000,
-        efficiency: 94,
-        lastMaintenanceDate: "2024-01-10",
-        nextMaintenanceDate: "2024-02-10",
-        specifications: {
+  // Get single machine by ID
+  async getMachine(id: string): Promise<ApiResponse<Machine>> {
+    return apiRequest<ApiResponse<Machine>>(`${API_CONFIG.ENDPOINTS.MACHINES}/${id}`)
+  },
 
-          
-          powerConsumption: 75,
-          operatingTemperature: { min: 40, max: 50 },
-          operatingPressure: { min: 1.5, max: 2.0 },
-        },
-        notes: "High-efficiency cream separation unit"
-      },
-      {
-        id: "m03",
-        serialNumber: "HOM-2024-003",
-        name: "Homogenizer Unit 1",
-        code: "M/C 03",
-        category: "homogenizer",
-        type: "homogenizer",
-        location: "Production Line B",
-        floor: "Floor 01",
-        warehouse: "Warehouse 01",
-        status: "maintenance",
-        operator: "Mike Wilson",
-        manufacturer: "ProcessPro Equipment",
-        model: "HOM-2500",
-        installationDate: "2023-08-10",
-        temperature: 65,
-        pressure: 200,
-        speed: 3000,
-        efficiency: 91,
-        lastMaintenanceDate: "2024-01-20",
-        nextMaintenanceDate: "2024-01-25",
-        specifications: {
-          capacity: 2500,
-          powerConsumption: 120,
-          operatingTemperature: { min: 60, max: 70 },
-          operatingPressure: { min: 150, max: 250 },
-        },
-        notes: "Currently undergoing scheduled maintenance"
-      },
-      {
-        id: "m04",
-        serialNumber: "PKG-2024-004",
-        name: "Packaging Line Alpha",
-        code: "M/C 04",
-        category: "packaging",
-        type: "packaging",
-        location: "Packaging Hall",
-        floor: "Floor 02",
-        warehouse: "Warehouse 02",
-        status: "running",
-        operator: "Emma Davis",
-        manufacturer: "PackTech Systems",
-        model: "PKG-AUTO-500",
-        installationDate: "2023-09-05",
-        temperature: 25,
-        pressure: 0.5,
-        speed: 500,
-        efficiency: 98,
-        lastMaintenanceDate: "2024-01-05",
-        nextMaintenanceDate: "2024-02-05",
-        specifications: {
-          capacity: 500,
-          powerConsumption: 45,
-          operatingTemperature: { min: 20, max: 30 },
-          operatingPressure: { min: 0.3, max: 0.7 },
-        },
-        notes: "Automated packaging line for 1L milk cartons"
-      },
-      {
-        id: "m05",
-        serialNumber: "COL-2024-005",
-        name: "Cooling System 1",
-        code: "M/C 05",
-        category: "cooling",
-        type: "pasteurizer",
-        location: "Cold Storage",
-        floor: "Floor 01",
-        warehouse: "Warehouse 01",
-        status: "running",
-        operator: "David Brown",
-        manufacturer: "CryoCool Technologies",
-        model: "CC-ULTRA-1000",
-        installationDate: "2023-05-30",
-        temperature: 4,
-        pressure: 3.2,
-        speed: 0,
-        efficiency: 97,
-        lastMaintenanceDate: "2024-01-12",
-        nextMaintenanceDate: "2024-02-12",
-        specifications: {
-          capacity: 10000,
-          powerConsumption: 200,
-          operatingTemperature: { min: 2, max: 6 },
-          operatingPressure: { min: 3.0, max: 3.5 },
-        },
-        notes: "Primary cooling system for processed milk"
-      },
-      {
-        id: "m06",
-        serialNumber: "PST-2024-006",
-        name: "Pasteurizer Unit 2",
-        code: "M/C 06",
-        category: "pasteurizer",
-        type: "pasteurizer",
-        location: "Production Line B",
-        floor: "Floor 01",
-        warehouse: "Warehouse 01",
-        status: "idle",
-        operator: "Lisa Garcia",
-        manufacturer: "DairyTech Solutions",
-        model: "PST-5000X",
-        installationDate: "2023-10-15",
-        temperature: 0,
-        pressure: 0,
-        speed: 0,
-        efficiency: 95,
-        lastMaintenanceDate: "2024-01-08",
-        nextMaintenanceDate: "2024-02-08",
-        specifications: {
-          capacity: "5000L/hr",
-          powerConsumption: "150kW",
-          operatingTemperature: "80-90°C",
-          operatingPressure: "2.0-3.0 bar",
-        },
-        notes: "Backup pasteurization unit"
-      },
-      {
-        id: "m07",
-        serialNumber: "SEP-2024-007",
-        name: "Cream Separator B",
-        code: "M/C 07",
-        category: "separator",
-        type: "separator",
-        location: "Production Line B",
-        floor: "Floor 01",
-        warehouse: "Warehouse 01",
-        status: "offline",
-        operator: "Tom Anderson",
-        manufacturer: "MilkFlow Industries",
-        model: "SEP-2000",
-        installationDate: "2023-11-20",
-        temperature: 0,
-        pressure: 0,
-        speed: 0,
-        efficiency: 89,
-        lastMaintenanceDate: "2024-01-18",
-        nextMaintenanceDate: "2024-01-30",
-        specifications: {
-          capacity: 2000,
-          powerConsumption: 55,
-          operatingTemperature: { min: 40, max: 50 },
-          operatingPressure: { min: 1.5, max: 2.0 },
-        },
-        notes: "Currently offline for repairs"
-      },
-      {
-        id: "m08",
-        serialNumber: "PKG-2024-008",
-        name: "Packaging Line Beta",
-        code: "M/C 08",
-        category: "packaging",
-        type: "packaging",
-        location: "Packaging Hall",
-        floor: "Floor 02",
-        warehouse: "Warehouse 02",
-        status: "running",
-        operator: "Rachel White",
-        manufacturer: "PackTech Systems",
-        model: "PKG-AUTO-300",
-        installationDate: "2023-12-01",
-        temperature: 23,
-        pressure: 0.4,
-        speed: 300,
-        efficiency: 96,
-        lastMaintenanceDate: "2024-01-14",
-        nextMaintenanceDate: "2024-02-14",
-        specifications: {
-          capacity: 300,
-          powerConsumption: 35,
-          operatingTemperature: { min: 20, max: 30 },
-          operatingPressure: { min: 0.3, max: 0.7 },
-        },
-        notes: "Secondary packaging line for 500ml bottles"
-      }
-    ]
-
-    const mockInspections: MachineInspection[] = [
-      {
-        id: "1357",
-        machineId: "m01",
-        inspectorId: "inspector1",
-        type: "daily",
-        checkedBy: "Brooklyn Simmons",
-        date: "2024-01-01",
-        problems: ["Missing parts"],
-        status: "issues_found",
-        notes: "Requires maintenance attention",
-      },
-      // Add more mock inspections as needed
-    ]
-
-    return {
-      data: {
-        machines: mockMachines,
-        inspections: mockInspections,
-      },
-      message: "Machines retrieved successfully",
-      success: true,
-      timestamp: new Date().toISOString(),
+  // Create new machine
+  async createMachine(machineData: Omit<Machine, 'id' | 'created_at' | 'updated_at'>): Promise<ApiResponse<Machine>> {
+    const requestData = {
+      ...machineData,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
     }
+    
+    return apiRequest<ApiResponse<Machine>>(API_CONFIG.ENDPOINTS.MACHINES, {
+      method: 'POST',
+      body: JSON.stringify(requestData),
+    })
+  },
+
+  // Update existing machine
+  async updateMachine(machineData: Machine): Promise<ApiResponse<Machine>> {
+    const requestData = {
+      ...machineData,
+      updated_at: new Date().toISOString(),
+    }
+    
+    return apiRequest<ApiResponse<Machine>>(API_CONFIG.ENDPOINTS.MACHINES, {
+      method: 'PATCH',
+      body: JSON.stringify(requestData),
+    })
+  },
+
+  // Delete machine
+  async deleteMachine(id: string): Promise<ApiResponse<null>> {
+    return apiRequest<ApiResponse<null>>(`${API_CONFIG.ENDPOINTS.MACHINES}/${id}`, {
+      method: 'DELETE',
+    })
   },
 }

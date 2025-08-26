@@ -1,32 +1,30 @@
 // Core Entity Types
 export interface User {
   id: string
-  name: string
+  first_name: string
+  last_name: string
   email: string
-  role: UserRole
+  role_id: string
   department: string
-  avatar?: string
-  isActive: boolean
-  createdAt: string
-  updatedAt: string
+  password?: string
+  created_at: string
+  updated_at: string
 }
 
 export type UserRole = "admin" | "manager" | "operator" | "lab_technician" | "quality_control"
 
 export interface Supplier {
   id: string
-  name: string
-  code: string
-  contactPerson: string
-  phone: string
+  created_at: string
+  first_name: string
+  last_name: string
   email: string
-  address: string
-  registrationNumber: string
-  isActive: boolean
-  performanceRating: number
-  vehicles: Vehicle[]
-  createdAt: string
-  updatedAt: string
+  phone_number: string
+  physical_address: string
+  raw_product: string
+  volume_supplied: number
+  volume_rejected: number
+  updated_at: string
 }
 
 export interface Vehicle {
@@ -59,25 +57,39 @@ export interface RawMilkIntake {
 
 export interface Machine {
   id: string
+  created_at: string
   name: string
-  code: string
-  type: MachineType
-  location: string
-  floor: string
-  warehouse: string
+  serial_number: string
   status: MachineStatus
-  operator?: string
-  temperature?: number
-  pressure?: number
-  speed?: number
-  efficiency: number
-  lastMaintenance: string
-  nextMaintenance: string
-  specifications: MachineSpecification
+  category: string
+  location: string
+  updated_at: string
 }
 
-export type MachineType = "pasteurizer" | "homogenizer" | "separator" | "filler" | "packaging" | "sterilizer"
-export type MachineStatus = "running" | "idle" | "maintenance" | "fault" | "offline"
+export type MachineStatus = "active" | "inactive" | "maintenance" | "offline"
+
+export interface Silo {
+  id: string
+  created_at: string
+  name: string
+  serial_number: string
+  status: SiloStatus
+  category: string
+  location: string
+  milk_volume: number
+  capacity: number
+  updated_at: string
+}
+
+export type SiloStatus = "active" | "inactive" | "maintenance" | "offline"
+
+export interface RawMaterial {
+  id: string
+  created_at: string
+  name: string
+  description: string
+  updated_at: string
+}
 
 export interface MachineSpecification {
   capacity: number
