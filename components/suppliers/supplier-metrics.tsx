@@ -1,3 +1,5 @@
+"use client"
+
 import { useSelector } from "react-redux"
 import type { RootState } from "@/lib/store"
 import { MetricCard } from "@/components/ui/metric-card"
@@ -16,36 +18,36 @@ export function SupplierMetrics() {
       <MetricCard
         title="Active Suppliers"
         value={activeSuppliers.toString()}
-        subtitle={`of ${totalSuppliers} total`}
-        icon={<Users className="w-5 h-5" />}
-        trend={{ value: 8.2, isPositive: true }}
+        unit={`of ${totalSuppliers} total`}
+        icon={Users}
+        change={{ value: 8.2, type: "increase" }}
         className="bg-gradient-to-br from-blue-500/10 to-blue-600/10 border-blue-500/20"
       />
 
       <MetricCard
         title="Average Rating"
         value={avgRating.toFixed(1)}
-        subtitle="out of 5.0"
-        icon={<TrendingUp className="w-5 h-5" />}
-        trend={{ value: 0.3, isPositive: true }}
+        unit="out of 5.0"
+        icon={TrendingUp}
+        change={{ value: 0.3, type: "increase" }}
         className="bg-gradient-to-br from-green-500/10 to-green-600/10 border-green-500/20"
       />
 
       <MetricCard
         title="Pending Approvals"
         value={pendingApprovals.toString()}
-        subtitle="require review"
-        icon={<AlertTriangle className="w-5 h-5" />}
-        trend={{ value: 2, isPositive: false }}
+        unit="require review"
+        icon={AlertTriangle}
+        change={{ value: 2, type: "decrease" }}
         className="bg-gradient-to-br from-orange-500/10 to-orange-600/10 border-orange-500/20"
       />
 
       <MetricCard
         title="Quality Score"
         value="94.2%"
-        subtitle="avg quality rating"
-        icon={<CheckCircle className="w-5 h-5" />}
-        trend={{ value: 1.8, isPositive: true }}
+        unit="avg quality rating"
+        icon={CheckCircle}
+        change={{ value: 1.8, type: "increase" }}
         className="bg-gradient-to-br from-purple-500/10 to-purple-600/10 border-purple-500/20"
       />
     </div>

@@ -13,9 +13,11 @@ interface RawMaterialTableProps {
 export function RawMaterialTable({ materials, loading }: RawMaterialTableProps) {
   const columns = [
     {
-      key: "material",
+      accessorKey: "name",
       header: "Material",
-      render: (material: RawMaterial) => (
+      cell: ({ row }: { row: any }) => {
+        const material = row.original as RawMaterial
+        return (
         <div className="flex items-center space-x-3">
           <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-blue-500 rounded-lg flex items-center justify-center text-white">
             <Package className="w-5 h-5" />
@@ -25,29 +27,37 @@ export function RawMaterialTable({ materials, loading }: RawMaterialTableProps) 
             <div className="text-sm text-gray-400">{material.code}</div>
           </div>
         </div>
-      ),
+        )
+      },
     },
     {
-      key: "category",
+      accessorKey: "category",
       header: "Category",
-      render: (material: RawMaterial) => (
-        <div className="text-sm text-gray-300 capitalize">{material.category.replace("-", " ")}</div>
-      ),
+      cell: ({ row }: { row: any }) => {
+        const material = row.original as RawMaterial
+        return (
+          <div className="text-sm text-gray-300 capitalize">{material.category.replace("-", " ")}</div>
+        )
+      },
     },
     {
-      key: "supplier",
+      accessorKey: "primarySupplier",
       header: "Primary Supplier",
-      render: (material: RawMaterial) => (
+      cell: ({ row }: { row: any }) => {
+        const material = row.original as RawMaterial
+        return (
         <div>
           <div className="text-sm font-medium text-white">{material.primarySupplier}</div>
           <div className="text-xs text-gray-400">Primary source</div>
         </div>
-      ),
+        )
+      },
     },
     {
-      key: "stock",
+      accessorKey: "currentStock",
       header: "Current Stock",
-      render: (material: RawMaterial) => {
+      cell: ({ row }: { row: any }) => {
+        const material = row.original as RawMaterial
         const stockPercentage = (material.currentStock / material.maxStock) * 100
         const isLowStock = material.currentStock <= material.reorderLevel
 
@@ -74,9 +84,11 @@ export function RawMaterialTable({ materials, loading }: RawMaterialTableProps) 
       },
     },
     {
-      key: "price",
+      accessorKey: "unitPrice",
       header: "Unit Price",
-      render: (material: RawMaterial) => (
+      cell: ({ row }: { row: any }) => {
+        const material = row.original as RawMaterial
+        return (
         <div className="space-y-1">
           <div className="text-sm font-medium text-white">${material.unitPrice.toFixed(2)}</div>
           <div className="flex items-center text-xs">
@@ -93,12 +105,15 @@ export function RawMaterialTable({ materials, loading }: RawMaterialTableProps) 
             )}
           </div>
         </div>
-      ),
+        )
+      },
     },
     {
-      key: "quality",
+      accessorKey: "qualityScore",
       header: "Quality Score",
-      render: (material: RawMaterial) => (
+      cell: ({ row }: { row: any }) => {
+        const material = row.original as RawMaterial
+        return (
         <div className="space-y-1">
           <div className="text-sm font-medium text-white">{material.qualityScore}%</div>
           <StatusBadge
@@ -108,19 +123,23 @@ export function RawMaterialTable({ materials, loading }: RawMaterialTableProps) 
             variant={material.qualityScore >= 95 ? "success" : material.qualityScore >= 85 ? "warning" : "error"}
           />
         </div>
-      ),
+        )
+      },
     },
     {
-      key: "lastReceived",
+      accessorKey: "lastReceived",
       header: "Last Received",
-      render: (material: RawMaterial) => (
-        <div className="text-sm text-gray-300">{new Date(material.lastReceived).toLocaleDateString()}</div>
-      ),
+      cell: ({ row }: { row: any }) => {
+        const material = row.original as RawMaterial
+        return (
+          <div className="text-sm text-gray-300">{new Date(material.lastReceived).toLocaleDateString()}</div>
+        )
+      },
     },
     {
-      key: "actions",
+      id: "actions",
       header: "",
-      render: () => (
+      cell: () => (
         <Button variant="ghost" size="sm" className="text-gray-400 hover:text-white">
           <MoreHorizontal className="w-4 h-4" />
         </Button>
@@ -128,16 +147,16 @@ export function RawMaterialTable({ materials, loading }: RawMaterialTableProps) 
     },
   ]
 
+  if (loading) {
+    return <div className="text-center py-8 text-gray-400">Loading...</div>
+  }
+
   return (
     <DataTable
-      data={materials}
+      data={materials || []}
       columns={columns}
-      loading={loading}
-      searchable={false}
-      pagination={{
-        pageSize: 10,
-        showSizeChanger: true,
-      }}
+      searchKey="name"
+      searchPlaceholder="Search materials..."
     />
   )
 }

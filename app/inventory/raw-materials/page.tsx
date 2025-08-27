@@ -1,6 +1,8 @@
+"use client"
+
 import { useSelector, useDispatch } from "react-redux"
 import type { RootState } from "@/lib/store"
-import { setSupplierFilters } from "@/lib/store/slices/supplierSlice"
+import { setFilters } from "@/lib/store/slices/rawMaterialSlice"
 import { MainLayout } from "@/components/layout/main-layout"
 import { RawMaterialMetrics } from "@/components/inventory/raw-material-metrics"
 import { RawMaterialFilters } from "@/components/inventory/raw-material-filters"
@@ -10,7 +12,7 @@ import { Plus, Upload } from "lucide-react"
 
 export default function RawMaterialsPage() {
   const dispatch = useDispatch()
-  const { rawMaterials, filters, loading } = useSelector((state: RootState) => state.supplier)
+  const { rawMaterials, filters, loading } = useSelector((state: RootState) => state.rawMaterial)
 
   return (
     <MainLayout>
@@ -37,7 +39,7 @@ export default function RawMaterialsPage() {
         <div className="bg-gray-800 rounded-lg p-6">
           <RawMaterialFilters
             filters={filters}
-            onFiltersChange={(newFilters) => dispatch(setSupplierFilters(newFilters))}
+            onFiltersChange={(newFilters) => dispatch(setFilters(newFilters))}
           />
 
           <RawMaterialTable materials={rawMaterials} loading={loading} />
