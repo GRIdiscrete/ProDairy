@@ -1,5 +1,90 @@
-@import 'tailwindcss';
-@import 'tw-animate-css';
+@import '@tailwind base';
+@tailwind components;
+@tailwind utilities;
+
+/* Toast notifications - ensure they appear on top of everything */
+[data-sonner-toaster] {
+  z-index: 9999 !important;
+}
+
+[data-sonner-toast] {
+  z-index: 9999 !important;
+  opacity: 1 !important;
+  backdrop-filter: blur(8px) !important;
+}
+
+.toast-notification {
+  z-index: 9999 !important;
+  opacity: 1 !important;
+}
+
+/* Toast type-specific styles */
+.toast-success,
+[data-sonner-toast][data-type="success"] {
+  background: #10b981 !important;
+  color: #ffffff !important;
+  border: 2px solid #059669 !important;
+  box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.25), 0 10px 10px -5px rgba(16, 185, 129, 0.1) !important;
+}
+
+.toast-error,
+[data-sonner-toast][data-type="error"] {
+  background: #ef4444 !important;
+  color: #ffffff !important;
+  border: 2px solid #dc2626 !important;
+  box-shadow: 0 10px 25px -5px rgba(239, 68, 68, 0.25), 0 10px 10px -5px rgba(239, 68, 68, 0.1) !important;
+}
+
+.toast-warning,
+[data-sonner-toast][data-type="warning"] {
+  background: #f59e0b !important;
+  color: #ffffff !important;
+  border: 2px solid #d97706 !important;
+  box-shadow: 0 10px 25px -5px rgba(245, 158, 11, 0.25), 0 10px 10px -5px rgba(245, 158, 11, 0.1) !important;
+}
+
+.toast-info,
+[data-sonner-toast][data-type="info"] {
+  background: #3b82f6 !important;
+  color: #ffffff !important;
+  border: 2px solid #2563eb !important;
+  box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.25), 0 10px 10px -5px rgba(59, 130, 246, 0.1) !important;
+}
+
+/* Default toast (no type) */
+[data-sonner-toast]:not([data-type]) {
+  background: hsl(var(--background)) !important;
+  color: hsl(var(--foreground)) !important;
+  border: 2px solid hsl(var(--border)) !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+}
+
+/* Toast close button styling */
+[data-sonner-toast] button[data-close-button] {
+  background: rgba(255, 255, 255, 0.2) !important;
+  color: currentColor !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  border-radius: 6px !important;
+  width: 24px !important;
+  height: 24px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: all 0.2s ease-in-out !important;
+}
+
+[data-sonner-toast] button[data-close-button]:hover {
+  background: rgba(255, 255, 255, 0.3) !important;
+  transform: scale(1.1) !important;
+}
+
+/* Dark mode adjustments */
+.dark [data-sonner-toast]:not([data-type]) {
+  background: hsl(var(--card)) !important;
+  color: hsl(var(--card-foreground)) !important;
+  border: 2px solid hsl(var(--border)) !important;
+}
+
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 @custom-variant dark (&:is(.dark *));

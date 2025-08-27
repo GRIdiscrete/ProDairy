@@ -1,220 +1,288 @@
 "use client"
 
-import { useEffect } from "react"
-import { useForm } from "react-hook-form"
+import { useState, useEffect } from "react"
+import { useForm, Controller } from "react-hook-form"
 import { yupResolver } from "@hookform/resolvers/yup"
 import * as yup from "yup"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
-import { Button } from "@/components/ui/button"
+import { LoadingButton } from "@/components/ui/loading-button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Textarea } from "@/components/ui/textarea"
-import { X } from "lucide-react"
+import { useAppDispatch, useAppSelector } from "@/lib/store"
+import { createSupplier, updateSupplier } from "@/lib/store/slices/supplierSlice"
+import { toast } from "sonner"
+import type { Supplier } from "@/lib/types"
 
 const supplierSchema = yup.object({
-  name: yup.string().required("Supplier name is required"),
-  contactPerson: yup.string().required("Contact person is required"),
-  phone: yup.string().required("Phone number is required"),
+  first_name: yup.string().required("First name is required"),
+  last_name: yup.string().required("Last name is required"),
   email: yup.string().email("Invalid email").required("Email is required"),
-  address: yup.string().required("Address is required"),
-  city: yup.string().required("City is required"),
-  state: yup.string().required("State is required"),
-  zipCode: yup.string().required("ZIP code is required"),
-  country: yup.string().required("Country is required"),
-  status: yup.string().required("Status is required"),
-  supplierType: yup.string().required("Supplier type is required"),
-  paymentTerms: yup.string().required("Payment terms are required"),
-  notes: yup.string(),
+  phone_number: yup.string().required("Phone number is required"),
+  physical_address: yup.string().required("Physical address is required"),
+  raw_product: yup.string().required("Raw product is required"),
+  volume_supplied: yup.number().required("Volume supplied is required").min(0, "Volume supplied cannot be negative"),
+  volume_rejected: yup.number().required("Volume rejected is required").min(0, "Volume rejected cannot be negative"),
 })
+
+type SupplierFormData = yup.InferType<typeof supplierSchema>
 
 interface SupplierFormDrawerProps {
   open: boolean
-  onClose: () => void
-  supplier?: any
+  onOpenChange: (open: boolean) => void
+  supplier?: Supplier | null
+  mode: "create" | "edit"
 }
 
-export function SupplierFormDrawer({ open, onClose, supplier }: SupplierFormDrawerProps) {
+export function SupplierFormDrawer({ open, onOpenChange, supplier, mode }: SupplierFormDrawerProps) {
+  const dispatch = useAppDispatch()
+  const { operationLoading } = useAppSelector((state) => state.supplier)
+
   const {
-    register,
+    control,
     handleSubmit,
+    formState: { errors },
     reset,
     setValue,
-    formState: { errors, isSubmitting },
-  } = useForm({
+  } = useForm<SupplierFormData>({
     resolver: yupResolver(supplierSchema),
+    defaultValues: {
+      first_name: "",
+      last_name: "",
+      email: "",
+      phone_number: "",
+      physical_address: "",
+      raw_product: "",
+      volume_supplied: 0,
+      volume_rejected: 0,
+    },
   })
 
-  useEffect(() => {
-    if (supplier) {
-      Object.keys(supplier).forEach((key) => {
-        setValue(key as any, supplier[key])
-      })
-    } else {
-      reset()
-    }
-  }, [supplier, setValue, reset])
-
-  const onSubmit = async (data: any) => {
+  const onSubmit = async (data: SupplierFormData) => {
     try {
-      console.log("[v0] Supplier form data:", data)
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-      onClose()
+      console.log('Form data submitted:', data)
+
+      if (mode === "create") {
+        const result = await dispatch(createSupplier(data)).unwrap()
+        toast.success('Supplier created successfully')
+      } else if (supplier) {
+        const result = await dispatch(updateSupplier({
+          ...data,
+          id: supplier.id,
+          created_at: supplier.created_at,
+          updated_at: supplier.updated_at,
+        })).unwrap()
+        toast.success('Supplier updated successfully')
+      }
+      onOpenChange(false)
       reset()
-    } catch (error) {
-      console.error("[v0] Error saving supplier:", error)
+    } catch (error: any) {
+      // Backend error message will be used from the thunk
+      toast.error(error || (mode === "create" ? 'Failed to create supplier' : 'Failed to update supplier'))
     }
   }
 
+  useEffect(() => {
+    if (open && supplier && mode === "edit") {
+      reset({
+        first_name: supplier.first_name || "",
+        last_name: supplier.last_name || "",
+        email: supplier.email || "",
+        phone_number: supplier.phone_number || "",
+        physical_address: supplier.physical_address || "",
+        raw_product: supplier.raw_product || "",
+        volume_supplied: supplier.volume_supplied || 0,
+        volume_rejected: supplier.volume_rejected || 0,
+      })
+    } else if (open && mode === "create") {
+      reset({
+        first_name: "",
+        last_name: "",
+        email: "",
+        phone_number: "",
+        physical_address: "",
+        raw_product: "",
+        volume_supplied: 0,
+        volume_rejected: 0,
+      })
+    }
+  }, [open, supplier, mode, reset])
+
   return (
-    <Sheet open={open} onOpenChange={onClose}>
-      <SheetContent className="w-[700px] sm:max-w-[700px] overflow-y-auto">
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent className="w-[50vw] sm:max-w-[50vw] overflow-y-auto">
         <div className="p-6">
           <SheetHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <SheetTitle>{supplier ? "Edit Supplier" : "Add New Supplier"}</SheetTitle>
-                <SheetDescription>
-                  {supplier ? "Update supplier information" : "Enter supplier details to add to the system"}
-                </SheetDescription>
-              </div>
-              <Button variant="ghost" size="sm" onClick={onClose}>
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
+            <SheetTitle>{mode === "create" ? "Add New Supplier" : "Edit Supplier"}</SheetTitle>
+            <SheetDescription>
+              {mode === "create" ? "Create a new supplier profile" : "Update supplier information"}
+            </SheetDescription>
           </SheetHeader>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 mt-6">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Supplier Name *</Label>
-                <Input id="name" {...register("name")} placeholder="Enter supplier name" />
-                {errors.name && <p className="text-sm text-red-500">{errors.name.message}</p>}
+            {/* Personal Information */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Personal Information</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="first_name">First Name *</Label>
+                  <Controller
+                    name="first_name"
+                    control={control}
+                    render={({ field }) => (
+                      <Input
+                        id="first_name"
+                        {...field}
+                        placeholder="Enter first name"
+                      />
+                    )}
+                  />
+                  {errors.first_name && <p className="text-sm text-red-500">{errors.first_name.message}</p>}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="last_name">Last Name *</Label>
+                  <Controller
+                    name="last_name"
+                    control={control}
+                    render={({ field }) => (
+                      <Input
+                        id="last_name"
+                        {...field}
+                        placeholder="Enter last name"
+                      />
+                    )}
+                  />
+                  {errors.last_name && <p className="text-sm text-red-500">{errors.last_name.message}</p>}
+                </div>
               </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="contactPerson">Contact Person *</Label>
-                <Input id="contactPerson" {...register("contactPerson")} placeholder="Enter contact person name" />
-                {errors.contactPerson && <p className="text-sm text-red-500">{errors.contactPerson.message}</p>}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email *</Label>
+                  <Controller
+                    name="email"
+                    control={control}
+                    render={({ field }) => (
+                      <Input
+                        id="email"
+                        type="email"
+                        {...field}
+                        placeholder="Enter email address"
+                      />
+                    )}
+                  />
+                  {errors.email && <p className="text-sm text-red-500">{errors.email.message}</p>}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="phone_number">Phone Number *</Label>
+                  <Controller
+                    name="phone_number"
+                    control={control}
+                    render={({ field }) => (
+                      <Input
+                        id="phone_number"
+                        {...field}
+                        placeholder="Enter phone number (e.g., +263770000000)"
+                      />
+                    )}
+                  />
+                  {errors.phone_number && <p className="text-sm text-red-500">{errors.phone_number.message}</p>}
+                </div>
               </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="phone">Phone *</Label>
-                <Input id="phone" {...register("phone")} placeholder="Enter phone number" />
-                {errors.phone && <p className="text-sm text-red-500">{errors.phone.message}</p>}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="email">Email *</Label>
-                <Input id="email" type="email" {...register("email")} placeholder="Enter email address" />
-                {errors.email && <p className="text-sm text-red-500">{errors.email.message}</p>}
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="address">Address *</Label>
-              <Input id="address" {...register("address")} placeholder="Enter street address" />
-              {errors.address && <p className="text-sm text-red-500">{errors.address.message}</p>}
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="city">City *</Label>
-                <Input id="city" {...register("city")} placeholder="Enter city" />
-                {errors.city && <p className="text-sm text-red-500">{errors.city.message}</p>}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="state">State *</Label>
-                <Input id="state" {...register("state")} placeholder="Enter state" />
-                {errors.state && <p className="text-sm text-red-500">{errors.state.message}</p>}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="zipCode">ZIP Code *</Label>
-                <Input id="zipCode" {...register("zipCode")} placeholder="Enter ZIP code" />
-                {errors.zipCode && <p className="text-sm text-red-500">{errors.zipCode.message}</p>}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="country">Country *</Label>
-                <Input id="country" {...register("country")} placeholder="Enter country" />
-                {errors.country && <p className="text-sm text-red-500">{errors.country.message}</p>}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="status">Status *</Label>
-                <Select onValueChange={(value) => setValue("status", value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="inactive">Inactive</SelectItem>
-                  </SelectContent>
-                </Select>
-                {errors.status && <p className="text-sm text-red-500">{errors.status.message}</p>}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="supplierType">Supplier Type *</Label>
-                <Select onValueChange={(value) => setValue("supplierType", value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="raw_milk">Raw Milk</SelectItem>
-                    <SelectItem value="packaging">Packaging</SelectItem>
-                    <SelectItem value="chemicals">Chemicals</SelectItem>
-                    <SelectItem value="equipment">Equipment</SelectItem>
-                    <SelectItem value="services">Services</SelectItem>
-                  </SelectContent>
-                </Select>
-                {errors.supplierType && <p className="text-sm text-red-500">{errors.supplierType.message}</p>}
+                <Label htmlFor="physical_address">Physical Address *</Label>
+                <Controller
+                  name="physical_address"
+                  control={control}
+                  render={({ field }) => (
+                    <Input
+                      id="physical_address"
+                      {...field}
+                      placeholder="Enter physical address"
+                    />
+                  )}
+                />
+                {errors.physical_address && <p className="text-sm text-red-500">{errors.physical_address.message}</p>}
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="paymentTerms">Payment Terms *</Label>
-              <Select onValueChange={(value) => setValue("paymentTerms", value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select payment terms" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="net_30">Net 30</SelectItem>
-                  <SelectItem value="net_60">Net 60</SelectItem>
-                  <SelectItem value="net_90">Net 90</SelectItem>
-                  <SelectItem value="cod">Cash on Delivery</SelectItem>
-                  <SelectItem value="prepaid">Prepaid</SelectItem>
-                </SelectContent>
-              </Select>
-              {errors.paymentTerms && <p className="text-sm text-red-500">{errors.paymentTerms.message}</p>}
+            {/* Supply Information */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Supply Information</h3>
+              <div className="space-y-2">
+                <Label htmlFor="raw_product">Raw Product *</Label>
+                <Controller
+                  name="raw_product"
+                  control={control}
+                  render={({ field }) => (
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select raw product" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="milk">Milk</SelectItem>
+                        <SelectItem value="cream">Cream</SelectItem>
+                        <SelectItem value="yogurt">Yogurt</SelectItem>
+                        <SelectItem value="cheese">Cheese</SelectItem>
+                        <SelectItem value="butter">Butter</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+                {errors.raw_product && <p className="text-sm text-red-500">{errors.raw_product.message}</p>}
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="volume_supplied">Volume Supplied (L) *</Label>
+                  <Controller
+                    name="volume_supplied"
+                    control={control}
+                    render={({ field }) => (
+                      <Input
+                        id="volume_supplied"
+                        type="number"
+                        step="0.01"
+                        {...field}
+                        value={field.value || ""}
+                        onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                        placeholder="Enter volume supplied in liters"
+                      />
+                    )}
+                  />
+                  {errors.volume_supplied && <p className="text-sm text-red-500">{errors.volume_supplied.message}</p>}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="volume_rejected">Volume Rejected (L) *</Label>
+                  <Controller
+                    name="volume_rejected"
+                    control={control}
+                    render={({ field }) => (
+                      <Input
+                        id="volume_rejected"
+                        type="number"
+                        step="0.01"
+                        {...field}
+                        value={field.value || ""}
+                        onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                        placeholder="Enter volume rejected"
+                      />
+                    )}
+                  />
+                  {errors.volume_rejected && <p className="text-sm text-red-500">{errors.volume_rejected.message}</p>}
+                </div>
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="notes">Notes</Label>
-              <Textarea
-                id="notes"
-                {...register("notes")}
-                placeholder="Additional notes about the supplier..."
-                rows={3}
-              />
-            </div>
-
-            <div className="flex justify-end gap-3 pt-4">
-              <Button type="button" variant="outline" onClick={onClose}>
+            <div className="flex justify-end space-x-2 pt-4">
+              <LoadingButton type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Cancel
-              </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Saving..." : supplier ? "Update Supplier" : "Add Supplier"}
-              </Button>
+              </LoadingButton>
+              <LoadingButton 
+                type="submit" 
+                loading={mode === "create" ? operationLoading.create : operationLoading.update}
+                loadingText={mode === "create" ? "Creating..." : "Updating..."}
+              >
+                {mode === "create" ? "Create Supplier" : "Update Supplier"}
+              </LoadingButton>
             </div>
           </form>
         </div>

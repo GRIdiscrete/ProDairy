@@ -4,162 +4,150 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Edit, Mail, Phone, MapPin, Calendar, User, Building } from "lucide-react"
+import { Edit, Mail, User, Building, Shield, Calendar } from "lucide-react"
+import { User as UserType } from "@/lib/types"
+import { format } from "date-fns"
 
 interface UserViewDrawerProps {
   open: boolean
   onClose: () => void
-  user: any
+  user: UserType | null
   onEdit?: () => void
 }
 
 export function UserViewDrawer({ open, onClose, user, onEdit }: UserViewDrawerProps) {
   if (!user) return null
 
-  const getStatusColor = (status: string) => {
-    switch (status?.toLowerCase()) {
-      case "active":
-        return "bg-green-100 text-green-800"
-      case "inactive":
-        return "bg-gray-100 text-gray-800"
-      case "suspended":
-        return "bg-red-100 text-red-800"
+  const getRoleColor = (roleId: string) => {
+    const role = roleId?.toLowerCase()
+    switch (role) {
+      case 'admin':
+      case 'administrator':
+        return 'bg-purple-100 text-purple-800'
+      case 'manager':
+        return 'bg-blue-100 text-blue-800'
+      case 'operator':
+      case 'editor':
+        return 'bg-green-100 text-green-800'
+      case 'technician':
+        return 'bg-orange-100 text-orange-800'
       default:
-        return "bg-gray-100 text-gray-800"
+        return 'bg-gray-100 text-gray-800'
     }
   }
 
-  const getRoleColor = (role: string) => {
-    switch (role?.toLowerCase()) {
-      case "admin":
-        return "bg-purple-100 text-purple-800"
-      case "manager":
-        return "bg-blue-100 text-blue-800"
-      case "operator":
-        return "bg-green-100 text-green-800"
-      case "technician":
-        return "bg-orange-100 text-orange-800"
-      default:
-        return "bg-gray-100 text-gray-800"
-    }
+  const formatDate = (dateString: string) => {
+    return format(new Date(dateString), 'MMM d, yyyy')
   }
 
   return (
     <Sheet open={open} onOpenChange={onClose}>
       <SheetContent className="w-[50vw] sm:max-w-[50vw] p-6 overflow-y-auto">
-        <SheetHeader className="mb-6">
+        <SheetHeader>
           <div className="flex items-center justify-between">
-            <SheetTitle>User Details</SheetTitle>
-            {onEdit && (
-              <Button variant="outline" size="sm" onClick={onEdit}>
-                <Edit className="w-4 h-4 mr-2" />
-                Edit
-              </Button>
-            )}
+            <div className="flex items-center gap-4">
+              <SheetTitle className="flex items-center gap-2 m-0">
+                <User className="w-6 h-6" />
+                {`${user.first_name} ${user.last_name}`.trim()}
+              </SheetTitle>
+           
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation()
+                onEdit?.()
+                onClose()
+              }}
+              className="ml-auto"
+            >
+              <Edit className="w-4 h-4 mr-2" />
+              Edit User
+            </Button>
           </div>
         </SheetHeader>
 
-        <div className="space-y-6">
-          {/* Basic Information */}
+        <div className="mt-6 space-y-6">
+          {/* User Profile */}
           <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center">
-                <User className="w-5 h-5 mr-2" />
-                Basic Information
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Full Name</label>
-                  <p className="text-sm font-semibold">{user.name}</p>
+            <CardContent className="p-6">
+              <div className="flex items-start gap-4">
+                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary/10 to-primary/20 flex items-center justify-center flex-shrink-0">
+                  <User className="w-8 h-8 text-primary" />
                 </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Status</label>
-                  <div className="mt-1">
-                    <Badge className={getStatusColor(user.status || "active")}>
-                      {user.status || "Active"}
-                    </Badge>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Role</label>
-                  <div className="mt-1">
-                    <Badge className={getRoleColor(user.role)}>
-                      {user.role}
-                    </Badge>
-                  </div>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Department</label>
-                  <p className="text-sm font-semibold flex items-center">
-                    <Building className="w-4 h-4 mr-1" />
-                    {user.department}
+                <div className="flex-1 min-w-0">
+                  <h2 className="text-xl font-semibold truncate">
+                    {`${user.first_name} ${user.last_name}`.trim()}
+                  </h2>
+                  <p className="text-muted-foreground flex items-center gap-2 mt-1">
+                    <Mail className="w-4 h-4" />
+                    <span className="truncate">{user.email}</span>
                   </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
 
-          {/* Contact Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Contact Information</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <label className="text-sm font-medium text-gray-500">Email Address</label>
-                <p className="text-sm font-semibold flex items-center">
-                  <Mail className="w-4 h-4 mr-2" />
-                  {user.email}
-                </p>
+                  <div className="mt-3 flex flex-wrap gap-4">
+                    {user.department && (
+                      <div className="flex items-center text-sm bg-muted/50 px-3 py-1 rounded-md">
+                        <Building className="w-4 h-4 mr-2 text-muted-foreground" />
+                        <span className="font-medium">{user.department}</span>
+                      </div>
+                    )}
+                    {/* {user.role_id && (
+                      <div className="flex items-center text-sm bg-muted/50 px-3 py-1 rounded-md">
+                        <Shield className="w-4 h-4 mr-2 text-muted-foreground" />
+                        <span className="font-medium">{user.role_id}</span>
+                      </div>
+                    )} */}
+                  </div>
+                </div>
               </div>
-              
-              {user.phone && (
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Phone Number</label>
-                  <p className="text-sm font-semibold flex items-center">
-                    <Phone className="w-4 h-4 mr-2" />
-                    {user.phone}
-                  </p>
-                </div>
-              )}
-              
-              {user.address && (
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Address</label>
-                  <p className="text-sm font-semibold flex items-center">
-                    <MapPin className="w-4 h-4 mr-2" />
-                    {user.address}
-                  </p>
-                </div>
-              )}
             </CardContent>
           </Card>
 
           {/* Account Information */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Account Information</CardTitle>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Shield className="w-5 h-5" />
+                Account Information
+              </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Created Date</label>
-                  <p className="text-sm font-semibold flex items-center">
-                    <Calendar className="w-4 h-4 mr-2" />
-                    {user.created_at ? new Date(user.created_at).toLocaleDateString() : "N/A"}
-                  </p>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <User className="w-4 h-4" />
+                    <span className="text-sm">Name</span>
+                  </div>
+                  <p className="font-medium">{`${user.first_name} ${user.last_name}`.trim() || 'N/A'}</p>
                 </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Last Updated</label>
-                  <p className="text-sm font-semibold flex items-center">
-                    <Calendar className="w-4 h-4 mr-2" />
-                    {user.updated_at ? new Date(user.updated_at).toLocaleDateString() : "N/A"}
-                  </p>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Mail className="w-4 h-4" />
+                    <span className="text-sm">Email</span>
+                  </div>
+                  <p className="font-medium">{user.email || 'N/A'}</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-muted-foreground">Last Updated</p>
+                  <div className="flex items-center gap-2">
+                    <Calendar className="w-4 h-4 text-muted-foreground" />
+                    <p className="font-medium">
+                      {user.updated_at ? formatDate(user.updated_at) : 'N/A'}
+                    </p>
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-muted-foreground">Created At</p>
+                  <div className="flex items-center gap-2">
+                    <Calendar className="w-4 h-4 text-muted-foreground" />
+                    <p className="font-medium">
+                      {user.created_at ? formatDate(user.created_at) : 'N/A'}
+                    </p>
+                  </div>
                 </div>
               </div>
             </CardContent>

@@ -1,9 +1,9 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import { MainLayout } from "@/components/layout/main-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
+import { LoadingButton } from "@/components/ui/loading-button"
 import { Input } from "@/components/ui/input"
 import { DataTable } from "@/components/ui/data-table"
 import { Badge } from "@/components/ui/badge"
@@ -11,64 +11,34 @@ import { Plus, Shield, Settings, Eye, Edit, Trash2 } from "lucide-react"
 import { RoleFormDrawer } from "@/components/forms/role-form-drawer"
 import { RoleViewDrawer } from "@/components/forms/role-view-drawer"
 import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-dialog"
+import { useAppDispatch, useAppSelector } from "@/lib/store"
+import { fetchRoles, deleteRole, clearError } from "@/lib/store/slices/rolesSlice"
+import { toast } from "sonner"
 
-// Mock data for roles
-const mockRoles = [
-  {
-    id: "1",
-    name: "Admin",
-    description: "Full system administrator with all permissions",
-    features: {
-      user: ["Create", "Update", "Delete", "View"],
-      role: ["Create", "Update", "Delete", "View"],
-      machine_item: ["Create", "Update", "Delete", "View"],
-      silo_item: ["Create", "Update", "Delete", "View"],
-      supplier: ["Create", "Update", "Delete", "View"],
-      process: ["Create", "Update", "Delete", "View"],
-      devices: ["Create", "Update", "Delete", "View"],
-    },
-    views: [
-      "admin_panel",
-      "user_tab",
-      "role_tab",
-      "machine_tab",
-      "silo_tab",
-      "supplier_tab",
-      "process_tab",
-      "devices_tab",
-    ],
-  },
-  {
-    id: "2",
-    name: "Manager",
-    description: "Department manager with limited administrative access",
-    features: {
-      user: ["Update", "View"],
-      machine_item: ["Create", "Update", "View"],
-      silo_item: ["Create", "Update", "View"],
-      supplier: ["Create", "Update", "View"],
-      process: ["Create", "Update", "View"],
-    },
-    views: ["user_tab", "machine_tab", "silo_tab", "supplier_tab", "process_tab"],
-  },
-  {
-    id: "3",
-    name: "Operator",
-    description: "Production operator with operational permissions",
-    features: {
-      machine_item: ["Update", "View"],
-      silo_item: ["Update", "View"],
-      process: ["Update", "View"],
-    },
-    views: ["machine_tab", "silo_tab", "process_tab"],
-  },
-]
 
 
 export default function RolesPage() {
-  const [roles, setRoles] = useState(mockRoles)
+  const dispatch = useAppDispatch()
+  const { roles, loading, error, operationLoading } = useAppSelector((state) => state.roles)
+  
   const [searchTerm, setSearchTerm] = useState("")
-  const [loading, setLoading] = useState(false)
+  const hasFetchedRef = useRef(false)
+  
+  // Load roles on component mount - prevent duplicate calls with ref
+  useEffect(() => {
+    if (!hasFetchedRef.current && !operationLoading.fetch) {
+      hasFetchedRef.current = true
+      dispatch(fetchRoles())
+    }
+  }, [dispatch, operationLoading.fetch])
+  
+  // Handle errors with toast notifications
+  useEffect(() => {
+    if (error) {
+      toast.error(error)
+      dispatch(clearError())
+    }
+  }, [error, dispatch])
   
   // Drawer states
   const [formDrawerOpen, setFormDrawerOpen] = useState(false)
@@ -78,11 +48,10 @@ export default function RolesPage() {
   // Selected role and mode
   const [selectedRole, setSelectedRole] = useState<any>(null)
   const [formMode, setFormMode] = useState<"create" | "edit">("create")
-  const [deleteLoading, setDeleteLoading] = useState(false)
 
   // Filter roles
   const filteredRoles = roles.filter(role => 
-    role.name.toLowerCase().includes(searchTerm.toLowerCase())
+    role.role_name.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
   // Action handlers
@@ -111,32 +80,29 @@ export default function RolesPage() {
   const confirmDelete = async () => {
     if (!selectedRole) return
     
-    setDeleteLoading(true)
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      setRoles(roles.filter(role => role.id !== selectedRole.id))
+      await dispatch(deleteRole(selectedRole.id)).unwrap()
+      toast.success('Role deleted successfully')
       setDeleteDialogOpen(false)
       setSelectedRole(null)
-    } catch (error) {
-      console.error("Error deleting role:", error)
-    } finally {
-      setDeleteLoading(false)
+    } catch (error: any) {
+      // Backend error message will be used from the thunk
+      toast.error(error || 'Failed to delete role')
     }
   }
 
   // Table columns with actions
   const columns = [
     {
-      accessorKey: "name",
+      accessorKey: "role_name",
       header: "Role Name",
       cell: ({ row }: any) => {
         const role = row.original
         const getRoleColor = () => {
-          switch (role.name.toLowerCase()) {
-            case "admin": return "bg-purple-100 text-purple-800"
+          switch (role.role_name.toLowerCase()) {
+            case "administrator": return "bg-purple-100 text-purple-800"
             case "manager": return "bg-blue-100 text-blue-800"
-            case "operator": return "bg-green-100 text-green-800"
+            case "editor": return "bg-green-100 text-green-800"
             default: return "bg-gray-100 text-gray-800"
           }
         }
@@ -147,28 +113,34 @@ export default function RolesPage() {
             </div>
             <div>
               <div className="flex items-center space-x-2">
-                <span className="font-medium">{role.name}</span>
-                <Badge className={getRoleColor()}>{role.name}</Badge>
+                <span className="font-medium">{role.role_name}</span>
+                <Badge className={getRoleColor()}>{role.role_name}</Badge>
               </div>
-              {role.description && (
-                <p className="text-sm text-gray-500 mt-1">{role.description}</p>
-              )}
+              <p className="text-sm text-gray-500 mt-1">Created: {new Date(role.created_at).toLocaleDateString()}</p>
             </div>
           </div>
         )
       },
     },
     {
-      accessorKey: "features",
-      header: "Features",
+      accessorKey: "permissions",
+      header: "Permissions",
       cell: ({ row }: any) => {
-        const features = row.getValue("features") as Record<string, string[]>
-        const featureCount = Object.keys(features).length
-        const totalPermissions = Object.values(features).reduce((total: number, actions: string[]) => total + actions.length, 0)
+        const role = row.original
+        const allOperations = [
+          ...role.user_operations,
+          ...role.role_operations,
+          ...role.machine_item_operations,
+          ...role.silo_item_operations,
+          ...role.supplier_operations,
+          ...role.process_operations,
+          ...role.devices_operations
+        ]
+        const uniqueOperations = [...new Set(allOperations)]
         return (
           <div className="space-y-1">
-            <Badge variant="outline">{featureCount} Features</Badge>
-            <p className="text-xs text-gray-500">{totalPermissions} permissions</p>
+            <Badge variant="outline">{uniqueOperations.length} Operations</Badge>
+            <p className="text-xs text-gray-500">{uniqueOperations.join(', ')}</p>
           </div>
         )
       },
@@ -188,15 +160,21 @@ export default function RolesPage() {
         const role = row.original
         return (
           <div className="flex space-x-2">
-            <Button variant="outline" size="sm" onClick={() => handleViewRole(role)}>
+            <LoadingButton variant="outline" size="sm" onClick={() => handleViewRole(role)}>
               <Eye className="w-4 h-4" />
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => handleEditRole(role)}>
+            </LoadingButton>
+            <LoadingButton variant="outline" size="sm" onClick={() => handleEditRole(role)}>
               <Settings className="w-4 h-4" />
-            </Button>
-            <Button variant="destructive" size="sm" onClick={() => handleDeleteRole(role)}>
+            </LoadingButton>
+            <LoadingButton 
+              variant="destructive" 
+              size="sm" 
+              onClick={() => handleDeleteRole(role)}
+              loading={operationLoading.delete}
+              disabled={operationLoading.delete}
+            >
               <Trash2 className="w-4 h-4" />
-            </Button>
+            </LoadingButton>
           </div>
         )
       },
@@ -211,10 +189,85 @@ export default function RolesPage() {
             <h1 className="text-3xl font-bold text-foreground">Roles Management</h1>
             <p className="text-muted-foreground">Manage user roles and permissions</p>
           </div>
-          <Button onClick={handleAddRole}>
+          <LoadingButton onClick={handleAddRole}>
             <Plus className="mr-2 h-4 w-4" />
             Add Role
-          </Button>
+          </LoadingButton>
+        </div>
+
+        {/* Summary Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Roles</CardTitle>
+              <Shield className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              {operationLoading.fetch ? (
+                <div className="animate-pulse">
+                  <div className="h-8 bg-gray-200 rounded w-16 mb-1"></div>
+                  <div className="h-3 bg-gray-200 rounded w-24"></div>
+                </div>
+              ) : (
+                <>
+                  <div className="text-2xl font-bold">{roles.length}</div>
+                  <p className="text-xs text-muted-foreground">System roles</p>
+                </>
+              )}
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Active Permissions</CardTitle>
+              <Settings className="h-4 w-4 text-blue-600" />
+            </CardHeader>
+            <CardContent>
+              {operationLoading.fetch ? (
+                <div className="animate-pulse">
+                  <div className="h-8 bg-gray-200 rounded w-16 mb-1"></div>
+                  <div className="h-3 bg-gray-200 rounded w-32"></div>
+                </div>
+              ) : (
+                <>
+                  <div className="text-2xl font-bold text-blue-600">
+                    {roles.reduce((total, role) => {
+                      return total + [
+                        ...role.user_operations,
+                        ...role.role_operations,
+                        ...role.machine_item_operations,
+                        ...role.silo_item_operations,
+                        ...role.supplier_operations,
+                        ...role.process_operations,
+                        ...role.devices_operations
+                      ].length
+                    }, 0)}
+                  </div>
+                  <p className="text-xs text-muted-foreground">Total permissions</p>
+                </>
+              )}
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Available Views</CardTitle>
+              <Eye className="h-4 w-4 text-green-600" />
+            </CardHeader>
+            <CardContent>
+              {operationLoading.fetch ? (
+                <div className="animate-pulse">
+                  <div className="h-8 bg-gray-200 rounded w-16 mb-1"></div>
+                  <div className="h-3 bg-gray-200 rounded w-28"></div>
+                </div>
+              ) : (
+                <>
+                  <div className="text-2xl font-bold text-green-600">
+                    {roles.reduce((total, role) => total + role.views.length, 0)}
+                  </div>
+                  <p className="text-xs text-muted-foreground">Accessible views</p>
+                </>
+              )}
+            </CardContent>
+          </Card>
         </div>
 
         <Card>
@@ -222,23 +275,39 @@ export default function RolesPage() {
             <CardTitle>Role Filters</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex space-x-4">
-              <Input 
-                placeholder="Search roles..." 
-                className="flex-1"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
+            <div className="flex items-center space-x-4">
+              <div className="flex-1">
+                <Input
+                  placeholder="Search roles..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="max-w-sm"
+                />
+              </div>
             </div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>Roles List ({filteredRoles.length})</CardTitle>
+            <CardTitle>Roles</CardTitle>
           </CardHeader>
           <CardContent>
-            <DataTable columns={columns} data={filteredRoles} loading={loading} searchKey="name" />
+            {operationLoading.fetch ? (
+              <div className="flex items-center justify-center h-64">
+                <div className="flex flex-col items-center space-y-4">
+                  <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                  <p className="text-muted-foreground">Loading roles...</p>
+                </div>
+              </div>
+            ) : (
+              <DataTable
+                columns={columns}
+                data={filteredRoles}
+                searchKey="role_name"
+                searchPlaceholder="Search roles..."
+              />
+            )}
           </CardContent>
         </Card>
 
@@ -266,9 +335,9 @@ export default function RolesPage() {
           open={deleteDialogOpen}
           onOpenChange={setDeleteDialogOpen}
           title="Delete Role"
-          description={`Are you sure you want to delete the ${selectedRole?.name} role? This action cannot be undone and may affect users assigned to this role.`}
+          description={`Are you sure you want to delete the ${selectedRole?.role_name} role? This action cannot be undone and may affect users assigned to this role.`}
           onConfirm={confirmDelete}
-          loading={deleteLoading}
+          loading={operationLoading.delete}
         />
       </div>
     </MainLayout>
