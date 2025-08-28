@@ -1,5 +1,6 @@
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit"
 import { usersApi, type CreateUserRequest, type UpdateUserRequest, type UserEntity } from "@/lib/api/users"
+import type { TableFilters } from "@/lib/types"
 
 export interface UsersState {
   items: UserEntity[]
@@ -13,9 +14,9 @@ const initialState: UsersState = {
   error: null,
 }
 
-export const fetchUsers = createAsyncThunk("users/fetchAll", async (_, { rejectWithValue }) => {
+export const fetchUsers = createAsyncThunk("users/fetchAll", async (params: { filters?: TableFilters } = {}, { rejectWithValue }) => {
   try {
-    const res = await usersApi.getUsers()
+    const res = await usersApi.getUsers(params)
     return res.data
   } catch (error: any) {
     const message = error?.response?.data?.message || error?.body?.message || error?.message || "Failed to fetch users"

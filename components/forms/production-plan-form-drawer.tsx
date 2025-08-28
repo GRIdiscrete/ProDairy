@@ -68,7 +68,7 @@ export function ProductionPlanFormDrawer({
   const { operationLoading } = useAppSelector((state) => state.productionPlan)
   const { rawMaterials, operationLoading: rawMaterialLoading } = useAppSelector((state) => state.rawMaterial)
   const { items: users, loading: usersLoading } = useAppSelector((state) => state.users)
-  
+
   const {
     control,
     handleSubmit,
@@ -189,12 +189,12 @@ export function ProductionPlanFormDrawer({
             <ClipboardList className="w-5 h-5" />
             {mode === "create" ? "Add New Production Plan" : `Edit Production Plan: ${productionPlan?.name}`}
           </SheetTitle>
-          <SheetDescription>
+            <SheetDescription>
             {mode === "create" 
               ? "Create a new production plan with raw materials and quantities" 
               : "Update production plan information and materials"}
-          </SheetDescription>
-        </SheetHeader>
+            </SheetDescription>
+          </SheetHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           <Card>
@@ -242,8 +242,8 @@ export function ProductionPlanFormDrawer({
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
                     <Label htmlFor="start_date">Start Date</Label>
                     <Controller
                       name="start_date"
@@ -260,9 +260,9 @@ export function ProductionPlanFormDrawer({
                     {errors.start_date && (
                       <p className="text-sm text-red-500">{errors.start_date.message}</p>
                     )}
-                  </div>
+              </div>
 
-                  <div className="space-y-2">
+              <div className="space-y-2">
                     <Label htmlFor="end_date">End Date</Label>
                     <Controller
                       name="end_date"
@@ -279,11 +279,11 @@ export function ProductionPlanFormDrawer({
                     {errors.end_date && (
                       <p className="text-sm text-red-500">{errors.end_date.message}</p>
                     )}
-                  </div>
-                </div>
+              </div>
+            </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
                     <Label htmlFor="supervisor">Supervisor</Label>
                     <Controller
                       name="supervisor"
@@ -310,25 +310,25 @@ export function ProductionPlanFormDrawer({
                     {errors.supervisor && (
                       <p className="text-sm text-red-500">{errors.supervisor.message}</p>
                     )}
-                  </div>
+              </div>
 
-                  <div className="space-y-2">
+              <div className="space-y-2">
                     <Label htmlFor="status">Status</Label>
                     <Controller
                       name="status"
                       control={control}
                       render={({ field }) => (
                         <Select value={field.value} onValueChange={field.onChange} disabled={isSubmitting}>
-                          <SelectTrigger>
+                  <SelectTrigger>
                             <SelectValue placeholder="Select status" />
-                          </SelectTrigger>
-                          <SelectContent>
+                  </SelectTrigger>
+                  <SelectContent>
                             <SelectItem value="planned">Planned</SelectItem>
                             <SelectItem value="ongoing">Ongoing</SelectItem>
                             <SelectItem value="completed">Completed</SelectItem>
                             <SelectItem value="cancelled">Cancelled</SelectItem>
-                          </SelectContent>
-                        </Select>
+                  </SelectContent>
+                </Select>
                       )}
                     />
                     {errors.status && (
@@ -380,10 +380,10 @@ export function ProductionPlanFormDrawer({
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
-                      </div>
-                      
+            </div>
+
                       <div className="grid grid-cols-1 gap-4">
-                        <div className="space-y-2">
+            <div className="space-y-2">
                           <Label>Raw Material</Label>
                           <Controller
                             name={`raw_products.${index}.raw_material_id`}
@@ -394,10 +394,10 @@ export function ProductionPlanFormDrawer({
                                 onValueChange={(value) => handleRawMaterialSelect(index, value)}
                                 disabled={isSubmitting}
                               >
-                                <SelectTrigger>
+                <SelectTrigger>
                                   <SelectValue placeholder="Select raw material" />
-                                </SelectTrigger>
-                                <SelectContent>
+                </SelectTrigger>
+                <SelectContent>
                                   {rawMaterialLoading.fetch ? (
                                     <SelectItem value="loading" disabled>Loading materials...</SelectItem>
                                   ) : (
@@ -407,8 +407,8 @@ export function ProductionPlanFormDrawer({
                                       </SelectItem>
                                     ))
                                   )}
-                                </SelectContent>
-                              </Select>
+                </SelectContent>
+              </Select>
                             )}
                           />
                           {errors.raw_products?.[index]?.raw_material_id && (
@@ -416,10 +416,10 @@ export function ProductionPlanFormDrawer({
                               {errors.raw_products[index]?.raw_material_id?.message}
                             </p>
                           )}
-                        </div>
+            </div>
 
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-2">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
                             <Label>Requested Amount</Label>
                             <Controller
                               name={`raw_products.${index}.requested_amount`}
@@ -440,9 +440,9 @@ export function ProductionPlanFormDrawer({
                                 {errors.raw_products[index]?.requested_amount?.message}
                               </p>
                             )}
-                          </div>
+              </div>
 
-                          <div className="space-y-2">
+              <div className="space-y-2">
                             <Label>Unit of Measure</Label>
                             <Controller
                               name={`raw_products.${index}.unit_of_measure`}
@@ -469,10 +469,10 @@ export function ProductionPlanFormDrawer({
                             )}
                           </div>
                         </div>
-                      </div>
-                    </div>
+              </div>
+            </div>
                   ))}
-                </div>
+            </div>
               )}
               {errors.raw_products && (
                 <p className="text-sm text-red-500">{errors.raw_products.message}</p>
@@ -487,16 +487,16 @@ export function ProductionPlanFormDrawer({
               onClick={() => onOpenChange(false)}
               disabled={isLoading}
             >
-              Cancel
-            </Button>
+                Cancel
+              </Button>
             <LoadingButton
               type="submit"
               loading={isLoading}
             >
               {mode === "create" ? "Create Plan" : "Save Changes"}
             </LoadingButton>
-          </div>
-        </form>
+            </div>
+          </form>
       </SheetContent>
     </Sheet>
   )

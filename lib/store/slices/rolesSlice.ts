@@ -31,9 +31,9 @@ const initialState: RolesState = {
 // Async thunks
 export const fetchRoles = createAsyncThunk(
   'roles/fetchRoles',
-  async (_, { rejectWithValue }) => {
+  async (params: { filters?: TableFilters } = {}, { rejectWithValue }) => {
     try {
-      const response = await rolesApi.getRoles()
+      const response = await rolesApi.getRoles(params)
       return response.data
     } catch (error: any) {
       const message = error?.response?.data?.message || error?.message || 'Failed to fetch roles'
