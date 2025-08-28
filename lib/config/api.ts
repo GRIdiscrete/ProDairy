@@ -7,6 +7,9 @@ export const API_CONFIG = {
     SILOS: '/silo',
     SUPPLIERS: '/supplier',
     RAW_MATERIALS: '/raw-material',
+    PROCESSES: '/process',
+    PRODUCTION_PLANS: '/production-plan',
+    DRIVER_FORMS: '/drivers-form',
   },
 } as const
 

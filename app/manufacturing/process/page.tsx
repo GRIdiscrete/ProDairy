@@ -3,28 +3,28 @@
 import { useState, useEffect } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import type { RootState, AppDispatch } from "@/lib/store"
-import { fetchProductionBatches } from "@/lib/store/slices/productionSlice"
+import { fetchProcesses } from "@/lib/store/slices/processSlice"
 import { MainLayout } from "@/components/layout/main-layout"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Search, Filter, Edit, Play, Pause, CircleStopIcon as Stop, Eye } from "lucide-react"
+import { Plus, Edit, Eye, Settings, Package, Trash2 } from "lucide-react"
 import { DataTable } from "@/components/ui/data-table"
 import { ProcessFormDrawer } from "@/components/forms/process-form-drawer"
 import { ProcessViewDrawer } from "@/components/forms/process-view-drawer"
+import { LoadingButton } from "@/components/ui/loading-button"
+import type { Process } from "@/lib/types"
 
 export default function ProcessPage() {
   const dispatch = useDispatch<AppDispatch>()
-  const { batches, loading } = useSelector((state: RootState) => state.production)
+  const { processes, operationLoading } = useSelector((state: RootState) => state.process)
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
   const [isViewDrawerOpen, setIsViewDrawerOpen] = useState(false)
-  const [editingProcess, setEditingProcess] = useState(null)
-  const [viewingProcess, setViewingProcess] = useState(null)
-  const [searchTerm, setSearchTerm] = useState("")
+  const [editingProcess, setEditingProcess] = useState<Process | null>(null)
+  const [viewingProcess, setViewingProcess] = useState<Process | null>(null)
 
   useEffect(() => {
-    dispatch(fetchProductionBatches({}))
+    dispatch(fetchProcesses())
   }, [dispatch])
 
   const handleAddProcess = () => {
@@ -32,177 +32,156 @@ export default function ProcessPage() {
     setIsDrawerOpen(true)
   }
 
-  const handleEditProcess = (process: any) => {
+  const handleEditProcess = (process: Process) => {
     setEditingProcess(process)
     setIsDrawerOpen(true)
   }
 
-  const handleViewProcess = (process: any) => {
+  const handleViewProcess = (process: Process) => {
     setViewingProcess(process)
     setIsViewDrawerOpen(true)
   }
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "running":
-        return "default"
-      case "paused":
-        return "secondary"
-      case "completed":
-        return "outline"
-      case "failed":
-        return "destructive"
-      default:
-        return "secondary"
-    }
-  }
-
   const columns = [
     {
-      accessorKey: "batchId",
-      header: "Process ID",
-    },
-    {
-      accessorKey: "productType",
-      header: "Product Type",
-    },
-    {
-      accessorKey: "status",
-      header: "Status",
-      cell: ({ row }: any) => <Badge variant={getStatusColor(row.original.status)}>{row.original.status}</Badge>,
-    },
-    {
-      accessorKey: "startTime",
-      header: "Start Time",
-      cell: ({ row }: any) => new Date(row.original.startTime).toLocaleString(),
-    },
-    {
-      accessorKey: "expectedEndTime",
-      header: "Expected End",
-      cell: ({ row }: any) => new Date(row.original.expectedEndTime).toLocaleString(),
-    },
-    {
-      accessorKey: "progress",
-      header: "Progress",
-      cell: ({ row }: any) => (
-        <div className="flex items-center gap-2">
-          <div className="w-16 bg-gray-200 rounded-full h-2">
-            <div className="bg-blue-600 h-2 rounded-full" style={{ width: `${row.original.progress}%` }} />
+      accessorKey: "name",
+      header: "Process Name",
+      cell: ({ row }: any) => {
+        const process = row.original as Process
+        return (
+          <div className="flex items-center gap-3">
+            <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center">
+              <Settings className="h-4 w-4 text-primary" />
+            </div>
+            <div>
+              <p className="font-medium text-sm">{process.name}</p>
+              <p className="text-muted-foreground text-xs">ID: {process.id.slice(0, 8)}...</p>
+            </div>
           </div>
-          <span className="text-sm">{row.original.progress}%</span>
-        </div>
-      ),
+        )
+      },
+    },
+    {
+      accessorKey: "raw_material_ids",
+      header: "Raw Materials",
+      cell: ({ row }: any) => {
+        const process = row.original as Process
+        return (
+          <div className="flex items-center gap-2">
+            <Package className="w-4 h-4 text-muted-foreground" />
+            <span className="text-sm">{process.raw_material_ids.length} materials</span>
+          </div>
+        )
+      },
+    },
+    {
+      accessorKey: "created_at",
+      header: "Created",
+      cell: ({ row }: any) => {
+        const process = row.original as Process
+        return (
+          <span className="text-sm">
+            {new Date(process.created_at).toLocaleDateString()}
+          </span>
+        )
+      },
+    },
+    {
+      accessorKey: "updated_at",
+      header: "Last Updated",
+      cell: ({ row }: any) => {
+        const process = row.original as Process
+        return (
+          <span className="text-sm">
+            {process.updated_at ? new Date(process.updated_at).toLocaleDateString() : 'Never'}
+          </span>
+        )
+      },
     },
     {
       id: "actions",
-      header: "Actions",
-      cell: ({ row }: any) => (
-        <div className="flex gap-1">
-          <Button variant="ghost" size="sm" onClick={() => handleViewProcess(row.original)}>
-            <Eye className="h-3 w-3" />
-          </Button>
-          <Button variant="ghost" size="sm">
-            <Play className="h-3 w-3" />
-          </Button>
-          <Button variant="ghost" size="sm">
-            <Pause className="h-3 w-3" />
-          </Button>
-          <Button variant="ghost" size="sm">
-            <Stop className="h-3 w-3" />
-          </Button>
-          <Button variant="ghost" size="sm" onClick={() => handleEditProcess(row.original)}>
-            <Edit className="h-4 w-4" />
-          </Button>
-        </div>
-      ),
+      cell: ({ row }: any) => {
+        const process = row.original as Process
+        return (
+          <div className="flex space-x-2">
+            <LoadingButton 
+              variant="outline" 
+              size="sm" 
+              onClick={() => handleViewProcess(process)}
+            >
+              <Eye className="w-4 h-4" />
+            </LoadingButton>
+            <LoadingButton 
+              variant="outline" 
+              size="sm" 
+              onClick={() => handleEditProcess(process)}
+            >
+              <Settings className="w-4 h-4" />
+            </LoadingButton>
+          </div>
+        )
+      },
     },
   ]
 
-  return (
-    <MainLayout title="Process Management" subtitle="Monitor and control production processes">
-      <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-bold">Process Management</h1>
-          <Button onClick={handleAddProcess}>
-            <Plus className="h-4 w-4 mr-2" />
-            Start New Process
-          </Button>
-        </div>
+  const isLoading = operationLoading.fetch
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Active Processes</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-600">
-                {batches.filter((b) => b.status === "running").length}
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Paused</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-yellow-600">
-                {batches.filter((b) => b.status === "paused").length}
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Completed Today</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-blue-600">
-                {batches.filter((b) => b.status === "completed").length}
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Failed</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-red-600">
-                {batches.filter((b) => b.status === "failed").length}
-              </div>
-            </CardContent>
-          </Card>
+  return (
+    <MainLayout>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">Manufacturing Processes</h1>
+            <p className="text-muted-foreground">Manage and configure manufacturing processes</p>
+          </div>
+          <LoadingButton onClick={handleAddProcess} loading={isLoading}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Process
+          </LoadingButton>
         </div>
 
         <Card>
           <CardHeader>
-            <div className="flex justify-between items-center">
-              <CardTitle>Production Processes</CardTitle>
-              <div className="flex gap-2">
-                <div className="relative">
-                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search processes..."
-                    className="pl-8 w-64"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
-                </div>
-                <Button variant="outline" size="sm">
-                  <Filter className="h-4 w-4 mr-2" />
-                  Filter
-                </Button>
-              </div>
-            </div>
+            <CardTitle>Processes</CardTitle>
           </CardHeader>
           <CardContent>
-            <DataTable columns={columns} data={batches} loading={loading} />
+            {isLoading ? (
+              <div className="flex items-center justify-center h-64">
+                <div className="flex flex-col items-center space-y-4">
+                  <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                  <p className="text-muted-foreground">Loading processes...</p>
+                </div>
+              </div>
+            ) : (
+              <DataTable
+                columns={columns}
+                data={processes || []}
+                searchKey="name"
+                searchPlaceholder="Search processes by name..."
+              />
+            )}
           </CardContent>
         </Card>
 
-        <ProcessFormDrawer open={isDrawerOpen} onClose={() => setIsDrawerOpen(false)} process={editingProcess} />
+        <ProcessFormDrawer 
+          open={isDrawerOpen} 
+          onOpenChange={setIsDrawerOpen} 
+          process={editingProcess} 
+          mode={editingProcess ? "edit" : "create"}
+          onSuccess={() => {
+            setIsDrawerOpen(false)
+            setEditingProcess(null)
+          }}
+        />
         <ProcessViewDrawer
           open={isViewDrawerOpen}
-          onClose={() => setIsViewDrawerOpen(false)}
+          onOpenChange={setIsViewDrawerOpen}
           process={viewingProcess}
+          onEdit={(process) => {
+            setEditingProcess(process)
+            setIsDrawerOpen(true)
+            setIsViewDrawerOpen(false)
+          }}
         />
       </div>
     </MainLayout>
