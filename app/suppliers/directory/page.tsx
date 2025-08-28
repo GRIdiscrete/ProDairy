@@ -1,23 +1,53 @@
 "use client"
 
-import React from "react"
+import React, { useState, useMemo } from "react"
 import { useSelector, useDispatch } from "react-redux"
 import type { RootState } from "@/lib/store"
-import { setSupplierFilters, fetchSuppliers } from "@/lib/store/slices/supplierSlice"
+import { fetchSuppliers } from "@/lib/store/slices/supplierSlice"
 import { MainLayout } from "@/components/layout/main-layout"
 import { SupplierMetrics } from "@/components/suppliers/supplier-metrics"
-import { SupplierFilters } from "@/components/suppliers/supplier-filters"
-import { SupplierDirectoryTable } from "@/components/suppliers/supplier-directory-table"
+import { DataTableFilters } from "@/components/ui/data-table-filters"
+import { DataTable } from "@/components/ui/data-table"
 import { Button } from "@/components/ui/button"
 import { Plus } from "lucide-react"
+import { TableFilters } from "@/lib/types"
 
 export default function SupplierDirectoryPage() {
   const dispatch = useDispatch()
-  const { suppliers, filters, loading } = useSelector((state: RootState) => state.supplier)
+  const { suppliers, loading } = useSelector((state: RootState) => state.supplier)
+  const [tableFilters, setTableFilters] = useState<TableFilters>({})
 
   React.useEffect(() => {
-    dispatch(fetchSuppliers() as any)
-  }, [dispatch])
+    dispatch(fetchSuppliers({ filters: tableFilters }) as any)
+  }, [dispatch, tableFilters])
+
+  // Filter fields configuration for suppliers
+  const filterFields = useMemo(() => [
+    {
+      key: "first_name",
+      label: "First Name",
+      type: "text" as const,
+      placeholder: "Filter by first name"
+    },
+    {
+      key: "company",
+      label: "Company",
+      type: "text" as const,
+      placeholder: "Filter by company"
+    },
+    {
+      key: "email",
+      label: "Email",
+      type: "text" as const,
+      placeholder: "Filter by email"
+    },
+    {
+      key: "phone",
+      label: "Phone",
+      type: "text" as const,
+      placeholder: "Filter by phone"
+    }
+  ], [])
 
   return (
     <MainLayout>
@@ -36,9 +66,12 @@ export default function SupplierDirectoryPage() {
         <SupplierMetrics />
 
         <div className="bg-gray-800 rounded-lg p-6">
-          <SupplierFilters
-            filters={filters}
-            onFiltersChange={(newFilters) => dispatch(setSupplierFilters(newFilters))}
+          <DataTableFilters
+            filters={tableFilters}
+            onFiltersChange={setTableFilters}
+            onSearch={(searchTerm) => setTableFilters(prev => ({ ...prev, search: searchTerm }))}
+            searchPlaceholder="Search suppliers..."
+            filterFields={filterFields}
           />
 
           <SupplierDirectoryTable suppliers={suppliers} loading={loading} />

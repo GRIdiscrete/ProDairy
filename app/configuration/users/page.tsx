@@ -5,6 +5,7 @@ import { MainLayout } from "@/components/layout/main-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { LoadingButton } from "@/components/ui/loading-button"
 import { DataTable } from "@/components/ui/data-table"
+import { DataTableFilters } from "@/components/ui/data-table-filters"
 import { Badge } from "@/components/ui/badge"
 import { Plus, Eye, Trash2, User, Settings } from "lucide-react"
 import { UserFormDrawer } from "@/components/forms/user-form-drawer"
@@ -14,7 +15,7 @@ import { useAppDispatch, useAppSelector } from "@/lib/store"
 import { fetchUsers, deleteUser } from "@/lib/store/slices/usersSlice"
 import { fetchRoles } from "@/lib/store/slices/rolesSlice"
 import { toast } from "sonner"
-import { User as UserType } from "@/lib/types"
+import { User as UserType, TableFilters } from "@/lib/types"
 import { ColumnDef } from "@tanstack/react-table"
 
 export default function UsersPage() {
@@ -38,6 +39,9 @@ export default function UsersPage() {
   // Selected user and mode
   const [selectedUser, setSelectedUser] = useState<UserType | null>(null)
   const [formMode, setFormMode] = useState<"create" | "edit">("create")
+  
+  // Filter state
+  const [tableFilters, setTableFilters] = useState<TableFilters>({})
 
   // Map UserEntity to User type
   const mappedUsers = useMemo(() => {
@@ -49,14 +53,21 @@ export default function UsersPage() {
     } as UserType))
   }, [userEntities, roleNameById])
 
-  // Load data on component mount
+  // Load data on component mount and when filters change
   useEffect(() => {
     if (!hasFetchedRef.current) {
       hasFetchedRef.current = true
-      dispatch(fetchUsers())
       if (!roles || roles.length === 0) {
         dispatch(fetchRoles())
       }
+    }
+    dispatch(fetchUsers({ filters: tableFilters }))
+  }, [dispatch, tableFilters, roles])
+
+  // Load roles only once
+  useEffect(() => {
+    if (!roles || roles.length === 0) {
+      dispatch(fetchRoles())
     }
   }, [dispatch, roles])
 
@@ -73,6 +84,35 @@ export default function UsersPage() {
     userEntities.forEach(user => user.department && deptSet.add(user.department))
     return Array.from(deptSet).sort()
   }, [userEntities])
+
+  // Filter fields configuration
+  const filterFields = useMemo(() => [
+    {
+      key: "email",
+      label: "Email",
+      type: "text" as const,
+      placeholder: "Filter by email"
+    },
+    {
+      key: "department",
+      label: "Department", 
+      type: "select" as const,
+      options: departments.map(dept => ({ label: dept, value: dept })),
+      placeholder: "Select department"
+    },
+    {
+      key: "role_id",
+      label: "Role",
+      type: "select" as const,
+      options: roles?.map(role => ({ label: role.role_name, value: role.id })) || [],
+      placeholder: "Select role"
+    },
+    {
+      key: "daterange",
+      label: "Date Range",
+      type: "daterange" as const
+    }
+  ], [departments, roles])
 
   // Define columns for DataTable
   const columns: ColumnDef<UserType>[] = [
@@ -266,7 +306,15 @@ export default function UsersPage() {
           <CardHeader>
             <CardTitle>Users</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
+            <DataTableFilters
+              filters={tableFilters}
+              onFiltersChange={setTableFilters}
+              onSearch={(searchTerm) => setTableFilters(prev => ({ ...prev, search: searchTerm }))}
+              searchPlaceholder="Search users by name or email..."
+              filterFields={filterFields}
+            />
+            
             {usersLoading ? (
               <div className="flex items-center justify-center h-64">
                 <div className="flex flex-col items-center space-y-4">
@@ -278,9 +326,7 @@ export default function UsersPage() {
               <DataTable
                 columns={columns}
                 data={mappedUsers}
-                searchKey="email"
-                searchPlaceholder="Search users by name or email..."
-                filters={filters}
+                showSearch={false}
               />
             )}
           </CardContent>

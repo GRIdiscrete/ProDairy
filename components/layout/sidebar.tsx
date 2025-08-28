@@ -50,6 +50,7 @@ const navigation = [
     children: [
       { name: "Suppliers", href: "/procurement/suppliers" },
       { name: "Raw Materials", href: "/procurement/materials" },
+      { name: "Driver Forms", href: "/procurement/driver-forms" },
     ],
   },
 ]

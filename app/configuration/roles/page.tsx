@@ -1,11 +1,11 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useMemo } from "react"
 import { MainLayout } from "@/components/layout/main-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { LoadingButton } from "@/components/ui/loading-button"
-import { Input } from "@/components/ui/input"
 import { DataTable } from "@/components/ui/data-table"
+import { DataTableFilters } from "@/components/ui/data-table-filters"
 import { Badge } from "@/components/ui/badge"
 import { Plus, Shield, Settings, Eye, Edit, Trash2 } from "lucide-react"
 import { RoleFormDrawer } from "@/components/forms/role-form-drawer"
@@ -14,6 +14,7 @@ import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-di
 import { useAppDispatch, useAppSelector } from "@/lib/store"
 import { fetchRoles, deleteRole, clearError } from "@/lib/store/slices/rolesSlice"
 import { toast } from "sonner"
+import { TableFilters } from "@/lib/types"
 
 
 
@@ -21,16 +22,16 @@ export default function RolesPage() {
   const dispatch = useAppDispatch()
   const { roles, loading, error, operationLoading } = useAppSelector((state) => state.roles)
   
-  const [searchTerm, setSearchTerm] = useState("")
+  const [tableFilters, setTableFilters] = useState<TableFilters>({})
   const hasFetchedRef = useRef(false)
   
-  // Load roles on component mount - prevent duplicate calls with ref
+  // Load roles on component mount and when filters change
   useEffect(() => {
-    if (!hasFetchedRef.current && !operationLoading.fetch) {
+    if (!hasFetchedRef.current) {
       hasFetchedRef.current = true
-      dispatch(fetchRoles())
     }
-  }, [dispatch, operationLoading.fetch])
+    dispatch(fetchRoles({ filters: tableFilters }))
+  }, [dispatch, tableFilters])
   
   // Handle errors with toast notifications
   useEffect(() => {
@@ -49,10 +50,15 @@ export default function RolesPage() {
   const [selectedRole, setSelectedRole] = useState<any>(null)
   const [formMode, setFormMode] = useState<"create" | "edit">("create")
 
-  // Filter roles
-  const filteredRoles = roles.filter(role => 
-    role.role_name.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  // Filter fields configuration for roles
+  const filterFields = useMemo(() => [
+    {
+      key: "role_name",
+      label: "Role Name",
+      type: "text" as const,
+      placeholder: "Filter by role name"
+    }
+  ], [])
 
   // Action handlers
   const handleAddRole = () => {
@@ -272,28 +278,18 @@ export default function RolesPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Role Filters</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center space-x-4">
-              <div className="flex-1">
-                <Input
-                  placeholder="Search roles..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="max-w-sm"
-                />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
             <CardTitle>Roles</CardTitle>
           </CardHeader>
-          <CardContent>
-            {operationLoading.fetch ? (
+          <CardContent className="space-y-4">
+            <DataTableFilters
+              filters={tableFilters}
+              onFiltersChange={setTableFilters}
+              onSearch={(searchTerm) => setTableFilters(prev => ({ ...prev, search: searchTerm }))}
+              searchPlaceholder="Search roles by name..."
+              filterFields={filterFields}
+            />
+            
+            {loading ? (
               <div className="flex items-center justify-center h-64">
                 <div className="flex flex-col items-center space-y-4">
                   <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
@@ -303,13 +299,14 @@ export default function RolesPage() {
             ) : (
               <DataTable
                 columns={columns}
-                data={filteredRoles}
-                searchKey="role_name"
-                searchPlaceholder="Search roles..."
+                data={roles}
+                showSearch={false}
               />
             )}
           </CardContent>
         </Card>
+
+
 
         {/* Form Drawer */}
         <RoleFormDrawer 

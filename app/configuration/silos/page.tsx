@@ -1,11 +1,11 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useMemo } from "react"
 import { MainLayout } from "@/components/layout/main-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { LoadingButton } from "@/components/ui/loading-button"
-import { Input } from "@/components/ui/input"
 import { DataTable } from "@/components/ui/data-table"
+import { DataTableFilters } from "@/components/ui/data-table-filters"
 import { Badge } from "@/components/ui/badge"
 import { Plus, Settings, Eye, Edit, Trash2, Search, Database, Gauge, Wrench, Activity } from "lucide-react"
 import { SiloFormDrawer } from "@/components/forms/silo-form-drawer"
@@ -14,21 +14,22 @@ import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-di
 import { useAppDispatch, useAppSelector } from "@/lib/store"
 import { fetchSilos, deleteSilo, clearError } from "@/lib/store/slices/siloSlice"
 import { toast } from "sonner"
+import { TableFilters } from "@/lib/types"
 
 export default function SilosPage() {
   const dispatch = useAppDispatch()
   const { silos, loading, error, operationLoading } = useAppSelector((state) => state.silo)
   
-  const [searchTerm, setSearchTerm] = useState("")
+  const [tableFilters, setTableFilters] = useState<TableFilters>({})
   const hasFetchedRef = useRef(false)
   
-  // Load silos on component mount - prevent duplicate calls with ref
+  // Load silos on component mount and when filters change
   useEffect(() => {
-    if (!hasFetchedRef.current && !operationLoading.fetch) {
+    if (!hasFetchedRef.current) {
       hasFetchedRef.current = true
-      dispatch(fetchSilos())
     }
-  }, [dispatch, operationLoading.fetch])
+    dispatch(fetchSilos({ filters: tableFilters }))
+  }, [dispatch, tableFilters])
   
   // Handle errors with toast notifications
   useEffect(() => {
@@ -47,12 +48,45 @@ export default function SilosPage() {
   const [selectedSilo, setSelectedSilo] = useState<any>(null)
   const [formMode, setFormMode] = useState<"create" | "edit">("create")
 
-  // Filter silos
-  const filteredSilos = silos.filter(silo => 
-    silo.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    silo.serial_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    silo.category.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  // Filter fields configuration for silos
+  const filterFields = useMemo(() => [
+    {
+      key: "name",
+      label: "Name",
+      type: "text" as const,
+      placeholder: "Filter by silo name"
+    },
+    {
+      key: "serial_number",
+      label: "Serial Number",
+      type: "text" as const,
+      placeholder: "Filter by serial number"
+    },
+    {
+      key: "category",
+      label: "Category",
+      type: "text" as const,
+      placeholder: "Filter by category"
+    },
+    {
+      key: "location",
+      label: "Location",
+      type: "text" as const,
+      placeholder: "Filter by location"
+    },
+    {
+      key: "status",
+      label: "Status",
+      type: "text" as const,
+      placeholder: "Filter by status"
+    },
+    {
+      key: "capacity",
+      label: "Capacity",
+      type: "text" as const,
+      placeholder: "Filter by capacity"
+    }
+  ], [])
 
   // Action handlers
   const handleAddSilo = () => {
@@ -298,28 +332,18 @@ export default function SilosPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Silo Filters</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center space-x-4">
-              <div className="flex-1">
-                <Input
-                  placeholder="Search silos..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="max-w-sm"
-                />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
             <CardTitle>Silos</CardTitle>
           </CardHeader>
-          <CardContent>
-            {operationLoading.fetch ? (
+          <CardContent className="space-y-4">
+            <DataTableFilters
+              filters={tableFilters}
+              onFiltersChange={setTableFilters}
+              onSearch={(searchTerm) => setTableFilters(prev => ({ ...prev, search: searchTerm }))}
+              searchPlaceholder="Search silos..."
+              filterFields={filterFields}
+            />
+            
+            {loading ? (
               <div className="flex items-center justify-center h-64">
                 <div className="flex flex-col items-center space-y-4">
                   <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
@@ -329,9 +353,8 @@ export default function SilosPage() {
             ) : (
               <DataTable
                 columns={columns}
-                data={filteredSilos}
-                searchKey="name"
-                searchPlaceholder="Search silos..."
+                data={silos}
+                showSearch={false}
               />
             )}
           </CardContent>

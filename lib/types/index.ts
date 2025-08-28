@@ -91,6 +91,73 @@ export interface RawMaterial {
   updated_at: string
 }
 
+// New Process Types
+export interface Process {
+  id: string
+  created_at: string
+  name: string
+  raw_material_ids: string[]
+  updated_at?: string
+}
+
+// New Production Plan Types
+export interface ProductionPlanRawProduct {
+  raw_material_id: string
+  raw_material_name: string
+  requested_amount: number
+  unit_of_measure: string
+}
+
+export interface ProductionPlan {
+  id: string
+  created_at: string
+  name: string
+  description?: string
+  start_date: string
+  end_date: string
+  raw_products: ProductionPlanRawProduct[]
+  supervisor: string
+  status: "planned" | "ongoing" | "completed" | "cancelled"
+  updated_at?: string
+  production_plan_supervisor_fkey?: UserEntity
+}
+
+// New Driver Form Types
+export interface DriverFormCollectedProduct {
+  raw_material_id: string
+  supplier_id: string
+  collected_amount: number
+  unit_of_measure: string
+  "e-sign-supplier": string
+  "e-sign-driver": string
+}
+
+export interface DriverForm {
+  id: string
+  created_at: string
+  driver: string
+  start_date: string
+  end_date: string
+  collected_products: DriverFormCollectedProduct[] | null
+  delivered: boolean
+  rejected: boolean
+  updated_at: string
+  drivers_driver_fkey?: UserEntity
+}
+
+// User Entity for API responses
+export interface UserEntity {
+  id: string
+  email: string
+  role_id: string
+  password?: string
+  last_name: string
+  created_at: string
+  department: string
+  first_name: string
+  updated_at: string
+}
+
 export interface MachineSpecification {
   capacity: number
   powerConsumption: number
