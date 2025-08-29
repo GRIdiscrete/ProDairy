@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import * as React from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,108 +13,24 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
+  Calendar as CalendarIcon,
+  Search,
+  Filter,
+  X,
+  ChevronDownIcon,
+} from "lucide-react";
+import { TableFilters } from "@/lib/types";
+import { Calendar } from "@/components/ui/calendar";
+import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Calendar as CalendarIcon, Search, Filter, X } from "lucide-react";
-import { TableFilters } from "@/lib/types";
-import { Calendar } from "@/components/ui/calendar";
-
-function formatDate(date: Date | undefined) {
-  if (!date) {
-    return "";
-  }
-
-  return date.toLocaleDateString("en-US", {
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-  });
-}
-
-function isValidDate(date: Date | undefined) {
-  if (!date) {
-    return false;
-  }
-  return !isNaN(date.getTime());
-}
-
-interface DatePickerWithTextProps {
-  value?: Date;
-  onDateChange: (date: Date | undefined) => void;
-  placeholder?: string;
-}
-
-function DatePickerWithText({
-  value,
-  onDateChange,
-  placeholder,
-}: DatePickerWithTextProps) {
-  const [open, setOpen] = useState(false);
-  const [month, setMonth] = useState<Date | undefined>(value);
-  const [inputValue, setInputValue] = useState(formatDate(value));
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const inputDate = new Date(e.target.value);
-    setInputValue(e.target.value);
-    if (isValidDate(inputDate)) {
-      onDateChange(inputDate);
-      setMonth(inputDate);
-    }
-  };
-
-  const handleCalendarSelect = (date: Date | undefined) => {
-    onDateChange(date);
-    setInputValue(formatDate(date));
-    setOpen(false);
-  };
-
-  return (
-    <div className="relative">
-      <Input
-        value={inputValue}
-        placeholder={placeholder}
-        className="bg-background pr-10 h-10"
-        onChange={handleInputChange}
-        onKeyDown={(e) => {
-          if (e.key === "ArrowDown") {
-            e.preventDefault();
-            setOpen(true);
-          }
-        }}
-      />
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="absolute top-1/2 right-1 h-8 w-8 -translate-y-1/2 p-0 hover:bg-transparent"
-          >
-            <CalendarIcon className="h-4 w-4" />
-            <span className="sr-only">Select date</span>
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-auto p-0" align="end" sideOffset={4}>
-          <Calendar
-            mode="single"
-            selected={value}
-            captionLayout="dropdown"
-            month={month}
-            onMonthChange={setMonth}
-            onSelect={handleCalendarSelect}
-          />
-        </PopoverContent>
-      </Popover>
-    </div>
-  );
-}
 
 interface FilterField {
   key: string;
   label: string;
-  type: "text" | "select" | "date" | "daterange";
+  type: "text" | "select" | "date";
   options?: { label: string; value: string }[];
   placeholder?: string;
 }
@@ -136,8 +52,10 @@ export function DataTableFilters({
   filterFields = [],
   showSearch = true,
 }: DataTableFiltersProps) {
-  const [searchTerm, setSearchTerm] = useState(filters.search || "");
-  const [showFilters, setShowFilters] = useState(false);
+  const [searchTerm, setSearchTerm] = React.useState(filters.search || "");
+  const [showFilters, setShowFilters] = React.useState(false);
+  const [fromDateOpen, setFromDateOpen] = React.useState(false);
+  const [toDateOpen, setToDateOpen] = React.useState(false);
 
   const handleSearchChange = (value: string) => {
     setSearchTerm(value);
@@ -157,6 +75,7 @@ export function DataTableFilters({
   };
 
   const handleDateRangeChange = (field: "from" | "to", value: string) => {
+    console.log("handleDateRangeChange:", field, value);
     const newFilters = { ...filters };
     if (!newFilters.dateRange) {
       newFilters.dateRange = { from: "", to: "" };
@@ -168,6 +87,7 @@ export function DataTableFilters({
       delete newFilters.dateRange;
     }
 
+    console.log("New filters:", newFilters);
     onFiltersChange(newFilters);
   };
 
@@ -178,6 +98,13 @@ export function DataTableFilters({
   };
 
   const hasActiveFilters = Object.keys(filters).length > 0;
+
+  const fromDate = filters.dateRange?.from
+    ? new Date(filters.dateRange.from + "T00:00:00")
+    : undefined;
+  const toDate = filters.dateRange?.to
+    ? new Date(filters.dateRange.to + "T00:00:00")
+    : undefined;
 
   return (
     <div className="space-y-4">
@@ -278,54 +205,87 @@ export function DataTableFilters({
                 </div>
               ))}
 
-              {filterFields.length > 0 && (
-                <div className="lg:col-span-2 space-y-3">
-                  <div className="flex items-center gap-2">
-                    <CalendarIcon className="w-4 h-4" />
-                    <Label className="text-base font-medium">Date Range</Label>
+              {/* Date Range Section - Always show when there are filter fields */}
+              <div className="lg:col-span-2 space-y-3">
+                <div className="flex items-center gap-2">
+                  <CalendarIcon className="w-4 h-4" />
+                  <Label className="text-base font-medium">Date Range</Label>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    {/* <Label className="text-sm text-muted-foreground">From Date</Label> */}
+                    <Popover open={fromDateOpen} onOpenChange={setFromDateOpen}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className="w-full justify-between font-normal h-10"
+                          type="button"
+                        >
+                          {fromDate
+                            ? fromDate.toLocaleDateString()
+                            : "Select from date"}
+                          <ChevronDownIcon className="h-4 w-4" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={fromDate}
+                          captionLayout="dropdown"
+                          onSelect={(date) => {
+                            console.log("From date selected:", date);
+                            if (date) {
+                              const dateString = date
+                                .toISOString()
+                                .split("T")[0];
+                              handleDateRangeChange("from", dateString);
+                            } else {
+                              handleDateRangeChange("from", "");
+                            }
+                            setFromDateOpen(false);
+                          }}
+                        />
+                      </PopoverContent>
+                    </Popover>
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label className="text-sm text-muted-foreground">
-                        From Date
-                      </Label>
-                      <DatePickerWithText
-                        value={
-                          filters.dateRange?.from
-                            ? new Date(filters.dateRange.from)
-                            : undefined
-                        }
-                        onDateChange={(date) =>
-                          handleDateRangeChange(
-                            "from",
-                            date ? date.toISOString().split("T")[0] : ""
-                          )
-                        }
-                        placeholder="Select from date"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-sm text-muted-foreground">
-                        To Date
-                      </Label>
-                      <DatePickerWithText
-                        value={
-                          filters.dateRange?.to
-                            ? new Date(filters.dateRange.to)
-                            : undefined
-                        }
-                        onDateChange={(date) =>
-                          handleDateRangeChange(
-                            "to",
-                            date ? date.toISOString().split("T")[0] : ""
-                          )
-                        }
-                        placeholder="Select to date"
-                      />
-                    </div>
+                  <div className="space-y-2">
+                    {/* <Label className="text-sm text-muted-foreground">To Date</Label> */}
+                    <Popover open={toDateOpen} onOpenChange={setToDateOpen}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className="w-full justify-between font-normal h-10"
+                          type="button"
+                        >
+                          {toDate
+                            ? toDate.toLocaleDateString()
+                            : "Select to date"}
+                          <ChevronDownIcon className="h-4 w-4" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={toDate}
+                          captionLayout="dropdown"
+                          onSelect={(date) => {
+                            console.log("To date selected:", date);
+                            if (date) {
+                              const dateString = date
+                                .toISOString()
+                                .split("T")[0];
+                              handleDateRangeChange("to", dateString);
+                            } else {
+                              handleDateRangeChange("to", "");
+                            }
+                            setToDateOpen(false);
+                          }}
+                        />
+                      </PopoverContent>
+                    </Popover>
                   </div>
                 </div>
-              )}
+              </div>
             </div>
           </CardContent>
         </Card>

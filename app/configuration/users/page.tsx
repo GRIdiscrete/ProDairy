@@ -107,11 +107,11 @@ export default function UsersPage() {
       options: roles?.map(role => ({ label: role.role_name, value: role.id })) || [],
       placeholder: "Select role"
     },
-    {
-      key: "daterange",
-      label: "Date Range",
-      type: "daterange" as const
-    }
+    // {
+    //   key: "daterange",
+    //   label: "Date Range",
+    //   type: "daterange" as const
+    // }
   ], [departments, roles])
 
   // Define columns for DataTable

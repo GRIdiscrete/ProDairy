@@ -62,11 +62,23 @@ export default function SilosPage() {
       type: "text" as const,
       placeholder: "Filter by serial number"
     },
+    // <SelectItem value="Milk Storage Tanks">Milk Storage Tanks</SelectItem>
+    // <SelectItem value="Cooling Silos">Cooling Silos</SelectItem>
+    // <SelectItem value="Processing Tanks">Processing Tanks</SelectItem>
+    // <SelectItem value="Buffer Tanks">Buffer Tanks</SelectItem>
+    // <SelectItem value="Fermentation Tanks">Fermentation Tanks</SelectItem>
     {
       key: "category",
       label: "Category",
-      type: "text" as const,
-      placeholder: "Filter by category"
+      type: "select" as const,
+      placeholder: "Select category",
+      options: [
+        { label: "Milk Storage Tanks", value: "Milk Storage Tanks" },
+        { label: "Cooling Silos", value: "Cooling Silos" },
+        { label: "Processing Tanks", value: "Processing Tanks" },
+        { label: "Buffer Tanks", value: "Buffer Tanks" },
+        { label: "Fermentation Tanks", value: "Fermentation Tanks" }
+      ]
     },
     {
       key: "location",
@@ -74,11 +86,21 @@ export default function SilosPage() {
       type: "text" as const,
       placeholder: "Filter by location"
     },
+    // <SelectItem value="active">Active</SelectItem>
+    // <SelectItem value="inactive">Inactive</SelectItem>
+    // <SelectItem value="maintenance">Maintenance</SelectItem>
+    // <SelectItem value="offline">Offline</SelectItem>
     {
       key: "status",
       label: "Status",
-      type: "text" as const,
-      placeholder: "Filter by status"
+      type: "select" as const,
+      placeholder: "Filter by status",
+      options: [
+        { label: "Active", value: "active" },
+        { label: "Inactive", value: "inactive" },
+        { label: "Maintenance", value: "maintenance" },
+        { label: "Offline", value: "offline" }
+      ]
     },
     {
       key: "capacity",
