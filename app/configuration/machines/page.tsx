@@ -65,9 +65,28 @@ export default function MachinesPage() {
     {
       key: "category",
       label: "Category",
-      type: "text" as const,
-      placeholder: "Filter by category"
+      type: "select" as const,
+      placeholder: "Select Category",
+      options: [
+        { label: "Pasteurizing Machines", value: "Pasteurizing Machines" },
+        { label: "Separator Machines", value: "Separator Machines" },
+        { label: "Homogenizer Machines", value: "Homogenizer Machines" },
+        { label: "Packaging Machines", value: "Packaging Machines" },
+        { label: "Cooling Machines", value: "Cooling Machines" }
+      ]
     },
+    // <SelectItem value="Pasteurizing Machines">Pasteurizing Machines</SelectItem>
+    //                       <SelectItem value="Separator Machines">Separator Machines</SelectItem>
+    //                       <SelectItem value="Homogenizer Machines">Homogenizer Machines</SelectItem>
+    //                       <SelectItem value="Packaging Machines">Packaging Machines</SelectItem>
+    //                       <SelectItem value="Cooling Machines">Cooling Machines</SelectItem>
+    // {
+    //   key: "department",
+    //   label: "Department", 
+    //   type: "select" as const,
+    //   options: departments.map(dept => ({ label: dept, value: dept })),
+    //   placeholder: "Select department"
+    // },
     {
       key: "location",
       label: "Location",
@@ -77,8 +96,14 @@ export default function MachinesPage() {
     {
       key: "status",
       label: "Status",
-      type: "text" as const,
-      placeholder: "Filter by status"
+      type: "select" as const,
+      placeholder: "Select Status",
+      options: [
+        { label: "Active", value: "active" },
+        { label: "Inactive", value: "inactive" },
+        { label: "Maintenance", value: "maintenance" },
+        { label: "Offline", value: "offline" }
+      ]
     }
   ], [])
 

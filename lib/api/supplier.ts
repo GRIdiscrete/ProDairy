@@ -16,18 +16,21 @@ export const supplierApi = {
     // Build query parameters for filter endpoint
     const queryParams = new URLSearchParams()
     
-    // Map common filters to API parameters (assuming similar structure to machines)
+    // Map common filters to API parameters
     if (filters.search) {
       queryParams.append('first_name', filters.search)
     }
-    if (filters.company) {
-      queryParams.append('company', filters.company)
+    if (filters.first_name) {
+      queryParams.append('first_name', filters.first_name)
+    }
+    if (filters.last_name) {
+      queryParams.append('last_name', filters.last_name)
     }
     if (filters.email) {
       queryParams.append('email', filters.email)
     }
-    if (filters.phone) {
-      queryParams.append('phone', filters.phone)
+    if (filters.phone_number) {
+      queryParams.append('phone_number', filters.phone_number)
     }
     if (filters.dateRange?.from) {
       queryParams.append('created_after', filters.dateRange.from)
@@ -38,7 +41,7 @@ export const supplierApi = {
     
     // Add any other custom filters
     Object.keys(filters).forEach(key => {
-      if (!['search', 'company', 'email', 'phone', 'dateRange'].includes(key) && filters[key]) {
+      if (!['search', 'first_name', 'last_name', 'email', 'phone_number', 'dateRange'].includes(key) && filters[key]) {
         queryParams.append(key, filters[key])
       }
     })
