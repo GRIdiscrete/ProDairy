@@ -5,6 +5,7 @@ import type React from "react"
 import { useState } from "react"
 import { Sidebar } from "./sidebar"
 import { Header } from "./header"
+import { AdminSidebar } from "./admin-sidebar"
 
 interface MainLayoutProps {
   children: React.ReactNode
@@ -17,7 +18,7 @@ export function MainLayout({ children, title, subtitle }: MainLayoutProps) {
 
   return (
     <div className="flex min-h-screen from-[#f8f9ff] via-[#f0f2ff] to-[#e8ebff]">
-      <Sidebar collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed(!sidebarCollapsed)} />
+      <AdminSidebar collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed(!sidebarCollapsed)} />
       <div className="flex flex-1 flex-col">
         <Header title={title} subtitle={subtitle} />
         <main className="flex-1 p-6">{children}</main>

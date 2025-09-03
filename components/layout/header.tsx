@@ -1,8 +1,8 @@
 "use client"
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { Search, Bell, MapPin, ChevronDown, LogOut, User, Settings, HelpCircle } from "lucide-react"
+import { useState, useEffect } from "react"
+import { useRouter, usePathname } from "next/navigation"
+import { Search, Bell, MapPin, ChevronDown, LogOut, User, Settings, HelpCircle, Users, Truck, ClipboardList } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -15,7 +15,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { useAppSelector } from "@/lib/store"
+import { useAppDispatch, useAppSelector } from "@/lib/store"
+import { logoutUser } from "@/lib/store/slices/authSlice"
 import { motion, AnimatePresence } from "framer-motion"
 
 interface HeaderProps {
@@ -24,13 +25,63 @@ interface HeaderProps {
 }
 
 export function Header({ title = "Dashboard", subtitle = "Welcome back!" }: HeaderProps) {
-  const currentUser = useAppSelector((state) => state.user.currentUser)
+  const dispatch = useAppDispatch()
+  const { user, profile, isAuthenticated } = useAppSelector((state) => state.auth)
   const router = useRouter()
+  const pathname = usePathname()
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false)
+  const [isClient, setIsClient] = useState(false)
 
-  const handleLogout = () => {
-    document.cookie = "auth-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT"
+  // Prevent hydration mismatch
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
+
+  const handleLogout = async () => {
+    await dispatch(logoutUser())
     router.push("/login")
+  }
+
+  // Dashboard configuration
+  const dashboards = [
+    {
+      id: "admin",
+      name: "Admin Dashboard",
+      icon: Users,
+      path: "/admin",
+      emoji: "🧑‍💻",
+      description: "System administration and management"
+    },
+    {
+      id: "drivers",
+      name: "Drivers UI",
+      icon: Truck,
+      path: "/drivers",
+      emoji: "🚚",
+      description: "Driver tools and delivery management"
+    },
+    {
+      id: "data-capture",
+      name: "Data Capture",
+      icon: ClipboardList,
+      path: "/data-capture",
+      emoji: "📋",
+      description: "Data entry and laboratory management"
+    }
+  ]
+
+  // Get current dashboard based on pathname
+  const getCurrentDashboard = () => {
+    if (pathname.startsWith("/admin")) return dashboards[0]
+    if (pathname.startsWith("/drivers")) return dashboards[1]
+    if (pathname.startsWith("/data-capture")) return dashboards[2]
+    return dashboards[0] // Default to admin
+  }
+
+  const currentDashboard = getCurrentDashboard()
+
+  const handleDashboardSwitch = (dashboardPath: string) => {
+    router.push(dashboardPath)
   }
 
   return (
@@ -41,8 +92,58 @@ export function Header({ title = "Dashboard", subtitle = "Welcome back!" }: Head
         className="pointer-events-none h-[2px] w-full bg-[linear-gradient(90deg,rgba(59,130,246,0.15),rgba(132,204,22,0.15))]"
       />
       <div className="flex h-16 items-center justify-between px-3 md:px-6">
-        {/* Left: Title */}
-       
+        {/* Left: Dashboard Switcher */}
+        <div className="flex items-center">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button 
+                variant="ghost" 
+                className="flex items-center gap-2 px-3 py-2 hover:bg-zinc-100"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">{currentDashboard.emoji}</span>
+                  <div className="hidden md:block text-left">
+                    <p className="text-sm font-medium text-zinc-900">
+                      {currentDashboard.name}
+                    </p>
+                    <p className="text-xs text-zinc-500">
+                      {currentDashboard.description}
+                    </p>
+                  </div>
+                </div>
+                <ChevronDown className="h-4 w-4 text-zinc-500" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-80" sideOffset={6}>
+              <DropdownMenuLabel className="font-medium">Switch Dashboard</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {dashboards.map((dashboard) => (
+                <DropdownMenuItem
+                  key={dashboard.id}
+                  onClick={() => handleDashboardSwitch(dashboard.path)}
+                  className={`cursor-pointer p-3 ${
+                    currentDashboard.id === dashboard.id 
+                      ? "bg-blue-50 text-blue-900" 
+                      : "hover:bg-zinc-50"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="text-xl">{dashboard.emoji}</span>
+                    <div className="flex-1">
+                      <p className="font-medium">{dashboard.name}</p>
+                      <p className="text-xs text-zinc-500">{dashboard.description}</p>
+                    </div>
+                    {currentDashboard.id === dashboard.id && (
+                      <Badge variant="default" className="text-xs">
+                        Current
+                      </Badge>
+                    )}
+                  </div>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
 
         {/* Center: Search (desktop) */}
         <div className="hidden md:block flex-1 px-6">
@@ -88,27 +189,40 @@ export function Header({ title = "Dashboard", subtitle = "Welcome back!" }: Head
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="group flex items-center gap-2 rounded-xl px-2 py-1.5 transition-colors hover:bg-zinc-100">
-                <Avatar className="h-8 w-8 ring-1 ring-zinc-200">
-                  <AvatarImage src={currentUser?.avatar || "/placeholder.svg"} alt={currentUser?.name} />
-                  <AvatarFallback className="text-[10px] font-light">
-                    {currentUser?.name?.split(" ").map((n) => n[0]).join("") || "PD"}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="hidden text-left md:block">
-                  <p className="text-sm font-light leading-4 text-zinc-900">
-                    {currentUser?.name || "ProDairy User"}
-                  </p>
-                  <p className="text-xs font-extralight text-zinc-500">
-                    {currentUser?.email || "user@prodairy.co.zw"}
-                  </p>
-                </div>
+                {isClient && (
+                  <>
+                    <Avatar className="h-8 w-8 ring-1 ring-zinc-200">
+                      <AvatarImage 
+                        src={user?.avatar || undefined} 
+                        alt={profile ? `${profile.first_name} ${profile.last_name}` : "User"} 
+                      />
+                      <AvatarFallback className="text-[10px] font-light bg-gradient-to-br from-blue-500 to-purple-600 text-white">
+                        {profile && profile.first_name && profile.last_name 
+                          ? `${profile.first_name[0]}${profile.last_name[0]}` 
+                          : "U"
+                        }
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="hidden text-left md:block">
+                      <p className="text-sm font-light leading-4 text-zinc-900">
+                        {profile ? `${profile.first_name} ${profile.last_name}` : "ProDairy User"}
+                      </p>
+                      <p className="text-xs font-extralight text-zinc-500">
+                        {profile?.email || user?.email || "user@prodairy.co.zw"}
+                      </p>
+                    </div>
+                  </>
+                )}
                 <ChevronDown className="hidden h-4 w-4 text-zinc-500 md:block" />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56" sideOffset={6}>
               <DropdownMenuLabel className="font-light">My Account</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="cursor-pointer">
+              <DropdownMenuItem 
+                className="cursor-pointer"
+                onClick={() => router.push('/profile')}
+              >
                 <User className="mr-2 h-4 w-4" />
                 Profile
               </DropdownMenuItem>
@@ -133,7 +247,7 @@ export function Header({ title = "Dashboard", subtitle = "Welcome back!" }: Head
         </div>
       </div>
 
-      {/* Mobile search sheet */}
+      {/* Mobile search and dashboard switcher */}
       <AnimatePresence initial={false}>
         {mobileSearchOpen && (
           <motion.div
@@ -144,13 +258,42 @@ export function Header({ title = "Dashboard", subtitle = "Welcome back!" }: Head
             transition={{ duration: 0.2 }}
             className="border-t border-zinc-200 px-3 pb-3 pt-2 md:hidden"
           >
-            <div className="relative">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
-              <Input
-                autoFocus
-                placeholder="Search telemetry, batches, users…"
-                className="w-full rounded-xl border-zinc-200 bg-white pl-9 pr-3 text-sm font-light placeholder:text-zinc-400 focus:border-lime-400 focus:ring-2 focus:ring-blue-500/30"
-              />
+            <div className="space-y-3">
+              {/* Mobile Dashboard Switcher */}
+              <div className="space-y-2">
+                <p className="text-xs font-medium text-zinc-500 uppercase tracking-wide">Switch Dashboard</p>
+                <div className="grid grid-cols-1 gap-2">
+                  {dashboards.map((dashboard) => (
+                    <Button
+                      key={dashboard.id}
+                      variant={currentDashboard.id === dashboard.id ? "default" : "outline"}
+                      onClick={() => {
+                        handleDashboardSwitch(dashboard.path)
+                        setMobileSearchOpen(false)
+                      }}
+                      className="justify-start h-auto p-3"
+                    >
+                      <div className="flex items-center gap-3 w-full">
+                        <span className="text-lg">{dashboard.emoji}</span>
+                        <div className="text-left flex-1">
+                          <p className="font-medium text-sm">{dashboard.name}</p>
+                          <p className="text-xs opacity-70">{dashboard.description}</p>
+                        </div>
+                      </div>
+                    </Button>
+                  ))}
+                </div>
+              </div>
+              
+              {/* Mobile Search */}
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+                <Input
+                  autoFocus
+                  placeholder="Search telemetry, batches, users…"
+                  className="w-full rounded-xl border-zinc-200 bg-white pl-9 pr-3 text-sm font-light placeholder:text-zinc-400 focus:border-lime-400 focus:ring-2 focus:ring-blue-500/30"
+                />
+              </div>
             </div>
           </motion.div>
         )}

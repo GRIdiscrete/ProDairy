@@ -6,6 +6,7 @@ import { yupResolver } from "@hookform/resolvers/yup"
 import * as yup from "yup"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
+import { useIsMobile } from "@/hooks/use-mobile"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Truck, User, Package, Plus, Trash2 } from "lucide-react"
@@ -65,6 +66,7 @@ export function DriverFormDrawer({
 }: DriverFormDrawerProps): JSX.Element {
   const [loading, setLoading] = useState(false)
   const dispatch = useAppDispatch()
+  const isMobile = useIsMobile()
 
   const { operationLoading } = useAppSelector((state) => state.driverForm)
   const { rawMaterials, operationLoading: rawMaterialLoading } = useAppSelector((state) => state.rawMaterial)
@@ -177,7 +179,14 @@ export function DriverFormDrawer({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-[50vw] sm:max-w-[50vw] overflow-y-auto p-6">
+      <SheetContent
+        side={isMobile ? "bottom" : "right"}
+        className={
+          isMobile
+            ? "h-[85vh] w-full max-w-full overflow-y-auto p-6 rounded-t-2xl"
+            : "w-[50vw] sm:max-w-[50vw] overflow-y-auto p-6"
+        }
+      >
         <SheetHeader className="mb-6">
           <SheetTitle className="flex items-center gap-2">
             <Truck className="w-5 h-5" />
