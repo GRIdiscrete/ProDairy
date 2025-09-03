@@ -13,6 +13,8 @@ interface RolesState {
     delete: boolean
     fetch: boolean
   }
+  lastFetched: number | null
+  isInitialized: boolean
 }
 
 const initialState: RolesState = {
@@ -26,18 +28,37 @@ const initialState: RolesState = {
     delete: false,
     fetch: false,
   },
+  lastFetched: null,
+  isInitialized: false,
 }
 
 // Async thunks
 export const fetchRoles = createAsyncThunk(
   'roles/fetchRoles',
-  async (params: { filters?: TableFilters } = {}, { rejectWithValue }) => {
+  async (params: { filters?: TableFilters } = {}, { rejectWithValue, getState }) => {
     try {
+      const state = getState() as { roles: RolesState }
+      const { lastFetched, isInitialized } = state.roles
+      
+      // Prevent duplicate requests within 5 seconds
+      const now = Date.now()
+      if (isInitialized && lastFetched && (now - lastFetched) < 5000) {
+        console.log('Roles fetch skipped - too recent')
+        return state.roles.roles
+      }
+      
       const response = await rolesApi.getRoles(params)
       return response.data
     } catch (error: any) {
       const message = error?.response?.data?.message || error?.message || 'Failed to fetch roles'
       return rejectWithValue(message)
+    }
+  },
+  {
+    // Add condition to prevent multiple pending requests
+    condition: (_, { getState }) => {
+      const state = getState() as { roles: RolesState }
+      return !state.roles.loading
     }
   }
 )
@@ -118,6 +139,8 @@ const rolesSlice = createSlice({
       .addCase(fetchRoles.fulfilled, (state, action) => {
         state.operationLoading.fetch = false
         state.roles = action.payload
+        state.lastFetched = Date.now()
+        state.isInitialized = true
       })
       .addCase(fetchRoles.rejected, (state, action) => {
         state.operationLoading.fetch = false

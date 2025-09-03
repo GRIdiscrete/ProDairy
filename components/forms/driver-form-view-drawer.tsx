@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
+import { useIsMobile } from "@/hooks/use-mobile"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Truck, Package, Calendar, User, Edit, Trash2, CheckCircle, XCircle } from "lucide-react"
@@ -27,6 +28,7 @@ export function DriverFormViewDrawer({
 }: DriverFormViewDrawerProps): JSX.Element {
   const [loading, setLoading] = useState(false)
   const dispatch = useAppDispatch()
+  const isMobile = useIsMobile()
 
   const { operationLoading } = useAppSelector((state) => state.driverForm)
 
@@ -60,7 +62,14 @@ export function DriverFormViewDrawer({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-[50vw] sm:max-w-[50vw] overflow-y-auto p-6">
+      <SheetContent
+        side={isMobile ? "bottom" : "right"}
+        className={
+          isMobile
+            ? "h-[85vh] w-full max-w-full overflow-y-auto p-6 rounded-t-2xl"
+            : "w-[50vw] sm:max-w-[50vw] overflow-y-auto p-6"
+        }
+      >
         <SheetHeader className="mb-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
