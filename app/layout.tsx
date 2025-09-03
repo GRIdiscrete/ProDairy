@@ -4,6 +4,7 @@ import "./globals.css"
 import { ReduxProvider } from "@/lib/providers/redux-provider"
 import { ThemeProvider } from "@/components/theme-provider"
 import { ToastProvider } from "@/components/providers/toast-provider"
+import { AuthProvider } from "@/components/providers/auth-provider"
 
 export const metadata: Metadata = {
   title: "ProDairy Admin - Dairy Management System",
@@ -21,8 +22,10 @@ export default function RootLayout({
       <body className="font-sans antialiased">
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
           <ReduxProvider>
-            {children}
-            <ToastProvider />
+            <AuthProvider>
+              {children}
+              <ToastProvider />
+            </AuthProvider>
           </ReduxProvider>
         </ThemeProvider>
       </body>

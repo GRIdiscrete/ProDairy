@@ -2,11 +2,52 @@ import type { ApiResponse, RawMaterial, TableFilters } from "@/lib/types"
 import { apiRequest, API_CONFIG } from '../config/api'
 
 export const rawMaterialApi = {
-  // Get all raw materials
+  // Get all raw materials with optional filters
   async getRawMaterials(params: {
     filters?: TableFilters
   } = {}): Promise<ApiResponse<RawMaterial[]>> {
-    return apiRequest<ApiResponse<RawMaterial[]>>(API_CONFIG.ENDPOINTS.RAW_MATERIALS)
+    const { filters } = params
+    
+    // If no filters, use the regular endpoint
+    if (!filters || Object.keys(filters).length === 0) {
+      return apiRequest<ApiResponse<RawMaterial[]>>(API_CONFIG.ENDPOINTS.RAW_MATERIALS)
+    }
+    
+    // Build query parameters for filter endpoint
+    const queryParams = new URLSearchParams()
+    
+    // Map common filters to API parameters
+    if (filters.search) {
+      queryParams.append('name', filters.search)
+    }
+    if (filters.category) {
+      queryParams.append('category', filters.category)
+    }
+    if (filters.supplier) {
+      queryParams.append('supplier', filters.supplier)
+    }
+    if (filters.status) {
+      queryParams.append('status', filters.status)
+    }
+    if (filters.dateRange?.from) {
+      queryParams.append('created_after', filters.dateRange.from)
+    }
+    if (filters.dateRange?.to) {
+      queryParams.append('created_before', filters.dateRange.to)
+    }
+    
+    // Add any other custom filters
+    Object.keys(filters).forEach(key => {
+      if (!['search', 'category', 'supplier', 'status', 'dateRange'].includes(key) && filters[key]) {
+        queryParams.append(key, filters[key])
+      }
+    })
+    
+    const endpoint = queryParams.toString() 
+      ? `${API_CONFIG.ENDPOINTS.RAW_MATERIALS}/filter?${queryParams.toString()}`
+      : API_CONFIG.ENDPOINTS.RAW_MATERIALS
+      
+    return apiRequest<ApiResponse<RawMaterial[]>>(endpoint)
   },
 
   // Get single raw material by ID

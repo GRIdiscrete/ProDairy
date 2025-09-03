@@ -1,4 +1,5 @@
 import { apiRequest, API_CONFIG } from "../config/api"
+import type { TableFilters } from "@/lib/types"
 
 export interface CreateUserRequest {
   first_name: string
@@ -39,8 +40,51 @@ export const usersApi = {
       body: JSON.stringify(payload),
     })
   },
-  getUsers: async (): Promise<ApiEnvelope<UserEntity[]>> => {
-    return apiRequest<ApiEnvelope<UserEntity[]>>(API_CONFIG.ENDPOINTS.USERS)
+  getUsers: async (params: {
+    filters?: TableFilters
+  } = {}): Promise<ApiEnvelope<UserEntity[]>> => {
+    const { filters } = params
+    
+    // If no filters, use the regular endpoint
+    if (!filters || Object.keys(filters).length === 0) {
+      return apiRequest<ApiEnvelope<UserEntity[]>>(API_CONFIG.ENDPOINTS.USERS)
+    }
+    
+    // Build query parameters for filter endpoint
+    const queryParams = new URLSearchParams()
+    
+    // Map common filters to API parameters
+    if (filters.search) {
+      queryParams.append('first_name', filters.search)
+    }
+    if (filters.email) {
+      queryParams.append('email', filters.email)
+    }
+    if (filters.department) {
+      queryParams.append('department', filters.department)
+    }
+    if (filters.role_id) {
+      queryParams.append('role_id', filters.role_id)
+    }
+    if (filters.dateRange?.from) {
+      queryParams.append('created_after', filters.dateRange.from)
+    }
+    if (filters.dateRange?.to) {
+      queryParams.append('created_before', filters.dateRange.to)
+    }
+    
+    // Add any other custom filters
+    Object.keys(filters).forEach(key => {
+      if (!['search', 'email', 'department', 'role_id', 'dateRange'].includes(key) && filters[key]) {
+        queryParams.append(key, filters[key])
+      }
+    })
+    
+    const endpoint = queryParams.toString() 
+      ? `${API_CONFIG.ENDPOINTS.USERS}/filter?${queryParams.toString()}`
+      : API_CONFIG.ENDPOINTS.USERS
+      
+    return apiRequest<ApiEnvelope<UserEntity[]>>(endpoint)
   },
   getUser: async (id: string): Promise<ApiEnvelope<UserEntity>> => {
     return apiRequest<ApiEnvelope<UserEntity>>(`${API_CONFIG.ENDPOINTS.USERS}/${id}`)
