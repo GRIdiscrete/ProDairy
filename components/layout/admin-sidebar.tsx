@@ -22,6 +22,7 @@ import {
   User,
 } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
+import { useFilteredNavigation } from "@/hooks/use-permissions"
 
 const adminNavigation = [
   { name: "Dashboard", href: "/admin", icon: LayoutDashboard, current: false },
@@ -100,6 +101,9 @@ interface AdminSidebarProps {
 export function AdminSidebar({ collapsed = false, onToggle }: AdminSidebarProps) {
   const pathname = usePathname()
   const [openDropdowns, setOpenDropdowns] = useState<string[]>([])
+  
+  // Filter navigation based on user permissions
+  const filteredNavigation = useFilteredNavigation(adminNavigation)
 
   const toggleDropdown = (itemName: string) => {
     setOpenDropdowns((prev) =>
@@ -202,7 +206,7 @@ export function AdminSidebar({ collapsed = false, onToggle }: AdminSidebarProps)
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto px-3 py-3">
         <ul className="space-y-1">
-          {adminNavigation.map((item) => {
+          {filteredNavigation.map((item) => {
             const isActive = pathname === item.href || pathname.startsWith(item.href + "/")
             const isDropdownOpen =
               openDropdowns.includes(item.name) ||
