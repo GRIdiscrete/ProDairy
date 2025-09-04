@@ -1,27 +1,52 @@
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit"
 import { usersApi, type CreateUserRequest, type UpdateUserRequest, type UserEntity } from "@/lib/api/users"
+import type { TableFilters } from "@/lib/types"
 
 export interface UsersState {
   items: UserEntity[]
   loading: boolean
   error: string | null
+  lastFetched: number | null
+  isInitialized: boolean
 }
 
 const initialState: UsersState = {
   items: [],
   loading: false,
   error: null,
+  lastFetched: null,
+  isInitialized: false,
 }
 
-export const fetchUsers = createAsyncThunk("users/fetchAll", async (_, { rejectWithValue }) => {
-  try {
-    const res = await usersApi.getUsers()
-    return res.data
-  } catch (error: any) {
-    const message = error?.response?.data?.message || error?.body?.message || error?.message || "Failed to fetch users"
-    return rejectWithValue(message)
+export const fetchUsers = createAsyncThunk(
+  "users/fetchAll", 
+  async (params: { filters?: TableFilters } = {}, { rejectWithValue, getState }) => {
+    try {
+      const state = getState() as { users: UsersState }
+      const { lastFetched, isInitialized } = state.users
+      
+      // Prevent duplicate requests within 5 seconds
+      const now = Date.now()
+      if (isInitialized && lastFetched && (now - lastFetched) < 5000) {
+        console.log('Users fetch skipped - too recent')
+        return state.users.items
+      }
+      
+      const res = await usersApi.getUsers(params)
+      return res.data
+    } catch (error: any) {
+      const message = error?.response?.data?.message || error?.body?.message || error?.message || "Failed to fetch users"
+      return rejectWithValue(message)
+    }
+  },
+  {
+    // Add condition to prevent multiple pending requests
+    condition: (_, { getState }) => {
+      const state = getState() as { users: UsersState }
+      return !state.users.loading
+    }
   }
-})
+)
 
 export const createUser = createAsyncThunk("users/create", async (payload: CreateUserRequest, { rejectWithValue }) => {
   try {
@@ -71,6 +96,8 @@ const usersSlice = createSlice({
       .addCase(fetchUsers.fulfilled, (state, action: PayloadAction<UserEntity[]>) => {
         state.loading = false
         state.items = action.payload
+        state.lastFetched = Date.now()
+        state.isInitialized = true
       })
       .addCase(fetchUsers.rejected, (state, action) => {
         state.loading = false

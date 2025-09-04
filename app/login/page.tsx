@@ -1,71 +1,307 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import React, { useState, useMemo, useEffect } from "react"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
-import { Fingerprint } from "lucide-react"
+import { useDispatch } from "react-redux"
+import { Fingerprint, Loader2 } from "lucide-react"
 import { motion } from "framer-motion"
+import { loginUser, clearError } from "@/lib/store/slices/authSlice"
+import { useAuth } from "@/hooks/use-auth"
+import { toast } from "sonner"
+import type { AppDispatch } from "@/lib/store"
+import * as yup from "yup"
 
 export default function LoginPage() {
   const [formData, setFormData] = useState({ email: "", password: "" })
   const [isUsingFingerprint, setIsUsingFingerprint] = useState(false)
   const [submitting, setSubmitting] = useState(false)
-  const [error, setError] = useState("")
+  const [validationErrors, setValidationErrors] = useState<{ [key: string]: string }>({})
+  const [isFormValid, setIsFormValid] = useState(false)
   const router = useRouter()
+  const dispatch = useDispatch<AppDispatch>()
+  const { isLoading, error, isAuthenticated } = useAuth()
 
-  const handleSubmit = async (e: React.FormEvent) => {
+
+  // Yup validation schema
+  const loginSchema = yup.object().shape({
+    email: yup
+      .string()
+      .required("Email is required")
+      .email("Please enter a valid email address"),
+    password: yup
+      .string()
+      .required("Password is required")
+      .min(6, "Password must be at least 6 characters"),
+  })
+
+    const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // setError("")
-    router.push("/")
-    // setSubmitting(true)
-    // try {
-    //   const res = await fetch(
-    //     "https://ckwkcg0o80cckkg0oog8okk8.greatssystems.co.zw/docs/api/users",
-    //     { cache: "no-store" }
-    //   )
-    //   if (!res.ok) throw new Error("Failed to connect to authentication service")
-    //   const users = await res.json()
+    
+    console.log("Form submission started with data:", formData)
 
-    //   const user = users.find(
-    //     (u: any) => u.email === formData.email && u.password === formData.password
-    //   )
-
-    //   if (user) {
-    //     sessionStorage.setItem("userId", user.id)
-    //     sessionStorage.setItem("role", user.role)
-    //     sessionStorage.setItem("name", `${user.first_name} ${user.last_name}`)
-    //     document.cookie = "auth-token=authenticated; path=/"
-    //     router.push("/")
-    //   } else {
-    //     setError("Invalid email or password")
-    //   }
-    // } catch (err) {
-    //   console.error(err)
-    //   setError("Authentication failed. Please try again.")
-    // } finally {
-    //   setSubmitting(false)
-    // }
+    // Clear previous errors and reset profile fetch success
+    setValidationErrors({})
+    setProfileFetchSuccess(false)
+    dispatch(clearError())
+    
+    try {
+      // Validate form data with Yup
+      await loginSchema.validate(formData, { abortEarly: false })
+      
+      setSubmitting(true)
+      
+      try {
+        const result = await dispatch(loginUser(formData)).unwrap()
+        console.log("Login successful:", result)
+        
+        // Show success toast
+        toast.success("Welcome back! Redirecting to dashboard...")
+        
+        // Set profile fetch success flag to trigger immediate redirect
+        setProfileFetchSuccess(true)
+      } catch (err: any) {
+        console.error("Login failed:", err)
+        console.log("Error details:", {
+          statusCode: err.statusCode,
+          message: err.message,
+          fullError: err
+        })
+        
+        // Handle API error responses with toast notifications
+        // The error structure from our custom error object
+        console.log('Toast error handling - Full error object:', err)
+        
+        // Extract statusCode and message from the error structure
+        let statusCode = 500
+        let message = "Login failed"
+        
+        if (err && typeof err === 'object') {
+          // Check if statusCode is directly on the error object
+          if (err.statusCode) {
+            statusCode = err.statusCode
+          }
+          // Check if statusCode is in the apiError property
+          else if (err.apiError && err.apiError.statusCode) {
+            statusCode = err.apiError.statusCode
+          }
+          // Check if statusCode is in the message (fallback)
+          else if (err.message && err.message.includes('400')) {
+            statusCode = 400
+          }
+          
+          // Extract message
+          if (err.message) {
+            message = err.message
+          } else if (err.apiError && err.apiError.message) {
+            message = err.apiError.message
+          }
+        }
+        
+        console.log('Toast error handling - Extracted:', { statusCode, message })
+        
+        if (statusCode === 400) {
+          if (err.message === "missing email or phone") {
+            toast.error("Please provide both email and password")
+          } else if (message === "Invalid login credentials") {
+            console.log('Showing toast for Invalid login credentials')
+            toast.error("Invalid email or password. Please check your credentials and try again.")
+          } else {
+            toast.error(message || "Invalid credentials")
+          }
+        } else if (statusCode === 401) {
+          toast.error("Invalid email or password")
+        } else if (statusCode === 500) {
+          toast.error("Server error. Please try again later.")
+        } else {
+          toast.error(message || "Login failed. Please try again.")
+        }
+      }
+    } catch (validationErr: any) {
+      // Handle Yup validation errors
+      if (validationErr.inner) {
+        const errors: { [key: string]: string } = {}
+        validationErr.inner.forEach((error: any) => {
+          if (error.path) {
+            errors[error.path] = error.message
+          }
+        })
+        setValidationErrors(errors)
+      }
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   const handleFingerprintLogin = async () => {
     setIsUsingFingerprint(true)
-    setError("")
+    setSubmitting(true) // Also set submitting state for consistency
+    setValidationErrors({})
+    setProfileFetchSuccess(false) // Reset profile fetch success flag
+    dispatch(clearError())
+    
     try {
       // Simulated biometric auth; hook up WebAuthn later
       await new Promise((r) => setTimeout(r, 1600))
-      document.cookie = "auth-token=authenticated; path=/"
-      router.push("/")
-    } catch (error) {
+      // For demo purposes, use a default account
+      const result = await dispatch(loginUser({ 
+        email: "bmwale@gmail.com", 
+        password: "password" 
+      })).unwrap()
+      console.log("Fingerprint login successful:", result)
+      
+      // Show success toast
+      toast.success("Welcome back! Redirecting to dashboard...")
+      
+      // Set profile fetch success flag to trigger immediate redirect
+      setProfileFetchSuccess(true)
+    } catch (error: any) {
       console.error("Fingerprint authentication failed:", error)
-      setError("Fingerprint authentication failed")
+      
+      // Handle API error responses for fingerprint login with toast
+      const statusCode = error.statusCode || error.apiError?.statusCode || 500
+      const message = error.message || error.apiError?.message || "Authentication failed"
+      
+      if (statusCode === 400) {
+        if (message === "missing email or phone") {
+          toast.error("Authentication failed. Please try again.")
+        } else if (message === "Invalid login credentials") {
+          toast.error("Invalid credentials. Please try again.")
+        } else {
+          toast.error(message || "Authentication failed")
+        }
+      } else if (statusCode === 401) {
+        toast.error("Authentication failed. Please try again.")
+      } else {
+        toast.error(message || "Authentication failed. Please try again.")
+      }
     } finally {
       setIsUsingFingerprint(false)
+      setSubmitting(false) // Reset submitting state
     }
   }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }))
+    const fieldName = e.target.name
+    const fieldValue = e.target.value
+    
+    setFormData((prev) => ({ ...prev, [fieldName]: fieldValue }))
+    
+    // Clear validation error for this field when user starts typing
+    if (validationErrors[fieldName]) {
+      setValidationErrors(prev => {
+        const newErrors = { ...prev }
+        delete newErrors[fieldName]
+        return newErrors
+      })
+    }
+    
+
+    
+    // Validate the field immediately if it has a value
+    if (fieldValue.trim()) {
+      validateField(fieldName, fieldValue)
+    }
   }
+
+  const validateField = async (fieldName: string, fieldValue: string) => {
+    try {
+      await loginSchema.validateAt(fieldName, { [fieldName]: fieldValue })
+      // Field is valid, ensure no error is shown
+      if (validationErrors[fieldName]) {
+        setValidationErrors(prev => {
+          const newErrors = { ...prev }
+          delete newErrors[fieldName]
+          return newErrors
+        })
+      }
+      
+      // Check if entire form is now valid
+      checkFormValidity()
+    } catch (err: any) {
+      // Field is invalid, but don't show error while user is typing
+      // Error will be shown on blur
+    }
+  }
+
+  const checkFormValidity = async () => {
+    try {
+      await loginSchema.validate(formData, { abortEarly: false })
+      setIsFormValid(true)
+    } catch (err: any) {
+      setIsFormValid(false)
+    }
+  }
+
+  const handleInputBlur = async (e: React.FocusEvent<HTMLInputElement>) => {
+    const fieldName = e.target.name
+    const fieldValue = e.target.value
+    
+    try {
+      // Validate only this field
+      await loginSchema.validateAt(fieldName, { [fieldName]: fieldValue })
+      
+      // Clear validation error for this field if validation passes
+      if (validationErrors[fieldName]) {
+        setValidationErrors(prev => {
+          const newErrors = { ...prev }
+          delete newErrors[fieldName]
+          return newErrors
+        })
+      }
+    } catch (err: any) {
+      // Set validation error for this field
+      setValidationErrors(prev => ({
+        ...prev,
+        [fieldName]: err.message
+      }))
+    }
+  }
+
+  // Redirect if already authenticated (but only if not in the middle of a login)
+  useEffect(() => {
+    console.log("Login page useEffect - isAuthenticated:", isAuthenticated, "submitting:", submitting, "isUsingFingerprint:", isUsingFingerprint)
+    
+    if (isAuthenticated && !submitting && !isUsingFingerprint) {
+      console.log("Authentication detected and login process complete, scheduling redirect...")
+      // Add a small delay to ensure all state updates are complete
+      const redirectTimer = setTimeout(() => {
+        console.log("Executing redirect to dashboard...")
+        // Use replace to prevent back button issues
+        router.replace("/")
+      }, 200) // 200ms delay to ensure state synchronization
+      
+      return () => clearTimeout(redirectTimer)
+    } else if (isAuthenticated && (submitting || isUsingFingerprint)) {
+      console.log("Authentication detected but login process still active, waiting...")
+    }
+  }, [isAuthenticated, submitting, isUsingFingerprint, router])
+
+  // Direct listener for profile fetch success - more reliable than waiting for Redux state
+  const [profileFetchSuccess, setProfileFetchSuccess] = useState(false)
+  
+  useEffect(() => {
+    if (profileFetchSuccess) {
+      console.log("Profile fetch success detected, redirecting to dashboard...")
+      // Immediate redirect after profile fetch success
+      router.replace("/")
+    }
+  }, [profileFetchSuccess, router])
+
+  // Check form validity when form data changes
+  useEffect(() => {
+    checkFormValidity()
+  }, [formData])
+
+  // Clear errors when component unmounts
+  useEffect(() => {
+    return () => {
+      setValidationErrors({})
+      setProfileFetchSuccess(false)
+    }
+  }, [])
+
+
 
   const dots = useMemo(() => Array.from({ length: 40 }), [])
 
@@ -201,9 +437,16 @@ export default function LoginPage() {
                       placeholder="you@prodairy.co.zw"
                       value={formData.email}
                       onChange={handleInputChange}
-                      className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-zinc-900 outline-none ring-0 transition placeholder:text-zinc-400 focus:border-lime-400 focus:ring-2 focus:ring-blue-500/30"
-                      required
+                      onBlur={handleInputBlur}
+                      className={`w-full rounded-xl border bg-white px-4 py-3 text-zinc-900 outline-none ring-0 transition placeholder:text-zinc-400 focus:ring-2 focus:ring-blue-500/30 ${
+                        validationErrors.email 
+                          ? 'border-red-300 focus:border-red-400' 
+                          : 'border-zinc-200 focus:border-lime-400'
+                      }`}
                     />
+                    {validationErrors.email && (
+                      <p className="mt-1 text-sm text-red-600">{validationErrors.email}</p>
+                    )}
                   </label>
                   <label className="block">
                     <span className="mb-1 block text-sm text-zinc-600">Password</span>
@@ -214,9 +457,16 @@ export default function LoginPage() {
                       placeholder="••••••••"
                       value={formData.password}
                       onChange={handleInputChange}
-                      className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-zinc-900 outline-none ring-0 transition placeholder:text-zinc-400 focus:border-lime-400 focus:ring-2 focus:ring-blue-500/30"
-                      required
+                      onBlur={handleInputBlur}
+                      className={`w-full rounded-xl border bg-white px-4 py-3 text-zinc-900 outline-none ring-0 transition placeholder:text-zinc-400 focus:ring-2 focus:ring-blue-500/30 ${
+                        validationErrors.password 
+                          ? 'border-red-300 focus:border-red-400' 
+                          : 'border-zinc-200 focus:border-lime-400'
+                      }`}
                     />
+                    {validationErrors.password && (
+                      <p className="mt-1 text-sm text-red-600">{validationErrors.password}</p>
+                    )}
                   </label>
 
                   <div className="flex items-center justify-between text-sm">
@@ -227,18 +477,56 @@ export default function LoginPage() {
                     <a href="#" className="font-medium text-blue-700 hover:underline">Forgot password?</a>
                   </div>
 
-                  {error && (
-                    <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">
-                      {error}
-                    </p>
-                  )}
+
+
+                  {/* Show validation summary */}
+                  {/* {Object.keys(validationErrors).length > 0 && (
+                    <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 animate-in slide-in-from-top-2 duration-200">
+                      <p className="text-sm text-amber-800 font-medium mb-1">Please fix the following errors:</p>
+                      <ul className="text-sm text-amber-700 space-y-1">
+                        {Object.entries(validationErrors).map(([field, message]) => (
+                          <li key={field} className="flex items-center gap-2">
+                            <span className="w-2 h-2 bg-amber-500 rounded-full"></span>
+                            <span className="capitalize">{field}:</span> {message}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )} */}
+
+                  {/* Show success message when form is valid */}
+                  {/* {isFormValid && Object.keys(validationErrors).length === 0 && (
+                    <div className="rounded-lg border border-green-200 bg-green-50 px-3 py-2 animate-in slide-in-from-top-2 duration-200">
+                      <p className="text-sm text-green-800 font-medium flex items-center gap-2">
+                        <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                        Form is ready! You can now sign in.
+                      </p>
+                    </div>
+                  )} */}
 
                   <button
                     type="submit"
                     disabled={submitting || isUsingFingerprint}
-                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-lime-600 px-4 py-3 font-semibold text-white shadow-lg transition-all hover:brightness-110 disabled:opacity-50"
+                    className={`flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 font-semibold text-white shadow-lg transition-all disabled:opacity-50 ${
+                      Object.keys(validationErrors).length > 0
+                        ? 'bg-gradient-to-r from-amber-500 to-orange-500 hover:brightness-110'
+                        : isFormValid
+                        ? 'bg-gradient-to-r from-green-500 to-emerald-500 hover:brightness-110'
+                        : 'bg-gradient-to-r from-blue-600 to-lime-600 hover:brightness-110'
+                    }`}
                   >
-                    {submitting ? "Signing in…" : "Sign in"}
+                    {submitting ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Signing in…
+                      </>
+                    ) : Object.keys(validationErrors).length > 0 ? (
+                      "Fix errors to continue"
+                    ) : isFormValid ? (
+                      "Ready to sign in ✓"
+                    ) : (
+                      "Sign in"
+                    )}
                   </button>
                 </form>
 

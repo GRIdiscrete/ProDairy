@@ -2,11 +2,55 @@ import type { ApiResponse, Machine, TableFilters } from "@/lib/types"
 import { apiRequest, API_CONFIG } from '../config/api'
 
 export const machineApi = {
-  // Get all machines
+  // Get all machines with optional filters
   async getMachines(params: {
     filters?: TableFilters
   } = {}): Promise<ApiResponse<Machine[]>> {
-    return apiRequest<ApiResponse<Machine[]>>(API_CONFIG.ENDPOINTS.MACHINES)
+    const { filters } = params
+    
+    // If no filters, use the regular endpoint
+    if (!filters || Object.keys(filters).length === 0) {
+      return apiRequest<ApiResponse<Machine[]>>(API_CONFIG.ENDPOINTS.MACHINES)
+    }
+    
+    // Build query parameters for filter endpoint
+    const queryParams = new URLSearchParams()
+    
+    // Map common filters to API parameters
+    if (filters.search) {
+      queryParams.append('name', filters.search)
+    }
+    if (filters.status) {
+      queryParams.append('status', filters.status)
+    }
+    if (filters.category) {
+      queryParams.append('category', filters.category)
+    }
+    if (filters.location) {
+      queryParams.append('location', filters.location)
+    }
+    if (filters.serial_number) {
+      queryParams.append('serial_number', filters.serial_number)
+    }
+    if (filters.dateRange?.from) {
+      queryParams.append('created_after', filters.dateRange.from)
+    }
+    if (filters.dateRange?.to) {
+      queryParams.append('created_before', filters.dateRange.to)
+    }
+    
+    // Add any other custom filters
+    Object.keys(filters).forEach(key => {
+      if (!['search', 'status', 'category', 'location', 'serial_number', 'dateRange'].includes(key) && filters[key]) {
+        queryParams.append(key, filters[key])
+      }
+    })
+    
+    const endpoint = queryParams.toString() 
+      ? `${API_CONFIG.ENDPOINTS.MACHINES}/filter?${queryParams.toString()}`
+      : API_CONFIG.ENDPOINTS.MACHINES
+      
+    return apiRequest<ApiResponse<Machine[]>>(endpoint)
   },
 
   // Get single machine by ID

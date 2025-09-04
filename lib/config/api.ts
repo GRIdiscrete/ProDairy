@@ -7,8 +7,14 @@ export const API_CONFIG = {
     SILOS: '/silo',
     SUPPLIERS: '/supplier',
     RAW_MATERIALS: '/raw-material',
+    PROCESSES: '/process',
+    PRODUCTION_PLANS: '/production-plan',
+    DRIVER_FORMS: '/drivers-form',
   },
 } as const
+
+import { authenticatedFetch } from '@/lib/utils/api-interceptor'
+import { CookieManager } from '@/lib/utils/cookies'
 
 export const apiRequest = async <T>(
   endpoint: string,
@@ -16,19 +22,53 @@ export const apiRequest = async <T>(
 ): Promise<T> => {
   const url = `${API_CONFIG.BASE_URL}${endpoint}`
   
+  // Get authentication state directly from cookies instead of Redux store
+  const cookies = CookieManager.getAuthCookies()
+  const { accessToken } = cookies
+  
+  console.log('API Request Debug:', {
+    url,
+    endpoint,
+    cookiesRetrieved: !!cookies,
+    accessToken: accessToken ? `${accessToken.substring(0, 20)}...` : 'null',
+    hasToken: !!accessToken
+  })
+  
   const config: RequestInit = {
     mode: 'cors',
-    credentials: 'omit',
+    // credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
-      'Access-Control-Allow-Origin': '*',
       ...options.headers,
     },
     ...options,
   }
+  
+  //console the config
+  console.log('token iri', accessToken)
+  
+  // Add Authorization header if we have a token from cookies
+  if (accessToken) {
+    config.headers = {
+      ...config.headers,
+      'Authorization': `Bearer ${accessToken}`,
+    }
+    console.log('Added Authorization header with token from cookies')
+  } else {
+    console.log('No Authorization header added: no token found in cookies')
+  }
+  
+  // Add additional CORS headers for greatssystems.co.zw domain
+  if (url.includes('greatssystems.co.zw')) {
+    config.headers = {
+      ...config.headers,
+      'Origin': typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000',
+      'X-Requested-With': 'XMLHttpRequest',
+    }
+  }
 
-  const response = await fetch(url, config)
+  const response = await authenticatedFetch(url, config)
   
   if (!response.ok) {
     let errorBody: any = null
