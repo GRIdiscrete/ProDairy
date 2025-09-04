@@ -8,16 +8,13 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Separator } from '@/components/ui/separator'
-import { 
-  Drawer,
-  DrawerClose,
-  DrawerContent,
-  DrawerDescription,
-  DrawerFooter,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerTrigger,
-} from '@/components/ui/drawer'
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet'
 import { 
   User, 
   Mail, 
@@ -64,6 +61,7 @@ export function EditProfileDrawer({ open, onOpenChange, profile, user }: EditPro
       })
     }
   }, [profile, user])
+
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -134,252 +132,248 @@ export function EditProfileDrawer({ open, onOpenChange, profile, user }: EditPro
     setProfileImage(null)
   }
 
-  return (
-    <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="max-h-[90vh]">
-        <div className="mx-auto w-full max-w-2xl">
-          <DrawerHeader className="border-b border-gray-200 pb-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <DrawerTitle className="text-xl font-semibold text-gray-900">
-                  Edit Profile
-                </DrawerTitle>
-                <DrawerDescription className="text-gray-600">
-                  Update your personal information and profile picture
-                </DrawerDescription>
-              </div>
-              <DrawerClose asChild>
-                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                  <X className="h-4 w-4" />
-                </Button>
-              </DrawerClose>
-            </div>
-          </DrawerHeader>
-
-          <div className="flex-1 overflow-y-auto p-6 space-y-6">
-            {/* Profile Picture Section */}
-            <div className="space-y-4">
-              <Label className="text-sm font-medium text-gray-700">Profile Picture</Label>
-              <div className="flex items-center space-x-4">
-                <div className="relative">
-                  <Avatar className="h-20 w-20 ring-2 ring-blue-100">
-                    <AvatarImage 
-                      src={profileImage || user?.avatar || undefined} 
-                      alt={`${profile.first_name} ${profile.last_name}`} 
-                    />
-                    <AvatarFallback className="text-xl font-semibold bg-gradient-to-br from-blue-500 to-purple-600 text-white">
-                      {profile.first_name?.[0] || ''}{profile.last_name?.[0] || ''}
-                    </AvatarFallback>
-                  </Avatar>
-                  
-                  {/* Upload Button */}
-                  <div className="absolute -bottom-2 -right-2">
-                    <Label htmlFor="profile-image" className="cursor-pointer">
-                      <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center hover:bg-blue-700 transition-colors shadow-lg">
-                        <Camera className="w-4 h-4 text-white" />
-                      </div>
-                    </Label>
-                    <Input
-                      id="profile-image"
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={handleImageUpload}
-                      disabled={isUploading}
-                    />
-                  </div>
-                </div>
-                
-                <div className="flex-1">
-                  <p className="text-sm text-gray-600 mb-2">
-                    Upload a new profile picture. Supported formats: JPG, PNG, GIF
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    Maximum file size: 5MB
-                  </p>
-                  {isUploading && (
-                    <div className="flex items-center space-x-2 mt-2">
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                      <span className="text-sm text-blue-600">Uploading...</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <Separator />
-
-            {/* Personal Information Form */}
-            <div className="space-y-4">
-              <Label className="text-sm font-medium text-gray-700">Personal Information</Label>
+  // Shared form content component
+  const FormContent = () => (
+    <>
+      <div className="space-y-6">
+        {/* Profile Picture Section */}
+        <div className="space-y-4">
+          <Label className="text-sm font-medium text-gray-700">Profile Picture</Label>
+          <div className="flex items-center space-x-4">
+            <div className="relative">
+              <Avatar className="h-20 w-20 ring-2 ring-blue-100">
+                <AvatarImage 
+                  src={profileImage || user?.avatar || undefined} 
+                  alt={`${profile.first_name} ${profile.last_name}`} 
+                />
+                <AvatarFallback className="text-xl font-semibold bg-gradient-to-br from-blue-500 to-purple-600 text-white">
+                  {profile.first_name?.[0] || ''}{profile.last_name?.[0] || ''}
+                </AvatarFallback>
+              </Avatar>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="first_name" className="text-sm font-medium text-gray-700">
-                    First Name *
-                  </Label>
-                  <Input
-                    id="first_name"
-                    value={formData.first_name}
-                    onChange={(e) => handleInputChange('first_name', e.target.value)}
-                    placeholder="Enter first name"
-                    className="border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="last_name" className="text-sm font-medium text-gray-700">
-                    Last Name *
-                  </Label>
-                  <Input
-                    id="last_name"
-                    value={formData.last_name}
-                    onChange={(e) => handleInputChange('last_name', e.target.value)}
-                    placeholder="Enter last name"
-                    className="border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="email" className="text-sm font-medium text-gray-700">
-                  Email Address *
+              {/* Upload Button */}
+              <div className="absolute -bottom-2 -right-2">
+                <Label htmlFor="profile-image" className="cursor-pointer">
+                  <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center hover:bg-blue-700 transition-colors shadow-lg">
+                    <Camera className="w-4 h-4 text-white" />
+                  </div>
                 </Label>
                 <Input
-                  id="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => handleInputChange('email', e.target.value)}
-                  placeholder="Enter email address"
-                  className="border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="department" className="text-sm font-medium text-gray-700">
-                    Department
-                  </Label>
-                  <Input
-                    id="department"
-                    value={formData.department}
-                    onChange={(e) => handleInputChange('department', e.target.value)}
-                    placeholder="Enter department"
-                    className="border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="phone" className="text-sm font-medium text-gray-700">
-                    Phone Number
-                  </Label>
-                  <Input
-                    id="phone"
-                    value={formData.phone}
-                    onChange={(e) => handleInputChange('phone', e.target.value)}
-                    placeholder="Enter phone number"
-                    className="border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="bio" className="text-sm font-medium text-gray-700">
-                  Bio
-                </Label>
-                <Textarea
-                  id="bio"
-                  value={formData.bio}
-                  onChange={(e) => handleInputChange('bio', e.target.value)}
-                  placeholder="Tell us about yourself..."
-                  rows={3}
-                  className="border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                  id="profile-image"
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleImageUpload}
+                  disabled={isUploading}
                 />
               </div>
             </div>
+            
+            <div className="flex-1">
+              <p className="text-sm text-gray-600 mb-2">
+                Upload a new profile picture. Supported formats: JPG, PNG, GIF
+              </p>
+              <p className="text-xs text-gray-500">
+                Maximum file size: 5MB
+              </p>
+              {isUploading && (
+                <div className="flex items-center space-x-2 mt-2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                  <span className="text-sm text-blue-600">Uploading...</span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
 
-            <Separator />
+        <Separator />
 
-            {/* Account Information (Read-only) */}
-            <div className="space-y-4">
-              <Label className="text-sm font-medium text-gray-700">Account Information</Label>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium text-gray-500">User ID</Label>
-                  <Input
-                    value={profile.id}
-                    disabled
-                    className="bg-gray-50 border-gray-200 text-gray-600"
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium text-gray-500">Role ID</Label>
-                  <Input
-                    value={profile.role_id}
-                    disabled
-                    className="bg-gray-50 border-gray-200 text-gray-600"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium text-gray-500">Member Since</Label>
-                  <Input
-                    value={new Date(profile.created_at).toLocaleDateString()}
-                    disabled
-                    className="bg-gray-50 border-gray-200 text-gray-600"
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium text-gray-500">Last Updated</Label>
-                  <Input
-                    value={profile.updated_at 
-                      ? new Date(profile.updated_at).toLocaleDateString() 
-                      : 'Never'
-                    }
-                    disabled
-                    className="bg-gray-50 border-gray-200 text-gray-600"
-                  />
-                </div>
-              </div>
+        {/* Personal Information Form */}
+        <div className="space-y-4">
+          <Label className="text-sm font-medium text-gray-700">Personal Information</Label>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="first_name" className="text-sm font-medium text-gray-700">
+                First Name *
+              </Label>
+              <Input
+                id="first_name"
+                value={formData.first_name}
+                onChange={(e) => handleInputChange('first_name', e.target.value)}
+                placeholder="Enter first name"
+                className="border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="last_name" className="text-sm font-medium text-gray-700">
+                Last Name *
+              </Label>
+              <Input
+                id="last_name"
+                value={formData.last_name}
+                onChange={(e) => handleInputChange('last_name', e.target.value)}
+                placeholder="Enter last name"
+                className="border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+              />
             </div>
           </div>
 
-          <DrawerFooter className="border-t border-gray-200 pt-4">
-            <div className="flex items-center justify-end space-x-3">
-              <Button
-                variant="outline"
-                onClick={handleReset}
-                disabled={isLoading}
-                className="border-gray-300 text-gray-700 hover:bg-gray-50"
-              >
-                Reset
-              </Button>
-              <Button
-                onClick={handleSaveProfile}
-                disabled={isLoading}
-                className="bg-blue-600 hover:bg-blue-700"
-              >
-                {isLoading ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    Saving...
-                  </>
-                ) : (
-                  <>
-                    <Save className="h-4 w-4 mr-2" />
-                    Save Changes
-                  </>
-                )}
-              </Button>
+          <div className="space-y-2">
+            <Label htmlFor="email" className="text-sm font-medium text-gray-700">
+              Email Address *
+            </Label>
+            <Input
+              id="email"
+              type="email"
+              value={formData.email}
+              onChange={(e) => handleInputChange('email', e.target.value)}
+              placeholder="Enter email address"
+              className="border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="department" className="text-sm font-medium text-gray-700">
+                Department
+              </Label>
+              <Input
+                id="department"
+                value={formData.department}
+                onChange={(e) => handleInputChange('department', e.target.value)}
+                placeholder="Enter department"
+                className="border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+              />
             </div>
-          </DrawerFooter>
+            
+            <div className="space-y-2">
+              <Label htmlFor="phone" className="text-sm font-medium text-gray-700">
+                Phone Number
+              </Label>
+              <Input
+                id="phone"
+                value={formData.phone}
+                onChange={(e) => handleInputChange('phone', e.target.value)}
+                placeholder="Enter phone number"
+                className="border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="bio" className="text-sm font-medium text-gray-700">
+              Bio
+            </Label>
+            <Textarea
+              id="bio"
+              value={formData.bio}
+              onChange={(e) => handleInputChange('bio', e.target.value)}
+              placeholder="Tell us about yourself..."
+              rows={3}
+              className="border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+            />
+          </div>
         </div>
-      </DrawerContent>
-    </Drawer>
+
+        <Separator />
+
+        {/* Account Information (Read-only) */}
+        <div className="space-y-4">
+          <Label className="text-sm font-medium text-gray-700">Account Information</Label>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label className="text-sm font-medium text-gray-500">User ID</Label>
+              <Input
+                value={profile.id}
+                disabled
+                className="bg-gray-50 border-gray-200 text-gray-600"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-sm font-medium text-gray-500">Role ID</Label>
+              <Input
+                value={profile.role_id}
+                disabled
+                className="bg-gray-50 border-gray-200 text-gray-600"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label className="text-sm font-medium text-gray-500">Member Since</Label>
+              <Input
+                value={new Date(profile.created_at).toLocaleDateString()}
+                disabled
+                className="bg-gray-50 border-gray-200 text-gray-600"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-sm font-medium text-gray-500">Last Updated</Label>
+              <Input
+                value={profile.updated_at 
+                  ? new Date(profile.updated_at).toLocaleDateString() 
+                  : 'Never'
+                }
+                disabled
+                className="bg-gray-50 border-gray-200 text-gray-600"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex justify-end space-x-2 pt-4">
+        <Button
+          variant="outline"
+          onClick={handleReset}
+          disabled={isLoading}
+          className="border-gray-300 text-gray-700 hover:bg-gray-50"
+        >
+          Reset
+        </Button>
+        <Button
+          onClick={handleSaveProfile}
+          disabled={isLoading}
+          className="bg-blue-600 hover:bg-blue-700"
+        >
+          {isLoading ? (
+            <>
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+              Saving...
+            </>
+          ) : (
+            <>
+              <Save className="h-4 w-4 mr-2" />
+              Save Changes
+            </>
+          )}
+        </Button>
+      </div>
+    </>
+  )
+
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent className="w-[50vw] sm:max-w-[50vw] overflow-y-auto">
+        <div className="p-6">
+          <SheetHeader>
+            <SheetTitle>Edit Profile</SheetTitle>
+            <SheetDescription>
+              Update your personal information and profile picture
+            </SheetDescription>
+          </SheetHeader>
+
+          <div className="space-y-6 mt-6">
+            <FormContent />
+          </div>
+        </div>
+      </SheetContent>
+    </Sheet>
   )
 }

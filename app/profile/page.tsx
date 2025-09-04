@@ -98,18 +98,54 @@ export default function ProfilePage() {
     }
   ]
 
-  // Mock roles and permissions - in real app, this would come from API
-  const userRole = {
-    name: 'Production Manager',
-    description: 'Manages production operations and team coordination',
-    permissions: [
-      { category: 'Production', permissions: ['view', 'create', 'edit', 'delete'] },
-      { category: 'Users', permissions: ['view', 'create', 'edit'] },
-      { category: 'Reports', permissions: ['view', 'export'] },
-      { category: 'Maintenance', permissions: ['view', 'schedule'] },
-      { category: 'Quality', permissions: ['view', 'approve', 'reject'] }
-    ]
-  }
+  // Extract role and permissions from the actual API response
+  const userRole = profile.users_role_id_fkey
+  const roleName = userRole?.role_name || 'Unknown Role'
+  const roleDescription = `Role created on ${userRole?.created_at ? new Date(userRole.created_at).toLocaleDateString() : 'Unknown date'}`
+  
+  // Transform the operations into a more organized structure
+  const permissions = [
+    {
+      category: 'Views',
+      permissions: userRole?.views || [],
+      icon: '👁️'
+    },
+    {
+      category: 'Role Operations',
+      permissions: userRole?.role_operations || [],
+      icon: '👥'
+    },
+    {
+      category: 'User Operations',
+      permissions: userRole?.user_operations || [],
+      icon: '👤'
+    },
+    {
+      category: 'Device Operations',
+      permissions: userRole?.devices_operations || [],
+      icon: '📱'
+    },
+    {
+      category: 'Process Operations',
+      permissions: userRole?.process_operations || [],
+      icon: '⚙️'
+    },
+    {
+      category: 'Supplier Operations',
+      permissions: userRole?.supplier_operations || [],
+      icon: '🏢'
+    },
+    {
+      category: 'Silo Operations',
+      permissions: userRole?.silo_item_operations || [],
+      icon: '🏭'
+    },
+    {
+      category: 'Machine Operations',
+      permissions: userRole?.machine_item_operations || [],
+      icon: '🔧'
+    }
+  ].filter(category => category.permissions.length > 0) // Only show categories with permissions
 
   const getActivityIcon = (type: string) => {
     switch (type) {
@@ -150,7 +186,7 @@ export default function ProfilePage() {
                   {profile.first_name} {profile.last_name}
                 </CardTitle>
                 <CardDescription className="text-lg text-gray-600">
-                  {userRole.name}
+                  {roleName}
                 </CardDescription>
                 <div className="flex items-center space-x-4 text-sm text-gray-500">
                   <div className="flex items-center space-x-1">
@@ -214,7 +250,7 @@ export default function ProfilePage() {
               <div>
                 <p className="text-sm font-medium text-gray-600">Permissions</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {userRole.permissions.reduce((acc, cat) => acc + cat.permissions.length, 0)}
+                  {permissions.reduce((acc, cat) => acc + cat.permissions.length, 0)}
                 </p>
               </div>
             </div>
@@ -240,16 +276,25 @@ export default function ProfilePage() {
 
       {/* Tabs */}
       <Tabs defaultValue="activities" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="activities" className="flex items-center space-x-2">
+        <TabsList className="grid w-full grid-cols-3 h-12 bg-transparent p-0 gap-2">
+          <TabsTrigger 
+            value="activities" 
+            className="flex items-center space-x-2 h-10 border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 data-[state=active]:border-blue-600 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 data-[state=active]:shadow-sm"
+          >
             <Activity className="h-4 w-4" />
             <span>Recent Activities</span>
           </TabsTrigger>
-          <TabsTrigger value="roles" className="flex items-center space-x-2">
+          <TabsTrigger 
+            value="roles" 
+            className="flex items-center space-x-2 h-10 border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 data-[state=active]:border-blue-600 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 data-[state=active]:shadow-sm"
+          >
             <Shield className="h-4 w-4" />
             <span>Roles & Permissions</span>
           </TabsTrigger>
-          <TabsTrigger value="profile" className="flex items-center space-x-2">
+          <TabsTrigger 
+            value="profile" 
+            className="flex items-center space-x-2 h-10 border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 data-[state=active]:border-blue-600 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 data-[state=active]:shadow-sm"
+          >
             <User className="h-4 w-4" />
             <span>Profile Info</span>
           </TabsTrigger>
@@ -309,9 +354,9 @@ export default function ProfilePage() {
                 <h4 className="font-semibold text-gray-900 mb-2">Current Role</h4>
                 <div className="flex items-center space-x-2">
                   <Badge variant="default" className="bg-blue-100 text-blue-800">
-                    {userRole.name}
+                    {roleName}
                   </Badge>
-                  <span className="text-sm text-gray-600">{userRole.description}</span>
+                  <span className="text-sm text-gray-600">{roleDescription}</span>
                 </div>
               </div>
 
@@ -319,11 +364,14 @@ export default function ProfilePage() {
               <div>
                 <h4 className="font-semibold text-gray-900 mb-4">Permissions by Category</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {userRole.permissions.map((category, index) => (
+                  {permissions.map((category: any, index: number) => (
                     <div key={index} className="p-4 border border-gray-200 rounded-lg">
-                      <h5 className="font-medium text-gray-900 mb-3">{category.category}</h5>
+                      <div className="flex items-center space-x-2 mb-3">
+                        <span className="text-lg">{category.icon}</span>
+                        <h5 className="font-medium text-gray-900">{category.category}</h5>
+                      </div>
                       <div className="flex flex-wrap gap-2">
-                        {category.permissions.map((permission, permIndex) => (
+                        {category.permissions.map((permission: string, permIndex: number) => (
                           <Badge 
                             key={permIndex} 
                             variant="secondary" 

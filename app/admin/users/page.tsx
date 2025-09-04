@@ -18,6 +18,9 @@ import { toast } from "sonner"
 import { User as UserType, TableFilters } from "@/lib/types"
 import { ColumnDef } from "@tanstack/react-table"
 import { TablePulseLoading } from "@/components/ui/pulse-loading"
+import { PermissionTableActions } from "@/components/ui/permission-table-actions"
+import { PermissionButton } from "@/components/ui/permission-table-actions"
+import { PermissionGuard } from "@/components/auth/permission-guard"
 
 export default function AdminUsersPage() {
   const dispatch = useAppDispatch()
@@ -57,7 +60,7 @@ export default function AdminUsersPage() {
   // Load roles only once on mount
   useEffect(() => {
     if (!rolesInitialized && (!roles || roles.length === 0)) {
-      dispatch(fetchRoles())
+      dispatch(fetchRoles({}))
     }
   }, [dispatch, rolesInitialized, roles])
   
@@ -181,30 +184,12 @@ export default function AdminUsersPage() {
       cell: ({ row }) => {
         const user = row.original
         return (
-          <div className="flex space-x-2">
-            <LoadingButton 
-              variant="outline" 
-              size="sm" 
-              onClick={() => handleViewUser(user)}
-            >
-              <Eye className="w-4 h-4" />
-            </LoadingButton>
-            <LoadingButton 
-              variant="outline" 
-              size="sm" 
-              onClick={() => handleEditUser(user)}
-            >
-              <Settings className="w-4 h-4" />
-            </LoadingButton>
-            <LoadingButton 
-              variant="destructive" 
-              size="sm" 
-              onClick={() => handleDeleteUser(user)}
-              disabled={usersLoading}
-            >
-              <Trash2 className="w-4 h-4" />
-            </LoadingButton>
-          </div>
+          <PermissionTableActions
+            feature="user"
+            onView={() => handleViewUser(user)}
+            onEdit={() => handleEditUser(user)}
+            onDelete={() => handleDeleteUser(user)}
+          />
         )
       },
     },
@@ -254,17 +239,23 @@ export default function AdminUsersPage() {
   }
 
   return (
-    <AdminDashboardLayout title="Users Management" subtitle="Manage system users and their permissions">
-      <div className="space-y-6">
+    <PermissionGuard requiredView="user_tab">
+      <AdminDashboardLayout title="Users Management" subtitle="Manage system users and their permissions">
+        <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-foreground">Users Management</h1>
             <p className="text-muted-foreground">Manage system users and their permissions</p>
           </div>
-          <LoadingButton onClick={handleAddUser} loading={usersLoading}>
+          <PermissionButton
+            feature="user"
+            permission="create"
+            onClick={handleAddUser}
+            disabled={usersLoading}
+          >
             <Plus className="mr-2 h-4 w-4" />
             Add User
-          </LoadingButton>
+          </PermissionButton>
         </div>
 
         <Card>
@@ -328,7 +319,8 @@ export default function AdminUsersPage() {
           onConfirm={confirmDelete}
           loading={usersLoading}
         />
-      </div>
-    </AdminDashboardLayout>
+        </div>
+      </AdminDashboardLayout>
+    </PermissionGuard>
   )
 }

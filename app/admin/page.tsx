@@ -11,6 +11,7 @@ import { MachineOperatorTable } from "@/components/dashboard/machine-operator-ta
 import { QualityEfficiency } from "@/components/dashboard/quality-efficiency"
 import { useAppDispatch } from "@/lib/store"
 import { fetchDashboardMetrics, fetchRecentBatches, fetchRecentInspections } from "@/lib/store/slices/dashboardSlice"
+import { PermissionDebug } from "@/components/debug/permission-debug"
 
 export default function AdminDashboard() {
   const dispatch = useAppDispatch()
@@ -24,6 +25,9 @@ export default function AdminDashboard() {
   return (
     <AdminDashboardLayout title="Admin Dashboard" subtitle="System administration and management">
       <div className="space-y-6">
+        {/* Permission Debug Component */}
+        <PermissionDebug />
+        
         {/* Production Overview Metrics */}
         <ProductionOverview />
 

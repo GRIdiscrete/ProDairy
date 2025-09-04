@@ -17,6 +17,9 @@ import { toast } from "sonner"
 import { UserRole, TableFilters } from "@/lib/types"
 import { ColumnDef } from "@tanstack/react-table"
 import { TablePulseLoading, MetricsPulseLoading } from "@/components/ui/pulse-loading"
+import { PermissionTableActions } from "@/components/ui/permission-table-actions"
+import { PermissionButton } from "@/components/ui/permission-table-actions"
+import { PermissionGuard } from "@/components/auth/permission-guard"
 
 export default function AdminRolesPage() {
   const dispatch = useAppDispatch()
@@ -190,30 +193,12 @@ export default function AdminRolesPage() {
       cell: ({ row }) => {
         const role = row.original
         return (
-          <div className="flex space-x-2">
-            <LoadingButton 
-              variant="outline" 
-              size="sm" 
-              onClick={() => handleViewRole(role)}
-            >
-              <Eye className="w-4 h-4" />
-            </LoadingButton>
-            <LoadingButton 
-              variant="outline" 
-              size="sm" 
-              onClick={() => handleEditRole(role)}
-            >
-              <Settings className="w-4 h-4" />
-            </LoadingButton>
-            <LoadingButton 
-              variant="destructive" 
-              size="sm" 
-              onClick={() => handleDeleteRole(role)}
-              disabled={rolesLoading}
-            >
-              <Trash2 className="w-4 h-4" />
-            </LoadingButton>
-          </div>
+          <PermissionTableActions
+            feature="role"
+            onView={() => handleViewRole(role)}
+            onEdit={() => handleEditRole(role)}
+            onDelete={() => handleDeleteRole(role)}
+          />
         )
       },
     },
@@ -256,17 +241,23 @@ export default function AdminRolesPage() {
   }
 
   return (
-    <AdminDashboardLayout title="Roles Management" subtitle="Manage user roles and permissions">
-      <div className="space-y-6">
+    <PermissionGuard requiredView="role_tab">
+      <AdminDashboardLayout title="Roles Management" subtitle="Manage user roles and permissions">
+        <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-foreground">Roles Management</h1>
             <p className="text-muted-foreground">Manage user roles and their permissions</p>
           </div>
-          <LoadingButton onClick={handleAddRole} loading={rolesLoading}>
+          <PermissionButton
+            feature="role"
+            permission="create"
+            onClick={handleAddRole}
+            disabled={rolesLoading}
+          >
             <Plus className="mr-2 h-4 w-4" />
             Add Role
-          </LoadingButton>
+          </PermissionButton>
         </div>
 
         {/* Metrics Cards */}
@@ -370,7 +361,8 @@ export default function AdminRolesPage() {
           onConfirm={confirmDelete}
           loading={rolesLoading}
         />
-      </div>
-    </AdminDashboardLayout>
+        </div>
+      </AdminDashboardLayout>
+    </PermissionGuard>
   )
 }
