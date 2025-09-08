@@ -12,6 +12,13 @@ import {
   ClipboardList,
   User,
   FlaskConical,
+  Beaker,
+  Droplets,
+  Package,
+  Factory,
+  TestTube,
+  Grid3X3,
+  Wrench,
 } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 
@@ -33,6 +40,57 @@ const dataCaptureNavigation = [
     name: "Lab Forms",
     href: "/data-capture/lab-forms",
     icon: FlaskConical,
+    current: false,
+  },
+  // Process Control Forms
+  {
+    name: "BMT Control Form",
+    href: "/data-capture/bmt-control-form",
+    icon: Beaker,
+    current: false,
+  },
+  {
+    name: "CIP Control Form",
+    href: "/data-capture/cip-control-form",
+    icon: Droplets,
+    current: false,
+  },
+  {
+    name: "IST Control Form",
+    href: "/data-capture/ist-control-form",
+    icon: TestTube,
+    current: false,
+  },
+  // Production Forms
+  {
+    name: "Filler Log 2",
+    href: "/data-capture/filler-log-2",
+    icon: Package,
+    current: false,
+  },
+  {
+    name: "Flex Sterilizer",
+    href: "/data-capture/flex-one-steriliser-process",
+    icon: Factory,
+    current: false,
+  },
+  {
+    name: "Sterilised Milk Process",
+    href: "/data-capture/sterilised-milk-process",
+    icon: Droplets,
+    current: false,
+  },
+  {
+    name: "Palletiser Sheet",
+    href: "/data-capture/palletiser-sheet",
+    icon: Grid3X3,
+    current: false,
+  },
+  // Driver Forms
+  {
+    name: "Drivers Form",
+    href: "/data-capture/drivers-form",
+    icon: Wrench,
     current: false,
   },
 ]

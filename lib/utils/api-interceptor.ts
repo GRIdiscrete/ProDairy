@@ -51,8 +51,37 @@ class ApiInterceptor {
 
   async interceptResponse(response: Response, request: Request): Promise<Response> {
     if (response.status === 401) {
-      console.log('ApiInterceptor: Received 401 response, authentication required')
-      // For now, we'll just return the response and let the calling code handle it
+      console.log('ApiInterceptor: Received 401 response, logging out user', {
+        url: request.url,
+        status: response.status,
+        statusText: response.statusText
+      })
+      
+      try {
+        // Dispatch logout action to clear auth state and redirect
+        console.log('ApiInterceptor: Dispatching logout action')
+        store.dispatch(logoutUser())
+        
+        // Clear cookies immediately
+        console.log('ApiInterceptor: Clearing auth cookies')
+        CookieManager.clearAuthCookies()
+        
+        // Redirect to login page if we're in the browser
+        if (typeof window !== 'undefined') {
+          console.log('ApiInterceptor: Redirecting to login page')
+          // Use a small delay to ensure the logout action completes
+          setTimeout(() => {
+            window.location.href = '/login'
+          }, 100)
+        }
+      } catch (error) {
+        console.error('Error during logout on 401:', error)
+        // Even if logout fails, still try to redirect
+        if (typeof window !== 'undefined') {
+          console.log('ApiInterceptor: Fallback redirect to login page')
+          window.location.href = '/login'
+        }
+      }
     }
 
     return response
@@ -99,11 +128,48 @@ export const handleAuthError = async (response: Response): Promise<void> => {
   try {
     if (isAuthError(response)) {
       console.log('handleAuthError: Authentication failed, response status:', response.status)
+      
+      // Note: Store dispatch removed to avoid circular dependency
+      
+      // Clear cookies immediately
+      CookieManager.clearAuthCookies()
+      
+      // Redirect to login page if we're in the browser
+      if (typeof window !== 'undefined') {
+        // Use a small delay to ensure the logout action completes
+        setTimeout(() => {
+          window.location.href = '/login'
+        }, 100)
+      }
+      
       throw new Error('Authentication failed')
     }
   } catch (error) {
     console.error('Error handling auth error:', error)
+    // Even if logout fails, still try to redirect
+    if (typeof window !== 'undefined') {
+      window.location.href = '/login'
+    }
     throw error
+  }
+}
+
+// Test function to verify interceptor is working (for development/testing)
+export const testInterceptor = async (): Promise<void> => {
+  console.log('Testing API interceptor...')
+  
+  try {
+    // Make a request that should return 401 (using a test endpoint)
+    const response = await authenticatedFetch('/test-401-endpoint', {
+      method: 'GET',
+      headers: {
+        'Authorization': 'Bearer invalid-token'
+      }
+    })
+    
+    console.log('Test response status:', response.status)
+  } catch (error) {
+    console.log('Test completed with error (expected):', error)
   }
 }
 

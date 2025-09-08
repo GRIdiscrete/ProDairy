@@ -1,4 +1,5 @@
-import { apiRequest, API_CONFIG } from "../config/api"
+import { apiRequest } from '@/lib/utils/api-request'
+import { API_CONFIG } from '@/lib/config/api'
 import type { TableFilters } from "@/lib/types"
 
 export interface CreateUserRequest {

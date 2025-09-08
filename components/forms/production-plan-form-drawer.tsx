@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Calendar, ClipboardList, Package, User, Plus, Trash2 } from "lucide-react"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { DatePicker } from "@/components/ui/date-picker"
 import { toast } from "sonner"
 import { useAppDispatch, useAppSelector } from "@/lib/store"
 import { createProductionPlan, updateProductionPlan, fetchProductionPlans } from "@/lib/store/slices/productionPlanSlice"
@@ -245,18 +246,20 @@ export function ProductionPlanFormDrawer({
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                     <Label htmlFor="start_date">Start Date</Label>
-                    <Controller
-                      name="start_date"
-                      control={control}
-                      render={({ field }) => (
-                        <Input
-                          {...field}
-                          id="start_date"
-                          type="date"
-                          disabled={isSubmitting}
+                        <Controller
+                          name="start_date"
+                          control={control}
+                          render={({ field }) => (
+                            <DatePicker
+                              label="Start Date *"
+                              value={field.value}
+                              onChange={field.onChange}
+                              placeholder="Select start date"
+                              disabled={isSubmitting}
+                              error={!!errors.start_date}
+                            />
+                          )}
                         />
-                      )}
-                    />
                     {errors.start_date && (
                       <p className="text-sm text-red-500">{errors.start_date.message}</p>
                     )}
@@ -264,18 +267,20 @@ export function ProductionPlanFormDrawer({
 
               <div className="space-y-2">
                     <Label htmlFor="end_date">End Date</Label>
-                    <Controller
-                      name="end_date"
-                      control={control}
-                      render={({ field }) => (
-                        <Input
-                          {...field}
-                          id="end_date"
-                          type="date"
-                          disabled={isSubmitting}
+                        <Controller
+                          name="end_date"
+                          control={control}
+                          render={({ field }) => (
+                            <DatePicker
+                              label="End Date *"
+                              value={field.value}
+                              onChange={field.onChange}
+                              placeholder="Select end date"
+                              disabled={isSubmitting}
+                              error={!!errors.end_date}
+                            />
+                          )}
                         />
-                      )}
-                    />
                     {errors.end_date && (
                       <p className="text-sm text-red-500">{errors.end_date.message}</p>
                     )}
