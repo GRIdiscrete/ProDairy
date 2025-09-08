@@ -14,6 +14,13 @@ import processReducer from "./slices/processSlice"
 import productionPlanReducer from "./slices/productionPlanSlice"
 import driverFormReducer from "./slices/driverFormSlice"
 import authReducer from "./slices/authSlice"
+import bmtControlFormReducer from "./slices/bmtControlFormSlice"
+import cipControlFormReducer from "./slices/cipControlFormSlice"
+import istControlFormReducer from "./slices/istControlFormSlice"
+import sterilisedMilkProcessReducer from "./slices/sterilisedMilkProcessSlice"
+import palletiserSheetReducer from "./slices/palletiserSheetSlice"
+import flexOneSteriliserProcessReducer from "./slices/flexOneSteriliserProcessSlice"
+import fillerLog2Reducer from "./slices/fillerLog2Slice"
 export const store = configureStore({
   reducer: {
     dashboard: dashboardReducer,
@@ -30,6 +37,13 @@ export const store = configureStore({
     productionPlan: productionPlanReducer,
     driverForm: driverFormReducer,
     auth: authReducer,
+    bmtControlForms: bmtControlFormReducer,
+    cipControlForms: cipControlFormReducer,
+    istControlForms: istControlFormReducer,
+    sterilisedMilkProcesses: sterilisedMilkProcessReducer,
+    palletiserSheets: palletiserSheetReducer,
+    flexOneSteriliserProcesses: flexOneSteriliserProcessReducer,
+    fillerLog2s: fillerLog2Reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

@@ -1,5 +1,6 @@
 import type { ApiResponse, Machine, TableFilters } from "@/lib/types"
-import { apiRequest, API_CONFIG } from '../config/api'
+import { apiRequest } from '@/lib/utils/api-request'
+import { API_CONFIG } from '@/lib/config/api'
 
 export const machineApi = {
   // Get all machines with optional filters
