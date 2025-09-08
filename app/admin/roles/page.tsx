@@ -33,7 +33,7 @@ export default function AdminRolesPage() {
   // Selected role and mode
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(null)
   const [formMode, setFormMode] = useState<"create" | "edit">("create")
-  
+
   // Filter state
   const [tableFilters, setTableFilters] = useState<TableFilters>({})
 
@@ -240,10 +240,10 @@ export default function AdminRolesPage() {
     }
   }
 
-  return (
+        return (
     <PermissionGuard requiredView="role_tab">
-      <AdminDashboardLayout title="Roles Management" subtitle="Manage user roles and permissions">
-        <div className="space-y-6">
+    <AdminDashboardLayout title="Roles Management" subtitle="Manage user roles and permissions">
+      <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-foreground">Roles Management</h1>
@@ -265,39 +265,39 @@ export default function AdminRolesPage() {
           <MetricsPulseLoading />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Roles</CardTitle>
-                <Shield className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Roles</CardTitle>
+              <Shield className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
                 <div className="text-2xl font-bold">{totalRoles}</div>
                 <p className="text-xs text-muted-foreground">Active roles</p>
-              </CardContent>
-            </Card>
+            </CardContent>
+          </Card>
 
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Active Roles</CardTitle>
                 <Users className="h-4 w-4 text-blue-600" />
-              </CardHeader>
-              <CardContent>
+            </CardHeader>
+            <CardContent>
                 <div className="text-2xl font-bold text-blue-600">{activeRoles}</div>
                 <p className="text-xs text-muted-foreground">With permissions</p>
-              </CardContent>
-            </Card>
+            </CardContent>
+          </Card>
 
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Admin Roles</CardTitle>
                 <Shield className="h-4 w-4 text-purple-600" />
-              </CardHeader>
-              <CardContent>
+            </CardHeader>
+            <CardContent>
                 <div className="text-2xl font-bold text-purple-600">{adminRoles}</div>
                 <p className="text-xs text-muted-foreground">Administrative access</p>
-              </CardContent>
-            </Card>
-          </div>
+            </CardContent>
+          </Card>
+        </div>
         )}
 
         <Card>
@@ -333,13 +333,13 @@ export default function AdminRolesPage() {
             if (!open) setSelectedRole(null)
           }}
           role={formMode === 'edit' && selectedRole ? selectedRole : undefined}
-          mode={formMode}
+          mode={formMode} 
           onSuccess={() => {
             setFormDrawerOpen(false)
             setSelectedRole(null)
           }}
         />
-        
+
         {/* View Drawer */}
         <RoleViewDrawer
           open={viewDrawerOpen}
@@ -351,7 +351,7 @@ export default function AdminRolesPage() {
             setFormDrawerOpen(true)
           }}
         />
-        
+
         {/* Delete Confirmation Dialog */}
         <DeleteConfirmationDialog
           open={deleteDialogOpen}
@@ -361,8 +361,8 @@ export default function AdminRolesPage() {
           onConfirm={confirmDelete}
           loading={rolesLoading}
         />
-        </div>
-      </AdminDashboardLayout>
+      </div>
+    </AdminDashboardLayout>
     </PermissionGuard>
   )
 }

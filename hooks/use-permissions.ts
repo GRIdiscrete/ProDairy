@@ -31,7 +31,8 @@ import {
  * Hook to get current user's profile
  */
 export function useCurrentUser() {
-  const { profile, isAuthenticated } = useAppSelector((state) => state.auth)
+  const authState = useAppSelector((state) => state.auth)
+  const { profile, isAuthenticated } = authState || { profile: null, isAuthenticated: false }
   return { profile, isAuthenticated }
 }
 

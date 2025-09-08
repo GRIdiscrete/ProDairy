@@ -26,7 +26,8 @@ interface HeaderProps {
 
 export function Header({ title = "Dashboard", subtitle = "Welcome back!" }: HeaderProps) {
   const dispatch = useAppDispatch()
-  const { user, profile, isAuthenticated } = useAppSelector((state) => state.auth)
+  const authState = useAppSelector((state) => state.auth)
+  const { user, profile, isAuthenticated } = authState || { user: null, profile: null, isAuthenticated: false }
   const router = useRouter()
   const pathname = usePathname()
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false)

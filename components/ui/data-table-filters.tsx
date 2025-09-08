@@ -26,6 +26,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { DatePicker } from "@/components/ui/date-picker";
 
 interface FilterField {
   key: string;
@@ -193,12 +194,10 @@ export function DataTableFilters({
                     </Select>
                   )}
                   {field.type === "date" && (
-                    <Input
-                      type="date"
+                    <DatePicker
                       value={filters[field.key] || ""}
-                      onChange={(e) =>
-                        handleFilterChange(field.key, e.target.value)
-                      }
+                      onChange={(value) => handleFilterChange(field.key, value)}
+                      placeholder={field.placeholder || "Select date"}
                       className="h-10"
                     />
                   )}
