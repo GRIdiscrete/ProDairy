@@ -40,13 +40,21 @@ import {
   createFilmaticLinesProductionSheet, 
   updateFilmaticLinesProductionSheet
 } from "@/lib/store/slices/filmaticLinesProductionSheetSlice"
+import { filmaticLinesApi } from "@/lib/api/filmatic-lines"
 import { 
   fetchStandardizingForms 
 } from "@/lib/store/slices/standardizingSlice"
 import { 
   fetchRoles 
 } from "@/lib/store/slices/rolesSlice"
-import { FilmaticLinesProductionSheet, CreateFilmaticLinesProductionSheetRequest } from "@/lib/api/filmatic-lines"
+import { 
+  FilmaticLinesProductionSheet, 
+  CreateFilmaticLinesProductionSheetRequest,
+  CreateFilmaticLinesProductionSheetDetailRequest,
+  CreateFilmaticLinesBottlesReconciliationRequest,
+  CreateFilmaticLinesMilkReconciliationRequest,
+  CreateFilmaticLinesStoppageTimeMinutesRequest
+} from "@/lib/api/filmatic-lines"
 import { toast } from "sonner"
 
 // Process Overview Component
@@ -154,16 +162,48 @@ const StepNavigation = ({ currentStep, onStepChange }: { currentStep: number, on
   )
 }
 
-// Form Schema
+// Form Schema - All fields optional for step-by-step validation
 const filmaticLinesProductionSheetSchema = yup.object({
+  // Step 1: Basic Information
   approved_by: yup.string().required("Approved by is required"),
   date: yup.string().required("Date is required"),
   shift: yup.string().required("Shift is required"),
   product: yup.string().required("Product is required"),
-  details: yup.string().optional(),
-  bottles_reconciliation: yup.string().optional(),
-  stoppage: yup.string().optional(),
-  milk_reconciliation: yup.string().optional(),
+  
+  // Step 2: Production Details
+  day_shift_hours: yup.string().optional(),
+  no_of_pallets: yup.number().optional().min(0, "Must be positive"),
+  hourly_target: yup.number().optional().min(0, "Must be positive"),
+  variance: yup.number().optional(),
+  reason_for_variance: yup.string().optional(),
+  
+  // Step 3: Bottles Reconciliation
+  bottles_shift: yup.string().optional(),
+  bottles_opening: yup.number().optional().min(0, "Must be positive"),
+  bottles_added: yup.number().optional().min(0, "Must be positive"),
+  bottles_closing: yup.number().optional().min(0, "Must be positive"),
+  bottles_wastes: yup.number().optional().min(0, "Must be positive"),
+  bottles_damages: yup.number().optional().min(0, "Must be positive"),
+  
+  // Step 4: Milk Reconciliation
+  milk_shift: yup.string().optional(),
+  milk_opening: yup.number().optional().min(0, "Must be positive"),
+  milk_added: yup.number().optional().min(0, "Must be positive"),
+  milk_closing: yup.number().optional().min(0, "Must be positive"),
+  milk_total: yup.number().optional().min(0, "Must be positive"),
+  milk_transfer: yup.number().optional().min(0, "Must be positive"),
+  
+  // Step 5: Stoppage Time
+  product_1: yup.number().optional().min(0, "Must be positive"),
+  product_2: yup.number().optional().min(0, "Must be positive"),
+  filler_1: yup.number().optional().min(0, "Must be positive"),
+  filler_2: yup.number().optional().min(0, "Must be positive"),
+  capper_1: yup.number().optional().min(0, "Must be positive"),
+  capper_2: yup.number().optional().min(0, "Must be positive"),
+  sleever_1: yup.number().optional().min(0, "Must be positive"),
+  sleever_2: yup.number().optional().min(0, "Must be positive"),
+  shrink_1: yup.number().optional().min(0, "Must be positive"),
+  shrink_2: yup.number().optional().min(0, "Must be positive"),
 })
 
 type FilmaticLinesProductionSheetData = yup.InferType<typeof filmaticLinesProductionSheetSchema>
@@ -188,19 +228,54 @@ export function FilmaticLinesProductionSheetDrawer({
 
   const [loadingStandardizingForms, setLoadingStandardizingForms] = useState(false)
   const [currentStep, setCurrentStep] = useState(1)
+  const [createdSheetId, setCreatedSheetId] = useState<string | null>(null)
+  const [createdDetailId, setCreatedDetailId] = useState<string | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   // Single form for all data
   const formHook = useForm<FilmaticLinesProductionSheetData>({
     resolver: yupResolver(filmaticLinesProductionSheetSchema),
     defaultValues: {
+      // Step 1: Basic Information
       approved_by: "",
       date: "",
       shift: "",
       product: "",
-      details: "",
-      bottles_reconciliation: "",
-      stoppage: "",
-      milk_reconciliation: "",
+      
+      // Step 2: Production Details
+      day_shift_hours: "",
+      no_of_pallets: 0,
+      hourly_target: 0,
+      variance: 0,
+      reason_for_variance: "",
+      
+      // Step 3: Bottles Reconciliation
+      bottles_shift: "",
+      bottles_opening: 0,
+      bottles_added: 0,
+      bottles_closing: 0,
+      bottles_wastes: 0,
+      bottles_damages: 0,
+      
+      // Step 4: Milk Reconciliation
+      milk_shift: "",
+      milk_opening: 0,
+      milk_added: 0,
+      milk_closing: 0,
+      milk_total: 0,
+      milk_transfer: 0,
+      
+      // Step 5: Stoppage Time
+      product_1: 0,
+      product_2: 0,
+      filler_1: 0,
+      filler_2: 0,
+      capper_1: 0,
+      capper_2: 0,
+      sleever_1: 0,
+      sleever_2: 0,
+      shrink_1: 0,
+      shrink_2: 0,
     },
   })
 
@@ -236,57 +311,239 @@ export function FilmaticLinesProductionSheetDrawer({
   // Reset form when drawer opens/closes
   useEffect(() => {
     if (open) {
+      setCurrentStep(1)
+      setCreatedSheetId(null)
+      setCreatedDetailId(null)
+      setIsSubmitting(false)
+      
       if (mode === "edit" && sheet) {
+        // For edit mode, populate with existing data
         formHook.reset({
           approved_by: sheet.approved_by,
           date: sheet.date,
           shift: sheet.shift,
           product: sheet.product,
-          details: sheet.details || "",
-          bottles_reconciliation: sheet.bottles_reconciliation || "",
-          stoppage: sheet.stoppage || "",
-          milk_reconciliation: sheet.milk_reconciliation || "",
+          day_shift_hours: "",
+          no_of_pallets: 0,
+          hourly_target: 0,
+          variance: 0,
+          reason_for_variance: "",
+          bottles_shift: "",
+          bottles_opening: 0,
+          bottles_added: 0,
+          bottles_closing: 0,
+          bottles_wastes: 0,
+          bottles_damages: 0,
+          milk_shift: "",
+          milk_opening: 0,
+          milk_added: 0,
+          milk_closing: 0,
+          milk_total: 0,
+          milk_transfer: 0,
+          product_1: 0,
+          product_2: 0,
+          filler_1: 0,
+          filler_2: 0,
+          capper_1: 0,
+          capper_2: 0,
+          sleever_1: 0,
+          sleever_2: 0,
+          shrink_1: 0,
+          shrink_2: 0,
         })
       } else {
+        // Reset to default values for create mode
         formHook.reset({
           approved_by: "",
           date: "",
           shift: "",
           product: "",
-          details: "",
-          bottles_reconciliation: "",
-          stoppage: "",
-          milk_reconciliation: "",
+          day_shift_hours: "",
+          no_of_pallets: 0,
+          hourly_target: 0,
+          variance: 0,
+          reason_for_variance: "",
+          bottles_shift: "",
+          bottles_opening: 0,
+          bottles_added: 0,
+          bottles_closing: 0,
+          bottles_wastes: 0,
+          bottles_damages: 0,
+          milk_shift: "",
+          milk_opening: 0,
+          milk_added: 0,
+          milk_closing: 0,
+          milk_total: 0,
+          milk_transfer: 0,
+          product_1: 0,
+          product_2: 0,
+          filler_1: 0,
+          filler_2: 0,
+          capper_1: 0,
+          capper_2: 0,
+          sleever_1: 0,
+          sleever_2: 0,
+          shrink_1: 0,
+          shrink_2: 0,
         })
       }
     }
   }, [open, mode, sheet])
 
-  const handleSubmit = async (data: FilmaticLinesProductionSheetData) => {
+  // Handle step-by-step submission
+  const handleStepSubmit = async (data: FilmaticLinesProductionSheetData) => {
+    if (isSubmitting) return
+    
+    // Manual validation for current step
+    if (currentStep === 1) {
+      if (!data.approved_by || !data.date || !data.shift || !data.product) {
+        toast.error("Please fill in all required fields")
+        return
+      }
+    } else if (currentStep === 2) {
+      if (!data.day_shift_hours || data.no_of_pallets === undefined || data.hourly_target === undefined || data.variance === undefined || !data.reason_for_variance) {
+        toast.error("Please fill in all required fields")
+        return
+      }
+    } else if (currentStep === 3) {
+      if (!data.bottles_shift || data.bottles_opening === undefined || data.bottles_added === undefined || data.bottles_closing === undefined || data.bottles_wastes === undefined || data.bottles_damages === undefined) {
+        toast.error("Please fill in all required fields")
+        return
+      }
+    } else if (currentStep === 4) {
+      if (!data.milk_shift || data.milk_opening === undefined || data.milk_added === undefined || data.milk_closing === undefined || data.milk_total === undefined || data.milk_transfer === undefined) {
+        toast.error("Please fill in all required fields")
+        return
+      }
+    } else if (currentStep === 5) {
+      if (data.product_1 === undefined || data.product_2 === undefined || data.filler_1 === undefined || data.filler_2 === undefined || data.capper_1 === undefined || data.capper_2 === undefined || data.sleever_1 === undefined || data.sleever_2 === undefined || data.shrink_1 === undefined || data.shrink_2 === undefined) {
+        toast.error("Please fill in all required fields")
+        return
+      }
+    }
+    
+    setIsSubmitting(true)
+    
     try {
-      const formData: CreateFilmaticLinesProductionSheetRequest = {
-        approved_by: data.approved_by,
-        date: data.date,
-        shift: data.shift,
-        product: data.product,
-      }
+      // Step 1: Create basic production sheet
+      if (currentStep === 1) {
+        const formData: CreateFilmaticLinesProductionSheetRequest = {
+          approved_by: data.approved_by,
+          date: data.date,
+          shift: data.shift,
+          product: data.product,
+        }
 
-      if (mode === "edit" && sheet) {
-        await dispatch(updateFilmaticLinesProductionSheet({
-          id: sheet.id,
-          ...formData,
-        })).unwrap()
-        toast.success("Production sheet updated successfully")
-      } else {
-        await dispatch(createFilmaticLinesProductionSheet(formData)).unwrap()
+        const result = await dispatch(createFilmaticLinesProductionSheet(formData)).unwrap()
+        setCreatedSheetId(result.id)
         toast.success("Production sheet created successfully")
+        setCurrentStep(2)
       }
+      
+      // Step 2: Create production sheet details
+      else if (currentStep === 2 && createdSheetId) {
+        const detailData: CreateFilmaticLinesProductionSheetDetailRequest = {
+          filmatic_lines_production_sheet_id: createdSheetId,
+          day_shift_hours: data.day_shift_hours || "",
+          no_of_pallets: data.no_of_pallets || 0,
+          hourly_target: data.hourly_target || 0,
+          variance: data.variance || 0,
+          reason_for_variance: data.reason_for_variance || "",
+        }
 
-      onOpenChange(false)
+        console.log("Creating production sheet details with data:", detailData)
+        const result = await filmaticLinesApi.createProductionSheetDetail(detailData)
+        console.log("Production sheet details result:", result)
+        setCreatedDetailId(result.id)
+        toast.success("Production details created successfully")
+        setCurrentStep(3)
+      }
+      
+      // Step 3: Create bottles reconciliation
+      else if (currentStep === 3 && createdDetailId) {
+        const bottlesData: CreateFilmaticLinesBottlesReconciliationRequest = {
+          filmatic_lines_production_sheet_details_id: createdDetailId,
+          shift: data.bottles_shift || "",
+          opening: data.bottles_opening || 0,
+          added: data.bottles_added || 0,
+          closing: data.bottles_closing || 0,
+          wastes: data.bottles_wastes || 0,
+          damages: data.bottles_damages || 0,
+        }
+
+        console.log("Creating bottles reconciliation with data:", bottlesData)
+        const result = await filmaticLinesApi.createBottlesReconciliation(bottlesData)
+        console.log("Bottles reconciliation result:", result)
+        toast.success("Bottles reconciliation created successfully")
+        setCurrentStep(4)
+      }
+      
+      // Step 4: Create milk reconciliation
+      else if (currentStep === 4 && createdDetailId) {
+        const milkData: CreateFilmaticLinesMilkReconciliationRequest = {
+          filmatic_lines_production_sheet_details_id: createdDetailId,
+          shift: data.milk_shift || "",
+          opening: data.milk_opening || 0,
+          added: data.milk_added || 0,
+          closing: data.milk_closing || 0,
+          total: data.milk_total || 0,
+          transfer: data.milk_transfer || 0,
+        }
+
+        console.log("Creating milk reconciliation with data:", milkData)
+        const result = await filmaticLinesApi.createMilkReconciliation(milkData)
+        console.log("Milk reconciliation result:", result)
+        toast.success("Milk reconciliation created successfully")
+        setCurrentStep(5)
+      }
+      
+      // Step 5: Create stoppage time minutes
+      else if (currentStep === 5 && createdDetailId) {
+        const stoppageData: CreateFilmaticLinesStoppageTimeMinutesRequest = {
+          filmatic_lines_production_sheet_details_id: createdDetailId,
+          product_1: data.product_1 || 0,
+          product_2: data.product_2 || 0,
+          filler_1: data.filler_1 || 0,
+          filler_2: data.filler_2 || 0,
+          capper_1: data.capper_1 || 0,
+          capper_2: data.capper_2 || 0,
+          sleever_1: data.sleever_1 || 0,
+          sleever_2: data.sleever_2 || 0,
+          shrink_1: data.shrink_1 || 0,
+          shrink_2: data.shrink_2 || 0,
+        }
+
+        console.log("Creating stoppage time minutes with data:", stoppageData)
+        const result = await filmaticLinesApi.createStoppageTimeMinutes(stoppageData)
+        console.log("Stoppage time minutes result:", result)
+        toast.success("Stoppage time recorded successfully")
+        toast.success("Filmatic Lines Production Sheet completed successfully!")
+        onOpenChange(false)
+      }
     } catch (error: any) {
-      toast.error(error || "Failed to save production sheet")
+      console.error("Step submission error:", error)
+      toast.error(error?.message || "Failed to save step data")
+    } finally {
+      setIsSubmitting(false)
     }
   }
+
+  const handleNext = () => {
+    if (currentStep < 5) {
+      setCurrentStep(currentStep + 1)
+    }
+  }
+
+  const handlePrevious = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1)
+    }
+  }
+
+  // Update form resolver when step changes
+  useEffect(() => {
+    formHook.clearErrors()
+  }, [currentStep, formHook])
 
   const renderForm = () => {
     // Convert roles to searchable select options
@@ -404,127 +661,596 @@ export function FilmaticLinesProductionSheetDrawer({
               <p className="text-sm font-light text-gray-600 mt-2">Enter production information and details</p>
             </div>
             
-            <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label htmlFor="details">Production Details</Label>
+                <Label htmlFor="day_shift_hours">Day Shift Hours *</Label>
                 <Controller
-                  name="details"
+                  name="day_shift_hours"
                   control={formHook.control}
                   render={({ field }) => (
-                    <Textarea
-                      id="details"
-                      placeholder="Enter production details..."
-                      rows={4}
+                    <Input
+                      id="day_shift_hours"
+                      placeholder="e.g., 08:00-16:00"
                       {...field}
                     />
                   )}
                 />
+                {formHook.formState.errors.day_shift_hours && (
+                  <p className="text-sm text-red-500">{formHook.formState.errors.day_shift_hours.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="no_of_pallets">Number of Pallets *</Label>
+                <Controller
+                  name="no_of_pallets"
+                  control={formHook.control}
+                  render={({ field }) => (
+                    <Input
+                      id="no_of_pallets"
+                      type="number"
+                      min="0"
+                      placeholder="Enter number of pallets"
+                      {...field}
+                      onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                    />
+                  )}
+                />
+                {formHook.formState.errors.no_of_pallets && (
+                  <p className="text-sm text-red-500">{formHook.formState.errors.no_of_pallets.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="hourly_target">Hourly Target (cases/hour) *</Label>
+                <Controller
+                  name="hourly_target"
+                  control={formHook.control}
+                  render={({ field }) => (
+                    <Input
+                      id="hourly_target"
+                      type="number"
+                      min="0"
+                      placeholder="Enter hourly target in cases"
+                      {...field}
+                      onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                    />
+                  )}
+                />
+                {formHook.formState.errors.hourly_target && (
+                  <p className="text-sm text-red-500">{formHook.formState.errors.hourly_target.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="variance">Variance (cases) *</Label>
+                <Controller
+                  name="variance"
+                  control={formHook.control}
+                  render={({ field }) => (
+                    <Input
+                      id="variance"
+                      type="number"
+                      placeholder="Enter variance in cases (+/-)"
+                      {...field}
+                      onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                    />
+                  )}
+                />
+                {formHook.formState.errors.variance && (
+                  <p className="text-sm text-red-500">{formHook.formState.errors.variance.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-2 col-span-2">
+                <Label htmlFor="reason_for_variance">Reason for Variance *</Label>
+                <Controller
+                  name="reason_for_variance"
+                  control={formHook.control}
+                  render={({ field }) => (
+                    <Textarea
+                      id="reason_for_variance"
+                      placeholder="Enter reason for variance..."
+                      rows={3}
+                      {...field}
+                    />
+                  )}
+                />
+                {formHook.formState.errors.reason_for_variance && (
+                  <p className="text-sm text-red-500">{formHook.formState.errors.reason_for_variance.message}</p>
+                )}
               </div>
             </div>
           </div>
         )}
 
-        {/* Step 3: Reconciliation */}
+        {/* Step 3: Bottles Reconciliation */}
         {currentStep === 3 && (
           <div className="space-y-6">
             <div className="text-center mb-6">
-              <h3 className="text-xl font-light text-gray-900">Reconciliation</h3>
-              <p className="text-sm font-light text-gray-600 mt-2">Enter bottles and milk reconciliation information</p>
+              <h3 className="text-xl font-light text-gray-900">Bottles Reconciliation</h3>
+              <p className="text-sm font-light text-gray-600 mt-2">Enter bottles reconciliation information</p>
             </div>
             
-            <div className="grid grid-cols-1 gap-6">
+            <div className="grid grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label htmlFor="bottles_reconciliation">Bottles Reconciliation</Label>
+                <Label htmlFor="bottles_shift">Shift *</Label>
                 <Controller
-                  name="bottles_reconciliation"
+                  name="bottles_shift"
                   control={formHook.control}
                   render={({ field }) => (
-                    <Textarea
-                      id="bottles_reconciliation"
-                      placeholder="Enter bottles reconciliation details..."
-                      rows={3}
-                      {...field}
-                    />
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <SelectTrigger className="h-12 border border-gray-300 hover:border-gray-400 focus:border-blue-500 shadow-none hover:shadow-none focus:shadow-none rounded-full">
+                        <SelectValue placeholder="Select shift" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Morning Shift">Morning Shift</SelectItem>
+                        <SelectItem value="Afternoon Shift">Afternoon Shift</SelectItem>
+                        <SelectItem value="Night Shift">Night Shift</SelectItem>
+                      </SelectContent>
+                    </Select>
                   )}
                 />
+                {formHook.formState.errors.bottles_shift && (
+                  <p className="text-sm text-red-500">{formHook.formState.errors.bottles_shift.message}</p>
+                )}
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="milk_reconciliation">Milk Reconciliation</Label>
+                <Label htmlFor="bottles_opening">Opening (bottles) *</Label>
                 <Controller
-                  name="milk_reconciliation"
+                  name="bottles_opening"
                   control={formHook.control}
                   render={({ field }) => (
-                    <Textarea
-                      id="milk_reconciliation"
-                      placeholder="Enter milk reconciliation details..."
-                      rows={3}
+                    <Input
+                      id="bottles_opening"
+                      type="number"
+                      min="0"
+                      placeholder="Enter opening bottles count"
                       {...field}
+                      onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
                     />
                   )}
                 />
+                {formHook.formState.errors.bottles_opening && (
+                  <p className="text-sm text-red-500">{formHook.formState.errors.bottles_opening.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="bottles_added">Added (bottles) *</Label>
+                <Controller
+                  name="bottles_added"
+                  control={formHook.control}
+                  render={({ field }) => (
+                    <Input
+                      id="bottles_added"
+                      type="number"
+                      min="0"
+                      placeholder="Enter added bottles count"
+                      {...field}
+                      onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                    />
+                  )}
+                />
+                {formHook.formState.errors.bottles_added && (
+                  <p className="text-sm text-red-500">{formHook.formState.errors.bottles_added.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="bottles_closing">Closing (bottles) *</Label>
+                <Controller
+                  name="bottles_closing"
+                  control={formHook.control}
+                  render={({ field }) => (
+                    <Input
+                      id="bottles_closing"
+                      type="number"
+                      min="0"
+                      placeholder="Enter closing bottles count"
+                      {...field}
+                      onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                    />
+                  )}
+                />
+                {formHook.formState.errors.bottles_closing && (
+                  <p className="text-sm text-red-500">{formHook.formState.errors.bottles_closing.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="bottles_wastes">Wastes (bottles) *</Label>
+                <Controller
+                  name="bottles_wastes"
+                  control={formHook.control}
+                  render={({ field }) => (
+                    <Input
+                      id="bottles_wastes"
+                      type="number"
+                      min="0"
+                      placeholder="Enter wasted bottles count"
+                      {...field}
+                      onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                    />
+                  )}
+                />
+                {formHook.formState.errors.bottles_wastes && (
+                  <p className="text-sm text-red-500">{formHook.formState.errors.bottles_wastes.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="bottles_damages">Damages (bottles) *</Label>
+                <Controller
+                  name="bottles_damages"
+                  control={formHook.control}
+                  render={({ field }) => (
+                    <Input
+                      id="bottles_damages"
+                      type="number"
+                      min="0"
+                      placeholder="Enter damaged bottles count"
+                      {...field}
+                      onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                    />
+                  )}
+                />
+                {formHook.formState.errors.bottles_damages && (
+                  <p className="text-sm text-red-500">{formHook.formState.errors.bottles_damages.message}</p>
+                )}
               </div>
             </div>
           </div>
         )}
 
-        {/* Step 4: Stoppage & Quality */}
+        {/* Step 4: Milk Reconciliation */}
         {currentStep === 4 && (
           <div className="space-y-6">
             <div className="text-center mb-6">
-              <h3 className="text-xl font-light text-gray-900">Stoppage & Quality</h3>
-              <p className="text-sm font-light text-gray-600 mt-2">Enter stoppage information and quality metrics</p>
+              <h3 className="text-xl font-light text-gray-900">Milk Reconciliation</h3>
+              <p className="text-sm font-light text-gray-600 mt-2">Enter milk reconciliation information</p>
             </div>
             
-            <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label htmlFor="stoppage">Stoppage Information</Label>
+                <Label htmlFor="milk_shift">Shift *</Label>
                 <Controller
-                  name="stoppage"
+                  name="milk_shift"
                   control={formHook.control}
                   render={({ field }) => (
-                    <Textarea
-                      id="stoppage"
-                      placeholder="Enter stoppage information..."
-                      rows={4}
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <SelectTrigger className="h-12 border border-gray-300 hover:border-gray-400 focus:border-blue-500 shadow-none hover:shadow-none focus:shadow-none rounded-full">
+                        <SelectValue placeholder="Select shift" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Morning Shift">Morning Shift</SelectItem>
+                        <SelectItem value="Afternoon Shift">Afternoon Shift</SelectItem>
+                        <SelectItem value="Night Shift">Night Shift</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+                {formHook.formState.errors.milk_shift && (
+                  <p className="text-sm text-red-500">{formHook.formState.errors.milk_shift.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="milk_opening">Opening (liters) *</Label>
+                <Controller
+                  name="milk_opening"
+                  control={formHook.control}
+                  render={({ field }) => (
+                    <Input
+                      id="milk_opening"
+                      type="number"
+                      min="0"
+                      placeholder="Enter opening milk quantity"
                       {...field}
+                      onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
                     />
                   )}
                 />
+                {formHook.formState.errors.milk_opening && (
+                  <p className="text-sm text-red-500">{formHook.formState.errors.milk_opening.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="milk_added">Added (liters) *</Label>
+                <Controller
+                  name="milk_added"
+                  control={formHook.control}
+                  render={({ field }) => (
+                    <Input
+                      id="milk_added"
+                      type="number"
+                      min="0"
+                      placeholder="Enter added milk quantity"
+                      {...field}
+                      onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                    />
+                  )}
+                />
+                {formHook.formState.errors.milk_added && (
+                  <p className="text-sm text-red-500">{formHook.formState.errors.milk_added.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="milk_closing">Closing (liters) *</Label>
+                <Controller
+                  name="milk_closing"
+                  control={formHook.control}
+                  render={({ field }) => (
+                    <Input
+                      id="milk_closing"
+                      type="number"
+                      min="0"
+                      placeholder="Enter closing milk quantity"
+                      {...field}
+                      onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                    />
+                  )}
+                />
+                {formHook.formState.errors.milk_closing && (
+                  <p className="text-sm text-red-500">{formHook.formState.errors.milk_closing.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="milk_total">Total (liters) *</Label>
+                <Controller
+                  name="milk_total"
+                  control={formHook.control}
+                  render={({ field }) => (
+                    <Input
+                      id="milk_total"
+                      type="number"
+                      min="0"
+                      placeholder="Enter total milk quantity"
+                      {...field}
+                      onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                    />
+                  )}
+                />
+                {formHook.formState.errors.milk_total && (
+                  <p className="text-sm text-red-500">{formHook.formState.errors.milk_total.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="milk_transfer">Transfer (liters) *</Label>
+                <Controller
+                  name="milk_transfer"
+                  control={formHook.control}
+                  render={({ field }) => (
+                    <Input
+                      id="milk_transfer"
+                      type="number"
+                      min="0"
+                      placeholder="Enter transfer milk quantity"
+                      {...field}
+                      onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                    />
+                  )}
+                />
+                {formHook.formState.errors.milk_transfer && (
+                  <p className="text-sm text-red-500">{formHook.formState.errors.milk_transfer.message}</p>
+                )}
               </div>
             </div>
           </div>
         )}
 
-        {/* Step 5: Review & Submit */}
+        {/* Step 5: Stoppage Time Minutes */}
         {currentStep === 5 && (
           <div className="space-y-6">
             <div className="text-center mb-6">
-              <h3 className="text-xl font-light text-gray-900">Review & Submit</h3>
-              <p className="text-sm font-light text-gray-600 mt-2">Review all information before submitting</p>
+              <h3 className="text-xl font-light text-gray-900">Stoppage Time Minutes</h3>
+              <p className="text-sm font-light text-gray-600 mt-2">Enter stoppage time for each machine component</p>
             </div>
             
-            <div className="space-y-4">
-              <div className="p-6 bg-gray-50 rounded-lg">
-                <h4 className="text-lg font-medium text-gray-900 mb-4">Form Summary</h4>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm text-gray-600">Approved By:</p>
-                    <p className="font-medium">{formHook.watch('approved_by') || 'Not selected'}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Date:</p>
-                    <p className="font-medium">{formHook.watch('date') || 'Not selected'}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Shift:</p>
-                    <p className="font-medium">{formHook.watch('shift') || 'Not selected'}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Product:</p>
-                    <p className="font-medium">{formHook.watch('product') || 'Not selected'}</p>
-                  </div>
-                </div>
+            <div className="grid grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <Label htmlFor="product_1">Product 1 (minutes) *</Label>
+                <Controller
+                  name="product_1"
+                  control={formHook.control}
+                  render={({ field }) => (
+                    <Input
+                      id="product_1"
+                      type="number"
+                      min="0"
+                      {...field}
+                      onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                    />
+                  )}
+                />
+                {formHook.formState.errors.product_1 && (
+                  <p className="text-sm text-red-500">{formHook.formState.errors.product_1.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="product_2">Product 2 (minutes) *</Label>
+                <Controller
+                  name="product_2"
+                  control={formHook.control}
+                  render={({ field }) => (
+                    <Input
+                      id="product_2"
+                      type="number"
+                      min="0"
+                      {...field}
+                      onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                    />
+                  )}
+                />
+                {formHook.formState.errors.product_2 && (
+                  <p className="text-sm text-red-500">{formHook.formState.errors.product_2.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="filler_1">Filler 1 (minutes) *</Label>
+                <Controller
+                  name="filler_1"
+                  control={formHook.control}
+                  render={({ field }) => (
+                    <Input
+                      id="filler_1"
+                      type="number"
+                      min="0"
+                      {...field}
+                      onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                    />
+                  )}
+                />
+                {formHook.formState.errors.filler_1 && (
+                  <p className="text-sm text-red-500">{formHook.formState.errors.filler_1.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="filler_2">Filler 2 (minutes) *</Label>
+                <Controller
+                  name="filler_2"
+                  control={formHook.control}
+                  render={({ field }) => (
+                    <Input
+                      id="filler_2"
+                      type="number"
+                      min="0"
+                      {...field}
+                      onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                    />
+                  )}
+                />
+                {formHook.formState.errors.filler_2 && (
+                  <p className="text-sm text-red-500">{formHook.formState.errors.filler_2.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="capper_1">Capper 1 (minutes) *</Label>
+                <Controller
+                  name="capper_1"
+                  control={formHook.control}
+                  render={({ field }) => (
+                    <Input
+                      id="capper_1"
+                      type="number"
+                      min="0"
+                      {...field}
+                      onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                    />
+                  )}
+                />
+                {formHook.formState.errors.capper_1 && (
+                  <p className="text-sm text-red-500">{formHook.formState.errors.capper_1.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="capper_2">Capper 2 (minutes) *</Label>
+                <Controller
+                  name="capper_2"
+                  control={formHook.control}
+                  render={({ field }) => (
+                    <Input
+                      id="capper_2"
+                      type="number"
+                      min="0"
+                      {...field}
+                      onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                    />
+                  )}
+                />
+                {formHook.formState.errors.capper_2 && (
+                  <p className="text-sm text-red-500">{formHook.formState.errors.capper_2.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="sleever_1">Sleever 1 (minutes) *</Label>
+                <Controller
+                  name="sleever_1"
+                  control={formHook.control}
+                  render={({ field }) => (
+                    <Input
+                      id="sleever_1"
+                      type="number"
+                      min="0"
+                      {...field}
+                      onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                    />
+                  )}
+                />
+                {formHook.formState.errors.sleever_1 && (
+                  <p className="text-sm text-red-500">{formHook.formState.errors.sleever_1.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="sleever_2">Sleever 2 (minutes) *</Label>
+                <Controller
+                  name="sleever_2"
+                  control={formHook.control}
+                  render={({ field }) => (
+                    <Input
+                      id="sleever_2"
+                      type="number"
+                      min="0"
+                      {...field}
+                      onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                    />
+                  )}
+                />
+                {formHook.formState.errors.sleever_2 && (
+                  <p className="text-sm text-red-500">{formHook.formState.errors.sleever_2.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="shrink_1">Shrink 1 (minutes) *</Label>
+                <Controller
+                  name="shrink_1"
+                  control={formHook.control}
+                  render={({ field }) => (
+                    <Input
+                      id="shrink_1"
+                      type="number"
+                      min="0"
+                      {...field}
+                      onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                    />
+                  )}
+                />
+                {formHook.formState.errors.shrink_1 && (
+                  <p className="text-sm text-red-500">{formHook.formState.errors.shrink_1.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="shrink_2">Shrink 2 (minutes) *</Label>
+                <Controller
+                  name="shrink_2"
+                  control={formHook.control}
+                  render={({ field }) => (
+                    <Input
+                      id="shrink_2"
+                      type="number"
+                      min="0"
+                      {...field}
+                      onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                    />
+                  )}
+                />
+                {formHook.formState.errors.shrink_2 && (
+                  <p className="text-sm text-red-500">{formHook.formState.errors.shrink_2.message}</p>
+                )}
               </div>
             </div>
           </div>
@@ -547,7 +1273,7 @@ export function FilmaticLinesProductionSheetDrawer({
         </SheetHeader>
 
         <div className="flex-1 overflow-y-auto">
-          <form onSubmit={formHook.handleSubmit(handleSubmit)}>
+          <form onSubmit={formHook.handleSubmit(handleStepSubmit)}>
             <div className="p-6">
               <ProcessOverview />
               <StepNavigation currentStep={currentStep} onStepChange={setCurrentStep} />
@@ -560,8 +1286,9 @@ export function FilmaticLinesProductionSheetDrawer({
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => setCurrentStep(currentStep - 1)}
+                    onClick={handlePrevious}
                     className="flex items-center gap-2"
+                    disabled={isSubmitting}
                   >
                     <ChevronLeft className="h-4 w-4" />
                     Previous
@@ -572,21 +1299,39 @@ export function FilmaticLinesProductionSheetDrawer({
               <div className="flex items-center space-x-2">
                 {currentStep < 5 ? (
                   <Button
-                    type="button"
-                    onClick={() => setCurrentStep(currentStep + 1)}
+                    type="submit"
+                    disabled={isSubmitting || loading.create || loading.update}
                     className="flex items-center gap-2"
                   >
-                    Next
-                    <ChevronRight className="h-4 w-4" />
+                    {isSubmitting ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        Save & Continue
+                        <ChevronRight className="h-4 w-4" />
+                      </>
+                    )}
                   </Button>
                 ) : (
                   <Button
                     type="submit"
-                    disabled={loading.create || loading.update}
+                    disabled={isSubmitting || loading.create || loading.update}
                     className="flex items-center gap-2"
                   >
-                    <Save className="h-4 w-4" />
-                    {mode === "edit" ? "Update Sheet" : "Create Sheet"}
+                    {isSubmitting ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        Completing...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="h-4 w-4" />
+                        Complete Process
+                      </>
+                    )}
                   </Button>
                 )}
               </div>

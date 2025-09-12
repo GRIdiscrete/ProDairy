@@ -10,9 +10,7 @@ export interface FilmaticLinesProductionSheet {
   shift: string
   product: string
   details: string | null
-  bottles_reconciliation: string | null
-  stoppage: string | null
-  milk_reconciliation: string | null
+  filmatic_lines_production_sheet_details_fkey?: FilmaticLinesProductionSheetDetail | null
   filmatic_lines_production_sheet_approved_by_fkey?: {
     id: string
     role_name: string
@@ -54,6 +52,14 @@ export interface FilmaticLinesProductionSheetDetail {
   hourly_target: number
   variance: number
   reason_for_variance: string
+  operator: string | null
+  operator_signature: string | null
+  supervisor: string | null
+  supervisor_signature: string | null
+  bottles_reconciliation?: FilmaticLinesBottlesReconciliation | null
+  milk_reconciliation?: FilmaticLinesMilkReconciliation | null
+  stoppages?: string | null
+  filmatic_lines_production_sheet_details_stoppages_fkey?: FilmaticLinesStoppageTimeMinutes | null
   filmatic_lines_production_she_filmatic_lines_production_sh_fkey?: FilmaticLinesProductionSheet
 }
 
@@ -111,9 +117,9 @@ export interface UpdateFilmaticLinesBottlesReconciliationRequest {
 }
 
 export interface FilmaticLinesMilkReconciliation {
-  id: number
+  id: string
   created_at: string
-  updated_at: string
+  updated_at: string | null
   filmatic_lines_production_sheet_details_id: string
   shift: string
   opening: number
@@ -134,7 +140,7 @@ export interface CreateFilmaticLinesMilkReconciliationRequest {
 }
 
 export interface UpdateFilmaticLinesMilkReconciliationRequest {
-  id: number
+  id: string
   filmatic_lines_production_sheet_details_id: string
   shift: string
   opening: number
@@ -319,7 +325,7 @@ export const filmaticLinesApi = {
     })
   },
 
-  deleteMilkReconciliation: async (id: number) => {
+  deleteMilkReconciliation: async (id: string) => {
     return apiRequest<void>(`/filmatic-lines-production-sheet-details-milk-reconciliation/${id}`, {
       method: 'DELETE',
     })

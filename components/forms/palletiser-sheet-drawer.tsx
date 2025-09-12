@@ -17,9 +17,11 @@ import {
   fetchPalletiserSheets
 } from "@/lib/store/slices/palletiserSheetSlice"
 import { usersApi } from "@/lib/api/users"
+import { machineApi } from "@/lib/api/machine"
+import { rolesApi } from "@/lib/api/roles"
 import { toast } from "sonner"
 import { PalletiserSheet, PalletiserSheetDetails } from "@/lib/api/data-capture-forms"
-import { ChevronLeft, ChevronRight } from "lucide-react"
+import { ChevronLeft, ChevronRight, ArrowRight, Package, Beaker, FileText } from "lucide-react"
 
 interface PalletiserSheetDrawerProps {
   open: boolean
@@ -28,25 +30,59 @@ interface PalletiserSheetDrawerProps {
   mode?: "create" | "edit"
 }
 
+// Process Overview Component
+const ProcessOverview = () => (
+  <div className="mb-8 p-6 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg">
+    <h3 className="text-lg font-light text-gray-900 mb-4">Process Overview</h3>
+    <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center space-x-2">
+        <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center">
+          <Beaker className="w-4 h-4 text-orange-600" />
+        </div>
+        <span className="text-sm font-light">Filmatic Lines</span>
+      </div>
+      <ArrowRight className="w-4 h-4 text-gray-400" />
+      <div className="flex items-center space-x-2">
+        <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+          <Package className="w-4 h-4 text-blue-600" />
+        </div>
+        <div className="flex items-center space-x-2">
+          <span className="text-sm font-medium text-blue-600">Palletizing</span>
+          <div className="bg-gradient-to-r from-blue-500 to-cyan-600 text-white px-2 py-1 rounded-full text-xs font-medium shadow-lg">
+            Current Step
+          </div>
+        </div>
+      </div>
+      <ArrowRight className="w-4 h-4 text-gray-400" />
+      <div className="flex items-center space-x-2">
+        <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+          <FileText className="w-4 h-4 text-gray-400" />
+        </div>
+        <span className="text-sm font-light text-gray-400">Process Log</span>
+      </div>
+    </div>
+  </div>
+)
+
 // Step 1: Sheet Form Schema
 const sheetSchema = yup.object({
-  sheet_date: yup.string().required("Sheet date is required"),
-  shift: yup.string().required("Shift is required"),
-  operator_id: yup.string().required("Operator is required"),
-  palletiser_id: yup.string().required("Palletiser is required"),
-  total_pallets: yup.number().required("Total pallets is required").min(0, "Must be positive"),
-  efficiency_rate: yup.number().required("Efficiency rate is required").min(0, "Must be positive").max(100, "Cannot exceed 100%"),
-  downtime_minutes: yup.number().required("Downtime minutes is required").min(0, "Must be positive"),
-  notes: yup.string().optional(),
+  machine_id: yup.string().required("Machine is required"),
+  manufacturing_date: yup.string().required("Manufacturing date is required"),
+  expiry_date: yup.string().required("Expiry date is required"),
+  batch_number: yup.number().required("Batch number is required").min(1, "Must be positive"),
+  product_type: yup.string().required("Product type is required"),
+  approved_by: yup.string().required("Approved by is required"),
 })
 
 // Step 2: Sheet Details Form Schema
 const sheetDetailsSchema = yup.object({
-  product_code: yup.string().required("Product code is required"),
-  quantity_palletised: yup.number().required("Quantity palletised is required").min(0, "Must be positive"),
-  pallet_pattern: yup.string().required("Pallet pattern is required"),
-  quality_check: yup.boolean().required("Quality check is required"),
-  timestamp: yup.string().required("Timestamp is required"),
+  pallet_number: yup.number().required("Pallet number is required").min(1, "Must be positive"),
+  start_time: yup.string().required("Start time is required"),
+  end_time: yup.string().required("End time is required"),
+  cases_packed: yup.number().required("Cases packed is required").min(0, "Must be positive"),
+  serial_number: yup.string().required("Serial number is required"),
+  counter_id: yup.string().required("Counter is required"),
+  counter_signature: yup.string().required("Counter signature is required"),
 })
 
 type SheetFormData = yup.InferType<typeof sheetSchema>
@@ -67,20 +103,22 @@ export function PalletiserSheetDrawer({
   const [currentStep, setCurrentStep] = useState(1)
   const [createdSheet, setCreatedSheet] = useState<PalletiserSheet | null>(null)
   const [users, setUsers] = useState<any[]>([])
+  const [machines, setMachines] = useState<any[]>([])
+  const [roles, setRoles] = useState<any[]>([])
   const [loadingUsers, setLoadingUsers] = useState(false)
+  const [loadingMachines, setLoadingMachines] = useState(false)
+  const [loadingRoles, setLoadingRoles] = useState(false)
 
   // Sheet form
   const sheetForm = useForm<SheetFormData>({
     resolver: yupResolver(sheetSchema),
     defaultValues: {
-      sheet_date: "",
-      shift: "",
-      operator_id: "",
-      palletiser_id: "",
-      total_pallets: 0,
-      efficiency_rate: 0,
-      downtime_minutes: 0,
-      notes: "",
+      machine_id: "",
+      manufacturing_date: "",
+      expiry_date: "",
+      batch_number: 0,
+      product_type: "",
+      approved_by: "",
     },
   })
 
@@ -88,53 +126,97 @@ export function PalletiserSheetDrawer({
   const sheetDetailsForm = useForm<SheetDetailsFormData>({
     resolver: yupResolver(sheetDetailsSchema),
     defaultValues: {
-      product_code: "",
-      quantity_palletised: 0,
-      pallet_pattern: "",
-      quality_check: false,
-      timestamp: "",
+      pallet_number: 0,
+      start_time: "",
+      end_time: "",
+      cases_packed: 0,
+      serial_number: "",
+      counter_id: "",
+      counter_signature: "",
     },
+    mode: "onChange"
   })
 
-  // Load users on component mount
+  // Load users, machines, and roles on component mount
   useEffect(() => {
-    const loadUsers = async () => {
+    const loadData = async () => {
       setLoadingUsers(true)
+      setLoadingMachines(true)
+      setLoadingRoles(true)
       try {
+        // Load users
         const usersResponse = await usersApi.getUsers()
         setUsers(usersResponse.data || [])
+        
+        // Load machines
+        const machinesResponse = await machineApi.getMachines()
+        setMachines(machinesResponse.data || [])
+        
+        // Load roles
+        const rolesResponse = await rolesApi.getRoles()
+        setRoles(rolesResponse.data || [])
       } catch (error) {
-        console.error("Failed to load users:", error)
-        toast.error("Failed to load users")
+        console.error("Failed to load data:", error)
+        toast.error("Failed to load form data")
       } finally {
         setLoadingUsers(false)
+        setLoadingMachines(false)
+        setLoadingRoles(false)
       }
     }
 
     if (open) {
-      loadUsers()
+      loadData()
     }
   }, [open])
 
   // Reset forms when drawer opens/closes
   useEffect(() => {
     if (open) {
+      console.log("Form opening, mode:", mode, "sheet:", sheet)
+      
       if (mode === "edit" && sheet) {
         sheetForm.reset({
-          sheet_date: sheet.sheet_date,
-          shift: sheet.shift,
-          operator_id: sheet.operator_id,
-          palletiser_id: sheet.palletiser_id,
-          total_pallets: sheet.total_pallets,
-          efficiency_rate: sheet.efficiency_rate,
-          downtime_minutes: sheet.downtime_minutes,
-          notes: sheet.notes || "",
+          machine_id: sheet.machine_id || "",
+          manufacturing_date: sheet.manufacturing_date || "",
+          expiry_date: sheet.expiry_date || "",
+          batch_number: sheet.batch_number || 0,
+          product_type: sheet.product_type || "",
+          approved_by: sheet.approved_by || "",
         })
+        
+        // Reset sheet details form with clean defaults
+        sheetDetailsForm.reset({
+          pallet_number: 0,
+          start_time: "",
+          end_time: "",
+          cases_packed: 0,
+          serial_number: "",
+          counter_id: "",
+          counter_signature: "",
+        })
+        
         setCreatedSheet(sheet)
         setCurrentStep(2) // Skip to details step for edit mode
       } else {
-        sheetForm.reset()
-        sheetDetailsForm.reset()
+        // Reset both forms to clean defaults
+        sheetForm.reset({
+          machine_id: "",
+          manufacturing_date: "",
+          expiry_date: "",
+          batch_number: 0,
+          product_type: "",
+          approved_by: "",
+        })
+        sheetDetailsForm.reset({
+          pallet_number: 0,
+          start_time: "",
+          end_time: "",
+          cases_packed: 0,
+          serial_number: "",
+          counter_id: "",
+          counter_signature: "",
+        })
         setCreatedSheet(null)
         setCurrentStep(1)
       }
@@ -227,174 +309,188 @@ export function PalletiserSheetDrawer({
     }
   }
 
+  const handleMachineSearch = async (query: string) => {
+    if (!query.trim()) return []
+    
+    try {
+      const machinesResponse = await machineApi.getMachines({
+        filters: { search: query }
+      })
+      return (machinesResponse.data || [])
+        .map(machine => ({
+          value: machine.id,
+          label: machine.name,
+          description: `${machine.category} • ${machine.location}`
+        }))
+    } catch (error) {
+      console.error("Failed to search machines:", error)
+      return []
+    }
+  }
+
+  const handleRoleSearch = async (query: string) => {
+    if (!query.trim()) return []
+    
+    try {
+      const rolesResponse = await rolesApi.getRoles({
+        filters: { search: query }
+      })
+      return (rolesResponse.data || [])
+        .map(role => ({
+          value: role.id,
+          label: role.role_name,
+          description: `${role.views?.length || 0} views • ${role.user_operations?.length || 0} user operations`
+        }))
+    } catch (error) {
+      console.error("Failed to search roles:", error)
+      return []
+    }
+  }
+
   const renderStep1 = () => (
     <div className="space-y-6 p-6">
+      <ProcessOverview />
+      
       <div className="space-y-4">
         <div className="text-center mb-6">
-          <h3 className="text-xl font-semibold text-gray-900">Step 1: Sheet Information</h3>
-          <p className="text-sm text-gray-600 mt-2">Enter the basic palletiser sheet details and operator information</p>
+          <h3 className="text-xl font-light text-gray-900">Basic Information</h3>
+          <p className="text-sm font-light text-gray-600 mt-2">Enter the basic palletiser sheet details and machine information</p>
         </div>
         
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
+            <Label htmlFor="machine_id">Machine *</Label>
             <Controller
-              name="sheet_date"
+              name="machine_id"
               control={sheetForm.control}
               render={({ field }) => (
-                <DatePicker
-                  label="Sheet Date *"
+                <SearchableSelect
+                  options={machines.map(machine => ({
+                    value: machine.id,
+                    label: machine.name,
+                    description: `${machine.category} • ${machine.location}`
+                  }))}
                   value={field.value}
-                  onChange={field.onChange}
-                  placeholder="Select sheet date"
-                  error={!!sheetForm.formState.errors.sheet_date}
+                  onValueChange={field.onChange}
+                  onSearch={handleMachineSearch}
+                  placeholder="Search and select machine"
+                  searchPlaceholder="Search machines..."
+                  emptyMessage="No machines found"
+                  loading={loadingMachines}
                 />
               )}
             />
-            {sheetForm.formState.errors.sheet_date && (
-              <p className="text-sm text-red-500">{sheetForm.formState.errors.sheet_date.message}</p>
+            {sheetForm.formState.errors.machine_id && (
+              <p className="text-sm text-red-500">{sheetForm.formState.errors.machine_id.message}</p>
             )}
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="shift">Shift *</Label>
+            <Label htmlFor="product_type">Product Type *</Label>
             <Controller
-              name="shift"
+              name="product_type"
               control={sheetForm.control}
               render={({ field }) => (
                 <Input
-                  id="shift"
-                  placeholder="Enter shift (e.g., Morning, Afternoon, Night)"
+                  id="product_type"
+                  placeholder="Enter product type (e.g., UHT Milk 1L)"
                   {...field}
                 />
               )}
             />
-            {sheetForm.formState.errors.shift && (
-              <p className="text-sm text-red-500">{sheetForm.formState.errors.shift.message}</p>
+            {sheetForm.formState.errors.product_type && (
+              <p className="text-sm text-red-500">{sheetForm.formState.errors.product_type.message}</p>
             )}
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="operator_id">Operator *</Label>
             <Controller
-              name="operator_id"
+              name="manufacturing_date"
+              control={sheetForm.control}
+              render={({ field }) => (
+                <DatePicker
+                  label="Manufacturing Date *"
+                  value={field.value}
+                  onChange={field.onChange}
+                  placeholder="Select manufacturing date"
+                  error={!!sheetForm.formState.errors.manufacturing_date}
+                />
+              )}
+            />
+            {sheetForm.formState.errors.manufacturing_date && (
+              <p className="text-sm text-red-500">{sheetForm.formState.errors.manufacturing_date.message}</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Controller
+              name="expiry_date"
+              control={sheetForm.control}
+              render={({ field }) => (
+                <DatePicker
+                  label="Expiry Date *"
+                  value={field.value}
+                  onChange={field.onChange}
+                  placeholder="Select expiry date"
+                  error={!!sheetForm.formState.errors.expiry_date}
+                />
+              )}
+            />
+            {sheetForm.formState.errors.expiry_date && (
+              <p className="text-sm text-red-500">{sheetForm.formState.errors.expiry_date.message}</p>
+            )}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="batch_number">Batch Number *</Label>
+            <Controller
+              name="batch_number"
+              control={sheetForm.control}
+              render={({ field }) => (
+                <Input
+                  id="batch_number"
+                  type="number"
+                  placeholder="Enter batch number"
+                  {...field}
+                  onChange={(e) => field.onChange(Number(e.target.value))}
+                />
+              )}
+            />
+            {sheetForm.formState.errors.batch_number && (
+              <p className="text-sm text-red-500">{sheetForm.formState.errors.batch_number.message}</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="approved_by">Approved By (Role) *</Label>
+            <Controller
+              name="approved_by"
               control={sheetForm.control}
               render={({ field }) => (
                 <SearchableSelect
-                  options={users.map(user => ({
-                    value: user.id,
-                    label: `${user.first_name} ${user.last_name}`.trim() || user.email,
-                    description: `${user.department} • ${user.email}`
+                  options={roles.map(role => ({
+                    value: role.id,
+                    label: role.role_name,
+                    description: `${role.views?.length || 0} views • ${role.user_operations?.length || 0} user operations`
                   }))}
                   value={field.value}
                   onValueChange={field.onChange}
-                  onSearch={handleUserSearch}
-                  placeholder="Search and select operator"
-                  loading={loadingUsers}
+                  onSearch={handleRoleSearch}
+                  placeholder="Search and select role"
+                  searchPlaceholder="Search roles..."
+                  emptyMessage="No roles found"
+                  loading={loadingRoles}
                 />
               )}
             />
-            {sheetForm.formState.errors.operator_id && (
-              <p className="text-sm text-red-500">{sheetForm.formState.errors.operator_id.message}</p>
+            {sheetForm.formState.errors.approved_by && (
+              <p className="text-sm text-red-500">{sheetForm.formState.errors.approved_by.message}</p>
             )}
           </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="palletiser_id">Palletiser ID *</Label>
-            <Controller
-              name="palletiser_id"
-              control={sheetForm.control}
-              render={({ field }) => (
-                <Input
-                  id="palletiser_id"
-                  placeholder="Enter palletiser ID"
-                  {...field}
-                />
-              )}
-            />
-            {sheetForm.formState.errors.palletiser_id && (
-              <p className="text-sm text-red-500">{sheetForm.formState.errors.palletiser_id.message}</p>
-            )}
-          </div>
-        </div>
-
-        <div className="grid grid-cols-3 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="total_pallets">Total Pallets *</Label>
-            <Controller
-              name="total_pallets"
-              control={sheetForm.control}
-              render={({ field }) => (
-                <Input
-                  id="total_pallets"
-                  type="number"
-                  placeholder="Enter total pallets"
-                  {...field}
-                  onChange={(e) => field.onChange(Number(e.target.value))}
-                />
-              )}
-            />
-            {sheetForm.formState.errors.total_pallets && (
-              <p className="text-sm text-red-500">{sheetForm.formState.errors.total_pallets.message}</p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="efficiency_rate">Efficiency Rate (%) *</Label>
-            <Controller
-              name="efficiency_rate"
-              control={sheetForm.control}
-              render={({ field }) => (
-                <Input
-                  id="efficiency_rate"
-                  type="number"
-                  step="0.1"
-                  placeholder="Enter efficiency rate"
-                  {...field}
-                  onChange={(e) => field.onChange(Number(e.target.value))}
-                />
-              )}
-            />
-            {sheetForm.formState.errors.efficiency_rate && (
-              <p className="text-sm text-red-500">{sheetForm.formState.errors.efficiency_rate.message}</p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="downtime_minutes">Downtime (Minutes) *</Label>
-            <Controller
-              name="downtime_minutes"
-              control={sheetForm.control}
-              render={({ field }) => (
-                <Input
-                  id="downtime_minutes"
-                  type="number"
-                  placeholder="Enter downtime minutes"
-                  {...field}
-                  onChange={(e) => field.onChange(Number(e.target.value))}
-                />
-              )}
-            />
-            {sheetForm.formState.errors.downtime_minutes && (
-              <p className="text-sm text-red-500">{sheetForm.formState.errors.downtime_minutes.message}</p>
-            )}
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="notes">Notes</Label>
-          <Controller
-            name="notes"
-            control={sheetForm.control}
-            render={({ field }) => (
-              <Input
-                id="notes"
-                placeholder="Enter any additional notes (optional)"
-                {...field}
-              />
-            )}
-          />
         </div>
       </div>
     </div>
@@ -402,114 +498,199 @@ export function PalletiserSheetDrawer({
 
   const renderStep2 = () => (
     <div className="space-y-6 p-6">
+      <ProcessOverview />
+      
       <div className="space-y-4">
         <div className="text-center mb-6">
-          <h3 className="text-xl font-semibold text-gray-900">Step 2: Product Details</h3>
-          <p className="text-sm text-gray-600 mt-2">Enter the specific product palletisation details and quality information</p>
+          <h3 className="text-xl font-light text-gray-900">Details</h3>
+          <p className="text-sm font-light text-gray-600 mt-2">Enter the specific pallet details and counter information</p>
         </div>
         
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="product_code">Product Code *</Label>
+            <Label htmlFor="pallet_number">Pallet Number *</Label>
             <Controller
-              name="product_code"
+              name="pallet_number"
               control={sheetDetailsForm.control}
-              render={({ field }) => (
-                <Input
-                  id="product_code"
-                  placeholder="Enter product code"
-                  {...field}
-                />
-              )}
+              render={({ field }) => {
+                const safeValue = typeof field.value === 'number' ? field.value : 0
+                return (
+                  <Input
+                    id="pallet_number"
+                    type="number"
+                    placeholder="Enter pallet number"
+                    value={safeValue || ""}
+                    onChange={(e) => {
+                      const value = e.target.value
+                      const numValue = value === "" ? 0 : parseInt(value, 10) || 0
+                      field.onChange(numValue)
+                    }}
+                  />
+                )
+              }}
             />
-            {sheetDetailsForm.formState.errors.product_code && (
-              <p className="text-sm text-red-500">{sheetDetailsForm.formState.errors.product_code.message}</p>
+            {sheetDetailsForm.formState.errors.pallet_number && (
+              <p className="text-sm text-red-500">{sheetDetailsForm.formState.errors.pallet_number.message}</p>
             )}
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="quantity_palletised">Quantity Palletised *</Label>
+            <Label htmlFor="cases_packed">Cases Packed *</Label>
             <Controller
-              name="quantity_palletised"
+              name="cases_packed"
               control={sheetDetailsForm.control}
-              render={({ field }) => (
-                <Input
-                  id="quantity_palletised"
-                  type="number"
-                  placeholder="Enter quantity palletised"
-                  {...field}
-                  onChange={(e) => field.onChange(Number(e.target.value))}
-                />
-              )}
+              render={({ field }) => {
+                const safeValue = typeof field.value === 'number' ? field.value : 0
+                return (
+                  <Input
+                    id="cases_packed"
+                    type="number"
+                    placeholder="Enter cases packed"
+                    value={safeValue || ""}
+                    onChange={(e) => {
+                      const value = e.target.value
+                      const numValue = value === "" ? 0 : parseInt(value, 10) || 0
+                      field.onChange(numValue)
+                    }}
+                  />
+                )
+              }}
             />
-            {sheetDetailsForm.formState.errors.quantity_palletised && (
-              <p className="text-sm text-red-500">{sheetDetailsForm.formState.errors.quantity_palletised.message}</p>
+            {sheetDetailsForm.formState.errors.cases_packed && (
+              <p className="text-sm text-red-500">{sheetDetailsForm.formState.errors.cases_packed.message}</p>
             )}
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="pallet_pattern">Pallet Pattern *</Label>
             <Controller
-              name="pallet_pattern"
+              name="start_time"
               control={sheetDetailsForm.control}
-              render={({ field }) => (
-                <Input
-                  id="pallet_pattern"
-                  placeholder="Enter pallet pattern"
-                  {...field}
-                />
-              )}
+              render={({ field }) => {
+                const safeValue = typeof field.value === 'string' && field.value !== 'UTC' ? field.value : ""
+                return (
+                  <DatePicker
+                    label="Start Time *"
+                    value={safeValue}
+                    onChange={(value) => {
+                      field.onChange(value || "")
+                    }}
+                    placeholder="Select start time"
+                    showTime={true}
+                    error={!!sheetDetailsForm.formState.errors.start_time}
+                  />
+                )
+              }}
             />
-            {sheetDetailsForm.formState.errors.pallet_pattern && (
-              <p className="text-sm text-red-500">{sheetDetailsForm.formState.errors.pallet_pattern.message}</p>
+            {sheetDetailsForm.formState.errors.start_time && (
+              <p className="text-sm text-red-500">{sheetDetailsForm.formState.errors.start_time.message}</p>
             )}
           </div>
 
           <div className="space-y-2">
             <Controller
-              name="timestamp"
+              name="end_time"
               control={sheetDetailsForm.control}
-              render={({ field }) => (
-                <DatePicker
-                  label="Timestamp *"
-                  value={field.value}
-                  onChange={field.onChange}
-                  placeholder="Select timestamp"
-                  showTime={true}
-                  error={!!sheetDetailsForm.formState.errors.timestamp}
-                />
-              )}
+              render={({ field }) => {
+                const safeValue = typeof field.value === 'string' && field.value !== 'UTC' ? field.value : ""
+                return (
+                  <DatePicker
+                    label="End Time *"
+                    value={safeValue}
+                    onChange={(value) => {
+                      field.onChange(value || "")
+                    }}
+                    placeholder="Select end time"
+                    showTime={true}
+                    error={!!sheetDetailsForm.formState.errors.end_time}
+                  />
+                )
+              }}
             />
-            {sheetDetailsForm.formState.errors.timestamp && (
-              <p className="text-sm text-red-500">{sheetDetailsForm.formState.errors.timestamp.message}</p>
+            {sheetDetailsForm.formState.errors.end_time && (
+              <p className="text-sm text-red-500">{sheetDetailsForm.formState.errors.end_time.message}</p>
+            )}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="serial_number">Serial Number *</Label>
+            <Controller
+              name="serial_number"
+              control={sheetDetailsForm.control}
+              render={({ field }) => {
+                const safeValue = typeof field.value === 'string' ? field.value : ""
+                return (
+                  <Input
+                    id="serial_number"
+                    placeholder="Enter serial number (e.g., PAL-20250821-001)"
+                    value={safeValue}
+                    onChange={(e) => {
+                      field.onChange(e.target.value)
+                    }}
+                  />
+                )
+              }}
+            />
+            {sheetDetailsForm.formState.errors.serial_number && (
+              <p className="text-sm text-red-500">{sheetDetailsForm.formState.errors.serial_number.message}</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="counter_id">Counter *</Label>
+            <Controller
+              name="counter_id"
+              control={sheetDetailsForm.control}
+              render={({ field }) => {
+                const safeValue = typeof field.value === 'string' ? field.value : ""
+                return (
+                  <SearchableSelect
+                    options={users.map(user => ({
+                      value: user.id,
+                      label: `${user.first_name} ${user.last_name}`.trim() || user.email,
+                      description: `${user.department} • ${user.email}`
+                    }))}
+                    value={safeValue}
+                    onValueChange={(value) => {
+                      field.onChange(value || "")
+                    }}
+                    onSearch={handleUserSearch}
+                    placeholder="Search and select counter"
+                    loading={loadingUsers}
+                  />
+                )
+              }}
+            />
+            {sheetDetailsForm.formState.errors.counter_id && (
+              <p className="text-sm text-red-500">{sheetDetailsForm.formState.errors.counter_id.message}</p>
             )}
           </div>
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="quality_check">Quality Check *</Label>
+          <Label htmlFor="counter_signature">Counter Signature *</Label>
           <Controller
-            name="quality_check"
+            name="counter_signature"
             control={sheetDetailsForm.control}
-            render={({ field }) => (
-              <div className="flex items-center space-x-2">
-                <input
-                  id="quality_check"
-                  type="checkbox"
-                  checked={field.value}
-                  onChange={field.onChange}
-                  className="rounded border-gray-300"
+            render={({ field }) => {
+              const safeValue = typeof field.value === 'string' ? field.value : ""
+              return (
+                <Input
+                  id="counter_signature"
+                  placeholder="Enter counter signature (base64-encoded)"
+                  value={safeValue}
+                  onChange={(e) => {
+                    field.onChange(e.target.value)
+                  }}
                 />
-                <Label htmlFor="quality_check" className="text-sm">
-                  Product passed quality check
-                </Label>
-              </div>
-            )}
+              )
+            }}
           />
-          {sheetDetailsForm.formState.errors.quality_check && (
-            <p className="text-sm text-red-500">{sheetDetailsForm.formState.errors.quality_check.message}</p>
+          {sheetDetailsForm.formState.errors.counter_signature && (
+            <p className="text-sm text-red-500">{sheetDetailsForm.formState.errors.counter_signature.message}</p>
           )}
         </div>
       </div>
@@ -518,24 +699,24 @@ export function PalletiserSheetDrawer({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-[50vw] sm:max-w-[50vw] p-0">
-        <SheetHeader className="p-6 pb-0">
+      <SheetContent className="w-[50vw] sm:max-w-[50vw] p-0 bg-white">
+        <SheetHeader className="p-6 pb-0 bg-white">
           <SheetTitle>
             {mode === "edit" ? "Edit Palletiser Sheet" : "Create Palletiser Sheet"}
           </SheetTitle>
           <SheetDescription>
             {currentStep === 1 
-              ? "Step 1: Enter sheet information and operator details"
-              : "Step 2: Enter product details and quality information"
+              ? "Basic Information: Enter sheet information and machine details"
+              : "Details: Enter pallet details and counter information"
             }
           </SheetDescription>
         </SheetHeader>
 
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto bg-white" key={`form-${open}-${currentStep}`}>
           {currentStep === 1 ? renderStep1() : renderStep2()}
         </div>
 
-        <div className="flex items-center justify-between p-6 pt-0 border-t">
+        <div className="flex items-center justify-between p-6 pt-0 border-t bg-white">
           <Button
             variant="outline"
             onClick={handleBack}
@@ -548,7 +729,7 @@ export function PalletiserSheetDrawer({
 
           <div className="flex items-center gap-2">
             <span className="text-sm text-muted-foreground">
-              Step {currentStep} of 2
+              {currentStep === 1 ? "Basic Information" : "Details"} • Step {currentStep} of 2
             </span>
           </div>
 

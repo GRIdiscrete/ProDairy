@@ -69,8 +69,8 @@ const dataCaptureNavigation = [
   },
   {
     name: "Process Log",
-    href: "/data-capture/palletiser-sheet",
-    icon: Grid3X3,
+    href: "/data-capture/process-log",
+    icon: Workflow,
     current: false,
   },
   // Process Control Forms
