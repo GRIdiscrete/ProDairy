@@ -91,7 +91,7 @@ export function DatePicker({
   return (
     <div className={cn("space-y-2", className)}>
       {label && (
-        <Label className="text-sm font-medium text-gray-700">
+        <Label className="text-base font-normal text-gray-700">
           {label}
         </Label>
       )}
@@ -102,7 +102,7 @@ export function DatePicker({
             <Button
               variant="outline"
               className={cn(
-                "w-full justify-start text-left font-normal",
+                "w-full justify-start text-left font-normal h-12 border border-gray-300 hover:border-gray-400 focus:border-blue-500 shadow-none hover:shadow-none focus:shadow-none",
                 !isValidDate && "text-muted-foreground",
                 error && "border-red-500 focus:border-red-500",
                 disabled && "opacity-50 cursor-not-allowed"
@@ -167,7 +167,7 @@ export function TimePicker({
   return (
     <div className={cn("space-y-2", className)}>
       {label && (
-        <Label className="text-sm font-medium text-gray-700">
+        <Label className="text-base font-normal text-gray-700">
           {label}
         </Label>
       )}

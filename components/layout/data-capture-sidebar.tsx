@@ -1,11 +1,11 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import Image from "next/image"
-import { usePathname } from "next/navigation"
-import { useState } from "react"
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
+import Link from "next/link";
+import Image from "next/image";
+import { usePathname } from "next/navigation";
+import { useState } from "react";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import {
   LayoutDashboard,
   ChevronLeft,
@@ -19,32 +19,63 @@ import {
   TestTube,
   Grid3X3,
   Wrench,
-} from "lucide-react"
-import { motion, AnimatePresence } from "framer-motion"
+  Workflow,
+} from "lucide-react";
+import { motion, AnimatePresence, Variants } from "framer-motion";
 
 const dataCaptureNavigation = [
-  { name: "Dashboard", href: "/data-capture", icon: LayoutDashboard, current: false },
   {
-    name: "Data Capturer UI",
-    href: "/data-capture/ui",
+    name: "Dashboard",
+    href: "/data-capture",
+    icon: LayoutDashboard,
+    current: false,
+  },
+  // {
+  //   name: "Process Forms",
+  //   href: "/data-capture/forms",
+  //   icon: Workflow,
+  //   current: false,
+  // },
+
+  {
+    name: "Raw Milk Intake",
+    href: "/data-capture/raw-milk-intake",
     icon: ClipboardList,
     current: false,
   },
   {
-    name: "Operator Forms",
-    href: "/data-capture/operator-forms",
-    icon: User,
+    name: "Standardizing",
+    href: "/data-capture/standardizing",
+    icon: Beaker,
     current: false,
   },
   {
-    name: "Lab Forms",
-    href: "/data-capture/lab-forms",
+    name: "Pasteurizing",
+    href: "/data-capture/pasteurizing",
     icon: FlaskConical,
+    current: false,
+  },
+  {
+    name: "Filmatic Lines",
+    href: "/data-capture/filmatic-lines",
+    icon: Factory,
+    current: false,
+  },
+  {
+    name: "Palletiser Sheet",
+    href: "/data-capture/palletiser-sheet",
+    icon: Grid3X3,
+    current: false,
+  },
+  {
+    name: "Process Log",
+    href: "/data-capture/process-log",
+    icon: Workflow,
     current: false,
   },
   // Process Control Forms
   {
-    name: "BMT Control Form",
+    name: "Bulk Milk Transfer",
     href: "/data-capture/bmt-control-form",
     icon: Beaker,
     current: false,
@@ -62,59 +93,57 @@ const dataCaptureNavigation = [
     current: false,
   },
   // Production Forms
-  {
-    name: "Filler Log 2",
-    href: "/data-capture/filler-log-2",
-    icon: Package,
-    current: false,
-  },
-  {
-    name: "Flex Sterilizer",
-    href: "/data-capture/flex-one-steriliser-process",
-    icon: Factory,
-    current: false,
-  },
-  {
-    name: "Sterilised Milk Process",
-    href: "/data-capture/sterilised-milk-process",
-    icon: Droplets,
-    current: false,
-  },
-  {
-    name: "Palletiser Sheet",
-    href: "/data-capture/palletiser-sheet",
-    icon: Grid3X3,
-    current: false,
-  },
-  // Driver Forms
-  {
-    name: "Drivers Form",
-    href: "/data-capture/drivers-form",
-    icon: Wrench,
-    current: false,
-  },
-]
+  // {
+  //   name: "Filler Log 2",
+  //   href: "/data-capture/filler-log-2",
+  //   icon: Package,
+  //   current: false,
+  // },
+  // {
+  //   name: "Flex Sterilizer",
+  //   href: "/data-capture/flex-one-steriliser-process",
+  //   icon: Factory,
+  //   current: false,
+  // },
+  // {
+  //   name: "Sterilised Milk Process",
+  //   href: "/data-capture/sterilised-milk-process",
+  //   icon: Droplets,
+  //   current: false,
+  // },
+
+
+];
 
 interface DataCaptureSidebarProps {
-  collapsed?: boolean
-  onToggle?: () => void
+  collapsed?: boolean;
+  onToggle?: () => void;
 }
 
-export function DataCaptureSidebar({ collapsed = false, onToggle }: DataCaptureSidebarProps) {
-  const pathname = usePathname()
+export function DataCaptureSidebar({
+  collapsed = false,
+  onToggle,
+}: DataCaptureSidebarProps) {
+  const pathname = usePathname();
 
   // Layout widths
-  const openWidth = 272
-  const closedWidth = 80
-  const width = collapsed ? closedWidth : openWidth
+  const openWidth = 272;
+  const closedWidth = 80;
+  const width = collapsed ? closedWidth : openWidth;
 
   // Motion variants
-  const sidebarVariants = {
-    open: { width: openWidth, transition: { type: "spring", stiffness: 260, damping: 30 } },
-    closed: { width: closedWidth, transition: { type: "spring", stiffness: 260, damping: 30 } },
-  }
+  const sidebarVariants: Variants = {
+    open: {
+      width: openWidth,
+      transition: { type: "spring", stiffness: 260, damping: 30 },
+    },
+    closed: {
+      width: closedWidth,
+      transition: { type: "spring", stiffness: 260, damping: 30 },
+    },
+  };
 
-  const isOpen = !collapsed
+  const isOpen = !collapsed;
 
   return (
     <motion.aside
@@ -122,7 +151,7 @@ export function DataCaptureSidebar({ collapsed = false, onToggle }: DataCaptureS
       animate={isOpen ? "open" : "closed"}
       variants={sidebarVariants}
       className={cn(
-        "relative z-30 flex min-h-screen flex-col border-r border-zinc-200 bg-white/80 backdrop-blur-xl"
+        "fixed left-0 top-0 z-30 flex h-screen flex-col border-r border-zinc-200 bg-white/80 backdrop-blur-xl"
       )}
       style={{ width }}
     >
@@ -138,14 +167,16 @@ export function DataCaptureSidebar({ collapsed = false, onToggle }: DataCaptureS
           aria-hidden
           className="pointer-events-none absolute inset-x-0 -bottom-px h-[1px] bg-gradient-to-r from-blue-300 via-zinc-200 to-lime-300"
         />
-        <div className={cn("flex items-center gap-3", collapsed && "w-full justify-center")}>
+        <div
+          className={cn(
+            "flex items-center gap-3",
+            collapsed && "w-full justify-center"
+          )}
+        >
           {/* Logo */}
           <div className="relative flex-shrink-0">
             <div
-              className={cn(
-                "relative",
-                collapsed ? "h-9 w-9" : "h-10 w-10"
-              )}
+              className={cn("relative", collapsed ? "h-9 w-9" : "h-10 w-10")}
               style={{ overflow: "visible" }}
               aria-hidden
             />
@@ -187,7 +218,12 @@ export function DataCaptureSidebar({ collapsed = false, onToggle }: DataCaptureS
           className="h-8 w-8 p-0 text-zinc-700 hover:bg-zinc-100"
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
-          <ChevronLeft className={cn("h-4 w-4 transition-transform", collapsed && "rotate-180")} />
+          <ChevronLeft
+            className={cn(
+              "h-4 w-4 transition-transform",
+              collapsed && "rotate-180"
+            )}
+          />
         </Button>
       </div>
 
@@ -195,7 +231,8 @@ export function DataCaptureSidebar({ collapsed = false, onToggle }: DataCaptureS
       <nav className="flex-1 overflow-y-auto px-3 py-3">
         <ul className="space-y-1">
           {dataCaptureNavigation.map((item) => {
-            const isActive = pathname === item.href || pathname.startsWith(item.href + "/")
+            const isActive =
+              pathname === item.href || pathname.startsWith(item.href + "/");
 
             return (
               <li key={item.name} className="relative">
@@ -211,11 +248,15 @@ export function DataCaptureSidebar({ collapsed = false, onToggle }: DataCaptureS
                   <item.icon
                     className={cn(
                       "h-5 w-5 flex-shrink-0",
-                      isActive ? "text-blue-600" : "text-zinc-500 group-hover:text-zinc-700"
+                      isActive
+                        ? "text-blue-600"
+                        : "text-zinc-500 group-hover:text-zinc-700"
                     )}
                   />
                   {!collapsed && (
-                    <span className="ml-3 font-light tracking-wide">{item.name}</span>
+                    <span className="ml-3 font-light tracking-wide">
+                      {item.name}
+                    </span>
                   )}
                 </Link>
 
@@ -227,16 +268,26 @@ export function DataCaptureSidebar({ collapsed = false, onToggle }: DataCaptureS
                   />
                 )}
               </li>
-            )
+            );
           })}
         </ul>
       </nav>
 
       {/* Footer / Profile */}
       <div className="border-t border-zinc-200 p-3">
-        <div className={cn("flex items-center gap-3", collapsed && "justify-center")}>
+        <div
+          className={cn(
+            "flex items-center gap-3",
+            collapsed && "justify-center"
+          )}
+        >
           <div className="relative h-9 w-9 overflow-hidden rounded-full ring-1 ring-zinc-200">
-            <Image src="/placeholder-user.jpg" alt="User avatar" fill className="object-cover" />
+            <Image
+              src="/placeholder-user.jpg"
+              alt="User avatar"
+              fill
+              className="object-cover"
+            />
           </div>
           <AnimatePresence initial={false}>
             {!collapsed && (
@@ -247,7 +298,9 @@ export function DataCaptureSidebar({ collapsed = false, onToggle }: DataCaptureS
                 exit={{ opacity: 0, x: -6 }}
                 className="min-w-0"
               >
-                <p className="truncate text-sm font-light text-zinc-900">Data Capturer</p>
+                <p className="truncate text-sm font-light text-zinc-900">
+                  Data Capturer
+                </p>
                 <p className="truncate text-xs font-extralight tracking-wide text-zinc-500">
                   capturer@prodairy.co.zw
                 </p>
@@ -257,7 +310,5 @@ export function DataCaptureSidebar({ collapsed = false, onToggle }: DataCaptureS
         </div>
       </div>
     </motion.aside>
-  )
+  );
 }
-
-

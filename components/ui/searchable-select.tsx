@@ -128,7 +128,7 @@ export function SearchableSelect({
           role="combobox"
           aria-expanded={open}
           className={cn(
-            "w-full justify-between",
+            "w-full justify-between h-12 border border-gray-300 hover:border-gray-400 focus:border-blue-500 shadow-none hover:shadow-none focus:shadow-none",
             !selectedOptions.length && "text-muted-foreground",
             className
           )}
@@ -205,7 +205,7 @@ export function SearchableSelect({
                     >
                       <div className="flex items-center justify-between w-full">
                         <div className="flex flex-col">
-                          <span className="font-medium">{option.label}</span>
+                          <span className="font-normal">{option.label}</span>
                           {option.description && (
                             <span className="text-sm text-muted-foreground">
                               {option.description}
