@@ -204,9 +204,50 @@ const filmaticLinesProductionSheetSchema = yup.object({
   sleever_2: yup.number().optional().min(0, "Must be positive"),
   shrink_1: yup.number().optional().min(0, "Must be positive"),
   shrink_2: yup.number().optional().min(0, "Must be positive"),
-})
+}).required()
 
-type FilmaticLinesProductionSheetData = yup.InferType<typeof filmaticLinesProductionSheetSchema>
+interface FilmaticLinesProductionSheetData {
+  // Step 1: Basic Information
+  approved_by: string
+  date: string
+  shift: string
+  product: string
+  
+  // Step 2: Production Details
+  day_shift_hours?: string
+  no_of_pallets?: number
+  hourly_target?: number
+  variance?: number
+  reason_for_variance?: string
+  
+  // Step 3: Bottles Reconciliation
+  bottles_shift?: string
+  bottles_opening?: number
+  bottles_added?: number
+  bottles_closing?: number
+  bottles_wastes?: number
+  bottles_damages?: number
+  
+  // Step 4: Milk Reconciliation
+  milk_shift?: string
+  milk_opening?: number
+  milk_added?: number
+  milk_closing?: number
+  milk_total?: number
+  milk_transfer?: number
+  
+  // Step 5: Stoppage Time
+  product_1?: number
+  product_2?: number
+  filler_1?: number
+  filler_2?: number
+  capper_1?: number
+  capper_2?: number
+  sleever_1?: number
+  sleever_2?: number
+  shrink_1?: number
+  shrink_2?: number
+}
 
 interface FilmaticLinesProductionSheetDrawerProps {
   open: boolean
@@ -234,7 +275,7 @@ export function FilmaticLinesProductionSheetDrawer({
 
   // Single form for all data
   const formHook = useForm<FilmaticLinesProductionSheetData>({
-    resolver: yupResolver(filmaticLinesProductionSheetSchema),
+    // resolver: yupResolver(filmaticLinesProductionSheetSchema),
     defaultValues: {
       // Step 1: Basic Information
       approved_by: "",
@@ -406,10 +447,7 @@ export function FilmaticLinesProductionSheetDrawer({
         return
       }
     } else if (currentStep === 3) {
-      if (!data.bottles_shift || data.bottles_opening === undefined || data.bottles_added === undefined || data.bottles_closing === undefined || data.bottles_wastes === undefined || data.bottles_damages === undefined) {
-        toast.error("Please fill in all required fields")
-        return
-      }
+      // Skip validation for Bottles Reconciliation step - allow empty fields
     } else if (currentStep === 4) {
       if (!data.milk_shift || data.milk_opening === undefined || data.milk_added === undefined || data.milk_closing === undefined || data.milk_total === undefined || data.milk_transfer === undefined) {
         toast.error("Please fill in all required fields")
@@ -592,10 +630,10 @@ export function FilmaticLinesProductionSheetDrawer({
                   name="date"
                   control={formHook.control}
                   render={({ field }) => (
-                    <Input
-                      id="date"
-                      type="date"
-                      {...field}
+                    <DatePicker
+                      value={field.value || ''}
+                      onChange={(date) => field.onChange(date)}
+                      placeholder="Select production date"
                     />
                   )}
                 />
@@ -1301,7 +1339,7 @@ export function FilmaticLinesProductionSheetDrawer({
                   <Button
                     type="submit"
                     disabled={isSubmitting || loading.create || loading.update}
-                    className="flex items-center gap-2"
+                    className="flex items-center gap-2 cursor-pointer"
                   >
                     {isSubmitting ? (
                       <>
@@ -1319,7 +1357,7 @@ export function FilmaticLinesProductionSheetDrawer({
                   <Button
                     type="submit"
                     disabled={isSubmitting || loading.create || loading.update}
-                    className="flex items-center gap-2"
+                    className="flex items-center gap-2 cursor-pointer"
                   >
                     {isSubmitting ? (
                       <>
