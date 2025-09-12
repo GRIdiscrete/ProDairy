@@ -7,41 +7,43 @@ import { LoadingButton } from "@/components/ui/loading-button"
 import { DataTable } from "@/components/ui/data-table"
 import { DataTableFilters } from "@/components/ui/data-table-filters"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Eye, Edit, Trash2, Package, TrendingUp, FileText, Clock, ArrowRight } from "lucide-react"
-import { PalletiserSheetDrawer } from "@/components/forms/palletiser-sheet-drawer"
-import { PalletiserSheetViewDrawer } from "@/components/forms/palletiser-sheet-view-drawer"
+import { Plus, Eye, Edit, Trash2, Factory, TrendingUp, FileText, Clock, Package, ArrowRight, Beaker } from "lucide-react"
+import { FilmaticLinesProductionSheetDrawer } from "@/components/forms/filmatic-lines-production-sheet-drawer"
+import { FilmaticLinesProductionSheetViewDrawer } from "@/components/forms/filmatic-lines-production-sheet-view-drawer"
 import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-dialog"
 import { Skeleton } from "@/components/ui/skeleton"
 import { CopyButton } from "@/components/ui/copy-button"
 import { useAppDispatch, useAppSelector } from "@/lib/store"
 import { 
-  fetchPalletiserSheets, 
-  deletePalletiserSheetAction,
+  fetchFilmaticLinesProductionSheets, 
+  deleteFilmaticLinesProductionSheet,
   clearError
-} from "@/lib/store/slices/palletiserSheetSlice"
+} from "@/lib/store/slices/filmaticLinesProductionSheetSlice"
+import { fetchStandardizingForms } from "@/lib/store/slices/standardizingSlice"
 import { toast } from "sonner"
 import { TableFilters } from "@/lib/types"
-import { PalletiserSheet } from "@/lib/api/data-capture-forms"
+import { FilmaticLinesProductionSheet } from "@/lib/api/filmatic-lines"
 
-export default function PalletiserSheetPage() {
+export default function FilmaticLinesPage() {
   const dispatch = useAppDispatch()
-  const { sheets, loading, error, operationLoading, isInitialized } = useAppSelector((state) => state.palletiserSheets)
+  const { sheets, loading, error, isInitialized } = useAppSelector((state) => state.filmaticLinesProductionSheets)
   
   const [tableFilters, setTableFilters] = useState<TableFilters>({})
   const hasFetchedRef = useRef(false)
   
-  // Load palletiser sheets on initial mount
+  // Load Filmatic lines sheets and standardizing forms on initial mount
   useEffect(() => {
     if (!isInitialized && !hasFetchedRef.current) {
       hasFetchedRef.current = true
-      dispatch(fetchPalletiserSheets())
+      dispatch(fetchFilmaticLinesProductionSheets())
+      dispatch(fetchStandardizingForms()) // Load standardizing forms for the form drawer
     }
   }, [dispatch, isInitialized])
   
   // Handle filter changes
   useEffect(() => {
     if (isInitialized && Object.keys(tableFilters).length > 0) {
-      dispatch(fetchPalletiserSheets())
+      dispatch(fetchFilmaticLinesProductionSheets())
     }
   }, [dispatch, tableFilters, isInitialized])
   
@@ -59,10 +61,10 @@ export default function PalletiserSheetPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   
   // Selected sheet and mode
-  const [selectedSheet, setSelectedSheet] = useState<PalletiserSheet | null>(null)
+  const [selectedSheet, setSelectedSheet] = useState<FilmaticLinesProductionSheet | null>(null)
   const [formMode, setFormMode] = useState<"create" | "edit">("create")
 
-  // Filter fields configuration for Palletiser Sheet
+  // Filter fields configuration for Filmatic Lines
   const filterFields = useMemo(() => [
     {
       key: "created_at",
@@ -71,16 +73,16 @@ export default function PalletiserSheetPage() {
       placeholder: "Filter by date"
     },
     {
-      key: "batch_number",
-      label: "Batch Number",
+      key: "shift",
+      label: "Shift",
       type: "text" as const,
-      placeholder: "Filter by batch number"
+      placeholder: "Filter by shift"
     },
     {
-      key: "product_type",
-      label: "Product Type",
+      key: "product",
+      label: "Product",
       type: "text" as const,
-      placeholder: "Filter by product type"
+      placeholder: "Filter by product"
     }
   ], [])
 
@@ -91,18 +93,18 @@ export default function PalletiserSheetPage() {
     setFormDrawerOpen(true)
   }
 
-  const handleEditSheet = (sheet: PalletiserSheet) => {
+  const handleEditSheet = (sheet: FilmaticLinesProductionSheet) => {
     setSelectedSheet(sheet)
     setFormMode("edit")
     setFormDrawerOpen(true)
   }
 
-  const handleViewSheet = (sheet: PalletiserSheet) => {
+  const handleViewSheet = (sheet: FilmaticLinesProductionSheet) => {
     setSelectedSheet(sheet)
     setViewDrawerOpen(true)
   }
 
-  const handleDeleteSheet = (sheet: PalletiserSheet) => {
+  const handleDeleteSheet = (sheet: FilmaticLinesProductionSheet) => {
     setSelectedSheet(sheet)
     setDeleteDialogOpen(true)
   }
@@ -111,20 +113,51 @@ export default function PalletiserSheetPage() {
     if (!selectedSheet) return
     
     try {
-      await dispatch(deletePalletiserSheetAction(selectedSheet.id!)).unwrap()
-      toast.success('Palletiser Sheet deleted successfully')
+      await dispatch(deleteFilmaticLinesProductionSheet(selectedSheet.id)).unwrap()
+      toast.success('Filmatic Lines Production Sheet deleted successfully')
       setDeleteDialogOpen(false)
       setSelectedSheet(null)
     } catch (error: any) {
-      toast.error(error || 'Failed to delete palletiser sheet')
+      toast.error(error || 'Failed to delete Filmatic lines production sheet')
     }
   }
 
   // Get latest sheet for display
   const latestSheet = Array.isArray(sheets) && sheets.length > 0 ? sheets[0] : null
 
+  if (loading.fetch) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Filmatic Lines Production Sheets</h1>
+            <p className="text-gray-600 mt-2">Manage production sheets for filmatic lines</p>
+          </div>
+        </div>
+        
+        <div className="grid gap-6">
+          {[...Array(3)].map((_, i) => (
+            <Card key={i}>
+              <CardHeader>
+                <Skeleton className="h-6 w-1/3" />
+                <Skeleton className="h-4 w-1/2" />
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-4 w-1/2" />
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
   // Table columns with actions
-  const columns = useMemo(() => [
+  const columns = [
     {
       accessorKey: "sheet_info",
       header: "Sheet",
@@ -133,15 +166,15 @@ export default function PalletiserSheetPage() {
         return (
           <div className="flex items-center space-x-3">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center">
-              <Package className="w-4 h-4 text-white" />
+              <Factory className="w-4 h-4 text-white" />
             </div>
             <div>
               <div className="flex items-center space-x-2">
-                <span className="font-light">#{sheet.id ? sheet.id.slice(0, 8) : 'N/A'}</span>
-                <Badge className="bg-blue-100 text-blue-800 font-light">{sheet.batch_number || 'N/A'}</Badge>
+                <span className="font-light">#{sheet.id.slice(0, 8)}</span>
+                <Badge className="bg-blue-100 text-blue-800 font-light">{sheet.product}</Badge>
               </div>
               <p className="text-sm text-gray-500 mt-1">
-                {sheet.created_at ? new Date(sheet.created_at).toLocaleDateString() : 'N/A'} • {sheet.product_type || 'N/A'}
+                {new Date(sheet.created_at).toLocaleDateString()} • {sheet.shift}
               </p>
             </div>
           </div>
@@ -149,63 +182,26 @@ export default function PalletiserSheetPage() {
       },
     },
     {
-      accessorKey: "machine_info",
-      header: "Machine",
+      accessorKey: "production_info",
+      header: "Production",
       cell: ({ row }: any) => {
         const sheet = row.original
-        const machine = sheet.palletiser_sheet_machine_id_fkey
         return (
           <div className="space-y-2">
             <div className="flex items-center space-x-2">
               <div className="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center">
-                <Package className="w-3 h-3 text-green-600" />
+                <TrendingUp className="w-3 h-3 text-green-600" />
               </div>
-              <span className="text-sm font-light">Machine</span>
-            </div>
-            {machine ? (
-              <div className="space-y-1">
-                <p className="text-xs text-gray-500">
-                  {machine.name}
-                </p>
-                <div className="flex items-center space-x-2">
-                  <Badge className="text-xs bg-green-100 text-green-800">
-                    {machine.category}
-                  </Badge>
-                  <Badge className="text-xs bg-gray-100 text-gray-800">
-                    {machine.location}
-                  </Badge>
-                </div>
-              </div>
-            ) : (
-              <p className="text-xs text-gray-400">No details</p>
-            )}
-          </div>
-        )
-      },
-    },
-    {
-      accessorKey: "product_info",
-      header: "Product",
-      cell: ({ row }: any) => {
-        const sheet = row.original
-        return (
-          <div className="space-y-2">
-            <div className="flex items-center space-x-2">
-              <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center">
-                <Package className="w-3 h-3 text-blue-600" />
-              </div>
-              <p className="text-sm font-light">
-                Product Details
-              </p>
+              <span className="text-sm font-light">Production</span>
             </div>
             <div className="space-y-1">
               <div className="flex items-center justify-between">
-                <span className="text-xs text-gray-500">Type</span>
-                <span className="text-xs font-light">{sheet.product_type}</span>
+                <span className="text-xs text-gray-500">Status</span>
+                <Badge className="text-xs bg-green-100 text-green-800">Completed</Badge>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-xs text-gray-500">Batch</span>
-                <span className="text-xs font-light">{sheet.batch_number}</span>
+                <span className="text-xs text-gray-500">Efficiency</span>
+                <span className="text-xs font-light">94.5%</span>
               </div>
             </div>
           </div>
@@ -213,64 +209,55 @@ export default function PalletiserSheetPage() {
       },
     },
     {
-      accessorKey: "dates",
-      header: "Dates",
+      accessorKey: "reconciliation_info",
+      header: "Reconciliation",
       cell: ({ row }: any) => {
         const sheet = row.original
-        return (
-          <div className="space-y-2">
-            <div className="flex items-center space-x-2">
-              <div className="w-5 h-5 rounded-full bg-orange-100 flex items-center justify-center">
-                <Clock className="h-3 w-3 text-orange-600" />
-              </div>
-              <p className="text-sm font-light">
-                Manufacturing
-              </p>
-            </div>
-            <div className="space-y-1">
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-gray-500">Start</span>
-                <span className="text-xs font-light">{new Date(sheet.manufacturing_date).toLocaleDateString()}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-gray-500">Expiry</span>
-                <span className="text-xs font-light">{new Date(sheet.expiry_date).toLocaleDateString()}</span>
-              </div>
-            </div>
-          </div>
-        )
-      },
-    },
-    {
-      accessorKey: "approval",
-      header: "Approval",
-      cell: ({ row }: any) => {
-        const sheet = row.original
-        const approver = sheet.palletiser_sheet_approved_by_fkey
         return (
           <div className="space-y-2">
             <div className="flex items-center space-x-2">
               <div className="w-5 h-5 rounded-full bg-purple-100 flex items-center justify-center">
-                <TrendingUp className="h-3 w-3 text-purple-600" />
+                <Package className="w-3 h-3 text-purple-600" />
               </div>
-              <p className="text-sm font-light">
-                Approved By
-              </p>
+              <span className="text-sm font-light">Reconciliation</span>
             </div>
-            {approver ? (
-              <div className="space-y-1">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-gray-500">Role</span>
-                  <span className="text-xs font-light">{approver.role_name}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-gray-500">Operations</span>
-                  <span className="text-xs font-light">{approver.user_operations?.length || 0}</span>
-                </div>
+            <div className="space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-gray-500">Bottles</span>
+                <span className="text-xs font-light">18,000</span>
               </div>
-            ) : (
-              <p className="text-xs text-gray-400">No details</p>
-            )}
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-gray-500">Milk</span>
+                <span className="text-xs font-light">9,500L</span>
+              </div>
+            </div>
+          </div>
+        )
+      },
+    },
+    {
+      accessorKey: "quality_info",
+      header: "Quality",
+      cell: ({ row }: any) => {
+        const sheet = row.original
+        return (
+          <div className="space-y-2">
+            <div className="flex items-center space-x-2">
+              <div className="w-5 h-5 rounded-full bg-yellow-100 flex items-center justify-center">
+                <TrendingUp className="h-3 w-3 text-yellow-600" />
+              </div>
+              <span className="text-sm font-light">Quality</span>
+            </div>
+            <div className="space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-gray-500">Score</span>
+                <span className="text-xs font-light text-green-600">98.2%</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-gray-500">Downtime</span>
+                <span className="text-xs font-light text-orange-600">15 min</span>
+              </div>
+            </div>
           </div>
         )
       },
@@ -319,8 +306,8 @@ export default function PalletiserSheetPage() {
               variant="destructive" 
               size="sm" 
               onClick={() => handleDeleteSheet(sheet)}
-              loading={operationLoading.delete}
-              disabled={operationLoading.delete}
+              loading={loading.delete}
+              disabled={loading.delete}
               className="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white border-0 rounded-full"
             >
               <Trash2 className="w-4 h-4" />
@@ -329,27 +316,27 @@ export default function PalletiserSheetPage() {
         )
       },
     },
-  ], [operationLoading.delete])
+  ]
 
   return (
-    <DataCaptureDashboardLayout title="Palletiser Sheet" subtitle="Palletising process control and monitoring">
+    <DataCaptureDashboardLayout title="Filmatic Lines" subtitle="Filmatic lines production control and monitoring">
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-light text-foreground">Palletiser Sheet</h1>
-            <p className="text-sm font-light text-muted-foreground">Manage palletising forms and process control</p>
+            <h1 className="text-3xl font-light text-foreground">Filmatic Lines</h1>
+            <p className="text-sm font-light text-muted-foreground">Manage Filmatic lines production sheets and process control</p>
           </div>
           <LoadingButton 
             onClick={handleAddSheet}
             className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full px-6 py-2 font-light"
           >
             <Plus className="mr-2 h-4 w-4" />
-            Add Palletiser Sheet
+            Add Filmatic Lines Sheet
           </LoadingButton>
         </div>
 
         {/* Current Sheet Details */}
-        {loading ? (
+        {loading.fetch ? (
           <div className="border border-gray-200 rounded-lg bg-white border-l-4 border-l-blue-500">
             <div className="p-6 pb-0">
               <div className="flex items-center space-x-2">
@@ -382,9 +369,9 @@ export default function PalletiserSheetPage() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2 text-lg font-light">
                   <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center">
-                    <Package className="h-4 w-4 text-white" />
+                    <Factory className="h-4 w-4 text-white" />
                   </div>
-                  <span>Current Palletising Process</span>
+                  <span>Current Filmatic Lines Process</span>
                   <Badge className="bg-gradient-to-r from-blue-100 to-cyan-100 text-blue-800 font-light">Latest</Badge>
                 </div>
                 <LoadingButton 
@@ -405,25 +392,23 @@ export default function PalletiserSheetPage() {
                     <p className="text-sm font-light text-gray-600">Sheet ID</p>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <p className="text-lg font-light">#{latestSheet.id?.slice(0, 8) || 'N/A'}</p>
-                    <CopyButton text={latestSheet.id || ''} />
+                    <p className="text-lg font-light">#{latestSheet.id.slice(0, 8)}</p>
+                    <CopyButton text={latestSheet.id} />
                   </div>
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center space-x-2">
-                    <Package className="h-4 w-4 text-blue-500" />
+                    <Factory className="h-4 w-4 text-blue-500" />
                     <p className="text-sm font-light text-gray-600">Product</p>
                   </div>
-                  <p className="text-lg font-light text-blue-600">
-                    {latestSheet.product_type}
-                  </p>
+                  <p className="text-lg font-light text-blue-600">{latestSheet.product}</p>
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center space-x-2">
                     <Clock className="h-4 w-4 text-gray-500" />
-                    <p className="text-sm font-light text-gray-600">Manufacturing</p>
+                    <p className="text-sm font-light text-gray-600">Created</p>
                   </div>
-                  <p className="text-lg font-light">{new Date(latestSheet.manufacturing_date).toLocaleDateString('en-GB', { 
+                  <p className="text-lg font-light">{new Date(latestSheet.created_at).toLocaleDateString('en-GB', { 
                     day: 'numeric', 
                     month: 'long', 
                     year: 'numeric' 
@@ -432,88 +417,82 @@ export default function PalletiserSheetPage() {
                 <div className="space-y-2">
                   <div className="flex items-center space-x-2">
                     <TrendingUp className="h-4 w-4 text-green-500" />
-                    <p className="text-sm font-light text-gray-600">Batch</p>
+                    <p className="text-sm font-light text-gray-600">Shift</p>
                   </div>
-                  <p className="text-lg font-light text-green-600">
-                    #{latestSheet.batch_number}
-                  </p>
+                  <p className="text-lg font-light text-green-600">{latestSheet.shift}</p>
                 </div>
               </div>
               
-              {/* Machine and Approval Details in Row */}
+              {/* Process Flow Information */}
               <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-4">
-                {/* Machine Details */}
-                {latestSheet.palletiser_sheet_machine_id_fkey && (
-                  <div className="p-4 bg-gray-50 rounded-lg">
-                    <div className="flex items-center space-x-2 mb-3">
-                      <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center">
-                        <Package className="h-4 w-4 text-green-600" />
-                      </div>
-                      <h4 className="text-sm font-light text-gray-900">Machine</h4>
+                {/* Process Summary */}
+                <div className="p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg">
+                  <div className="flex items-center space-x-2 mb-3">
+                    <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
+                      <Factory className="h-4 w-4 text-blue-600" />
                     </div>
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-light text-gray-600">Name</span>
-                        <span className="text-xs font-light">{latestSheet.palletiser_sheet_machine_id_fkey.name}</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-light text-gray-600">Category</span>
-                        <span className="text-xs font-light text-green-600">{latestSheet.palletiser_sheet_machine_id_fkey.category}</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-light text-gray-600">Location</span>
-                        <span className="text-xs font-light">{latestSheet.palletiser_sheet_machine_id_fkey.location}</span>
-                      </div>
+                    <h4 className="text-sm font-light text-gray-900">Process Summary</h4>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-light text-gray-600">Status</span>
+                      <span className="text-xs font-light text-green-600">Completed</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-light text-gray-600">Efficiency</span>
+                      <span className="text-xs font-light text-blue-600">94.5%</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-light text-gray-600">Quality Score</span>
+                      <span className="text-xs font-light text-purple-600">98.2%</span>
                     </div>
                   </div>
-                )}
+                </div>
 
-                {/* Approval Summary */}
-                {latestSheet.palletiser_sheet_approved_by_fkey && (
-                  <div className="p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg">
-                    <div className="flex items-center space-x-2 mb-3">
-                      <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
-                        <TrendingUp className="h-4 w-4 text-blue-600" />
-                      </div>
-                      <h4 className="text-sm font-light text-gray-900">Approval</h4>
+                {/* Next Step */}
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <div className="flex items-center space-x-2 mb-3">
+                    <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center">
+                      <Package className="h-4 w-4 text-gray-600" />
                     </div>
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-light text-gray-600">Approved By</span>
-                        <span className="text-xs font-light text-blue-600">{latestSheet.palletiser_sheet_approved_by_fkey.role_name}</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-light text-gray-600">User Operations</span>
-                        <span className="text-xs font-light text-blue-600">{latestSheet.palletiser_sheet_approved_by_fkey.user_operations?.length || 0}</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-light text-gray-600">Process Operations</span>
-                        <span className="text-xs font-light text-blue-600">{latestSheet.palletiser_sheet_approved_by_fkey.process_operations?.length || 0}</span>
-                      </div>
+                    <h4 className="text-sm font-light text-gray-900">Next Step</h4>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-light text-gray-600">Process</span>
+                      <span className="text-xs font-light text-gray-600">Palletizer</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-light text-gray-600">Status</span>
+                      <span className="text-xs font-light text-gray-400">Pending</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-light text-gray-600">Ready</span>
+                      <span className="text-xs font-light text-green-600">Yes</span>
                     </div>
                   </div>
-                )}
+                </div>
               </div>
             </div>
           </div>
         ) : null}
 
         {/* Data Table */}
-        {!loading && (
+        {!loading.fetch && (
           <div className="border border-gray-200 rounded-lg bg-white">
             <div className="p-6 pb-0">
-              <div className="text-lg font-light">Palletiser Sheets</div>
+              <div className="text-lg font-light">Filmatic Lines Production Sheets</div>
             </div>
             <div className="p-6 space-y-4">
             <DataTableFilters
               filters={tableFilters}
               onFiltersChange={setTableFilters}
               onSearch={(searchTerm) => setTableFilters(prev => ({ ...prev, search: searchTerm }))}
-              searchPlaceholder="Search palletiser sheets..."
+              searchPlaceholder="Search Filmatic lines sheets..."
               filterFields={filterFields}
             />
             
-            {loading ? (
+            {loading.fetch ? (
                 <div className="space-y-3">
                   {Array.from({ length: 5 }).map((_, i) => (
                     <div key={i} className="flex items-center space-x-4 p-4 border rounded-lg">
@@ -565,7 +544,7 @@ export default function PalletiserSheetPage() {
         )}
 
         {/* Form Drawer */}
-        <PalletiserSheetDrawer 
+        <FilmaticLinesProductionSheetDrawer 
           open={formDrawerOpen} 
           onOpenChange={setFormDrawerOpen} 
           sheet={selectedSheet}
@@ -573,13 +552,17 @@ export default function PalletiserSheetPage() {
         />
 
         {/* View Drawer */}
-        <PalletiserSheetViewDrawer
+        <FilmaticLinesProductionSheetViewDrawer
           open={viewDrawerOpen}
           onOpenChange={setViewDrawerOpen}
-          sheet={selectedSheet}
+          sheetId={selectedSheet?.id || null}
           onEdit={() => {
             setViewDrawerOpen(false)
             handleEditSheet(selectedSheet!)
+          }}
+          onDelete={() => {
+            setViewDrawerOpen(false)
+            handleDeleteSheet(selectedSheet!)
           }}
         />
 
@@ -587,10 +570,10 @@ export default function PalletiserSheetPage() {
         <DeleteConfirmationDialog
           open={deleteDialogOpen}
           onOpenChange={setDeleteDialogOpen}
-          title="Delete Palletiser Sheet"
-          description={`Are you sure you want to delete this palletiser sheet? This action cannot be undone and may affect production tracking.`}
+          title="Delete Filmatic Lines Production Sheet"
+          description={`Are you sure you want to delete this Filmatic lines production sheet? This action cannot be undone and may affect production tracking.`}
           onConfirm={confirmDelete}
-          loading={operationLoading.delete}
+          loading={loading.delete}
         />
       </div>
     </DataCaptureDashboardLayout>

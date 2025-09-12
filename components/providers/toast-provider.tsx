@@ -34,6 +34,42 @@ export function ToastProvider() {
           warning: 'toast-warning',
           info: 'toast-info',
         },
+        error: {
+          style: {
+            background: '#fef2f2',
+            color: '#dc2626',
+            border: '2px solid #fecaca',
+            fontWeight: '700',
+            fontSize: '15px',
+          },
+        },
+        success: {
+          style: {
+            background: '#f0fdf4',
+            color: '#16a34a',
+            border: '2px solid #bbf7d0',
+            fontWeight: '600',
+            fontSize: '15px',
+          },
+        },
+        warning: {
+          style: {
+            background: '#fffbeb',
+            color: '#d97706',
+            border: '2px solid #fed7aa',
+            fontWeight: '600',
+            fontSize: '15px',
+          },
+        },
+        info: {
+          style: {
+            background: '#eff6ff',
+            color: '#2563eb',
+            border: '2px solid #bfdbfe',
+            fontWeight: '600',
+            fontSize: '15px',
+          },
+        },
       }}
     />
   )

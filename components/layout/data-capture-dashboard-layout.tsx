@@ -15,11 +15,14 @@ export function DataCaptureDashboardLayout({ children, title, subtitle }: DataCa
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
 
   return (
-    <div className="flex min-h-screen from-[#f8f9ff] via-[#f0f2ff] to-[#e8ebff]">
+    <div className="min-h-screen bg-white from-[#f8f9ff] via-[#f0f2ff] to-[#e8ebff] overflow-hidden">
       <DataCaptureSidebar collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed(!sidebarCollapsed)} />
-      <div className="flex flex-1 flex-col">
+      <div 
+        className="flex flex-col min-h-screen transition-all duration-300"
+        style={{ marginLeft: sidebarCollapsed ? '80px' : '272px' }}
+      >
         <Header title={title} subtitle={subtitle} />
-        <main className="flex-1 p-6">{children}</main>
+        <main className="flex-1 p-6 overflow-hidden">{children}</main>
       </div>
     </div>
   )
