@@ -555,14 +555,10 @@ export default function FilmaticLinesPage() {
         <FilmaticLinesProductionSheetViewDrawer
           open={viewDrawerOpen}
           onOpenChange={setViewDrawerOpen}
-          sheetId={selectedSheet?.id || null}
+          sheet={selectedSheet}
           onEdit={() => {
             setViewDrawerOpen(false)
             handleEditSheet(selectedSheet!)
-          }}
-          onDelete={() => {
-            setViewDrawerOpen(false)
-            handleDeleteSheet(selectedSheet!)
           }}
         />
 
