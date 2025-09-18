@@ -20,6 +20,7 @@ import {
 import { toast } from "sonner"
 import { TableFilters } from "@/lib/types"
 import { BMTControlForm } from "@/lib/api/data-capture-forms"
+import ContentSkeleton from "@/components/ui/content-skeleton"
 
 export default function BMTControlFormPage() {
   const dispatch = useAppDispatch()
@@ -336,6 +337,9 @@ export default function BMTControlFormPage() {
           </Card>
         </div>
 
+        {loading ? (
+        <ContentSkeleton sections={1} cardsPerSection={4} />
+        ) : (
         <Card>
           <CardHeader>
             <CardTitle>BMT Control Forms</CardTitle>
@@ -350,12 +354,7 @@ export default function BMTControlFormPage() {
             />
             
             {loading ? (
-              <div className="flex items-center justify-center h-64">
-                <div className="flex flex-col items-center space-y-4">
-                  <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-                  <p className="text-muted-foreground">Loading BMT forms...</p>
-                </div>
-              </div>
+              <ContentSkeleton sections={1} cardsPerSection={4} />
             ) : (
               <DataTable
                 columns={columns}
@@ -365,6 +364,7 @@ export default function BMTControlFormPage() {
             )}
           </CardContent>
         </Card>
+        )}
 
         {/* Form Drawer */}
         <BMTControlFormDrawer 

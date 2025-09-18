@@ -39,6 +39,9 @@ import {
 import { StandardizingForm, CreateStandardizingFormRequest, RawMilk, SkimMilk, Cream } from "@/lib/api/standardizing"
 import { siloApi } from "@/lib/api/silo"
 import { toast } from "sonner"
+import { SignatureModal } from "@/components/ui/signature-modal"
+import { SignatureViewer } from "@/components/ui/signature-viewer"
+import { base64ToPngDataUrl, normalizeDataUrlToBase64 } from "@/lib/utils/signature"
 
 // Process Overview Component
 const ProcessOverview = () => (
@@ -163,6 +166,8 @@ export function StandardizingFormDrawer({
       ],
     },
   })
+  const [signatureOpen, setSignatureOpen] = useState(false)
+  const [signatureViewOpen, setSignatureViewOpen] = useState(false)
 
   const { fields: rawMilkFields, append: appendRawMilk, remove: removeRawMilk } = useFieldArray({
     control: formHook.control,
@@ -307,6 +312,7 @@ export function StandardizingFormDrawer({
       const formData: CreateStandardizingFormRequest = {
         id: mode === "edit" && form ? form.id : crypto.randomUUID(),
         ...data,
+        operator_signature: normalizeDataUrlToBase64(data.operator_signature),
       }
 
       if (mode === "edit" && form) {
@@ -371,11 +377,28 @@ export function StandardizingFormDrawer({
                 name="operator_signature"
                 control={formHook.control}
                 render={({ field }) => (
-                  <Input
-                    id="operator_signature"
-                    placeholder="Enter operator signature"
-                    {...field}
-                  />
+                  <div className="space-y-2">
+                    {field.value ? (
+                      <img src={base64ToPngDataUrl(field.value)} alt="Operator signature" className="h-24 border border-gray-200 rounded-md bg-white" />
+                    ) : (
+                      <div className="h-24 flex items-center justify-center border border-dashed border-gray-300 rounded-md text-xs text-gray-500 bg-white">
+                        No signature captured
+                      </div>
+                    )}
+                    <div className="flex items-center gap-2">
+                      <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={() => setSignatureOpen(true)}>
+                        Add Signature
+                      </Button>
+                      {field.value && (
+                        <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={() => setSignatureViewOpen(true)}>
+                          View Signature
+                        </Button>
+                      )}
+                      {field.value && (
+                        <Button type="button" variant="ghost" size="sm" className="rounded-full text-red-600" onClick={() => field.onChange("")}>Clear</Button>
+                      )}
+                    </div>
+                  </div>
                 )}
               />
               {formHook.formState.errors.operator_signature && (
@@ -867,6 +890,7 @@ export function StandardizingFormDrawer({
   )
 
   return (
+    <>
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-[50vw] sm:max-w-[50vw] p-0 bg-white">
         <SheetHeader className="p-6 pb-0">
@@ -896,5 +920,20 @@ export function StandardizingFormDrawer({
         </div>
       </SheetContent>
     </Sheet>
+    <SignatureModal
+      open={signatureOpen}
+      onOpenChange={setSignatureOpen}
+      title="Capture Operator Signature"
+      onSave={(dataUrl) => {
+        formHook.setValue("operator_signature", dataUrl, { shouldValidate: true })
+      }}
+    />
+    <SignatureViewer
+      open={signatureViewOpen}
+      onOpenChange={setSignatureViewOpen}
+      title="Operator Signature"
+      value={formHook.getValues("operator_signature")}
+    />
+    </>
   )
 }

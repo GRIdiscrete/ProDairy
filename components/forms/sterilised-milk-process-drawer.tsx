@@ -20,7 +20,10 @@ import {
 import { usersApi } from "@/lib/api/users"
 import { toast } from "sonner"
 import { SterilisedMilkProcess, SterilisedMilkProcessDetails } from "@/lib/api/data-capture-forms"
-import { ChevronLeft, ChevronRight } from "lucide-react"
+import { ChevronLeft, ChevronRight, ArrowRight, Package, Beaker, FileText } from "lucide-react"
+import { SignatureModal } from "@/components/ui/signature-modal"
+import { SignatureViewer } from "@/components/ui/signature-viewer"
+import { base64ToPngDataUrl } from "@/lib/utils/signature"
 
 interface SterilisedMilkProcessDrawerProps {
   open: boolean
@@ -76,6 +79,10 @@ export function SterilisedMilkProcessDrawer({
   const [createdProcess, setCreatedProcess] = useState<SterilisedMilkProcess | null>(null)
   const [users, setUsers] = useState<any[]>([])
   const [loadingUsers, setLoadingUsers] = useState(false)
+  const [operatorSignatureOpen, setOperatorSignatureOpen] = useState(false)
+  const [supervisorSignatureOpen, setSupervisorSignatureOpen] = useState(false)
+  const [operatorSignatureViewOpen, setOperatorSignatureViewOpen] = useState(false)
+  const [supervisorSignatureViewOpen, setSupervisorSignatureViewOpen] = useState(false)
 
   // Process form
   const processForm = useForm<ProcessFormData>({
@@ -237,12 +244,46 @@ export function SterilisedMilkProcessDrawer({
     }
   }
 
+  const ProcessOverview = () => (
+    <div className="mb-8 p-6 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg">
+      <h3 className="text-lg font-light text-gray-900 mb-4">Process Overview</h3>
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center space-x-2">
+          <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center">
+            <Beaker className="w-4 h-4 text-orange-600" />
+          </div>
+          <span className="text-sm font-light">Filmatic Lines 1</span>
+        </div>
+        <ArrowRight className="w-4 h-4 text-gray-400" />
+        <div className="flex items-center space-x-2">
+          <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+            <FileText className="w-4 h-4 text-gray-400" />
+          </div>
+          <div className="flex items-center space-x-2">
+            <span className="text-sm font-medium text-blue-600">Process Log</span>
+            <div className="bg-gradient-to-r from-blue-500 to-cyan-600 text-white px-2 py-1 rounded-full text-xs font-medium shadow-lg">
+              Current Step
+            </div>
+          </div>
+        </div>
+        <ArrowRight className="w-4 h-4 text-gray-400" />
+        <div className="flex items-center space-x-2">
+          <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center">
+            <Beaker className="w-4 h-4 text-orange-600" />
+          </div>
+          <span className="text-sm font-light">Filmatic Lines 2</span>
+        </div>
+      </div>
+    </div>
+  )
+
   const renderStep1 = () => (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6 p-6 bg-white">
+      <ProcessOverview />
       <div className="space-y-4">
         <div className="text-center mb-6">
-          <h3 className="text-xl font-semibold text-gray-900">Step 1: Process Information</h3>
-          <p className="text-sm text-gray-600 mt-2">Enter the basic process details and personnel information</p>
+          <h3 className="text-xl font-light text-gray-900">Process Information</h3>
+          <p className="text-sm font-light text-gray-600 mt-2">Enter the basic process details and personnel information</p>
         </div>
         
         <div className="grid grid-cols-2 gap-4">
@@ -302,13 +343,33 @@ export function SterilisedMilkProcessDrawer({
           <Controller
             name="operator_signature"
             control={processForm.control}
-            render={({ field }) => (
-              <Input
-                id="operator_signature"
-                placeholder="Enter operator signature"
-                {...field}
-              />
-            )}
+            render={({ field }) => {
+              const safeValue = typeof field.value === 'string' ? field.value : ""
+              return (
+                <div className="space-y-2">
+                  {safeValue ? (
+                    <img src={base64ToPngDataUrl(safeValue)} alt="Operator signature" className="h-24 border border-gray-200 rounded-md bg-white" />
+                  ) : (
+                    <div className="h-24 flex items-center justify-center border border-dashed border-gray-300 rounded-md text-xs text-gray-500 bg-white">
+                      No signature captured
+                    </div>
+                  )}
+                  <div className="flex items-center gap-2">
+                    <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={() => setOperatorSignatureOpen(true)}>
+                      Add Signature
+                    </Button>
+                    {safeValue && (
+                      <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={() => setOperatorSignatureViewOpen(true)}>
+                        View Signature
+                      </Button>
+                    )}
+                    {safeValue && (
+                      <Button type="button" variant="ghost" size="sm" className="rounded-full text-red-600" onClick={() => field.onChange("")}>Clear</Button>
+                    )}
+                  </div>
+                </div>
+              )
+            }}
           />
           {processForm.formState.errors.operator_signature && (
             <p className="text-sm text-red-500">{processForm.formState.errors.operator_signature.message}</p>
@@ -345,13 +406,33 @@ export function SterilisedMilkProcessDrawer({
           <Controller
             name="supervisor_signature"
             control={processForm.control}
-            render={({ field }) => (
-              <Input
-                id="supervisor_signature"
-                placeholder="Enter supervisor signature"
-                {...field}
-              />
-            )}
+            render={({ field }) => {
+              const safeValue = typeof field.value === 'string' ? field.value : ""
+              return (
+                <div className="space-y-2">
+                  {safeValue ? (
+                    <img src={base64ToPngDataUrl(safeValue)} alt="Supervisor signature" className="h-24 border border-gray-200 rounded-md bg-white" />
+                  ) : (
+                    <div className="h-24 flex items-center justify-center border border-dashed border-gray-300 rounded-md text-xs text-gray-500 bg-white">
+                      No signature captured
+                    </div>
+                  )}
+                  <div className="flex items-center gap-2">
+                    <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={() => setSupervisorSignatureOpen(true)}>
+                      Add Signature
+                    </Button>
+                    {safeValue && (
+                      <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={() => setSupervisorSignatureViewOpen(true)}>
+                        View Signature
+                      </Button>
+                    )}
+                    {safeValue && (
+                      <Button type="button" variant="ghost" size="sm" className="rounded-full text-red-600" onClick={() => field.onChange("")}>Clear</Button>
+                    )}
+                  </div>
+                </div>
+              )
+            }}
           />
           {processForm.formState.errors.supervisor_signature && (
             <p className="text-sm text-red-500">{processForm.formState.errors.supervisor_signature.message}</p>
@@ -725,8 +806,8 @@ export function SterilisedMilkProcessDrawer({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-[50vw] sm:max-w-[50vw] p-0">
-        <SheetHeader className="p-6 pb-0">
+      <SheetContent className="w-[50vw] sm:max-w-[50vw] p-0 bg-white">
+        <SheetHeader className="p-6 pb-0 bg-white">
           <SheetTitle>
             {mode === "edit" ? "Edit Sterilised Milk Process" : "Create Sterilised Milk Process"}
           </SheetTitle>
@@ -738,11 +819,11 @@ export function SterilisedMilkProcessDrawer({
           </SheetDescription>
         </SheetHeader>
 
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto bg-white">
           {currentStep === 1 ? renderStep1() : renderStep2()}
         </div>
 
-        <div className="flex items-center justify-between p-6 pt-0 border-t">
+        <div className="flex items-center justify-between p-6 pt-0 border-t bg-white">
           <Button
             variant="outline"
             onClick={handleBack}
@@ -778,6 +859,34 @@ export function SterilisedMilkProcessDrawer({
           )}
         </div>
       </SheetContent>
+      <SignatureModal
+        open={operatorSignatureOpen}
+        onOpenChange={setOperatorSignatureOpen}
+        title="Capture Operator Signature"
+        onSave={(dataUrl) => {
+          processForm.setValue("operator_signature", dataUrl, { shouldValidate: true })
+        }}
+      />
+      <SignatureViewer
+        open={operatorSignatureViewOpen}
+        onOpenChange={setOperatorSignatureViewOpen}
+        title="Operator Signature"
+        value={processForm.getValues("operator_signature")}
+      />
+      <SignatureModal
+        open={supervisorSignatureOpen}
+        onOpenChange={setSupervisorSignatureOpen}
+        title="Capture Supervisor Signature"
+        onSave={(dataUrl) => {
+          processForm.setValue("supervisor_signature", dataUrl, { shouldValidate: true })
+        }}
+      />
+      <SignatureViewer
+        open={supervisorSignatureViewOpen}
+        onOpenChange={setSupervisorSignatureViewOpen}
+        title="Supervisor Signature"
+        value={processForm.getValues("supervisor_signature")}
+      />
     </Sheet>
   )
 }

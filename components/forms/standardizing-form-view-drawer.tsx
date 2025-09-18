@@ -9,6 +9,7 @@ import { CopyButton } from "@/components/ui/copy-button"
 import { Beaker, Package, User, Droplets, Clock, Calendar, FileText, Edit, Trash2, ArrowRight, Play, RotateCcw, TrendingUp } from "lucide-react"
 import { format } from "date-fns"
 import type { StandardizingForm } from "@/lib/api/standardizing"
+import { base64ToPngDataUrl } from "@/lib/utils/signature"
 
 interface StandardizingFormViewDrawerProps {
   open: boolean
@@ -248,6 +249,22 @@ export function StandardizingFormViewDrawer({
                   <span className="text-sm font-light text-orange-600">
                     {(form.skim_milk?.length || 0) + (form.cream?.length || 0)}
                   </span>
+                </div>
+                <div className="space-y-2 pt-2">
+                  <span className="text-sm font-light text-gray-600">Operator Signature</span>
+                  {form.operator_signature ? (
+                    <div className="mt-1">
+                      <img
+                        src={base64ToPngDataUrl(form.operator_signature)}
+                        alt="Operator signature"
+                        className="h-24 border border-gray-200 rounded-md bg-white"
+                      />
+                    </div>
+                  ) : (
+                    <div className="h-24 flex items-center justify-center border border-dashed border-gray-300 rounded-md text-xs text-gray-500 bg-white">
+                      No signature available
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

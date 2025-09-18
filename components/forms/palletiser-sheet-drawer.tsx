@@ -22,6 +22,9 @@ import { rolesApi } from "@/lib/api/roles"
 import { toast } from "sonner"
 import { PalletiserSheet, PalletiserSheetDetails } from "@/lib/api/data-capture-forms"
 import { ChevronLeft, ChevronRight, ArrowRight, Package, Beaker, FileText } from "lucide-react"
+import { SignatureModal } from "@/components/ui/signature-modal"
+import { SignatureViewer } from "@/components/ui/signature-viewer"
+import { base64ToPngDataUrl, normalizeDataUrlToBase64 } from "@/lib/utils/signature"
 
 interface PalletiserSheetDrawerProps {
   open: boolean
@@ -108,6 +111,8 @@ export function PalletiserSheetDrawer({
   const [loadingUsers, setLoadingUsers] = useState(false)
   const [loadingMachines, setLoadingMachines] = useState(false)
   const [loadingRoles, setLoadingRoles] = useState(false)
+  const [counterSignatureOpen, setCounterSignatureOpen] = useState(false)
+  const [counterSignatureViewOpen, setCounterSignatureViewOpen] = useState(false)
 
   // Sheet form
   const sheetForm = useForm<SheetFormData>({
@@ -253,6 +258,7 @@ export function PalletiserSheetDrawer({
       const sheetDetailsData = {
         ...data,
         palletiser_sheet_id: createdSheet.id!,
+        counter_signature: normalizeDataUrlToBase64(data.counter_signature),
       }
 
       if (mode === "edit" && sheet) {
@@ -678,14 +684,28 @@ export function PalletiserSheetDrawer({
             render={({ field }) => {
               const safeValue = typeof field.value === 'string' ? field.value : ""
               return (
-                <Input
-                  id="counter_signature"
-                  placeholder="Enter counter signature (base64-encoded)"
-                  value={safeValue}
-                  onChange={(e) => {
-                    field.onChange(e.target.value)
-                  }}
-                />
+                <div className="space-y-2">
+                  {safeValue ? (
+                    <img src={base64ToPngDataUrl(safeValue)} alt="Counter signature" className="h-24 border border-gray-200 rounded-md bg-white" />
+                  ) : (
+                    <div className="h-24 flex items-center justify-center border border-dashed border-gray-300 rounded-md text-xs text-gray-500 bg-white">
+                      No signature captured
+                    </div>
+                  )}
+                  <div className="flex items-center gap-2">
+                    <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={() => setCounterSignatureOpen(true)}>
+                      Add Signature
+                    </Button>
+                    {safeValue && (
+                      <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={() => setCounterSignatureViewOpen(true)}>
+                        View Signature
+                      </Button>
+                    )}
+                    {safeValue && (
+                      <Button type="button" variant="ghost" size="sm" className="rounded-full text-red-600" onClick={() => field.onChange("")}>Clear</Button>
+                    )}
+                  </div>
+                </div>
               )
             }}
           />
@@ -698,6 +718,7 @@ export function PalletiserSheetDrawer({
   )
 
   return (
+    <>
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-[50vw] sm:max-w-[50vw] p-0 bg-white">
         <SheetHeader className="p-6 pb-0 bg-white">
@@ -753,5 +774,20 @@ export function PalletiserSheetDrawer({
         </div>
       </SheetContent>
     </Sheet>
+    <SignatureModal
+      open={counterSignatureOpen}
+      onOpenChange={setCounterSignatureOpen}
+      title="Capture Counter Signature"
+      onSave={(dataUrl) => {
+        sheetDetailsForm.setValue("counter_signature", dataUrl, { shouldValidate: true })
+      }}
+    />
+    <SignatureViewer
+      open={counterSignatureViewOpen}
+      onOpenChange={setCounterSignatureViewOpen}
+      title="Counter Signature"
+      value={sheetDetailsForm.getValues("counter_signature")}
+    />
+    </>
   )
 }

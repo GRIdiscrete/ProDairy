@@ -804,7 +804,7 @@ export const deleteSterilisedMilkProcess = async (id: string) => {
 // Sterilised Milk Process Details APIs
 export const getSterilisedMilkProcessDetails = async () => {
   try {
-    const res = await apiRequest<any>('/sterilised-milk-process/details')
+    const res = await apiRequest<any>('/sterilised-milk-process-details')
     return Array.isArray(res) ? (res as SterilisedMilkProcessDetails[]) : ((res?.data ?? []) as SterilisedMilkProcessDetails[])
   } catch (error: any) {
     console.error('Error fetching sterilised milk process details:', error)
@@ -813,22 +813,22 @@ export const getSterilisedMilkProcessDetails = async () => {
 }
 
 export const getSterilisedMilkProcessDetail = async (id: string) => {
-  const res = await apiRequest<any>(`/sterilised-milk-process/details/${id}`)
+  const res = await apiRequest<any>(`/sterilised-milk-process-details/${id}`)
   return Array.isArray(res) ? (res[0] as SterilisedMilkProcessDetails) : ((res?.data ?? null) as SterilisedMilkProcessDetails)
 }
 
 export const createSterilisedMilkProcessDetails = async (data: Omit<SterilisedMilkProcessDetails, 'id' | 'created_at' | 'updated_at'>) => {
-  const res = await apiRequest<any>('/sterilised-milk-process/details', { method: 'POST', body: JSON.stringify(data) })
+  const res = await apiRequest<any>('/sterilised-milk-process-details', { method: 'POST', body: JSON.stringify(data) })
   return Array.isArray(res) ? (res[0] as SterilisedMilkProcessDetails) : ((res?.data ?? null) as SterilisedMilkProcessDetails)
 }
 
 export const updateSterilisedMilkProcessDetails = async (data: SterilisedMilkProcessDetails) => {
-  const res = await apiRequest<any>('/sterilised-milk-process/details', { method: 'PATCH', body: JSON.stringify(data) })
+  const res = await apiRequest<any>('/sterilised-milk-process-details', { method: 'PATCH', body: JSON.stringify(data) })
   return Array.isArray(res) ? (res[0] as SterilisedMilkProcessDetails) : ((res?.data ?? null) as SterilisedMilkProcessDetails)
 }
 
 export const deleteSterilisedMilkProcessDetails = async (id: string) => {
-  await apiRequest(`/sterilised-milk-process/details/${id}`, { method: 'DELETE' })
+  await apiRequest(`/sterilised-milk-process-details/${id}`, { method: 'DELETE' })
 }
 
 // Flex 1 Steriliser Process Types
