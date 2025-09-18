@@ -15,6 +15,7 @@ import { Separator } from "@/components/ui/separator"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { SearchableSelect, SearchableSelectOption } from "@/components/ui/searchable-select"
 import { DatePicker } from "@/components/ui/date-picker"
+import { SignatureModal } from "@/components/ui/signature-modal"
 import { 
   Plus, 
   Trash2, 
@@ -40,6 +41,8 @@ import { RawMilkIntakeForm, CreateRawMilkIntakeFormRequest } from "@/lib/api/raw
 import { siloApi } from "@/lib/api/silo"
 import { supplierApi } from "@/lib/api/supplier"
 import { toast } from "sonner"
+import { normalizeDataUrlToBase64, base64ToPngDataUrl } from "@/lib/utils/signature"
+import { SignatureViewer } from "@/components/ui/signature-viewer"
 
 // Process Overview Component
 const ProcessOverview = () => (
@@ -147,6 +150,9 @@ export function RawMilkIntakeFormDrawer({
       ],
     },
   })
+
+  const [signatureOpen, setSignatureOpen] = useState(false)
+  const [signatureViewOpen, setSignatureViewOpen] = useState(false)
 
   const { fields, append, remove } = useFieldArray({
     control: formHook.control,
@@ -285,10 +291,13 @@ export function RawMilkIntakeFormDrawer({
 
   const handleSubmit = async (data: RawMilkIntakeFormData) => {
     try {
+      const normalizedSignature = normalizeDataUrlToBase64(data.operator_signature)
+
       const formData: CreateRawMilkIntakeFormRequest = {
         id: mode === "edit" && form ? form.id : crypto.randomUUID(),
         created_at: mode === "edit" && form ? form.created_at : new Date().toISOString(),
         ...data,
+        operator_signature: normalizedSignature,
       }
 
       if (mode === "edit" && form) {
@@ -414,20 +423,41 @@ export function RawMilkIntakeFormDrawer({
 
           <div className="space-y-2">
             <Label htmlFor="operator_signature">Operator Signature *</Label>
-            <Controller
-              name="operator_signature"
-              control={formHook.control}
-              render={({ field }) => (
-                <Input
-                  id="operator_signature"
-                  placeholder="Enter operator signature"
-                  {...field}
+            <div className="flex items-start gap-4">
+              <div className="flex-1">
+                <Controller
+                  name="operator_signature"
+                  control={formHook.control}
+                  render={({ field }) => (
+                    <div className="space-y-2">
+                      {field.value ? (
+                        <img src={base64ToPngDataUrl(field.value)} alt="Operator signature" className="h-24 border border-gray-200 rounded-md bg-white" />
+                      ) : (
+                        <div className="h-24 flex items-center justify-center border border-dashed border-gray-300 rounded-md text-xs text-gray-500 bg-white">
+                          No signature captured
+                        </div>
+                      )}
+                      <div className="flex items-center gap-2">
+                        <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={() => setSignatureOpen(true)}>
+                          Add Signature
+                        </Button>
+                        {field.value && (
+                          <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={() => setSignatureViewOpen(true)}>
+                            View Signature
+                          </Button>
+                        )}
+                        {field.value && (
+                          <Button type="button" variant="ghost" size="sm" className="rounded-full text-red-600" onClick={() => field.onChange("")}>Clear</Button>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 />
-              )}
-            />
-            {formHook.formState.errors.operator_signature && (
-              <p className="text-sm text-red-500">{formHook.formState.errors.operator_signature.message}</p>
-            )}
+                {formHook.formState.errors.operator_signature && (
+                  <p className="text-sm text-red-500">{formHook.formState.errors.operator_signature.message}</p>
+                )}
+              </div>
+            </div>
           </div>
         </div>
 
@@ -587,6 +617,7 @@ export function RawMilkIntakeFormDrawer({
   )
 
   return (
+    <>
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-[50vw] sm:max-w-[50vw] p-0 bg-white">
         <SheetHeader className="p-6 pb-0">
@@ -616,5 +647,21 @@ export function RawMilkIntakeFormDrawer({
         </div>
       </SheetContent>
     </Sheet>
+
+    <SignatureModal
+      open={signatureOpen}
+      onOpenChange={setSignatureOpen}
+      title="Capture Operator Signature"
+      onSave={(dataUrl) => {
+        formHook.setValue("operator_signature", dataUrl, { shouldValidate: true })
+      }}
+    />
+    <SignatureViewer
+      open={signatureViewOpen}
+      onOpenChange={setSignatureViewOpen}
+      title="Operator Signature"
+      value={formHook.getValues("operator_signature")}
+    />
+  </>
   )
 }

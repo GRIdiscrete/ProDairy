@@ -6,6 +6,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { SterilisedMilkProcess, SterilisedMilkProcessDetails } from "@/lib/api/data-capture-forms"
 import { format } from "date-fns"
+import { base64ToPngDataUrl } from "@/lib/utils/signature"
+import { Button } from "@/components/ui/button"
+import { Beaker, FileText, CheckCircle, User, Package, ArrowRight, Hash, Clock } from "lucide-react"
 
 interface SterilisedMilkProcessViewDrawerProps {
   open: boolean
@@ -45,37 +48,88 @@ export function SterilisedMilkProcessViewDrawer({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-[50vw] sm:max-w-[50vw] p-6">
-        <SheetHeader>
-          <SheetTitle>Sterilised Milk Process Details</SheetTitle>
-          <SheetDescription>
-            Complete information about the sterilised milk process and its parameters
-          </SheetDescription>
+      <SheetContent className="w-[50vw] sm:max-w-[50vw] p-0 bg-white">
+        <SheetHeader className="p-6 pb-0 bg-white">
+          <div className="flex items-center justify-between">
+            <div>
+              <SheetTitle className="text-lg font-light">Sterilised Milk Process Details</SheetTitle>
+              <SheetDescription className="text-sm font-light">
+                Complete information about the sterilised milk process and its parameters
+              </SheetDescription>
+            </div>
+            {onEdit && (
+              <Button
+                onClick={onEdit}
+                variant="outline"
+                size="sm"
+                className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 rounded-full"
+              >
+                Edit
+              </Button>
+            )}
+          </div>
         </SheetHeader>
 
-        <div className="space-y-6 mt-6">
+        <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-white">
+          {/* Process Overview */}
+          <div className="mb-2 p-6 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg">
+            <h3 className="text-lg font-light text-gray-900 mb-4">Process Overview</h3>
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center">
+                  <Beaker className="w-4 h-4 text-orange-600" />
+                </div>
+                <span className="text-sm font-light">Filmatic Lines 1</span>
+              </div>
+              <ArrowRight className="w-4 h-4 text-gray-400" />
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+                  <FileText className="w-4 h-4 text-gray-400" />
+                </div>
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm font-medium text-blue-600">Process Log</span>
+                  <div className="bg-gradient-to-r from-blue-500 to-cyan-600 text-white px-2 py-1 rounded-full text-xs font-medium shadow-lg">
+                    Current Step
+                  </div>
+                </div>
+              </div>
+              <ArrowRight className="w-4 h-4 text-gray-400" />
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center">
+                  <Beaker className="w-4 h-4 text-orange-600" />
+                </div>
+                <span className="text-sm font-light">Filmatic Lines 2</span>
+              </div>
+            </div>
+          </div>
+
           {/* Process Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Process Information</CardTitle>
+          <Card className="shadow-none border border-gray-200 rounded-lg">
+            <CardHeader className="pb-4">
+              <div className="flex items-center space-x-2">
+                <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
+                  <FileText className="h-4 w-4 text-blue-600" />
+                </div>
+                <CardTitle className="text-base font-light">Process Information</CardTitle>
+              </div>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-medium text-muted-foreground">Process ID</label>
-                  <p className="text-sm">{process.id}</p>
+                  <span className="text-xs font-light text-gray-500">Process ID</span>
+                  <p className="text-sm font-light">{process.id}</p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-muted-foreground">Created At</label>
-                  <p className="text-sm">
+                  <span className="text-xs font-light text-gray-500">Created At</span>
+                  <p className="text-sm font-light">
                     {process.created_at ? format(new Date(process.created_at), "PPP 'at' p") : "N/A"}
                   </p>
                 </div>
               </div>
 
               <div>
-                <label className="text-sm font-medium text-muted-foreground">Updated At</label>
-                <p className="text-sm">
+                <span className="text-xs font-light text-gray-500">Updated At</span>
+                <p className="text-sm font-light">
                   {process.updated_at ? format(new Date(process.updated_at), "PPP 'at' p") : "N/A"}
                 </p>
               </div>
@@ -83,57 +137,65 @@ export function SterilisedMilkProcessViewDrawer({
           </Card>
 
           {/* Personnel Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Personnel Information</CardTitle>
+          <Card className="shadow-none border border-gray-200 rounded-lg">
+            <CardHeader className="pb-4">
+              <div className="flex items-center space-x-2">
+                <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center">
+                  <User className="h-4 w-4 text-purple-600" />
+                </div>
+                <CardTitle className="text-base font-light">Personnel Information</CardTitle>
+              </div>
             </CardHeader>
             <CardContent className="space-y-6">
               {/* Approved By */}
               <div className="space-y-2">
-                <h4 className="font-medium">Approved By</h4>
+                <h4 className="text-sm font-medium">Approved By</h4>
                 <div className="pl-4 space-y-1">
-                  <p className="text-sm"><span className="font-medium">Name:</span> {approvedBy.name}</p>
-                  <p className="text-sm"><span className="font-medium">Email:</span> {approvedBy.email}</p>
-                  <p className="text-sm"><span className="font-medium">Department:</span> {approvedBy.department}</p>
+                  <p className="text-sm font-light"><span className="font-medium">Name:</span> {approvedBy.name}</p>
+                  <p className="text-sm font-light"><span className="font-medium">Email:</span> {approvedBy.email}</p>
+                  <p className="text-sm font-light"><span className="font-medium">Department:</span> {approvedBy.department}</p>
                   {approvedBy.role && (
-                    <p className="text-sm"><span className="font-medium">Role:</span> {approvedBy.role}</p>
+                    <p className="text-sm font-light"><span className="font-medium">Role:</span> {approvedBy.role}</p>
                   )}
                 </div>
               </div>
 
-              <Separator />
-
-              {/* Operator */}
-              <div className="space-y-2">
-                <h4 className="font-medium">Operator</h4>
-                <div className="pl-4 space-y-1">
-                  <p className="text-sm"><span className="font-medium">Name:</span> {operator.name}</p>
-                  <p className="text-sm"><span className="font-medium">Email:</span> {operator.email}</p>
-                  <p className="text-sm"><span className="font-medium">Department:</span> {operator.department}</p>
-                  {operator.role && (
-                    <p className="text-sm"><span className="font-medium">Role:</span> {operator.role}</p>
-                  )}
+              {/* Operator and Supervisor in a row */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Operator */}
+                <div className="space-y-2">
+                  <h4 className="text-sm font-medium">Operator</h4>
+                  <div className="space-y-1">
+                    <p className="text-sm font-light">Name: {operator.name}</p>
+                    <p className="text-sm font-light">Email: {operator.email}</p>
+                    <p className="text-sm font-light">Department: {operator.department}</p>
+                  </div>
+                  <div className="mt-2">
+                    <p className="text-sm font-medium mb-2">Operator Signature</p>
+                    {process.operator_signature ? (
+                      <img src={base64ToPngDataUrl(process.operator_signature)} alt="Operator signature" className="h-24 border border-gray-200 rounded-md bg-white" />
+                    ) : (
+                      <p className="text-sm text-muted-foreground">No signature</p>
+                    )}
+                  </div>
                 </div>
-                <div className="pl-4 mt-2">
-                  <p className="text-sm"><span className="font-medium">Signature:</span> {process.operator_signature}</p>
-                </div>
-              </div>
 
-              <Separator />
-
-              {/* Supervisor */}
-              <div className="space-y-2">
-                <h4 className="font-medium">Supervisor</h4>
-                <div className="pl-4 space-y-1">
-                  <p className="text-sm"><span className="font-medium">Name:</span> {supervisor.name}</p>
-                  <p className="text-sm"><span className="font-medium">Email:</span> {supervisor.email}</p>
-                  <p className="text-sm"><span className="font-medium">Department:</span> {supervisor.department}</p>
-                  {supervisor.role && (
-                    <p className="text-sm"><span className="font-medium">Role:</span> {supervisor.role}</p>
-                  )}
-                </div>
-                <div className="pl-4 mt-2">
-                  <p className="text-sm"><span className="font-medium">Signature:</span> {process.supervisor_signature}</p>
+                {/* Supervisor */}
+                <div className="space-y-2">
+                  <h4 className="text-sm font-medium">Supervisor</h4>
+                  <div className="space-y-1">
+                    <p className="text-sm font-light">Name: {supervisor.name}</p>
+                    <p className="text-sm font-light">Email: {supervisor.email}</p>
+                    <p className="text-sm font-light">Department: {supervisor.department}</p>
+                  </div>
+                  <div className="mt-2">
+                    <p className="text-sm font-medium mb-2">Supervisor Signature</p>
+                    {process.supervisor_signature ? (
+                      <img src={base64ToPngDataUrl(process.supervisor_signature)} alt="Supervisor signature" className="h-24 border border-gray-200 rounded-md bg-white" />
+                    ) : (
+                      <p className="text-sm text-muted-foreground">No signature</p>
+                    )}
+                  </div>
                 </div>
               </div>
             </CardContent>
@@ -141,9 +203,14 @@ export function SterilisedMilkProcessViewDrawer({
 
           {/* Process Details */}
           {processDetails && processDetails.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Process Parameters</CardTitle>
+            <Card className="shadow-none border border-gray-200 rounded-lg">
+              <CardHeader className="pb-4">
+                <div className="flex items-center space-x-2">
+                  <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
+                    <Beaker className="h-4 w-4 text-blue-600" />
+                  </div>
+                  <CardTitle className="text-base font-light">Process Parameters</CardTitle>
+                </div>
               </CardHeader>
               <CardContent className="space-y-6">
                 {processDetails.map((detail, index) => (
@@ -152,8 +219,8 @@ export function SterilisedMilkProcessViewDrawer({
                     
                     <div className="space-y-4">
                       <div className="flex items-center justify-between">
-                        <h4 className="font-medium">{detail.parameter_name}</h4>
-                        <Badge variant="secondary">Batch #{detail.batch_number}</Badge>
+                        <h4 className="text-sm font-medium">{detail.parameter_name}</h4>
+                        <Badge className="bg-blue-100 text-blue-800 font-light">Batch #{detail.batch_number}</Badge>
                       </div>
 
                       {/* Filling Readings */}
@@ -161,7 +228,7 @@ export function SterilisedMilkProcessViewDrawer({
                         <h5 className="text-sm font-medium text-muted-foreground">Filling Readings</h5>
                         <div className="grid grid-cols-2 gap-4 pl-4">
                           <div>
-                            <p className="text-sm"><span className="font-medium">Start:</span> {detail.filling_start_reading}°C</p>
+                            <p className="text-sm font-light"><span className="font-medium">Start:</span> {detail.filling_start_reading}°C</p>
                           </div>
                         </div>
                       </div>
@@ -171,7 +238,7 @@ export function SterilisedMilkProcessViewDrawer({
                         <h5 className="text-sm font-medium text-muted-foreground">Autoclave Readings</h5>
                         <div className="grid grid-cols-2 gap-4 pl-4">
                           <div>
-                            <p className="text-sm"><span className="font-medium">Start:</span> {detail.autoclave_start_reading}°C</p>
+                            <p className="text-sm font-light"><span className="font-medium">Start:</span> {detail.autoclave_start_reading}°C</p>
                           </div>
                         </div>
                       </div>
@@ -181,10 +248,10 @@ export function SterilisedMilkProcessViewDrawer({
                         <h5 className="text-sm font-medium text-muted-foreground">Heating Readings</h5>
                         <div className="grid grid-cols-2 gap-4 pl-4">
                           <div>
-                            <p className="text-sm"><span className="font-medium">Start:</span> {detail.heating_start_reading}°C</p>
+                            <p className="text-sm font-light"><span className="font-medium">Start:</span> {detail.heating_start_reading}°C</p>
                           </div>
                           <div>
-                            <p className="text-sm"><span className="font-medium">Finish:</span> {detail.heating_finish_reading}°C</p>
+                            <p className="text-sm font-light"><span className="font-medium">Finish:</span> {detail.heating_finish_reading}°C</p>
                           </div>
                         </div>
                       </div>
@@ -194,13 +261,13 @@ export function SterilisedMilkProcessViewDrawer({
                         <h5 className="text-sm font-medium text-muted-foreground">Sterilization Readings</h5>
                         <div className="grid grid-cols-2 gap-4 pl-4">
                           <div>
-                            <p className="text-sm"><span className="font-medium">Start:</span> {detail.sterilization_start_reading}°C</p>
+                            <p className="text-sm font-light"><span className="font-medium">Start:</span> {detail.sterilization_start_reading}°C</p>
                           </div>
                           <div>
-                            <p className="text-sm"><span className="font-medium">After 5-6 min:</span> {detail.sterilisation_after_five_six_minutes_reading}°C</p>
+                            <p className="text-sm font-light"><span className="font-medium">After 5-6 min:</span> {detail.sterilisation_after_five_six_minutes_reading}°C</p>
                           </div>
                           <div className="col-span-2">
-                            <p className="text-sm"><span className="font-medium">Finish:</span> {detail.sterilisation_finish_reading}°C</p>
+                            <p className="text-sm font-light"><span className="font-medium">Finish:</span> {detail.sterilisation_finish_reading}°C</p>
                           </div>
                         </div>
                       </div>
@@ -210,10 +277,10 @@ export function SterilisedMilkProcessViewDrawer({
                         <h5 className="text-sm font-medium text-muted-foreground">Precooling Readings</h5>
                         <div className="grid grid-cols-2 gap-4 pl-4">
                           <div>
-                            <p className="text-sm"><span className="font-medium">Start:</span> {detail.precooling_start_reading}°C</p>
+                            <p className="text-sm font-light"><span className="font-medium">Start:</span> {detail.precooling_start_reading}°C</p>
                           </div>
                           <div>
-                            <p className="text-sm"><span className="font-medium">Finish:</span> {detail.precooling_finish_reading}°C</p>
+                            <p className="text-sm font-light"><span className="font-medium">Finish:</span> {detail.precooling_finish_reading}°C</p>
                           </div>
                         </div>
                       </div>
@@ -223,10 +290,10 @@ export function SterilisedMilkProcessViewDrawer({
                         <h5 className="text-sm font-medium text-muted-foreground">Cooling One Readings</h5>
                         <div className="grid grid-cols-2 gap-4 pl-4">
                           <div>
-                            <p className="text-sm"><span className="font-medium">Start:</span> {detail.cooling_one_start_reading}°C</p>
+                            <p className="text-sm font-light"><span className="font-medium">Start:</span> {detail.cooling_one_start_reading}°C</p>
                           </div>
                           <div>
-                            <p className="text-sm"><span className="font-medium">Finish:</span> {detail.cooling_one_finish_reading}°C</p>
+                            <p className="text-sm font-light"><span className="font-medium">Finish:</span> {detail.cooling_one_finish_reading}°C</p>
                           </div>
                         </div>
                       </div>
@@ -236,10 +303,10 @@ export function SterilisedMilkProcessViewDrawer({
                         <h5 className="text-sm font-medium text-muted-foreground">Cooling Two Readings</h5>
                         <div className="grid grid-cols-2 gap-4 pl-4">
                           <div>
-                            <p className="text-sm"><span className="font-medium">Start:</span> {detail.cooling_two_start_reading}°C</p>
+                            <p className="text-sm font-light"><span className="font-medium">Start:</span> {detail.cooling_two_start_reading}°C</p>
                           </div>
                           <div>
-                            <p className="text-sm"><span className="font-medium">Finish:</span> {detail.cooling_two_finish_reading}°C</p>
+                            <p className="text-sm font-light"><span className="font-medium">Finish:</span> {detail.cooling_two_finish_reading}°C</p>
                           </div>
                         </div>
                       </div>
@@ -264,7 +331,7 @@ export function SterilisedMilkProcessViewDrawer({
 
           {/* No Process Details */}
           {(!processDetails || processDetails.length === 0) && (
-            <Card>
+            <Card className="shadow-none border border-gray-200 rounded-lg">
               <CardContent className="py-8 text-center">
                 <p className="text-muted-foreground">No process details available for this process.</p>
               </CardContent>

@@ -26,6 +26,7 @@ import { fetchBMTControlForms } from "@/lib/store/slices/bmtControlFormSlice"
 import { toast } from "sonner"
 import { TableFilters } from "@/lib/types"
 import { PasteurizingForm } from "@/lib/api/pasteurizing"
+import ContentSkeleton from "@/components/ui/content-skeleton"
 
 export default function PasteurizingPage() {
   const dispatch = useAppDispatch()
@@ -379,32 +380,7 @@ export default function PasteurizingPage() {
 
         {/* Current Form Details */}
         {loading ? (
-          <div className="border border-gray-200 rounded-lg bg-white border-l-4 border-l-blue-500">
-            <div className="p-6 pb-0">
-              <div className="flex items-center space-x-2">
-                <Skeleton className="h-5 w-5 rounded" />
-                <Skeleton className="h-6 w-48" />
-                <Skeleton className="h-6 w-16 rounded-full" />
-              </div>
-            </div>
-            <div className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                {Array.from({ length: 4 }).map((_, i) => (
-                  <div key={i} className="space-y-2">
-                    <Skeleton className="h-4 w-24" />
-                    <Skeleton className="h-6 w-20" />
-                  </div>
-                ))}
-              </div>
-              <div className="mt-4 space-y-2">
-                <Skeleton className="h-4 w-48" />
-                <Skeleton className="h-4 w-56" />
-              </div>
-              <div className="mt-4 flex justify-end">
-                <Skeleton className="h-9 w-32" />
-              </div>
-            </div>
-          </div>
+          <ContentSkeleton sections={1} cardsPerSection={4} />
         ) : latestForm ? (
           <div className="border border-gray-200 rounded-lg bg-white border-l-4 border-l-blue-500">
             <div className="p-6 pb-0">
@@ -550,51 +526,9 @@ export default function PasteurizingPage() {
             />
             
             {loading ? (
-                <div className="space-y-3">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <div key={i} className="flex items-center space-x-4 p-4 border rounded-lg">
-                      <div className="flex items-center space-x-3">
-                        <Skeleton className="h-8 w-8 rounded-lg" />
-                        <div className="space-y-1">
-                          <div className="flex items-center space-x-2">
-                            <Skeleton className="h-4 w-16" />
-                            <Skeleton className="h-5 w-12 rounded-full" />
-                          </div>
-                          <Skeleton className="h-3 w-32" />
-                        </div>
-                      </div>
-                      <div className="flex-1 grid grid-cols-4 gap-4">
-                        <div className="space-y-1">
-                          <Skeleton className="h-4 w-20" />
-                          <Skeleton className="h-3 w-24" />
-                        </div>
-                        <div className="space-y-1">
-                          <Skeleton className="h-4 w-20" />
-                          <Skeleton className="h-3 w-24" />
-                        </div>
-                        <div className="space-y-1">
-                          <Skeleton className="h-4 w-20" />
-                          <Skeleton className="h-3 w-24" />
-                        </div>
-                        <div className="space-y-1">
-                          <Skeleton className="h-4 w-20" />
-                          <Skeleton className="h-3 w-24" />
-                        </div>
-                      </div>
-                      <div className="flex space-x-2">
-                        <Skeleton className="h-8 w-8" />
-                        <Skeleton className="h-8 w-8" />
-                        <Skeleton className="h-8 w-8" />
-                      </div>
-                    </div>
-                  ))}
-              </div>
+              <ContentSkeleton sections={1} cardsPerSection={4} />
             ) : (
-              <DataTable
-                columns={columns}
-                data={forms}
-                showSearch={false}
-              />
+              <DataTable columns={columns} data={forms} showSearch={false} />
             )}
             </div>
           </div>
