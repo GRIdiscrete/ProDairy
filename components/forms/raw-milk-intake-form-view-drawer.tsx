@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -8,6 +8,10 @@ import { LoadingButton } from "@/components/ui/loading-button"
 import { CopyButton } from "@/components/ui/copy-button"
 import { Droplets, Truck, User, Package, Clock, Calendar, FileText, Beaker, Edit, Trash2, ArrowRight, Play, RotateCcw, TrendingUp } from "lucide-react"
 import { format } from "date-fns"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useAppDispatch, useAppSelector } from "@/lib/store"
+import { fetchRawMilkIntakeLabTests, deleteRawMilkIntakeLabTest } from "@/lib/store/slices/rawMilkIntakeLabTestSlice"
+import { RawMilkIntakeLabTestDrawer } from "@/components/forms/raw-milk-intake-lab-test-drawer"
 import type { RawMilkIntakeForm } from "@/lib/api/raw-milk-intake"
 import { base64ToPngDataUrl } from "@/lib/utils/signature"
 
@@ -28,6 +32,23 @@ export function RawMilkIntakeFormViewDrawer({
 }: RawMilkIntakeFormViewDrawerProps) {
   const [isAnimating, setIsAnimating] = useState(false)
   const [animationProgress, setAnimationProgress] = useState(0)
+  const [activeTab, setActiveTab] = useState<string>("details")
+  const dispatch = useAppDispatch()
+  const { tests, isInitialized, operationLoading } = useAppSelector((s) => (s as any).rawMilkIntakeLabTests)
+  const [labDrawerOpen, setLabDrawerOpen] = useState(false)
+  const [labMode, setLabMode] = useState<"create" | "edit">("create")
+  const [labExistingId, setLabExistingId] = useState<string | undefined>(undefined)
+
+  useEffect(() => {
+    if (open && !isInitialized) {
+      dispatch(fetchRawMilkIntakeLabTests())
+    }
+  }, [open, isInitialized, dispatch])
+
+  const currentLabTest = useMemo(() => {
+    if (!form) return null
+    return (tests || []).find((t: any) => t.raw_milk_intake_id === form.id) || null
+  }, [tests, form])
 
   if (!form) return null
 
@@ -130,9 +151,38 @@ export function RawMilkIntakeFormViewDrawer({
                 <Trash2 className="w-4 h-4 mr-2" />
                 Delete
               </LoadingButton>
+              <LoadingButton
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  if (currentLabTest) { setLabMode("edit"); setLabExistingId(currentLabTest.id) } else { setLabMode("create"); setLabExistingId(undefined) }
+                  setLabDrawerOpen(true)
+                }}
+                className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full"
+              >
+                <Beaker className="w-4 h-4 mr-2" />
+                {currentLabTest ? "Update Lab Test" : "Create Lab Test"}
+              </LoadingButton>
             </div>
           </div>
 
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="h-auto p-0 bg-transparent border-0 border-b border-gray-200">
+              <TabsTrigger 
+                value="details"
+                className="rounded-none bg-transparent border-0 border-b-2 border-transparent text-lg font-light text-gray-700 px-0 mr-6 data-[state=active]:text-blue-700 data-[state=active]:border-blue-600"
+              >
+                <FileText className="w-4 h-4 mr-2" /> Details
+              </TabsTrigger>
+              <TabsTrigger 
+                value="lab"
+                className="rounded-none bg-transparent border-0 border-b-2 border-transparent text-lg font-light text-gray-700 px-0 mr-6 data-[state=active]:text-blue-700 data-[state=active]:border-blue-600"
+              >
+                <Beaker className="w-4 h-4 mr-2" /> Lab Test
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="details" className="mt-4">
           {/* Visual Milk Transfer Animation */}
           {form.raw_milk_intake_form_destination_silo_id_fkey && (
             <div className="mb-8 p-6 bg-white border border-gray-200 rounded-lg">
@@ -455,7 +505,61 @@ export function RawMilkIntakeFormViewDrawer({
               </div>
             </div>
           </div>
+            </TabsContent>
+
+            <TabsContent value="lab" className="mt-4">
+              <div className="space-y-4">
+                {currentLabTest ? (
+                  <div className="p-6 bg-white border border-gray-200 rounded-lg">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-light">Lab Test Result</h3>
+                      <div className="flex items-center gap-2">
+                        <Badge className={"text-xs " + (currentLabTest.accepted ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800')}>
+                          {currentLabTest.accepted ? 'Accepted' : 'Rejected'}
+                        </Badge>
+                        <LoadingButton size="sm" variant="outline" className="rounded-full"
+                          onClick={() => { setLabMode("edit"); setLabExistingId(currentLabTest.id); setLabDrawerOpen(true) }}>
+                          Edit
+                        </LoadingButton>
+                        <LoadingButton size="sm" variant="destructive" className="rounded-full"
+                          loading={operationLoading.delete}
+                          onClick={() => dispatch(deleteRawMilkIntakeLabTest(currentLabTest.id))}
+                        >
+                          Delete
+                        </LoadingButton>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="flex items-center justify-between"><span className="text-sm text-gray-600">Date</span><span className="text-sm font-light">{currentLabTest.date}</span></div>
+                      <div className="flex items-center justify-between"><span className="text-sm text-gray-600">Organoleptic</span><span className="text-sm font-light">{currentLabTest.organol_eptic}</span></div>
+                      <div className="flex items-center justify-between"><span className="text-sm text-gray-600">No Water</span><span className="text-sm font-light">{currentLabTest.no_water}</span></div>
+                      <div className="flex items-center justify-between"><span className="text-sm text-gray-600">No Starch</span><span className="text-sm font-light">{currentLabTest.no_starch}</span></div>
+                      <div className="flex items-center justify-between"><span className="text-sm text-gray-600">Milk Freshness</span><span className="text-sm font-light">{currentLabTest.milk_freshness}</span></div>
+                      <div className="flex items-center justify-between"><span className="text-sm text-gray-600">Bacteria Load</span><span className="text-sm font-light">{currentLabTest.bacteria_load}</span></div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-6 bg-white border border-gray-200 rounded-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="text-lg font-light">Lab Test</h3>
+                      <Badge className="text-xs bg-yellow-100 text-yellow-800">No Result</Badge>
+                    </div>
+                    <p className="text-sm text-gray-600 mb-3">No lab test found for this intake form.</p>
+                    <LoadingButton className="rounded-full" onClick={() => { setLabMode("create"); setLabExistingId(undefined); setLabDrawerOpen(true) }}>Create Lab Test</LoadingButton>
+                  </div>
+                )}
+              </div>
+            </TabsContent>
+          </Tabs>
         </div>
+
+        <RawMilkIntakeLabTestDrawer
+          open={labDrawerOpen}
+          onOpenChange={setLabDrawerOpen}
+          rawMilkIntakeFormId={form.id}
+          mode={labMode}
+          existingId={labExistingId}
+        />
       </SheetContent>
     </Sheet>
   )

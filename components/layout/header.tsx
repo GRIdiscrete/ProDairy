@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter, usePathname } from "next/navigation"
-import { Search, Bell, MapPin, ChevronDown, LogOut, User, Settings, HelpCircle, Users, Truck, ClipboardList } from "lucide-react"
+import { Search, Bell, MapPin, ChevronDown, LogOut, User, Settings, HelpCircle, Users, Truck, ClipboardList, Wrench } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -68,6 +68,14 @@ export function Header({ title = "Dashboard", subtitle = "Welcome back!" }: Head
       path: "/data-capture",
       emoji: "📋",
       description: "Data entry and laboratory management"
+    },
+    {
+      id: "tools",
+      name: "Tools",
+      icon: Wrench,
+      path: "/tools",
+      emoji: "🛠️",
+      description: "Utilities for transfers and cleaning"
     }
   ]
 
@@ -76,6 +84,7 @@ export function Header({ title = "Dashboard", subtitle = "Welcome back!" }: Head
     if (pathname.startsWith("/admin")) return dashboards[0]
     if (pathname.startsWith("/drivers")) return dashboards[1]
     if (pathname.startsWith("/data-capture")) return dashboards[2]
+    if (pathname.startsWith("/tools")) return dashboards[3]
     return dashboards[0] // Default to admin
   }
 

@@ -21,6 +21,7 @@ import { toast } from "sonner"
 import { TableFilters } from "@/lib/types"
 import { CIPControlForm } from "@/lib/api/data-capture-forms"
 import ContentSkeleton from "@/components/ui/content-skeleton"
+import { ToolsDashboardLayout } from "@/components/layout/tools-dashboard-layout"
 
 export default function CIPControlFormPage() {
   const dispatch = useAppDispatch()
@@ -259,7 +260,7 @@ export default function CIPControlFormPage() {
   ]
 
   return (
-    <DataCaptureDashboardLayout title="CIP Control Forms" subtitle="Cleaning in Place control and monitoring">
+    <ToolsDashboardLayout title="CIP Control Forms" subtitle="Cleaning in Place control and monitoring">
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
@@ -418,6 +419,6 @@ export default function CIPControlFormPage() {
           loading={operationLoading.delete}
         />
       </div>
-    </DataCaptureDashboardLayout>
+    </ToolsDashboardLayout>
   )
 }

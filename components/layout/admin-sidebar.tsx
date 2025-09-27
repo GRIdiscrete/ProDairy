@@ -63,9 +63,21 @@ const adminNavigation = [
     current: false,
   },
   {
+    name: "Tankers",
+    href: "/admin/tankers",
+    icon: Truck,
+    current: false,
+  },
+  {
     name: "Processes",
     href: "/admin/processes",
     icon: ClipboardList,
+    current: false,
+  },
+  {
+    name: "Filmatic Lines Groups",
+    href: "/admin/filmatic-lines-groups",
+    icon: Users,
     current: false,
   },
   {

@@ -91,7 +91,7 @@ export default function ProcessLogPage() {
             </div>
             <div>
               <div className="flex items-center space-x-2">
-                <span className="font-light">#{p.id.slice(0, 8)}</span>
+                <span className="font-light">#{typeof p.id === 'string' ? p.id.slice(0, 8) : 'N/A'}</span>
                 <Badge className="bg-blue-100 text-blue-800 font-light">Process</Badge>
               </div>
               <p className="text-sm text-gray-500 mt-1">
@@ -226,8 +226,8 @@ export default function ProcessLogPage() {
                     <p className="text-sm font-light text-gray-600">Process ID</p>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <p className="text-lg font-light">#{latest.id.slice(0, 8)}</p>
-                    <CopyButton text={latest.id} />
+                    <p className="text-lg font-light">#{typeof latest.id === 'string' ? latest.id.slice(0, 8) : 'N/A'}</p>
+                    <CopyButton text={typeof latest.id === 'string' ? latest.id : ''} />
                   </div>
                 </div>
                 <div className="space-y-2">
@@ -235,7 +235,7 @@ export default function ProcessLogPage() {
                     <Beaker className="h-4 w-4 text-blue-500" />
                     <p className="text-sm font-light text-gray-600">Created</p>
                   </div>
-                  <p className="text-lg font-light">{new Date(latest.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                  <p className="text-lg font-light">{latest.created_at ? new Date(latest.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : 'N/A'}</p>
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center space-x-2">
@@ -249,7 +249,7 @@ export default function ProcessLogPage() {
                     <TrendingUp className="h-4 w-4 text-purple-500" />
                     <p className="text-sm font-light text-gray-600">Approved By</p>
                   </div>
-                  <p className="text-lg font-light text-blue-600">{latest.sterilised_milk_process_approved_by_fkey?.role_name || '—'}</p>
+                  <p className="text-lg font-light text-blue-600">{latest?.sterilised_milk_process_approved_by_fkey?.role_name || '—'}</p>
                 </div>
               </div>
               <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-4">
