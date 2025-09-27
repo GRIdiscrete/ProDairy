@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { usePathname } from "next/navigation"
 import { useForm, useFieldArray, Controller } from "react-hook-form"
 import { yupResolver } from "@hookform/resolvers/yup"
 import * as yup from "yup"
@@ -86,6 +87,8 @@ const ProcessOverview = () => (
 
 // Form Schema
 const pasteurizingFormSchema = yup.object({
+  operator: yup.string().required("Operator is required"),
+  date: yup.string().required("Date is required"),
   machine: yup.string().required("Machine is required"),
   source_silo: yup.string().required("Source silo is required"),
   preheating_start: yup.string().required("Preheating start time is required"),
@@ -98,8 +101,15 @@ const pasteurizingFormSchema = yup.object({
   fat: yup.number().required("Fat content is required").min(0, "Fat content must be positive"),
   production: yup.array().of(
     yup.object({
-      product: yup.string().required("Product is required"),
-      quantity: yup.number().required("Quantity is required").min(0, "Quantity must be positive"),
+      time: yup.string().required("Time is required"),
+      temp_hot_water: yup.number().required("Temp hot water required"),
+      temp_product_pasteurisation: yup.number().required("Temp pasteurisation required"),
+      homogenisation_pressure_stage_1: yup.number().required("Stage 1 pressure required"),
+      homogenisation_pressure_stage_2: yup.number().required("Stage 2 pressure required"),
+      total_homogenisation_pressure: yup.number().required("Total pressure required"),
+      temperature_product_out: yup.number().required("Product out temp required"),
+      output_target_value: yup.number().required("Output target required").min(0, "Must be positive"),
+      output_target_unit: yup.string().required("Unit required"),
     })
   ).min(1, "At least one production entry is required"),
 })
@@ -132,6 +142,8 @@ export function PasteurizingFormDrawer({
   const formHook = useForm<PasteurizingFormData>({
     resolver: yupResolver(pasteurizingFormSchema),
     defaultValues: {
+      operator: "",
+      date: new Date().toISOString().split('T')[0],
       machine: "",
       source_silo: "",
       preheating_start: "",
@@ -142,7 +154,17 @@ export function PasteurizingFormDrawer({
       machine_end: "",
       bmt: "",
       fat: 0,
-      production: [{ product: "", quantity: 0 }],
+      production: [{
+        time: "",
+        temp_hot_water: 0,
+        temp_product_pasteurisation: 0,
+        homogenisation_pressure_stage_1: 0,
+        homogenisation_pressure_stage_2: 0,
+        total_homogenisation_pressure: 0,
+        temperature_product_out: 0,
+        output_target_value: 0,
+        output_target_unit: "L",
+      }],
     },
   })
 
@@ -194,6 +216,8 @@ export function PasteurizingFormDrawer({
   useEffect(() => {
     if (form && mode === "edit") {
       formHook.reset({
+        operator: (form as any).operator || "",
+        date: (form as any).date || new Date().toISOString().split('T')[0],
         machine: form.machine || "",
         source_silo: form.source_silo || "",
         preheating_start: form.preheating_start || "",
@@ -204,10 +228,34 @@ export function PasteurizingFormDrawer({
         machine_end: form.machine_end || "",
         bmt: form.bmt || "",
         fat: form.fat || 0,
-        production: form.production?.length > 0 ? form.production : [{ product: "", quantity: 0 }],
+        production: (form as any).production?.length > 0
+          ? (form as any).production.map((p: any) => ({
+              time: p.time || "",
+              temp_hot_water: p.temp_hot_water ?? 0,
+              temp_product_pasteurisation: p.temp_product_pasteurisation ?? 0,
+              homogenisation_pressure_stage_1: p.homogenisation_pressure_stage_1 ?? 0,
+              homogenisation_pressure_stage_2: p.homogenisation_pressure_stage_2 ?? 0,
+              total_homogenisation_pressure: p.total_homogenisation_pressure ?? 0,
+              temperature_product_out: p.temperature_product_out ?? 0,
+              output_target_value: p.output_target?.value ?? 0,
+              output_target_unit: p.output_target?.unit_of_measure ?? "L",
+            }))
+          : [{
+              time: "",
+              temp_hot_water: 0,
+              temp_product_pasteurisation: 0,
+              homogenisation_pressure_stage_1: 0,
+              homogenisation_pressure_stage_2: 0,
+              total_homogenisation_pressure: 0,
+              temperature_product_out: 0,
+              output_target_value: 0,
+              output_target_unit: "L",
+            }],
       })
     } else if (mode === "create") {
       formHook.reset({
+        operator: "",
+        date: new Date().toISOString().split('T')[0],
         machine: "",
         source_silo: "",
         preheating_start: "",
@@ -218,14 +266,31 @@ export function PasteurizingFormDrawer({
         machine_end: "",
         bmt: "",
         fat: 0,
-        production: [{ product: "", quantity: 0 }],
+        production: [{
+          time: "",
+          temp_hot_water: 0,
+          temp_product_pasteurisation: 0,
+          homogenisation_pressure_stage_1: 0,
+          homogenisation_pressure_stage_2: 0,
+          total_homogenisation_pressure: 0,
+          temperature_product_out: 0,
+          output_target_value: 0,
+          output_target_unit: "L",
+        }],
       })
     }
   }, [form, mode, formHook])
 
+  const pathname = usePathname()
   const handleSubmit = async (data: PasteurizingFormData) => {
     try {
-      const formData: CreatePasteurizingFormRequest = {
+      const processIdMatch = pathname.match(/data-capture\/(.*?)\//)
+      const processId = processIdMatch ? processIdMatch[1] : ""
+
+      const formData: any = {
+        id: mode === "edit" && form ? form.id : crypto.randomUUID(),
+        operator: (useAppSelector as any)?.(state => state.auth?.user?.id) || data.operator,
+        date: data.date,
         machine: data.machine,
         source_silo: data.source_silo,
         preheating_start: data.preheating_start,
@@ -236,14 +301,24 @@ export function PasteurizingFormDrawer({
         machine_end: data.machine_end,
         bmt: data.bmt,
         fat: data.fat,
-        production: data.production,
+        production: data.production.map(p => ({
+          time: p.time,
+          temp_hot_water: p.temp_hot_water,
+          temp_product_pasteurisation: p.temp_product_pasteurisation,
+          homogenisation_pressure_stage_1: p.homogenisation_pressure_stage_1,
+          homogenisation_pressure_stage_2: p.homogenisation_pressure_stage_2,
+          total_homogenisation_pressure: p.total_homogenisation_pressure,
+          temperature_product_out: p.temperature_product_out,
+          process_id: processId,
+          output_target: { value: p.output_target_value, unit_of_measure: p.output_target_unit }
+        }))
       }
 
       if (mode === "create") {
-        await dispatch(createPasteurizingForm(formData)).unwrap()
+        await dispatch(createPasteurizingForm(formData as any)).unwrap()
         toast.success("Pasteurizing form created successfully")
       } else if (form) {
-        await dispatch(updatePasteurizingForm({ id: form.id, formData })).unwrap()
+        await dispatch(updatePasteurizingForm({ id: form.id, formData: formData as any })).unwrap()
         toast.success("Pasteurizing form updated successfully")
       }
 

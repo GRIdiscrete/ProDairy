@@ -245,7 +245,7 @@ export function ProductionPlanFormDrawer({
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                    <Label htmlFor="start_date">Start Date</Label>
+                  
                         <Controller
                           name="start_date"
                           control={control}
@@ -266,7 +266,6 @@ export function ProductionPlanFormDrawer({
               </div>
 
               <div className="space-y-2">
-                    <Label htmlFor="end_date">End Date</Label>
                         <Controller
                           name="end_date"
                           control={control}

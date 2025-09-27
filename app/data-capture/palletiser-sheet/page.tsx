@@ -138,7 +138,10 @@ export default function PalletiserSheetPage() {
             </div>
             <div>
               <div className="flex items-center space-x-2">
-                <span className="font-light">#{sheet.id ? sheet.id.slice(0, 8) : 'N/A'}</span>
+                <div className="flex items-center space-x-2 max-w-[160px]">
+                  <span className="font-light truncate" title={sheet.id || ''}>#{sheet.id ? sheet.id.slice(0, 8) : 'N/A'}</span>
+                  {sheet.id && <CopyButton text={sheet.id} />}
+                </div>
                 <Badge className="bg-blue-100 text-blue-800 font-light">{sheet.batch_number || 'N/A'}</Badge>
               </div>
               <p className="text-sm text-gray-500 mt-1">

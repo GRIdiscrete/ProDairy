@@ -29,6 +29,9 @@ import filmaticLinesProductionSheetDetailReducer from "./slices/filmaticLinesPro
 import filmaticLinesBottlesReconciliationReducer from "./slices/filmaticLinesBottlesReconciliationSlice"
 import filmaticLinesMilkReconciliationReducer from "./slices/filmaticLinesMilkReconciliationSlice"
 import filmaticLinesStoppageTimeMinutesReducer from "./slices/filmaticLinesStoppageTimeMinutesSlice"
+import tankerReducer from "./slices/tankerSlice"
+import filmaticLinesGroupsReducer from "./slices/filmaticLinesGroupsSlice"
+import rawMilkIntakeLabTestsReducer from "./slices/rawMilkIntakeLabTestSlice"
 export const store = configureStore({
   reducer: {
     dashboard: dashboardReducer,
@@ -60,6 +63,9 @@ export const store = configureStore({
     filmaticLinesBottlesReconciliations: filmaticLinesBottlesReconciliationReducer,
     filmaticLinesMilkReconciliations: filmaticLinesMilkReconciliationReducer,
     filmaticLinesStoppageTimeMinutes: filmaticLinesStoppageTimeMinutesReducer,
+    tankers: tankerReducer,
+    filmaticLinesGroups: filmaticLinesGroupsReducer,
+    rawMilkIntakeLabTests: rawMilkIntakeLabTestsReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

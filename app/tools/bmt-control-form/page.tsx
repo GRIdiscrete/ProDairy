@@ -21,6 +21,7 @@ import { toast } from "sonner"
 import { TableFilters } from "@/lib/types"
 import { BMTControlForm } from "@/lib/api/data-capture-forms"
 import ContentSkeleton from "@/components/ui/content-skeleton"
+import { ToolsDashboardLayout } from "@/components/layout/tools-dashboard-layout"
 
 export default function BMTControlFormPage() {
   const dispatch = useAppDispatch()
@@ -236,7 +237,7 @@ export default function BMTControlFormPage() {
   ]
 
   return (
-    <DataCaptureDashboardLayout title="BMT Control Forms" subtitle="Bulk Milk Transfer control and monitoring">
+    <ToolsDashboardLayout title="BMT Control Forms" subtitle="Bulk Milk Transfer control and monitoring">
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
@@ -395,6 +396,6 @@ export default function BMTControlFormPage() {
           loading={operationLoading.delete}
         />
       </div>
-    </DataCaptureDashboardLayout>
+    </ToolsDashboardLayout>
   )
 }
