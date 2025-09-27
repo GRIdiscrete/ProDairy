@@ -21,6 +21,17 @@ import sterilisedMilkProcessReducer from "./slices/sterilisedMilkProcessSlice"
 import palletiserSheetReducer from "./slices/palletiserSheetSlice"
 import flexOneSteriliserProcessReducer from "./slices/flexOneSteriliserProcessSlice"
 import fillerLog2Reducer from "./slices/fillerLog2Slice"
+import rawMilkIntakeReducer from "./slices/rawMilkIntakeSlice"
+import standardizingReducer from "./slices/standardizingSlice"
+import pasteurizingReducer from "./slices/pasteurizingSlice"
+import filmaticLinesProductionSheetReducer from "./slices/filmaticLinesProductionSheetSlice"
+import filmaticLinesProductionSheetDetailReducer from "./slices/filmaticLinesProductionSheetDetailSlice"
+import filmaticLinesBottlesReconciliationReducer from "./slices/filmaticLinesBottlesReconciliationSlice"
+import filmaticLinesMilkReconciliationReducer from "./slices/filmaticLinesMilkReconciliationSlice"
+import filmaticLinesStoppageTimeMinutesReducer from "./slices/filmaticLinesStoppageTimeMinutesSlice"
+import tankerReducer from "./slices/tankerSlice"
+import filmaticLinesGroupsReducer from "./slices/filmaticLinesGroupsSlice"
+import rawMilkIntakeLabTestsReducer from "./slices/rawMilkIntakeLabTestSlice"
 export const store = configureStore({
   reducer: {
     dashboard: dashboardReducer,
@@ -44,6 +55,17 @@ export const store = configureStore({
     palletiserSheets: palletiserSheetReducer,
     flexOneSteriliserProcesses: flexOneSteriliserProcessReducer,
     fillerLog2s: fillerLog2Reducer,
+    rawMilkIntake: rawMilkIntakeReducer,
+    standardizing: standardizingReducer,
+    pasteurizing: pasteurizingReducer,
+    filmaticLinesProductionSheets: filmaticLinesProductionSheetReducer,
+    filmaticLinesProductionSheetDetails: filmaticLinesProductionSheetDetailReducer,
+    filmaticLinesBottlesReconciliations: filmaticLinesBottlesReconciliationReducer,
+    filmaticLinesMilkReconciliations: filmaticLinesMilkReconciliationReducer,
+    filmaticLinesStoppageTimeMinutes: filmaticLinesStoppageTimeMinutesReducer,
+    tankers: tankerReducer,
+    filmaticLinesGroups: filmaticLinesGroupsReducer,
+    rawMilkIntakeLabTests: rawMilkIntakeLabTestsReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

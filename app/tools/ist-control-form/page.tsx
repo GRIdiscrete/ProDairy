@@ -20,6 +20,8 @@ import {
 import { toast } from "sonner"
 import { TableFilters } from "@/lib/types"
 import { ISTControlForm } from "@/lib/api/data-capture-forms"
+import ContentSkeleton from "@/components/ui/content-skeleton"
+import { ToolsDashboardLayout } from "@/components/layout/tools-dashboard-layout"
 
 export default function ISTControlFormPage() {
   const dispatch = useAppDispatch()
@@ -240,7 +242,7 @@ export default function ISTControlFormPage() {
   ]
 
   return (
-    <DataCaptureDashboardLayout title="IST Control Forms" subtitle="Item Stock Transfer control and monitoring">
+    <ToolsDashboardLayout title="IST Control Forms" subtitle="Item Stock Transfer control and monitoring">
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
@@ -331,14 +333,9 @@ export default function ISTControlFormPage() {
               filterOptions={filterFields}
             />
             
-            {loading ? (
-              <div className="flex items-center justify-center h-64">
-                <div className="flex flex-col items-center space-y-4">
-                  <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-                  <p className="text-muted-foreground">Loading IST forms...</p>
-                </div>
-              </div>
-            ) : (
+        {loading ? (
+          <ContentSkeleton sections={1} cardsPerSection={4} />
+        ) : (
               <DataTable
                 columns={columns}
                 data={Array.isArray(forms) ? forms : []}
@@ -373,6 +370,6 @@ export default function ISTControlFormPage() {
         description="Are you sure you want to delete this IST control form? This action cannot be undone."
           loading={operationLoading.delete}
         />
-    </DataCaptureDashboardLayout>
+    </ToolsDashboardLayout>
   )
 }

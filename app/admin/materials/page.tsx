@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import { MainLayout } from "@/components/layout/main-layout"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+// Removed Card wrappers in favor of simple bordered sections
 import { LoadingButton } from "@/components/ui/loading-button"
 import { Input } from "@/components/ui/input"
 import { DataTable } from "@/components/ui/data-table"
@@ -218,128 +218,103 @@ export default function MaterialsPage() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Raw Materials</h1>
-            <p className="text-muted-foreground">Manage raw materials inventory and specifications</p>
+            <h1 className="text-3xl font-light text-foreground">Raw Materials</h1>
+            <p className="text-sm font-light text-muted-foreground">Manage raw materials inventory and specifications</p>
           </div>
-          <LoadingButton onClick={handleAddRawMaterial}>
+          <LoadingButton 
+            onClick={handleAddRawMaterial}
+            className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full px-6 py-2 font-light"
+          >
             <Plus className="mr-2 h-4 w-4" />
             Add Raw Material
           </LoadingButton>
         </div>
 
-        {/* Counter Widgets with Icons */}
+        {/* Stats (no shadow, gray border, rounded) */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Materials</CardTitle>
-              <Package className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              {operationLoading.fetch ? (
-                <div className="animate-pulse">
-                  <div className="h-8 bg-gray-200 rounded w-16 mb-1"></div>
-                  <div className="h-3 bg-gray-200 rounded w-24"></div>
-                </div>
-              ) : (
-                <>
-                  <div className="text-2xl font-bold">{totalMaterials}</div>
-                  <p className="text-xs text-muted-foreground">Raw materials</p>
-                </>
-              )}
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Recently Added</CardTitle>
+          <div className="border border-gray-200 rounded-lg bg-white p-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-light">Total Materials</span>
+              <Package className="h-4 w-4 text-gray-500" />
+            </div>
+            {operationLoading.fetch ? (
+              <div className="animate-pulse space-y-1">
+                <div className="h-8 bg-gray-200 rounded w-16"></div>
+                <div className="h-3 bg-gray-200 rounded w-24"></div>
+              </div>
+            ) : (
+              <>
+                <div className="text-2xl font-light">{totalMaterials}</div>
+                <p className="text-xs text-muted-foreground">Raw materials</p>
+              </>
+            )}
+          </div>
+          <div className="border border-gray-200 rounded-lg bg-white p-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-light">Recently Added</span>
               <Calendar className="h-4 w-4 text-blue-600" />
-            </CardHeader>
-            <CardContent>
-              {operationLoading.fetch ? (
-                <div className="animate-pulse">
-                  <div className="h-8 bg-gray-200 rounded w-16 mb-1"></div>
-                  <div className="h-3 bg-gray-200 rounded w-32"></div>
-                </div>
-              ) : (
-                <>
-                  <div className="text-2xl font-bold text-blue-600">{recentlyAdded}</div>
-                  <p className="text-xs text-muted-foreground">Last 7 days</p>
-                </>
-              )}
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Categories</CardTitle>
+            </div>
+            {operationLoading.fetch ? (
+              <div className="animate-pulse space-y-1">
+                <div className="h-8 bg-gray-200 rounded w-16"></div>
+                <div className="h-3 bg-gray-200 rounded w-32"></div>
+              </div>
+            ) : (
+              <>
+                <div className="text-2xl font-light text-blue-600">{recentlyAdded}</div>
+                <p className="text-xs text-muted-foreground">Last 7 days</p>
+              </>
+            )}
+          </div>
+          <div className="border border-gray-200 rounded-lg bg-white p-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-light">Categories</span>
               <Layers className="h-4 w-4 text-green-600" />
-            </CardHeader>
-            <CardContent>
-              {operationLoading.fetch ? (
-                <div className="animate-pulse">
-                  <div className="h-8 bg-gray-200 rounded w-16 mb-1"></div>
-                  <div className="h-3 bg-gray-200 rounded w-32"></div>
+            </div>
+            {operationLoading.fetch ? (
+              <div className="animate-pulse space-y-1">
+                <div className="h-8 bg-gray-200 rounded w-16"></div>
+                <div className="h-3 bg-gray-200 rounded w-32"></div>
+              </div>
+            ) : (
+              <>
+                <div className="text-2xl font-light text-green-600">
+                  {new Set(rawMaterials.map(rm => rm.name.split(' ')[0])).size}
                 </div>
-              ) : (
-                <>
-                  <div className="text-2xl font-bold text-green-600">
-                    {new Set(rawMaterials.map(rm => rm.name.split(' ')[0])).size}
-                  </div>
-                  <p className="text-xs text-muted-foreground">Material types</p>
-                </>
-              )}
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Documentation</CardTitle>
+                <p className="text-xs text-muted-foreground">Material types</p>
+              </>
+            )}
+          </div>
+          <div className="border border-gray-200 rounded-lg bg-white p-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-light">Documentation</span>
               <BookOpen className="h-4 w-4 text-purple-600" />
-            </CardHeader>
-            <CardContent>
-              {operationLoading.fetch ? (
-                <div className="animate-pulse">
-                  <div className="h-8 bg-gray-200 rounded w-16 mb-1"></div>
-                  <div className="h-3 bg-gray-200 rounded w-32"></div>
+            </div>
+            {operationLoading.fetch ? (
+              <div className="animate-pulse space-y-1">
+                <div className="h-8 bg-gray-200 rounded w-16"></div>
+                <div className="h-3 bg-gray-200 rounded w-32"></div>
+              </div>
+            ) : (
+              <>
+                <div className="text-2xl font-light text-purple-600">
+                  {rawMaterials.filter(rm => rm.description && rm.description.trim().length > 0).length}
                 </div>
-              ) : (
-                <>
-                  <div className="text-2xl font-bold text-purple-600">
-                    {rawMaterials.filter(rm => rm.description && rm.description.trim().length > 0).length}
-                  </div>
-                  <p className="text-xs text-muted-foreground">With descriptions</p>
-                </>
-              )}
-            </CardContent>
-          </Card>
+                <p className="text-xs text-muted-foreground">With descriptions</p>
+              </>
+            )}
+          </div>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Material Filters</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center space-x-4">
-              <div className="flex-1">
-                <Input
-                  placeholder="Search raw materials..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="max-w-sm"
-                />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Raw Materials</CardTitle>
-          </CardHeader>
-          <CardContent>
+        <div className="border border-gray-200 rounded-lg bg-white">
+          <div className="p-6 pb-0">
+            <div className="text-lg font-light">Raw Materials</div>
+          </div>
+          <div className="p-6">
             {operationLoading.fetch ? (
-              <div className="flex items-center justify-center h-64">
-                <div className="flex flex-col items-center space-y-4">
-                  <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-                  <p className="text-muted-foreground">Loading raw materials...</p>
-                </div>
+              <div className="space-y-3">
+                <div className="h-10 bg-gray-100 rounded w-48" />
+                <div className="h-64 bg-gray-50 border border-dashed border-gray-200 rounded" />
               </div>
             ) : (
               <DataTable
@@ -349,8 +324,8 @@ export default function MaterialsPage() {
                 searchPlaceholder="Search raw materials..."
               />
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Form Drawer */}
         <RawMaterialFormDrawer 

@@ -7,10 +7,12 @@ import { LoadingButton } from "@/components/ui/loading-button"
 import { DataTable } from "@/components/ui/data-table"
 import { DataTableFilters } from "@/components/ui/data-table-filters"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Eye, Edit, Trash2, Package, TrendingUp, FileText, Clock } from "lucide-react"
+import { Plus, Eye, Edit, Trash2, Package, TrendingUp, FileText, Clock, ArrowRight } from "lucide-react"
 import { PalletiserSheetDrawer } from "@/components/forms/palletiser-sheet-drawer"
 import { PalletiserSheetViewDrawer } from "@/components/forms/palletiser-sheet-view-drawer"
 import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-dialog"
+import { Skeleton } from "@/components/ui/skeleton"
+import { CopyButton } from "@/components/ui/copy-button"
 import { useAppDispatch, useAppSelector } from "@/lib/store"
 import { 
   fetchPalletiserSheets, 
@@ -20,6 +22,7 @@ import {
 import { toast } from "sonner"
 import { TableFilters } from "@/lib/types"
 import { PalletiserSheet } from "@/lib/api/data-capture-forms"
+import ContentSkeleton from "@/components/ui/content-skeleton"
 
 export default function PalletiserSheetPage() {
   const dispatch = useAppDispatch()
@@ -63,43 +66,22 @@ export default function PalletiserSheetPage() {
   // Filter fields configuration for Palletiser Sheet
   const filterFields = useMemo(() => [
     {
-      key: "size",
-      label: "Size",
-      type: "select" as const,
-      placeholder: "Select Size",
-      options: [
-        { label: "Large", value: "Large" },
-        { label: "Medium", value: "Medium" },
-        { label: "Small", value: "Small" }
-      ]
-    },
-    {
-      key: "grade",
-      label: "Grade",
-      type: "select" as const,
-      placeholder: "Select Grade",
-      options: [
-        { label: "A", value: "A" },
-        { label: "B", value: "B" },
-        { label: "C", value: "C" }
-      ]
-    },
-    {
-      key: "shift",
-      label: "Shift",
-      type: "select" as const,
-      placeholder: "Select Shift",
-      options: [
-        { label: "Morning", value: "Morning" },
-        { label: "Afternoon", value: "Afternoon" },
-        { label: "Night", value: "Night" }
-      ]
-    },
-    {
-      key: "date",
+      key: "created_at",
       label: "Date",
       type: "date" as const,
       placeholder: "Filter by date"
+    },
+    {
+      key: "batch_number",
+      label: "Batch Number",
+      type: "text" as const,
+      placeholder: "Filter by batch number"
+    },
+    {
+      key: "product_type",
+      label: "Product Type",
+      type: "text" as const,
+      placeholder: "Filter by product type"
     }
   ], [])
 
@@ -139,8 +121,11 @@ export default function PalletiserSheetPage() {
     }
   }
 
+  // Get latest sheet for display
+  const latestSheet = Array.isArray(sheets) && sheets.length > 0 ? sheets[0] : null
+
   // Table columns with actions
-  const columns = [
+  const columns = useMemo(() => [
     {
       accessorKey: "sheet_info",
       header: "Sheet",
@@ -148,16 +133,19 @@ export default function PalletiserSheetPage() {
         const sheet = row.original
         return (
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center">
               <Package className="w-4 h-4 text-white" />
             </div>
             <div>
               <div className="flex items-center space-x-2">
-                <span className="font-medium">Pallet #{sheet.pallet_number}</span>
-                <Badge className="bg-orange-100 text-orange-800">{sheet.size}</Badge>
+                <div className="flex items-center space-x-2 max-w-[160px]">
+                  <span className="font-light truncate" title={sheet.id || ''}>#{sheet.id ? sheet.id.slice(0, 8) : 'N/A'}</span>
+                  {sheet.id && <CopyButton text={sheet.id} />}
+                </div>
+                <Badge className="bg-blue-100 text-blue-800 font-light">{sheet.batch_number || 'N/A'}</Badge>
               </div>
               <p className="text-sm text-gray-500 mt-1">
-                Grade: {sheet.grade} | {sheet.machine}
+                {sheet.created_at ? new Date(sheet.created_at).toLocaleDateString() : 'N/A'} • {sheet.product_type || 'N/A'}
               </p>
             </div>
           </div>
@@ -165,44 +153,128 @@ export default function PalletiserSheetPage() {
       },
     },
     {
-      accessorKey: "operator_info",
-      header: "Operator",
+      accessorKey: "machine_info",
+      header: "Machine",
       cell: ({ row }: any) => {
         const sheet = row.original
+        const machine = sheet.palletiser_sheet_machine_id_fkey
         return (
-          <div className="space-y-1">
-            <p className="text-sm font-medium">{sheet.operator_name}</p>
-            <p className="text-xs text-gray-500">Supervisor: {sheet.supervisor}</p>
+          <div className="space-y-2">
+            <div className="flex items-center space-x-2">
+              <div className="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center">
+                <Package className="w-3 h-3 text-green-600" />
+              </div>
+              <span className="text-sm font-light">Machine</span>
+            </div>
+            {machine ? (
+              <div className="space-y-1">
+                <p className="text-xs text-gray-500">
+                  {machine.name}
+                </p>
+                <div className="flex items-center space-x-2">
+                  <Badge className="text-xs bg-green-100 text-green-800">
+                    {machine.category}
+                  </Badge>
+                  <Badge className="text-xs bg-gray-100 text-gray-800">
+                    {machine.location}
+                  </Badge>
+                </div>
+              </div>
+            ) : (
+              <p className="text-xs text-gray-400">No details</p>
+            )}
           </div>
         )
       },
     },
     {
-      accessorKey: "timing",
-      header: "Timing",
+      accessorKey: "product_info",
+      header: "Product",
       cell: ({ row }: any) => {
         const sheet = row.original
         return (
-          <div className="space-y-1">
-            <p className="text-sm font-medium">{sheet.shift}</p>
-            <p className="text-xs text-gray-500">
-              {sheet.time_in} - {sheet.time_out}
-            </p>
+          <div className="space-y-2">
+            <div className="flex items-center space-x-2">
+              <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center">
+                <Package className="w-3 h-3 text-blue-600" />
+              </div>
+              <p className="text-sm font-light">
+                Product Details
+              </p>
+            </div>
+            <div className="space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-gray-500">Type</span>
+                <span className="text-xs font-light">{sheet.product_type}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-gray-500">Batch</span>
+                <span className="text-xs font-light">{sheet.batch_number}</span>
+              </div>
+            </div>
           </div>
         )
       },
     },
     {
-      accessorKey: "variance",
-      header: "Variance",
+      accessorKey: "dates",
+      header: "Dates",
       cell: ({ row }: any) => {
         const sheet = row.original
         return (
-          <div className="space-y-1">
-            <p className="text-sm font-medium">{sheet.variance}</p>
-            <Badge variant={sheet.variance > 0 ? "destructive" : "default"} className="text-xs">
-              {sheet.variance > 0 ? "Over" : "Normal"}
-            </Badge>
+          <div className="space-y-2">
+            <div className="flex items-center space-x-2">
+              <div className="w-5 h-5 rounded-full bg-orange-100 flex items-center justify-center">
+                <Clock className="h-3 w-3 text-orange-600" />
+              </div>
+              <p className="text-sm font-light">
+                Manufacturing
+              </p>
+            </div>
+            <div className="space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-gray-500">Start</span>
+                <span className="text-xs font-light">{new Date(sheet.manufacturing_date).toLocaleDateString()}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-gray-500">Expiry</span>
+                <span className="text-xs font-light">{new Date(sheet.expiry_date).toLocaleDateString()}</span>
+              </div>
+            </div>
+          </div>
+        )
+      },
+    },
+    {
+      accessorKey: "approval",
+      header: "Approval",
+      cell: ({ row }: any) => {
+        const sheet = row.original
+        const approver = sheet.palletiser_sheet_approved_by_fkey
+        return (
+          <div className="space-y-2">
+            <div className="flex items-center space-x-2">
+              <div className="w-5 h-5 rounded-full bg-purple-100 flex items-center justify-center">
+                <TrendingUp className="h-3 w-3 text-purple-600" />
+              </div>
+              <p className="text-sm font-light">
+                Approved By
+              </p>
+            </div>
+            {approver ? (
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-500">Role</span>
+                  <span className="text-xs font-light">{approver.role_name}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-500">Operations</span>
+                  <span className="text-xs font-light">{approver.user_operations?.length || 0}</span>
+                </div>
+              </div>
+            ) : (
+              <p className="text-xs text-gray-400">No details</p>
+            )}
           </div>
         )
       },
@@ -214,7 +286,7 @@ export default function PalletiserSheetPage() {
         const sheet = row.original
         return (
           <div className="space-y-1">
-            <p className="text-sm font-medium">
+            <p className="text-sm font-light">
               {sheet.created_at ? new Date(sheet.created_at).toLocaleDateString() : 'N/A'}
             </p>
             <p className="text-xs text-gray-500">
@@ -231,10 +303,20 @@ export default function PalletiserSheetPage() {
         const sheet = row.original
         return (
           <div className="flex space-x-2">
-            <LoadingButton variant="outline" size="sm" onClick={() => handleViewSheet(sheet)}>
+            <LoadingButton 
+              variant="outline" 
+              size="sm" 
+              onClick={() => handleViewSheet(sheet)}
+              className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full"
+            >
               <Eye className="w-4 h-4" />
             </LoadingButton>
-            <LoadingButton variant="outline" size="sm" onClick={() => handleEditSheet(sheet)}>
+            <LoadingButton 
+              variant="outline" 
+              size="sm" 
+              onClick={() => handleEditSheet(sheet)}
+              className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 rounded-full"
+            >
               <Edit className="w-4 h-4" />
             </LoadingButton>
             <LoadingButton 
@@ -243,6 +325,7 @@ export default function PalletiserSheetPage() {
               onClick={() => handleDeleteSheet(sheet)}
               loading={operationLoading.delete}
               disabled={operationLoading.delete}
+              className="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white border-0 rounded-full"
             >
               <Trash2 className="w-4 h-4" />
             </LoadingButton>
@@ -250,139 +333,173 @@ export default function PalletiserSheetPage() {
         )
       },
     },
-  ]
+  ], [operationLoading.delete])
 
   return (
-    <DataCaptureDashboardLayout title="Palletiser Sheet" subtitle="Palletiser sheet control and monitoring">
+    <DataCaptureDashboardLayout title="Palletiser Sheet" subtitle="Palletising process control and monitoring">
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Palletiser Sheet</h1>
-            <p className="text-muted-foreground">Manage palletiser sheet operations</p>
+            <h1 className="text-3xl font-light text-foreground">Palletiser Sheet</h1>
+            <p className="text-sm font-light text-muted-foreground">Manage palletising forms and process control</p>
           </div>
-          <LoadingButton onClick={handleAddSheet}>
+          <LoadingButton 
+            onClick={handleAddSheet}
+            className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full px-6 py-2 font-light"
+          >
             <Plus className="mr-2 h-4 w-4" />
-            Add Sheet
+            Add Palletiser Sheet
           </LoadingButton>
         </div>
 
-        {/* Counter Widgets with Icons */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Sheets</CardTitle>
-              <FileText className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              {operationLoading.fetch ? (
-                <div className="animate-pulse">
-                  <div className="h-8 bg-gray-200 rounded w-16 mb-1"></div>
-                  <div className="h-3 bg-gray-200 rounded w-24"></div>
-                </div>
-              ) : (
-                <>
-                  <div className="text-2xl font-bold">{(sheets || []).length}</div>
-                  <p className="text-xs text-muted-foreground">Total entries</p>
-                </>
-              )}
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Today's Sheets</CardTitle>
-              <TrendingUp className="h-4 w-4 text-blue-600" />
-            </CardHeader>
-            <CardContent>
-              {operationLoading.fetch ? (
-                <div className="animate-pulse">
-                  <div className="h-8 bg-gray-200 rounded w-16 mb-1"></div>
-                  <div className="h-3 bg-gray-200 rounded w-32"></div>
-                </div>
-              ) : (
-                <>
-                  <div className="text-2xl font-bold text-blue-600">
-                    {(sheets || []).filter((sheet) => 
-                      sheet.created_at && new Date(sheet.created_at).toDateString() === new Date().toDateString()
-                    ).length}
+        {/* Current Sheet Details */}
+        {loading ? (
+          <ContentSkeleton sections={1} cardsPerSection={4} />
+        ) : latestSheet ? (
+          <div className="border border-gray-200 rounded-lg bg-white border-l-4 border-l-blue-500">
+            <div className="p-6 pb-0">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2 text-lg font-light">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center">
+                    <Package className="h-4 w-4 text-white" />
                   </div>
-                  <p className="text-xs text-muted-foreground">Completed today</p>
-                </>
-              )}
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Grade A</CardTitle>
-              <Package className="h-4 w-4 text-green-600" />
-            </CardHeader>
-            <CardContent>
-              {operationLoading.fetch ? (
-                <div className="animate-pulse">
-                  <div className="h-8 bg-gray-200 rounded w-16 mb-1"></div>
-                  <div className="h-3 bg-gray-200 rounded w-32"></div>
+                  <span>Current Palletising Process</span>
+                  <Badge className="bg-gradient-to-r from-blue-100 to-cyan-100 text-blue-800 font-light">Latest</Badge>
                 </div>
-              ) : (
-                <>
-                  <div className="text-2xl font-bold text-green-600">
-                    {(sheets || []).filter((sheet) => sheet.grade === "A").length}
+                <LoadingButton 
+                  variant="outline" 
+                  onClick={() => handleViewSheet(latestSheet)}
+                  className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full px-4 py-2 font-light text-sm"
+                >
+                  <Eye className="mr-2 h-4 w-4" />
+                  View Details
+                </LoadingButton>
+              </div>
+            </div>
+            <div className="p-6">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <FileText className="h-4 w-4 text-gray-500" />
+                    <p className="text-sm font-light text-gray-600">Sheet ID</p>
                   </div>
-                  <p className="text-xs text-muted-foreground">High quality</p>
-                </>
-              )}
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Avg Variance</CardTitle>
-              <Clock className="h-4 w-4 text-purple-600" />
-            </CardHeader>
-            <CardContent>
-              {operationLoading.fetch ? (
-                <div className="animate-pulse">
-                  <div className="h-8 bg-gray-200 rounded w-16 mb-1"></div>
-                  <div className="h-3 bg-gray-200 rounded w-32"></div>
+                  <div className="flex items-center space-x-2">
+                    <p className="text-lg font-light">#{latestSheet.id?.slice(0, 8) || 'N/A'}</p>
+                    <CopyButton text={latestSheet.id || ''} />
+                  </div>
                 </div>
-              ) : (
-                <>
-                  <div className="text-2xl font-bold text-purple-600">
-                    {(sheets || []).length ? ((sheets || []).reduce((sum, sheet) => sum + (sheet.variance || 0), 0) / sheets.length).toFixed(1) : 0}
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <Package className="h-4 w-4 text-blue-500" />
+                    <p className="text-sm font-light text-gray-600">Product</p>
                   </div>
-                  <p className="text-xs text-muted-foreground">Time variance</p>
-                </>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+                  <p className="text-lg font-light text-blue-600">
+                    {latestSheet.product_type}
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <Clock className="h-4 w-4 text-gray-500" />
+                    <p className="text-sm font-light text-gray-600">Manufacturing</p>
+                  </div>
+                  <p className="text-lg font-light">{new Date(latestSheet.manufacturing_date).toLocaleDateString('en-GB', { 
+                    day: 'numeric', 
+                    month: 'long', 
+                    year: 'numeric' 
+                  })}</p>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <TrendingUp className="h-4 w-4 text-green-500" />
+                    <p className="text-sm font-light text-gray-600">Batch</p>
+                  </div>
+                  <p className="text-lg font-light text-green-600">
+                    #{latestSheet.batch_number}
+                  </p>
+                </div>
+              </div>
+              
+              {/* Machine and Approval Details in Row */}
+              <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {/* Machine Details */}
+                {latestSheet.palletiser_sheet_machine_id_fkey && (
+                  <div className="p-4 bg-gray-50 rounded-lg">
+                    <div className="flex items-center space-x-2 mb-3">
+                      <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center">
+                        <Package className="h-4 w-4 text-green-600" />
+                      </div>
+                      <h4 className="text-sm font-light text-gray-900">Machine</h4>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-light text-gray-600">Name</span>
+                        <span className="text-xs font-light">{latestSheet.palletiser_sheet_machine_id_fkey.name}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-light text-gray-600">Category</span>
+                        <span className="text-xs font-light text-green-600">{latestSheet.palletiser_sheet_machine_id_fkey.category}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-light text-gray-600">Location</span>
+                        <span className="text-xs font-light">{latestSheet.palletiser_sheet_machine_id_fkey.location}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Palletiser Sheets</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
+                {/* Approval Summary */}
+                {latestSheet.palletiser_sheet_approved_by_fkey && (
+                  <div className="p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg">
+                    <div className="flex items-center space-x-2 mb-3">
+                      <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
+                        <TrendingUp className="h-4 w-4 text-blue-600" />
+                      </div>
+                      <h4 className="text-sm font-light text-gray-900">Approval</h4>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-light text-gray-600">Approved By</span>
+                        <span className="text-xs font-light text-blue-600">{latestSheet.palletiser_sheet_approved_by_fkey.role_name}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-light text-gray-600">User Operations</span>
+                        <span className="text-xs font-light text-blue-600">{latestSheet.palletiser_sheet_approved_by_fkey.user_operations?.length || 0}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-light text-gray-600">Process Operations</span>
+                        <span className="text-xs font-light text-blue-600">{latestSheet.palletiser_sheet_approved_by_fkey.process_operations?.length || 0}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        ) : null}
+
+        {/* Data Table */}
+        {!loading && (
+          <div className="border border-gray-200 rounded-lg bg-white">
+            <div className="p-6 pb-0">
+              <div className="text-lg font-light">Palletiser Sheets</div>
+            </div>
+            <div className="p-6 space-y-4">
             <DataTableFilters
               filters={tableFilters}
               onFiltersChange={setTableFilters}
               onSearch={(searchTerm) => setTableFilters(prev => ({ ...prev, search: searchTerm }))}
-              searchPlaceholder="Search sheets..."
+              searchPlaceholder="Search palletiser sheets..."
               filterFields={filterFields}
             />
             
             {loading ? (
-              <div className="flex items-center justify-center h-64">
-                <div className="flex flex-col items-center space-y-4">
-                  <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-                  <p className="text-muted-foreground">Loading sheets...</p>
-                </div>
-              </div>
+              <ContentSkeleton sections={1} cardsPerSection={4} />
             ) : (
-              <DataTable
-                columns={columns}
-                data={sheets || []}
-                showSearch={false}
-              />
+              <DataTable columns={columns} data={sheets} showSearch={false} />
             )}
-          </CardContent>
-        </Card>
+            </div>
+          </div>
+        )}
 
         {/* Form Drawer */}
         <PalletiserSheetDrawer 

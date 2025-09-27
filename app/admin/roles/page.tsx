@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react"
 import { AdminDashboardLayout } from "@/components/layout/admin-dashboard-layout"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+// Remove Card wrappers; use bordered sections like data-capture pages
 import { LoadingButton } from "@/components/ui/loading-button"
 import { DataTable } from "@/components/ui/data-table"
 import { DataTableFilters } from "@/components/ui/data-table-filters"
@@ -246,8 +246,8 @@ export default function AdminRolesPage() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Roles Management</h1>
-            <p className="text-muted-foreground">Manage user roles and their permissions</p>
+            <h1 className="text-3xl font-light text-foreground">Roles Management</h1>
+            <p className="text-sm font-light text-muted-foreground">Manage user roles and their permissions</p>
           </div>
           <PermissionButton
             feature="role"
@@ -262,49 +262,45 @@ export default function AdminRolesPage() {
 
         {/* Metrics Cards */}
         {rolesLoading ? (
-          <MetricsPulseLoading />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="border border-gray-200 rounded-lg bg-white p-4 h-24 animate-pulse"></div>
+            <div className="border border-gray-200 rounded-lg bg-white p-4 h-24 animate-pulse"></div>
+            <div className="border border-gray-200 rounded-lg bg-white p-4 h-24 animate-pulse"></div>
+          </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Roles</CardTitle>
-              <Shield className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-                <div className="text-2xl font-bold">{totalRoles}</div>
-                <p className="text-xs text-muted-foreground">Active roles</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Active Roles</CardTitle>
+            <div className="border border-gray-200 rounded-lg bg-white p-4">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-light">Total Roles</span>
+                <Shield className="h-4 w-4 text-gray-500" />
+              </div>
+              <div className="text-2xl font-light">{totalRoles}</div>
+              <p className="text-xs text-muted-foreground">Active roles</p>
+            </div>
+            <div className="border border-gray-200 rounded-lg bg-white p-4">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-light">Active Roles</span>
                 <Users className="h-4 w-4 text-blue-600" />
-            </CardHeader>
-            <CardContent>
-                <div className="text-2xl font-bold text-blue-600">{activeRoles}</div>
-                <p className="text-xs text-muted-foreground">With permissions</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Admin Roles</CardTitle>
+              </div>
+              <div className="text-2xl font-light text-blue-600">{activeRoles}</div>
+              <p className="text-xs text-muted-foreground">With permissions</p>
+            </div>
+            <div className="border border-gray-200 rounded-lg bg-white p-4">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-light">Admin Roles</span>
                 <Shield className="h-4 w-4 text-purple-600" />
-            </CardHeader>
-            <CardContent>
-                <div className="text-2xl font-bold text-purple-600">{adminRoles}</div>
-                <p className="text-xs text-muted-foreground">Administrative access</p>
-            </CardContent>
-          </Card>
-        </div>
+              </div>
+              <div className="text-2xl font-light text-purple-600">{adminRoles}</div>
+              <p className="text-xs text-muted-foreground">Administrative access</p>
+            </div>
+          </div>
         )}
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Roles</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
+        <div className="border border-gray-200 rounded-lg bg-white">
+          <div className="p-6 pb-0">
+            <div className="text-lg font-light">Roles</div>
+          </div>
+          <div className="p-6 space-y-4">
             <DataTableFilters
               filters={tableFilters}
               onFiltersChange={setTableFilters}
@@ -314,7 +310,10 @@ export default function AdminRolesPage() {
             />
             
             {rolesLoading ? (
-              <TablePulseLoading rows={6} />
+              <div className="space-y-3">
+                <div className="h-10 bg-gray-100 rounded w-48" />
+                <div className="h-64 bg-gray-50 border border-dashed border-gray-200 rounded" />
+              </div>
             ) : (
               <DataTable
                 columns={columns}
@@ -322,8 +321,8 @@ export default function AdminRolesPage() {
                 showSearch={false}
               />
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Form Drawer */}
         <RoleFormDrawer 

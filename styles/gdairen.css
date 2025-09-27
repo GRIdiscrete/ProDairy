@@ -1,0 +1,356 @@
+/* Gdairen Custom Styles */
+
+/* Gradient Border Utilities */
+.gradient-border {
+  position: relative;
+  background: linear-gradient(45deg, #3b82f6, #06b6d4, #10b981);
+  border-radius: 0.5rem;
+  padding: 2px;
+}
+
+.gradient-border::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  padding: 2px;
+  background: linear-gradient(45deg, #3b82f6, #06b6d4, #10b981);
+  border-radius: inherit;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+}
+
+/* Gdairen Button Animations */
+@keyframes gdairen-pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+@keyframes gdairen-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.gdairen-shimmer {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
+  background-size: 200% 100%;
+  animation: gdairen-shimmer 2s infinite;
+}
+
+/* Gdairen Label Styles */
+.gdairen-label {
+  font-size: 1rem; /* text-base */
+  font-weight: 400; /* font-normal */
+  color: #374151; /* text-gray-700 */
+  margin-bottom: 0.5rem; /* mb-2 */
+  display: block;
+}
+
+/* Gdairen Form Styles */
+.gdairen-form-card {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.gdairen-form-card:hover {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  transform: translateY(-2px);
+  transition: all 0.3s ease;
+}
+
+/* Gdairen Input Styles */
+.gdairen-input {
+  border: 1px solid #d1d5db; /* Gray-300 border */
+  border-radius: 9999px; /* Fully rounded corners */
+  padding: 0.875rem 1.25rem; /* Increased padding for bigger height */
+  height: 3rem; /* Bigger height */
+  transition: all 0.3s ease;
+  background: #ffffff;
+  font-size: 1rem;
+  /* No shadow */
+}
+
+.gdairen-input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
+  outline: none;
+  transform: translateY(-1px);
+}
+
+.gdairen-input:hover {
+  border-color: #9ca3af; /* Gray-400 on hover */
+  /* No shadow */
+}
+
+/* Gdairen Textarea Styles */
+.gdairen-textarea {
+  border: 1px solid #d1d5db; /* Gray-300 border */
+  border-radius: 0.5rem; /* Rounded corners */
+  padding: 0.875rem 1rem; /* Increased padding */
+  min-height: 4rem; /* Minimum height */
+  transition: all 0.3s ease;
+  background: #ffffff;
+  font-size: 1rem;
+  /* No shadow */
+}
+
+.gdairen-textarea:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
+  outline: none;
+  transform: translateY(-1px);
+}
+
+.gdairen-textarea:hover {
+  border-color: #9ca3af; /* Gray-400 on hover */
+  /* No shadow */
+}
+
+.gdairen-input::placeholder {
+  color: #9ca3af;
+  font-weight: 400;
+}
+
+.gdairen-input:disabled {
+  background-color: #f9fafb;
+  border-color: #e5e7eb;
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+/* Gdairen Stepper Styles */
+.gdairen-stepper {
+  position: relative;
+}
+
+.gdairen-stepper::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #3b82f6, #06b6d4, #10b981);
+  transform: translateY(-50%);
+  z-index: 1;
+}
+
+.gdairen-step {
+  position: relative;
+  z-index: 2;
+  background: #ffffff;
+  border: 3px solid #e2e8f0;
+  border-radius: 50%;
+  width: 2.5rem;
+  height: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.gdairen-step.active {
+  border-color: #3b82f6;
+  background: linear-gradient(135deg, #3b82f6, #06b6d4);
+  color: white;
+  box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3);
+}
+
+.gdairen-step.completed {
+  border-color: #10b981;
+  background: linear-gradient(135deg, #10b981, #06b6d4);
+  color: white;
+  box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.3);
+}
+
+/* Gdairen Table Styles */
+.gdairen-table {
+  background: #ffffff;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+}
+
+.gdairen-table th {
+  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+  border-bottom: 2px solid #e2e8f0;
+  font-weight: 600;
+  color: #374151;
+  padding: 1rem;
+}
+
+.gdairen-table td {
+  border-bottom: 1px solid #f1f5f9;
+  padding: 1rem;
+  transition: background-color 0.2s ease;
+}
+
+.gdairen-table tr:hover td {
+  background-color: #f8fafc;
+}
+
+/* Gdairen Badge Styles */
+.gdairen-badge {
+  background: linear-gradient(135deg, #3b82f6, #06b6d4);
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  box-shadow: 0 2px 4px -1px rgba(59, 130, 246, 0.3);
+}
+
+.gdairen-badge-success {
+  background: linear-gradient(135deg, #10b981, #06b6d4);
+  box-shadow: 0 2px 4px -1px rgba(16, 185, 129, 0.3);
+}
+
+.gdairen-badge-warning {
+  background: linear-gradient(135deg, #f59e0b, #f97316);
+  box-shadow: 0 2px 4px -1px rgba(245, 158, 11, 0.3);
+}
+
+.gdairen-badge-error {
+  background: linear-gradient(135deg, #ef4444, #f97316);
+  box-shadow: 0 2px 4px -1px rgba(239, 68, 68, 0.3);
+}
+
+/* Gdairen Card Styles */
+.gdairen-card {
+  background: #ffffff;
+  border-radius: 0.75rem;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  transition: all 0.3s ease;
+}
+
+.gdairen-card:hover {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  transform: translateY(-2px);
+}
+
+.gdairen-card-header {
+  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+  border-bottom: 1px solid #e2e8f0;
+  padding: 1.5rem;
+  border-radius: 0.75rem 0.75rem 0 0;
+}
+
+/* Gdairen Loading Spinner */
+.gdairen-spinner {
+  width: 1.5rem;
+  height: 1.5rem;
+  border: 2px solid #e2e8f0;
+  border-top: 2px solid #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Gdairen Progress Bar */
+.gdairen-progress {
+  background: #e2e8f0;
+  border-radius: 9999px;
+  height: 0.5rem;
+  overflow: hidden;
+}
+
+.gdairen-progress-bar {
+  background: linear-gradient(90deg, #3b82f6, #06b6d4, #10b981);
+  height: 100%;
+  border-radius: 9999px;
+  transition: width 0.3s ease;
+  position: relative;
+}
+
+.gdairen-progress-bar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.3),
+    transparent
+  );
+  animation: gdairen-shimmer 2s infinite;
+}
+
+/* Gdairen Modal Styles */
+.gdairen-modal {
+  background: #ffffff;
+  border-radius: 1rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  border: 1px solid #e2e8f0;
+}
+
+.gdairen-modal-header {
+  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+  border-bottom: 1px solid #e2e8f0;
+  padding: 1.5rem;
+  border-radius: 1rem 1rem 0 0;
+}
+
+/* Gdairen Alert Styles */
+.gdairen-alert {
+  border-radius: 0.75rem;
+  padding: 1rem 1.5rem;
+  border: 1px solid;
+  position: relative;
+  overflow: hidden;
+}
+
+.gdairen-alert::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #3b82f6, #06b6d4, #10b981);
+}
+
+.gdairen-alert-success {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+  color: #166534;
+}
+
+.gdairen-alert-warning {
+  background: #fffbeb;
+  border-color: #fed7aa;
+  color: #92400e;
+}
+
+.gdairen-alert-error {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #991b1b;
+}
+
+.gdairen-alert-info {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #1e40af;
+}

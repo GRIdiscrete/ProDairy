@@ -409,27 +409,72 @@ export interface ISTForm {
 export interface PalletiserSheet {
   id?: string
   created_at?: string
-  sheet_date: string
-  shift: string
-  operator_id: string
-  palletiser_id: string
-  total_pallets: number
-  efficiency_rate: number
-  downtime_minutes: number
-  notes?: string
   updated_at?: string
+  machine_id: string
+  manufacturing_date: string
+  expiry_date: string
+  batch_number: number
+  product_type: string
+  approved_by: string
+  // Relationship data
+  palletiser_sheet_approved_by_fkey?: {
+    id: string
+    views: string[]
+    role_name: string
+    created_at: string
+    updated_at: string
+    role_operations: string[]
+    user_operations: string[]
+    devices_operations: string[]
+    process_operations: string[]
+    supplier_operations: string[]
+    silo_item_operations: string[]
+    machine_item_operations: string[]
+  }
+  palletiser_sheet_machine_id_fkey?: {
+    id: string
+    name: string
+    status: string
+    category: string
+    location: string
+    created_at: string
+    updated_at: string
+    serial_number: string
+  }
 }
 
 export interface PalletiserSheetDetails {
   id?: string
   created_at?: string
-  palletiser_sheet_id: string
-  product_code: string
-  quantity_palletised: number
-  pallet_pattern: string
-  quality_check: boolean
-  timestamp: string
   updated_at?: string
+  palletiser_sheet_id: string
+  pallet_number: number
+  start_time: string
+  end_time: string
+  cases_packed: number
+  serial_number: string
+  counter_id: string
+  counter_signature: string
+  // Relationship data
+  palletiser_sheet_details_palletiser_sheet_id_fkey?: PalletiserSheet
+  palletiser_sheet_details_counter_id_fkey?: {
+    id: string
+    created_at: string
+    first_name: string
+    last_name: string
+    role_id: string
+    department: string
+    email: string
+    password: string
+    users_role_id_fkey?: {
+      id: string
+      role_name: string
+      features: any
+      views: string[]
+      updated_at: string
+    }
+    updated_at: string
+  }
 }
 
 // Sterilised Milk Process Types
@@ -759,7 +804,7 @@ export const deleteSterilisedMilkProcess = async (id: string) => {
 // Sterilised Milk Process Details APIs
 export const getSterilisedMilkProcessDetails = async () => {
   try {
-    const res = await apiRequest<any>('/sterilised-milk-process/details')
+    const res = await apiRequest<any>('/sterilised-milk-process-details')
     return Array.isArray(res) ? (res as SterilisedMilkProcessDetails[]) : ((res?.data ?? []) as SterilisedMilkProcessDetails[])
   } catch (error: any) {
     console.error('Error fetching sterilised milk process details:', error)
@@ -768,22 +813,22 @@ export const getSterilisedMilkProcessDetails = async () => {
 }
 
 export const getSterilisedMilkProcessDetail = async (id: string) => {
-  const res = await apiRequest<any>(`/sterilised-milk-process/details/${id}`)
+  const res = await apiRequest<any>(`/sterilised-milk-process-details/${id}`)
   return Array.isArray(res) ? (res[0] as SterilisedMilkProcessDetails) : ((res?.data ?? null) as SterilisedMilkProcessDetails)
 }
 
 export const createSterilisedMilkProcessDetails = async (data: Omit<SterilisedMilkProcessDetails, 'id' | 'created_at' | 'updated_at'>) => {
-  const res = await apiRequest<any>('/sterilised-milk-process/details', { method: 'POST', body: JSON.stringify(data) })
+  const res = await apiRequest<any>('/sterilised-milk-process-details', { method: 'POST', body: JSON.stringify(data) })
   return Array.isArray(res) ? (res[0] as SterilisedMilkProcessDetails) : ((res?.data ?? null) as SterilisedMilkProcessDetails)
 }
 
 export const updateSterilisedMilkProcessDetails = async (data: SterilisedMilkProcessDetails) => {
-  const res = await apiRequest<any>('/sterilised-milk-process/details', { method: 'PATCH', body: JSON.stringify(data) })
+  const res = await apiRequest<any>('/sterilised-milk-process-details', { method: 'PATCH', body: JSON.stringify(data) })
   return Array.isArray(res) ? (res[0] as SterilisedMilkProcessDetails) : ((res?.data ?? null) as SterilisedMilkProcessDetails)
 }
 
 export const deleteSterilisedMilkProcessDetails = async (id: string) => {
-  await apiRequest(`/sterilised-milk-process/details/${id}`, { method: 'DELETE' })
+  await apiRequest(`/sterilised-milk-process-details/${id}`, { method: 'DELETE' })
 }
 
 // Flex 1 Steriliser Process Types

@@ -17,6 +17,9 @@ import { siloApi } from "@/lib/api/silo"
 import { usersApi } from "@/lib/api/users"
 import { toast } from "sonner"
 import type { BMTControlForm } from "@/lib/api/data-capture-forms"
+import { SignatureModal } from "@/components/ui/signature-modal"
+import { SignatureViewer } from "@/components/ui/signature-viewer"
+import { base64ToPngDataUrl, normalizeDataUrlToBase64 } from "@/lib/utils/signature"
 
 const bmtControlFormSchema = yup.object({
   flow_meter_start: yup.string().required("Flow meter start time is required"),
@@ -59,6 +62,8 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
   const [users, setUsers] = useState<SearchableSelectOption[]>([])
   const [loadingSilos, setLoadingSilos] = useState(false)
   const [loadingUsers, setLoadingUsers] = useState(false)
+  const [llmSigOpen, setLlmSigOpen] = useState(false)
+  const [dppSigOpen, setDppSigOpen] = useState(false)
 
   // Load initial data
   const loadInitialData = async () => {
@@ -134,6 +139,7 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
     handleSubmit,
     formState: { errors },
     reset,
+    setValue,
   } = useForm<BMTControlFormData>({
     resolver: yupResolver(bmtControlFormSchema),
     defaultValues: {
@@ -156,10 +162,14 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
 
   const onSubmit = async (data: BMTControlFormData) => {
     try {
-      console.log('Form data submitted:', data)
+      const payload = {
+        ...data,
+        llm_signature: normalizeDataUrlToBase64(data.llm_signature),
+        dpp_signature: normalizeDataUrlToBase64(data.dpp_signature),
+      }
 
       if (mode === "create") {
-        await dispatch(createBMTControlFormAction(data)).unwrap()
+        await dispatch(createBMTControlFormAction(payload)).unwrap()
         toast.success('BMT Control Form created successfully')
         // Refresh the data to get complete relationship information
         setTimeout(() => {
@@ -167,7 +177,7 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
         }, 100)
       } else if (form) {
         await dispatch(updateBMTControlFormAction({
-          ...data,
+          ...payload,
           id: form.id,
           created_at: form.created_at,
           updated_at: form.updated_at,
@@ -231,6 +241,7 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
   }, [open])
 
   return (
+    <>
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-[50vw] sm:max-w-[50vw] overflow-y-auto">
         <div className="p-6">
@@ -479,11 +490,24 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
                     name="llm_signature"
                     control={control}
                     render={({ field }) => (
-                      <Input
-                        id="llm_signature"
-                        placeholder="Enter LLM signature"
-                        {...field}
-                      />
+                      <div className="space-y-2">
+                        {field.value ? (
+                          <img src={base64ToPngDataUrl(field.value)} alt="LLM signature" className="h-24 border border-gray-200 rounded-md bg-white" />
+                        ) : (
+                          <div className="h-24 flex items-center justify-center border border-dashed border-gray-300 rounded-md text-xs text-gray-500 bg-white">
+                            No signature captured
+                          </div>
+                        )}
+                        <div className="flex items-center gap-2">
+                          <LoadingButton type="button" variant="outline" onClick={() => setLlmSigOpen(true)}>Add Signature</LoadingButton>
+                          {field.value && (
+                            <>
+                              <LoadingButton type="button" variant="outline" onClick={() => setLlmSigOpen(true)}>View Signature</LoadingButton>
+                              <LoadingButton type="button" variant="ghost" onClick={() => field.onChange("")}>Clear</LoadingButton>
+                            </>
+                          )}
+                        </div>
+                      </div>
                     )}
                   />
                   {errors.llm_signature && <p className="text-sm text-red-500">{errors.llm_signature.message}</p>}
@@ -516,11 +540,24 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
                     name="dpp_signature"
                     control={control}
                     render={({ field }) => (
-                      <Input
-                        id="dpp_signature"
-                        placeholder="Enter DPP signature"
-                        {...field}
-                      />
+                      <div className="space-y-2">
+                        {field.value ? (
+                          <img src={base64ToPngDataUrl(field.value)} alt="DPP signature" className="h-24 border border-gray-200 rounded-md bg-white" />
+                        ) : (
+                          <div className="h-24 flex items-center justify-center border border-dashed border-gray-300 rounded-md text-xs text-gray-500 bg-white">
+                            No signature captured
+                          </div>
+                        )}
+                        <div className="flex items-center gap-2">
+                          <LoadingButton type="button" variant="outline" onClick={() => setDppSigOpen(true)}>Add Signature</LoadingButton>
+                          {field.value && (
+                            <>
+                              <LoadingButton type="button" variant="outline" onClick={() => setDppSigOpen(true)}>View Signature</LoadingButton>
+                              <LoadingButton type="button" variant="ghost" onClick={() => field.onChange("")}>Clear</LoadingButton>
+                            </>
+                          )}
+                        </div>
+                      </div>
                     )}
                   />
                   {errors.dpp_signature && <p className="text-sm text-red-500">{errors.dpp_signature.message}</p>}
@@ -544,5 +581,34 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
         </div>
       </SheetContent>
     </Sheet>
+    <SignatureModal
+      open={llmSigOpen}
+      onOpenChange={setLlmSigOpen}
+      title="Capture LLM Signature"
+      onSave={(dataUrl) => {
+        setValue("llm_signature", dataUrl, { shouldValidate: true, shouldDirty: true })
+      }}
+    />
+    <SignatureViewer
+      open={false}
+      onOpenChange={() => {}}
+      title="LLM Signature"
+      value={undefined}
+    />
+    <SignatureModal
+      open={dppSigOpen}
+      onOpenChange={setDppSigOpen}
+      title="Capture DPP Signature"
+      onSave={(dataUrl) => {
+        setValue("dpp_signature", dataUrl, { shouldValidate: true, shouldDirty: true })
+      }}
+    />
+    <SignatureViewer
+      open={false}
+      onOpenChange={() => {}}
+      title="DPP Signature"
+      value={undefined}
+    />
+    </>
   )
 }

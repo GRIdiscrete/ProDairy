@@ -20,6 +20,8 @@ import {
 import { toast } from "sonner"
 import { TableFilters } from "@/lib/types"
 import { CIPControlForm } from "@/lib/api/data-capture-forms"
+import ContentSkeleton from "@/components/ui/content-skeleton"
+import { ToolsDashboardLayout } from "@/components/layout/tools-dashboard-layout"
 
 export default function CIPControlFormPage() {
   const dispatch = useAppDispatch()
@@ -258,7 +260,7 @@ export default function CIPControlFormPage() {
   ]
 
   return (
-    <DataCaptureDashboardLayout title="CIP Control Forms" subtitle="Cleaning in Place control and monitoring">
+    <ToolsDashboardLayout title="CIP Control Forms" subtitle="Cleaning in Place control and monitoring">
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
@@ -359,6 +361,9 @@ export default function CIPControlFormPage() {
           </Card>
         </div>
 
+        {loading ? (
+        <ContentSkeleton sections={1} cardsPerSection={4} />
+        ) : (
         <Card>
           <CardHeader>
             <CardTitle>CIP Control Forms</CardTitle>
@@ -373,12 +378,7 @@ export default function CIPControlFormPage() {
             />
             
             {loading ? (
-              <div className="flex items-center justify-center h-64">
-                <div className="flex flex-col items-center space-y-4">
-                  <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-                  <p className="text-muted-foreground">Loading CIP forms...</p>
-                </div>
-              </div>
+              <ContentSkeleton sections={1} cardsPerSection={4} />
             ) : (
               <DataTable
                 columns={columns}
@@ -388,6 +388,7 @@ export default function CIPControlFormPage() {
             )}
           </CardContent>
         </Card>
+        )}
 
         {/* Form Drawer */}
         <CIPControlFormDrawer 
@@ -418,6 +419,6 @@ export default function CIPControlFormPage() {
           loading={operationLoading.delete}
         />
       </div>
-    </DataCaptureDashboardLayout>
+    </ToolsDashboardLayout>
   )
 }

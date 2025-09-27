@@ -4,9 +4,9 @@ import { useState, useEffect } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import type { RootState, AppDispatch } from "@/lib/store"
 import { fetchDriverForms } from "@/lib/store/slices/driverFormSlice"
-import { SharedLayout } from "@/components/layout/shared-layout"
+import { DriversDashboardLayout } from "@/components/layout/drivers-dashboard-layout"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Plus, Edit, Eye, Truck, Calendar, User, CheckCircle, XCircle, Settings, Trash2 } from "lucide-react"
 import { DataTable } from "@/components/ui/data-table"
@@ -182,13 +182,9 @@ export default function DriverFormsPage() {
   const isLoading = operationLoading.fetch
 
   return (
-    <SharedLayout title="Driver Forms" subtitle="Manage driver collection forms and deliveries">
+    <DriversDashboardLayout title="Driver Forms" subtitle="Manage driver collection forms and deliveries">
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">Driver Forms</h1>
-            <p className="text-muted-foreground">Manage driver collection forms and deliveries</p>
-          </div>
+        <div className="flex items-center justify-end">
           <LoadingButton onClick={handleAddForm} loading={isLoading}>
             <Plus className="mr-2 h-4 w-4" />
             Create Form
@@ -338,6 +334,6 @@ export default function DriverFormsPage() {
           }}
         />
       </div>
-    </SharedLayout>
+    </DriversDashboardLayout>
   )
 }

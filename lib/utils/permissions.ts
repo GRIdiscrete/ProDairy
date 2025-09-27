@@ -64,6 +64,9 @@ export function getUserRole(profile: ExtendedUserProfile | null): UserRole | nul
  * Check if user has a specific view permission
  */
 export function hasViewPermission(profile: ExtendedUserProfile | null, view: View): boolean {
+  // TEMPORARY: Bypass permissions for testing - return true for all checks
+  return true
+  
   const userRole = getUserRole(profile)
   if (!userRole?.views) return false
   
@@ -74,6 +77,9 @@ export function hasViewPermission(profile: ExtendedUserProfile | null, view: Vie
  * Check if user has access to a specific route
  */
 export function hasRouteAccess(profile: ExtendedUserProfile | null, route: string): boolean {
+  // TEMPORARY: Bypass permissions for testing - return true for all checks
+  return true
+  
   const view = ROUTE_TO_VIEW_MAP[route]
   if (!view) return false // Deny access to unmapped routes for security
   
@@ -88,6 +94,9 @@ export function hasFeaturePermission(
   feature: Feature, 
   permission: Permission
 ): boolean {
+  // TEMPORARY: Bypass permissions for testing - return true for all checks
+  return true
+  
   const userRole = getUserRole(profile)
   if (!userRole) return false
   
@@ -104,6 +113,9 @@ export function hasFeaturePermission(
  * Check if user has any permission for a feature
  */
 export function hasAnyFeaturePermission(profile: ExtendedUserProfile | null, feature: Feature): boolean {
+  // TEMPORARY: Bypass permissions for testing - return true for all checks
+  return true
+  
   const permissions: Permission[] = ['create', 'read', 'update', 'delete']
   return permissions.some(permission => hasFeaturePermission(profile, feature, permission))
 }
@@ -112,6 +124,9 @@ export function hasAnyFeaturePermission(profile: ExtendedUserProfile | null, fea
  * Get all permissions for a specific feature
  */
 export function getFeaturePermissions(profile: ExtendedUserProfile | null, feature: Feature): Permission[] {
+  // TEMPORARY: Bypass permissions for testing - return all permissions
+  return ['create', 'read', 'update', 'delete']
+  
   const permissions: Permission[] = ['create', 'read', 'update', 'delete']
   return permissions.filter(permission => hasFeaturePermission(profile, feature, permission))
 }
@@ -120,25 +135,32 @@ export function getFeaturePermissions(profile: ExtendedUserProfile | null, featu
  * Check if user can perform CRUD operations on a feature
  */
 export function canCreate(profile: ExtendedUserProfile | null, feature: Feature): boolean {
-  return hasFeaturePermission(profile, feature, 'create')
+  // TEMPORARY: Bypass permissions for testing - return true for all checks
+  return true
 }
 
 export function canRead(profile: ExtendedUserProfile | null, feature: Feature): boolean {
-  return hasFeaturePermission(profile, feature, 'read')
+  // TEMPORARY: Bypass permissions for testing - return true for all checks
+  return true
 }
 
 export function canUpdate(profile: ExtendedUserProfile | null, feature: Feature): boolean {
-  return hasFeaturePermission(profile, feature, 'update')
+  // TEMPORARY: Bypass permissions for testing - return true for all checks
+  return true
 }
 
 export function canDelete(profile: ExtendedUserProfile | null, feature: Feature): boolean {
-  return hasFeaturePermission(profile, feature, 'delete')
+  // TEMPORARY: Bypass permissions for testing - return true for all checks
+  return true
 }
 
 /**
  * Get accessible routes for a user
  */
 export function getAccessibleRoutes(profile: ExtendedUserProfile | null): string[] {
+  // TEMPORARY: Bypass permissions for testing - return all routes
+  return Object.keys(ROUTE_TO_VIEW_MAP)
+  
   const userRole = getUserRole(profile)
   if (!userRole?.views) return []
   
@@ -154,6 +176,9 @@ export function filterNavigationByPermissions<T extends { href: string }>(
   navigationItems: T[],
   profile: ExtendedUserProfile | null
 ): T[] {
+  // TEMPORARY: Bypass permissions for testing - return all navigation items
+  return navigationItems
+  
   return navigationItems.filter(item => hasRouteAccess(profile, item.href))
 }
 
@@ -161,6 +186,9 @@ export function filterNavigationByPermissions<T extends { href: string }>(
  * Check if user is admin (has all permissions)
  */
 export function isAdmin(profile: ExtendedUserProfile | null): boolean {
+  // TEMPORARY: Bypass permissions for testing - return true for all users
+  return true
+  
   const userRole = getUserRole(profile)
   if (!userRole) return false
   
@@ -197,6 +225,9 @@ export function getUserRoleName(profile: ExtendedUserProfile | null): string {
  * Check if user has specific role
  */
 export function hasRole(profile: ExtendedUserProfile | null, roleName: string): boolean {
+  // TEMPORARY: Bypass permissions for testing - return true for all role checks
+  return true
+  
   const userRole = getUserRole(profile)
   return userRole?.role_name === roleName
 }

@@ -86,11 +86,11 @@ export function RawMaterialFormDrawer({ open, onOpenChange, rawMaterial, mode }:
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-[50vw] sm:max-w-[50vw] overflow-y-auto">
-        <div className="p-6">
+      <SheetContent className="w-[50vw] sm:max-w-[50vw] overflow-y-auto bg-white p-0">
+        <div className="p-6 bg-white">
           <SheetHeader>
-            <SheetTitle>{mode === "create" ? "Add New Raw Material" : "Edit Raw Material"}</SheetTitle>
-            <SheetDescription>
+            <SheetTitle className="text-lg font-light">{mode === "create" ? "Add New Raw Material" : "Edit Raw Material"}</SheetTitle>
+            <SheetDescription className="text-sm font-light">
               {mode === "create" ? "Create a new raw material entry" : "Update raw material information"}
             </SheetDescription>
           </SheetHeader>
@@ -98,7 +98,7 @@ export function RawMaterialFormDrawer({ open, onOpenChange, rawMaterial, mode }:
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 mt-6">
             {/* Basic Information */}
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Material Information</h3>
+              <h3 className="text-lg font-light text-gray-900">Material Information</h3>
               <div className="space-y-2">
                 <Label htmlFor="name">Material Name *</Label>
                 <Controller
@@ -136,7 +136,7 @@ export function RawMaterialFormDrawer({ open, onOpenChange, rawMaterial, mode }:
 
             {/* Examples and Guidelines */}
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Guidelines</h3>
+              <h3 className="text-lg font-light text-gray-900">Guidelines</h3>
               <div className="bg-gray-50 p-4 rounded-lg space-y-2">
                 <h4 className="font-medium text-gray-700">Material Name Examples:</h4>
                 <ul className="text-sm text-gray-600 space-y-1 ml-4">
@@ -157,14 +157,15 @@ export function RawMaterialFormDrawer({ open, onOpenChange, rawMaterial, mode }:
               </div>
             </div>
 
-            <div className="flex justify-end space-x-2 pt-4">
-              <LoadingButton type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <div className="flex justify-end space-x-2 pt-4 border-t bg-white">
+              <LoadingButton type="button" variant="outline" onClick={() => onOpenChange(false)} className="rounded-full">
                 Cancel
               </LoadingButton>
               <LoadingButton 
                 type="submit" 
                 loading={mode === "create" ? operationLoading.create : operationLoading.update}
                 loadingText={mode === "create" ? "Creating..." : "Updating..."}
+                className="rounded-full"
               >
                 {mode === "create" ? "Create Raw Material" : "Update Raw Material"}
               </LoadingButton>
