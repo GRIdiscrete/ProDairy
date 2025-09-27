@@ -53,7 +53,7 @@ export function ToolsSidebar({ collapsed = false, onToggle }: ToolsSidebarProps)
           <AnimatePresence initial={false}>
             {!collapsed && (
               <motion.div key="brand" initial={{ opacity: 0, x: -6 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -6 }} className="truncate">
-                <span className="block text-sm font-extralight tracking-[0.18em] text-zinc-900 uppercase">ProDairy OS</span>
+                <span className="block text-sm font-extralight tracking-[0.18em] text-zinc-900 uppercase">ProDairy DMS</span>
                 <span className="block text-[11px] font-light tracking-wider text-zinc-500">Tools</span>
               </motion.div>
             )}

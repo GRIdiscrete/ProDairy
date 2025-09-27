@@ -10,7 +10,7 @@ export default function DriversDashboard() {
     <DriversDashboardLayout title="Drivers Dashboard" subtitle="Driver management and tools">
       <div className="space-y-6">
         {/* Quick Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Active Deliveries</CardTitle>
@@ -54,7 +54,7 @@ export default function DriversDashboard() {
         </div>
 
         {/* Recent Activity */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
           <Card>
             <CardHeader>
               <CardTitle>Recent Deliveries</CardTitle>
@@ -90,7 +90,7 @@ export default function DriversDashboard() {
               <CardTitle>Quick Actions</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
                 <div className="p-4 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors">
                   <FileText className="h-8 w-8 text-primary mb-2" />
                   <h3 className="font-medium">Driver Forms</h3>

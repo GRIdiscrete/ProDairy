@@ -373,7 +373,7 @@ export default function LoginPage() {
                 <Image src="/Prodairy-3D-Logo.png" alt="ProDairy" fill className="object-contain" />
               </div>
               <div>
-                <h1 className="text-2xl font-light tracking-wider uppercase">ProDairy OS</h1>
+                <h1 className="text-2xl font-light tracking-wider uppercase">ProDairy DMS</h1>
                 <p className="text-xs text-zinc-500 tracking-wide">Futuristic Dairy Manufacturing</p>
               </div>
             </div>

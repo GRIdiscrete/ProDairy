@@ -105,7 +105,7 @@ export function DriversSidebar({ collapsed = false, onToggle }: DriversSidebarPr
                 className="truncate"
               >
                 <span className="block text-sm font-extralight tracking-[0.18em] text-zinc-900 uppercase">
-                  ProDairy OS
+                  ProDairy DMS
                 </span>
                 <span className="block text-[11px] font-light tracking-wider text-zinc-500">
                   Drivers UI

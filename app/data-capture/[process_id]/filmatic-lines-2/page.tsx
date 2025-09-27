@@ -9,44 +9,44 @@ import { DataTable } from "@/components/ui/data-table"
 import { DataTableFilters } from "@/components/ui/data-table-filters"
 import { Badge } from "@/components/ui/badge"
 import { Plus, Eye, Edit, Trash2, Factory, TrendingUp, FileText, Clock, Package, ArrowRight, Beaker, Sun, Moon } from "lucide-react"
-import { FilmaticLinesForm1Drawer } from "@/components/forms/filmatic-lines-form-1-drawer"
-import { FilmaticLinesForm1ViewDrawer } from "@/components/forms/filmatic-lines-form-1-view-drawer"
+import { FilmaticLinesForm2Drawer } from "@/components/forms/filmatic-lines-form-2-drawer"
+import { FilmaticLinesForm2ViewDrawer } from "@/components/forms/filmatic-lines-form-2-view-drawer"
 import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-dialog"
 import { Skeleton } from "@/components/ui/skeleton"
 import { CopyButton } from "@/components/ui/copy-button"
 import { useAppDispatch, useAppSelector } from "@/lib/store"
 import { 
-  fetchFilmaticLinesForm1s, 
-  deleteFilmaticLinesForm1,
+  fetchFilmaticLinesForm2s, 
+  deleteFilmaticLinesForm2,
   clearError
-} from "@/lib/store/slices/filmaticLinesForm1Slice"
+} from "@/lib/store/slices/filmaticLinesForm2Slice"
 import { toast } from "sonner"
 import { TableFilters } from "@/lib/types"
-import { FilmaticLinesForm1 } from "@/lib/api/filmatic-lines-form-1"
+import { FilmaticLinesForm2 } from "@/lib/api/filmatic-lines-form-2"
 import ContentSkeleton from "@/components/ui/content-skeleton"
 
-export default function FilmaticLines1Page() {
+export default function FilmaticLines2Page() {
   const params = useParams()
   const processId = params.process_id as string
   
   const dispatch = useAppDispatch()
-  const { forms, loading, error, isInitialized } = useAppSelector((state) => state.filmaticLinesForm1)
+  const { forms, loading, error, isInitialized } = useAppSelector((state) => state.filmaticLinesForm2)
   
   const [tableFilters, setTableFilters] = useState<TableFilters>({})
   const hasFetchedRef = useRef(false)
   
-  // Load Filmatic lines form 1 data on initial mount
+  // Load Filmatic lines form 2 data on initial mount
   useEffect(() => {
     if (!isInitialized && !hasFetchedRef.current) {
       hasFetchedRef.current = true
-      dispatch(fetchFilmaticLinesForm1s())
+      dispatch(fetchFilmaticLinesForm2s())
     }
   }, [dispatch, isInitialized])
   
   // Handle filter changes
   useEffect(() => {
     if (isInitialized && Object.keys(tableFilters).length > 0) {
-      dispatch(fetchFilmaticLinesForm1s())
+      dispatch(fetchFilmaticLinesForm2s())
     }
   }, [dispatch, tableFilters, isInitialized])
   
@@ -64,10 +64,10 @@ export default function FilmaticLines1Page() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   
   // Selected form and mode
-  const [selectedForm, setSelectedForm] = useState<FilmaticLinesForm1 | null>(null)
+  const [selectedForm, setSelectedForm] = useState<FilmaticLinesForm2 | null>(null)
   const [formMode, setFormMode] = useState<"create" | "edit">("create")
 
-  // Filter fields configuration for Filmatic Lines Form 1
+  // Filter fields configuration for Filmatic Lines Form 2
   const filterFields = useMemo(() => [
     {
       key: "created_at",
@@ -100,18 +100,18 @@ export default function FilmaticLines1Page() {
     setFormDrawerOpen(true)
   }
 
-  const handleEditForm = (form: FilmaticLinesForm1) => {
+  const handleEditForm = (form: FilmaticLinesForm2) => {
     setSelectedForm(form)
     setFormMode("edit")
     setFormDrawerOpen(true)
   }
 
-  const handleViewForm = (form: FilmaticLinesForm1) => {
+  const handleViewForm = (form: FilmaticLinesForm2) => {
     setSelectedForm(form)
     setViewDrawerOpen(true)
   }
 
-  const handleDeleteForm = (form: FilmaticLinesForm1) => {
+  const handleDeleteForm = (form: FilmaticLinesForm2) => {
     setSelectedForm(form)
     setDeleteDialogOpen(true)
   }
@@ -120,12 +120,12 @@ export default function FilmaticLines1Page() {
     if (!selectedForm) return
     
     try {
-      await dispatch(deleteFilmaticLinesForm1(selectedForm.id)).unwrap()
-      toast.success('Filmatic Lines Form 1 deleted successfully')
+      await dispatch(deleteFilmaticLinesForm2(selectedForm.id)).unwrap()
+      toast.success('Filmatic Lines Form 2 deleted successfully')
       setDeleteDialogOpen(false)
       setSelectedForm(null)
     } catch (error: any) {
-      toast.error(error || 'Failed to delete Filmatic Lines Form 1')
+      toast.error(error || 'Failed to delete Filmatic Lines Form 2')
     }
   }
 
@@ -134,7 +134,7 @@ export default function FilmaticLines1Page() {
 
   if (loading.fetch) {
     return (
-      <DataCaptureDashboardLayout title="Filmatic Lines Form 1" subtitle="Filmatic lines form 1 production control and monitoring">
+      <DataCaptureDashboardLayout title="Filmatic Lines Form 2" subtitle="Filmatic lines form 2 production control and monitoring">
         <ContentSkeleton sections={1} cardsPerSection={4} />
       </DataCaptureDashboardLayout>
     )
@@ -160,7 +160,7 @@ export default function FilmaticLines1Page() {
                 </Badge>
               </div>
               <p className="text-sm text-gray-500 mt-1">
-                {new Date(form.created_at).toLocaleDateString()} • {form.holding_tank_bmt}
+                {new Date(form.created_at).toLocaleDateString()} • {form.holding_tank_bmt ? form.holding_tank_bmt.slice(0, 8) + '...' : 'N/A'}
               </p>
             </div>
           </div>
@@ -305,19 +305,19 @@ export default function FilmaticLines1Page() {
   ]
 
   return (
-    <DataCaptureDashboardLayout title="Filmatic Lines Form 1" subtitle="Filmatic lines form 1 production control and monitoring">
+    <DataCaptureDashboardLayout title="Filmatic Lines Form 2" subtitle="Filmatic lines form 2 production control and monitoring">
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-light text-foreground">Filmatic Lines Form 1</h1>
-            <p className="text-sm font-light text-muted-foreground">Manage Filmatic lines form 1 production data and process control</p>
+            <h1 className="text-3xl font-light text-foreground">Filmatic Lines Form 2</h1>
+            <p className="text-sm font-light text-muted-foreground">Manage Filmatic lines form 2 production data and process control</p>
           </div>
           <LoadingButton 
             onClick={handleAddForm}
             className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full px-6 py-2 font-light"
           >
             <Plus className="mr-2 h-4 w-4" />
-            Add Filmatic Lines Form 1
+            Add Filmatic Lines Form 2
           </LoadingButton>
         </div>
 
@@ -357,7 +357,7 @@ export default function FilmaticLines1Page() {
                   <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center">
                     <Factory className="h-4 w-4 text-white" />
                   </div>
-                  <span>Current Filmatic Lines Form 1</span>
+                  <span>Current Filmatic Lines Form 2</span>
                   <Badge className="bg-gradient-to-r from-blue-100 to-cyan-100 text-blue-800 font-light">Latest</Badge>
                 </div>
                 <LoadingButton 
@@ -387,7 +387,7 @@ export default function FilmaticLines1Page() {
                     <Factory className="h-4 w-4 text-blue-500" />
                     <p className="text-sm font-light text-gray-600">Holding Tank</p>
                   </div>
-                  <p className="text-lg font-light text-blue-600">{latestForm.holding_tank_bmt}</p>
+                  <p className="text-lg font-light text-blue-600">{latestForm.holding_tank_bmt ? latestForm.holding_tank_bmt.slice(0, 8) + '...' : 'N/A'}</p>
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center space-x-2">
@@ -469,14 +469,14 @@ export default function FilmaticLines1Page() {
         {!loading.fetch && (
           <div className="border border-gray-200 rounded-lg bg-white">
             <div className="p-6 pb-0">
-              <div className="text-lg font-light">Filmatic Lines Form 1 Records</div>
+              <div className="text-lg font-light">Filmatic Lines Form 2 Records</div>
             </div>
             <div className="p-6 space-y-4">
             <DataTableFilters
               filters={tableFilters}
               onFiltersChange={setTableFilters}
               onSearch={(searchTerm) => setTableFilters(prev => ({ ...prev, search: searchTerm }))}
-              searchPlaceholder="Search Filmatic lines form 1 records..."
+              searchPlaceholder="Search Filmatic lines form 2 records..."
               filterFields={filterFields}
             />
             
@@ -490,7 +490,7 @@ export default function FilmaticLines1Page() {
         )}
 
         {/* Form Drawer */}
-        <FilmaticLinesForm1Drawer 
+        <FilmaticLinesForm2Drawer 
           open={formDrawerOpen} 
           onOpenChange={setFormDrawerOpen} 
           form={selectedForm}
@@ -499,22 +499,18 @@ export default function FilmaticLines1Page() {
         />
 
         {/* View Drawer */}
-        <FilmaticLinesForm1ViewDrawer
+        <FilmaticLinesForm2ViewDrawer
           open={viewDrawerOpen}
           onOpenChange={setViewDrawerOpen}
           form={selectedForm}
-          onEdit={() => {
-            setViewDrawerOpen(false)
-            handleEditForm(selectedForm!)
-          }}
         />
 
         {/* Delete Confirmation Dialog */}
         <DeleteConfirmationDialog
           open={deleteDialogOpen}
           onOpenChange={setDeleteDialogOpen}
-          title="Delete Filmatic Lines Form 1"
-          description={`Are you sure you want to delete this Filmatic lines form 1 record? This action cannot be undone and may affect production tracking.`}
+          title="Delete Filmatic Lines Form 2"
+          description={`Are you sure you want to delete this Filmatic lines form 2 record? This action cannot be undone and may affect production tracking.`}
           onConfirm={confirmDelete}
           loading={loading.delete}
         />

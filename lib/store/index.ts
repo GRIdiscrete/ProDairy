@@ -31,7 +31,13 @@ import filmaticLinesMilkReconciliationReducer from "./slices/filmaticLinesMilkRe
 import filmaticLinesStoppageTimeMinutesReducer from "./slices/filmaticLinesStoppageTimeMinutesSlice"
 import tankerReducer from "./slices/tankerSlice"
 import filmaticLinesGroupsReducer from "./slices/filmaticLinesGroupsSlice"
+import filmaticLinesForm1Reducer from "./slices/filmaticLinesForm1Slice"
+import filmaticLinesForm2Reducer from "./slices/filmaticLinesForm2Slice"
+import steriMilkProcessLogReducer from "./slices/steriMilkProcessLogSlice"
 import rawMilkIntakeLabTestsReducer from "./slices/rawMilkIntakeLabTestSlice"
+import productIncubationReducer from "./slices/productIncubationSlice"
+import uhtQualityCheckReducer from "./slices/uhtQualityCheckSlice"
+import qaCorrectiveActionReducer from "./slices/qaCorrectiveActionSlice"
 export const store = configureStore({
   reducer: {
     dashboard: dashboardReducer,
@@ -65,7 +71,13 @@ export const store = configureStore({
     filmaticLinesStoppageTimeMinutes: filmaticLinesStoppageTimeMinutesReducer,
     tankers: tankerReducer,
     filmaticLinesGroups: filmaticLinesGroupsReducer,
+    filmaticLinesForm1: filmaticLinesForm1Reducer,
+    filmaticLinesForm2: filmaticLinesForm2Reducer,
+    steriMilkProcessLog: steriMilkProcessLogReducer,
     rawMilkIntakeLabTests: rawMilkIntakeLabTestsReducer,
+    productIncubations: productIncubationReducer,
+    uhtQualityChecks: uhtQualityCheckReducer,
+    qaCorrectiveActions: qaCorrectiveActionReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

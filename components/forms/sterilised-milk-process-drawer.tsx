@@ -39,12 +39,12 @@ const processSchema = yup.object({
   operator_signature: yup.string().required("Operator signature is required"),
   supervisor_id: yup.string().required("Supervisor is required"),
   supervisor_signature: yup.string().required("Supervisor signature is required"),
+  filmatic_form_id: yup.string().required("Filmatic form is required"),
 })
 
 // Step 2: Process Details Form Schema
 const processDetailsSchema = yup.object({
   parameter_name: yup.string().required("Parameter name is required"),
-  batch_number: yup.number().required("Batch number is required").positive("Batch number must be positive"),
   filling_start_reading: yup.number().required("Filling start reading is required"),
   autoclave_start_reading: yup.number().required("Autoclave start reading is required"),
   heating_start_reading: yup.number().required("Heating start reading is required"),
@@ -78,7 +78,9 @@ export function SterilisedMilkProcessDrawer({
   const [currentStep, setCurrentStep] = useState(1)
   const [createdProcess, setCreatedProcess] = useState<SterilisedMilkProcess | null>(null)
   const [users, setUsers] = useState<any[]>([])
+  const [filmaticForms, setFilmaticForms] = useState<any[]>([])
   const [loadingUsers, setLoadingUsers] = useState(false)
+  const [loadingFilmaticForms, setLoadingFilmaticForms] = useState(false)
   const [operatorSignatureOpen, setOperatorSignatureOpen] = useState(false)
   const [supervisorSignatureOpen, setSupervisorSignatureOpen] = useState(false)
   const [operatorSignatureViewOpen, setOperatorSignatureViewOpen] = useState(false)
@@ -93,6 +95,7 @@ export function SterilisedMilkProcessDrawer({
       operator_signature: "",
       supervisor_id: "",
       supervisor_signature: "",
+      filmatic_form_id: "",
     },
   })
 
@@ -101,7 +104,6 @@ export function SterilisedMilkProcessDrawer({
     resolver: yupResolver(processDetailsSchema),
     defaultValues: {
       parameter_name: "Temperature",
-      batch_number: 1001,
       filling_start_reading: 0,
       autoclave_start_reading: 0,
       heating_start_reading: 0,
@@ -118,23 +120,31 @@ export function SterilisedMilkProcessDrawer({
     },
   })
 
-  // Load users on component mount
+  // Load users and filmatic forms on component mount
   useEffect(() => {
-    const loadUsers = async () => {
+    const loadData = async () => {
       setLoadingUsers(true)
+      setLoadingFilmaticForms(true)
       try {
+        // Load users
         const usersResponse = await usersApi.getUsers()
         setUsers(usersResponse.data || [])
+        
+        // Load filmatic forms
+        const { sterilisedMilkApi } = await import("@/lib/api/sterilised-milk-process")
+        const filmaticResponse = await sterilisedMilkApi.getFilmaticForms()
+        setFilmaticForms(filmaticResponse.data || [])
       } catch (error) {
-        console.error("Failed to load users:", error)
-        toast.error("Failed to load users")
+        console.error("Failed to load data:", error)
+        toast.error("Failed to load form data")
       } finally {
         setLoadingUsers(false)
+        setLoadingFilmaticForms(false)
       }
     }
 
     if (open) {
-      loadUsers()
+      loadData()
     }
   }, [open])
 
@@ -148,6 +158,7 @@ export function SterilisedMilkProcessDrawer({
           operator_signature: process.operator_signature,
           supervisor_id: process.supervisor_id,
           supervisor_signature: process.supervisor_signature,
+          filmatic_form_id: process.filmatic_form_id || "",
         })
         setCreatedProcess(process)
         setCurrentStep(2) // Skip to details step for edit mode
@@ -162,6 +173,9 @@ export function SterilisedMilkProcessDrawer({
 
   const handleProcessSubmit = async (data: ProcessFormData) => {
     try {
+      // Debug: Log what's being sent
+      console.log("Form data being sent:", data)
+      
       if (mode === "edit" && process) {
         await dispatch(updateSterilisedMilkProcessAction({
           ...process,
@@ -286,6 +300,30 @@ export function SterilisedMilkProcessDrawer({
           <p className="text-sm font-light text-gray-600 mt-2">Enter the basic process details and personnel information</p>
         </div>
         
+        <div className="space-y-2">
+          <Label htmlFor="filmatic_form_id">Filmatic Form *</Label>
+          <Controller
+            name="filmatic_form_id"
+            control={processForm.control}
+            render={({ field }) => (
+              <SearchableSelect
+                options={filmaticForms.map(form => ({
+                  value: form.id,
+                  label: `Filmatic Form #${form.id.slice(0, 8)}`,
+                  description: `${form.date} • ${form.approved ? 'Approved' : 'Pending'} • ${form.day_shift_opening_bottles + form.night_shift_opening_bottles} bottles`
+                }))}
+                value={field.value}
+                onValueChange={field.onChange}
+                placeholder="Select filmatic form"
+                loading={loadingFilmaticForms}
+              />
+            )}
+          />
+          {processForm.formState.errors.filmatic_form_id && (
+            <p className="text-sm text-red-500">{processForm.formState.errors.filmatic_form_id.message}</p>
+          )}
+        </div>
+
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="approved_by">Approved By *</Label>
@@ -438,6 +476,7 @@ export function SterilisedMilkProcessDrawer({
             <p className="text-sm text-red-500">{processForm.formState.errors.supervisor_signature.message}</p>
           )}
         </div>
+
       </div>
     </div>
   )
@@ -450,44 +489,22 @@ export function SterilisedMilkProcessDrawer({
           <p className="text-sm text-gray-600 mt-2">Enter the specific process parameters and temperature readings</p>
         </div>
         
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="parameter_name">Parameter Name *</Label>
-            <Controller
-              name="parameter_name"
-              control={processDetailsForm.control}
-              render={({ field }) => (
-                <Input
-                  id="parameter_name"
-                  placeholder="Enter parameter name"
-                  {...field}
-                />
-              )}
-            />
-            {processDetailsForm.formState.errors.parameter_name && (
-              <p className="text-sm text-red-500">{processDetailsForm.formState.errors.parameter_name.message}</p>
+        <div className="space-y-2">
+          <Label htmlFor="parameter_name">Parameter Name *</Label>
+          <Controller
+            name="parameter_name"
+            control={processDetailsForm.control}
+            render={({ field }) => (
+              <Input
+                id="parameter_name"
+                placeholder="Enter parameter name"
+                {...field}
+              />
             )}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="batch_number">Batch Number *</Label>
-            <Controller
-              name="batch_number"
-              control={processDetailsForm.control}
-              render={({ field }) => (
-                <Input
-                  id="batch_number"
-                  type="number"
-                  placeholder="Enter batch number"
-                  {...field}
-                  onChange={(e) => field.onChange(Number(e.target.value))}
-                />
-              )}
-            />
-            {processDetailsForm.formState.errors.batch_number && (
-              <p className="text-sm text-red-500">{processDetailsForm.formState.errors.batch_number.message}</p>
-            )}
-          </div>
+          />
+          {processDetailsForm.formState.errors.parameter_name && (
+            <p className="text-sm text-red-500">{processDetailsForm.formState.errors.parameter_name.message}</p>
+          )}
         </div>
 
         {/* Filling Readings */}
