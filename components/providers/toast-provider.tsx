@@ -19,7 +19,6 @@ export function ToastProvider() {
           border: '1px solid hsl(var(--border))',
           borderRadius: '12px',
           boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-          backdropFilter: 'blur(8px)',
           fontSize: '14px',
           fontWeight: '500',
           padding: '16px',

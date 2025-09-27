@@ -11,12 +11,12 @@ export default function HomePage() {
   const router = useRouter()
 
   return (
-    <SharedLayout title="ProDairy Production Management Portal" subtitle="Choose your dashboard to get started">
+    <SharedLayout title="ProDairy DMS" subtitle="Choose your dashboard to get started">
       <div className="h-screen overflow-hidden flex items-center justify-center bg-white">
         <div className=" w-full px-6">
           <div className="text-center mb-12">
             <h1 className="text-4xl font-bold text-gray-900 mb-4">
-              ProDairy Production Management Portal
+              ProDairy DMS
             </h1>
             <p className="text-xl text-gray-600">
               Choose your dashboard to get started

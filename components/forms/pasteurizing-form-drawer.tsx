@@ -48,6 +48,9 @@ import {
 import { 
   fetchBMTControlForms 
 } from "@/lib/store/slices/bmtControlFormSlice"
+import { 
+  fetchUsers 
+} from "@/lib/store/slices/userSlice"
 import { PasteurizingForm, CreatePasteurizingFormRequest, Production } from "@/lib/api/pasteurizing"
 import { toast } from "sonner"
 
@@ -135,6 +138,7 @@ export function PasteurizingFormDrawer({
   const { machines } = useAppSelector((state) => state.machine)
   const { silos } = useAppSelector((state) => state.silo)
   const { forms: bmtForms } = useAppSelector((state) => state.bmtControlForms)
+  const { users } = useAppSelector((state) => state.user)
 
   const [loadingInitialData, setLoadingInitialData] = useState(false)
 
@@ -196,6 +200,11 @@ export function PasteurizingFormDrawer({
       // Load BMT forms for the searchable select
       if (bmtForms.length === 0) {
         await dispatch(fetchBMTControlForms())
+      }
+      
+      // Load users for the operator select
+      if (users.length === 0) {
+        await dispatch(fetchUsers({}))
       }
     } catch (error) {
       console.error("Failed to load initial data:", error)
@@ -288,8 +297,7 @@ export function PasteurizingFormDrawer({
       const processId = processIdMatch ? processIdMatch[1] : ""
 
       const formData: any = {
-        id: mode === "edit" && form ? form.id : crypto.randomUUID(),
-        operator: (useAppSelector as any)?.(state => state.auth?.user?.id) || data.operator,
+        operator: data.operator,
         date: data.date,
         machine: data.machine,
         source_silo: data.source_silo,
@@ -350,6 +358,24 @@ export function PasteurizingFormDrawer({
       description: `${bmt.volume}L • ${bmt.product}`
     }))
 
+    // Convert users to searchable select options
+    const operatorOptions: SearchableSelectOption[] = users.map(user => {
+      // Debug: Log user object structure
+      console.log('User object:', user)
+      
+      // Handle different possible user object structures
+      const firstName = user.first_name || user.firstName || user.name?.split(' ')[0] || 'Unknown'
+      const lastName = user.last_name || user.lastName || user.name?.split(' ').slice(1).join(' ') || 'User'
+      const email = user.email || 'No email'
+      const role = user.role || user.user_role || 'No role'
+      
+      return {
+        value: user.id,
+        label: `${firstName} ${lastName}`,
+        description: `${email} • ${role}`
+      }
+    })
+
     return (
       <div className="space-y-6 p-6">
         <ProcessOverview />
@@ -363,6 +389,48 @@ export function PasteurizingFormDrawer({
             </div>
             
             <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="operator">Operator *</Label>
+                <Controller
+                  name="operator"
+                  control={formHook.control}
+                  render={({ field }) => (
+                    <SearchableSelect
+                      options={operatorOptions}
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      placeholder="Select operator..."
+                      searchPlaceholder="Search operators..."
+                      emptyMessage="No operators found"
+                      loading={loadingInitialData}
+                    />
+                  )}
+                />
+                {formHook.formState.errors.operator && (
+                  <p className="text-sm text-red-500">{formHook.formState.errors.operator.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Controller
+                  name="date"
+                  control={formHook.control}
+                  render={({ field }) => (
+                    <DatePicker
+                      label="Date *"
+                      value={field.value}
+                      onChange={field.onChange}
+                      placeholder="Select date"
+                      showTime={false}
+                      error={!!formHook.formState.errors.date}
+                    />
+                  )}
+                />
+                {formHook.formState.errors.date && (
+                  <p className="text-sm text-red-500">{formHook.formState.errors.date.message}</p>
+                )}
+              </div>
+
               <div className="space-y-2">
                 <Label htmlFor="machine">Machine *</Label>
                 <Controller
@@ -609,50 +677,208 @@ export function PasteurizingFormDrawer({
                   
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor={`production.${index}.product`}>Product *</Label>
                       <Controller
-                        name={`production.${index}.product`}
+                        name={`production.${index}.time`}
                         control={formHook.control}
                         render={({ field }) => (
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <SelectTrigger className="h-12 border border-gray-300 hover:border-gray-400 focus:border-blue-500 shadow-none hover:shadow-none focus:shadow-none rounded-full">
-                              <SelectValue placeholder="Select product" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="UHT Milk">UHT Milk</SelectItem>
-                              <SelectItem value="Fresh Milk">Fresh Milk</SelectItem>
-                              <SelectItem value="Sterilized Milk">Sterilized Milk</SelectItem>
-                              <SelectItem value="Skim Milk">Skim Milk</SelectItem>
-                            </SelectContent>
-                          </Select>
+                          <TimePicker
+                            label="Time *"
+                            value={field.value}
+                            onChange={field.onChange}
+                            placeholder="Select time"
+                            error={!!formHook.formState.errors.production?.[index]?.time}
+                          />
                         )}
                       />
-                      {formHook.formState.errors.production?.[index]?.product && (
+                      {formHook.formState.errors.production?.[index]?.time && (
                         <p className="text-sm text-red-500">
-                          {formHook.formState.errors.production[index]?.product?.message}
+                          {formHook.formState.errors.production[index]?.time?.message}
                         </p>
                       )}
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor={`production.${index}.quantity`}>Quantity (L) *</Label>
+                      <Label htmlFor={`production.${index}.temp_hot_water`}>Hot Water Temp (°C) *</Label>
                       <Controller
-                        name={`production.${index}.quantity`}
+                        name={`production.${index}.temp_hot_water`}
                         control={formHook.control}
                         render={({ field }) => (
                           <Input
-                            id={`production.${index}.quantity`}
+                            id={`production.${index}.temp_hot_water`}
                             type="number"
                             step="0.1"
-                            placeholder="Enter quantity"
+                            placeholder="Enter temperature"
                             {...field}
                             onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
                           />
                         )}
                       />
-                      {formHook.formState.errors.production?.[index]?.quantity && (
+                      {formHook.formState.errors.production?.[index]?.temp_hot_water && (
                         <p className="text-sm text-red-500">
-                          {formHook.formState.errors.production[index]?.quantity?.message}
+                          {formHook.formState.errors.production[index]?.temp_hot_water?.message}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor={`production.${index}.temp_product_pasteurisation`}>Pasteurisation Temp (°C) *</Label>
+                      <Controller
+                        name={`production.${index}.temp_product_pasteurisation`}
+                        control={formHook.control}
+                        render={({ field }) => (
+                          <Input
+                            id={`production.${index}.temp_product_pasteurisation`}
+                            type="number"
+                            step="0.1"
+                            placeholder="Enter temperature"
+                            {...field}
+                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                          />
+                        )}
+                      />
+                      {formHook.formState.errors.production?.[index]?.temp_product_pasteurisation && (
+                        <p className="text-sm text-red-500">
+                          {formHook.formState.errors.production[index]?.temp_product_pasteurisation?.message}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor={`production.${index}.homogenisation_pressure_stage_1`}>Stage 1 Pressure (bar) *</Label>
+                      <Controller
+                        name={`production.${index}.homogenisation_pressure_stage_1`}
+                        control={formHook.control}
+                        render={({ field }) => (
+                          <Input
+                            id={`production.${index}.homogenisation_pressure_stage_1`}
+                            type="number"
+                            step="0.1"
+                            placeholder="Enter pressure"
+                            {...field}
+                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                          />
+                        )}
+                      />
+                      {formHook.formState.errors.production?.[index]?.homogenisation_pressure_stage_1 && (
+                        <p className="text-sm text-red-500">
+                          {formHook.formState.errors.production[index]?.homogenisation_pressure_stage_1?.message}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor={`production.${index}.homogenisation_pressure_stage_2`}>Stage 2 Pressure (bar) *</Label>
+                      <Controller
+                        name={`production.${index}.homogenisation_pressure_stage_2`}
+                        control={formHook.control}
+                        render={({ field }) => (
+                          <Input
+                            id={`production.${index}.homogenisation_pressure_stage_2`}
+                            type="number"
+                            step="0.1"
+                            placeholder="Enter pressure"
+                            {...field}
+                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                          />
+                        )}
+                      />
+                      {formHook.formState.errors.production?.[index]?.homogenisation_pressure_stage_2 && (
+                        <p className="text-sm text-red-500">
+                          {formHook.formState.errors.production[index]?.homogenisation_pressure_stage_2?.message}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor={`production.${index}.total_homogenisation_pressure`}>Total Pressure (bar) *</Label>
+                      <Controller
+                        name={`production.${index}.total_homogenisation_pressure`}
+                        control={formHook.control}
+                        render={({ field }) => (
+                          <Input
+                            id={`production.${index}.total_homogenisation_pressure`}
+                            type="number"
+                            step="0.1"
+                            placeholder="Enter total pressure"
+                            {...field}
+                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                          />
+                        )}
+                      />
+                      {formHook.formState.errors.production?.[index]?.total_homogenisation_pressure && (
+                        <p className="text-sm text-red-500">
+                          {formHook.formState.errors.production[index]?.total_homogenisation_pressure?.message}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor={`production.${index}.temperature_product_out`}>Product Out Temp (°C) *</Label>
+                      <Controller
+                        name={`production.${index}.temperature_product_out`}
+                        control={formHook.control}
+                        render={({ field }) => (
+                          <Input
+                            id={`production.${index}.temperature_product_out`}
+                            type="number"
+                            step="0.1"
+                            placeholder="Enter temperature"
+                            {...field}
+                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                          />
+                        )}
+                      />
+                      {formHook.formState.errors.production?.[index]?.temperature_product_out && (
+                        <p className="text-sm text-red-500">
+                          {formHook.formState.errors.production[index]?.temperature_product_out?.message}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor={`production.${index}.output_target_value`}>Output Target *</Label>
+                      <Controller
+                        name={`production.${index}.output_target_value`}
+                        control={formHook.control}
+                        render={({ field }) => (
+                          <Input
+                            id={`production.${index}.output_target_value`}
+                            type="number"
+                            step="0.1"
+                            placeholder="Enter target value"
+                            {...field}
+                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                          />
+                        )}
+                      />
+                      {formHook.formState.errors.production?.[index]?.output_target_value && (
+                        <p className="text-sm text-red-500">
+                          {formHook.formState.errors.production[index]?.output_target_value?.message}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor={`production.${index}.output_target_unit`}>Unit *</Label>
+                      <Controller
+                        name={`production.${index}.output_target_unit`}
+                        control={formHook.control}
+                        render={({ field }) => (
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <SelectTrigger className="h-12 border border-gray-300 hover:border-gray-400 focus:border-blue-500 shadow-none hover:shadow-none focus:shadow-none rounded-full">
+                              <SelectValue placeholder="Select unit" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="L">Liters (L)</SelectItem>
+                              <SelectItem value="ML">Milliliters (ML)</SelectItem>
+                              <SelectItem value="KG">Kilograms (KG)</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        )}
+                      />
+                      {formHook.formState.errors.production?.[index]?.output_target_unit && (
+                        <p className="text-sm text-red-500">
+                          {formHook.formState.errors.production[index]?.output_target_unit?.message}
                         </p>
                       )}
                     </div>
@@ -663,7 +889,17 @@ export function PasteurizingFormDrawer({
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => appendProduction({ product: "", quantity: 0 })}
+                onClick={() => appendProduction({ 
+                  time: "",
+                  temp_hot_water: 0,
+                  temp_product_pasteurisation: 0,
+                  homogenisation_pressure_stage_1: 0,
+                  homogenisation_pressure_stage_2: 0,
+                  total_homogenisation_pressure: 0,
+                  temperature_product_out: 0,
+                  output_target_value: 0,
+                  output_target_unit: "L"
+                })}
                 className="w-full border-dashed border-2 border-gray-300 hover:border-blue-500 hover:bg-blue-50"
               >
                 <Plus className="w-4 h-4 mr-2" />

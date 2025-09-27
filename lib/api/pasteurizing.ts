@@ -1,14 +1,26 @@
 import { apiRequest } from "@/lib/utils/api-request"
 
 export interface Production {
-  product: string
-  quantity: number
+  time: string
+  temp_hot_water: number
+  temp_product_pasteurisation: number
+  homogenisation_pressure_stage_1: number
+  homogenisation_pressure_stage_2: number
+  total_homogenisation_pressure: number
+  temperature_product_out: number
+  process_id: string
+  output_target: {
+    value: number
+    unit_of_measure: string
+  }
 }
 
 export interface PasteurizingForm {
   id: string
   created_at: string
   updated_at?: string
+  operator?: string
+  date?: string
   machine: string
   source_silo: string
   preheating_start: string
@@ -20,9 +32,56 @@ export interface PasteurizingForm {
   bmt: string
   fat: number
   production: Production[]
+  // Related data from API response
+  steri_milk_pasteurizing_form_operator_fkey?: any
+  steri_milk_pasteurizing_form_machine_fkey?: {
+    id: string
+    name: string
+    status: string
+    category: string
+    location: string
+    counter_id?: string
+    created_at: string
+    updated_at: string
+    cases_packed?: number
+    serial_number: string
+  }
+  steri_milk_pasteurizing_form_source_silo_fkey?: {
+    id: string
+    name: string
+    status: string
+    capacity: number
+    category: string
+    location: string
+    created_at: string
+    updated_at: string
+    milk_volume: number
+    serial_number: string
+  }
+  steri_milk_pasteurizing_form_bmt_fkey?: {
+    id: string
+    volume: number
+    product?: string
+    created_at: string
+    updated_at?: string
+    movement_end: string
+    dpp_signature: string
+    llm_signature: string
+    flow_meter_end: string
+    movement_start: string
+    source_silo_id: string
+    dpp_operator_id: string
+    llm_operator_id: string
+    flow_meter_start: string
+    destination_silo_id: string
+    flow_meter_end_reading: number
+    flow_meter_start_reading: number
+  }
 }
 
 export interface CreatePasteurizingFormRequest {
+  operator: string
+  date: string
   machine: string
   source_silo: string
   preheating_start: string
