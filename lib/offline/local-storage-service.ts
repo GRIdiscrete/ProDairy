@@ -8,40 +8,52 @@ export class LocalStorageService {
     IS_OFFLINE: 'is_offline_mode'
   }
 
-  // Save data to localStorage
+  // Save data to localStorage (SSR-safe)
   static saveDrivers(drivers: any[]) {
-    localStorage.setItem(this.KEYS.DRIVERS, JSON.stringify(drivers))
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(this.KEYS.DRIVERS, JSON.stringify(drivers))
+    }
   }
 
   static saveRawMaterials(materials: any[]) {
-    localStorage.setItem(this.KEYS.RAW_MATERIALS, JSON.stringify(materials))
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(this.KEYS.RAW_MATERIALS, JSON.stringify(materials))
+    }
   }
 
   static saveSuppliers(suppliers: any[]) {
-    localStorage.setItem(this.KEYS.SUPPLIERS, JSON.stringify(suppliers))
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(this.KEYS.SUPPLIERS, JSON.stringify(suppliers))
+    }
   }
 
   static saveDriverForms(forms: any[]) {
-    localStorage.setItem(this.KEYS.DRIVER_FORMS, JSON.stringify(forms))
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(this.KEYS.DRIVER_FORMS, JSON.stringify(forms))
+    }
   }
 
-  // Get data from localStorage
+  // Get data from localStorage (SSR-safe)
   static getDrivers(): any[] {
+    if (typeof window === 'undefined') return []
     const data = localStorage.getItem(this.KEYS.DRIVERS)
     return data ? JSON.parse(data) : []
   }
 
   static getRawMaterials(): any[] {
+    if (typeof window === 'undefined') return []
     const data = localStorage.getItem(this.KEYS.RAW_MATERIALS)
     return data ? JSON.parse(data) : []
   }
 
   static getSuppliers(): any[] {
+    if (typeof window === 'undefined') return []
     const data = localStorage.getItem(this.KEYS.SUPPLIERS)
     return data ? JSON.parse(data) : []
   }
 
   static getDriverForms(): any[] {
+    if (typeof window === 'undefined') return []
     const data = localStorage.getItem(this.KEYS.DRIVER_FORMS)
     return data ? JSON.parse(data) : []
   }
@@ -68,20 +80,25 @@ export class LocalStorageService {
            this.getSuppliers().length > 0
   }
 
-  // Clear all offline data
+  // Clear all offline data (SSR-safe)
   static clearAllData() {
-    localStorage.removeItem(this.KEYS.DRIVERS)
-    localStorage.removeItem(this.KEYS.RAW_MATERIALS)
-    localStorage.removeItem(this.KEYS.SUPPLIERS)
-    localStorage.removeItem(this.KEYS.DRIVER_FORMS)
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(this.KEYS.DRIVERS)
+      localStorage.removeItem(this.KEYS.RAW_MATERIALS)
+      localStorage.removeItem(this.KEYS.SUPPLIERS)
+      localStorage.removeItem(this.KEYS.DRIVER_FORMS)
+    }
   }
 
-  // Set offline mode
+  // Set offline mode (SSR-safe)
   static setOfflineMode(isOffline: boolean) {
-    localStorage.setItem(this.KEYS.IS_OFFLINE, isOffline.toString())
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(this.KEYS.IS_OFFLINE, isOffline.toString())
+    }
   }
 
   static isOfflineMode(): boolean {
+    if (typeof window === 'undefined') return false
     return localStorage.getItem(this.KEYS.IS_OFFLINE) === 'true'
   }
 }
