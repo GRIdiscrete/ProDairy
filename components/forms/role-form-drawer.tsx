@@ -13,12 +13,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useAppDispatch, useAppSelector } from "@/lib/store"
 import { createRole, updateRole } from "@/lib/store/slices/rolesSlice"
 import { toast } from "sonner"
-import { UserRole } from "@/lib/types/roles"
+import { UserRole, UserRoleResponse, convertApiResponseToUserRole } from "@/lib/types/roles"
 
 const roleSchema = yup.object({
   role_name: yup.string().required("Role name is required"),
   features: yup.object({
-    // Original permissions
+    // All permissions now use nested operations structure
     user: yup.object({
       operations: yup.array().of(yup.string()).default([]),
     }).default({ operations: [] }),
@@ -41,20 +41,42 @@ const roleSchema = yup.object({
       operations: yup.array().of(yup.string()).default([]),
     }).default({ operations: [] }),
     
-    // New permissions - direct arrays, not nested under operations
-    raw_product_collection: yup.array().of(yup.string()).default([]),
-    raw_milk_intake: yup.array().of(yup.string()).default([]),
-    raw_milk_lab_test: yup.array().of(yup.string()).default([]),
-    before_and_after_autoclave_lab_test: yup.array().of(yup.string()).default([]),
-    pasteurizing: yup.array().of(yup.string()).default([]),
-    filmatic_operation: yup.array().of(yup.string()).default([]),
-    steri_process_operation: yup.array().of(yup.string()).default([]),
-    incubation: yup.array().of(yup.string()).default([]),
-    incubation_lab_test: yup.array().of(yup.string()).default([]),
-    dispatch: yup.array().of(yup.string()).default([]),
-    production_plan: yup.array().of(yup.string()).default([]),
+    // New permissions - now also use nested operations structure
+    raw_product_collection: yup.object({
+      operations: yup.array().of(yup.string()).default([]),
+    }).default({ operations: [] }),
+    raw_milk_intake: yup.object({
+      operations: yup.array().of(yup.string()).default([]),
+    }).default({ operations: [] }),
+    raw_milk_lab_test: yup.object({
+      operations: yup.array().of(yup.string()).default([]),
+    }).default({ operations: [] }),
+    before_and_after_autoclave_lab_test: yup.object({
+      operations: yup.array().of(yup.string()).default([]),
+    }).default({ operations: [] }),
+    pasteurizing: yup.object({
+      operations: yup.array().of(yup.string()).default([]),
+    }).default({ operations: [] }),
+    filmatic_operation: yup.object({
+      operations: yup.array().of(yup.string()).default([]),
+    }).default({ operations: [] }),
+    steri_process_operation: yup.object({
+      operations: yup.array().of(yup.string()).default([]),
+    }).default({ operations: [] }),
+    incubation: yup.object({
+      operations: yup.array().of(yup.string()).default([]),
+    }).default({ operations: [] }),
+    incubation_lab_test: yup.object({
+      operations: yup.array().of(yup.string()).default([]),
+    }).default({ operations: [] }),
+    dispatch: yup.object({
+      operations: yup.array().of(yup.string()).default([]),
+    }).default({ operations: [] }),
+    production_plan: yup.object({
+      operations: yup.array().of(yup.string()).default([]),
+    }).default({ operations: [] }),
   }).default({
-    // Original permissions
+    // All permissions use nested operations structure
     user: { operations: [] },
     role: { operations: [] },
     machine_item: { operations: [] },
@@ -62,19 +84,17 @@ const roleSchema = yup.object({
     supplier: { operations: [] },
     process: { operations: [] },
     devices: { operations: [] },
-    
-    // New permissions - direct arrays
-    raw_product_collection: [],
-    raw_milk_intake: [],
-    raw_milk_lab_test: [],
-    before_and_after_autoclave_lab_test: [],
-    pasteurizing: [],
-    filmatic_operation: [],
-    steri_process_operation: [],
-    incubation: [],
-    incubation_lab_test: [],
-    dispatch: [],
-    production_plan: [],
+    raw_product_collection: { operations: [] },
+    raw_milk_intake: { operations: [] },
+    raw_milk_lab_test: { operations: [] },
+    before_and_after_autoclave_lab_test: { operations: [] },
+    pasteurizing: { operations: [] },
+    filmatic_operation: { operations: [] },
+    steri_process_operation: { operations: [] },
+    incubation: { operations: [] },
+    incubation_lab_test: { operations: [] },
+    dispatch: { operations: [] },
+    production_plan: { operations: [] },
   }),
   views: yup.array().of(yup.string()).default([]),
 })
@@ -84,7 +104,7 @@ type RoleFormData = yup.InferType<typeof roleSchema>
 interface RoleFormDrawerProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  role?: UserRole | null
+  role?: UserRole | UserRoleResponse | null
   mode: "create" | "edit"
 }
 
@@ -114,6 +134,39 @@ const featureOptions = [
 
 const actionOptions = ["create", "read", "update", "delete", "approve"]
 
+// Helper function to check if all operations are selected for a feature
+const areAllOperationsSelected = (featureKey: string, allFeatures: any) => {
+  const featureOperations = allFeatures?.[featureKey]?.operations || []
+  return actionOptions.every(action => featureOperations.includes(action))
+}
+
+// Helper function to check if any operations are selected for a feature
+const areAnyOperationsSelected = (featureKey: string, allFeatures: any) => {
+  const featureOperations = allFeatures?.[featureKey]?.operations || []
+  return featureOperations.length > 0
+}
+
+// Helper function to toggle all operations for a feature
+const toggleAllOperations = (featureKey: string, allFeatures: any, setValue: any) => {
+  const featureOperations = allFeatures?.[featureKey]?.operations || []
+  const allSelected = areAllOperationsSelected(featureKey, allFeatures)
+  
+  const updatedFeatures = { ...allFeatures }
+  if (!updatedFeatures[featureKey]) {
+    updatedFeatures[featureKey] = { operations: [] }
+  }
+  
+  if (allSelected) {
+    // Unselect all operations
+    updatedFeatures[featureKey].operations = []
+  } else {
+    // Select all operations
+    updatedFeatures[featureKey].operations = [...actionOptions]
+  }
+  
+  setValue('features', updatedFeatures)
+}
+
 const viewOptions = [
   // Original views
   { key: "dashboard", label: "Dashboard" },
@@ -137,6 +190,14 @@ export function RoleFormDrawer({ open, onOpenChange, role, mode }: RoleFormDrawe
   const dispatch = useAppDispatch()
   const { operationLoading } = useAppSelector((state) => state.roles)
 
+  // Helper function to detect if role is in API response format (flat) or internal format (nested)
+  const isApiResponseFormat = (role: UserRole | UserRoleResponse): role is UserRoleResponse => {
+    return 'user_operations' in role && !('features' in role)
+  }
+
+  // Convert API response to internal format if needed
+  const normalizedRole = role && isApiResponseFormat(role) ? convertApiResponseToUserRole(role) : role
+
   const {
     control,
     handleSubmit,
@@ -149,7 +210,7 @@ export function RoleFormDrawer({ open, onOpenChange, role, mode }: RoleFormDrawe
     defaultValues: {
       role_name: "",
       features: {
-        // Original permissions
+        // All permissions now use nested operations structure
         user: { operations: [] },
         role: { operations: [] },
         machine_item: { operations: [] },
@@ -157,19 +218,17 @@ export function RoleFormDrawer({ open, onOpenChange, role, mode }: RoleFormDrawe
         supplier: { operations: [] },
         process: { operations: [] },
         devices: { operations: [] },
-        
-        // New permissions - direct arrays
-        raw_product_collection: [],
-        raw_milk_intake: [],
-        raw_milk_lab_test: [],
-        before_and_after_autoclave_lab_test: [],
-        pasteurizing: [],
-        filmatic_operation: [],
-        steri_process_operation: [],
-        incubation: [],
-        incubation_lab_test: [],
-        dispatch: [],
-        production_plan: [],
+        raw_product_collection: { operations: [] },
+        raw_milk_intake: { operations: [] },
+        raw_milk_lab_test: { operations: [] },
+        before_and_after_autoclave_lab_test: { operations: [] },
+        pasteurizing: { operations: [] },
+        filmatic_operation: { operations: [] },
+        steri_process_operation: { operations: [] },
+        incubation: { operations: [] },
+        incubation_lab_test: { operations: [] },
+        dispatch: { operations: [] },
+        production_plan: { operations: [] },
       },
       views: [],
     },
@@ -177,93 +236,81 @@ export function RoleFormDrawer({ open, onOpenChange, role, mode }: RoleFormDrawe
 
   const onSubmit = async (data: RoleFormData) => {
     try {
-      console.log('Form data submitted:', data)
-      console.log('Raw features data:', data.features)
-      console.log('New features check:', {
-        raw_product_collection: data.features?.raw_product_collection,
-        raw_milk_intake: data.features?.raw_milk_intake,
-        pasteurizing: data.features?.pasteurizing,
-        filmatic_operation: data.features?.filmatic_operation,
-        dispatch: data.features?.dispatch,
-        production_plan: data.features?.production_plan,
-      })
       
-      // Debug: Check if new features have operations (now direct arrays)
-      console.log('New features operations:', {
-        raw_product_collection_ops: data.features?.raw_product_collection,
-        raw_milk_intake_ops: data.features?.raw_milk_intake,
-        pasteurizing_ops: data.features?.pasteurizing,
-      })
-      
-      // Clean and transform the data to ensure proper types
+      // Clean and transform the data to ensure proper types with nested features structure
       const cleanedData = {
         role_name: data.role_name?.trim() || '',
-        // Original permissions - flattened to top level
-        user_operations: (data.features?.user?.operations?.filter(Boolean) || []) as string[],
-        role_operations: (data.features?.role?.operations?.filter(Boolean) || []) as string[],
-        machine_item_operations: (data.features?.machine_item?.operations?.filter(Boolean) || []) as string[],
-        silo_item_operations: (data.features?.silo_item?.operations?.filter(Boolean) || []) as string[],
-        supplier_operations: (data.features?.supplier?.operations?.filter(Boolean) || []) as string[],
-        process_operations: (data.features?.process?.operations?.filter(Boolean) || []) as string[],
-        devices_operations: (data.features?.devices?.operations?.filter(Boolean) || []) as string[],
-        
-        // New permissions - direct arrays (no nested operations)
-        raw_product_collection: Array.isArray(data.features?.raw_product_collection) 
-          ? data.features.raw_product_collection.filter(Boolean) 
-          : [],
-        raw_milk_intake: Array.isArray(data.features?.raw_milk_intake) 
-          ? data.features.raw_milk_intake.filter(Boolean) 
-          : [],
-        raw_milk_lab_test: Array.isArray(data.features?.raw_milk_lab_test) 
-          ? data.features.raw_milk_lab_test.filter(Boolean) 
-          : [],
-        before_and_after_autoclave_lab_test: Array.isArray(data.features?.before_and_after_autoclave_lab_test) 
-          ? data.features.before_and_after_autoclave_lab_test.filter(Boolean) 
-          : [],
-        pasteurizing: Array.isArray(data.features?.pasteurizing) 
-          ? data.features.pasteurizing.filter(Boolean) 
-          : [],
-        filmatic_operation: Array.isArray(data.features?.filmatic_operation) 
-          ? data.features.filmatic_operation.filter(Boolean) 
-          : [],
-        steri_process_operation: Array.isArray(data.features?.steri_process_operation) 
-          ? data.features.steri_process_operation.filter(Boolean) 
-          : [],
-        incubation: Array.isArray(data.features?.incubation) 
-          ? data.features.incubation.filter(Boolean) 
-          : [],
-        incubation_lab_test: Array.isArray(data.features?.incubation_lab_test) 
-          ? data.features.incubation_lab_test.filter(Boolean) 
-          : [],
-        dispatch: Array.isArray(data.features?.dispatch) 
-          ? data.features.dispatch.filter(Boolean) 
-          : [],
-        production_plan: Array.isArray(data.features?.production_plan) 
-          ? data.features.production_plan.filter(Boolean) 
-          : [],
-        
+        features: {
+          // Original permissions
+          user: {
+            operations: (data.features?.user?.operations?.filter(Boolean) || []) as string[]
+          },
+          role: {
+            operations: (data.features?.role?.operations?.filter(Boolean) || []) as string[]
+          },
+          machine_item: {
+            operations: (data.features?.machine_item?.operations?.filter(Boolean) || []) as string[]
+          },
+          silo_item: {
+            operations: (data.features?.silo_item?.operations?.filter(Boolean) || []) as string[]
+          },
+          supplier: {
+            operations: (data.features?.supplier?.operations?.filter(Boolean) || []) as string[]
+          },
+          process: {
+            operations: (data.features?.process?.operations?.filter(Boolean) || []) as string[]
+          },
+          devices: {
+            operations: (data.features?.devices?.operations?.filter(Boolean) || []) as string[]
+          },
+          
+          // New permissions - now properly nested under operations
+          raw_product_collection: {
+            operations: (data.features?.raw_product_collection?.operations?.filter(Boolean) || []) as string[]
+          },
+          raw_milk_intake: {
+            operations: (data.features?.raw_milk_intake?.operations?.filter(Boolean) || []) as string[]
+          },
+          raw_milk_lab_test: {
+            operations: (data.features?.raw_milk_lab_test?.operations?.filter(Boolean) || []) as string[]
+          },
+          before_and_after_autoclave_lab_test: {
+            operations: (data.features?.before_and_after_autoclave_lab_test?.operations?.filter(Boolean) || []) as string[]
+          },
+          pasteurizing: {
+            operations: (data.features?.pasteurizing?.operations?.filter(Boolean) || []) as string[]
+          },
+          filmatic_operation: {
+            operations: (data.features?.filmatic_operation?.operations?.filter(Boolean) || []) as string[]
+          },
+          steri_process_operation: {
+            operations: (data.features?.steri_process_operation?.operations?.filter(Boolean) || []) as string[]
+          },
+          incubation: {
+            operations: (data.features?.incubation?.operations?.filter(Boolean) || []) as string[]
+          },
+          incubation_lab_test: {
+            operations: (data.features?.incubation_lab_test?.operations?.filter(Boolean) || []) as string[]
+          },
+          dispatch: {
+            operations: (data.features?.dispatch?.operations?.filter(Boolean) || []) as string[]
+          },
+          production_plan: {
+            operations: (data.features?.production_plan?.operations?.filter(Boolean) || []) as string[]
+          }
+        },
         views: (data.views?.filter(Boolean) || []) as string[],
       }
 
-      console.log('Cleaned data:', cleanedData)
-      console.log('New features in cleaned data:', {
-        raw_product_collection: cleanedData.raw_product_collection,
-        raw_milk_intake: cleanedData.raw_milk_intake,
-        raw_milk_lab_test: cleanedData.raw_milk_lab_test,
-        pasteurizing: cleanedData.pasteurizing,
-        filmatic_operation: cleanedData.filmatic_operation,
-        dispatch: cleanedData.dispatch,
-        production_plan: cleanedData.production_plan,
-      })
 
       if (mode === "create") {
         await dispatch(createRole(cleanedData)).unwrap()
         toast.success('Role created successfully')
-      } else if (role) {
+      } else if (normalizedRole) {
         await dispatch(updateRole({
           ...cleanedData,
-          id: role.id,
-          updated_at: role.updated_at,
+          id: normalizedRole.id,
+          updated_at: normalizedRole.updated_at,
         })).unwrap()
         toast.success('Role updated successfully')
       }
@@ -277,50 +324,37 @@ export function RoleFormDrawer({ open, onOpenChange, role, mode }: RoleFormDrawe
 
 
   useEffect(() => {
-    console.log('Form useEffect triggered:', { open, role: !!role, mode })
-    if (open && role && mode === "edit") {
+    if (open && normalizedRole && mode === "edit") {
       reset({
-        role_name: role.role_name || "",
+        role_name: normalizedRole.role_name || "",
         features: {
-          // Original permissions
-          user: { operations: role.user_operations || [] },
-          role: { operations: role.role_operations || [] },
-          machine_item: { operations: role.machine_item_operations || [] },
-          silo_item: { operations: role.silo_item_operations || [] },
-          supplier: { operations: role.supplier_operations || [] },
-          process: { operations: role.process_operations || [] },
-          devices: { operations: role.devices_operations || [] },
-          
-          // New permissions - direct arrays
-          raw_product_collection: role.raw_product_collection || [],
-          raw_milk_intake: role.raw_milk_intake || [],
-          raw_milk_lab_test: role.raw_milk_lab_test || [],
-          before_and_after_autoclave_lab_test: role.before_and_after_autoclave_lab_test || [],
-          pasteurizing: role.pasteurizing || [],
-          filmatic_operation: role.filmatic_operation || [],
-          steri_process_operation: role.steri_process_operation || [],
-          incubation: role.incubation || [],
-          incubation_lab_test: role.incubation_lab_test || [],
-          dispatch: role.dispatch || [],
-          production_plan: role.production_plan || [],
+          // All permissions now use nested operations structure
+          user: { operations: normalizedRole.features?.user?.operations || [] },
+          role: { operations: normalizedRole.features?.role?.operations || [] },
+          machine_item: { operations: normalizedRole.features?.machine_item?.operations || [] },
+          silo_item: { operations: normalizedRole.features?.silo_item?.operations || [] },
+          supplier: { operations: normalizedRole.features?.supplier?.operations || [] },
+          process: { operations: normalizedRole.features?.process?.operations || [] },
+          devices: { operations: normalizedRole.features?.devices?.operations || [] },
+          raw_product_collection: { operations: normalizedRole.features?.raw_product_collection?.operations || [] },
+          raw_milk_intake: { operations: normalizedRole.features?.raw_milk_intake?.operations || [] },
+          raw_milk_lab_test: { operations: normalizedRole.features?.raw_milk_lab_test?.operations || [] },
+          before_and_after_autoclave_lab_test: { operations: normalizedRole.features?.before_and_after_autoclave_lab_test?.operations || [] },
+          pasteurizing: { operations: normalizedRole.features?.pasteurizing?.operations || [] },
+          filmatic_operation: { operations: normalizedRole.features?.filmatic_operation?.operations || [] },
+          steri_process_operation: { operations: normalizedRole.features?.steri_process_operation?.operations || [] },
+          incubation: { operations: normalizedRole.features?.incubation?.operations || [] },
+          incubation_lab_test: { operations: normalizedRole.features?.incubation_lab_test?.operations || [] },
+          dispatch: { operations: normalizedRole.features?.dispatch?.operations || [] },
+          production_plan: { operations: normalizedRole.features?.production_plan?.operations || [] },
         },
-        views: role.views || [],
+        views: normalizedRole.views || [],
       })
-      console.log('Form reset with role data:', {
-        role_name: role.role_name,
-        raw_product_collection: role.raw_product_collection,
-        raw_milk_intake: role.raw_milk_intake,
-        pasteurizing: role.pasteurizing,
-        filmatic_operation: role.filmatic_operation,
-        dispatch: role.dispatch,
-        production_plan: role.production_plan,
-      })
-      console.log('All role properties:', Object.keys(role))
     } else if (open && mode === "create") {
       reset({
         role_name: "",
         features: {
-          // Original permissions
+          // All permissions now use nested operations structure
           user: { operations: [] },
           role: { operations: [] },
           machine_item: { operations: [] },
@@ -328,19 +362,17 @@ export function RoleFormDrawer({ open, onOpenChange, role, mode }: RoleFormDrawe
           supplier: { operations: [] },
           process: { operations: [] },
           devices: { operations: [] },
-          
-          // New permissions - direct arrays
-          raw_product_collection: [],
-          raw_milk_intake: [],
-          raw_milk_lab_test: [],
-          before_and_after_autoclave_lab_test: [],
-          pasteurizing: [],
-          filmatic_operation: [],
-          steri_process_operation: [],
-          incubation: [],
-          incubation_lab_test: [],
-          dispatch: [],
-          production_plan: [],
+          raw_product_collection: { operations: [] },
+          raw_milk_intake: { operations: [] },
+          raw_milk_lab_test: { operations: [] },
+          before_and_after_autoclave_lab_test: { operations: [] },
+          pasteurizing: { operations: [] },
+          filmatic_operation: { operations: [] },
+          steri_process_operation: { operations: [] },
+          incubation: { operations: [] },
+          incubation_lab_test: { operations: [] },
+          dispatch: { operations: [] },
+          production_plan: { operations: [] },
         },
         views: [],
       })
@@ -395,10 +427,91 @@ export function RoleFormDrawer({ open, onOpenChange, role, mode }: RoleFormDrawe
                     <table className="w-full border-collapse">
                       <thead>
                         <tr className="border-b border-gray-200">
-                          <th className="text-left p-3 text-base text-gray-700">Feature</th>
+                          <th className="text-left p-3 text-base text-gray-700">
+                            <div className="flex items-center space-x-2">
+                              <span>Feature</span>
+                              <Checkbox
+                                id="select-all-features"
+                                checked={(() => {
+                                  const allFeatureKeys = [
+                                    'user', 'role', 'machine_item', 'silo_item', 'supplier', 'process', 'devices',
+                                    'raw_product_collection', 'raw_milk_intake', 'raw_milk_lab_test', 
+                                    'before_and_after_autoclave_lab_test', 'pasteurizing', 'filmatic_operation', 
+                                    'steri_process_operation', 'incubation', 'incubation_lab_test', 'dispatch', 'production_plan'
+                                  ]
+                                  return allFeatureKeys.every(featureKey => areAllOperationsSelected(featureKey, watch('features')))
+                                })()}
+                                onCheckedChange={(checked) => {
+                                  const updatedFeatures = { ...watch('features') }
+                                  // Include ALL features in the select all functionality
+                                  const allFeatureKeys = [
+                                    'user', 'role', 'machine_item', 'silo_item', 'supplier', 'process', 'devices',
+                                    'raw_product_collection', 'raw_milk_intake', 'raw_milk_lab_test', 
+                                    'before_and_after_autoclave_lab_test', 'pasteurizing', 'filmatic_operation', 
+                                    'steri_process_operation', 'incubation', 'incubation_lab_test', 'dispatch', 'production_plan'
+                                  ]
+                                  
+                                  allFeatureKeys.forEach(featureKey => {
+                                    if (!updatedFeatures[featureKey]) {
+                                      updatedFeatures[featureKey] = { operations: [] }
+                                    }
+                                    updatedFeatures[featureKey].operations = checked ? [...actionOptions] : []
+                                  })
+                                  setValue('features', updatedFeatures)
+                                }}
+                              />
+                              <Label htmlFor="select-all-features" className="text-xs text-gray-500">
+                                Select All
+                              </Label>
+                            </div>
+                          </th>
                           {actionOptions.map((action) => (
                             <th key={action} className="text-center p-3 text-base text-gray-700 min-w-[80px] capitalize">
-                              {action}
+                              <div className="flex flex-col items-center space-y-1">
+                                <span>{action}</span>
+                                <Checkbox
+                                  id={`select-all-${action}`}
+                                  checked={(() => {
+                                    const allFeatureKeys = [
+                                      'user', 'role', 'machine_item', 'silo_item', 'supplier', 'process', 'devices',
+                                      'raw_product_collection', 'raw_milk_intake', 'raw_milk_lab_test', 
+                                      'before_and_after_autoclave_lab_test', 'pasteurizing', 'filmatic_operation', 
+                                      'steri_process_operation', 'incubation', 'incubation_lab_test', 'dispatch', 'production_plan'
+                                    ]
+                                    return allFeatureKeys.every(featureKey => {
+                                      const featureOperations = watch('features')?.[featureKey]?.operations || []
+                                      return featureOperations.includes(action)
+                                    })
+                                  })()}
+                                  onCheckedChange={(checked) => {
+                                    const updatedFeatures = { ...watch('features') }
+                                    const allFeatureKeys = [
+                                      'user', 'role', 'machine_item', 'silo_item', 'supplier', 'process', 'devices',
+                                      'raw_product_collection', 'raw_milk_intake', 'raw_milk_lab_test', 
+                                      'before_and_after_autoclave_lab_test', 'pasteurizing', 'filmatic_operation', 
+                                      'steri_process_operation', 'incubation', 'incubation_lab_test', 'dispatch', 'production_plan'
+                                    ]
+                                    
+                                    allFeatureKeys.forEach(featureKey => {
+                                      if (!updatedFeatures[featureKey]) {
+                                        updatedFeatures[featureKey] = { operations: [] }
+                                      }
+                                      const currentOperations = updatedFeatures[featureKey].operations
+                                      if (checked) {
+                                        if (!currentOperations.includes(action)) {
+                                          updatedFeatures[featureKey].operations = [...currentOperations, action]
+                                        }
+                                      } else {
+                                        updatedFeatures[featureKey].operations = currentOperations.filter(op => op !== action)
+                                      }
+                                    })
+                                    setValue('features', updatedFeatures)
+                                  }}
+                                />
+                                <Label htmlFor={`select-all-${action}`} className="text-xs text-gray-500">
+                                  All
+                                </Label>
+                              </div>
                             </th>
                           ))}
                         </tr>
@@ -406,14 +519,23 @@ export function RoleFormDrawer({ open, onOpenChange, role, mode }: RoleFormDrawe
                       <tbody>
                         {featureOptions.map((feature, index) => (
                           <tr key={feature.key} className={`border-b border-gray-200 ${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}`}>
-                            <td className="p-3 text-base text-gray-700">{feature.label}</td>
+                            <td className="p-3 text-base text-gray-700">
+                              <div className="flex items-center space-x-2">
+                                <span>{feature.label}</span>
+                                <Checkbox
+                                  id={`select-all-${feature.key}`}
+                                  checked={areAllOperationsSelected(feature.key, watch('features'))}
+                                  onCheckedChange={() => toggleAllOperations(feature.key, watch('features'), setValue)}
+                                />
+                                <Label htmlFor={`select-all-${feature.key}`} className="text-xs text-gray-500">
+                                  All
+                                </Label>
+                              </div>
+                            </td>
                             {actionOptions.map((action) => {
                               const allFeatures = watch('features')
-                              // For new features, they are direct arrays, not nested under operations
-                              const isNewFeature = ['raw_product_collection', 'raw_milk_intake', 'raw_milk_lab_test', 'before_and_after_autoclave_lab_test', 'pasteurizing', 'filmatic_operation', 'steri_process_operation', 'incubation', 'incubation_lab_test', 'dispatch', 'production_plan'].includes(feature.key)
-                              const currentFeatures = isNewFeature 
-                                ? (allFeatures?.[feature.key as keyof typeof allFeatures] as string[] || [])
-                                : (allFeatures?.[feature.key as keyof typeof allFeatures]?.operations || [])
+                              // All features now use nested operations structure
+                              const currentFeatures = allFeatures?.[feature.key as keyof typeof allFeatures]?.operations || []
                               const isChecked = currentFeatures.includes(action)
                               
                               return (
@@ -426,25 +548,15 @@ export function RoleFormDrawer({ open, onOpenChange, role, mode }: RoleFormDrawe
                                         console.log(`Feature ${feature.key} - Action ${action} - Checked: ${checked}`)
                                         const updatedFeatures = { ...allFeatures }
                                         
-                                        if (isNewFeature) {
-                                          // For new features, work directly with arrays
-                                          const current = updatedFeatures[feature.key as keyof typeof updatedFeatures] as string[] || []
-                                          if (checked) {
-                                            updatedFeatures[feature.key as keyof typeof updatedFeatures] = [...current, action]
-                                          } else {
-                                            updatedFeatures[feature.key as keyof typeof updatedFeatures] = current.filter(a => a !== action)
-                                          }
+                                        // All features now use nested operations structure
+                                        if (!updatedFeatures[feature.key as keyof typeof updatedFeatures]) {
+                                          updatedFeatures[feature.key as keyof typeof updatedFeatures] = { operations: [] }
+                                        }
+                                        const current = updatedFeatures[feature.key as keyof typeof updatedFeatures].operations
+                                        if (checked) {
+                                          updatedFeatures[feature.key as keyof typeof updatedFeatures].operations = [...current, action]
                                         } else {
-                                          // For original features, work with nested operations
-                                          if (!updatedFeatures[feature.key as keyof typeof updatedFeatures]) {
-                                            updatedFeatures[feature.key as keyof typeof updatedFeatures] = { operations: [] }
-                                          }
-                                          const current = updatedFeatures[feature.key as keyof typeof updatedFeatures].operations
-                                          if (checked) {
-                                            updatedFeatures[feature.key as keyof typeof updatedFeatures].operations = [...current, action]
-                                          } else {
-                                            updatedFeatures[feature.key as keyof typeof updatedFeatures].operations = current.filter(a => a !== action)
-                                          }
+                                          updatedFeatures[feature.key as keyof typeof updatedFeatures].operations = current.filter(a => a !== action)
                                         }
                                         
                                         console.log(`Updated features for ${feature.key}:`, updatedFeatures[feature.key as keyof typeof updatedFeatures])
