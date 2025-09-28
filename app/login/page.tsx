@@ -69,34 +69,11 @@ export default function LoginPage() {
         })
         
         // Handle API error responses with toast notifications
-        // The error structure from our custom error object
         console.log('Toast error handling - Full error object:', err)
         
         // Extract statusCode and message from the error structure
-        let statusCode = 500
-        let message = "Login failed"
-        
-        if (err && typeof err === 'object') {
-          // Check if statusCode is directly on the error object
-          if (err.statusCode) {
-            statusCode = err.statusCode
-          }
-          // Check if statusCode is in the apiError property
-          else if (err.apiError && err.apiError.statusCode) {
-            statusCode = err.apiError.statusCode
-          }
-          // Check if statusCode is in the message (fallback)
-          else if (err.message && err.message.includes('400')) {
-            statusCode = 400
-          }
-          
-          // Extract message
-          if (err.message) {
-            message = err.message
-          } else if (err.apiError && err.apiError.message) {
-            message = err.apiError.message
-          }
-        }
+        let statusCode = err.statusCode || 500
+        let message = err.message || "Login failed"
         
         console.log('Toast error handling - Extracted:', { statusCode, message })
         
@@ -373,7 +350,7 @@ export default function LoginPage() {
                 <Image src="/Prodairy-3D-Logo.png" alt="ProDairy" fill className="object-contain" />
               </div>
               <div>
-                <h1 className="text-2xl font-light tracking-wider uppercase">ProDairy OS</h1>
+                <h1 className="text-2xl font-light tracking-wider uppercase">ProDairy DMS</h1>
                 <p className="text-xs text-zinc-500 tracking-wide">Futuristic Dairy Manufacturing</p>
               </div>
             </div>

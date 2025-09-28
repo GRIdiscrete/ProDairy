@@ -14,7 +14,7 @@ interface SterilisedMilkProcessViewDrawerProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   process: SterilisedMilkProcess | null
-  processDetails: SterilisedMilkProcessDetails[]
+  processDetails?: SterilisedMilkProcessDetails[]
   onEdit?: () => void
 }
 
@@ -26,6 +26,9 @@ export function SterilisedMilkProcessViewDrawer({
   onEdit
 }: SterilisedMilkProcessViewDrawerProps) {
   if (!process) return null
+
+  // Get process details from the process relationship
+  const processDetailsData = process.sterilised_milk_process_details_fkey ? [process.sterilised_milk_process_details_fkey] : (processDetails || [])
 
   const getPersonName = (person: any) => {
     if (!person) return "Unknown"
@@ -51,11 +54,16 @@ export function SterilisedMilkProcessViewDrawer({
       <SheetContent className="w-[50vw] sm:max-w-[50vw] p-0 bg-white">
         <SheetHeader className="p-6 pb-0 bg-white">
           <div className="flex items-center justify-between">
-            <div>
-              <SheetTitle className="text-lg font-light">Sterilised Milk Process Details</SheetTitle>
-              <SheetDescription className="text-sm font-light">
-                Complete information about the sterilised milk process and its parameters
-              </SheetDescription>
+            <div className="flex items-center space-x-3">
+              <div>
+                <SheetTitle className="text-lg font-light">Current Sterilised Milk Process</SheetTitle>
+                <SheetDescription className="text-sm font-light">
+                  Complete information about the sterilised milk process and its parameters
+                </SheetDescription>
+              </div>
+              <Badge className="bg-green-100 text-green-800 font-medium px-3 py-1 rounded-full">
+                Latest
+              </Badge>
             </div>
             {onEdit && (
               <Button
@@ -127,11 +135,19 @@ export function SterilisedMilkProcessViewDrawer({
                 </div>
               </div>
 
-              <div>
-                <span className="text-xs font-light text-gray-500">Updated At</span>
-                <p className="text-sm font-light">
-                  {process.updated_at ? format(new Date(process.updated_at), "PPP 'at' p") : "N/A"}
-                </p>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <span className="text-xs font-light text-gray-500">Updated At</span>
+                  <p className="text-sm font-light">
+                    {process.updated_at ? format(new Date(process.updated_at), "PPP 'at' p") : "N/A"}
+                  </p>
+                </div>
+                <div>
+                  <span className="text-xs font-light text-gray-500">Filmatic Form</span>
+                  <p className="text-sm font-light">
+                    {process.filmatic_form_id ? `Form #${process.filmatic_form_id.slice(0, 8)}` : "Not linked"}
+                  </p>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -202,7 +218,7 @@ export function SterilisedMilkProcessViewDrawer({
           </Card>
 
           {/* Process Details */}
-          {processDetails && processDetails.length > 0 && (
+          {processDetailsData && processDetailsData.length > 0 && (
             <Card className="shadow-none border border-gray-200 rounded-lg">
               <CardHeader className="pb-4">
                 <div className="flex items-center space-x-2">
@@ -213,14 +229,17 @@ export function SterilisedMilkProcessViewDrawer({
                 </div>
               </CardHeader>
               <CardContent className="space-y-6">
-                {processDetails.map((detail, index) => (
+                {processDetailsData.map((detail, index) => (
                   <div key={detail.id || index} className="space-y-4">
                     {index > 0 && <Separator />}
                     
                     <div className="space-y-4">
                       <div className="flex items-center justify-between">
                         <h4 className="text-sm font-medium">{detail.parameter_name}</h4>
-                        <Badge className="bg-blue-100 text-blue-800 font-light">Batch #{detail.batch_number}</Badge>
+                        <div className="flex items-center space-x-2">
+                          <Badge className="bg-blue-100 text-blue-800 font-light">Process Details</Badge>
+                          <Badge className="bg-green-100 text-green-800 font-medium">Latest</Badge>
+                        </div>
                       </div>
 
                       {/* Filling Readings */}
@@ -321,6 +340,10 @@ export function SterilisedMilkProcessViewDrawer({
                             <p><span className="font-medium">Updated:</span> {detail.updated_at ? format(new Date(detail.updated_at), "PPP 'at' p") : "N/A"}</p>
                           </div>
                         </div>
+                        <div className="mt-2 flex items-center space-x-2">
+                          <Clock className="h-3 w-3 text-green-600" />
+                          <span className="text-xs text-green-600 font-medium">Latest Process Parameters</span>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -330,7 +353,7 @@ export function SterilisedMilkProcessViewDrawer({
           )}
 
           {/* No Process Details */}
-          {(!processDetails || processDetails.length === 0) && (
+          {(!processDetailsData || processDetailsData.length === 0) && (
             <Card className="shadow-none border border-gray-200 rounded-lg">
               <CardContent className="py-8 text-center">
                 <p className="text-muted-foreground">No process details available for this process.</p>

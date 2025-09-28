@@ -17,11 +17,15 @@ export interface SterilisedMilkProcess {
 }
 
 export interface CreateSterilisedMilkProcessRequest {
+  id?: string
+  created_at?: string
+  updated_at?: string
   approved_by: string
   operator_id: string
   operator_signature: string
   supervisor_id: string
   supervisor_signature: string
+  filmatic_form_id: string
 }
 
 export interface SterilisedMilkProcessResponse {
@@ -42,7 +46,6 @@ export interface SterilisedMilkProcessDetails {
   updated_at: string | null
   sterilised_milk_process_id: string
   parameter_name: string
-  batch_number: number
   filling_start_reading: number
   autoclave_start_reading: number
   heating_start_reading: number
@@ -70,6 +73,32 @@ export interface SterilisedMilkProcessDetailsListResponse {
   statusCode: number
   message: string
   data: SterilisedMilkProcessDetails[]
+}
+
+export interface FilmaticForm1 {
+  id: string
+  created_at: string
+  updated_at: string | null
+  approved: boolean
+  process_id: string | null
+  date: string
+  holding_tank_bmt: string
+  day_shift_id: string | null
+  night_shift_id: string | null
+  day_shift_opening_bottles: number
+  day_shift_closing_bottles: number
+  night_shift_opening_bottles: number
+  night_shift_closing_bottles: number
+  day_shift_waste_bottles: number
+  night_shift_waste_bottles: number
+  filmatic_line_form_1_day_shift_id_fkey?: any
+  filmatic_line_form_1_night_shift_id_fkey?: any
+}
+
+export interface FilmaticForm1Response {
+  statusCode: number
+  message: string
+  data: FilmaticForm1[]
 }
 
 export const sterilisedMilkApi = {
@@ -117,6 +146,11 @@ export const sterilisedMilkApi = {
   },
   deleteDetails: async (id: string) => {
     return apiRequest(`/sterilised-milk-process-details/${id}`, { method: "DELETE" })
+  },
+
+  // Filmatic Form 1 endpoints
+  getFilmaticForms: async () => {
+    return apiRequest<FilmaticForm1Response>(`/filmatic-lines-form-1`, { method: "GET" })
   },
 }
 

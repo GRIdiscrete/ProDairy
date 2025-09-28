@@ -18,6 +18,7 @@ import { useAppDispatch, useAppSelector } from "@/lib/store"
 import { createProductionPlan, updateProductionPlan, fetchProductionPlans } from "@/lib/store/slices/productionPlanSlice"
 import { fetchRawMaterials } from "@/lib/store/slices/rawMaterialSlice"
 import { fetchUsers } from "@/lib/store/slices/usersSlice"
+import { fetchProcesses } from "@/lib/store/slices/processSlice"
 import { LoadingButton } from "@/components/ui/loading-button"
 import type { ProductionPlan, ProductionPlanRawProduct } from "@/lib/types"
 
@@ -28,6 +29,11 @@ const productionPlanSchema = yup.object({
   end_date: yup.string().required("End date is required"),
   supervisor: yup.string().required("Supervisor is required"),
   status: yup.string().required("Status is required"),
+  process_id: yup.string().required("Process is required"),
+  output: yup.object({
+    value: yup.number().positive("Output value must be positive").required("Output value is required"),
+    unit_of_measure: yup.string().required("Output unit of measure is required"),
+  }).required("Output information is required"),
   raw_products: yup.array().of(
     yup.object({
       raw_material_id: yup.string().required("Raw material is required"),
@@ -45,6 +51,11 @@ type ProductionPlanFormData = {
   end_date: string
   supervisor: string
   status: "planned" | "ongoing" | "completed" | "cancelled"
+  process_id: string
+  output: {
+    value: number
+    unit_of_measure: string
+  }
   raw_products: ProductionPlanRawProduct[]
 }
 
@@ -69,6 +80,7 @@ export function ProductionPlanFormDrawer({
   const { operationLoading } = useAppSelector((state) => state.productionPlan)
   const { rawMaterials, operationLoading: rawMaterialLoading } = useAppSelector((state) => state.rawMaterial)
   const { items: users, loading: usersLoading } = useAppSelector((state) => state.users)
+  const { processes, operationLoading: processLoading } = useAppSelector((state) => state.process)
 
   const {
     control,
@@ -86,6 +98,11 @@ export function ProductionPlanFormDrawer({
       end_date: "",
       supervisor: "",
       status: "planned",
+      process_id: "",
+      output: {
+        value: 0,
+        unit_of_measure: "litres",
+      },
       raw_products: [],
     },
   })
@@ -98,8 +115,9 @@ export function ProductionPlanFormDrawer({
   // Load required data on component mount
   useEffect(() => {
     if (open) {
-      dispatch(fetchRawMaterials())
-      dispatch(fetchUsers())
+      dispatch(fetchRawMaterials({}))
+      dispatch(fetchUsers({}))
+      dispatch(fetchProcesses({}))
     }
   }, [dispatch, open])
 
@@ -113,6 +131,8 @@ export function ProductionPlanFormDrawer({
         setValue("end_date", productionPlan.end_date.split('T')[0])
         setValue("supervisor", productionPlan.supervisor)
         setValue("status", productionPlan.status)
+        setValue("process_id", productionPlan.process_id || "")
+        setValue("output", productionPlan.output || { value: 0, unit_of_measure: "litres" })
         setValue("raw_products", productionPlan.raw_products)
       } else {
         reset({
@@ -122,6 +142,11 @@ export function ProductionPlanFormDrawer({
           end_date: "",
           supervisor: "",
           status: "planned",
+          process_id: "",
+          output: {
+            value: 0,
+            unit_of_measure: "litres",
+          },
           raw_products: [],
         })
       }
@@ -152,7 +177,7 @@ export function ProductionPlanFormDrawer({
       }
 
       // Refresh the production plans list
-      dispatch(fetchProductionPlans())
+      dispatch(fetchProductionPlans({}))
       onOpenChange(false)
       onSuccess?.()
     } catch (error: any) {
@@ -184,193 +209,251 @@ export function ProductionPlanFormDrawer({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-[50vw] sm:max-w-[50vw] overflow-y-auto p-6">
-        <SheetHeader className="mb-6">
-          <SheetTitle className="flex items-center gap-2">
-            <ClipboardList className="w-5 h-5" />
-            {mode === "create" ? "Add New Production Plan" : `Edit Production Plan: ${productionPlan?.name}`}
+      <SheetContent className="w-[50vw] sm:max-w-[50vw] p-0 bg-white">
+        <SheetHeader className="p-6 pb-0 bg-white">
+          <SheetTitle className="text-lg font-light">
+            {mode === "create" ? "Add New Production Plan" : "Edit Production Plan"}
           </SheetTitle>
-            <SheetDescription>
-            {mode === "create" 
-              ? "Create a new production plan with raw materials and quantities" 
-              : "Update production plan information and materials"}
-            </SheetDescription>
-          </SheetHeader>
+          <SheetDescription className="text-sm font-light">
+            {mode === "create" ? "Create a new production plan with raw materials and quantities" : "Update production plan information and materials"}
+          </SheetDescription>
+        </SheetHeader>
+        <div className="flex-1 overflow-y-auto bg-white p-6">
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <ClipboardList className="w-5 h-5" />
-                Plan Information
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 gap-4">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Plan Name *</Label>
+                <Controller
+                  name="name"
+                  control={control}
+                  render={({ field }) => (
+                    <Input
+                      {...field}
+                      placeholder="Enter production plan name"
+                      disabled={isSubmitting}
+                    />
+                  )}
+                />
+                {errors.name && (
+                  <p className="text-sm text-red-500">{errors.name.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label>Description</Label>
+                <Controller
+                  name="description"
+                  control={control}
+                  render={({ field }) => (
+                    <Textarea
+                      {...field}
+                      placeholder="Enter plan description"
+                      disabled={isSubmitting}
+                      rows={3}
+                    />
+                  )}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name">Plan Name</Label>
                   <Controller
-                    name="name"
+                    name="start_date"
                     control={control}
                     render={({ field }) => (
-                      <Input
-                        {...field}
-                        id="name"
-                        placeholder="Enter production plan name"
+                      <DatePicker
+                        label="Start Date *"
+                        value={field.value}
+                        onChange={field.onChange}
+                        placeholder="Select start date"
                         disabled={isSubmitting}
+                        error={!!errors.start_date}
                       />
                     )}
                   />
-                  {errors.name && (
-                    <p className="text-sm text-red-500">{errors.name.message}</p>
+                  {errors.start_date && (
+                    <p className="text-sm text-red-500">{errors.start_date.message}</p>
                   )}
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="description">Description</Label>
                   <Controller
-                    name="description"
+                    name="end_date"
                     control={control}
                     render={({ field }) => (
-                      <Textarea
-                        {...field}
-                        id="description"
-                        placeholder="Enter plan description"
+                      <DatePicker
+                        label="End Date *"
+                        value={field.value}
+                        onChange={field.onChange}
+                        placeholder="Select end date"
                         disabled={isSubmitting}
-                        rows={3}
+                        error={!!errors.end_date}
                       />
                     )}
                   />
+                  {errors.end_date && (
+                    <p className="text-sm text-red-500">{errors.end_date.message}</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Supervisor *</Label>
+                  <Controller
+                    name="supervisor"
+                    control={control}
+                    render={({ field }) => (
+                      <Select value={field.value} onValueChange={field.onChange} disabled={isSubmitting}>
+                        <SelectTrigger className="w-full rounded-full">
+                          <SelectValue placeholder="Select supervisor" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {usersLoading ? (
+                            <SelectItem value="loading" disabled>Loading users...</SelectItem>
+                          ) : (
+                            users.map((user) => (
+                              <SelectItem key={user.id} value={user.id}>
+                                {user.first_name} {user.last_name}
+                              </SelectItem>
+                            ))
+                          )}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                  {errors.supervisor && (
+                    <p className="text-sm text-red-500">{errors.supervisor.message}</p>
+                  )}
                 </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                  
-                        <Controller
-                          name="start_date"
-                          control={control}
-                          render={({ field }) => (
-                            <DatePicker
-                              label="Start Date *"
-                              value={field.value}
-                              onChange={field.onChange}
-                              placeholder="Select start date"
-                              disabled={isSubmitting}
-                              error={!!errors.start_date}
-                            />
-                          )}
-                        />
-                    {errors.start_date && (
-                      <p className="text-sm text-red-500">{errors.start_date.message}</p>
+                <div className="space-y-2">
+                  <Label>Status *</Label>
+                  <Controller
+                    name="status"
+                    control={control}
+                    render={({ field }) => (
+                      <Select value={field.value} onValueChange={field.onChange} disabled={isSubmitting}>
+                        <SelectTrigger className="w-full rounded-full">
+                          <SelectValue placeholder="Select status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="planned">Planned</SelectItem>
+                          <SelectItem value="ongoing">Ongoing</SelectItem>
+                          <SelectItem value="completed">Completed</SelectItem>
+                          <SelectItem value="cancelled">Cancelled</SelectItem>
+                        </SelectContent>
+                      </Select>
                     )}
+                  />
+                  {errors.status && (
+                    <p className="text-sm text-red-500">{errors.status.message}</p>
+                  )}
+                </div>
               </div>
 
               <div className="space-y-2">
-                        <Controller
-                          name="end_date"
-                          control={control}
-                          render={({ field }) => (
-                            <DatePicker
-                              label="End Date *"
-                              value={field.value}
-                              onChange={field.onChange}
-                              placeholder="Select end date"
-                              disabled={isSubmitting}
-                              error={!!errors.end_date}
-                            />
-                          )}
-                        />
-                    {errors.end_date && (
-                      <p className="text-sm text-red-500">{errors.end_date.message}</p>
+                <Label>Process *</Label>
+                <Controller
+                  name="process_id"
+                  control={control}
+                  render={({ field }) => (
+                    <Select value={field.value} onValueChange={field.onChange} disabled={isSubmitting}>
+                      <SelectTrigger className="w-full rounded-full">
+                        <SelectValue placeholder="Select process" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {processLoading.fetch ? (
+                          <SelectItem value="loading" disabled>Loading processes...</SelectItem>
+                        ) : (
+                          processes.map((process) => (
+                            <SelectItem key={process.id} value={process.id}>
+                              {process.name}
+                            </SelectItem>
+                          ))
+                        )}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+                {errors.process_id && (
+                  <p className="text-sm text-red-500">{errors.process_id.message}</p>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Output Value *</Label>
+                  <Controller
+                    name="output.value"
+                    control={control}
+                    render={({ field }) => (
+                      <Input
+                        {...field}
+                        type="number"
+                        step="0.01"
+                        placeholder="0.00"
+                        disabled={isSubmitting}
+                        onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                      />
                     )}
+                  />
+                  {errors.output?.value && (
+                    <p className="text-sm text-red-500">{errors.output.value.message}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Output Unit *</Label>
+                  <Controller
+                    name="output.unit_of_measure"
+                    control={control}
+                    render={({ field }) => (
+                      <Select value={field.value} onValueChange={field.onChange} disabled={isSubmitting}>
+                        <SelectTrigger className="w-full rounded-full">
+                          <SelectValue placeholder="Select unit" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="litres">Litres</SelectItem>
+                          <SelectItem value="KG">KG</SelectItem>
+                          <SelectItem value="L">L</SelectItem>
+                          <SelectItem value="ML">ML</SelectItem>
+                          <SelectItem value="G">G</SelectItem>
+                          <SelectItem value="PCS">PCS</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                  {errors.output?.unit_of_measure && (
+                    <p className="text-sm text-red-500">{errors.output.unit_of_measure.message}</p>
+                  )}
+                </div>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                    <Label htmlFor="supervisor">Supervisor</Label>
-                    <Controller
-                      name="supervisor"
-                      control={control}
-                      render={({ field }) => (
-                        <Select value={field.value} onValueChange={field.onChange} disabled={isSubmitting}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select supervisor" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {usersLoading ? (
-                              <SelectItem value="loading" disabled>Loading users...</SelectItem>
-                            ) : (
-                              users.map((user) => (
-                                <SelectItem key={user.id} value={user.id}>
-                                  {user.first_name} {user.last_name}
-                                </SelectItem>
-                              ))
-                            )}
-                          </SelectContent>
-                        </Select>
-                      )}
-                    />
-                    {errors.supervisor && (
-                      <p className="text-sm text-red-500">{errors.supervisor.message}</p>
-                    )}
-              </div>
-
-              <div className="space-y-2">
-                    <Label htmlFor="status">Status</Label>
-                    <Controller
-                      name="status"
-                      control={control}
-                      render={({ field }) => (
-                        <Select value={field.value} onValueChange={field.onChange} disabled={isSubmitting}>
-                  <SelectTrigger>
-                            <SelectValue placeholder="Select status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                            <SelectItem value="planned">Planned</SelectItem>
-                            <SelectItem value="ongoing">Ongoing</SelectItem>
-                            <SelectItem value="completed">Completed</SelectItem>
-                            <SelectItem value="cancelled">Cancelled</SelectItem>
-                  </SelectContent>
-                </Select>
-                      )}
-                    />
-                    {errors.status && (
-                      <p className="text-sm text-red-500">{errors.status.message}</p>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
+            <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Package className="w-5 h-5" />
-                  Raw Materials
-                </CardTitle>
+                <Label>Raw Materials *</Label>
                 <Button
                   type="button"
                   onClick={addRawMaterial}
                   size="sm"
                   disabled={isSubmitting}
+                  className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full"
                 >
                   <Plus className="w-4 h-4 mr-2" />
                   Add Material
                 </Button>
               </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
               {fields.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
+                <div className="text-center py-8 text-muted-foreground border border-gray-200 rounded-lg">
                   <Package className="w-12 h-12 mx-auto mb-4 opacity-50" />
                   <p>No raw materials added yet</p>
                   <p className="text-sm">Click "Add Material" to get started</p>
                 </div>
               ) : (
-                <div className="space-y-4 max-h-80 overflow-y-auto">
+                <div className="space-y-4 max-h-80 overflow-y-auto border border-gray-200 rounded-lg p-4">
                   {fields.map((field, index) => (
                     <div key={field.id} className="p-4 border rounded-lg space-y-4">
                       <div className="flex items-center justify-between">
@@ -381,13 +464,14 @@ export function ProductionPlanFormDrawer({
                           size="sm"
                           variant="destructive"
                           disabled={isSubmitting}
+                          className="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white border-0 rounded-full"
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
-            </div>
+                      </div>
 
                       <div className="grid grid-cols-1 gap-4">
-            <div className="space-y-2">
+                        <div className="space-y-2">
                           <Label>Raw Material</Label>
                           <Controller
                             name={`raw_products.${index}.raw_material_id`}
@@ -398,10 +482,10 @@ export function ProductionPlanFormDrawer({
                                 onValueChange={(value) => handleRawMaterialSelect(index, value)}
                                 disabled={isSubmitting}
                               >
-                <SelectTrigger>
+                                <SelectTrigger className="w-full rounded-full">
                                   <SelectValue placeholder="Select raw material" />
-                </SelectTrigger>
-                <SelectContent>
+                                </SelectTrigger>
+                                <SelectContent>
                                   {rawMaterialLoading.fetch ? (
                                     <SelectItem value="loading" disabled>Loading materials...</SelectItem>
                                   ) : (
@@ -411,8 +495,8 @@ export function ProductionPlanFormDrawer({
                                       </SelectItem>
                                     ))
                                   )}
-                </SelectContent>
-              </Select>
+                                </SelectContent>
+                              </Select>
                             )}
                           />
                           {errors.raw_products?.[index]?.raw_material_id && (
@@ -420,10 +504,10 @@ export function ProductionPlanFormDrawer({
                               {errors.raw_products[index]?.raw_material_id?.message}
                             </p>
                           )}
-            </div>
+                        </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
                             <Label>Requested Amount</Label>
                             <Controller
                               name={`raw_products.${index}.requested_amount`}
@@ -444,16 +528,16 @@ export function ProductionPlanFormDrawer({
                                 {errors.raw_products[index]?.requested_amount?.message}
                               </p>
                             )}
-              </div>
+                          </div>
 
-              <div className="space-y-2">
+                          <div className="space-y-2">
                             <Label>Unit of Measure</Label>
                             <Controller
                               name={`raw_products.${index}.unit_of_measure`}
                               control={control}
                               render={({ field }) => (
                                 <Select value={field.value} onValueChange={field.onChange} disabled={isSubmitting}>
-                                  <SelectTrigger>
+                                  <SelectTrigger className="w-full rounded-full">
                                     <SelectValue placeholder="Select unit" />
                                   </SelectTrigger>
                                   <SelectContent>
@@ -473,34 +557,36 @@ export function ProductionPlanFormDrawer({
                             )}
                           </div>
                         </div>
-              </div>
-            </div>
+                      </div>
+                    </div>
                   ))}
-            </div>
+                </div>
               )}
               {errors.raw_products && (
                 <p className="text-sm text-red-500">{errors.raw_products.message}</p>
               )}
-            </CardContent>
-          </Card>
+            </div>
 
-          <div className="flex justify-end space-x-3 pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              disabled={isLoading}
-            >
+            <div className="flex justify-end space-x-2 pt-4">
+              <LoadingButton
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+                disabled={isLoading}
+              >
                 Cancel
-              </Button>
-            <LoadingButton
-              type="submit"
-              loading={isLoading}
-            >
-              {mode === "create" ? "Create Plan" : "Save Changes"}
-            </LoadingButton>
+              </LoadingButton>
+              <LoadingButton
+                type="submit"
+                loading={isLoading}
+                disabled={isLoading}
+                className="bg-gradient-to-r from-gray-500 to-gray-700 hover:from-gray-600 hover:to-gray-800 text-white border-0 rounded-full px-6 py-2 font-light"
+              >
+                {mode === "create" ? "Create Plan" : "Update Plan"}
+              </LoadingButton>
             </div>
           </form>
+        </div>
       </SheetContent>
     </Sheet>
   )

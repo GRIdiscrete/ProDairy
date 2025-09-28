@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useMemo } from "react"
 import { DataCaptureDashboardLayout } from "@/components/layout/data-capture-dashboard-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { LoadingButton } from "@/components/ui/loading-button"
+import { Button } from "@/components/ui/button"
 import { DataTable } from "@/components/ui/data-table"
 import { DataTableFilters } from "@/components/ui/data-table-filters"
 import { Badge } from "@/components/ui/badge"
@@ -15,7 +16,6 @@ import { useAppDispatch, useAppSelector } from "@/lib/store"
 import { 
   fetchSterilisedMilkProcesses, 
   deleteSterilisedMilkProcessAction,
-  fetchSterilisedMilkProcessDetails,
   clearError
 } from "@/lib/store/slices/sterilisedMilkProcessSlice"
 import { toast } from "sonner"
@@ -34,7 +34,6 @@ export default function SterilisedMilkProcessPage() {
     if (!isInitialized && !hasFetchedRef.current) {
       hasFetchedRef.current = true
       dispatch(fetchSterilisedMilkProcesses())
-      dispatch(fetchSterilisedMilkProcessDetails())
     }
   }, [dispatch, isInitialized])
   
@@ -65,8 +64,14 @@ export default function SterilisedMilkProcessPage() {
   // Get process details for selected process
   const selectedProcessDetails = useMemo(() => {
     if (!selectedProcess) return []
-    return processDetails.filter((detail: any) => detail.sterilised_milk_process_id === selectedProcess.id)
-  }, [selectedProcess, processDetails])
+    
+    // Check if the process has details relationship
+    if (selectedProcess.sterilised_milk_process_details_fkey) {
+      return [selectedProcess.sterilised_milk_process_details_fkey]
+    }
+    
+    return []
+  }, [selectedProcess])
 
   // Filter fields configuration for Sterilised Milk Process
   const filterFields = useMemo(() => [
@@ -144,17 +149,59 @@ export default function SterilisedMilkProcessPage() {
       header: "Process",
       cell: ({ row }: any) => {
         const process = row.original
-        const processDetailsCount = processDetails.filter((detail: any) => detail.sterilised_milk_process_id === process.id).length
+        const hasDetails = process.sterilised_milk_process_details_fkey
+        const details = hasDetails ? process.sterilised_milk_process_details_fkey : null
+        
         return (
-          <div className="flex items-center space-x-3">
+          <div className="flex items-start space-x-3">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center">
               <Milk className="w-4 h-4 text-white" />
             </div>
-            <div>
-              <div className="flex items-center space-x-2">
-                <span className="font-medium">Sterilisation Process</span>
-                <Badge className="bg-green-100 text-green-800">{processDetailsCount} params</Badge>
+            <div className="flex-1">
+              <div className="flex items-center space-x-2 mb-2">
+                <span className="font-medium">Current Sterilised Milk Process</span>
+                <Badge className="bg-green-100 text-green-800">Latest</Badge>
+                {hasDetails && (
+                  <Badge className="bg-blue-100 text-blue-800">Process Parameters</Badge>
+                )}
               </div>
+              
+              {/* Process Parameters Preview */}
+              {hasDetails && details ? (
+                <div className="mt-2 p-3 bg-gray-50 rounded-lg border">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-medium text-gray-600">Process Parameters Preview</span>
+                    <Badge variant="outline" className="text-xs">Latest</Badge>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div>
+                      <span className="text-gray-500">Parameter:</span>
+                      <p className="font-medium">{details.parameter_name}</p>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Batch:</span>
+                      <p className="font-medium">#{details.batch_number}</p>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Heating Start:</span>
+                      <p className="font-medium">{details.heating_start_reading}°C</p>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Sterilization:</span>
+                      <p className="font-medium">{details.sterilization_start_reading}°C</p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="mt-2 p-3 bg-gray-50 rounded-lg border border-dashed">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-medium text-gray-600">Process Parameters</span>
+                    <Badge variant="outline" className="text-xs text-gray-500">No Details</Badge>
+                  </div>
+                  <p className="text-xs text-gray-500">No process details available for this process.</p>
+                </div>
+              )}
+              
               <p className="text-sm text-gray-500 mt-1">
                 ID: {process.id ? `${process.id.slice(0, 8)}...` : "N/A"}
               </p>
@@ -253,6 +300,132 @@ export default function SterilisedMilkProcessPage() {
           </LoadingButton>
         </div>
 
+        {/* Current Sterilised Milk Process Card */}
+        {processes && processes.length > 0 && (() => {
+          const latestProcess = processes.sort((a: any, b: any) => 
+            new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
+          )[0]
+          const hasDetails = latestProcess.sterilised_milk_process_details_fkey
+          const details = hasDetails ? latestProcess.sterilised_milk_process_details_fkey : null
+          
+          return (
+            <Card className="border-l-4 border-l-green-500">
+              <CardHeader className="pb-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center">
+                      <Milk className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-lg font-medium">Current Sterilised Milk Process</CardTitle>
+                      <p className="text-sm text-muted-foreground">Latest process information and parameters</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Badge className="bg-green-100 text-green-800">Latest</Badge>
+                    {hasDetails && (
+                      <Badge className="bg-blue-100 text-blue-800">Process Parameters</Badge>
+                    )}
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div>
+                    <span className="text-xs font-medium text-muted-foreground">Process ID</span>
+                    <p className="text-sm font-medium">#{latestProcess.id ? latestProcess.id.slice(0, 8) : "N/A"}</p>
+                  </div>
+                  <div>
+                    <span className="text-xs font-medium text-muted-foreground">Created</span>
+                    <p className="text-sm font-medium">
+                      {latestProcess.created_at ? new Date(latestProcess.created_at).toLocaleDateString() : "N/A"}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-xs font-medium text-muted-foreground">Updated</span>
+                    <p className="text-sm font-medium">
+                      {latestProcess.updated_at ? new Date(latestProcess.updated_at).toLocaleDateString() : "N/A"}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-xs font-medium text-muted-foreground">Approved By</span>
+                    <p className="text-sm font-medium">
+                      {getPersonName(latestProcess.sterilised_milk_process_approved_by_fkey)}
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <span className="text-xs font-medium text-muted-foreground">Filmatic Form</span>
+                    <p className="text-sm font-medium">
+                      {latestProcess.filmatic_form_id ? `Form #${latestProcess.filmatic_form_id.slice(0, 8)}` : "Not linked"}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-xs font-medium text-muted-foreground">Status</span>
+                    <p className="text-sm font-medium text-green-600">Active Process</p>
+                  </div>
+                </div>
+
+                {/* Process Parameters Preview */}
+                {hasDetails && details && (
+                  <div className="mt-4 p-4 bg-gray-50 rounded-lg border">
+                    <div className="flex items-center justify-between mb-3">
+                      <h4 className="text-sm font-medium">Process Parameters</h4>
+                      <Badge variant="outline" className="text-xs">Latest</Badge>
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                      <div>
+                        <span className="text-gray-500">Parameter:</span>
+                        <p className="font-medium">{details.parameter_name}</p>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Batch:</span>
+                        <p className="font-medium">#{details.batch_number}</p>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Heating Start:</span>
+                        <p className="font-medium">{details.heating_start_reading}°C</p>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Sterilization:</span>
+                        <p className="font-medium">{details.sterilization_start_reading}°C</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex items-center justify-between pt-4 border-t">
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleViewProcess(latestProcess)}
+                      className="text-green-600 border-green-200 hover:bg-green-50"
+                    >
+                      <Eye className="w-4 h-4 mr-2" />
+                      View Details
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleEditProcess(latestProcess)}
+                      className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                    >
+                      <Edit className="w-4 h-4 mr-2" />
+                      Edit Process
+                    </Button>
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    Last updated: {latestProcess.updated_at ? new Date(latestProcess.updated_at).toLocaleString() : "Never"}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )
+        })()}
+
         {/* Counter Widgets with Icons */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <Card>
@@ -311,7 +484,7 @@ export default function SterilisedMilkProcessPage() {
               ) : (
                 <>
                   <div className="text-2xl font-bold text-green-600">
-                    {(processDetails || []).length}
+                    {(processes || []).filter((process: any) => process.sterilised_milk_process_details_fkey).length}
                   </div>
                   <p className="text-xs text-muted-foreground">Process parameters</p>
                 </>
@@ -332,7 +505,7 @@ export default function SterilisedMilkProcessPage() {
               ) : (
                 <>
                   <div className="text-2xl font-bold text-purple-600">
-                    {(processes || []).length ? Math.round((processDetails || []).length / processes.length) : 0}
+                    {(processes || []).length ? Math.round((processes || []).filter((process: any) => process.sterilised_milk_process_details_fkey).length / processes.length) : 0}
                   </div>
                   <p className="text-xs text-muted-foreground">Per process</p>
                 </>

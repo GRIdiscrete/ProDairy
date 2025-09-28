@@ -20,10 +20,12 @@ import {
   Grid3X3,
   Wrench,
   Workflow,
+  AlertTriangle,
 } from "lucide-react";
 import { motion, AnimatePresence, Variants } from "framer-motion";
 import { processApi } from "@/lib/api/process";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useAppSelector } from "@/lib/store";
 
 const dataCaptureNavigation = [
   {
@@ -86,6 +88,7 @@ export function DataCaptureSidebar({
   onToggle,
 }: DataCaptureSidebarProps) {
   const pathname = usePathname();
+  const { user, profile } = useAppSelector((state) => state.auth);
   const [processes, setProcesses] = useState<any[]>([])
   const [processOpen, setProcessOpen] = useState(false)
   const [selectedProcess, setSelectedProcess] = useState<string | null>(null)
@@ -187,10 +190,10 @@ export function DataCaptureSidebar({
                 className="truncate"
               >
                 <span className="block text-sm font-extralight tracking-[0.18em] text-zinc-900 uppercase">
-                  ProDairy OS
+                  ProDairy DMS
                 </span>
                 <span className="block text-[11px] font-light tracking-wider text-zinc-500">
-                  Data Capture
+                 Production Processes
                 </span>
               </motion.div>
             )}
@@ -289,12 +292,13 @@ export function DataCaptureSidebar({
                 <ul className="space-y-1">
                   {[
                     { key: 'pasteurizing', label: 'Pasteurizing', Icon: FlaskConical, enabled: true },
-                    { key: 'filmatic-lines', label: 'Filmatic Lines 1', Icon: Factory, enabled: true },
+                    { key: 'filmatic-lines', label: 'Filmatic Lines Form 1', Icon: Factory, enabled: true },
                     { key: 'process-log', label: 'Process Log', Icon: Workflow, enabled: true },
                     { key: 'filmatic-lines-2', label: 'Filmatic Lines 2', Icon: Factory, enabled: true },
                     { key: 'palletiser-sheet', label: 'Palletizer', Icon: Grid3X3, enabled: true },
-                    { href: '#', label: 'Incubation', Icon: Beaker, enabled: false },
-                    { href: '#', label: 'Test', Icon: TestTube, enabled: false },
+                    { key: 'incubation', label: 'Incubation', Icon: Beaker, enabled: true },
+                    { key: 'test', label: 'Test', Icon: TestTube, enabled: true },
+                    { key: 'qa-corrective-measures', label: 'QA Corrective Measures', Icon: AlertTriangle, enabled: true },
                     { href: '#', label: 'Dispatch', Icon: Package, enabled: false },
                   ].map((s, idx) => {
                     const href = s.enabled
@@ -358,10 +362,15 @@ export function DataCaptureSidebar({
                 className="min-w-0"
               >
                 <p className="truncate text-sm font-light text-zinc-900">
-                  Data Capturer
+                  {profile?.first_name && profile?.last_name 
+                    ? `${profile.first_name} ${profile.last_name}` 
+                    : user?.first_name && user?.last_name 
+                    ? `${user.first_name} ${user.last_name}` 
+                    : 'User'
+                  }
                 </p>
                 <p className="truncate text-xs font-extralight tracking-wide text-zinc-500">
-                  capturer@prodairy.co.zw
+                  {profile?.email || user?.email || 'user@prodairy.co.zw'}
                 </p>
               </motion.div>
             )}

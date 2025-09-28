@@ -23,6 +23,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { KanbanSkeleton } from "@/components/ui/kanban-skeleton"
 
 export interface ProcessForm {
   id: string
@@ -52,13 +53,15 @@ interface ProcessBoardProps {
   onFormClick?: (form: ProcessForm) => void
   onFormCreate?: (columnId: string) => void
   className?: string
+  loading?: boolean
 }
 
 export function ProcessBoard({ 
   columns, 
   onFormClick, 
   onFormCreate,
-  className 
+  className,
+  loading = false
 }: ProcessBoardProps) {
   const [draggedForm, setDraggedForm] = useState<ProcessForm | null>(null)
   const [draggedFromColumn, setDraggedFromColumn] = useState<string | null>(null)
@@ -108,6 +111,16 @@ export function ProcessBoard({
   const handleDragEnd = () => {
     setDraggedForm(null)
     setDraggedFromColumn(null)
+  }
+
+  if (loading) {
+    return (
+      <KanbanSkeleton 
+        columns={columns.length} 
+        cardsPerColumn={3}
+        className={className}
+      />
+    )
   }
 
   return (

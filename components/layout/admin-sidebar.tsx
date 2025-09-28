@@ -23,6 +23,7 @@ import {
 } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { useFilteredNavigation } from "@/hooks/use-permissions"
+import { useAppSelector } from "@/lib/store"
 
 const adminNavigation = [
   { name: "Dashboard", href: "/admin", icon: LayoutDashboard, current: false },
@@ -112,6 +113,7 @@ interface AdminSidebarProps {
 
 export function AdminSidebar({ collapsed = false, onToggle }: AdminSidebarProps) {
   const pathname = usePathname()
+  const { user, profile } = useAppSelector((state) => state.auth)
   const [openDropdowns, setOpenDropdowns] = useState<string[]>([])
   
   // Filter navigation based on user permissions
@@ -194,7 +196,7 @@ export function AdminSidebar({ collapsed = false, onToggle }: AdminSidebarProps)
                 className="truncate"
               >
                 <span className="block text-sm font-extralight tracking-[0.18em] text-zinc-900 uppercase">
-                  ProDairy OS
+                  ProDairy DMS
                 </span>
                 <span className="block text-[11px] font-light tracking-wider text-zinc-500">
                   Admin Console
@@ -339,9 +341,16 @@ export function AdminSidebar({ collapsed = false, onToggle }: AdminSidebarProps)
                 exit={{ opacity: 0, x: -6 }}
                 className="min-w-0"
               >
-                <p className="truncate text-sm font-light text-zinc-900">Admin User</p>
+                <p className="truncate text-sm font-light text-zinc-900">
+                  {profile?.first_name && profile?.last_name 
+                    ? `${profile.first_name} ${profile.last_name}` 
+                    : user?.first_name && user?.last_name 
+                    ? `${user.first_name} ${user.last_name}` 
+                    : 'Admin User'
+                  }
+                </p>
                 <p className="truncate text-xs font-extralight tracking-wide text-zinc-500">
-                  admin@prodairy.co.zw
+                  {profile?.email || user?.email || 'admin@prodairy.co.zw'}
                 </p>
               </motion.div>
             )}

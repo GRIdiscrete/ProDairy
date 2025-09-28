@@ -41,20 +41,15 @@ export function PalletiserSheetViewDrawer({
   // Load sheet details when sheet changes
   useEffect(() => {
     if (sheet && open) {
-      // In a real implementation, you would fetch the sheet details here
-      // For now, we'll use mock data
-      setSheetDetails([
-        {
-          id: "1",
-          pallet_number: 1,
-          start_time: "2025-08-21 08:00:00+00",
-          end_time: "2025-08-21 08:30:00+00",
-          cases_packed: 50,
-          serial_number: "PAL-20250821-001",
-          counter_id: "counter-1",
-          counter_signature: "base64-encoded-signature-string"
-        }
-      ])
+      // Use real data from palletiser_sheet_details_fkey
+      const details = (sheet as any).palletiser_sheet_details_fkey
+      if (details) {
+        // Convert the single details object to array format for consistency
+        setSheetDetails([details])
+      } else {
+        // No details available
+        setSheetDetails([])
+      }
     }
   }, [sheet, open])
 
@@ -84,7 +79,7 @@ export function PalletiserSheetViewDrawer({
                 <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center">
                   <Beaker className="w-4 h-4 text-orange-600" />
                 </div>
-                <span className="text-sm font-light">Filmatic Lines</span>
+                <span className="text-sm font-light">Filmatic Lines 2</span>
               </div>
               <ArrowRight className="w-4 h-4 text-gray-400" />
               <div className="flex items-center space-x-2">
@@ -101,9 +96,9 @@ export function PalletiserSheetViewDrawer({
               <ArrowRight className="w-4 h-4 text-gray-400" />
               <div className="flex items-center space-x-2">
                 <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
-                  <FileText className="w-4 h-4 text-gray-400" />
+                  <Clock className="w-4 h-4 text-gray-400" />
                 </div>
-                <span className="text-sm font-light text-gray-400">Process Log</span>
+                <span className="text-sm font-light text-gray-400">Incubation</span>
               </div>
             </div>
           </div>
@@ -117,13 +112,13 @@ export function PalletiserSheetViewDrawer({
                     <Package className="w-5 h-5 text-white" />
                   </div>
                   <div>
-                    <CardTitle className="text-lg font-light">Sheet #{sheet.id?.slice(0, 8)}</CardTitle>
+                    <CardTitle className="text-lg font-light">Palletiser Sheet</CardTitle>
                     <div className="flex items-center space-x-2 mt-1">
                       <Badge className="bg-blue-100 text-blue-800 font-light">
                         Batch #{sheet.batch_number}
                       </Badge>
                       <Badge className="bg-green-100 text-green-800 font-light">
-                        {sheet.product_type}
+                        {sheet.product_type && sheet.product_type.length > 20 ? 'N/A' : (sheet.product_type || 'N/A')}
                       </Badge>
                     </div>
                   </div>

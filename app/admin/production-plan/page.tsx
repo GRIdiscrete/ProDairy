@@ -8,7 +8,7 @@ import { MainLayout } from "@/components/layout/main-layout"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Edit, Eye, ClipboardList, Calendar, User, Settings, Trash2 } from "lucide-react"
+import { Plus, Edit, Eye, ClipboardList, Calendar, User, Settings, Trash2, Package } from "lucide-react"
 import { DataTable } from "@/components/ui/data-table"
 import { ProductionPlanFormDrawer } from "@/components/forms/production-plan-form-drawer"
 import { ProductionPlanViewDrawer } from "@/components/forms/production-plan-view-drawer"
@@ -61,17 +61,22 @@ export default function ProductionPage() {
   const columns = [
     {
       accessorKey: "name",
-      header: "Plan Name",
+      header: "Plan",
       cell: ({ row }: any) => {
         const plan = row.original as ProductionPlan
         return (
-          <div className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center">
-              <ClipboardList className="h-4 w-4 text-primary" />
+          <div className="flex items-center space-x-3">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-gray-500 to-gray-700 flex items-center justify-center">
+              <ClipboardList className="w-4 h-4 text-white" />
             </div>
             <div>
-              <p className="font-medium text-sm">{plan.name}</p>
-              <p className="text-muted-foreground text-xs">ID: {plan.id.slice(0, 8)}...</p>
+              <div className="flex items-center space-x-2">
+                <span className="font-light">{plan.name}</span>
+                <Badge className={getStatusColor(plan.status)}>
+                  {plan.status.charAt(0).toUpperCase() + plan.status.slice(1)}
+                </Badge>
+              </div>
+              <p className="text-sm text-gray-500 mt-1">ID: {plan.id.slice(0, 8)}...</p>
             </div>
           </div>
         )
@@ -83,14 +88,14 @@ export default function ProductionPage() {
       cell: ({ row }: any) => {
         const plan = row.original as ProductionPlan
         return (
-          <div className="flex items-center gap-2">
-            <User className="w-4 h-4 text-muted-foreground" />
-            <span className="text-sm">
+          <div className="space-y-1">
+            <p className="text-sm font-light">
               {plan.production_plan_supervisor_fkey ? 
                 `${plan.production_plan_supervisor_fkey.first_name} ${plan.production_plan_supervisor_fkey.last_name}` :
                 'N/A'
               }
-            </span>
+            </p>
+            <p className="text-xs text-gray-500">Assigned supervisor</p>
           </div>
         )
       },
@@ -101,9 +106,9 @@ export default function ProductionPage() {
       cell: ({ row }: any) => {
         const plan = row.original as ProductionPlan
         return (
-          <div className="flex items-center gap-2 text-sm">
-            <Calendar className="w-4 h-4 text-muted-foreground" />
-            {new Date(plan.start_date).toLocaleDateString()}
+          <div className="space-y-1">
+            <p className="text-sm font-light">{new Date(plan.start_date).toLocaleDateString()}</p>
+            <p className="text-xs text-gray-500">Plan start</p>
           </div>
         )
       },
@@ -114,22 +119,10 @@ export default function ProductionPage() {
       cell: ({ row }: any) => {
         const plan = row.original as ProductionPlan
         return (
-          <div className="flex items-center gap-2 text-sm">
-            <Calendar className="w-4 h-4 text-muted-foreground" />
-            {new Date(plan.end_date).toLocaleDateString()}
+          <div className="space-y-1">
+            <p className="text-sm font-light">{new Date(plan.end_date).toLocaleDateString()}</p>
+            <p className="text-xs text-gray-500">Plan end</p>
           </div>
-        )
-      },
-    },
-    {
-      accessorKey: "status",
-      header: "Status",
-      cell: ({ row }: any) => {
-        const plan = row.original as ProductionPlan
-        return (
-          <Badge className={getStatusColor(plan.status)}>
-            {plan.status.charAt(0).toUpperCase() + plan.status.slice(1)}
-          </Badge>
         )
       },
     },
@@ -139,12 +132,16 @@ export default function ProductionPage() {
       cell: ({ row }: any) => {
         const plan = row.original as ProductionPlan
         return (
-          <span className="text-sm">{plan.raw_products.length} materials</span>
+          <div className="space-y-1">
+            <p className="text-sm font-light">{plan.raw_products.length} materials</p>
+            <p className="text-xs text-gray-500">Raw materials</p>
+          </div>
         )
       },
     },
     {
       id: "actions",
+      header: "Actions",
       cell: ({ row }: any) => {
         const plan = row.original as ProductionPlan
         return (
@@ -153,6 +150,7 @@ export default function ProductionPage() {
               variant="outline" 
               size="sm" 
               onClick={() => handleViewPlan(plan)}
+              className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full"
             >
               <Eye className="w-4 h-4" />
             </LoadingButton>
@@ -160,6 +158,7 @@ export default function ProductionPage() {
               variant="outline" 
               size="sm" 
               onClick={() => handleEditPlan(plan)}
+              className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 rounded-full"
             >
               <Settings className="w-4 h-4" />
             </LoadingButton>
@@ -176,20 +175,106 @@ export default function ProductionPage() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Production Plans</h1>
-            <p className="text-muted-foreground">Manage and monitor production planning</p>
+            <h1 className="text-3xl font-light text-foreground">Production Plans</h1>
+            <p className="text-sm font-light text-muted-foreground">Manage and monitor production planning</p>
           </div>
-          <LoadingButton onClick={handleAddPlan} loading={isLoading}>
+          <LoadingButton onClick={handleAddPlan} loading={isLoading} className="bg-gradient-to-r from-gray-500 to-gray-700 hover:from-gray-600 hover:to-gray-800 text-white border-0 rounded-full px-6 py-2 font-light">
             <Plus className="mr-2 h-4 w-4" />
             Create Plan
           </LoadingButton>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Production Plans</CardTitle>
-          </CardHeader>
-          <CardContent>
+        {/* Counter Widgets with Icons */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="bg-white border border-gray-200 rounded-lg p-6">
+            <div className="flex flex-row items-center justify-between mb-4">
+              <h3 className="text-sm text-gray-600">Total Plans</h3>
+              <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+                <ClipboardList className="h-4 w-4 text-gray-500" />
+              </div>
+            </div>
+            {isLoading ? (
+              <div className="animate-pulse">
+                <div className="h-8 bg-gray-200 rounded w-16 mb-2"></div>
+                <div className="h-3 bg-gray-200 rounded w-24"></div>
+              </div>
+            ) : (
+              <>
+                <div className="text-3xl text-gray-900">{productionPlans?.length || 0}</div>
+                <p className="text-xs text-gray-500 mt-1">Active in system</p>
+              </>
+            )}
+          </div>
+          <div className="bg-white border border-gray-200 rounded-lg p-6">
+            <div className="flex flex-row items-center justify-between mb-4">
+              <h3 className="text-sm text-gray-600">Ongoing</h3>
+              <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
+                <Calendar className="h-4 w-4 text-green-600" />
+              </div>
+            </div>
+            {isLoading ? (
+              <div className="animate-pulse">
+                <div className="h-8 bg-gray-200 rounded w-16 mb-2"></div>
+                <div className="h-3 bg-gray-200 rounded w-32"></div>
+              </div>
+            ) : (
+              <>
+                <div className="text-3xl text-green-600">
+                  {productionPlans?.filter(p => p.status === "ongoing").length || 0}
+                </div>
+                <p className="text-xs text-gray-500 mt-1">Currently active</p>
+              </>
+            )}
+          </div>
+          <div className="bg-white border border-gray-200 rounded-lg p-6">
+            <div className="flex flex-row items-center justify-between mb-4">
+              <h3 className="text-sm text-gray-600">Completed</h3>
+              <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+                <ClipboardList className="h-4 w-4 text-blue-600" />
+              </div>
+            </div>
+            {isLoading ? (
+              <div className="animate-pulse">
+                <div className="h-8 bg-gray-200 rounded w-16 mb-2"></div>
+                <div className="h-3 bg-gray-200 rounded w-32"></div>
+              </div>
+            ) : (
+              <>
+                <div className="text-3xl text-blue-600">
+                  {productionPlans?.filter(p => p.status === "completed").length || 0}
+                </div>
+                <p className="text-xs text-gray-500 mt-1">Finished plans</p>
+              </>
+            )}
+          </div>
+          <div className="bg-white border border-gray-200 rounded-lg p-6">
+            <div className="flex flex-row items-center justify-between mb-4">
+              <h3 className="text-sm text-gray-600">Total Materials</h3>
+              <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center">
+                <Package className="h-4 w-4 text-purple-600" />
+              </div>
+            </div>
+            {isLoading ? (
+              <div className="animate-pulse">
+                <div className="h-8 bg-gray-200 rounded w-16 mb-2"></div>
+                <div className="h-3 bg-gray-200 rounded w-32"></div>
+              </div>
+            ) : (
+              <>
+                <div className="text-3xl text-purple-600">
+                  {productionPlans?.reduce((total, p) => total + p.raw_products.length, 0) || 0}
+                </div>
+                <p className="text-xs text-gray-500 mt-1">Material requests</p>
+              </>
+            )}
+          </div>
+        </div>
+
+        <div className="border border-gray-200 rounded-lg bg-white">
+          <div className="p-6 pb-0">
+            <div className="text-lg font-light">Production Plans</div>
+          </div>
+          <div className="p-6 space-y-4">
             {isLoading ? (
               <div className="flex items-center justify-center h-64">
                 <div className="flex flex-col items-center space-y-4">
@@ -203,10 +288,11 @@ export default function ProductionPage() {
                 data={productionPlans || []}
                 searchKey="name"
                 searchPlaceholder="Search production plans by name..."
+                showSearch={false}
               />
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         <ProductionPlanFormDrawer 
           open={isDrawerOpen} 

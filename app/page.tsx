@@ -11,12 +11,12 @@ export default function HomePage() {
   const router = useRouter()
 
   return (
-    <SharedLayout title="ProDairy Production Management Portal" subtitle="Choose your dashboard to get started">
+    <SharedLayout title="ProDairy DMS" subtitle="Choose your dashboard to get started">
       <div className="h-screen overflow-hidden flex items-center justify-center bg-white">
         <div className=" w-full px-6">
           <div className="text-center mb-12">
             <h1 className="text-4xl font-bold text-gray-900 mb-4">
-              ProDairy Production Management Portal
+              ProDairy DMS
             </h1>
             <p className="text-xl text-gray-600">
               Choose your dashboard to get started
@@ -25,7 +25,10 @@ export default function HomePage() {
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8 items-stretch justify-items-stretch">
             {/* Admin Dashboard */}
-            <Card className="h-full w-full flex flex-col hover:shadow-xl hover:scale-105 transition-all duration-300 cursor-pointer group border-2 border-transparent hover:border-purple-200">
+            <Card 
+              className="h-full w-full flex flex-col hover:shadow-xl hover:scale-105 transition-all duration-300 cursor-pointer group border-2 border-transparent hover:border-purple-200"
+              onClick={() => router.push('/admin')}
+            >
               <CardHeader className="text-center">
                 <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                   <Users className="h-8 w-8 text-white" />
@@ -41,7 +44,10 @@ export default function HomePage() {
                 </ul>
                 <Button 
                   className="w-full group-hover:bg-purple-600 transition-all duration-300 cursor-pointer hover:scale-105 hover:shadow-lg"
-                  onClick={() => router.push('/admin')}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    router.push('/admin')
+                  }}
                 >
                   Access Admin Dashboard
                   <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform duration-300" />
@@ -50,7 +56,10 @@ export default function HomePage() {
             </Card>
 
             {/* Drivers UI */}
-            <Card className="h-full w-full flex flex-col hover:shadow-xl hover:scale-105 transition-all duration-300 cursor-pointer group border-2 border-transparent hover:border-orange-200">
+            <Card 
+              className="h-full w-full flex flex-col hover:shadow-xl hover:scale-105 transition-all duration-300 cursor-pointer group border-2 border-transparent hover:border-orange-200"
+              onClick={() => router.push('/drivers')}
+            >
               <CardHeader className="text-center">
                 <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                   <Truck className="h-8 w-8 text-white" />
@@ -66,7 +75,10 @@ export default function HomePage() {
                 </ul>
                 <Button 
                   className="w-full group-hover:bg-orange-600 transition-all duration-300 cursor-pointer hover:scale-105 hover:shadow-lg"
-                  onClick={() => router.push('/drivers')}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    router.push('/drivers')
+                  }}
                 >
                   Access Drivers UI
                   <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform duration-300" />
@@ -74,13 +86,16 @@ export default function HomePage() {
               </CardContent>
             </Card>
 
-            {/* Data Capture UI */}
-            <Card className="h-full w-full flex flex-col hover:shadow-xl hover:scale-105 transition-all duration-300 cursor-pointer group border-2 border-transparent hover:border-green-200">
+            {/*Production Processes UI */}
+            <Card 
+              className="h-full w-full flex flex-col hover:shadow-xl hover:scale-105 transition-all duration-300 cursor-pointer group border-2 border-transparent hover:border-green-200"
+              onClick={() => router.push('/data-capture')}
+            >
               <CardHeader className="text-center">
                 <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-green-500 to-lime-600 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                   <ClipboardList className="h-8 w-8 text-white" />
                 </div>
-                <CardTitle className="text-xl">📋 Data Capturers</CardTitle>
+                <CardTitle className="text-xl">📋Production Processes</CardTitle>
               </CardHeader>
               <CardContent className="text-center flex flex-col flex-1">
                 <ul className="text-xs text-gray-500 space-y-1.5 mb-4">
@@ -91,16 +106,22 @@ export default function HomePage() {
                 </ul>
                 <Button 
                   className="w-full group-hover:bg-green-600 transition-all duration-300 cursor-pointer hover:scale-105 hover:shadow-lg"
-                  onClick={() => router.push('/data-capture')}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    router.push('/data-capture')
+                  }}
                 >
-                  Access Data Capture UI
+                  AccessProduction Processes UI
                   <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform duration-300" />
                 </Button>
               </CardContent>
             </Card>
 
             {/* Tools UI */}
-            <Card className="h-full w-full flex flex-col hover:shadow-xl hover:scale-105 transition-all duration-300 cursor-pointer group border-2 border-transparent hover:border-blue-200">
+            <Card 
+              className="h-full w-full flex flex-col hover:shadow-xl hover:scale-105 transition-all duration-300 cursor-pointer group border-2 border-transparent hover:border-blue-200"
+              onClick={() => router.push('/tools')}
+            >
               <CardHeader className="text-center">
                 <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                   <Wrench className="h-8 w-8 text-white" />
@@ -115,7 +136,10 @@ export default function HomePage() {
                 </ul>
                 <Button 
                   className="w-full group-hover:bg-blue-600 transition-all duration-300 cursor-pointer hover:scale-105 hover:shadow-lg"
-                  onClick={() => router.push('/tools')}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    router.push('/tools')
+                  }}
                 >
                   Access Tools
                   <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform duration-300" />

@@ -52,16 +52,27 @@ export interface UserProfile {
 export interface UserRole {
   id: string
   views: string[]
+  dispatch: string | null
   role_name: string
   created_at: string
-  updated_at: string
+  updated_at: string | null
+  incubation: string | null
+  pasteurizing: string | null
+  production_plan: string | null
+  raw_milk_intake: string | null
   role_operations: string[]
   user_operations: string[]
+  raw_milk_lab_test: string | null
   devices_operations: string[]
+  filmatic_operation: string | null
   process_operations: string[]
+  incubation_lab_test: string | null
   supplier_operations: string[]
   silo_item_operations: string[]
+  raw_product_collection: string | null
   machine_item_operations: string[]
+  steri_process_operation: string | null
+  before_and_after_autoclave_lab_test: string | null
 }
 
 export interface ExtendedUserProfile extends UserProfile {

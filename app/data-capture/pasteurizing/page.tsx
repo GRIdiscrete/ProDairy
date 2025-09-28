@@ -136,24 +136,50 @@ export default function PasteurizingPage() {
   const latestForm = Array.isArray(forms) && forms.length > 0 ? forms[0] : null
 
   // Helper functions to get names from IDs
-  const getMachineName = (machineId: string) => {
-    const machine = machines.find(m => m.id === machineId)
-    return machine ? machine.name : `Machine #${machineId.slice(0, 8)}`
+  const getMachineName = (form: any) => {
+    if (form.steri_milk_pasteurizing_form_machine_fkey) {
+      return form.steri_milk_pasteurizing_form_machine_fkey.name
+    }
+    if (form.machine) {
+      const machine = machines.find(m => m.id === form.machine)
+      return machine ? machine.name : `Machine #${form.machine.slice(0, 8)}`
+    }
+    return 'Unknown Machine'
   }
 
-  const getSiloName = (siloId: string) => {
-    const silo = silos.find(s => s.id === siloId)
-    return silo ? silo.name : `Silo #${siloId.slice(0, 8)}`
+  const getSiloName = (form: any) => {
+    if (form.steri_milk_pasteurizing_form_source_silo_fkey) {
+      return form.steri_milk_pasteurizing_form_source_silo_fkey.name
+    }
+    if (form.source_silo) {
+      const silo = silos.find(s => s.id === form.source_silo)
+      return silo ? silo.name : `Silo #${form.source_silo.slice(0, 8)}`
+    }
+    return 'Unknown Silo'
   }
 
-  const getBMTFormInfo = (bmtId: string) => {
-    const bmtForm = bmtForms.find(b => b.id === bmtId)
-    return bmtForm ? {
-      name: `BMT Form #${bmtId.slice(0, 8)}`,
-      product: bmtForm.product,
-      volume: bmtForm.volume
-    } : {
-      name: `BMT #${bmtId.slice(0, 8)}`,
+  const getBMTFormInfo = (form: any) => {
+    if (form.steri_milk_pasteurizing_form_bmt_fkey) {
+      return {
+        name: `BMT Form #${form.bmt?.slice(0, 8) || 'Unknown'}`,
+        product: form.steri_milk_pasteurizing_form_bmt_fkey.product || 'Unknown',
+        volume: form.steri_milk_pasteurizing_form_bmt_fkey.volume
+      }
+    }
+    if (form.bmt) {
+      const bmtForm = bmtForms.find(b => b.id === form.bmt)
+      return bmtForm ? {
+        name: `BMT Form #${form.bmt.slice(0, 8)}`,
+        product: bmtForm.product,
+        volume: bmtForm.volume
+      } : {
+        name: `BMT #${form.bmt.slice(0, 8)}`,
+        product: 'Unknown',
+        volume: 0
+      }
+    }
+    return {
+      name: 'Unknown BMT',
       product: 'Unknown',
       volume: 0
     }
@@ -166,7 +192,7 @@ export default function PasteurizingPage() {
       header: "Form",
       cell: ({ row }: any) => {
         const form = row.original
-        const totalProduction = form.production?.reduce((sum: number, item: any) => sum + item.quantity, 0) || 0
+        const totalProduction = form.production?.reduce((sum: number, item: any) => sum + (item.output_target?.value || 0), 0) || 0
         return (
           <div className="flex items-center space-x-3">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center">
@@ -200,7 +226,7 @@ export default function PasteurizingPage() {
             </div>
             <div className="space-y-1">
               <p className="text-xs text-gray-500">
-                {getMachineName(form.machine)}
+                {getMachineName(form)}
               </p>
               <div className="flex items-center space-x-2">
                 <Badge className="text-xs bg-blue-100 text-blue-800">
@@ -229,7 +255,7 @@ export default function PasteurizingPage() {
             </div>
             <div className="space-y-1">
               <p className="text-xs text-gray-500">
-                {getSiloName(form.source_silo)}
+                {getSiloName(form)}
               </p>
               <div className="flex items-center space-x-2">
                 <Badge className="text-xs bg-green-100 text-green-800">
@@ -246,7 +272,7 @@ export default function PasteurizingPage() {
       header: "Production",
       cell: ({ row }: any) => {
         const form = row.original
-        const totalQuantity = form.production?.reduce((sum: number, item: any) => sum + item.quantity, 0) || 0
+        const totalQuantity = form.production?.reduce((sum: number, item: any) => sum + (item.output_target?.value || 0), 0) || 0
         const avgFat = form.fat || 0
         return (
           <div className="space-y-2">
@@ -420,7 +446,7 @@ export default function PasteurizingPage() {
                     <p className="text-sm font-light text-gray-600">Production</p>
                   </div>
                   <p className="text-lg font-light text-blue-600">
-                    {latestForm.production?.reduce((sum, item) => sum + item.quantity, 0).toFixed(1)}L
+                    {latestForm.production?.reduce((sum, item) => sum + (item.output_target?.value || 0), 0).toFixed(1)}L
                   </p>
                 </div>
                 <div className="space-y-2">
@@ -496,7 +522,7 @@ export default function PasteurizingPage() {
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-light text-gray-600">Total Volume</span>
                       <span className="text-xs font-light text-blue-600">
-                        {latestForm.production?.reduce((sum, item) => sum + item.quantity, 0).toFixed(1)}L
+                        {latestForm.production?.reduce((sum, item) => sum + (item.output_target?.value || 0), 0).toFixed(1)}L
                       </span>
                     </div>
                     <div className="flex items-center justify-between">

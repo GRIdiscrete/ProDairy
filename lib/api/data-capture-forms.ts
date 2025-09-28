@@ -441,6 +441,15 @@ export interface PalletiserSheet {
     updated_at: string
     serial_number: string
   }
+  palletiser_sheet_details_fkey?: {
+    pallet_number: number
+    start_time: string
+    end_time: string
+    cases_packed: number
+    serial_number: string
+    counter_id: string
+    counter_signature: string
+  } | null
 }
 
 export interface PalletiserSheetDetails {
@@ -487,7 +496,10 @@ export interface SterilisedMilkProcess {
   operator_signature: string
   supervisor_id: string
   supervisor_signature: string
+  details?: string | null
+  filmatic_form_id?: string
   // Relationship data
+  sterilised_milk_process_details_fkey?: SterilisedMilkProcessDetails
   sterilised_milk_process_approved_by_fkey?: {
     id: string
     created_at: string
@@ -1189,3 +1201,203 @@ export const updateFillerLog2StripSplice = (data: FillerLog2StripSplice) =>
   apiRequest<FillerLog2StripSplice>('/filler-log-2/strip-splice', { method: 'PATCH', body: JSON.stringify(data) })
 export const deleteFillerLog2StripSplice = (id: string) => 
   apiRequest<void>(`/filler-log-2/strip-splice/${id}`, { method: 'DELETE' })
+
+// Product Incubation APIs
+export interface ProductIncubation {
+  id?: string
+  created_at?: string
+  updated_at?: string
+  approved_by: string
+  product_description: string
+  mnf: string
+  bb: string
+  bn: number
+  incubation_days: number
+  date_in: string
+  expected_date_out: string
+  actual_date_out: string
+  // Relationship data
+  product_incubation_approved_by_fkey?: {
+    id: string
+    views: string[]
+    role_name: string
+    created_at: string
+    updated_at: string
+    role_operations: string[]
+    user_operations: string[]
+    devices_operations: string[]
+    process_operations: string[]
+    supplier_operations: string[]
+    silo_item_operations: string[]
+    machine_item_operations: string[]
+  }
+}
+
+export const getProductIncubations = async () => {
+  try {
+    const res = await apiRequest<any>('/product-incubation')
+    return Array.isArray(res) ? (res as ProductIncubation[]) : ((res?.data ?? []) as ProductIncubation[])
+  } catch (error: any) {
+    console.error('Error fetching product incubations:', error)
+    return []
+  }
+}
+
+export const createProductIncubation = (data: Omit<ProductIncubation, 'id' | 'created_at' | 'updated_at'>) => 
+  apiRequest<ProductIncubation>('/product-incubation', { method: 'POST', body: JSON.stringify(data) })
+export const updateProductIncubation = (data: ProductIncubation) => 
+  apiRequest<ProductIncubation>('/product-incubation', { method: 'PATCH', body: JSON.stringify(data) })
+export const deleteProductIncubation = (id: string) => 
+  apiRequest<void>(`/product-incubation/${id}`, { method: 'DELETE' })
+
+// UHT Quality Check After Incubation APIs
+export interface UHTQualityCheckAfterIncubation {
+  id?: string
+  created_at?: string
+  updated_at?: string
+  date_of_production: string
+  date_analysed: string
+  batch_number: string
+  product: string
+  checked_by: string
+  ph_0_days: number
+  details?: string | null
+  // Relationship data
+  uht_qa_check_after_incubation_details_fkey?: {
+    id: string
+    time: string
+    ph_30_degrees: number
+    ph_55_degrees: number
+    defects: string
+    event: string
+    analyst: string
+    verified_by: string
+    created_at: string
+    updated_at?: string
+    uht_qa_check_after_incubation_id: string
+  } | null
+  uht_qa_check_after_incubation_checked_by_fkey?: {
+    id: string
+    created_at: string
+    first_name: string
+    last_name: string
+    role_id: string
+    department: string
+    email: string
+  }
+}
+
+export interface UHTQualityCheckAfterIncubationDetails {
+  id?: string
+  created_at?: string
+  updated_at?: string
+  uht_qa_check_after_incubation_id: string
+  time: string
+  ph_30_degrees: number
+  ph_55_degrees: number
+  defects: string
+  event: string
+  analyst: string
+  verified_by: string
+  // Relationship data
+  uht_qa_check_after_incubation_details_uht_qa_check_after_incubation_id_fkey?: UHTQualityCheckAfterIncubation
+  uht_qa_check_after_incubation_details_analyst_fkey?: {
+    id: string
+    created_at: string
+    first_name: string
+    last_name: string
+    role_id: string
+    department: string
+    email: string
+  }
+  uht_qa_check_after_incubation_details_verified_by_fkey?: {
+    id: string
+    created_at: string
+    first_name: string
+    last_name: string
+    role_id: string
+    department: string
+    email: string
+  }
+}
+
+export const getUHTQualityCheckAfterIncubations = async () => {
+  try {
+    const res = await apiRequest<any>('/uht-quality-check-after-incubation')
+    return Array.isArray(res) ? (res as UHTQualityCheckAfterIncubation[]) : ((res?.data ?? []) as UHTQualityCheckAfterIncubation[])
+  } catch (error: any) {
+    console.error('Error fetching UHT quality check after incubations:', error)
+    return []
+  }
+}
+
+export const createUHTQualityCheckAfterIncubation = (data: Omit<UHTQualityCheckAfterIncubation, 'id' | 'created_at' | 'updated_at' | 'details'>) => 
+  apiRequest<UHTQualityCheckAfterIncubation>('/uht-quality-check-after-incubation', { method: 'POST', body: JSON.stringify(data) })
+export const updateUHTQualityCheckAfterIncubation = (data: UHTQualityCheckAfterIncubation) => 
+  apiRequest<UHTQualityCheckAfterIncubation>('/uht-quality-check-after-incubation', { method: 'PATCH', body: JSON.stringify(data) })
+export const deleteUHTQualityCheckAfterIncubation = (id: string) => 
+  apiRequest<void>(`/uht-quality-check-after-incubation/${id}`, { method: 'DELETE' })
+
+export const createUHTQualityCheckAfterIncubationDetails = (data: Omit<UHTQualityCheckAfterIncubationDetails, 'id' | 'created_at' | 'updated_at'>) => 
+  apiRequest<UHTQualityCheckAfterIncubationDetails>('/uht-quality-check-after-incubation-details', { method: 'POST', body: JSON.stringify(data) })
+export const updateUHTQualityCheckAfterIncubationDetails = (data: UHTQualityCheckAfterIncubationDetails) => 
+  apiRequest<UHTQualityCheckAfterIncubationDetails>('/uht-quality-check-after-incubation-details', { method: 'PATCH', body: JSON.stringify(data) })
+export const deleteUHTQualityCheckAfterIncubationDetails = (id: string) => 
+  apiRequest<void>(`/uht-quality-check-after-incubation-details/${id}`, { method: 'DELETE' })
+
+// QA Corrective Action Types
+export interface QACorrectiveAction {
+  id?: string
+  created_at?: string
+  updated_at?: string
+  date_of_production: string
+  date_analysed: string
+  batch_number: number
+  product: string
+  checked_by: string
+  issue: string
+  analyst: string
+  qa_decision: string
+  details?: string
+  // Relationship data
+  qa_corrective_action_details_fkey?: QACorrectiveActionDetails
+}
+
+export interface QACorrectiveActionDetails {
+  id?: string
+  created_at?: string
+  updated_at?: string
+  qa_corrective_action_id: string
+  ph_after_7_days_at_30_degrees: number
+  packaging_integrity: string
+  defects: string
+}
+
+// QA Corrective Action API functions
+export const getQACorrectiveActions = async () => {
+  try {
+    const res = await apiRequest<any>('/qa-corrective-action')
+    return Array.isArray(res) ? (res as QACorrectiveAction[]) : ((res?.data ?? []) as QACorrectiveAction[])
+  } catch (error: any) {
+    console.error('Error fetching QA corrective actions:', error)
+    return []
+  }
+}
+
+export const createQACorrectiveAction = (data: Omit<QACorrectiveAction, 'id' | 'created_at' | 'updated_at' | 'details'>) => 
+  apiRequest<QACorrectiveAction>('/qa-corrective-action', { method: 'POST', body: JSON.stringify(data) })
+
+export const updateQACorrectiveAction = (data: QACorrectiveAction) => 
+  apiRequest<QACorrectiveAction>('/qa-corrective-action', { method: 'PATCH', body: JSON.stringify(data) })
+
+export const deleteQACorrectiveAction = (id: string) => 
+  apiRequest<void>(`/qa-corrective-action/${id}`, { method: 'DELETE' })
+
+export const createQACorrectiveActionDetails = (data: Omit<QACorrectiveActionDetails, 'id' | 'created_at' | 'updated_at'>) => 
+  apiRequest<QACorrectiveActionDetails>('/qa-corrective-action-details', { method: 'POST', body: JSON.stringify(data) })
+
+export const updateQACorrectiveActionDetails = (data: QACorrectiveActionDetails) => 
+  apiRequest<QACorrectiveActionDetails>('/qa-corrective-action-details', { method: 'PATCH', body: JSON.stringify(data) })
+
+export const deleteQACorrectiveActionDetails = (id: string) => 
+  apiRequest<void>(`/qa-corrective-action-details/${id}`, { method: 'DELETE' })

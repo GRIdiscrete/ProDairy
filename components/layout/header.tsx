@@ -1,8 +1,8 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { useRouter, usePathname } from "next/navigation"
-import { Search, Bell, MapPin, ChevronDown, LogOut, User, Settings, HelpCircle, Users, Truck, ClipboardList, Wrench } from "lucide-react"
+import { Search, Bell, MapPin, ChevronDown, LogOut, User, Settings, HelpCircle, Users, Truck, ClipboardList, Wrench, ArrowRight } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -15,6 +15,19 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
 import { useAppDispatch, useAppSelector } from "@/lib/store"
 import { logoutUser } from "@/lib/store/slices/authSlice"
 import { motion, AnimatePresence } from "framer-motion"
@@ -32,6 +45,8 @@ export function Header({ title = "Dashboard", subtitle = "Welcome back!" }: Head
   const pathname = usePathname()
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false)
   const [isClient, setIsClient] = useState(false)
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState("")
 
   // Prevent hydration mismatch
   useEffect(() => {
@@ -63,7 +78,7 @@ export function Header({ title = "Dashboard", subtitle = "Welcome back!" }: Head
     },
     {
       id: "data-capture",
-      name: "Data Capture",
+      name: "Production Processes",
       icon: ClipboardList,
       path: "/data-capture",
       emoji: "📋",
@@ -79,6 +94,69 @@ export function Header({ title = "Dashboard", subtitle = "Welcome back!" }: Head
     }
   ]
 
+  // Comprehensive route list for search
+  const allRoutes = [
+    // Admin Routes
+    { path: "/admin", title: "Admin Dashboard", category: "Admin", icon: Users, description: "System administration and management" },
+    { path: "/admin/users", title: "Users Management", category: "Admin", icon: Users, description: "Manage system users and permissions" },
+    { path: "/admin/roles", title: "Roles Management", category: "Admin", icon: Users, description: "Manage user roles and access levels" },
+    { path: "/admin/machines", title: "Machines", category: "Admin", icon: Wrench, description: "Machine configuration and management" },
+    { path: "/admin/silos", title: "Silos", category: "Admin", icon: Wrench, description: "Silo configuration and management" },
+    { path: "/admin/tankers", title: "Tankers", category: "Admin", icon: Truck, description: "Tanker fleet management" },
+    { path: "/admin/devices", title: "Devices", category: "Admin", icon: Wrench, description: "Device configuration and monitoring" },
+    { path: "/admin/suppliers", title: "Suppliers", category: "Admin", icon: Users, description: "Supplier management and contacts" },
+    { path: "/admin/materials", title: "Materials", category: "Admin", icon: ClipboardList, description: "Raw materials inventory" },
+    { path: "/admin/production-plan", title: "Production Plan", category: "Admin", icon: ClipboardList, description: "Production planning and scheduling" },
+    { path: "/admin/processes", title: "Processes", category: "Admin", icon: ClipboardList, description: "Process configuration and management" },
+    { path: "/admin/filmatic-lines-groups", title: "Filmatic Lines Groups", category: "Admin", icon: ClipboardList, description: "Filmatic lines configuration" },
+
+    // Drivers Routes
+    { path: "/drivers", title: "Drivers Dashboard", category: "Drivers", icon: Truck, description: "Driver tools and delivery management" },
+    { path: "/drivers/forms", title: "Driver Forms", category: "Drivers", icon: ClipboardList, description: "Driver form submissions and management" },
+    { path: "/drivers/tools", title: "Driver Tools", category: "Drivers", icon: Wrench, description: "Driver utility tools" },
+
+    // Data Capture Routes
+    { path: "/data-capture", title: "Data Capture Dashboard", category: "Data Capture", icon: ClipboardList, description: "Data entry and laboratory management" },
+    { path: "/data-capture/kanban", title: "Process Kanban", category: "Data Capture", icon: ClipboardList, description: "Process workflow management" },
+    { path: "/data-capture/process-log", title: "Process Log", category: "Data Capture", icon: ClipboardList, description: "Process logging and tracking" },
+    { path: "/data-capture/pasteurizing", title: "Pasteurizing", category: "Data Capture", icon: ClipboardList, description: "Pasteurization process management" },
+    { path: "/data-capture/sterilised-milk-process", title: "Sterilised Milk Process", category: "Data Capture", icon: ClipboardList, description: "Sterilized milk processing" },
+    { path: "/data-capture/standardizing", title: "Standardizing", category: "Data Capture", icon: ClipboardList, description: "Milk standardization process" },
+    { path: "/data-capture/raw-milk-intake", title: "Raw Milk Intake", category: "Data Capture", icon: ClipboardList, description: "Raw milk intake management" },
+    { path: "/data-capture/filmatic-lines", title: "Filmatic Lines", category: "Data Capture", icon: ClipboardList, description: "Filmatic lines processing" },
+    { path: "/data-capture/flex-one-steriliser-process", title: "Flex One Steriliser Process", category: "Data Capture", icon: ClipboardList, description: "Flex sterilizer process management" },
+    { path: "/data-capture/palletiser-sheet", title: "Palletiser Sheet", category: "Data Capture", icon: ClipboardList, description: "Palletizing process management" },
+    { path: "/data-capture/filler-log-2", title: "Filler Log 2", category: "Data Capture", icon: ClipboardList, description: "Filler log management" },
+    { path: "/data-capture/lab-forms", title: "Lab Forms", category: "Data Capture", icon: ClipboardList, description: "Laboratory form management" },
+    { path: "/data-capture/operator-forms", title: "Operator Forms", category: "Data Capture", icon: ClipboardList, description: "Operator form submissions" },
+    { path: "/data-capture/ui", title: "Data Capture UI", category: "Data Capture", icon: ClipboardList, description: "Data capture user interface" },
+    { path: "/data-capture/forms", title: "Forms", category: "Data Capture", icon: ClipboardList, description: "Form management and submissions" },
+    { path: "/data-capture/forms/example", title: "Example Form", category: "Data Capture", icon: ClipboardList, description: "Example form template" },
+
+    // Tools Routes
+    { path: "/tools", title: "Tools Dashboard", category: "Tools", icon: Wrench, description: "Utilities for transfers and cleaning" },
+    { path: "/tools/bmt-control-form", title: "BMT Control Form", category: "Tools", icon: Wrench, description: "Bulk Milk Transfer control" },
+    { path: "/tools/cip-control-form", title: "CIP Control Form", category: "Tools", icon: Wrench, description: "Clean In Place control" },
+    { path: "/tools/ist-control-form", title: "IST Control Form", category: "Tools", icon: Wrench, description: "IST control management" },
+
+    // Other Routes
+    { path: "/profile", title: "Profile", category: "Account", icon: User, description: "User profile management" },
+    { path: "/login", title: "Login", category: "Account", icon: User, description: "User authentication" },
+  ]
+
+  // Filter routes based on search query
+  const filteredRoutes = useMemo(() => {
+    if (!searchQuery.trim()) return allRoutes.slice(0, 10) // Show first 10 by default
+    
+    const query = searchQuery.toLowerCase()
+    return allRoutes.filter(route => 
+      route.title.toLowerCase().includes(query) ||
+      route.description.toLowerCase().includes(query) ||
+      route.category.toLowerCase().includes(query) ||
+      route.path.toLowerCase().includes(query)
+    )
+  }, [searchQuery])
+
   // Get current dashboard based on pathname
   const getCurrentDashboard = () => {
     if (pathname.startsWith("/admin")) return dashboards[0]
@@ -92,6 +170,12 @@ export function Header({ title = "Dashboard", subtitle = "Welcome back!" }: Head
 
   const handleDashboardSwitch = (dashboardPath: string) => {
     router.push(dashboardPath)
+  }
+
+  const handleRouteSelect = (routePath: string) => {
+    router.push(routePath)
+    setSearchOpen(false)
+    setSearchQuery("")
   }
 
   return (
@@ -158,11 +242,58 @@ export function Header({ title = "Dashboard", subtitle = "Welcome back!" }: Head
         {/* Center: Search (desktop) */}
         <div className="hidden md:block flex-1 px-6">
           <div className="relative mx-auto w-full max-w-md">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
-            <Input
-              placeholder="Search telemetry, batches, users…"
-              className="w-full rounded-xl border-zinc-200 bg-white pl-9 pr-3 text-sm font-light placeholder:text-zinc-400 focus:border-lime-400 focus:ring-2 focus:ring-blue-500/30"
-            />
+            <Popover open={searchOpen} onOpenChange={setSearchOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={searchOpen}
+                  className="w-full justify-start text-left font-normal h-10 border-zinc-200 bg-white hover:bg-zinc-50 focus:border-lime-400 focus:ring-2 focus:ring-blue-500/30"
+                >
+                  <Search className="mr-2 h-4 w-4 text-zinc-400" />
+                  <span className="text-zinc-400">
+                    {searchQuery ? `Searching for "${searchQuery}"` : "Search all pages..."}
+                  </span>
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[400px] p-0" align="start">
+                <Command>
+                  <CommandInput
+                    placeholder="Search pages, modules, features..."
+                    value={searchQuery}
+                    onValueChange={setSearchQuery}
+                    className="h-9"
+                  />
+                  <CommandList>
+                    <CommandEmpty>No pages found.</CommandEmpty>
+                    {filteredRoutes.length > 0 && (
+                      <CommandGroup>
+                        {filteredRoutes.map((route) => (
+                          <CommandItem
+                            key={route.path}
+                            value={route.path}
+                            onSelect={() => handleRouteSelect(route.path)}
+                            className="flex items-center gap-3 p-3 cursor-pointer"
+                          >
+                            <route.icon className="h-4 w-4 text-zinc-500" />
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2">
+                                <span className="font-medium">{route.title}</span>
+                                <Badge variant="secondary" className="text-xs">
+                                  {route.category}
+                                </Badge>
+                              </div>
+                              <p className="text-xs text-zinc-500 mt-1">{route.description}</p>
+                            </div>
+                            <ArrowRight className="h-4 w-4 text-zinc-400" />
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    )}
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
           </div>
         </div>
 
@@ -296,13 +427,35 @@ export function Header({ title = "Dashboard", subtitle = "Welcome back!" }: Head
               </div>
               
               {/* Mobile Search */}
-              <div className="relative">
-                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
-                <Input
-                  autoFocus
-                  placeholder="Search telemetry, batches, users…"
-                  className="w-full rounded-xl border-zinc-200 bg-white pl-9 pr-3 text-sm font-light placeholder:text-zinc-400 focus:border-lime-400 focus:ring-2 focus:ring-blue-500/30"
-                />
+              <div className="space-y-2">
+                <p className="text-xs font-medium text-zinc-500 uppercase tracking-wide">Search Pages</p>
+                <div className="space-y-2 max-h-60 overflow-y-auto">
+                  {filteredRoutes.slice(0, 8).map((route) => (
+                    <Button
+                      key={route.path}
+                      variant="outline"
+                      onClick={() => {
+                        handleRouteSelect(route.path)
+                        setMobileSearchOpen(false)
+                      }}
+                      className="w-full justify-start h-auto p-3"
+                    >
+                      <div className="flex items-center gap-3 w-full">
+                        <route.icon className="h-4 w-4 text-zinc-500" />
+                        <div className="text-left flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium text-sm">{route.title}</span>
+                            <Badge variant="secondary" className="text-xs">
+                              {route.category}
+                            </Badge>
+                          </div>
+                          <p className="text-xs text-zinc-500 mt-1">{route.description}</p>
+                        </div>
+                        <ArrowRight className="h-4 w-4 text-zinc-400" />
+                      </div>
+                    </Button>
+                  ))}
+                </div>
               </div>
             </div>
           </motion.div>

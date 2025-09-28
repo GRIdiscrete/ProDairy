@@ -51,7 +51,7 @@ export function PasteurizingFormViewDrawer({
     setAnimationProgress(0)
   }
 
-  const totalProduction = form.production?.reduce((sum, item) => sum + item.quantity, 0) || 0
+  const totalProduction = form.production?.reduce((sum, item) => sum + (item.output_target?.value || 0), 0) || 0
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -108,7 +108,7 @@ export function PasteurizingFormViewDrawer({
                 <div>
                   <h2 className="text-xl font-light text-gray-900">Pasteurizing Form</h2>
                   <div className="flex items-center space-x-2 mt-1">
-                    <span className="text-sm text-gray-500">#{form.id.slice(0, 8)}</span>
+                    <span className="text-sm text-gray-500">#{String(form.id).slice(0, 8)}</span>
                     <CopyButton text={form.id} />
                     <Badge className="bg-blue-100 text-blue-800">Active</Badge>
                   </div>
@@ -190,7 +190,7 @@ export function PasteurizingFormViewDrawer({
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-600">Machine ID</span>
                     <div className="flex items-center space-x-2">
-                      <span className="text-sm font-light">#{form.machine.slice(0, 8)}</span>
+                      <span className="text-sm font-light">#{String(form.machine).slice(0, 8)}</span>
                       <CopyButton text={form.machine} />
                     </div>
                   </div>
@@ -212,7 +212,7 @@ export function PasteurizingFormViewDrawer({
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-600">Silo ID</span>
                     <div className="flex items-center space-x-2">
-                      <span className="text-sm font-light">#{form.source_silo.slice(0, 8)}</span>
+                      <span className="text-sm font-light">#{String(form.source_silo).slice(0, 8)}</span>
                       <CopyButton text={form.source_silo} />
                     </div>
                   </div>
@@ -234,7 +234,7 @@ export function PasteurizingFormViewDrawer({
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-600">BMT ID</span>
                     <div className="flex items-center space-x-2">
-                      <span className="text-sm font-light">#{form.bmt.slice(0, 8)}</span>
+                      <span className="text-sm font-light">#{String(form.bmt).slice(0, 8)}</span>
                       <CopyButton text={form.bmt} />
                     </div>
                   </div>
@@ -328,17 +328,45 @@ export function PasteurizingFormViewDrawer({
                       </div>
                       <h4 className="text-sm font-medium text-gray-900">Production Entry {index + 1}</h4>
                     </div>
-                    <Badge className="bg-blue-100 text-blue-800">{item.quantity}L</Badge>
+                    <Badge className="bg-blue-100 text-blue-800">
+                      {item.output_target?.value || 0}{item.output_target?.unit_of_measure || 'L'}
+                    </Badge>
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <span className="text-xs text-gray-500">Product</span>
-                      <p className="text-sm font-light text-gray-900">{item.product}</p>
+                      <span className="text-xs text-gray-500">Time</span>
+                      <p className="text-sm font-light text-gray-900">{item.time}</p>
                     </div>
                     <div className="space-y-2">
-                      <span className="text-xs text-gray-500">Quantity</span>
-                      <p className="text-sm font-light text-gray-900">{item.quantity}L</p>
+                      <span className="text-xs text-gray-500">Hot Water Temp</span>
+                      <p className="text-sm font-light text-gray-900">{item.temp_hot_water}°C</p>
+                    </div>
+                    <div className="space-y-2">
+                      <span className="text-xs text-gray-500">Pasteurisation Temp</span>
+                      <p className="text-sm font-light text-gray-900">{item.temp_product_pasteurisation}°C</p>
+                    </div>
+                    <div className="space-y-2">
+                      <span className="text-xs text-gray-500">Stage 1 Pressure</span>
+                      <p className="text-sm font-light text-gray-900">{item.homogenisation_pressure_stage_1} bar</p>
+                    </div>
+                    <div className="space-y-2">
+                      <span className="text-xs text-gray-500">Stage 2 Pressure</span>
+                      <p className="text-sm font-light text-gray-900">{item.homogenisation_pressure_stage_2} bar</p>
+                    </div>
+                    <div className="space-y-2">
+                      <span className="text-xs text-gray-500">Total Pressure</span>
+                      <p className="text-sm font-light text-gray-900">{item.total_homogenisation_pressure} bar</p>
+                    </div>
+                    <div className="space-y-2">
+                      <span className="text-xs text-gray-500">Product Out Temp</span>
+                      <p className="text-sm font-light text-gray-900">{item.temperature_product_out}°C</p>
+                    </div>
+                    <div className="space-y-2">
+                      <span className="text-xs text-gray-500">Output Target</span>
+                      <p className="text-sm font-light text-gray-900">
+                        {item.output_target?.value || 0} {item.output_target?.unit_of_measure || 'L'}
+                      </p>
                     </div>
                   </div>
                 </div>
