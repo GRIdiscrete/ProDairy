@@ -74,11 +74,10 @@ export default function SilosPage() {
       type: "select" as const,
       placeholder: "Select category",
       options: [
-        { label: "Milk Storage Tanks", value: "Milk Storage Tanks" },
-        { label: "Cooling Silos", value: "Cooling Silos" },
-        { label: "Processing Tanks", value: "Processing Tanks" },
-        { label: "Buffer Tanks", value: "Buffer Tanks" },
-        { label: "Fermentation Tanks", value: "Fermentation Tanks" }
+        { label: "Raw Milk", value: "Raw Milk" },
+        { label: "Standardized", value: "Standardized" },
+        { label: "Pasteurized", value: "Pasteurized" },
+        { label: "Holding", value: "Holding" }
       ]
     },
     {
@@ -166,12 +165,12 @@ export default function SilosPage() {
         }
         return (
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#4f46e5] to-[#7c3aed] flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-gray-500 to-gray-700 flex items-center justify-center">
               <Database className="w-4 h-4 text-white" />
             </div>
             <div>
               <div className="flex items-center space-x-2">
-                <span className="font-medium">{silo.name}</span>
+                <span className="font-light">{silo.name}</span>
                 <Badge className={getStatusColor()}>{silo.status}</Badge>
               </div>
               <p className="text-sm text-gray-500 mt-1">Serial: {silo.serial_number} • {silo.category}</p>
@@ -187,7 +186,7 @@ export default function SilosPage() {
         const silo = row.original
         return (
           <div className="space-y-1">
-            <p className="text-sm font-medium">{silo.location}</p>
+            <p className="text-sm font-light">{silo.location}</p>
             <p className="text-xs text-gray-500">{silo.category}</p>
           </div>
         )
@@ -202,7 +201,7 @@ export default function SilosPage() {
         return (
           <div className="space-y-1">
             <div className="flex items-center space-x-2">
-              <span className="text-sm font-medium">{silo.capacity.toLocaleString()}L</span>
+              <span className="text-sm font-light">{silo.capacity.toLocaleString()}L</span>
               <Badge variant="outline" className={fillPercentage > 80 ? "text-red-600" : fillPercentage > 60 ? "text-yellow-600" : "text-green-600"}>
                 {fillPercentage.toFixed(1)}%
               </Badge>
@@ -219,7 +218,7 @@ export default function SilosPage() {
         const silo = row.original
         return (
           <div className="space-y-1">
-            <p className="text-sm font-medium">{new Date(silo.created_at).toLocaleDateString()}</p>
+            <p className="text-sm font-light">{new Date(silo.created_at).toLocaleDateString()}</p>
             <p className="text-xs text-gray-500">Updated: {new Date(silo.updated_at).toLocaleDateString()}</p>
           </div>
         )
@@ -232,10 +231,10 @@ export default function SilosPage() {
         const silo = row.original
         return (
           <div className="flex space-x-2">
-            <LoadingButton variant="outline" size="sm" onClick={() => handleViewSilo(silo)}>
+            <LoadingButton variant="outline" size="sm" onClick={() => handleViewSilo(silo)} className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full">
               <Eye className="w-4 h-4" />
             </LoadingButton>
-            <LoadingButton variant="outline" size="sm" onClick={() => handleEditSilo(silo)}>
+            <LoadingButton variant="outline" size="sm" onClick={() => handleEditSilo(silo)} className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 rounded-full">
               <Settings className="w-4 h-4" />
             </LoadingButton>
             <LoadingButton 
@@ -244,6 +243,7 @@ export default function SilosPage() {
               onClick={() => handleDeleteSilo(silo)}
               loading={operationLoading.delete}
               disabled={operationLoading.delete}
+              className="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white border-0 rounded-full"
             >
               <Trash2 className="w-4 h-4" />
             </LoadingButton>
@@ -258,10 +258,10 @@ export default function SilosPage() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Silo Configuration</h1>
-            <p className="text-muted-foreground">Manage and configure storage silos</p>
+            <h1 className="text-3xl font-light text-foreground">Silo Configuration</h1>
+            <p className="text-sm font-light text-muted-foreground">Manage and configure storage silos</p>
           </div>
-          <LoadingButton onClick={handleAddSilo}>
+          <LoadingButton onClick={handleAddSilo} className="bg-gradient-to-r from-gray-500 to-gray-700 hover:from-gray-600 hover:to-gray-800 text-white border-0 rounded-full px-6 py-2 font-light">
             <Plus className="mr-2 h-4 w-4" />
             Add Silo
           </LoadingButton>
@@ -269,95 +269,95 @@ export default function SilosPage() {
 
         {/* Counter Widgets with Icons */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Silos</CardTitle>
-              <Database className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              {operationLoading.fetch ? (
-                <div className="animate-pulse">
-                  <div className="h-8 bg-gray-200 rounded w-16 mb-1"></div>
-                  <div className="h-3 bg-gray-200 rounded w-24"></div>
+          <div className="bg-white border border-gray-200 rounded-lg p-6">
+            <div className="flex flex-row items-center justify-between mb-4">
+              <h3 className="text-sm text-gray-600">Total Silos</h3>
+              <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+                <Database className="h-4 w-4 text-gray-500" />
+              </div>
+            </div>
+            {operationLoading.fetch ? (
+              <div className="animate-pulse">
+                <div className="h-8 bg-gray-200 rounded w-16 mb-2"></div>
+                <div className="h-3 bg-gray-200 rounded w-24"></div>
+              </div>
+            ) : (
+              <>
+                <div className="text-3xl text-gray-900">{silos.length}</div>
+                <p className="text-xs text-gray-500 mt-1">Active in system</p>
+              </>
+            )}
+          </div>
+          <div className="bg-white border border-gray-200 rounded-lg p-6">
+            <div className="flex flex-row items-center justify-between mb-4">
+              <h3 className="text-sm text-gray-600">Active</h3>
+              <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
+                <Activity className="h-4 w-4 text-green-600" />
+              </div>
+            </div>
+            {operationLoading.fetch ? (
+              <div className="animate-pulse">
+                <div className="h-8 bg-gray-200 rounded w-16 mb-2"></div>
+                <div className="h-3 bg-gray-200 rounded w-32"></div>
+              </div>
+            ) : (
+              <>
+                <div className="text-3xl text-green-600">
+                  {silos.filter((s) => s.status === "active").length}
                 </div>
-              ) : (
-                <>
-                  <div className="text-2xl font-bold">{silos.length}</div>
-                  <p className="text-xs text-muted-foreground">Storage units</p>
-                </>
-              )}
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Active</CardTitle>
-              <Activity className="h-4 w-4 text-green-600" />
-            </CardHeader>
-            <CardContent>
-              {operationLoading.fetch ? (
-                <div className="animate-pulse">
-                  <div className="h-8 bg-gray-200 rounded w-16 mb-1"></div>
-                  <div className="h-3 bg-gray-200 rounded w-32"></div>
+                <p className="text-xs text-gray-500 mt-1">Currently active</p>
+              </>
+            )}
+          </div>
+          <div className="bg-white border border-gray-200 rounded-lg p-6">
+            <div className="flex flex-row items-center justify-between mb-4">
+              <h3 className="text-sm text-gray-600">Total Capacity</h3>
+              <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+                <Gauge className="h-4 w-4 text-blue-600" />
+              </div>
+            </div>
+            {operationLoading.fetch ? (
+              <div className="animate-pulse">
+                <div className="h-8 bg-gray-200 rounded w-16 mb-2"></div>
+                <div className="h-3 bg-gray-200 rounded w-32"></div>
+              </div>
+            ) : (
+              <>
+                <div className="text-3xl text-blue-600">
+                  {silos.reduce((total, s) => total + s.capacity, 0).toLocaleString()}L
                 </div>
-              ) : (
-                <>
-                  <div className="text-2xl font-bold text-green-600">
-                    {silos.filter((s) => s.status === "active").length}
-                  </div>
-                  <p className="text-xs text-muted-foreground">Currently active</p>
-                </>
-              )}
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Capacity</CardTitle>
-              <Gauge className="h-4 w-4 text-blue-600" />
-            </CardHeader>
-            <CardContent>
-              {operationLoading.fetch ? (
-                <div className="animate-pulse">
-                  <div className="h-8 bg-gray-200 rounded w-16 mb-1"></div>
-                  <div className="h-3 bg-gray-200 rounded w-32"></div>
+                <p className="text-xs text-gray-500 mt-1">Storage capacity</p>
+              </>
+            )}
+          </div>
+          <div className="bg-white border border-gray-200 rounded-lg p-6">
+            <div className="flex flex-row items-center justify-between mb-4">
+              <h3 className="text-sm text-gray-600">Current Volume</h3>
+              <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center">
+                <Wrench className="h-4 w-4 text-purple-600" />
+              </div>
+            </div>
+            {operationLoading.fetch ? (
+              <div className="animate-pulse">
+                <div className="h-8 bg-gray-200 rounded w-16 mb-2"></div>
+                <div className="h-3 bg-gray-200 rounded w-32"></div>
+              </div>
+            ) : (
+              <>
+                <div className="text-3xl text-purple-600">
+                  {silos.reduce((total, s) => total + s.milk_volume, 0).toLocaleString()}L
                 </div>
-              ) : (
-                <>
-                  <div className="text-2xl font-bold text-blue-600">
-                    {silos.reduce((total, s) => total + s.capacity, 0).toLocaleString()}L
-                  </div>
-                  <p className="text-xs text-muted-foreground">Storage capacity</p>
-                </>
-              )}
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Current Volume</CardTitle>
-              <Wrench className="h-4 w-4 text-purple-600" />
-            </CardHeader>
-            <CardContent>
-              {operationLoading.fetch ? (
-                <div className="animate-pulse">
-                  <div className="h-8 bg-gray-200 rounded w-16 mb-1"></div>
-                  <div className="h-3 bg-gray-200 rounded w-32"></div>
-                </div>
-              ) : (
-                <>
-                  <div className="text-2xl font-bold text-purple-600">
-                    {silos.reduce((total, s) => total + s.milk_volume, 0).toLocaleString()}L
-                  </div>
-                  <p className="text-xs text-muted-foreground">Milk stored</p>
-                </>
-              )}
-            </CardContent>
-          </Card>
+                <p className="text-xs text-gray-500 mt-1">Milk stored</p>
+              </>
+            )}
+          </div>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Silos</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
+        <div className="border border-gray-200 rounded-lg bg-white">
+          <div className="p-6 pb-0">
+            <div className="text-lg font-light">Silos</div>
+          </div>
+          <div className="p-6 space-y-4">
             <DataTableFilters
               filters={tableFilters}
               onFiltersChange={setTableFilters}
@@ -380,8 +380,8 @@ export default function SilosPage() {
                 showSearch={false}
               />
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Form Drawer */}
         <SiloFormDrawer 

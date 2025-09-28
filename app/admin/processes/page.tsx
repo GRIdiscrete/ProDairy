@@ -46,17 +46,19 @@ export default function ProcessPage() {
   const columns = [
     {
       accessorKey: "name",
-      header: "Process Name",
+      header: "Process",
       cell: ({ row }: any) => {
         const process = row.original as Process
         return (
-          <div className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center">
-              <Settings className="h-4 w-4 text-primary" />
+          <div className="flex items-center space-x-3">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-gray-500 to-gray-700 flex items-center justify-center">
+              <Settings className="w-4 h-4 text-white" />
             </div>
             <div>
-              <p className="font-medium text-sm">{process.name}</p>
-              <p className="text-muted-foreground text-xs">ID: {process.id.slice(0, 8)}...</p>
+              <div className="flex items-center space-x-2">
+                <span className="font-light">{process.name}</span>
+              </div>
+              <p className="text-sm text-gray-500 mt-1">ID: {process.id.slice(0, 8)}...</p>
             </div>
           </div>
         )
@@ -68,9 +70,9 @@ export default function ProcessPage() {
       cell: ({ row }: any) => {
         const process = row.original as Process
         return (
-          <div className="flex items-center gap-2">
-            <Package className="w-4 h-4 text-muted-foreground" />
-            <span className="text-sm">{process.raw_material_ids.length} materials</span>
+          <div className="space-y-1">
+            <p className="text-sm font-light">{process.raw_material_ids.length} materials</p>
+            <p className="text-xs text-gray-500">Material assignments</p>
           </div>
         )
       },
@@ -81,9 +83,10 @@ export default function ProcessPage() {
       cell: ({ row }: any) => {
         const process = row.original as Process
         return (
-          <span className="text-sm">
-            {new Date(process.created_at).toLocaleDateString()}
-          </span>
+          <div className="space-y-1">
+            <p className="text-sm font-light">{new Date(process.created_at).toLocaleDateString()}</p>
+            <p className="text-xs text-gray-500">Process created</p>
+          </div>
         )
       },
     },
@@ -93,14 +96,18 @@ export default function ProcessPage() {
       cell: ({ row }: any) => {
         const process = row.original as Process
         return (
-          <span className="text-sm">
-            {process.updated_at ? new Date(process.updated_at).toLocaleDateString() : 'Never'}
-          </span>
+          <div className="space-y-1">
+            <p className="text-sm font-light">
+              {process.updated_at ? new Date(process.updated_at).toLocaleDateString() : 'Never'}
+            </p>
+            <p className="text-xs text-gray-500">Last modified</p>
+          </div>
         )
       },
     },
     {
       id: "actions",
+      header: "Actions",
       cell: ({ row }: any) => {
         const process = row.original as Process
         return (
@@ -109,6 +116,7 @@ export default function ProcessPage() {
               variant="outline" 
               size="sm" 
               onClick={() => handleViewProcess(process)}
+              className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full"
             >
               <Eye className="w-4 h-4" />
             </LoadingButton>
@@ -116,6 +124,7 @@ export default function ProcessPage() {
               variant="outline" 
               size="sm" 
               onClick={() => handleEditProcess(process)}
+              className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 rounded-full"
             >
               <Settings className="w-4 h-4" />
             </LoadingButton>
@@ -132,20 +141,106 @@ export default function ProcessPage() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Manufacturing Processes</h1>
-            <p className="text-muted-foreground">Manage and configure manufacturing processes</p>
+            <h1 className="text-3xl font-light text-foreground">Manufacturing Processes</h1>
+            <p className="text-sm font-light text-muted-foreground">Manage and configure manufacturing processes</p>
           </div>
-          <LoadingButton onClick={handleAddProcess} loading={isLoading}>
+          <LoadingButton onClick={handleAddProcess} loading={isLoading} className="bg-gradient-to-r from-gray-500 to-gray-700 hover:from-gray-600 hover:to-gray-800 text-white border-0 rounded-full px-6 py-2 font-light">
             <Plus className="mr-2 h-4 w-4" />
             Add Process
           </LoadingButton>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Processes</CardTitle>
-          </CardHeader>
-          <CardContent>
+        {/* Counter Widgets with Icons */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="bg-white border border-gray-200 rounded-lg p-6">
+            <div className="flex flex-row items-center justify-between mb-4">
+              <h3 className="text-sm text-gray-600">Total Processes</h3>
+              <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+                <Settings className="h-4 w-4 text-gray-500" />
+              </div>
+            </div>
+            {isLoading ? (
+              <div className="animate-pulse">
+                <div className="h-8 bg-gray-200 rounded w-16 mb-2"></div>
+                <div className="h-3 bg-gray-200 rounded w-24"></div>
+              </div>
+            ) : (
+              <>
+                <div className="text-3xl text-gray-900">{processes?.length || 0}</div>
+                <p className="text-xs text-gray-500 mt-1">Active in system</p>
+              </>
+            )}
+          </div>
+          <div className="bg-white border border-gray-200 rounded-lg p-6">
+            <div className="flex flex-row items-center justify-between mb-4">
+              <h3 className="text-sm text-gray-600">With Materials</h3>
+              <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+                <Package className="h-4 w-4 text-blue-600" />
+              </div>
+            </div>
+            {isLoading ? (
+              <div className="animate-pulse">
+                <div className="h-8 bg-gray-200 rounded w-16 mb-2"></div>
+                <div className="h-3 bg-gray-200 rounded w-32"></div>
+              </div>
+            ) : (
+              <>
+                <div className="text-3xl text-blue-600">
+                  {processes?.filter(p => p.raw_material_ids.length > 0).length || 0}
+                </div>
+                <p className="text-xs text-gray-500 mt-1">Have raw materials</p>
+              </>
+            )}
+          </div>
+          <div className="bg-white border border-gray-200 rounded-lg p-6">
+            <div className="flex flex-row items-center justify-between mb-4">
+              <h3 className="text-sm text-gray-600">Total Materials</h3>
+              <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
+                <Package className="h-4 w-4 text-green-600" />
+              </div>
+            </div>
+            {isLoading ? (
+              <div className="animate-pulse">
+                <div className="h-8 bg-gray-200 rounded w-16 mb-2"></div>
+                <div className="h-3 bg-gray-200 rounded w-32"></div>
+              </div>
+            ) : (
+              <>
+                <div className="text-3xl text-green-600">
+                  {processes?.reduce((total, p) => total + p.raw_material_ids.length, 0) || 0}
+                </div>
+                <p className="text-xs text-gray-500 mt-1">Material assignments</p>
+              </>
+            )}
+          </div>
+          <div className="bg-white border border-gray-200 rounded-lg p-6">
+            <div className="flex flex-row items-center justify-between mb-4">
+              <h3 className="text-sm text-gray-600">Recently Updated</h3>
+              <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center">
+                <Settings className="h-4 w-4 text-purple-600" />
+              </div>
+            </div>
+            {isLoading ? (
+              <div className="animate-pulse">
+                <div className="h-8 bg-gray-200 rounded w-16 mb-2"></div>
+                <div className="h-3 bg-gray-200 rounded w-32"></div>
+              </div>
+            ) : (
+              <>
+                <div className="text-3xl text-purple-600">
+                  {processes?.filter(p => p.updated_at && new Date(p.updated_at) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)).length || 0}
+                </div>
+                <p className="text-xs text-gray-500 mt-1">This week</p>
+              </>
+            )}
+          </div>
+        </div>
+
+        <div className="border border-gray-200 rounded-lg bg-white">
+          <div className="p-6 pb-0">
+            <div className="text-lg font-light">Processes</div>
+          </div>
+          <div className="p-6 space-y-4">
             {isLoading ? (
               <div className="flex items-center justify-center h-64">
                 <div className="flex flex-col items-center space-y-4">
@@ -159,10 +254,11 @@ export default function ProcessPage() {
                 data={processes || []}
                 searchKey="name"
                 searchPlaceholder="Search processes by name..."
+                showSearch={false}
               />
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         <ProcessFormDrawer 
           open={isDrawerOpen} 

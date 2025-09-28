@@ -15,7 +15,7 @@ export function AdminDashboardLayout({ children, title, subtitle }: AdminDashboa
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
 
   return (
-    <div className="flex min-h-screen from-[#f8f9ff] via-[#f0f2ff] to-[#e8ebff]">
+    <div className="flex min-h-screen bg-white">
       <AdminSidebar collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed(!sidebarCollapsed)} />
       <div className="flex flex-1 flex-col">
         <Header title={title} subtitle={subtitle} />

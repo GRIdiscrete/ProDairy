@@ -269,10 +269,7 @@ export function QACorrectiveActionDrawer({
     try {
       const { createQACorrectiveActionDetails, updateQACorrectiveActionDetails } = await import("@/lib/api/data-capture-forms")
       
-      // Debug: Log the data being sent
-      console.log("Form data being sent:", data)
-      console.log("Created action:", createdAction)
-      console.log("Created action ID:", createdAction.id)
+  
       
       const payload = {
         qa_corrective_action_id: createdAction.id!,

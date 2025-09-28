@@ -120,7 +120,7 @@ export function FilmaticLinesForm2ViewDrawer({
                 <div>
                   <span className="text-xs font-light text-gray-500">Process ID</span>
                   <p className="text-sm font-light">
-                    {form.process_id ? `Process #${form.process_id.slice(0, 8)}` : "Not linked"}
+                    {form.process_id ? `Process #${String(form.process_id).slice(0, 8)}` : "Not linked"}
                   </p>
                 </div>
               </div>
@@ -134,7 +134,7 @@ export function FilmaticLinesForm2ViewDrawer({
                 </div>
                 <div>
                   <span className="text-xs font-light text-gray-500">Holding Tank BMT</span>
-                  <p className="text-sm font-light">{form.holding_tank_bmt ? form.holding_tank_bmt.slice(0, 8) + '...' : 'N/A'}</p>
+                  <p className="text-sm font-light">{form.holding_tank_bmt ? String(form.holding_tank_bmt).slice(0, 8) + '...' : 'N/A'}</p>
                 </div>
               </div>
             </CardContent>
@@ -246,7 +246,7 @@ export function FilmaticLinesForm2ViewDrawer({
                   </div>
                   {form.day_shift_id && (
                     <div className="mt-2">
-                      <p className="text-sm font-light"><span className="font-medium">Shift ID:</span> {form.day_shift_id.slice(0, 8)}</p>
+                      <p className="text-sm font-light"><span className="font-medium">Shift ID:</span> {String(form.day_shift_id).slice(0, 8)}</p>
                     </div>
                   )}
                 </div>
@@ -269,7 +269,7 @@ export function FilmaticLinesForm2ViewDrawer({
                   </div>
                   {form.night_shift_id && (
                     <div className="mt-2">
-                      <p className="text-sm font-light"><span className="font-medium">Shift ID:</span> {form.night_shift_id.slice(0, 8)}</p>
+                      <p className="text-sm font-light"><span className="font-medium">Shift ID:</span> {String(form.night_shift_id).slice(0, 8)}</p>
                     </div>
                   )}
                 </div>

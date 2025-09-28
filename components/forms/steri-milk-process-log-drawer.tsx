@@ -21,6 +21,7 @@ import { filmaticLinesForm2Api } from "@/lib/api/filmatic-lines-form-2"
 import { toast } from "sonner"
 import { SteriMilkProcessLog, CreateSteriMilkProcessLogRequest } from "@/lib/api/steri-milk-process-log"
 import { ChevronLeft, ChevronRight, ArrowRight, Factory, Beaker, FileText, Package, Clock, Thermometer, Gauge } from "lucide-react"
+import { SignaturePad } from "@/components/ui/signature-pad"
 
 interface SteriMilkProcessLogDrawerProps {
   open: boolean
@@ -68,6 +69,7 @@ const ProcessOverview = () => (
 const basicInfoSchema = yup.object({
   approved: yup.boolean().required("Approval status is required"),
   approver_id: yup.string().required("Approver is required"),
+  approver_signature: yup.string().required("Approver signature is required"),
   filmatic_form_id: yup.string().required("Filmatic form is required"),
   batch_number: yup.number().required("Batch number is required").min(1, "Must be positive"),
 })
@@ -184,6 +186,7 @@ export function SteriMilkProcessLogDrawer({
     defaultValues: {
       approved: true,
       approver_id: "",
+      approver_signature: "",
       filmatic_form_id: "",
       batch_number: 1,
     },
@@ -318,6 +321,7 @@ export function SteriMilkProcessLogDrawer({
       const formData: CreateSteriMilkProcessLogRequest = {
         approved: basicInfo.approved,
         approver_id: basicInfo.approver_id,
+        approver_signature: basicInfo.approver_signature,
         filmatic_form_id: basicInfo.filmatic_form_id,
         batch: {
           batch_number: basicInfo.batch_number,
@@ -455,6 +459,26 @@ export function SteriMilkProcessLogDrawer({
           />
           {basicInfoForm.formState.errors.approver_id && (
             <p className="text-sm text-red-500">{basicInfoForm.formState.errors.approver_id.message}</p>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="approver_signature">Approver Signature *</Label>
+          <Controller
+            name="approver_signature"
+            control={basicInfoForm.control}
+            render={({ field }) => (
+              <SignaturePad
+                value={field.value}
+                onChange={field.onChange}
+                width={400}
+                height={120}
+                className="bg-white"
+              />
+            )}
+          />
+          {basicInfoForm.formState.errors.approver_signature && (
+            <p className="text-sm text-red-500">{basicInfoForm.formState.errors.approver_signature.message}</p>
           )}
         </div>
 

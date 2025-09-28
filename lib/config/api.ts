@@ -3,6 +3,7 @@ export const API_CONFIG = {
   ENDPOINTS: {
     USER_ROLES: '/user-roles',
     USERS: '/user',
+    AUTH: '/auth',
     MACHINES: '/machine',
     SILOS: '/silo',
     SUPPLIERS: '/supplier',
@@ -10,5 +11,6 @@ export const API_CONFIG = {
     PROCESSES: '/process',
     PRODUCTION_PLANS: '/production-plan',
     DRIVER_FORMS: '/drivers-form',
+    STERI_MILK_TEST_REPORT: '/steri-milk-test-report',
   },
 } as const

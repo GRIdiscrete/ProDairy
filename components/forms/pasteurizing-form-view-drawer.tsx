@@ -108,7 +108,7 @@ export function PasteurizingFormViewDrawer({
                 <div>
                   <h2 className="text-xl font-light text-gray-900">Pasteurizing Form</h2>
                   <div className="flex items-center space-x-2 mt-1">
-                    <span className="text-sm text-gray-500">#{form.id.slice(0, 8)}</span>
+                    <span className="text-sm text-gray-500">#{String(form.id).slice(0, 8)}</span>
                     <CopyButton text={form.id} />
                     <Badge className="bg-blue-100 text-blue-800">Active</Badge>
                   </div>
@@ -190,7 +190,7 @@ export function PasteurizingFormViewDrawer({
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-600">Machine ID</span>
                     <div className="flex items-center space-x-2">
-                      <span className="text-sm font-light">#{form.machine.slice(0, 8)}</span>
+                      <span className="text-sm font-light">#{String(form.machine).slice(0, 8)}</span>
                       <CopyButton text={form.machine} />
                     </div>
                   </div>
@@ -212,7 +212,7 @@ export function PasteurizingFormViewDrawer({
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-600">Silo ID</span>
                     <div className="flex items-center space-x-2">
-                      <span className="text-sm font-light">#{form.source_silo.slice(0, 8)}</span>
+                      <span className="text-sm font-light">#{String(form.source_silo).slice(0, 8)}</span>
                       <CopyButton text={form.source_silo} />
                     </div>
                   </div>
@@ -234,7 +234,7 @@ export function PasteurizingFormViewDrawer({
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-600">BMT ID</span>
                     <div className="flex items-center space-x-2">
-                      <span className="text-sm font-light">#{form.bmt.slice(0, 8)}</span>
+                      <span className="text-sm font-light">#{String(form.bmt).slice(0, 8)}</span>
                       <CopyButton text={form.bmt} />
                     </div>
                   </div>

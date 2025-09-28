@@ -75,147 +75,113 @@ export function ProductionPlanViewDrawer({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-[50vw] sm:max-w-[50vw] overflow-y-auto p-6">
-        <SheetHeader className="mb-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <SheetTitle className="flex items-center gap-2 m-0">
-                <ClipboardList className="w-6 h-6" />
-                Production Plan Details
-              </SheetTitle>
-            </div>
-            <div className="flex space-x-2">
-              {onEdit && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleEdit}
-                  disabled={isLoading}
-                  className="ml-auto"
-                >
-                  <Edit className="w-4 h-4 mr-2" />
-                  Edit
-                </Button>
-              )}
-              <LoadingButton
-                variant="destructive"
-                size="sm"
-                onClick={handleDelete}
-                loading={isLoading}
-              >
-                <Trash2 className="w-4 h-4 mr-2" />
-                Delete
-              </LoadingButton>
-            </div>
-          </div>
-          <SheetDescription>
-            View production plan information and materials
-          </SheetDescription>
+      <SheetContent className="w-[50vw] sm:max-w-[50vw] p-6 bg-white">
+        <SheetHeader>
+          <SheetTitle className="text-lg font-light">Production Plan Details</SheetTitle>
+          <SheetDescription className="text-sm font-light">View production plan information and materials</SheetDescription>
         </SheetHeader>
 
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <ClipboardList className="w-5 h-5" />
-                Plan Information
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <p className="text-muted-foreground text-sm mb-1">Plan Name</p>
-                <p className="font-medium">{productionPlan.name}</p>
-              </div>
-
-              {productionPlan.description && (
-                <div>
-                  <p className="text-muted-foreground text-sm mb-1">Description</p>
-                  <p>{productionPlan.description}</p>
-                </div>
-              )}
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-muted-foreground text-sm mb-1">Start Date</p>
-                  <div className="flex items-center gap-2 text-sm">
-                    <Calendar className="w-4 h-4" />
-                    {new Date(productionPlan.start_date).toLocaleDateString()}
+        <div className="space-y-6 mt-6">
+          <div className="border border-gray-200 rounded-lg bg-white">
+            <div className="p-4 pb-0">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-gray-500 to-gray-700 flex items-center justify-center">
+                    <ClipboardList className="w-4 h-4 text-white" />
                   </div>
-                </div>
-                <div>
-                  <p className="text-muted-foreground text-sm mb-1">End Date</p>
-                  <div className="flex items-center gap-2 text-sm">
-                    <Calendar className="w-4 h-4" />
-                    {new Date(productionPlan.end_date).toLocaleDateString()}
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-muted-foreground text-sm mb-1">Supervisor</p>
-                  <div className="flex items-center gap-2 text-sm">
-                    <User className="w-4 h-4" />
-                    {productionPlan.production_plan_supervisor_fkey ? 
-                      `${productionPlan.production_plan_supervisor_fkey.first_name} ${productionPlan.production_plan_supervisor_fkey.last_name}` :
-                      productionPlan.supervisor
-                    }
-                  </div>
-                </div>
-                <div>
-                  <p className="text-muted-foreground text-sm mb-1">Status</p>
+                  <div className="text-base font-light">{productionPlan.name}</div>
                   <Badge className={getStatusColor(productionPlan.status)}>
                     {productionPlan.status.charAt(0).toUpperCase() + productionPlan.status.slice(1)}
                   </Badge>
                 </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-muted-foreground text-sm mb-1">Created</p>
-                  <div className="flex items-center gap-2 text-sm">
-                    <Calendar className="w-4 h-4" />
-                    {new Date(productionPlan.created_at).toLocaleDateString()}
-                  </div>
+                <div className="flex space-x-2">
+                  {onEdit && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleEdit}
+                      disabled={isLoading}
+                      className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 rounded-full"
+                    >
+                      <Edit className="w-4 h-4 mr-2" />
+                      Edit
+                    </Button>
+                  )}
+                  <LoadingButton
+                    variant="destructive"
+                    size="sm"
+                    onClick={handleDelete}
+                    loading={isLoading}
+                    className="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white border-0 rounded-full"
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Delete
+                  </LoadingButton>
                 </div>
-                {productionPlan.updated_at && (
-                  <div>
-                    <p className="text-muted-foreground text-sm mb-1">Updated</p>
-                    <div className="flex items-center gap-2 text-sm">
-                      <Calendar className="w-4 h-4" />
-                      {new Date(productionPlan.updated_at).toLocaleDateString()}
-                    </div>
-                  </div>
-                )}
               </div>
-            </CardContent>
-          </Card>
+            </div>
+            <div className="p-4 grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <div className="text-xs text-gray-500 flex items-center gap-1"><Calendar className="h-3 w-3" />Start Date</div>
+                <div className="text-sm font-light">{new Date(productionPlan.start_date).toLocaleDateString()}</div>
+              </div>
+              <div className="space-y-1">
+                <div className="text-xs text-gray-500 flex items-center gap-1"><Calendar className="h-3 w-3" />End Date</div>
+                <div className="text-sm font-light">{new Date(productionPlan.end_date).toLocaleDateString()}</div>
+              </div>
+              <div className="space-y-1">
+                <div className="text-xs text-gray-500 flex items-center gap-1"><User className="h-3 w-3" />Supervisor</div>
+                <div className="text-sm font-light">
+                  {productionPlan.production_plan_supervisor_fkey ? 
+                    `${productionPlan.production_plan_supervisor_fkey.first_name} ${productionPlan.production_plan_supervisor_fkey.last_name}` :
+                    productionPlan.supervisor
+                  }
+                </div>
+              </div>
+              <div className="space-y-1">
+                <div className="text-xs text-gray-500 flex items-center gap-1"><Calendar className="h-3 w-3" />Created</div>
+                <div className="text-sm font-light">{new Date(productionPlan.created_at).toLocaleDateString()}</div>
+              </div>
+            </div>
+          </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Package className="w-5 h-5" />
-                Raw Materials ({productionPlan.raw_products.length})
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
+          {productionPlan.description && (
+            <div className="border border-gray-200 rounded-lg bg-white">
+              <div className="p-4 pb-0">
+                <div className="text-base font-light">Description</div>
+              </div>
+              <div className="p-4">
+                <p className="text-sm font-light">{productionPlan.description}</p>
+              </div>
+            </div>
+          )}
+
+          {/* Raw Materials Section */}
+          <div className="border border-gray-200 rounded-lg bg-white">
+            <div className="p-4 pb-0">
+              <div className="flex items-center space-x-2">
+                <Package className="w-4 h-4 text-blue-600" />
+                <div className="text-base font-light">Raw Materials ({productionPlan.raw_products.length})</div>
+              </div>
+            </div>
+            <div className="p-4">
               {productionPlan.raw_products.length === 0 ? (
                 <p className="text-muted-foreground text-sm">No raw materials specified</p>
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-3">
                   {productionPlan.raw_products.map((material, index) => (
                     <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
                       <div className="flex items-center space-x-3">
-                        <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                          <Package className="w-4 h-4 text-primary-foreground" />
+                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center">
+                          <Package className="w-4 h-4 text-white" />
                         </div>
                         <div>
-                          <p className="font-medium">{material.raw_material_name}</p>
+                          <p className="font-light">{material.raw_material_name}</p>
                           <p className="text-muted-foreground text-sm">ID: {material.raw_material_id}</p>
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="font-medium">
+                        <p className="font-light">
                           {material.requested_amount} {material.unit_of_measure}
                         </p>
                         <p className="text-muted-foreground text-sm">Requested</p>
@@ -224,18 +190,7 @@ export function ProductionPlanViewDrawer({
                   ))}
                 </div>
               )}
-            </CardContent>
-          </Card>
-
-          <div className="flex justify-end pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              disabled={isLoading}
-            >
-              Close
-            </Button>
+            </div>
           </div>
         </div>
       </SheetContent>

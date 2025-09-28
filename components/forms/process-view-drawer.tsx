@@ -72,98 +72,82 @@ export function ProcessViewDrawer({ open, onOpenChange, process, onEdit }: Proce
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-[50vw] sm:max-w-[50vw] overflow-y-auto p-6">
-        <SheetHeader className="mb-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <SheetTitle className="flex items-center gap-2 m-0">
-                <Settings className="w-6 h-6" />
-                Process Details
-              </SheetTitle>
-            </div>
-            <div className="flex space-x-2">
-              {onEdit && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleEdit}
-                  disabled={isLoading}
-                  className="ml-auto"
-                >
-                  <Edit className="w-4 h-4 mr-2" />
-                  Edit
-                </Button>
-              )}
-              <LoadingButton
-                variant="destructive"
-                size="sm"
-                onClick={handleDelete}
-                loading={isLoading}
-              >
-                <Trash2 className="w-4 h-4 mr-2" />
-                Delete
-              </LoadingButton>
-            </div>
-          </div>
-          <SheetDescription>
-            View process information and raw materials
-          </SheetDescription>
+      <SheetContent className="w-[50vw] sm:max-w-[50vw] p-6 bg-white">
+        <SheetHeader>
+          <SheetTitle className="text-lg font-light">Process Details</SheetTitle>
+          <SheetDescription className="text-sm font-light">View process information and raw materials</SheetDescription>
         </SheetHeader>
 
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Settings className="w-5 h-5" />
-                Process Information
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <p className="text-muted-foreground text-sm mb-1">Process Name</p>
-                <p className="font-medium">{process.name}</p>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-muted-foreground text-sm mb-1">Created</p>
-                  <div className="flex items-center gap-2 text-sm">
-                    <Calendar className="w-4 h-4" />
-                    {new Date(process.created_at).toLocaleDateString()}
+        <div className="space-y-6 mt-6">
+          <div className="border border-gray-200 rounded-lg bg-white">
+            <div className="p-4 pb-0">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-gray-500 to-gray-700 flex items-center justify-center">
+                    <Settings className="w-4 h-4 text-white" />
                   </div>
+                  <div className="text-base font-light">{process.name}</div>
                 </div>
-                {process.updated_at && (
-                  <div>
-                    <p className="text-muted-foreground text-sm mb-1">Updated</p>
-                    <div className="flex items-center gap-2 text-sm">
-                      <Calendar className="w-4 h-4" />
-                      {new Date(process.updated_at).toLocaleDateString()}
-                    </div>
-                  </div>
-                )}
+                <div className="flex space-x-2">
+                  {onEdit && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleEdit}
+                      disabled={isLoading}
+                      className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 rounded-full"
+                    >
+                      <Edit className="w-4 h-4 mr-2" />
+                      Edit
+                    </Button>
+                  )}
+                  <LoadingButton
+                    variant="destructive"
+                    size="sm"
+                    onClick={handleDelete}
+                    loading={isLoading}
+                    className="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white border-0 rounded-full"
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Delete
+                  </LoadingButton>
+                </div>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+            <div className="p-4 grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <div className="text-xs text-gray-500 flex items-center gap-1"><Calendar className="h-3 w-3" />Created</div>
+                <div className="text-sm font-light">{new Date(process.created_at).toLocaleDateString()}</div>
+              </div>
+              <div className="space-y-1">
+                <div className="text-xs text-gray-500 flex items-center gap-1"><Calendar className="h-3 w-3" />Updated</div>
+                <div className="text-sm font-light">
+                  {process.updated_at ? new Date(process.updated_at).toLocaleDateString() : 'Never'}
+                </div>
+              </div>
+            </div>
+          </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Package className="w-5 h-5" />
-                Raw Materials ({process.raw_material_ids.length})
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
+          {/* Raw Materials Section */}
+          <div className="border border-gray-200 rounded-lg bg-white">
+            <div className="p-4 pb-0">
+              <div className="flex items-center space-x-2">
+                <Package className="w-4 h-4 text-blue-600" />
+                <div className="text-base font-light">Raw Materials ({process.raw_material_ids.length})</div>
+              </div>
+            </div>
+            <div className="p-4">
               {process.raw_material_ids.length === 0 ? (
                 <p className="text-muted-foreground text-sm">No raw materials selected</p>
               ) : (
                 <div className="space-y-3">
                   {getSelectedRawMaterials().map((material) => (
                     <div key={material.id} className="flex items-center space-x-3 p-3 border rounded-lg">
-                      <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                        <Package className="w-4 h-4 text-primary-foreground" />
+                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center">
+                        <Package className="w-4 h-4 text-white" />
                       </div>
                       <div className="flex-1">
-                        <p className="font-medium">{material.name}</p>
+                        <p className="font-light">{material.name}</p>
                         {material.description && (
                           <p className="text-muted-foreground text-sm">{material.description}</p>
                         )}
@@ -179,18 +163,7 @@ export function ProcessViewDrawer({ open, onOpenChange, process, onEdit }: Proce
                   )}
                 </div>
               )}
-            </CardContent>
-          </Card>
-
-          <div className="flex justify-end pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              disabled={isLoading}
-            >
-              Close
-            </Button>
+            </div>
           </div>
         </div>
       </SheetContent>
