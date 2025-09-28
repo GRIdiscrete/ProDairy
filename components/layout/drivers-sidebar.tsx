@@ -13,6 +13,7 @@ import {
   Wrench,
 } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
+import { useAppSelector } from "@/lib/store"
 
 const driversNavigation = [
   { name: "Dashboard", href: "/drivers", icon: LayoutDashboard, current: false },
@@ -37,6 +38,7 @@ interface DriversSidebarProps {
 
 export function DriversSidebar({ collapsed = false, onToggle }: DriversSidebarProps) {
   const pathname = usePathname()
+  const { user, profile } = useAppSelector((state) => state.auth)
 
   // Layout widths
   const openWidth = 272
@@ -182,9 +184,16 @@ export function DriversSidebar({ collapsed = false, onToggle }: DriversSidebarPr
                 exit={{ opacity: 0, x: -6 }}
                 className="min-w-0"
               >
-                <p className="truncate text-sm font-light text-zinc-900">Driver User</p>
+                <p className="truncate text-sm font-light text-zinc-900">
+                  {profile?.first_name && profile?.last_name 
+                    ? `${profile.first_name} ${profile.last_name}` 
+                    : user?.first_name && user?.last_name 
+                    ? `${user.first_name} ${user.last_name}` 
+                    : 'Driver User'
+                  }
+                </p>
                 <p className="truncate text-xs font-extralight tracking-wide text-zinc-500">
-                  driver@prodairy.co.zw
+                  {profile?.email || user?.email || 'driver@prodairy.co.zw'}
                 </p>
               </motion.div>
             )}

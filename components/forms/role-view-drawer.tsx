@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Edit, Shield, Settings, Eye, CheckCircle, Calendar, Clock } from "lucide-react"
-import { UserRole } from "@/lib/types/roles"
+import { UserRole, UserRoleResponse, convertApiResponseToUserRole } from "@/lib/types/roles"
 
 interface RoleViewDrawerProps {
   open: boolean
@@ -22,6 +22,17 @@ const featureLabels: Record<string, string> = {
   supplier: "Supplier Management",
   process: "Process Management",
   devices: "Device Management",
+  raw_product_collection: "Raw Product Collection",
+  raw_milk_intake: "Raw Milk Intake",
+  raw_milk_lab_test: "Raw Milk Lab Test",
+  before_and_after_autoclave_lab_test: "Before & After Autoclave Lab Test",
+  pasteurizing: "Pasteurizing",
+  filmatic_operation: "Filmatic Operation",
+  steri_process_operation: "Steri Process Operation",
+  incubation: "Incubation",
+  incubation_lab_test: "Incubation Lab Test",
+  dispatch: "Dispatch",
+  production_plan: "Production Plan",
 }
 
 const viewLabels: Record<string, string> = {
@@ -35,6 +46,10 @@ const viewLabels: Record<string, string> = {
   supplier_tab: "Supplier Tab",
   process_tab: "Process Tab",
   devices_tab: "Devices Tab",
+  driver_ui: "Driver UI",
+  data_capture_module: "Data Capture Module",
+  lab_tests: "Lab Tests",
+  operations: "Operations",
 }
 
 const actionColors: Record<string, string> = {
@@ -42,10 +57,19 @@ const actionColors: Record<string, string> = {
   read: "bg-blue-100 text-blue-800",
   update: "bg-yellow-100 text-yellow-800", 
   delete: "bg-red-100 text-red-800",
+  approve: "bg-purple-100 text-purple-800",
 }
 
 export function RoleViewDrawer({ open, onClose, role, onEdit }: RoleViewDrawerProps) {
   if (!role) return null
+
+  // Helper function to detect if role is in API response format (flat) or internal format (nested)
+  const isApiResponseFormat = (role: UserRole | UserRoleResponse): role is UserRoleResponse => {
+    return 'user_operations' in role && !('features' in role)
+  }
+
+  // Convert API response to internal format if needed
+  const normalizedRole = isApiResponseFormat(role) ? convertApiResponseToUserRole(role) : role
 
   const getRoleColor = (roleName: string) => {
     switch (roleName?.toLowerCase()) {
@@ -71,28 +95,50 @@ export function RoleViewDrawer({ open, onClose, role, onEdit }: RoleViewDrawerPr
   }
 
   const getAllOperations = () => {
-    if (!role) return []
+    if (!normalizedRole) return []
     return [
-      ...role.user_operations,
-      ...role.role_operations,
-      ...role.machine_item_operations,
-      ...role.silo_item_operations,
-      ...role.supplier_operations,
-      ...role.process_operations,
-      ...role.devices_operations
+      ...(normalizedRole.features?.user?.operations || []),
+      ...(normalizedRole.features?.role?.operations || []),
+      ...(normalizedRole.features?.machine_item?.operations || []),
+      ...(normalizedRole.features?.silo_item?.operations || []),
+      ...(normalizedRole.features?.supplier?.operations || []),
+      ...(normalizedRole.features?.process?.operations || []),
+      ...(normalizedRole.features?.devices?.operations || []),
+      ...(normalizedRole.features?.raw_product_collection?.operations || []),
+      ...(normalizedRole.features?.raw_milk_intake?.operations || []),
+      ...(normalizedRole.features?.raw_milk_lab_test?.operations || []),
+      ...(normalizedRole.features?.before_and_after_autoclave_lab_test?.operations || []),
+      ...(normalizedRole.features?.pasteurizing?.operations || []),
+      ...(normalizedRole.features?.filmatic_operation?.operations || []),
+      ...(normalizedRole.features?.steri_process_operation?.operations || []),
+      ...(normalizedRole.features?.incubation?.operations || []),
+      ...(normalizedRole.features?.incubation_lab_test?.operations || []),
+      ...(normalizedRole.features?.dispatch?.operations || []),
+      ...(normalizedRole.features?.production_plan?.operations || [])
     ]
   }
 
   const getFeatureOperations = (featureKey: string) => {
-    if (!role) return []
+    if (!normalizedRole) return []
     switch (featureKey) {
-      case 'user': return role.user_operations
-      case 'role': return role.role_operations
-      case 'machine_item': return role.machine_item_operations
-      case 'silo_item': return role.silo_item_operations
-      case 'supplier': return role.supplier_operations
-      case 'process': return role.process_operations
-      case 'devices': return role.devices_operations
+      case 'user': return normalizedRole.features?.user?.operations || []
+      case 'role': return normalizedRole.features?.role?.operations || []
+      case 'machine_item': return normalizedRole.features?.machine_item?.operations || []
+      case 'silo_item': return normalizedRole.features?.silo_item?.operations || []
+      case 'supplier': return normalizedRole.features?.supplier?.operations || []
+      case 'process': return normalizedRole.features?.process?.operations || []
+      case 'devices': return normalizedRole.features?.devices?.operations || []
+      case 'raw_product_collection': return normalizedRole.features?.raw_product_collection?.operations || []
+      case 'raw_milk_intake': return normalizedRole.features?.raw_milk_intake?.operations || []
+      case 'raw_milk_lab_test': return normalizedRole.features?.raw_milk_lab_test?.operations || []
+      case 'before_and_after_autoclave_lab_test': return normalizedRole.features?.before_and_after_autoclave_lab_test?.operations || []
+      case 'pasteurizing': return normalizedRole.features?.pasteurizing?.operations || []
+      case 'filmatic_operation': return normalizedRole.features?.filmatic_operation?.operations || []
+      case 'steri_process_operation': return normalizedRole.features?.steri_process_operation?.operations || []
+      case 'incubation': return normalizedRole.features?.incubation?.operations || []
+      case 'incubation_lab_test': return normalizedRole.features?.incubation_lab_test?.operations || []
+      case 'dispatch': return normalizedRole.features?.dispatch?.operations || []
+      case 'production_plan': return normalizedRole.features?.production_plan?.operations || []
       default: return []
     }
   }
@@ -108,8 +154,8 @@ export function RoleViewDrawer({ open, onClose, role, onEdit }: RoleViewDrawerPr
               </div>
               <div>
                 <SheetTitle className="flex items-center space-x-2">
-                  <span>{role.role_name} Role</span>
-                  <Badge className={getRoleColor(role.role_name)}>{role.role_name}</Badge>
+                  <span>{normalizedRole.role_name} Role</span>
+                  <Badge className={getRoleColor(normalizedRole.role_name)}>{normalizedRole.role_name}</Badge>
                 </SheetTitle>
               </div>
             </div>
@@ -135,14 +181,14 @@ export function RoleViewDrawer({ open, onClose, role, onEdit }: RoleViewDrawerPr
               <div className="grid grid-cols-1 gap-4">
                 <div>
                   <label className="text-sm font-medium text-gray-500">Role Name</label>
-                  <p className="text-sm font-semibold">{role.role_name}</p>
+                  <p className="text-sm font-semibold">{normalizedRole.role_name}</p>
                 </div>
               </div>
               
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium text-gray-500">Total Views</label>
-                  <p className="text-sm font-semibold">{role.views.length} Views</p>
+                  <p className="text-sm font-semibold">{(normalizedRole.views || []).length} Views</p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-500">Total Operations</label>
@@ -158,14 +204,14 @@ export function RoleViewDrawer({ open, onClose, role, onEdit }: RoleViewDrawerPr
                     <Calendar className="w-4 h-4 mr-1" />
                     Created At
                   </label>
-                  <p className="text-sm">{formatDate(role.created_at)}</p>
+                  <p className="text-sm">{formatDate(normalizedRole.created_at)}</p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-500 flex items-center">
                     <Clock className="w-4 h-4 mr-1" />
                     Updated At
                   </label>
-                  <p className="text-sm">{formatDate(role.updated_at)}</p>
+                  <p className="text-sm">{formatDate(normalizedRole.updated_at)}</p>
                 </div>
               </div>
             </CardContent>
@@ -191,7 +237,7 @@ export function RoleViewDrawer({ open, onClose, role, onEdit }: RoleViewDrawerPr
                     </div>
                     <div className="flex flex-wrap gap-2">
                       {operations.length > 0 ? (
-                        operations.map((operation) => (
+                        operations.map((operation: string) => (
                           <Badge 
                             key={operation} 
                             className={actionColors[operation] || "bg-gray-100 text-gray-800"}
@@ -216,9 +262,9 @@ export function RoleViewDrawer({ open, onClose, role, onEdit }: RoleViewDrawerPr
               <CardTitle className="text-lg">View Permissions</CardTitle>
             </CardHeader>
             <CardContent>
-              {role.views.length > 0 ? (
+              {(normalizedRole.views || []).length > 0 ? (
                 <div className="grid grid-cols-2 gap-3">
-                  {role.views.map((viewKey: string) => (
+                  {(normalizedRole.views || []).map((viewKey: string) => (
                     <div key={viewKey} className="flex items-center space-x-2 p-2 border rounded-lg">
                       <Eye className="w-4 h-4 text-blue-500" />
                       <span className="text-sm font-medium">

@@ -25,6 +25,7 @@ import {
 import { motion, AnimatePresence, Variants } from "framer-motion";
 import { processApi } from "@/lib/api/process";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useAppSelector } from "@/lib/store";
 
 const dataCaptureNavigation = [
   {
@@ -87,6 +88,7 @@ export function DataCaptureSidebar({
   onToggle,
 }: DataCaptureSidebarProps) {
   const pathname = usePathname();
+  const { user, profile } = useAppSelector((state) => state.auth);
   const [processes, setProcesses] = useState<any[]>([])
   const [processOpen, setProcessOpen] = useState(false)
   const [selectedProcess, setSelectedProcess] = useState<string | null>(null)
@@ -360,10 +362,15 @@ export function DataCaptureSidebar({
                 className="min-w-0"
               >
                 <p className="truncate text-sm font-light text-zinc-900">
-                 Production Processesr
+                  {profile?.first_name && profile?.last_name 
+                    ? `${profile.first_name} ${profile.last_name}` 
+                    : user?.first_name && user?.last_name 
+                    ? `${user.first_name} ${user.last_name}` 
+                    : 'User'
+                  }
                 </p>
                 <p className="truncate text-xs font-extralight tracking-wide text-zinc-500">
-                  capturer@prodairy.co.zw
+                  {profile?.email || user?.email || 'user@prodairy.co.zw'}
                 </p>
               </motion.div>
             )}

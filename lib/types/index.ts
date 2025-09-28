@@ -120,6 +120,11 @@ export interface ProductionPlan {
   status: "planned" | "ongoing" | "completed" | "cancelled"
   updated_at?: string
   production_plan_supervisor_fkey?: UserEntity
+  process_id?: string
+  output?: {
+    value: number
+    unit_of_measure: string
+  }
 }
 
 // New Driver Form Types

@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit'
 import { authApi } from '@/lib/api/auth'
+import { userProfileApi } from '@/lib/api/user-profile'
 import { CookieManager } from '@/lib/utils/cookies'
 import type { 
   AuthState, 
@@ -54,7 +55,7 @@ const initialState: AuthState = getInitialState()
 // Async thunks
 export const loginUser = createAsyncThunk(
   'auth/login',
-  async (credentials: LoginCredentials, { rejectWithValue }) => {
+  async (credentials: LoginCredentials, { rejectWithValue, dispatch }) => {
     try {
       console.log('loginUser: Starting login process...')
       const loginResponse = await authApi.login(credentials)
@@ -63,34 +64,11 @@ export const loginUser = createAsyncThunk(
       // Extract user and token from the response
       const { user, access_token, refresh_token } = loginResponse
       
-      // Create a basic profile from the user data
-      const profile = {
-        id: user.id,
-        first_name: user.first_name,
-        last_name: user.last_name,
-        email: user.email,
-        role_id: user.role, // Map role to role_id
-        department: user.account_type,
-        password: '', // Empty password for profile
-        created_at: user.created_at,
-        updated_at: user.updated_at,
-        users_role_id_fkey: {
-          id: user.role,
-          role_name: user.role,
-          created_at: user.created_at,
-          updated_at: user.updated_at,
-          views: [],
-          role_operations: [],
-          user_operations: [],
-          devices_operations: [],
-          process_operations: [],
-          supplier_operations: [],
-          silo_item_operations: [],
-          machine_item_operations: []
-        }
-      }
-      
-      console.log('loginUser: Created profile from user data:', profile)
+      // Fetch detailed user profile
+      console.log('loginUser: Fetching detailed user profile...')
+      const profileResponse = await userProfileApi.getUserProfile(user.id)
+      const profile = profileResponse.data
+      console.log('loginUser: Detailed profile fetched:', profile)
 
       // Store in cookies
       console.log('loginUser: Setting auth cookies...')
@@ -191,6 +169,38 @@ export const refreshUserToken = createAsyncThunk(
       }
     } catch (error: any) {
       return rejectWithValue(error.message || 'Token refresh failed')
+    }
+  }
+)
+
+export const fetchUserProfile = createAsyncThunk(
+  'auth/fetchUserProfile',
+  async (userId: string, { rejectWithValue }) => {
+    try {
+      console.log('fetchUserProfile: Fetching user profile for ID:', userId)
+      const response = await userProfileApi.getUserProfile(userId)
+      console.log('fetchUserProfile: Profile fetched successfully:', response.data)
+      return response.data
+    } catch (error: any) {
+      console.log('fetchUserProfile: Failed to fetch profile:', error)
+      const message = error?.message || 'Failed to fetch user profile'
+      return rejectWithValue(message)
+    }
+  }
+)
+
+export const changePassword = createAsyncThunk(
+  'auth/changePassword',
+  async (payload: { email: string; password: string }, { rejectWithValue }) => {
+    try {
+      console.log('changePassword: Changing password for user:', payload.email)
+      const response = await userProfileApi.changePassword(payload)
+      console.log('changePassword: Password changed successfully')
+      return response.data
+    } catch (error: any) {
+      console.log('changePassword: Failed to change password:', error)
+      const message = error?.message || 'Failed to change password'
+      return rejectWithValue(message)
     }
   }
 )
@@ -339,6 +349,49 @@ const authSlice = createSlice({
         console.log('Redux: validateAndRestoreSession.rejected - Session restoration failed')
         state.isLoading = false
         state.isAuthenticated = false
+      })
+      
+      // Fetch User Profile
+      .addCase(fetchUserProfile.pending, (state) => {
+        state.isLoading = true
+        state.error = null
+      })
+      .addCase(fetchUserProfile.fulfilled, (state, action) => {
+        state.isLoading = false
+        state.profile = action.payload as ExtendedUserProfile
+        // Update cookies with new profile data
+        CookieManager.setAuthCookies(
+          state.accessToken!,
+          state.refreshToken!,
+          state.user!,
+          action.payload as ExtendedUserProfile
+        )
+      })
+      .addCase(fetchUserProfile.rejected, (state, action) => {
+        state.isLoading = false
+        state.error = action.payload as string
+      })
+      
+      // Change Password
+      .addCase(changePassword.pending, (state) => {
+        state.isLoading = true
+        state.error = null
+      })
+      .addCase(changePassword.fulfilled, (state, action) => {
+        state.isLoading = false
+        // After successful password change, logout the user
+        state.user = null
+        state.profile = null
+        state.accessToken = null
+        state.refreshToken = null
+        state.isAuthenticated = false
+        state.error = null
+        // Clear cookies
+        CookieManager.clearAuthCookies()
+      })
+      .addCase(changePassword.rejected, (state, action) => {
+        state.isLoading = false
+        state.error = action.payload as string
       })
   },
 })
