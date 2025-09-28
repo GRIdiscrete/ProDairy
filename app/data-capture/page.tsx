@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 import { DataCaptureDashboardLayout } from "@/components/layout/data-capture-dashboard-layout"
 import { ProcessSelector } from "@/components/data-capture/process-selector"
@@ -23,7 +23,7 @@ import {
   Settings
 } from "lucide-react"
 
-export default function DataCaptureDashboard() {
+function DataCaptureDashboardContent() {
   const searchParams = useSearchParams()
   const [selectedProcess, setSelectedProcess] = useState<string>('steri-milk')
   const [showKanban, setShowKanban] = useState<boolean>(false)
@@ -119,5 +119,13 @@ export default function DataCaptureDashboard() {
         )}
       </div>
     </DataCaptureDashboardLayout>
+  )
+}
+
+export default function DataCaptureDashboard() {
+  return (
+    <Suspense fallback={<DashboardSkeleton />}>
+      <DataCaptureDashboardContent />
+    </Suspense>
   )
 }

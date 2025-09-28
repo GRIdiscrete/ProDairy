@@ -71,12 +71,12 @@ export default function DriverFormsPage() {
     }
   }
 
-  // Get offline data from localStorage
+  // Get offline data from localStorage (SSR-safe)
   const [offlineData, setOfflineData] = useState({
-    drivers: LocalStorageService.getDrivers(),
-    rawMaterials: LocalStorageService.getRawMaterials(),
-    suppliers: LocalStorageService.getSuppliers(),
-    driverForms: LocalStorageService.getDriverForms()
+    drivers: typeof window !== 'undefined' ? LocalStorageService.getDrivers() : [],
+    rawMaterials: typeof window !== 'undefined' ? LocalStorageService.getRawMaterials() : [],
+    suppliers: typeof window !== 'undefined' ? LocalStorageService.getSuppliers() : [],
+    driverForms: typeof window !== 'undefined' ? LocalStorageService.getDriverForms() : []
   })
 
   // Use offline data when offline, online data when online
@@ -89,13 +89,15 @@ export default function DriverFormsPage() {
     if (isOnline) {
       dispatch(fetchDriverForms({}))
     } else {
-      // When going offline, refresh offline data from localStorage
-      setOfflineData({
-        drivers: LocalStorageService.getDrivers(),
-        rawMaterials: LocalStorageService.getRawMaterials(),
-        suppliers: LocalStorageService.getSuppliers(),
-        driverForms: LocalStorageService.getDriverForms()
-      })
+      // When going offline, refresh offline data from localStorage (SSR-safe)
+      if (typeof window !== 'undefined') {
+        setOfflineData({
+          drivers: LocalStorageService.getDrivers(),
+          rawMaterials: LocalStorageService.getRawMaterials(),
+          suppliers: LocalStorageService.getSuppliers(),
+          driverForms: LocalStorageService.getDriverForms()
+        })
+      }
     }
   }, [dispatch, isOnline])
 
@@ -116,19 +118,23 @@ export default function DriverFormsPage() {
         dispatch(fetchDriverForms({}))
       ])
 
-      // Save data to localStorage
-      LocalStorageService.saveDrivers(Array.isArray(usersResult.payload) ? usersResult.payload : [])
-      LocalStorageService.saveRawMaterials(Array.isArray(materialsResult.payload) ? materialsResult.payload : [])
-      LocalStorageService.saveSuppliers(Array.isArray(suppliersResult.payload) ? suppliersResult.payload : [])
-      LocalStorageService.saveDriverForms(Array.isArray(formsResult.payload) ? formsResult.payload : [])
+      // Save data to localStorage (SSR-safe)
+      if (typeof window !== 'undefined') {
+        LocalStorageService.saveDrivers(Array.isArray(usersResult.payload) ? usersResult.payload : [])
+        LocalStorageService.saveRawMaterials(Array.isArray(materialsResult.payload) ? materialsResult.payload : [])
+        LocalStorageService.saveSuppliers(Array.isArray(suppliersResult.payload) ? suppliersResult.payload : [])
+        LocalStorageService.saveDriverForms(Array.isArray(formsResult.payload) ? formsResult.payload : [])
+      }
 
-      // Update local state
-      setOfflineData({
-        drivers: LocalStorageService.getDrivers(),
-        rawMaterials: LocalStorageService.getRawMaterials(),
-        suppliers: LocalStorageService.getSuppliers(),
-        driverForms: LocalStorageService.getDriverForms()
-      })
+      // Update local state (SSR-safe)
+      if (typeof window !== 'undefined') {
+        setOfflineData({
+          drivers: LocalStorageService.getDrivers(),
+          rawMaterials: LocalStorageService.getRawMaterials(),
+          suppliers: LocalStorageService.getSuppliers(),
+          driverForms: LocalStorageService.getDriverForms()
+        })
+      }
 
       toast.success("All data loaded and stored offline successfully!")
     } catch (error) {
