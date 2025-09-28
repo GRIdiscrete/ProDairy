@@ -16,6 +16,11 @@ export interface CreateProductionPlanRequest {
   raw_products: ProductionPlanRawProduct[]
   supervisor: string
   status: "planned" | "ongoing" | "completed" | "cancelled"
+  process_id: string
+  output: {
+    value: number
+    unit_of_measure: string
+  }
 }
 
 export interface UpdateProductionPlanRequest extends CreateProductionPlanRequest {

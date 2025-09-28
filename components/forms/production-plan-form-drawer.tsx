@@ -18,6 +18,7 @@ import { useAppDispatch, useAppSelector } from "@/lib/store"
 import { createProductionPlan, updateProductionPlan, fetchProductionPlans } from "@/lib/store/slices/productionPlanSlice"
 import { fetchRawMaterials } from "@/lib/store/slices/rawMaterialSlice"
 import { fetchUsers } from "@/lib/store/slices/usersSlice"
+import { fetchProcesses } from "@/lib/store/slices/processSlice"
 import { LoadingButton } from "@/components/ui/loading-button"
 import type { ProductionPlan, ProductionPlanRawProduct } from "@/lib/types"
 
@@ -28,6 +29,11 @@ const productionPlanSchema = yup.object({
   end_date: yup.string().required("End date is required"),
   supervisor: yup.string().required("Supervisor is required"),
   status: yup.string().required("Status is required"),
+  process_id: yup.string().required("Process is required"),
+  output: yup.object({
+    value: yup.number().positive("Output value must be positive").required("Output value is required"),
+    unit_of_measure: yup.string().required("Output unit of measure is required"),
+  }).required("Output information is required"),
   raw_products: yup.array().of(
     yup.object({
       raw_material_id: yup.string().required("Raw material is required"),
@@ -45,6 +51,11 @@ type ProductionPlanFormData = {
   end_date: string
   supervisor: string
   status: "planned" | "ongoing" | "completed" | "cancelled"
+  process_id: string
+  output: {
+    value: number
+    unit_of_measure: string
+  }
   raw_products: ProductionPlanRawProduct[]
 }
 
@@ -69,6 +80,7 @@ export function ProductionPlanFormDrawer({
   const { operationLoading } = useAppSelector((state) => state.productionPlan)
   const { rawMaterials, operationLoading: rawMaterialLoading } = useAppSelector((state) => state.rawMaterial)
   const { items: users, loading: usersLoading } = useAppSelector((state) => state.users)
+  const { processes, operationLoading: processLoading } = useAppSelector((state) => state.process)
 
   const {
     control,
@@ -86,6 +98,11 @@ export function ProductionPlanFormDrawer({
       end_date: "",
       supervisor: "",
       status: "planned",
+      process_id: "",
+      output: {
+        value: 0,
+        unit_of_measure: "litres",
+      },
       raw_products: [],
     },
   })
@@ -100,6 +117,7 @@ export function ProductionPlanFormDrawer({
     if (open) {
       dispatch(fetchRawMaterials({}))
       dispatch(fetchUsers({}))
+      dispatch(fetchProcesses({}))
     }
   }, [dispatch, open])
 
@@ -113,6 +131,8 @@ export function ProductionPlanFormDrawer({
         setValue("end_date", productionPlan.end_date.split('T')[0])
         setValue("supervisor", productionPlan.supervisor)
         setValue("status", productionPlan.status)
+        setValue("process_id", productionPlan.process_id || "")
+        setValue("output", productionPlan.output || { value: 0, unit_of_measure: "litres" })
         setValue("raw_products", productionPlan.raw_products)
       } else {
         reset({
@@ -122,6 +142,11 @@ export function ProductionPlanFormDrawer({
           end_date: "",
           supervisor: "",
           status: "planned",
+          process_id: "",
+          output: {
+            value: 0,
+            unit_of_measure: "litres",
+          },
           raw_products: [],
         })
       }
@@ -324,6 +349,84 @@ export function ProductionPlanFormDrawer({
                   />
                   {errors.status && (
                     <p className="text-sm text-red-500">{errors.status.message}</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Process *</Label>
+                <Controller
+                  name="process_id"
+                  control={control}
+                  render={({ field }) => (
+                    <Select value={field.value} onValueChange={field.onChange} disabled={isSubmitting}>
+                      <SelectTrigger className="w-full rounded-full">
+                        <SelectValue placeholder="Select process" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {processLoading.fetch ? (
+                          <SelectItem value="loading" disabled>Loading processes...</SelectItem>
+                        ) : (
+                          processes.map((process) => (
+                            <SelectItem key={process.id} value={process.id}>
+                              {process.name}
+                            </SelectItem>
+                          ))
+                        )}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+                {errors.process_id && (
+                  <p className="text-sm text-red-500">{errors.process_id.message}</p>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Output Value *</Label>
+                  <Controller
+                    name="output.value"
+                    control={control}
+                    render={({ field }) => (
+                      <Input
+                        {...field}
+                        type="number"
+                        step="0.01"
+                        placeholder="0.00"
+                        disabled={isSubmitting}
+                        onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                      />
+                    )}
+                  />
+                  {errors.output?.value && (
+                    <p className="text-sm text-red-500">{errors.output.value.message}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Output Unit *</Label>
+                  <Controller
+                    name="output.unit_of_measure"
+                    control={control}
+                    render={({ field }) => (
+                      <Select value={field.value} onValueChange={field.onChange} disabled={isSubmitting}>
+                        <SelectTrigger className="w-full rounded-full">
+                          <SelectValue placeholder="Select unit" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="litres">Litres</SelectItem>
+                          <SelectItem value="KG">KG</SelectItem>
+                          <SelectItem value="L">L</SelectItem>
+                          <SelectItem value="ML">ML</SelectItem>
+                          <SelectItem value="G">G</SelectItem>
+                          <SelectItem value="PCS">PCS</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                  {errors.output?.unit_of_measure && (
+                    <p className="text-sm text-red-500">{errors.output.unit_of_measure.message}</p>
                   )}
                 </div>
               </div>

@@ -22,6 +22,17 @@ const featureLabels: Record<string, string> = {
   supplier: "Supplier Management",
   process: "Process Management",
   devices: "Device Management",
+  raw_product_collection: "Raw Product Collection",
+  raw_milk_intake: "Raw Milk Intake",
+  raw_milk_lab_test: "Raw Milk Lab Test",
+  before_and_after_autoclave_lab_test: "Before & After Autoclave Lab Test",
+  pasteurizing: "Pasteurizing",
+  filmatic_operation: "Filmatic Operation",
+  steri_process_operation: "Steri Process Operation",
+  incubation: "Incubation",
+  incubation_lab_test: "Incubation Lab Test",
+  dispatch: "Dispatch",
+  production_plan: "Production Plan",
 }
 
 const viewLabels: Record<string, string> = {
@@ -35,6 +46,10 @@ const viewLabels: Record<string, string> = {
   supplier_tab: "Supplier Tab",
   process_tab: "Process Tab",
   devices_tab: "Devices Tab",
+  driver_ui: "Driver UI",
+  data_capture_module: "Data Capture Module",
+  lab_tests: "Lab Tests",
+  operations: "Operations",
 }
 
 const actionColors: Record<string, string> = {
@@ -42,6 +57,7 @@ const actionColors: Record<string, string> = {
   read: "bg-blue-100 text-blue-800",
   update: "bg-yellow-100 text-yellow-800", 
   delete: "bg-red-100 text-red-800",
+  approve: "bg-purple-100 text-purple-800",
 }
 
 export function RoleViewDrawer({ open, onClose, role, onEdit }: RoleViewDrawerProps) {
@@ -73,26 +89,48 @@ export function RoleViewDrawer({ open, onClose, role, onEdit }: RoleViewDrawerPr
   const getAllOperations = () => {
     if (!role) return []
     return [
-      ...role.user_operations,
-      ...role.role_operations,
-      ...role.machine_item_operations,
-      ...role.silo_item_operations,
-      ...role.supplier_operations,
-      ...role.process_operations,
-      ...role.devices_operations
+      ...(role.user_operations || []),
+      ...(role.role_operations || []),
+      ...(role.machine_item_operations || []),
+      ...(role.silo_item_operations || []),
+      ...(role.supplier_operations || []),
+      ...(role.process_operations || []),
+      ...(role.devices_operations || []),
+      ...(role.raw_product_collection || []),
+      ...(role.raw_milk_intake || []),
+      ...(role.raw_milk_lab_test || []),
+      ...(role.before_and_after_autoclave_lab_test || []),
+      ...(role.pasteurizing || []),
+      ...(role.filmatic_operation || []),
+      ...(role.steri_process_operation || []),
+      ...(role.incubation || []),
+      ...(role.incubation_lab_test || []),
+      ...(role.dispatch || []),
+      ...(role.production_plan || [])
     ]
   }
 
   const getFeatureOperations = (featureKey: string) => {
     if (!role) return []
     switch (featureKey) {
-      case 'user': return role.user_operations
-      case 'role': return role.role_operations
-      case 'machine_item': return role.machine_item_operations
-      case 'silo_item': return role.silo_item_operations
-      case 'supplier': return role.supplier_operations
-      case 'process': return role.process_operations
-      case 'devices': return role.devices_operations
+      case 'user': return role.user_operations || []
+      case 'role': return role.role_operations || []
+      case 'machine_item': return role.machine_item_operations || []
+      case 'silo_item': return role.silo_item_operations || []
+      case 'supplier': return role.supplier_operations || []
+      case 'process': return role.process_operations || []
+      case 'devices': return role.devices_operations || []
+      case 'raw_product_collection': return role.raw_product_collection || []
+      case 'raw_milk_intake': return role.raw_milk_intake || []
+      case 'raw_milk_lab_test': return role.raw_milk_lab_test || []
+      case 'before_and_after_autoclave_lab_test': return role.before_and_after_autoclave_lab_test || []
+      case 'pasteurizing': return role.pasteurizing || []
+      case 'filmatic_operation': return role.filmatic_operation || []
+      case 'steri_process_operation': return role.steri_process_operation || []
+      case 'incubation': return role.incubation || []
+      case 'incubation_lab_test': return role.incubation_lab_test || []
+      case 'dispatch': return role.dispatch || []
+      case 'production_plan': return role.production_plan || []
       default: return []
     }
   }
@@ -142,7 +180,7 @@ export function RoleViewDrawer({ open, onClose, role, onEdit }: RoleViewDrawerPr
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium text-gray-500">Total Views</label>
-                  <p className="text-sm font-semibold">{role.views.length} Views</p>
+                  <p className="text-sm font-semibold">{(role.views || []).length} Views</p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-500">Total Operations</label>
@@ -191,7 +229,7 @@ export function RoleViewDrawer({ open, onClose, role, onEdit }: RoleViewDrawerPr
                     </div>
                     <div className="flex flex-wrap gap-2">
                       {operations.length > 0 ? (
-                        operations.map((operation) => (
+                        operations.map((operation: string) => (
                           <Badge 
                             key={operation} 
                             className={actionColors[operation] || "bg-gray-100 text-gray-800"}
@@ -216,9 +254,9 @@ export function RoleViewDrawer({ open, onClose, role, onEdit }: RoleViewDrawerPr
               <CardTitle className="text-lg">View Permissions</CardTitle>
             </CardHeader>
             <CardContent>
-              {role.views.length > 0 ? (
+              {(role.views || []).length > 0 ? (
                 <div className="grid grid-cols-2 gap-3">
-                  {role.views.map((viewKey: string) => (
+                  {(role.views || []).map((viewKey: string) => (
                     <div key={viewKey} className="flex items-center space-x-2 p-2 border rounded-lg">
                       <Eye className="w-4 h-4 text-blue-500" />
                       <span className="text-sm font-medium">

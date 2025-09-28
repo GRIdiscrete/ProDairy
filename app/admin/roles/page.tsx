@@ -262,11 +262,7 @@ export default function AdminRolesPage() {
 
         {/* Metrics Cards */}
         {rolesLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="border border-gray-200 rounded-lg bg-white p-4 h-24 animate-pulse"></div>
-            <div className="border border-gray-200 rounded-lg bg-white p-4 h-24 animate-pulse"></div>
-            <div className="border border-gray-200 rounded-lg bg-white p-4 h-24 animate-pulse"></div>
-          </div>
+          <MetricsPulseLoading className="grid-cols-1 md:grid-cols-3" />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="border border-gray-200 rounded-lg bg-white p-4">
@@ -310,10 +306,7 @@ export default function AdminRolesPage() {
             />
             
             {rolesLoading ? (
-              <div className="space-y-3">
-                <div className="h-10 bg-gray-100 rounded w-48" />
-                <div className="h-64 bg-gray-50 border border-dashed border-gray-200 rounded" />
-              </div>
+              <TablePulseLoading rows={6} />
             ) : (
               <DataTable
                 columns={columns}
