@@ -106,98 +106,68 @@ export function SiloFormDrawer({ open, onOpenChange, silo, mode }: SiloFormDrawe
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-[50vw] sm:max-w-[50vw] overflow-y-auto">
-        <div className="p-6">
-          <SheetHeader>
-            <SheetTitle>{mode === "create" ? "Add New Silo" : "Edit Silo"}</SheetTitle>
-            <SheetDescription>
-              {mode === "create" ? "Create a new silo configuration" : "Update silo information"}
-            </SheetDescription>
-          </SheetHeader>
+      <SheetContent className="w-[50vw] sm:max-w-[50vw] p-0 bg-white">
+        <SheetHeader className="p-6 pb-0 bg-white">
+          <SheetTitle className="text-lg font-light">
+            {mode === "create" ? "Add New Silo" : "Edit Silo"}
+          </SheetTitle>
+          <SheetDescription className="text-sm font-light">
+            {mode === "create" ? "Create a new silo configuration" : "Update silo information"}
+          </SheetDescription>
+        </SheetHeader>
+        <div className="flex-1 overflow-y-auto bg-white p-6">
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 mt-6">
-            {/* Basic Information */}
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Silo Information</h3>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name">Silo Name *</Label>
-                  <Controller
-                    name="name"
-                    control={control}
-                    render={({ field }) => (
-                      <Input
-                        id="name"
-                        {...field}
-                        placeholder="Enter silo name"
-                      />
-                    )}
-                  />
+                  <Label>Silo Name *</Label>
+                  <Controller name="name" control={control} render={({ field }) => (
+                    <Input placeholder="e.g., Silo-001" {...field} />
+                  )} />
                   {errors.name && <p className="text-sm text-red-500">{errors.name.message}</p>}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="serial_number">Serial Number *</Label>
-                  <Controller
-                    name="serial_number"
-                    control={control}
-                    render={({ field }) => (
-                      <Input
-                        id="serial_number"
-                        {...field}
-                        placeholder="Enter serial number"
-                      />
-                    )}
-                  />
+                  <Label>Serial Number *</Label>
+                  <Controller name="serial_number" control={control} render={({ field }) => (
+                    <Input placeholder="e.g., SN123456789" {...field} />
+                  )} />
                   {errors.serial_number && <p className="text-sm text-red-500">{errors.serial_number.message}</p>}
                 </div>
               </div>
+              
+              <div className="space-y-2">
+                <Label>Location *</Label>
+                <Controller name="location" control={control} render={({ field }) => (
+                  <Input placeholder="e.g., PD2" {...field} />
+                )} />
+                {errors.location && <p className="text-sm text-red-500">{errors.location.message}</p>}
+              </div>
+              
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="category">Category *</Label>
-                  <Controller
-                    name="category"
-                    control={control}
-                    render={({ field }) => (
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select category" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Milk Storage Tanks">Milk Storage Tanks</SelectItem>
-                          <SelectItem value="Cooling Silos">Cooling Silos</SelectItem>
-                          <SelectItem value="Processing Tanks">Processing Tanks</SelectItem>
-                          <SelectItem value="Buffer Tanks">Buffer Tanks</SelectItem>
-                          <SelectItem value="Fermentation Tanks">Fermentation Tanks</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    )}
-                  />
+                  <Label>Category *</Label>
+                  <Controller name="category" control={control} render={({ field }) => (
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <SelectTrigger className="w-full rounded-full">
+                        <SelectValue placeholder="Select category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Raw Milk">Raw Milk</SelectItem>
+                        <SelectItem value="Standardized">Standardized</SelectItem>
+                        <SelectItem value="Pasteurized">Pasteurized</SelectItem>
+                        <SelectItem value="Holding">Holding</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )} />
                   {errors.category && <p className="text-sm text-red-500">{errors.category.message}</p>}
                 </div>
+                
                 <div className="space-y-2">
-                  <Label htmlFor="location">Location *</Label>
-                  <Controller
-                    name="location"
-                    control={control}
-                    render={({ field }) => (
-                      <Input
-                        id="location"
-                        {...field}
-                        placeholder="Enter location (e.g., PD2)"
-                      />
-                    )}
-                  />
-                  {errors.location && <p className="text-sm text-red-500">{errors.location.message}</p>}
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="status">Status *</Label>
-                <Controller
-                  name="status"
-                  control={control}
-                  render={({ field }) => (
+                  <Label>Status *</Label>
+                  <Controller name="status" control={control} render={({ field }) => (
                     <Select onValueChange={field.onChange} value={field.value}>
-                      <SelectTrigger>
+                      <SelectTrigger className="w-full rounded-full">
                         <SelectValue placeholder="Select status" />
                       </SelectTrigger>
                       <SelectContent>
@@ -207,65 +177,57 @@ export function SiloFormDrawer({ open, onOpenChange, silo, mode }: SiloFormDrawe
                         <SelectItem value="offline">Offline</SelectItem>
                       </SelectContent>
                     </Select>
-                  )}
-                />
-                {errors.status && <p className="text-sm text-red-500">{errors.status.message}</p>}
+                  )} />
+                  {errors.status && <p className="text-sm text-red-500">{errors.status.message}</p>}
+                </div>
               </div>
-            </div>
-
-            {/* Capacity Information */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Capacity & Volume</h3>
+              
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="capacity">Total Capacity (L) *</Label>
-                  <Controller
-                    name="capacity"
-                    control={control}
-                    render={({ field }) => (
-                      <Input
-                        id="capacity"
-                        type="number"
-                        step="0.01"
-                        {...field}
-                        value={field.value || ""}
-                        onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                        placeholder="Enter total capacity in liters"
-                      />
-                    )}
-                  />
+                  <Label>Total Capacity (L) *</Label>
+                  <Controller name="capacity" control={control} render={({ field }) => (
+                    <Input
+                      type="number"
+                      step="0.01"
+                      {...field}
+                      value={field.value || ""}
+                      onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                      placeholder="Enter total capacity"
+                    />
+                  )} />
                   {errors.capacity && <p className="text-sm text-red-500">{errors.capacity.message}</p>}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="milk_volume">Current Milk Volume (L) *</Label>
-                  <Controller
-                    name="milk_volume"
-                    control={control}
-                    render={({ field }) => (
-                      <Input
-                        id="milk_volume"
-                        type="number"
-                        step="0.01"
-                        {...field}
-                        value={field.value || ""}
-                        onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                        placeholder="Enter current milk volume"
-                      />
-                    )}
-                  />
+                  <Label>Current Volume (L) *</Label>
+                  <Controller name="milk_volume" control={control} render={({ field }) => (
+                    <Input
+                      type="number"
+                      step="0.01"
+                      {...field}
+                      value={field.value || ""}
+                      onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                      placeholder="Enter current volume"
+                    />
+                  )} />
                   {errors.milk_volume && <p className="text-sm text-red-500">{errors.milk_volume.message}</p>}
                 </div>
               </div>
             </div>
 
             <div className="flex justify-end space-x-2 pt-4">
-              <LoadingButton type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              <LoadingButton
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+                disabled={operationLoading.create || operationLoading.update}
+              >
                 Cancel
               </LoadingButton>
-              <LoadingButton 
-                type="submit" 
-                loading={mode === "create" ? operationLoading.create : operationLoading.update}
-                loadingText={mode === "create" ? "Creating..." : "Updating..."}
+              <LoadingButton
+                type="submit"
+                loading={operationLoading.create || operationLoading.update}
+                disabled={operationLoading.create || operationLoading.update}
+                className="bg-gradient-to-r from-gray-500 to-gray-700 hover:from-gray-600 hover:to-gray-800 text-white border-0 rounded-full px-6 py-2 font-light"
               >
                 {mode === "create" ? "Create Silo" : "Update Silo"}
               </LoadingButton>

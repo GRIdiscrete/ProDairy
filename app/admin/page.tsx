@@ -1,53 +1,36 @@
 "use client"
 
-import { useEffect } from "react"
 import { AdminDashboardLayout } from "@/components/layout/admin-dashboard-layout"
-import { ProductionOverview } from "@/components/dashboard/production-overview"
-import { ProductionCostChart } from "@/components/dashboard/production-cost-chart"
-import { DowntimeChart } from "@/components/dashboard/downtime-chart"
-import { MachineSetup } from "@/components/dashboard/machine-setup"
-import { MachineInspectionTable } from "@/components/dashboard/machine-inspection-table"
-import { MachineOperatorTable } from "@/components/dashboard/machine-operator-table"
-import { QualityEfficiency } from "@/components/dashboard/quality-efficiency"
-import { useAppDispatch } from "@/lib/store"
-import { fetchDashboardMetrics, fetchRecentBatches, fetchRecentInspections } from "@/lib/store/slices/dashboardSlice"
-import { PermissionDebug } from "@/components/debug/permission-debug"
+import { AdminOverviewCards } from "@/components/dashboard/admin-overview-cards"
+import { AdminDashboardSkeleton } from "@/components/ui/admin-dashboard-skeleton"
+import { useState, useEffect } from "react"
 
 export default function AdminDashboard() {
-  const dispatch = useAppDispatch()
+  const [isLoading, setIsLoading] = useState(true)
 
+  // Simulate loading time for skeleton
   useEffect(() => {
-    dispatch(fetchDashboardMetrics())
-    dispatch(fetchRecentBatches())
-    dispatch(fetchRecentInspections())
-  }, [dispatch])
+    const timer = setTimeout(() => {
+      setIsLoading(false)
+    }, 1500)
+
+    return () => clearTimeout(timer)
+  }, [])
 
   return (
     <AdminDashboardLayout title="Admin Dashboard" subtitle="System administration and management">
       <div className="space-y-6">
-        {/* Permission Debug Component */}
-        <PermissionDebug />
-        
-        {/* Production Overview Metrics */}
-        <ProductionOverview />
-
-        {/* Charts Section */}
-        <div className="grid gap-6 md:grid-cols-6">
-          <ProductionCostChart />
-          <DowntimeChart />
-        </div>
-
-        {/* Machine Setup and Quality */}
-        <div className="grid gap-6 md:grid-cols-12">
-          <MachineSetup />
-          <QualityEfficiency />
-        </div>
-
-        {/* Tables Section */}
-        <div className="grid gap-6 md:grid-cols-1">
-          <MachineInspectionTable />
-          <MachineOperatorTable />
-        </div>
+        {isLoading ? (
+          <AdminDashboardSkeleton />
+        ) : (
+          <>
+            {/* Overview Cards */}
+            <div>
+              <h2 className="text-2xl font-light text-foreground mb-4">System Overview</h2>
+              <AdminOverviewCards />
+            </div>
+          </>
+        )}
       </div>
     </AdminDashboardLayout>
   )

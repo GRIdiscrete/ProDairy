@@ -74,13 +74,13 @@ export default function HomePage() {
               </CardContent>
             </Card>
 
-            {/* Data Capture UI */}
+            {/*Production Processes UI */}
             <Card className="h-full w-full flex flex-col hover:shadow-xl hover:scale-105 transition-all duration-300 cursor-pointer group border-2 border-transparent hover:border-green-200">
               <CardHeader className="text-center">
                 <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-green-500 to-lime-600 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                   <ClipboardList className="h-8 w-8 text-white" />
                 </div>
-                <CardTitle className="text-xl">📋 Data Capturers</CardTitle>
+                <CardTitle className="text-xl">📋Production Processesrs</CardTitle>
               </CardHeader>
               <CardContent className="text-center flex flex-col flex-1">
                 <ul className="text-xs text-gray-500 space-y-1.5 mb-4">
@@ -93,7 +93,7 @@ export default function HomePage() {
                   className="w-full group-hover:bg-green-600 transition-all duration-300 cursor-pointer hover:scale-105 hover:shadow-lg"
                   onClick={() => router.push('/data-capture')}
                 >
-                  Access Data Capture UI
+                  AccessProduction Processes UI
                   <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform duration-300" />
                 </Button>
               </CardContent>

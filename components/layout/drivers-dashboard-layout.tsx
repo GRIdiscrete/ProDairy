@@ -17,19 +17,19 @@ export function DriversDashboardLayout({ children, title, subtitle }: DriversDas
 
   return (
     <>
-      {/* Mobile Layout */}
-      <div className="md:hidden">
+      {/* Mobile & Tablet Layout */}
+      <div className="lg:hidden">
         <MobileDriversLayout title={title} subtitle={subtitle}>
           {children}
         </MobileDriversLayout>
       </div>
 
       {/* Desktop Layout */}
-      <div className="hidden md:flex min-h-screen from-[#f8f9ff] via-[#f0f2ff] to-[#e8ebff]">
+      <div className="hidden lg:flex min-h-screen bg-white">
         <DriversSidebar collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed(!sidebarCollapsed)} />
         <div className="flex flex-1 flex-col">
           <Header title={title} subtitle={subtitle} />
-          <main className="flex-1 p-4 md:p-6">{children}</main>
+          <main className="flex-1 p-4 lg:p-6">{children}</main>
         </div>
       </div>
     </>

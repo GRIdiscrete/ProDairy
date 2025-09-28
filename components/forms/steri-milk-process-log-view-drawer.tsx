@@ -1,5 +1,6 @@
 "use client"
 
+import { useState, useEffect, useCallback } from "react"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -7,7 +8,10 @@ import { Separator } from "@/components/ui/separator"
 import { SteriMilkProcessLog } from "@/lib/api/steri-milk-process-log"
 import { format } from "date-fns"
 import { Button } from "@/components/ui/button"
-import { Beaker, FileText, CheckCircle, User, Package, ArrowRight, Hash, Clock, Thermometer, Gauge, Factory } from "lucide-react"
+import { Beaker, FileText, CheckCircle, User, Package, ArrowRight, Hash, Clock, Thermometer, Gauge, Factory, Plus, Eye, Edit } from "lucide-react"
+import { SteriMilkTestReportFormDrawer } from "./steri-milk-test-report-form-drawer"
+import { steriMilkTestReportApi, type SteriMilkTestReport } from "@/lib/api/steri-milk-test-report"
+import { SignaturePad } from "@/components/ui/signature-pad"
 
 interface SteriMilkProcessLogViewDrawerProps {
   open: boolean
@@ -22,6 +26,29 @@ export function SteriMilkProcessLogViewDrawer({
   log,
   onEdit
 }: SteriMilkProcessLogViewDrawerProps) {
+  const [testReports, setTestReports] = useState<SteriMilkTestReport[]>([])
+  const [showTestReportForm, setShowTestReportForm] = useState(false)
+  const [loadingTestReports, setLoadingTestReports] = useState(false)
+
+  const loadTestReports = useCallback(async () => {
+    try {
+      setLoadingTestReports(true)
+      const response = await steriMilkTestReportApi.getTestReports()
+      setTestReports(response.data || [])
+    } catch (error) {
+      console.error('Failed to load test reports:', error)
+    } finally {
+      setLoadingTestReports(false)
+    }
+  }, [])
+
+  // Load test reports when drawer opens
+  useEffect(() => {
+    if (open && log) {
+      loadTestReports()
+    }
+  }, [open, log, loadTestReports])
+
   if (!log) return null
 
   return (
@@ -40,16 +67,27 @@ export function SteriMilkProcessLogViewDrawer({
                 {log.approved ? 'Approved' : 'Pending'}
               </Badge>
             </div>
-            {onEdit && (
+            <div className="flex items-center space-x-2">
               <Button
-                onClick={onEdit}
+                onClick={() => setShowTestReportForm(true)}
                 variant="outline"
                 size="sm"
-                className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 rounded-full"
+                className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full"
               >
-                Edit
+                <Beaker className="h-4 w-4 mr-1" />
+                Create Test Report
               </Button>
-            )}
+              {onEdit && (
+                <Button
+                  onClick={onEdit}
+                  variant="outline"
+                  size="sm"
+                  className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 rounded-full"
+                >
+                  Edit
+                </Button>
+              )}
+            </div>
           </div>
         </SheetHeader>
 
@@ -120,7 +158,7 @@ export function SteriMilkProcessLogViewDrawer({
                 <div>
                   <span className="text-xs font-light text-gray-500">Approver ID</span>
                   <p className="text-sm font-light">
-                    {log.approver_id ? `Approver #${log.approver_id.slice(0, 8)}` : "Not assigned"}
+                    {log.approver_id ? `Approver #${String(log.approver_id).slice(0, 8)}` : "Not assigned"}
                   </p>
                 </div>
               </div>
@@ -129,13 +167,13 @@ export function SteriMilkProcessLogViewDrawer({
                 <div>
                   <span className="text-xs font-light text-gray-500">Filmatic Form ID</span>
                   <p className="text-sm font-light">
-                    {log.filmatic_form_id ? `Form #${log.filmatic_form_id.slice(0, 8)}` : "Not linked"}
+                    {log.filmatic_form_id ? `Form #${String(log.filmatic_form_id).slice(0, 8)}` : "Not linked"}
                   </p>
                 </div>
                 <div>
                   <span className="text-xs font-light text-gray-500">Batch ID</span>
                   <p className="text-sm font-light">
-                    {log.batch_id ? `Batch #${log.batch_id.slice(0, 8)}` : "No batch"}
+                    {log.batch_id ? `Batch #${String(log.batch_id).slice(0, 8)}` : "No batch"}
                   </p>
                 </div>
               </div>
@@ -294,9 +332,30 @@ export function SteriMilkProcessLogViewDrawer({
               <div className="flex items-center justify-between">
                 <span className="text-sm font-light">Approver</span>
                 <span className="text-sm font-light">
-                  {log.approver_id ? `Approver #${log.approver_id.slice(0, 8)}` : "Not assigned"}
+                  {log.approver_id ? `Approver #${String(log.approver_id).slice(0, 8)}` : "Not assigned"}
                 </span>
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Approver Signature */}
+          <Card className="shadow-none border border-gray-200 rounded-lg">
+            <CardHeader className="pb-4">
+              <div className="flex items-center space-x-2">
+                <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
+                  <User className="h-4 w-4 text-blue-600" />
+                </div>
+                <CardTitle className="text-base font-light">Approver Signature</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <SignaturePad
+                value={log.approver_signature || ''}
+                onChange={() => {}} // Read-only display
+                width={400}
+                height={120}
+                className="bg-white"
+              />
             </CardContent>
           </Card>
 
@@ -317,8 +376,102 @@ export function SteriMilkProcessLogViewDrawer({
               </div>
             </CardContent>
           </Card>
+
+          {/* Test Reports Section */}
+          <Card className="shadow-none border border-gray-200 rounded-lg">
+            <CardHeader className="pb-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center">
+                    <Beaker className="h-4 w-4 text-purple-600" />
+                  </div>
+                  <CardTitle className="text-base font-light">Test Reports</CardTitle>
+                </div>
+                {testReports.length === 0 ? (
+                  <Button
+                    onClick={() => setShowTestReportForm(true)}
+                    size="sm"
+                    className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white border-0 rounded-full"
+                  >
+                    <Plus className="h-4 w-4 mr-1" />
+                    Create Test Report
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={() => setShowTestReportForm(true)}
+                    size="sm"
+                    variant="outline"
+                    className="border-purple-200 text-purple-600 hover:bg-purple-50 rounded-full"
+                  >
+                    <Edit className="h-4 w-4 mr-1" />
+                    Edit Test Report
+                  </Button>
+                )}
+              </div>
+            </CardHeader>
+            <CardContent>
+              {loadingTestReports ? (
+                <div className="text-center py-4">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-500 mx-auto"></div>
+                  <p className="text-sm text-gray-500 mt-2">Loading test reports...</p>
+                </div>
+              ) : testReports.length > 0 ? (
+                <div className="space-y-3">
+                  {testReports.slice(0, 1).map((report) => (
+                    <div key={report.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center">
+                            <Beaker className="h-4 w-4 text-purple-600" />
+                          </div>
+                          <div>
+                            <h4 className="font-medium text-sm">Test Report #{String(report.id).slice(0, 8)}</h4>
+                            <p className="text-xs text-gray-500">
+                              Issue Date: {report.issue_date} | Batch: {report.batch_number || 'N/A'}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Badge variant="outline" className="text-xs">
+                            {report.variety || 'Steri Milk'}
+                          </Badge>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-8 w-8 p-0"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                      <div className="mt-2 text-xs text-gray-500">
+                        Created: {format(new Date(report.created_at), "MMM dd, yyyy 'at' h:mm a")}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <Beaker className="h-8 w-8 mx-auto mb-2 text-gray-300" />
+                  <p className="text-sm">No test reports created yet</p>
+                  <p className="text-xs text-gray-400">Create your first test report to get started</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
       </SheetContent>
+
+      {/* Test Report Form Drawer */}
+      <SteriMilkTestReportFormDrawer
+        open={showTestReportForm}
+        onOpenChange={setShowTestReportForm}
+        processLogId={log.id}
+        onSuccess={() => {
+          setShowTestReportForm(false)
+          loadTestReports() // Reload test reports after creation
+        }}
+      />
     </Sheet>
   )
 }

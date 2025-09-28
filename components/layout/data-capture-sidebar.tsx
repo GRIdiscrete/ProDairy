@@ -191,7 +191,7 @@ export function DataCaptureSidebar({
                   ProDairy DMS
                 </span>
                 <span className="block text-[11px] font-light tracking-wider text-zinc-500">
-                  Data Capture
+                 Production Processes
                 </span>
               </motion.div>
             )}
@@ -360,7 +360,7 @@ export function DataCaptureSidebar({
                 className="min-w-0"
               >
                 <p className="truncate text-sm font-light text-zinc-900">
-                  Data Capturer
+                 Production Processesr
                 </p>
                 <p className="truncate text-xs font-extralight tracking-wide text-zinc-500">
                   capturer@prodairy.co.zw

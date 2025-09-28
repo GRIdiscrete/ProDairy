@@ -9,11 +9,12 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "
 import { useIsMobile } from "@/hooks/use-mobile"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Truck, User, Package, Plus, Trash2 } from "lucide-react"
+import { Truck, User, Package, Plus, Trash2, Wifi, WifiOff } from "lucide-react"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
 import { DatePicker } from "@/components/ui/date-picker"
+import { SignaturePad } from "@/components/ui/signature-pad"
 import { toast } from "sonner"
 import { useAppDispatch, useAppSelector } from "@/lib/store"
 import { createDriverForm, updateDriverForm, fetchDriverForms } from "@/lib/store/slices/driverFormSlice"
@@ -21,7 +22,13 @@ import { fetchRawMaterials } from "@/lib/store/slices/rawMaterialSlice"
 import { fetchUsers } from "@/lib/store/slices/usersSlice"
 import { fetchSuppliers } from "@/lib/store/slices/supplierSlice"
 import { LoadingButton } from "@/components/ui/loading-button"
+import { useOfflineData } from "@/hooks/use-offline-data"
+import { LocalStorageService } from "@/lib/offline/local-storage-service"
 import type { DriverForm, DriverFormCollectedProduct } from "@/lib/types"
+import type { OfflineDriverForm } from "@/lib/offline/database"
+
+// Unified form type
+type UnifiedForm = DriverForm | OfflineDriverForm
 
 const driverFormSchema = yup.object({
   driver: yup.string().required("Driver is required"),
@@ -53,7 +60,7 @@ type DriverFormFormData = {
 interface DriverFormDrawerProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  driverForm?: DriverForm
+  driverForm?: UnifiedForm
   mode: "create" | "edit"
   onSuccess?: () => void
 }
@@ -64,15 +71,39 @@ export function DriverFormDrawer({
   driverForm, 
   mode, 
   onSuccess 
-}: DriverFormDrawerProps): JSX.Element {
+}: DriverFormDrawerProps) {
   const [loading, setLoading] = useState(false)
   const dispatch = useAppDispatch()
   const isMobile = useIsMobile()
+  const isTablet = typeof window !== 'undefined' && window.innerWidth >= 768 && window.innerWidth < 1024
+
+  // Use offline data hook
+  const { 
+    drivers: offlineDrivers, 
+    rawMaterials: offlineRawMaterials, 
+    suppliers: offlineSuppliers, 
+    isOnline, 
+    saveDriverForm: saveOfflineForm,
+    loading: offlineLoading 
+  } = useOfflineData()
 
   const { operationLoading } = useAppSelector((state) => state.driverForm)
   const { rawMaterials, operationLoading: rawMaterialLoading } = useAppSelector((state) => state.rawMaterial)
   const { items: users, loading: usersLoading } = useAppSelector((state) => state.users)
   const { suppliers, operationLoading: suppliersLoading } = useAppSelector((state) => state.supplier)
+
+  // Get offline data from localStorage
+  const [offlineData, setOfflineData] = useState({
+    drivers: LocalStorageService.getDrivers(),
+    rawMaterials: LocalStorageService.getRawMaterials(),
+    suppliers: LocalStorageService.getSuppliers()
+  })
+
+  // Use offline data when offline, online data when online
+  const drivers = isOnline ? users : offlineData.drivers
+  const rawMaterialsData = isOnline ? rawMaterials : offlineData.rawMaterials
+  const suppliersData = isOnline ? suppliers : offlineData.suppliers
+  const dataLoading = isOnline ? (rawMaterialLoading || usersLoading || suppliersLoading) : false
   
   const {
     control,
@@ -100,18 +131,25 @@ export function DriverFormDrawer({
 
   // Load required data on component mount
   useEffect(() => {
-    if (open) {
-      dispatch(fetchRawMaterials())
-      dispatch(fetchUsers())
-      dispatch(fetchSuppliers())
+    if (open && isOnline) {
+      dispatch(fetchRawMaterials({}))
+      dispatch(fetchUsers({}))
+      dispatch(fetchSuppliers({}))
+    } else if (open && !isOnline) {
+      // Refresh offline data from localStorage
+      setOfflineData({
+        drivers: LocalStorageService.getDrivers(),
+        rawMaterials: LocalStorageService.getRawMaterials(),
+        suppliers: LocalStorageService.getSuppliers()
+      })
     }
-  }, [dispatch, open])
+  }, [dispatch, open, isOnline])
 
   // Reset form when driver form changes or mode changes
   useEffect(() => {
     if (open) {
       if (mode === "edit" && driverForm) {
-        setValue("driver", driverForm.driver)
+        setValue("driver", typeof driverForm.driver === 'string' ? driverForm.driver : driverForm.driver_id)
         setValue("start_date", driverForm.start_date.split('T')[0])
         setValue("end_date", driverForm.end_date.split('T')[0])
         setValue("delivered", driverForm.delivered)
@@ -140,21 +178,42 @@ export function DriverFormDrawer({
         end_date: new Date(data.end_date).toISOString(),
       }
 
-      if (mode === "create") {
-        await dispatch(createDriverForm(submitData)).unwrap()
-        toast.success("Driver form created successfully")
-      } else if (driverForm) {
-        await dispatch(updateDriverForm({
-          ...submitData,
-          id: driverForm.id,
-          created_at: driverForm.created_at,
-          updated_at: new Date().toISOString(),
-        })).unwrap()
-        toast.success("Driver form updated successfully")
+      if (isOnline) {
+        // Online mode - submit to API
+        if (mode === "create") {
+          await dispatch(createDriverForm(submitData)).unwrap()
+          toast.success("Driver form created successfully")
+        } else if (driverForm) {
+          await dispatch(updateDriverForm({
+            ...submitData,
+            id: driverForm.id,
+            created_at: driverForm.created_at,
+            updated_at: new Date().toISOString(),
+          })).unwrap()
+          toast.success("Driver form updated successfully")
+        }
+
+        // Refresh the driver forms list
+        dispatch(fetchDriverForms({}))
+      } else {
+        // Offline mode - save to localStorage
+        if (mode === "create") {
+          const offlineFormData = {
+            driver_id: submitData.driver,
+            start_date: submitData.start_date,
+            end_date: submitData.end_date,
+            delivered: submitData.delivered,
+            rejected: submitData.rejected,
+            collected_products: submitData.collected_products
+          }
+          LocalStorageService.saveDriverForm(offlineFormData)
+          toast.success("Driver form saved offline. It will be synced when you're back online.")
+        } else if (driverForm) {
+          // For offline edit, we'll need to implement update functionality
+          toast.info("Offline editing not yet implemented")
+        }
       }
 
-      // Refresh the driver forms list
-      dispatch(fetchDriverForms())
       onOpenChange(false)
       onSuccess?.()
     } catch (error: any) {
@@ -176,57 +235,83 @@ export function DriverFormDrawer({
     })
   }
 
-  const isLoading = loading || operationLoading.create || operationLoading.update
+  const isLoading = loading || !!operationLoading.create || !!operationLoading.update || dataLoading
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
-        side={isMobile ? "bottom" : "right"}
+        side={isMobile || isTablet ? "bottom" : "right"}
         className={
-          isMobile
-            ? "h-[85vh] w-full max-w-full overflow-y-auto p-6 rounded-t-2xl"
-            : "w-[50vw] sm:max-w-[50vw] overflow-y-auto p-6"
+          isMobile || isTablet
+            ? "h-[85vh] w-full max-w-full overflow-y-auto p-0 bg-white rounded-t-2xl"
+            : "w-[50vw] sm:max-w-[50vw] overflow-y-auto p-6 bg-white"
         }
       >
-        <SheetHeader className="mb-6">
-          <SheetTitle className="flex items-center gap-2">
-            <Truck className="w-5 h-5" />
-            {mode === "create" ? "Add New Driver Form" : `Edit Driver Form: #${driverForm?.id.slice(0, 8)}`}
-          </SheetTitle>
-          <SheetDescription>
-            {mode === "create" 
-              ? "Create a new driver collection form" 
-              : "Update driver form information"}
-          </SheetDescription>
+        <SheetHeader className={isMobile || isTablet ? "p-6 pb-0 bg-white" : "mb-6"}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center">
+                <Truck className="w-4 h-4 text-white" />
+              </div>
+              <div>
+                <SheetTitle className="text-lg font-light m-0">
+                  {mode === "create" ? "Add New Driver Form" : `Edit Driver Form: #${driverForm?.id.slice(0, 8)}`}
+                </SheetTitle>
+                <SheetDescription className="text-sm font-light">
+                  {mode === "create" 
+                    ? "Create a new driver collection form" 
+                    : "Update driver form information"}
+                </SheetDescription>
+              </div>
+            </div>
+            <div className="flex items-center space-x-2">
+              {isOnline ? (
+                <div className="flex items-center space-x-1 text-green-600">
+                  <Wifi className="h-4 w-4" />
+                  <span className="text-xs font-light">Online</span>
+                </div>
+              ) : (
+                <div className="flex items-center space-x-1 text-orange-600">
+                  <WifiOff className="h-4 w-4" />
+                  <span className="text-xs font-light">Offline</span>
+                </div>
+              )}
+            </div>
+          </div>
         </SheetHeader>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <User className="w-5 h-5" />
-                Driver Information
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className={isMobile || isTablet ? "space-y-6 p-6" : "space-y-6"}>
+          <div className="border border-gray-200 rounded-lg bg-white">
+            <div className="p-6 pb-0">
+              <div className="flex items-center space-x-2">
+                <User className="w-5 h-5 text-blue-600" />
+                <div className="text-lg font-light">Driver Information</div>
+              </div>
+            </div>
+            <div className="p-6 space-y-4">
               <div className="grid grid-cols-1 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="driver">Driver</Label>
+                  <Label htmlFor="driver" className="font-light">Driver *</Label>
                   <Controller
                     name="driver"
                     control={control}
                     render={({ field }) => (
                       <Select value={field.value} onValueChange={field.onChange} disabled={isSubmitting}>
-                        <SelectTrigger>
+                        <SelectTrigger className="w-full rounded-full border-gray-200">
                           <SelectValue placeholder="Select driver" />
                         </SelectTrigger>
-                        <SelectContent>
-                          {usersLoading ? (
-                            <SelectItem value="loading" disabled>Loading users...</SelectItem>
-                          ) : (
-                            users.map((user) => (
+            <SelectContent>
+              {dataLoading ? (
+                <SelectItem value="loading" disabled>Loading users...</SelectItem>
+              ) : (
+                drivers.map((user) => (
                               <SelectItem key={user.id} value={user.id}>
-                                {user.first_name} {user.last_name}
+                                <div className="flex flex-col">
+                                  <span className="font-light">{user.first_name} {user.last_name}</span>
+                                  {user.email && (
+                                    <span className="text-xs text-gray-500 font-light">{user.email}</span>
+                                  )}
+                                </div>
                               </SelectItem>
                             ))
                           )}
@@ -235,50 +320,48 @@ export function DriverFormDrawer({
                     )}
                   />
                   {errors.driver && (
-                    <p className="text-sm text-red-500">{errors.driver.message}</p>
+                    <p className="text-sm text-red-500 font-light">{errors.driver.message}</p>
                   )}
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="start_date">Start Date</Label>
-                        <Controller
-                          name="start_date"
-                          control={control}
-                          render={({ field }) => (
-                            <DatePicker
-                              label="Start Date *"
-                              value={field.value}
-                              onChange={field.onChange}
-                              placeholder="Select start date"
-                              disabled={isSubmitting}
-                              error={!!errors.start_date}
-                            />
-                          )}
+                    <Controller
+                      name="start_date"
+                      control={control}
+                      render={({ field }) => (
+                        <DatePicker
+                          label="Start Date *"
+                          value={field.value}
+                          onChange={field.onChange}
+                          placeholder="Select start date"
+                          disabled={isSubmitting}
+                          error={!!errors.start_date}
                         />
+                      )}
+                    />
                     {errors.start_date && (
-                      <p className="text-sm text-red-500">{errors.start_date.message}</p>
+                      <p className="text-sm text-red-500 font-light">{errors.start_date.message}</p>
                     )}
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="end_date">End Date</Label>
-                        <Controller
-                          name="end_date"
-                          control={control}
-                          render={({ field }) => (
-                            <DatePicker
-                              label="End Date *"
-                              value={field.value}
-                              onChange={field.onChange}
-                              placeholder="Select end date"
-                              disabled={isSubmitting}
-                              error={!!errors.end_date}
-                            />
-                          )}
+                    <Controller
+                      name="end_date"
+                      control={control}
+                      render={({ field }) => (
+                        <DatePicker
+                          label="End Date *"
+                          value={field.value}
+                          onChange={field.onChange}
+                          placeholder="Select end date"
+                          disabled={isSubmitting}
+                          error={!!errors.end_date}
                         />
+                      )}
+                    />
                     {errors.end_date && (
-                      <p className="text-sm text-red-500">{errors.end_date.message}</p>
+                      <p className="text-sm text-red-500 font-light">{errors.end_date.message}</p>
                     )}
                   </div>
                 </div>
@@ -297,7 +380,7 @@ export function DriverFormDrawer({
                         />
                       )}
                     />
-                    <Label htmlFor="delivered">Delivered</Label>
+                    <Label htmlFor="delivered" className="font-light">Delivered</Label>
                   </div>
 
                   <div className="flex items-center space-x-2">
@@ -313,50 +396,52 @@ export function DriverFormDrawer({
                         />
                       )}
                     />
-                    <Label htmlFor="rejected">Rejected</Label>
+                    <Label htmlFor="rejected" className="font-light">Rejected</Label>
                   </div>
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
-          <Card>
-            <CardHeader>
+          <div className="border border-gray-200 rounded-lg bg-white">
+            <div className="p-6 pb-0">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Package className="w-5 h-5" />
-                  Collected Products
-                </CardTitle>
+                <div className="flex items-center space-x-2">
+                  <Package className="w-5 h-5 text-blue-600" />
+                  <div className="text-lg font-light">Collected Products</div>
+                </div>
                 <Button
                   type="button"
                   onClick={addCollectedProduct}
                   size="sm"
                   disabled={isSubmitting}
+                  className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full"
                 >
                   <Plus className="w-4 h-4 mr-2" />
                   Add Product
                 </Button>
               </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
+            </div>
+            <div className="p-6 space-y-4">
               {fields.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
+                <div className="text-center py-8 text-gray-500">
                   <Package className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p>No collected products added yet</p>
-                  <p className="text-sm">Click "Add Product" to get started</p>
+                  <p className="font-light">No collected products added yet</p>
+                  <p className="text-sm font-light">Click "Add Product" to get started</p>
                 </div>
               ) : (
                 <div className="space-y-6 max-h-96 overflow-y-auto">
                   {fields.map((field, index) => (
-                    <div key={field.id} className="p-4 border rounded-lg space-y-4">
+                    <div key={field.id} className="p-4 border border-gray-200 rounded-lg space-y-4">
                       <div className="flex items-center justify-between">
-                        <h4 className="font-medium">Product #{index + 1}</h4>
+                        <h4 className="font-light">Product #{index + 1}</h4>
                         <Button
                           type="button"
                           onClick={() => remove(index)}
                           size="sm"
                           variant="destructive"
                           disabled={isSubmitting}
+                          className="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white border-0 rounded-full"
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
@@ -365,22 +450,27 @@ export function DriverFormDrawer({
                       <div className="grid grid-cols-1 gap-4">
                         <div className="grid grid-cols-2 gap-4">
                           <div className="space-y-2">
-                            <Label>Raw Material</Label>
+                            <Label className="font-light">Raw Material *</Label>
                             <Controller
                               name={`collected_products.${index}.raw_material_id`}
                               control={control}
                               render={({ field }) => (
                                 <Select value={field.value} onValueChange={field.onChange} disabled={isSubmitting}>
-                                  <SelectTrigger>
+                                  <SelectTrigger className="w-full rounded-full border-gray-200">
                                     <SelectValue placeholder="Select raw material" />
                                   </SelectTrigger>
                                   <SelectContent>
-                                    {rawMaterialLoading.fetch ? (
+                                    {dataLoading ? (
                                       <SelectItem value="loading" disabled>Loading materials...</SelectItem>
                                     ) : (
-                                      rawMaterials.map((material) => (
+                                      rawMaterialsData.map((material) => (
                                         <SelectItem key={material.id} value={material.id}>
-                                          {material.name}
+                                          <div className="flex flex-col">
+                                            <span className="font-light">{material.name}</span>
+                                            {material.description && (
+                                              <span className="text-xs text-gray-500 font-light">{material.description}</span>
+                                            )}
+                                          </div>
                                         </SelectItem>
                                       ))
                                     )}
@@ -389,29 +479,36 @@ export function DriverFormDrawer({
                               )}
                             />
                             {errors.collected_products?.[index]?.raw_material_id && (
-                              <p className="text-sm text-red-500">
+                              <p className="text-sm text-red-500 font-light">
                                 {errors.collected_products[index]?.raw_material_id?.message}
                               </p>
                             )}
                           </div>
 
                           <div className="space-y-2">
-                            <Label>Supplier</Label>
+                            <Label className="font-light">Supplier *</Label>
                             <Controller
                               name={`collected_products.${index}.supplier_id`}
                               control={control}
                               render={({ field }) => (
                                 <Select value={field.value} onValueChange={field.onChange} disabled={isSubmitting}>
-                                  <SelectTrigger>
+                                  <SelectTrigger className="w-full rounded-full border-gray-200">
                                     <SelectValue placeholder="Select supplier" />
                                   </SelectTrigger>
                                   <SelectContent>
-                                    {suppliersLoading.fetch ? (
+                                    {dataLoading ? (
                                       <SelectItem value="loading" disabled>Loading suppliers...</SelectItem>
                                     ) : (
-                                      suppliers.map((supplier) => (
+                                      suppliersData.map((supplier) => (
                                         <SelectItem key={supplier.id} value={supplier.id}>
-                                          {supplier.first_name} {supplier.last_name}
+                                          <div className="flex flex-col">
+                                            <span className="font-light">
+                                              {'name' in supplier ? supplier.name : `${supplier.first_name} ${supplier.last_name}`}
+                                            </span>
+                                            {supplier.email && (
+                                              <span className="text-xs text-gray-500 font-light">{supplier.email}</span>
+                                            )}
+                                          </div>
                                         </SelectItem>
                                       ))
                                     )}
@@ -420,7 +517,7 @@ export function DriverFormDrawer({
                               )}
                             />
                             {errors.collected_products?.[index]?.supplier_id && (
-                              <p className="text-sm text-red-500">
+                              <p className="text-sm text-red-500 font-light">
                                 {errors.collected_products[index]?.supplier_id?.message}
                               </p>
                             )}
@@ -429,7 +526,7 @@ export function DriverFormDrawer({
 
                         <div className="grid grid-cols-2 gap-4">
                           <div className="space-y-2">
-                            <Label>Collected Amount</Label>
+                            <Label className="font-light">Collected Amount *</Label>
                             <Controller
                               name={`collected_products.${index}.collected_amount`}
                               control={control}
@@ -441,24 +538,25 @@ export function DriverFormDrawer({
                                   placeholder="0.00"
                                   disabled={isSubmitting}
                                   onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                  className="rounded-full border-gray-200 font-light"
                                 />
                               )}
                             />
                             {errors.collected_products?.[index]?.collected_amount && (
-                              <p className="text-sm text-red-500">
+                              <p className="text-sm text-red-500 font-light">
                                 {errors.collected_products[index]?.collected_amount?.message}
                               </p>
                             )}
                           </div>
 
                           <div className="space-y-2">
-                            <Label>Unit of Measure</Label>
+                            <Label className="font-light">Unit of Measure *</Label>
                             <Controller
                               name={`collected_products.${index}.unit_of_measure`}
                               control={control}
                               render={({ field }) => (
                                 <Select value={field.value} onValueChange={field.onChange} disabled={isSubmitting}>
-                                  <SelectTrigger>
+                                  <SelectTrigger className="w-full rounded-full border-gray-200">
                                     <SelectValue placeholder="Select unit" />
                                   </SelectTrigger>
                                   <SelectContent>
@@ -472,49 +570,51 @@ export function DriverFormDrawer({
                               )}
                             />
                             {errors.collected_products?.[index]?.unit_of_measure && (
-                              <p className="text-sm text-red-500">
+                              <p className="text-sm text-red-500 font-light">
                                 {errors.collected_products[index]?.unit_of_measure?.message}
                               </p>
                             )}
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div className="space-y-2">
-                            <Label>Supplier E-Signature</Label>
+                            <Label className="font-light">Supplier E-Signature *</Label>
                             <Controller
                               name={`collected_products.${index}.e-sign-supplier`}
                               control={control}
                               render={({ field }) => (
-                                <Input
-                                  {...field}
-                                  placeholder="Supplier signature"
-                                  disabled={isSubmitting}
+                                <SignaturePad
+                                  value={field.value}
+                                  onChange={field.onChange}
+                                  width={280}
+                                  height={120}
                                 />
                               )}
                             />
                             {errors.collected_products?.[index]?.["e-sign-supplier"] && (
-                              <p className="text-sm text-red-500">
+                              <p className="text-sm text-red-500 font-light">
                                 {errors.collected_products[index]?.["e-sign-supplier"]?.message}
                               </p>
                             )}
                           </div>
 
                           <div className="space-y-2">
-                            <Label>Driver E-Signature</Label>
+                            <Label className="font-light">Driver E-Signature *</Label>
                             <Controller
                               name={`collected_products.${index}.e-sign-driver`}
                               control={control}
                               render={({ field }) => (
-                                <Input
-                                  {...field}
-                                  placeholder="Driver signature"
-                                  disabled={isSubmitting}
+                                <SignaturePad
+                                  value={field.value}
+                                  onChange={field.onChange}
+                                  width={280}
+                                  height={120}
                                 />
                               )}
                             />
                             {errors.collected_products?.[index]?.["e-sign-driver"] && (
-                              <p className="text-sm text-red-500">
+                              <p className="text-sm text-red-500 font-light">
                                 {errors.collected_products[index]?.["e-sign-driver"]?.message}
                               </p>
                             )}
@@ -526,10 +626,10 @@ export function DriverFormDrawer({
                 </div>
               )}
               {errors.collected_products && (
-                <p className="text-sm text-red-500">{errors.collected_products.message}</p>
+                <p className="text-sm text-red-500 font-light">{errors.collected_products.message}</p>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
           <div className="flex justify-end space-x-3 pt-4">
             <Button
@@ -537,12 +637,14 @@ export function DriverFormDrawer({
               variant="outline"
               onClick={() => onOpenChange(false)}
               disabled={isLoading}
+              className="bg-white border-gray-200 rounded-full font-light"
             >
               Cancel
             </Button>
             <LoadingButton
               type="submit"
               loading={isLoading}
+              className="bg-gradient-to-r from-gray-500 to-gray-700 hover:from-gray-600 hover:to-gray-800 text-white border-0 rounded-full px-6 py-2 font-light"
             >
               {mode === "create" ? "Create Form" : "Save Changes"}
             </LoadingButton>

@@ -124,37 +124,26 @@ export function ProcessFormDrawer({ open, onOpenChange, process, mode, onSuccess
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-[50vw] sm:max-w-[50vw] overflow-y-auto p-6">
-        <SheetHeader className="mb-6">
-          <SheetTitle className="flex items-center gap-2">
-            <Settings className="w-5 h-5" />
-            {mode === "create" ? "Add New Process" : `Edit Process: ${process?.name}`}
+      <SheetContent className="w-[50vw] sm:max-w-[50vw] p-0 bg-white">
+        <SheetHeader className="p-6 pb-0 bg-white">
+          <SheetTitle className="text-lg font-light">
+            {mode === "create" ? "Add New Process" : "Edit Process"}
           </SheetTitle>
-                <SheetDescription>
-            {mode === "create" 
-              ? "Create a new manufacturing process with raw materials" 
-              : "Update process information and raw materials"}
-                </SheetDescription>
-          </SheetHeader>
-
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Settings className="w-5 h-5" />
-                Process Information
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
+          <SheetDescription className="text-sm font-light">
+            {mode === "create" ? "Create a new manufacturing process" : "Update process information"}
+          </SheetDescription>
+        </SheetHeader>
+        <div className="flex-1 overflow-y-auto bg-white p-6">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Process Name</Label>
+                <Label>Process Name *</Label>
                 <Controller
                   name="name"
                   control={control}
                   render={({ field }) => (
-                <Input
+                    <Input
                       {...field}
-                      id="name"
                       placeholder="Enter process name"
                       disabled={isSubmitting}
                     />
@@ -164,68 +153,63 @@ export function ProcessFormDrawer({ open, onOpenChange, process, mode, onSuccess
                   <p className="text-sm text-red-500">{errors.name.message}</p>
                 )}
               </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Package className="w-5 h-5" />
-                Raw Materials
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {rawMaterialLoading.fetch ? (
-                <div className="text-center py-4 text-muted-foreground">Loading raw materials...</div>
-              ) : rawMaterials.length === 0 ? (
-                <div className="text-center py-4 text-muted-foreground">No raw materials available</div>
-              ) : (
-                <div className="space-y-3 max-h-60 overflow-y-auto">
-                  {rawMaterials.map((material) => (
-                    <div key={material.id} className="flex items-center space-x-3 p-3 border rounded-lg">
-                      <Checkbox
-                        id={`material-${material.id}`}
-                        checked={selectedRawMaterials.includes(material.id)}
-                        onCheckedChange={(checked) => handleRawMaterialChange(material.id, checked as boolean)}
-                      />
-                      <div className="flex-1">
-                        <Label 
-                          htmlFor={`material-${material.id}`} 
-                          className="font-medium cursor-pointer"
-                        >
-                          {material.name}
-                        </Label>
-                        {material.description && (
-                          <p className="text-muted-foreground text-sm">{material.description}</p>
-                        )}
+              
+              <div className="space-y-2">
+                <Label>Raw Materials *</Label>
+                {rawMaterialLoading.fetch ? (
+                  <div className="text-center py-4 text-muted-foreground">Loading raw materials...</div>
+                ) : rawMaterials.length === 0 ? (
+                  <div className="text-center py-4 text-muted-foreground">No raw materials available</div>
+                ) : (
+                  <div className="space-y-3 max-h-60 overflow-y-auto border border-gray-200 rounded-lg p-4">
+                    {rawMaterials.map((material) => (
+                      <div key={material.id} className="flex items-center space-x-3 p-3 border rounded-lg">
+                        <Checkbox
+                          id={`material-${material.id}`}
+                          checked={selectedRawMaterials.includes(material.id)}
+                          onCheckedChange={(checked) => handleRawMaterialChange(material.id, checked as boolean)}
+                        />
+                        <div className="flex-1">
+                          <Label 
+                            htmlFor={`material-${material.id}`} 
+                            className="font-medium cursor-pointer"
+                          >
+                            {material.name}
+                          </Label>
+                          {material.description && (
+                            <p className="text-muted-foreground text-sm">{material.description}</p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {errors.raw_material_ids && (
+                  <p className="text-sm text-red-500">{errors.raw_material_ids.message}</p>
+                )}
               </div>
             </div>
-                  ))}
-              </div>
-              )}
-              {errors.raw_material_ids && (
-                <p className="text-sm text-red-500">{errors.raw_material_ids.message}</p>
-              )}
-            </CardContent>
-          </Card>
 
-          <div className="flex justify-end space-x-3 pt-4">
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={() => onOpenChange(false)}
-              disabled={isLoading}
-            >
+            <div className="flex justify-end space-x-2 pt-4">
+              <LoadingButton
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+                disabled={isLoading}
+              >
                 Cancel
-              </Button>
-            <LoadingButton 
-              type="submit" 
-              loading={isLoading}
-            >
-              {mode === "create" ? "Create Process" : "Save Changes"}
-            </LoadingButton>
+              </LoadingButton>
+              <LoadingButton
+                type="submit"
+                loading={isLoading}
+                disabled={isLoading}
+                className="bg-gradient-to-r from-gray-500 to-gray-700 hover:from-gray-600 hover:to-gray-800 text-white border-0 rounded-full px-6 py-2 font-light"
+              >
+                {mode === "create" ? "Create Process" : "Update Process"}
+              </LoadingButton>
             </div>
           </form>
+        </div>
       </SheetContent>
     </Sheet>
   )

@@ -63,7 +63,7 @@ export function Header({ title = "Dashboard", subtitle = "Welcome back!" }: Head
     },
     {
       id: "data-capture",
-      name: "Data Capture",
+      name: "Production Processes",
       icon: ClipboardList,
       path: "/data-capture",
       emoji: "📋",

@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { DataTable } from "@/components/ui/data-table"
 import { DataTableFilters } from "@/components/ui/data-table-filters"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { TableSkeleton, DashboardSkeleton } from "@/components/ui/kanban-skeleton"
 import { 
   fetchFillerLog2s,
   fetchFillerLog2PackageIntegrities,
@@ -718,11 +719,15 @@ export default function FillerLog2Page() {
               </div>
             </CardHeader>
             <CardContent>
-              <DataTable
-                columns={packageIntegrityColumns}
-                data={filteredPackageIntegrities}
-                loading={loading}
-              />
+              {loading ? (
+                <TableSkeleton rows={5} columns={4} />
+              ) : (
+                <DataTable
+                  columns={packageIntegrityColumns}
+                  data={filteredPackageIntegrities}
+                  loading={loading}
+                />
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -973,11 +978,15 @@ export default function FillerLog2Page() {
               </div>
             </CardHeader>
             <CardContent>
-              <DataTable
-                columns={fillerLog2Columns}
-                data={filteredFillerLog2s}
-                loading={loading}
-              />
+              {loading ? (
+                <TableSkeleton rows={5} columns={6} />
+              ) : (
+                <DataTable
+                  columns={fillerLog2Columns}
+                  data={filteredFillerLog2s}
+                  loading={loading}
+                />
+              )}
             </CardContent>
           </Card>
         </TabsContent>
