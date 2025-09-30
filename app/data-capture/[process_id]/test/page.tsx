@@ -69,7 +69,7 @@ export default function UHTQualityCheckPage({ params }: UHTQualityCheckPageProps
   const [selectedQualityCheck, setSelectedQualityCheck] = useState<UHTQualityCheckAfterIncubation | null>(null)
   const [formMode, setFormMode] = useState<"create" | "edit">("create")
 
-  // Filter fields configuration for UHT Quality Check
+  // Filter fields configuration for Incubation Test
   const filterFields = useMemo(() => [
     {
       key: "created_at",
@@ -119,7 +119,7 @@ export default function UHTQualityCheckPage({ params }: UHTQualityCheckPageProps
     
     try {
       await dispatch(deleteUHTQualityCheckAction(selectedQualityCheck.id!)).unwrap()
-      toast.success('UHT Quality Check deleted successfully')
+      toast.success('Incubation Test deleted successfully')
       setDeleteDialogOpen(false)
       setSelectedQualityCheck(null)
     } catch (error: any) {
@@ -346,11 +346,11 @@ export default function UHTQualityCheckPage({ params }: UHTQualityCheckPageProps
   ], [operationLoading.delete])
 
   return (
-    <DataCaptureDashboardLayout title="UHT Quality Check" subtitle="UHT quality check after incubation process control and monitoring">
+    <DataCaptureDashboardLayout title="Incubation Test" subtitle="UHT quality check after incubation process control and monitoring">
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-light text-foreground">UHT Quality Check</h1>
+            <h1 className="text-3xl font-light text-foreground">Incubation Test</h1>
             <p className="text-sm font-light text-muted-foreground">Manage UHT quality check forms and process control</p>
             <p className="text-xs text-gray-500 mt-1">Process ID: {params.process_id}</p>
           </div>
@@ -517,7 +517,7 @@ export default function UHTQualityCheckPage({ params }: UHTQualityCheckPageProps
         <DeleteConfirmationDialog
           open={deleteDialogOpen}
           onOpenChange={setDeleteDialogOpen}
-          title="Delete UHT Quality Check"
+          title="Delete Incubation Test"
           description={`Are you sure you want to delete this UHT quality check? This action cannot be undone and may affect production tracking.`}
           onConfirm={confirmDelete}
           loading={operationLoading.delete}

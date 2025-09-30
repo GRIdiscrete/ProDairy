@@ -131,6 +131,7 @@ export function SteriMilkTestReportFormDrawer({
   const [loadingTankers, setLoadingTankers] = useState(false)
   const [processLog, setProcessLog] = useState<SteriMilkProcessLog | null>(null)
   const [loadingData, setLoadingData] = useState(false)
+  const [loadingUsers, setLoadingUsers] = useState(false)
   const [signatureOpen, setSignatureOpen] = useState(false)
   const [signatureViewOpen, setSignatureViewOpen] = useState(false)
 
@@ -213,78 +214,84 @@ export function SteriMilkTestReportFormDrawer({
     }
   })
 
-  // Fetch users and process log data when drawer opens
+  // Always fetch approvers (users) and tankers when the drawer opens
   useEffect(() => {
-    if (open && processLogId) {
-      const fetchData = async () => {
-        setLoadingData(true)
-        try {
-          // Fetch users
-          const usersResponse = await usersApi.getUsers()
-          setUsers(usersResponse.data || [])
-          
-          // Fetch tankers
-          setLoadingTankers(true)
-          try {
-            const tankersResponse = await tankerApi.getAll()
-            setTankers(tankersResponse.data || [])
-          } catch (tankerError) {
-            console.error('Failed to fetch tankers:', tankerError)
-            // Set fallback tankers if API fails
-            setTankers([
-              {
-                id: "fallback-tanker-1",
-                reg_number: "TNK-001",
-                capacity: 1000,
-                condition: "Good",
-                age: 2,
-                mileage: 50000,
-                driver_id: "driver-1",
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString()
-              },
-              {
-                id: "fallback-tanker-2", 
-                reg_number: "TNK-002",
-                capacity: 1500,
-                condition: "Excellent",
-                age: 1,
-                mileage: 25000,
-                driver_id: "driver-2",
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString()
-              }
-            ])
-          } finally {
-            setLoadingTankers(false)
-          }
-          
-          // Fetch process log data
-          const processLogResponse = await steriMilkProcessLogApi.getLog(processLogId)
-          setProcessLog(processLogResponse.data)
-          
-          // Prefill form with process log data
-          if (processLogResponse.data) {
-            const batchNumber = processLogResponse.data.batch_id_fkey?.batch_number || 1001
-            setValue('batch_number', batchNumber)
-            setValue('date_of_production', processLogResponse.data.batch_id_fkey?.created_at ? 
-              new Date(processLogResponse.data.batch_id_fkey.created_at).toISOString().split('T')[0] : 
-              new Date().toISOString().split('T')[0])
-            
-            // Auto-populate batch fields in other steps
-            setValue('standardisation_and_pasteurisation.batch', batchNumber)
-            setValue('uht_steri_milk.batch', batchNumber)
-          }
-        } catch (error) {
-          console.error('Failed to fetch data:', error)
-          toast.error('Failed to load form data')
-        } finally {
-          setLoadingData(false)
-        }
+    if (!open) return
+    const loadUsersAndTankers = async () => {
+      try {
+        setLoadingUsers(true)
+        const usersResponse = await usersApi.getUsers()
+        setUsers(usersResponse.data || [])
+      } catch (err) {
+        console.error('Failed to fetch users:', err)
+        setUsers([])
+      } finally {
+        setLoadingUsers(false)
       }
-      
-      fetchData()
+
+      setLoadingTankers(true)
+      try {
+        const tankersResponse = await tankerApi.getAll()
+        setTankers(tankersResponse.data || [])
+      } catch (tankerError) {
+        console.error('Failed to fetch tankers:', tankerError)
+        // Set fallback tankers if API fails
+        setTankers([
+          {
+            id: "fallback-tanker-1",
+            reg_number: "TNK-001",
+            capacity: 1000,
+            condition: "Good",
+            age: 2,
+            mileage: 50000,
+            driver_id: "driver-1",
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          },
+          {
+            id: "fallback-tanker-2", 
+            reg_number: "TNK-002",
+            capacity: 1500,
+            condition: "Excellent",
+            age: 1,
+            mileage: 25000,
+            driver_id: "driver-2",
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          }
+        ])
+      } finally {
+        setLoadingTankers(false)
+      }
     }
+    loadUsersAndTankers()
+  }, [open])
+
+  // Fetch process log data (and prefill) when provided
+  useEffect(() => {
+    if (!open || !processLogId) return
+    const loadProcessLog = async () => {
+      setLoadingData(true)
+      try {
+        const processLogResponse = await steriMilkProcessLogApi.getLog(processLogId)
+        setProcessLog(processLogResponse.data)
+        if (processLogResponse.data) {
+          const batchNumber = (processLogResponse.data as any).batch_id?.batch_number || 1001
+          setValue('batch_number', batchNumber)
+            setValue('date_of_production', (processLogResponse.data as any).batch_id?.created_at ? 
+              new Date((processLogResponse.data as any).batch_id.created_at).toISOString().split('T')[0] : 
+            new Date().toISOString().split('T')[0])
+          setValue('standardisation_and_pasteurisation.batch', batchNumber)
+          setValue('uht_steri_milk.batch', batchNumber)
+        }
+      } catch (error) {
+        console.error('Failed to fetch process log:', error)
+        toast.error('Failed to load form data')
+      } finally {
+        setLoadingData(false)
+      }
+    }
+    loadProcessLog()
   }, [open, processLogId, setValue])
 
   const handleUserSearch = async (query: string) => {
@@ -469,7 +476,7 @@ export function SteriMilkTestReportFormDrawer({
                       placeholder="Search and select approver"
                       searchPlaceholder="Search users..."
                       emptyMessage="No users found"
-                      loading={loadingData}
+                      loading={loadingUsers}
                     />
                   )}
                 />
@@ -947,7 +954,7 @@ export function SteriMilkTestReportFormDrawer({
                       placeholder="Search and select analyst"
                       searchPlaceholder="Search users..."
                       emptyMessage="No users found"
-                      loading={loadingData}
+                      loading={loadingUsers}
                     />
                   )}
                 />
@@ -1163,7 +1170,7 @@ export function SteriMilkTestReportFormDrawer({
                       placeholder="Search and select analyst"
                       searchPlaceholder="Search users..."
                       emptyMessage="No users found"
-                      loading={loadingData}
+                      loading={loadingUsers}
                     />
                   )}
                 />
