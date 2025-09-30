@@ -89,7 +89,6 @@ const skimMilkSchema = yup.object({
   quantity: yup.number().required("Quantity is required").min(0.1, "Quantity must be greater than 0"),
   fat: yup.number().required("Fat content is required").min(0, "Fat content must be 0 or greater"),
   destination_silo_id: yup.string().required("Destination silo is required"),
-  bmt_id: yup.string().required("BMT ID is required"),
 })
 
 const creamSchema = yup.object({
@@ -152,7 +151,6 @@ export function StandardizingFormDrawer({
           quantity: 0,
           fat: 0,
           destination_silo_id: "",
-          bmt_id: "",
         }
       ],
       cream: [
@@ -260,7 +258,6 @@ export function StandardizingFormDrawer({
               quantity: 0,
               fat: 0,
               destination_silo_id: "",
-              bmt_id: "",
             }
           ],
           cream: form.cream || [
@@ -290,7 +287,6 @@ export function StandardizingFormDrawer({
               quantity: 0,
               fat: 0,
               destination_silo_id: "",
-              bmt_id: "",
             }
           ],
           cream: [
@@ -668,25 +664,7 @@ export function StandardizingFormDrawer({
                       )}
                     </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor={`bmt_id_${index}`}>BMT ID *</Label>
-                      <Controller
-                        name={`skim_milk.${index}.bmt_id`}
-                        control={formHook.control}
-                        render={({ field }) => (
-                          <Input
-                            id={`bmt_id_${index}`}
-                            placeholder="Enter BMT ID"
-                            {...field}
-                          />
-                        )}
-                      />
-                      {formHook.formState.errors.skim_milk?.[index]?.bmt_id && (
-                        <p className="text-sm text-red-500">
-                          {formHook.formState.errors.skim_milk[index]?.bmt_id?.message}
-                        </p>
-                      )}
-                    </div>
+                    
                   </div>
                 </div>
               </div>
@@ -701,7 +679,6 @@ export function StandardizingFormDrawer({
                   quantity: 0,
                   fat: 0,
                   destination_silo_id: "",
-                  bmt_id: "",
                 })}
                 className="rounded-full px-4 py-2"
               >

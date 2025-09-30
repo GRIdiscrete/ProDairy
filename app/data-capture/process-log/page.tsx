@@ -130,10 +130,10 @@ export default function ProcessLogPage() {
         return (
           <div className="space-y-1">
             <p className="text-sm font-light">
-              {log.batch_id_fkey ? `Batch #${log.batch_id_fkey.batch_number}` : "No batch"}
+              {(log as any).batch_id ? `Batch #${(log as any).batch_id.batch_number}` : "No batch"}
             </p>
             <p className="text-xs text-gray-500">
-              {log.batch_id_fkey ? `Created: ${log.batch_id_fkey.created_at ? new Date(log.batch_id_fkey.created_at).toLocaleDateString() : 'N/A'}` : "Not created"}
+              {(log as any).batch_id ? `Created: ${((log as any).batch_id.created_at ? new Date((log as any).batch_id.created_at).toLocaleDateString() : 'N/A')}` : "Not created"}
             </p>
           </div>
         )

@@ -1250,7 +1250,7 @@ export const updateProductIncubation = (data: ProductIncubation) =>
 export const deleteProductIncubation = (id: string) => 
   apiRequest<void>(`/product-incubation/${id}`, { method: 'DELETE' })
 
-// UHT Quality Check After Incubation APIs
+// Incubation Test After Incubation APIs
 export interface UHTQualityCheckAfterIncubation {
   id?: string
   created_at?: string
