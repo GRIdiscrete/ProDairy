@@ -48,9 +48,7 @@ import {
 import { 
   fetchBMTControlForms 
 } from "@/lib/store/slices/bmtControlFormSlice"
-import { 
-  fetchUsers 
-} from "@/lib/store/slices/userSlice"
+import { usersApi } from "@/lib/api/users"
 import { PasteurizingForm, CreatePasteurizingFormRequest, Production } from "@/lib/api/pasteurizing"
 import { toast } from "sonner"
 
@@ -138,7 +136,9 @@ export function PasteurizingFormDrawer({
   const { machines } = useAppSelector((state) => state.machine)
   const { silos } = useAppSelector((state) => state.silo)
   const { forms: bmtForms } = useAppSelector((state) => state.bmtControlForms)
-  const { users } = useAppSelector((state) => state.user)
+  // State for users
+  const [users, setUsers] = useState<SearchableSelectOption[]>([])
+  const [loadingUsers, setLoadingUsers] = useState(false)
 
   const [loadingInitialData, setLoadingInitialData] = useState(false)
 
@@ -181,6 +181,7 @@ export function PasteurizingFormDrawer({
   const loadInitialData = async () => {
     try {
       setLoadingInitialData(true)
+      setLoadingUsers(true)
       
       // Load standardizing forms to show process flow
       if (standardizingForms.length === 0) {
@@ -202,15 +203,19 @@ export function PasteurizingFormDrawer({
         await dispatch(fetchBMTControlForms())
       }
       
-      // Load users for the operator select
-      if (users.length === 0) {
-        await dispatch(fetchUsers({}))
-      }
+      // Load users for the operator select using API
+      const usersResponse = await usersApi.getUsers()
+      setUsers(usersResponse.data?.map(user => ({
+        value: user.id,
+        label: `${user.first_name} ${user.last_name}`,
+        description: `${user.department} • ${user.email}`
+      })) || [])
     } catch (error) {
       console.error("Failed to load initial data:", error)
       toast.error("Failed to load form data")
     } finally {
       setLoadingInitialData(false)
+      setLoadingUsers(false)
     }
   }
 
@@ -224,6 +229,10 @@ export function PasteurizingFormDrawer({
   // Reset form when form prop changes
   useEffect(() => {
     if (form && mode === "edit") {
+      // Debug: Log the form data being used for reset
+      console.log('Form data for reset:', form)
+      console.log('Operator from form:', (form as any).operator)
+      
       formHook.reset({
         operator: (form as any).operator || "",
         date: (form as any).date || new Date().toISOString().split('T')[0],
@@ -262,6 +271,9 @@ export function PasteurizingFormDrawer({
             }],
       })
     } else if (mode === "create") {
+      // Debug: Log create mode reset
+      console.log('Resetting form for create mode')
+      
       formHook.reset({
         operator: "",
         date: new Date().toISOString().split('T')[0],
@@ -295,6 +307,10 @@ export function PasteurizingFormDrawer({
     try {
       const processIdMatch = pathname.match(/data-capture\/(.*?)\//)
       const processId = processIdMatch ? processIdMatch[1] : ""
+
+      // Debug: Log the operator value
+      console.log('Operator value being submitted:', data.operator)
+      console.log('All form data:', data)
 
       const formData: any = {
         operator: data.operator,
@@ -358,23 +374,11 @@ export function PasteurizingFormDrawer({
       description: `${bmt.volume}L • ${bmt.product}`
     }))
 
-    // Convert users to searchable select options
-    const operatorOptions: SearchableSelectOption[] = users.map(user => {
-      // Debug: Log user object structure
-      console.log('User object:', user)
-      
-      // Handle different possible user object structures
-      const firstName = user.first_name || user.firstName || user.name?.split(' ')[0] || 'Unknown'
-      const lastName = user.last_name || user.lastName || user.name?.split(' ').slice(1).join(' ') || 'User'
-      const email = user.email || 'No email'
-      const role = user.role || user.user_role || 'No role'
-      
-      return {
-        value: user.id,
-        label: `${firstName} ${lastName}`,
-        description: `${email} • ${role}`
-      }
-    })
+    // Users are already loaded as SearchableSelectOption[] from the API
+    const operatorOptions: SearchableSelectOption[] = users
+
+    // Debug: Log all operator options
+    console.log('Operator options:', operatorOptions)
 
     return (
       <div className="space-y-6 p-6">
@@ -394,17 +398,25 @@ export function PasteurizingFormDrawer({
                 <Controller
                   name="operator"
                   control={formHook.control}
-                  render={({ field }) => (
-                    <SearchableSelect
-                      options={operatorOptions}
-                      value={field.value}
-                      onValueChange={field.onChange}
-                      placeholder="Select operator..."
-                      searchPlaceholder="Search operators..."
-                      emptyMessage="No operators found"
-                      loading={loadingInitialData}
-                    />
-                  )}
+                  render={({ field }) => {
+                    // Debug: Log operator field value
+                    console.log('Operator field value:', field.value)
+                    
+                    return (
+                      <SearchableSelect
+                        options={operatorOptions}
+                        value={field.value}
+                        onValueChange={(value) => {
+                          console.log('Operator value changed to:', value)
+                          field.onChange(value)
+                        }}
+                        placeholder="Select operator..."
+                        searchPlaceholder="Search operators..."
+                        emptyMessage="No operators found"
+                        loading={loadingUsers}
+                      />
+                    )
+                  }}
                 />
                 {formHook.formState.errors.operator && (
                   <p className="text-sm text-red-500">{formHook.formState.errors.operator.message}</p>

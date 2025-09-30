@@ -7,7 +7,7 @@ import { LoadingButton } from "@/components/ui/loading-button"
 import { DataTable } from "@/components/ui/data-table"
 import { DataTableFilters } from "@/components/ui/data-table-filters"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Eye, Edit, Trash2, Droplets, TrendingUp, FileText } from "lucide-react"
+import { Plus, Eye, Edit, Trash2, Droplets, TrendingUp, FileText, Clock, FlaskConical } from "lucide-react"
 import { CIPControlFormDrawer } from "@/components/forms/cip-control-form-drawer"
 import { CIPControlFormViewDrawer } from "@/components/forms/cip-control-form-view-drawer"
 import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-dialog"
@@ -156,7 +156,7 @@ export default function CIPControlFormPage() {
             </div>
             <div>
               <div className="flex items-center space-x-2">
-                <span className="font-medium">{form.cip_control_form_machine_id_fkey?.name || `Machine: ${form.machine_id?.slice(0, 8)}...`}</span>
+                <span className="font-light">{form.cip_control_form_machine_id_fkey?.name || `Machine: ${form.machine_id?.slice(0, 8)}...`}</span>
                 <Badge className={getStatusColor(form.status)}>{form.status}</Badge>
               </div>
               <p className="text-sm text-gray-500 mt-1">
@@ -179,37 +179,14 @@ export default function CIPControlFormPage() {
           <div className="space-y-1">
             <div className="flex items-center space-x-4">
               <div className="text-center">
-                <p className="text-sm font-medium text-orange-600">{form.caustic_solution_strength}%</p>
+                <p className="text-sm font-light text-orange-600">{form.caustic_solution_strength}%</p>
                 <p className="text-xs text-gray-500">Caustic</p>
               </div>
               <div className="text-center">
-                <p className="text-sm font-medium text-red-600">{form.acid_solution_strength}%</p>
+                <p className="text-sm font-light text-red-600">{form.acid_solution_strength}%</p>
                 <p className="text-xs text-gray-500">Acid</p>
               </div>
             </div>
-          </div>
-        )
-      },
-    },
-    {
-      accessorKey: "approval_info",
-      header: "Approval & Verification",
-      cell: ({ row }: any) => {
-        const form = row.original
-        return (
-          <div className="space-y-1">
-            <p className="text-sm font-medium">
-              {form.cip_control_form_approver_fkey?.role_name || form.approver}
-            </p>
-            <p className="text-xs text-gray-500">
-              {form.cip_control_form_analyzer_fkey 
-                ? `${form.cip_control_form_analyzer_fkey.first_name} ${form.cip_control_form_analyzer_fkey.last_name}`
-                : form.analyzer
-              } • {form.cip_control_form_checked_by_fkey 
-                ? `${form.cip_control_form_checked_by_fkey.first_name} ${form.cip_control_form_checked_by_fkey.last_name}`
-                : form.checked_by
-              }
-            </p>
           </div>
         )
       },
@@ -221,7 +198,7 @@ export default function CIPControlFormPage() {
         const form = row.original
         return (
           <div className="space-y-1">
-            <p className="text-sm font-medium">
+            <p className="text-sm font-light">
               {form.created_at ? new Date(form.created_at).toLocaleDateString() : 'N/A'}
             </p>
             <p className="text-xs text-gray-500">
@@ -238,10 +215,20 @@ export default function CIPControlFormPage() {
         const form = row.original
         return (
           <div className="flex space-x-2">
-            <LoadingButton variant="outline" size="sm" onClick={() => handleViewForm(form)}>
+            <LoadingButton 
+              variant="outline" 
+              size="sm" 
+              onClick={() => handleViewForm(form)}
+              className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full"
+            >
               <Eye className="w-4 h-4" />
             </LoadingButton>
-            <LoadingButton variant="outline" size="sm" onClick={() => handleEditForm(form)}>
+            <LoadingButton 
+              variant="outline" 
+              size="sm" 
+              onClick={() => handleEditForm(form)}
+              className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 rounded-full"
+            >
               <Edit className="w-4 h-4" />
             </LoadingButton>
             <LoadingButton 
@@ -250,6 +237,7 @@ export default function CIPControlFormPage() {
               onClick={() => handleDeleteForm(form)}
               loading={operationLoading.delete}
               disabled={operationLoading.delete}
+              className="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white border-0 rounded-full"
             >
               <Trash2 className="w-4 h-4" />
             </LoadingButton>
@@ -259,135 +247,142 @@ export default function CIPControlFormPage() {
     },
   ]
 
+  // Get latest form for display
+  const latestForm = Array.isArray(forms) && forms.length > 0 ? forms[0] : null
+
   return (
     <ToolsDashboardLayout title="CIP Control Forms" subtitle="Cleaning in Place control and monitoring">
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">CIP Control Forms</h1>
-            <p className="text-muted-foreground">Manage cleaning in place control forms</p>
+            <h1 className="text-3xl font-light text-foreground">CIP Control Forms</h1>
+            <p className="text-sm font-light text-muted-foreground">Manage cleaning in place control forms</p>
           </div>
-          <LoadingButton onClick={handleAddForm}>
+          <LoadingButton 
+            onClick={handleAddForm}
+            className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full px-6 py-2 font-light"
+          >
             <Plus className="mr-2 h-4 w-4" />
             Add CIP Form
           </LoadingButton>
         </div>
 
-        {/* Counter Widgets with Icons */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Forms</CardTitle>
-              <FileText className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              {operationLoading.fetch ? (
-                <div className="animate-pulse">
-                  <div className="h-8 bg-gray-200 rounded w-16 mb-1"></div>
-                  <div className="h-3 bg-gray-200 rounded w-24"></div>
-                </div>
-              ) : (
-                <>
-                  <div className="text-2xl font-bold">{(forms || []).length}</div>
-                  <p className="text-xs text-muted-foreground">Total entries</p>
-                </>
-              )}
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Today's Forms</CardTitle>
-              <TrendingUp className="h-4 w-4 text-blue-600" />
-            </CardHeader>
-            <CardContent>
-              {operationLoading.fetch ? (
-                <div className="animate-pulse">
-                  <div className="h-8 bg-gray-200 rounded w-16 mb-1"></div>
-                  <div className="h-3 bg-gray-200 rounded w-32"></div>
-                </div>
-              ) : (
-                <>
-                  <div className="text-2xl font-bold text-blue-600">
-                    {(forms || []).filter((form) => 
-                      form.created_at && new Date(form.created_at).toDateString() === new Date().toDateString()
-                    ).length}
-                  </div>
-                  <p className="text-xs text-muted-foreground">Completed today</p>
-                </>
-              )}
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Completed</CardTitle>
-              <Droplets className="h-4 w-4 text-green-600" />
-            </CardHeader>
-            <CardContent>
-              {operationLoading.fetch ? (
-                <div className="animate-pulse">
-                  <div className="h-8 bg-gray-200 rounded w-16 mb-1"></div>
-                  <div className="h-3 bg-gray-200 rounded w-32"></div>
-                </div>
-              ) : (
-                <>
-                  <div className="text-2xl font-bold text-green-600">
-                    {(forms || []).filter((form) => form.status === "Completed").length}
-                  </div>
-                  <p className="text-xs text-muted-foreground">Completed forms</p>
-                </>
-              )}
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">In Progress</CardTitle>
-              <Droplets className="h-4 w-4 text-orange-600" />
-            </CardHeader>
-            <CardContent>
-              {operationLoading.fetch ? (
-                <div className="animate-pulse">
-                  <div className="h-8 bg-gray-200 rounded w-16 mb-1"></div>
-                  <div className="h-3 bg-gray-200 rounded w-32"></div>
-                </div>
-              ) : (
-                <>
-                  <div className="text-2xl font-bold text-orange-600">
-                    {(forms || []).filter((form) => form.status === "In Progress").length}
-                  </div>
-                  <p className="text-xs text-muted-foreground">Active cleaning</p>
-                </>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-
+        {/* Current Form Details */}
         {loading ? (
-        <ContentSkeleton sections={1} cardsPerSection={4} />
-        ) : (
-        <Card>
-          <CardHeader>
-            <CardTitle>CIP Control Forms</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <DataTableFilters
-              filters={tableFilters}
-              onFiltersChange={setTableFilters}
-              onSearch={(searchTerm) => setTableFilters(prev => ({ ...prev, search: searchTerm }))}
-              searchPlaceholder="Search CIP forms..."
-              filterFields={filterFields}
-            />
-            
-            {loading ? (
-              <ContentSkeleton sections={1} cardsPerSection={4} />
-            ) : (
-              <DataTable
-                columns={columns}
-                data={forms || []}
-                showSearch={false}
+          <ContentSkeleton sections={1} cardsPerSection={4} />
+        ) : latestForm ? (
+          <div className="border border-gray-200 rounded-lg bg-white border-l-4 border-l-blue-500">
+            <div className="p-6 pb-0">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2 text-lg font-light">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center">
+                    <Droplets className="h-4 w-4 text-white" />
+                  </div>
+                  <span>Current CIP Control Form</span>
+                  <Badge className="bg-gradient-to-r from-blue-100 to-cyan-100 text-blue-800 font-light">Latest</Badge>
+                </div>
+                <LoadingButton 
+                  variant="outline" 
+                  onClick={() => handleViewForm(latestForm)}
+                  className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full px-4 py-2 font-light text-sm"
+                >
+                  <Eye className="mr-2 h-4 w-4" />
+                  View Details
+                </LoadingButton>
+              </div>
+            </div>
+            <div className="p-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <Droplets className="h-4 w-4 text-blue-500" />
+                    <p className="text-sm font-light text-gray-600">Machine</p>
+                  </div>
+                  <p className="text-lg font-light text-blue-600">{latestForm.cip_control_form_machine_id_fkey?.name || 'N/A'}</p>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <TrendingUp className="h-4 w-4 text-green-500" />
+                    <p className="text-sm font-light text-gray-600">Status</p>
+                  </div>
+                  <Badge className={getStatusColor(latestForm.status)}>{latestForm.status}</Badge>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <Clock className="h-4 w-4 text-gray-500" />
+                    <p className="text-sm font-light text-gray-600">Created</p>
+                  </div>
+                  <p className="text-lg font-light">{latestForm.created_at ? new Date(latestForm.created_at).toLocaleDateString('en-GB', { 
+                    day: 'numeric', 
+                    month: 'long', 
+                    year: 'numeric' 
+                  }) : 'N/A'}</p>
+                </div>
+              </div>
+              
+              {/* Solution Concentrations */}
+              <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <div className="flex items-center space-x-2 mb-3">
+                    <div className="w-6 h-6 rounded-full bg-orange-100 flex items-center justify-center">
+                      <FlaskConical className="h-4 w-4 text-orange-600" />
+                    </div>
+                    <h4 className="text-sm font-light text-gray-900">Caustic Solution</h4>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-light text-gray-600">Strength</span>
+                      <span className="text-sm font-light text-orange-600">{latestForm.caustic_solution_strength}%</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-4 bg-gradient-to-r from-red-50 to-pink-50 rounded-lg">
+                  <div className="flex items-center space-x-2 mb-3">
+                    <div className="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center">
+                      <FlaskConical className="h-4 w-4 text-red-600" />
+                    </div>
+                    <h4 className="text-sm font-light text-gray-900">Acid Solution</h4>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-light text-gray-600">Strength</span>
+                      <span className="text-sm font-light text-red-600">{latestForm.acid_solution_strength}%</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : null}
+
+        {/* Data Table */}
+        {!loading && (
+          <div className="border border-gray-200 rounded-lg bg-white">
+            <div className="p-6 pb-0">
+              <div className="text-lg font-light">CIP Control Forms</div>
+            </div>
+            <div className="p-6 space-y-4">
+              <DataTableFilters
+                filters={tableFilters}
+                onFiltersChange={setTableFilters}
+                onSearch={(searchTerm) => setTableFilters(prev => ({ ...prev, search: searchTerm }))}
+                searchPlaceholder="Search CIP forms..."
+                filterFields={filterFields}
               />
-            )}
-          </CardContent>
-        </Card>
+              
+              {loading ? (
+                <ContentSkeleton sections={1} cardsPerSection={4} />
+              ) : (
+                <DataTable 
+                  columns={columns} 
+                  data={forms} 
+                  showSearch={false}
+                  searchKey="status"
+                />
+              )}
+            </div>
+          </div>
         )}
 
         {/* Form Drawer */}
