@@ -154,13 +154,12 @@ export default function FilmaticLines1Page() {
             </div>
             <div>
               <div className="flex items-center space-x-2">
-                <span className="font-light">#{form.id.slice(0, 8)}</span>
                 <Badge className={`${form.approved ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'} font-light`}>
                   {form.approved ? 'Approved' : 'Pending'}
                 </Badge>
               </div>
               <p className="text-sm text-gray-500 mt-1">
-                {new Date(form.created_at).toLocaleDateString()} • {form.holding_tank_bmt}
+                {new Date(form.created_at).toLocaleDateString()} 
               </p>
             </div>
           </div>
@@ -375,11 +374,12 @@ export default function FilmaticLines1Page() {
                 <div className="space-y-2">
                   <div className="flex items-center space-x-2">
                     <FileText className="h-4 w-4 text-gray-500" />
-                    <p className="text-sm font-light text-gray-600">Form ID</p>
+                    <p className="text-sm font-light text-gray-600">Form Status</p>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <p className="text-lg font-light">#{latestForm.id.slice(0, 8)}</p>
-                    <CopyButton text={latestForm.id} />
+                    <Badge className={`${latestForm.approved ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'} font-light`}>
+                      {latestForm.approved ? 'Approved' : 'Pending'}
+                    </Badge>
                   </div>
                 </div>
                 <div className="space-y-2">

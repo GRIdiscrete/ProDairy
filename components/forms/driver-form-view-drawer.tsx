@@ -6,16 +6,54 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "
 import { useIsMobile } from "@/hooks/use-mobile"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Truck, Package, Calendar, User, Edit, Trash2, CheckCircle, XCircle } from "lucide-react"
+import { Truck, Package, Calendar, User, Edit, Trash2, CheckCircle, XCircle, Eye, EyeOff } from "lucide-react"
 import { toast } from "sonner"
 import { useAppDispatch, useAppSelector } from "@/lib/store"
 import { deleteDriverForm, fetchDriverForms } from "@/lib/store/slices/driverFormSlice"
 import { LoadingButton } from "@/components/ui/loading-button"
+import { base64ToPngDataUrl } from "@/lib/utils/signature"
 import type { DriverForm } from "@/lib/types"
 import type { OfflineDriverForm } from "@/lib/offline/database"
 
 // Unified form type
 type UnifiedForm = DriverForm | OfflineDriverForm
+
+// Signature Viewer Component
+interface SignatureViewerProps {
+  signature: string
+  title: string
+  type: 'supplier' | 'driver'
+}
+
+function SignatureViewer({ signature, title, type }: SignatureViewerProps) {
+  if (!signature || signature.trim() === '') {
+    return (
+      <div className="space-y-1">
+        <div className="text-xs text-gray-500">{title}</div>
+        <div className="h-24 flex items-center justify-center border border-dashed border-gray-300 rounded-md text-xs text-gray-500 bg-white">
+          No signature available
+        </div>
+      </div>
+    )
+  }
+
+  // Use the same base64 conversion function as the raw-milk-intake form
+  const signatureImage = base64ToPngDataUrl(signature)
+
+  return (
+    <div className="space-y-1">
+      <div className="text-xs text-gray-500">{title}</div>
+      <div className="border border-gray-200 rounded-lg p-2 bg-gray-50">
+        <img 
+          src={signatureImage} 
+          alt={`${title} signature`}
+          className="w-full h-24 object-contain bg-white rounded border"
+          style={{ imageRendering: 'pixelated' }}
+        />
+      </div>
+    </div>
+  )
+}
 
 interface DriverFormViewDrawerProps {
   open: boolean
@@ -44,7 +82,7 @@ export function DriverFormViewDrawer({
       setLoading(true)
       await dispatch(deleteDriverForm(driverForm.id)).unwrap()
       toast.success("Driver form deleted successfully")
-      dispatch(fetchDriverForms())
+      dispatch(fetchDriverForms({}))
       onOpenChange(false)
     } catch (error: any) {
       const message = error?.message || "Failed to delete driver form"
@@ -127,14 +165,31 @@ export function DriverFormViewDrawer({
               <div className="space-y-1">
                 <div className="text-xs text-gray-500 flex items-center gap-1"><User className="h-3 w-3" />Driver</div>
                 <div className="text-sm font-light">
-                  {driverForm.drivers_driver_fkey ? 
-                    `${driverForm.drivers_driver_fkey.first_name} ${driverForm.drivers_driver_fkey.last_name}` :
-                    driverForm.driver
-                  }
+                  {(() => {
+                    // Handle online form with driver relationship
+                    if ((driverForm as any).drivers_driver_fkey) {
+                      return `${(driverForm as any).drivers_driver_fkey.first_name} ${(driverForm as any).drivers_driver_fkey.last_name}`
+                    }
+                    // Handle offline form with driver object
+                    if (driverForm.driver && typeof driverForm.driver === 'object') {
+                      return `${(driverForm.driver as any).first_name} ${(driverForm.driver as any).last_name}`
+                    }
+                    // Handle string driver ID
+                    if (typeof driverForm.driver === 'string') {
+                      return driverForm.driver
+                    }
+                    return 'Unknown Driver'
+                  })()}
                 </div>
-                {driverForm.drivers_driver_fkey?.email && (
-                  <div className="text-xs text-gray-500 font-light">{driverForm.drivers_driver_fkey.email}</div>
-                )}
+                {(() => {
+                  if ((driverForm as any).drivers_driver_fkey?.email) {
+                    return <div className="text-xs text-gray-500 font-light">{(driverForm as any).drivers_driver_fkey.email}</div>
+                  }
+                  if (driverForm.driver && typeof driverForm.driver === 'object' && (driverForm.driver as any).email) {
+                    return <div className="text-xs text-gray-500 font-light">{(driverForm.driver as any).email}</div>
+                  }
+                  return null
+                })()}
               </div>
               
               <div className="grid grid-cols-2 gap-4">
@@ -227,7 +282,7 @@ export function DriverFormViewDrawer({
                           </div>
                           <div>
                             <p className="font-light">Product #{index + 1}</p>
-                            <p className="text-muted-foreground text-sm font-light">Material ID: {product.raw_material_id}</p>
+                            <p className="text-muted-foreground text-sm font-light">Raw Material Collection</p>
                           </div>
                         </div>
                         <div className="text-right">
@@ -240,30 +295,26 @@ export function DriverFormViewDrawer({
 
                       <div className="grid grid-cols-2 gap-4 text-sm">
                         <div className="space-y-1">
-                          <div className="text-xs text-gray-500">Supplier ID</div>
-                          <p className="font-mono text-xs bg-gray-100 p-1 rounded font-light">
-                            {product.supplier_id}
-                          </p>
-                        </div>
-                        <div className="space-y-1">
                           <div className="text-xs text-gray-500">Unit of Measure</div>
                           <p className="font-light">{product.unit_of_measure}</p>
+                        </div>
+                        <div className="space-y-1">
+                          <div className="text-xs text-gray-500">Collected Amount</div>
+                          <p className="font-light">{product.collected_amount} {product.unit_of_measure}</p>
                         </div>
                       </div>
 
                       <div className="grid grid-cols-2 gap-4 text-sm">
-                        <div className="space-y-1">
-                          <div className="text-xs text-gray-500">Supplier Signature</div>
-                          <p className="font-mono text-xs bg-blue-50 p-2 rounded border border-blue-200 font-light">
-                            {product["e-sign-supplier"] || "Not signed"}
-                          </p>
-                        </div>
-                        <div className="space-y-1">
-                          <div className="text-xs text-gray-500">Driver Signature</div>
-                          <p className="font-mono text-xs bg-green-50 p-2 rounded border border-green-200 font-light">
-                            {product["e-sign-driver"] || "Not signed"}
-                          </p>
-                        </div>
+                        <SignatureViewer 
+                          signature={product["e-sign-supplier"] || ""} 
+                          title="Supplier Signature" 
+                          type="supplier" 
+                        />
+                        <SignatureViewer 
+                          signature={product["e-sign-driver"] || ""} 
+                          title="Driver Signature" 
+                          type="driver" 
+                        />
                       </div>
                     </div>
                   ))}

@@ -64,7 +64,7 @@ export function DatePicker({
   const handleTimeChange = (time: string) => {
     setTimeValue(time)
     
-    if (currentDate) {
+    if (currentDate && isValidDate) {
       const dateString = format(currentDate, "yyyy-MM-dd")
       onChange?.(`${dateString}T${time}`)
     }
@@ -72,11 +72,14 @@ export function DatePicker({
 
   // Initialize time value when date changes
   React.useEffect(() => {
-    if (currentDate && showTime) {
+    if (currentDate && showTime && isValidDate) {
       const timeStr = format(currentDate, "HH:mm")
       setTimeValue(timeStr)
+    } else if (showTime && (!currentDate || !isValidDate)) {
+      // Reset time value when date is invalid or cleared
+      setTimeValue("")
     }
-  }, [currentDate, showTime])
+  }, [currentDate, showTime, isValidDate])
 
   // Format display value
   const displayValue = React.useMemo(() => {

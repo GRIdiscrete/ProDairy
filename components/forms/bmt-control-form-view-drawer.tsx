@@ -1,12 +1,15 @@
 "use client"
 
 import { useState } from "react"
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet"
 import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { LoadingButton } from "@/components/ui/loading-button"
+import { CopyButton } from "@/components/ui/copy-button"
 import { AnimatedSiloTransfer } from "@/components/ui/animated-silo-transfer"
-import { Edit, Beaker, Droplets, Users, Clock, BarChart3, ArrowRight, Play, RotateCcw } from "lucide-react"
+import { Edit, Beaker, Droplets, Users, Clock, BarChart3, ArrowRight, Play, RotateCcw, FileText, Package, TrendingUp } from "lucide-react"
+import { format } from "date-fns"
+import { base64ToPngDataUrl } from "@/lib/utils/signature"
 import type { BMTControlForm } from "@/lib/api/data-capture-forms"
 
 interface BMTControlFormViewDrawerProps {
@@ -47,73 +50,95 @@ export function BMTControlFormViewDrawer({ open, onClose, form, onEdit }: BMTCon
 
   return (
     <Sheet open={open} onOpenChange={onClose}>
-      <SheetContent className="w-[50vw] sm:max-w-[50vw] p-6 overflow-y-auto">
-        <SheetHeader className="mb-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center">
-                <Beaker className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <SheetTitle className="flex items-center space-x-2">
-                  <span>BMT Control Form</span>
-                  <Badge className="bg-blue-100 text-blue-800">{form.product}</Badge>
-                </SheetTitle>
-                <p className="text-sm text-gray-500 mt-1">
-                  {form.bmt_control_form_source_silo_id_fkey?.name || form.source_silo_id} → {form.bmt_control_form_destination_silo_id_fkey?.name || form.destination_silo_id} • {form.volume}L
-                </p>
-              </div>
-            </div>
-            {onEdit && (
-              <Button variant="outline" size="sm" onClick={onEdit}>
-                <Edit className="w-4 h-4 mr-2" />
-                Edit Form
-              </Button>
-            )}
-          </div>
+      <SheetContent className="w-[60vw] sm:max-w-[60vw] p-0 overflow-hidden bg-white">
+        <SheetHeader className="p-6 pb-0">
+          <SheetTitle className="flex items-center gap-2 text-lg font-light">
+            <Beaker className="w-5 h-5" />
+            BMT Control Form Details
+          </SheetTitle>
+          <SheetDescription className="text-sm font-light">
+            Complete information about the bulk milk transfer control form record
+          </SheetDescription>
         </SheetHeader>
 
-        <div className="space-y-6">
-          {/* Basic Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center">
-                <Beaker className="w-5 h-5 mr-2" />
-                Product Transfer Details
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Product Type</label>
-                  <p className="text-sm font-semibold">{form.product}</p>
+        <div className="flex-1 overflow-y-auto p-6">
+          {/* Process Overview */}
+          <div className="mb-8 p-6 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg">
+            <h3 className="text-lg font-light text-gray-900 mb-4">Process Overview</h3>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+                  <Package className="w-4 h-4 text-blue-600" />
                 </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Volume</label>
-                  <p className="text-sm font-semibold">{form.volume} Liters</p>
-                </div>
+                <span className="text-sm font-light">Source Silo</span>
               </div>
-              <div className="flex items-center justify-center py-4">
-                <div className="flex items-center space-x-4">
-                  <div className="text-center">
-                    <div className="text-lg font-bold text-blue-600">{form.bmt_control_form_source_silo_id_fkey?.name || form.source_silo_id}</div>
-                    <div className="text-xs text-gray-500">Source Silo</div>
-                    {form.bmt_control_form_source_silo_id_fkey && (
-                      <div className="text-xs text-gray-400">{form.bmt_control_form_source_silo_id_fkey.location}</div>
-                    )}
-                  </div>
-                  <ArrowRight className="w-6 h-6 text-gray-400" />
-                  <div className="text-center">
-                    <div className="text-lg font-bold text-green-600">{form.bmt_control_form_destination_silo_id_fkey?.name || form.destination_silo_id}</div>
-                    <div className="text-xs text-gray-500">Destination Silo</div>
-                    {form.bmt_control_form_destination_silo_id_fkey && (
-                      <div className="text-xs text-gray-400">{form.bmt_control_form_destination_silo_id_fkey.location}</div>
-                    )}
+              <ArrowRight className="w-4 h-4 text-gray-400" />
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
+                  <Beaker className="w-4 h-4 text-green-600" />
+                </div>
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm font-medium text-green-600">BMT Transfer</span>
+                  <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-2 py-1 rounded-full text-xs font-medium shadow-lg">
+                    Current Step
                   </div>
                 </div>
               </div>
-            </CardContent>
-          </Card>
+              <ArrowRight className="w-4 h-4 text-gray-400" />
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+                  <Package className="w-4 h-4 text-gray-400" />
+                </div>
+                <span className="text-sm font-light text-gray-400">Destination Silo</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center space-x-2">
+              <h2 className="text-xl font-light">BMT Control Form</h2>
+            </div>
+            <div className="flex items-center space-x-2">
+              <LoadingButton
+                variant="outline"
+                size="sm"
+                onClick={onEdit}
+                className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 rounded-full"
+              >
+                <Edit className="w-4 h-4 mr-2" />
+                Edit
+              </LoadingButton>
+            </div>
+          </div>
+
+          {/* Transfer Details */}
+          <div className="p-6 bg-white border border-gray-200 rounded-lg">
+            <div className="flex items-center space-x-2 mb-4">
+              <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
+                <Beaker className="w-4 h-4 text-blue-600" />
+              </div>
+              <h3 className="text-lg font-light">Transfer Details</h3>
+            </div>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-light text-gray-600">Product</span>
+                <span className="text-sm font-light text-blue-600">{form.product}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-light text-gray-600">Volume</span>
+                <span className="text-sm font-light text-green-600">{form.volume}L</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-light text-gray-600">Source Silo</span>
+                <span className="text-sm font-light">{form.bmt_control_form_source_silo_id_fkey?.name || 'N/A'}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-light text-gray-600">Destination Silo</span>
+                <span className="text-sm font-light">{form.bmt_control_form_destination_silo_id_fkey?.name || 'N/A'}</span>
+              </div>
+            </div>
+          </div>
 
           {/* Animated Silo Transfer Visualization */}
           {form.bmt_control_form_source_silo_id_fkey && form.bmt_control_form_destination_silo_id_fkey && (
@@ -168,146 +193,172 @@ export function BMTControlFormViewDrawer({ open, onClose, form, onEdit }: BMTCon
           )}
 
           {/* Flow Meter Readings */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center">
-                <BarChart3 className="w-5 h-5 mr-2" />
-                Flow Meter Readings
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-3 border rounded-lg">
-                  <label className="text-sm font-medium text-gray-500">Start Reading</label>
-                  <p className="text-2xl font-bold text-blue-600">{form.flow_meter_start_reading}</p>
-                  <p className="text-xs text-gray-500">
-                    {form.flow_meter_start ? new Date(form.flow_meter_start).toLocaleString() : 'N/A'}
-                  </p>
-                </div>
-                <div className="p-3 border rounded-lg">
-                  <label className="text-sm font-medium text-gray-500">End Reading</label>
-                  <p className="text-2xl font-bold text-green-600">{form.flow_meter_end_reading}</p>
-                  <p className="text-xs text-gray-500">
-                    {form.flow_meter_end ? new Date(form.flow_meter_end).toLocaleString() : 'N/A'}
-                  </p>
-                </div>
+          <div className="p-6 bg-white border border-gray-200 rounded-lg">
+            <div className="flex items-center space-x-2 mb-4">
+              <div className="w-6 h-6 rounded-full bg-orange-100 flex items-center justify-center">
+                <BarChart3 className="w-4 h-4 text-orange-600" />
               </div>
-              <div className="p-3 bg-gray-50 border rounded-lg">
-                <label className="text-sm font-medium text-gray-500">Volume Difference</label>
-                <p className={`text-2xl font-bold ${volumeDifference > 0 ? 'text-green-600' : 'text-red-600'}`}>
+              <h3 className="text-lg font-light">Flow Meter Readings</h3>
+            </div>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-light text-gray-600">Start Reading</span>
+                <span className="text-sm font-light text-blue-600">{form.flow_meter_start_reading}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-light text-gray-600">End Reading</span>
+                <span className="text-sm font-light text-green-600">{form.flow_meter_end_reading}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-light text-gray-600">Volume Difference</span>
+                <span className={`text-sm font-light ${volumeDifference > 0 ? 'text-green-600' : 'text-red-600'}`}>
                   {volumeDifference > 0 ? '+' : ''}{volumeDifference}
-                </p>
-                <p className="text-xs text-gray-500">Flow meter differential</p>
+                </span>
               </div>
-            </CardContent>
-          </Card>
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-light text-gray-600">Start Time</span>
+                <span className="text-sm font-light">
+                  {form.flow_meter_start ? format(new Date(form.flow_meter_start), 'PPp') : 'N/A'}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-light text-gray-600">End Time</span>
+                <span className="text-sm font-light">
+                  {form.flow_meter_end ? format(new Date(form.flow_meter_end), 'PPp') : 'N/A'}
+                </span>
+              </div>
+            </div>
+          </div>
 
           {/* Movement Timeline */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center">
-                <Clock className="w-5 h-5 mr-2" />
-                Movement Timeline
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Movement Start</label>
-                  <p className="text-sm font-semibold">
-                    {form.movement_start ? new Date(form.movement_start).toLocaleString() : 'N/A'}
-                  </p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Movement End</label>
-                  <p className="text-sm font-semibold">
-                    {form.movement_end ? new Date(form.movement_end).toLocaleString() : 'N/A'}
-                  </p>
-                </div>
+          <div className="p-6 bg-white border border-gray-200 rounded-lg">
+            <div className="flex items-center space-x-2 mb-4">
+              <div className="w-6 h-6 rounded-full bg-indigo-100 flex items-center justify-center">
+                <Clock className="w-4 h-4 text-indigo-600" />
+              </div>
+              <h3 className="text-lg font-light">Movement Timeline</h3>
+            </div>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-light text-gray-600">Movement Start</span>
+                <span className="text-sm font-light">
+                  {form.movement_start ? format(new Date(form.movement_start), 'PPp') : 'N/A'}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-light text-gray-600">Movement End</span>
+                <span className="text-sm font-light">
+                  {form.movement_end ? format(new Date(form.movement_end), 'PPp') : 'N/A'}
+                </span>
               </div>
               {form.movement_start && form.movement_end && (
-                <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                  <label className="text-sm font-medium text-blue-700">Total Duration</label>
-                  <p className="text-lg font-bold text-blue-800">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-light text-gray-600">Total Duration</span>
+                  <span className="text-sm font-light text-indigo-600">
                     {Math.round((new Date(form.movement_end).getTime() - new Date(form.movement_start).getTime()) / (1000 * 60))} minutes
-                  </p>
+                  </span>
                 </div>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
           {/* Operator Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center">
-                <Users className="w-5 h-5 mr-2" />
-                Operator Information
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-3 border rounded-lg">
-                  <label className="text-sm font-medium text-gray-500">LLM Operator</label>
-                  <p className="text-sm font-semibold">
+          <div className="p-6 bg-white border border-gray-200 rounded-lg">
+            <div className="flex items-center space-x-2 mb-4">
+              <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center">
+                <Users className="w-4 h-4 text-purple-600" />
+              </div>
+              <h3 className="text-lg font-light">Operator Information</h3>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-light text-gray-600">LLM Operator</span>
+                  <span className="text-sm font-light">
                     {form.bmt_control_form_llm_operator_id_fkey 
                       ? `${form.bmt_control_form_llm_operator_id_fkey.first_name} ${form.bmt_control_form_llm_operator_id_fkey.last_name}`
                       : form.llm_operator_id
                     }
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    {form.bmt_control_form_llm_operator_id_fkey && (
-                      <span>{form.bmt_control_form_llm_operator_id_fkey.department} • </span>
-                    )}
-                    Signature: {form.llm_signature}
-                  </p>
+                  </span>
                 </div>
-                <div className="p-3 border rounded-lg">
-                  <label className="text-sm font-medium text-gray-500">DPP Operator</label>
-                  <p className="text-sm font-semibold">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-light text-gray-600">Department</span>
+                  <span className="text-sm font-light">
+                    {form.bmt_control_form_llm_operator_id_fkey?.department || 'N/A'}
+                  </span>
+                </div>
+                <div className="space-y-2">
+                  <span className="text-sm font-light text-gray-600">LLM Signature</span>
+                  {form.llm_signature ? (
+                    <div className="border border-gray-200 rounded-lg p-2 bg-gray-50">
+                      <img
+                        src={base64ToPngDataUrl(form.llm_signature)}
+                        alt="LLM signature"
+                        className="w-full h-20 object-contain"
+                      />
+                    </div>
+                  ) : (
+                    <div className="border border-gray-200 rounded-lg p-4 bg-gray-50 text-center text-gray-500 text-sm">
+                      No signature available
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-light text-gray-600">DPP Operator</span>
+                  <span className="text-sm font-light">
                     {form.bmt_control_form_dpp_operator_id_fkey 
                       ? `${form.bmt_control_form_dpp_operator_id_fkey.first_name} ${form.bmt_control_form_dpp_operator_id_fkey.last_name}`
                       : form.dpp_operator_id
                     }
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    {form.bmt_control_form_dpp_operator_id_fkey && (
-                      <span>{form.bmt_control_form_dpp_operator_id_fkey.department} • </span>
-                    )}
-                    Signature: {form.dpp_signature}
-                  </p>
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-light text-gray-600">Department</span>
+                  <span className="text-sm font-light">
+                    {form.bmt_control_form_dpp_operator_id_fkey?.department || 'N/A'}
+                  </span>
+                </div>
+                <div className="space-y-2">
+                  <span className="text-sm font-light text-gray-600">DPP Signature</span>
+                  {form.dpp_signature ? (
+                    <div className="border border-gray-200 rounded-lg p-2 bg-gray-50">
+                      <img
+                        src={base64ToPngDataUrl(form.dpp_signature)}
+                        alt="DPP signature"
+                        className="w-full h-20 object-contain"
+                      />
+                    </div>
+                  ) : (
+                    <div className="border border-gray-200 rounded-lg p-4 bg-gray-50 text-center text-gray-500 text-sm">
+                      No signature available
+                    </div>
+                  )}
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
-          {/* System Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">System Information</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Created</label>
-                  <p className="text-sm font-semibold">
-                    {form.created_at ? new Date(form.created_at).toLocaleString() : 'N/A'}
-                  </p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Last Updated</label>
-                  <p className="text-sm font-semibold">
-                    {form.updated_at ? new Date(form.updated_at).toLocaleString() : 'Never updated'}
-                  </p>
-                </div>
+          {/* Record Information */}
+          <div className="p-6 bg-white border border-gray-200 rounded-lg">
+            <h3 className="text-lg font-light mb-4">Record Information</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-light text-gray-600">Created</span>
+                <span className="text-sm font-light">
+                  {form.created_at ? format(new Date(form.created_at), 'PPP') : 'N/A'}
+                </span>
               </div>
-              {form.id && (
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Form ID</label>
-                  <p className="text-xs font-mono bg-gray-100 px-2 py-1 rounded">{form.id}</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-light text-gray-600">Last Updated</span>
+                <span className="text-sm font-light">
+                  {form.updated_at ? format(new Date(form.updated_at), 'PPP') : 'Never'}
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
       </SheetContent>
     </Sheet>

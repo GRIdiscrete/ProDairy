@@ -109,13 +109,13 @@ export default function ProcessLogPage() {
             </div>
             <div>
               <div className="flex items-center space-x-2">
-                <span className="font-light">#{log.id.slice(0, 8)}</span>
+                <span className="font-light">#{log.id?.slice(0, 8) || 'N/A'}</span>
                 <Badge className={`${log.approved ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'} font-light`}>
                   {log.approved ? 'Approved' : 'Pending'}
                 </Badge>
               </div>
               <p className="text-sm text-gray-500 mt-1">
-                {new Date(log.created_at).toLocaleDateString()}
+                {log.created_at ? new Date(log.created_at).toLocaleDateString() : 'N/A'}
               </p>
             </div>
           </div>
@@ -133,7 +133,7 @@ export default function ProcessLogPage() {
               {log.batch_id_fkey ? `Batch #${log.batch_id_fkey.batch_number}` : "No batch"}
             </p>
             <p className="text-xs text-gray-500">
-              {log.batch_id_fkey ? `Created: ${new Date(log.batch_id_fkey.created_at).toLocaleDateString()}` : "Not created"}
+              {log.batch_id_fkey ? `Created: ${log.batch_id_fkey.created_at ? new Date(log.batch_id_fkey.created_at).toLocaleDateString() : 'N/A'}` : "Not created"}
             </p>
           </div>
         )
@@ -172,7 +172,7 @@ export default function ProcessLogPage() {
         const log = row.original
         return (
           <div className="space-y-1">
-            <p className="text-sm font-light">{new Date(log.created_at).toLocaleDateString()}</p>
+            <p className="text-sm font-light">{log.created_at ? new Date(log.created_at).toLocaleDateString() : 'N/A'}</p>
             <p className="text-xs text-gray-500">{log.updated_at ? `Updated: ${new Date(log.updated_at).toLocaleDateString()}` : 'Never updated'}</p>
           </div>
         )
@@ -264,8 +264,8 @@ export default function ProcessLogPage() {
                     <p className="text-sm font-light text-gray-600">Log ID</p>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <p className="text-lg font-light">#{latest.id.slice(0, 8)}</p>
-                    <CopyButton text={latest.id} />
+                    <p className="text-lg font-light">#{latest.id?.slice(0, 8) || 'N/A'}</p>
+                    {latest.id && <CopyButton text={latest.id} />}
                   </div>
                 </div>
                 <div className="space-y-2">
@@ -273,11 +273,11 @@ export default function ProcessLogPage() {
                     <Beaker className="h-4 w-4 text-blue-500" />
                     <p className="text-sm font-light text-gray-600">Created</p>
                   </div>
-                  <p className="text-lg font-light">{new Date(latest.created_at).toLocaleDateString('en-GB', { 
+                  <p className="text-lg font-light">{latest.created_at ? new Date(latest.created_at).toLocaleDateString('en-GB', { 
                     day: 'numeric', 
                     month: 'long', 
                     year: 'numeric' 
-                  })}</p>
+                  }) : 'N/A'}</p>
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center space-x-2">
@@ -318,11 +318,11 @@ export default function ProcessLogPage() {
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-light text-gray-600">Batch Number</span>
-                        <span className="text-xs font-light">{latest.batch_id_fkey.batch_number}</span>
+                        <span className="text-xs font-light">{latest.batch_id_fkey.batch_number || 'N/A'}</span>
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-light text-gray-600">Created</span>
-                        <span className="text-xs font-light">{new Date(latest.batch_id_fkey.created_at).toLocaleDateString()}</span>
+                        <span className="text-xs font-light">{latest.batch_id_fkey.created_at ? new Date(latest.batch_id_fkey.created_at).toLocaleDateString() : 'N/A'}</span>
                       </div>
                     </div>
                   </div>

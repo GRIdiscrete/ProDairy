@@ -22,6 +22,9 @@ import { toast } from "sonner"
 import { SteriMilkProcessLog, CreateSteriMilkProcessLogRequest } from "@/lib/api/steri-milk-process-log"
 import { ChevronLeft, ChevronRight, ArrowRight, Factory, Beaker, FileText, Package, Clock, Thermometer, Gauge } from "lucide-react"
 import { SignaturePad } from "@/components/ui/signature-pad"
+import { SignatureModal } from "@/components/ui/signature-modal"
+import { SignatureViewer } from "@/components/ui/signature-viewer"
+import { base64ToPngDataUrl } from "@/lib/utils/signature"
 
 interface SteriMilkProcessLogDrawerProps {
   open: boolean
@@ -179,6 +182,8 @@ export function SteriMilkProcessLogDrawer({
   const [filmaticForms, setFilmaticForms] = useState<any[]>([])
   const [loadingUsers, setLoadingUsers] = useState(false)
   const [loadingFilmaticForms, setLoadingFilmaticForms] = useState(false)
+  const [approverSignatureOpen, setApproverSignatureOpen] = useState(false)
+  const [approverSignatureViewOpen, setApproverSignatureViewOpen] = useState(false)
 
   // Basic info form
   const basicInfoForm = useForm<BasicInfoFormData>({
@@ -468,13 +473,28 @@ export function SteriMilkProcessLogDrawer({
             name="approver_signature"
             control={basicInfoForm.control}
             render={({ field }) => (
-              <SignaturePad
-                value={field.value}
-                onChange={field.onChange}
-                width={400}
-                height={120}
-                className="bg-white"
-              />
+              <div className="space-y-2">
+                {field.value ? (
+                  <img src={base64ToPngDataUrl(field.value)} alt="Approver signature" className="h-24 border border-gray-200 rounded-md bg-white" />
+                ) : (
+                  <div className="h-24 flex items-center justify-center border border-dashed border-gray-300 rounded-md text-xs text-gray-500 bg-white">
+                    No signature captured
+                  </div>
+                )}
+                <div className="flex items-center gap-2">
+                  <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={() => setApproverSignatureOpen(true)}>
+                    Add Signature
+                  </Button>
+                  {field.value && (
+                    <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={() => setApproverSignatureViewOpen(true)}>
+                      View Signature
+                    </Button>
+                  )}
+                  {field.value && (
+                    <Button type="button" variant="ghost" size="sm" className="rounded-full text-red-600" onClick={() => field.onChange("")}>Clear</Button>
+                  )}
+                </div>
+              </div>
             )}
           />
           {basicInfoForm.formState.errors.approver_signature && (
@@ -1587,6 +1607,20 @@ export function SteriMilkProcessLogDrawer({
           )}
         </div>
       </SheetContent>
+      <SignatureModal
+        open={approverSignatureOpen}
+        onOpenChange={setApproverSignatureOpen}
+        title="Capture Approver Signature"
+        onSave={(dataUrl) => {
+          basicInfoForm.setValue("approver_signature", dataUrl, { shouldValidate: true })
+        }}
+      />
+      <SignatureViewer
+        open={approverSignatureViewOpen}
+        onOpenChange={setApproverSignatureViewOpen}
+        title="Approver Signature"
+        value={basicInfoForm.getValues("approver_signature")}
+      />
     </Sheet>
   )
 }

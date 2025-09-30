@@ -11,19 +11,43 @@ interface SignaturePadProps {
   width?: number
   height?: number
   className?: string
+  responsive?: boolean
 }
 
 export function SignaturePad({ 
   value, 
   onChange, 
   onClear,
-  width = 300, 
-  height = 150,
-  className = ""
+  width = 400, 
+  height = 100,
+  className = "",
+  responsive = true
 }: SignaturePadProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
   const [isDrawing, setIsDrawing] = useState(false)
   const [hasSignature, setHasSignature] = useState(false)
+  const [canvasSize, setCanvasSize] = useState({ width, height })
+
+  // Handle responsive sizing
+  useEffect(() => {
+    if (!responsive) return
+
+    const updateSize = () => {
+      const container = containerRef.current
+      if (!container) return
+
+      const containerWidth = container.offsetWidth
+      const containerHeight = container.offsetHeight
+      
+      // Use full container dimensions
+      setCanvasSize({ width: containerWidth, height: containerHeight })
+    }
+
+    updateSize()
+    window.addEventListener('resize', updateSize)
+    return () => window.removeEventListener('resize', updateSize)
+  }, [responsive])
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -32,9 +56,13 @@ export function SignaturePad({
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
+    // Use responsive size if enabled, otherwise use props
+    const finalWidth = responsive ? canvasSize.width : width
+    const finalHeight = responsive ? canvasSize.height : height
+
     // Set canvas size
-    canvas.width = width
-    canvas.height = height
+    canvas.width = finalWidth
+    canvas.height = finalHeight
 
     // Set drawing styles
     ctx.strokeStyle = '#000000'
@@ -46,12 +74,12 @@ export function SignaturePad({
     if (value) {
       const img = new Image()
       img.onload = () => {
-        ctx.drawImage(img, 0, 0, width, height)
+        ctx.drawImage(img, 0, 0, finalWidth, finalHeight)
         setHasSignature(true)
       }
       img.src = value
     }
-  }, [value, width, height])
+  }, [value, width, height, canvasSize, responsive])
 
   const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current
@@ -139,46 +167,34 @@ export function SignaturePad({
     canvasRef.current?.dispatchEvent(mouseEvent)
   }
 
+  const finalWidth = responsive ? canvasSize.width : width
+  const finalHeight = responsive ? canvasSize.height : height
+
   return (
-    <div className={`border border-gray-200 rounded-lg bg-white ${className}`}>
-      <div className="p-4 border-b border-gray-200">
-        <div className="flex items-center justify-between">
-          <h3 className="text-sm font-light text-gray-700">Signature</h3>
-          {hasSignature && (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={clearSignature}
-              className="h-8 px-3 text-xs font-light border-gray-200 rounded-full"
-            >
-              <RotateCcw className="h-3 w-3 mr-1" />
-              Clear
-            </Button>
-          )}
-        </div>
-      </div>
-      
-      <div className="p-4">
-        <div className="border border-gray-200 rounded-lg overflow-hidden">
-          <canvas
-            ref={canvasRef}
-            className="block cursor-crosshair"
-            onMouseDown={startDrawing}
-            onMouseMove={draw}
-            onMouseUp={stopDrawing}
-            onMouseLeave={stopDrawing}
-            onTouchStart={handleTouchStart}
-            onTouchMove={handleTouchMove}
-            onTouchEnd={handleTouchEnd}
-            style={{ width: `${width}px`, height: `${height}px` }}
-          />
-        </div>
+    <div className={`w-full h-full flex flex-col ${className}`} ref={containerRef}>
+      <div className="flex-1 w-full h-full relative bg-white border-2 border-dashed border-gray-300">
+        <canvas
+          ref={canvasRef}
+          className="absolute inset-0 w-full h-full cursor-crosshair"
+          onMouseDown={startDrawing}
+          onMouseMove={draw}
+          onMouseUp={stopDrawing}
+          onMouseLeave={stopDrawing}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          style={{ 
+            width: '100%', 
+            height: '100%'
+          }}
+        />
         
         {!hasSignature && (
-          <p className="text-xs text-gray-500 mt-2 text-center font-light">
-            Sign above to capture your signature
-          </p>
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <p className="text-sm text-gray-400 font-light bg-white/90 px-4 py-2 rounded-full border border-gray-200">
+              Sign here to capture your signature
+            </p>
+          </div>
         )}
       </div>
     </div>

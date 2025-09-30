@@ -174,6 +174,8 @@ export function CIPControlFormDrawer({ open, onOpenChange, form, mode }: CIPCont
   const onSubmit = async (data: CIPControlFormData) => {
     try {
       console.log('Form data submitted:', data)
+      console.log('Form object:', form)
+      console.log('Mode:', mode)
 
       if (mode === "create") {
         await dispatch(createCIPControlFormAction(data)).unwrap()
@@ -182,18 +184,24 @@ export function CIPControlFormDrawer({ open, onOpenChange, form, mode }: CIPCont
         setTimeout(() => {
           dispatch(fetchCIPControlForms())
         }, 100)
-      } else if (form) {
-        await dispatch(updateCIPControlFormAction({
+      } else if (form && form.id) {
+        const updatePayload = {
           ...data,
           id: form.id,
           created_at: form.created_at,
           updated_at: form.updated_at,
-        })).unwrap()
+        }
+        console.log('Update payload:', updatePayload)
+        await dispatch(updateCIPControlFormAction(updatePayload)).unwrap()
         toast.success('CIP Control Form updated successfully')
         // Refresh the data to get complete relationship information
         setTimeout(() => {
           dispatch(fetchCIPControlForms())
         }, 100)
+      } else {
+        console.error('Form ID is missing for update operation')
+        toast.error('Form ID is missing. Cannot update form.')
+        return
       }
       onOpenChange(false)
       reset()
@@ -241,8 +249,8 @@ export function CIPControlFormDrawer({ open, onOpenChange, form, mode }: CIPCont
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-[50vw] sm:max-w-[50vw] overflow-y-auto">
-        <div className="p-6">
+      <SheetContent className="w-[50vw] sm:max-w-[50vw] overflow-y-auto bg-white">
+        <div className="p-6 bg-white">
           <SheetHeader>
             <SheetTitle>{mode === "create" ? "Add New CIP Control Form" : "Edit CIP Control Form"}</SheetTitle>
             <SheetDescription>
@@ -253,7 +261,7 @@ export function CIPControlFormDrawer({ open, onOpenChange, form, mode }: CIPCont
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 mt-6">
             {/* Basic Information */}
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Basic Information</h3>
+              <h3 className="text-lg font-light text-gray-900 border-b pb-2">Basic Information</h3>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="status">Status *</Label>
@@ -262,7 +270,7 @@ export function CIPControlFormDrawer({ open, onOpenChange, form, mode }: CIPCont
                     control={control}
                     render={({ field }) => (
                       <Select onValueChange={field.onChange} value={field.value}>
-                        <SelectTrigger>
+                        <SelectTrigger className="w-full rounded-full border-gray-200">
                           <SelectValue placeholder="Select status" />
                         </SelectTrigger>
                         <SelectContent>
@@ -291,6 +299,7 @@ export function CIPControlFormDrawer({ open, onOpenChange, form, mode }: CIPCont
                         emptyMessage="No machines found"
                         loading={loadingMachines}
                         onSearch={handleMachineSearch}
+                        className="w-full rounded-full border-gray-200"
                       />
                     )}
                   />
@@ -313,6 +322,7 @@ export function CIPControlFormDrawer({ open, onOpenChange, form, mode }: CIPCont
                         emptyMessage="No users found"
                         loading={loadingUsers}
                         onSearch={handleUserSearch}
+                        className="w-full rounded-full border-gray-200"
                       />
                     )}
                   />
@@ -339,7 +349,7 @@ export function CIPControlFormDrawer({ open, onOpenChange, form, mode }: CIPCont
 
             {/* Solution Concentrations */}
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Solution Concentrations</h3>
+              <h3 className="text-lg font-light text-gray-900 border-b pb-2">Solution Concentrations</h3>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="caustic_solution_strength">Caustic Solution Strength (%) *</Label>
@@ -352,6 +362,7 @@ export function CIPControlFormDrawer({ open, onOpenChange, form, mode }: CIPCont
                         type="number"
                         step="0.1"
                         placeholder="Enter caustic strength"
+                        className="rounded-full border-gray-200"
                         {...field}
                         onChange={(e) => field.onChange(Number(e.target.value))}
                       />
@@ -370,6 +381,7 @@ export function CIPControlFormDrawer({ open, onOpenChange, form, mode }: CIPCont
                         type="number"
                         step="0.1"
                         placeholder="Enter acid strength"
+                        className="rounded-full border-gray-200"
                         {...field}
                         onChange={(e) => field.onChange(Number(e.target.value))}
                       />
@@ -387,6 +399,7 @@ export function CIPControlFormDrawer({ open, onOpenChange, form, mode }: CIPCont
                     <Input
                       id="rinse_water_test"
                       placeholder="Enter water test result"
+                      className="rounded-full border-gray-200"
                       {...field}
                     />
                   )}
@@ -397,7 +410,7 @@ export function CIPControlFormDrawer({ open, onOpenChange, form, mode }: CIPCont
 
             {/* Approval & Verification */}
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Approval & Verification</h3>
+              <h3 className="text-lg font-light text-gray-900 border-b pb-2">Approval & Verification</h3>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="approver">Approver *</Label>
@@ -414,6 +427,7 @@ export function CIPControlFormDrawer({ open, onOpenChange, form, mode }: CIPCont
                         emptyMessage="No roles found"
                         loading={loadingRoles}
                         onSearch={handleRoleSearch}
+                        className="w-full rounded-full border-gray-200"
                       />
                     )}
                   />
@@ -434,6 +448,7 @@ export function CIPControlFormDrawer({ open, onOpenChange, form, mode }: CIPCont
                         emptyMessage="No users found"
                         loading={loadingUsers}
                         onSearch={handleUserSearch}
+                        className="w-full rounded-full border-gray-200"
                       />
                     )}
                   />
@@ -455,6 +470,7 @@ export function CIPControlFormDrawer({ open, onOpenChange, form, mode }: CIPCont
                       emptyMessage="No users found"
                       loading={loadingUsers}
                       onSearch={handleUserSearch}
+                      className="w-full rounded-full border-gray-200"
                     />
                   )}
                 />

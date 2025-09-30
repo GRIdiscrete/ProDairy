@@ -46,19 +46,20 @@ export const SignatureModal: React.FC<SignatureModalProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-6xl w-[98vw] h-[90vh] flex flex-col p-2">
-        <DialogHeader className="flex-shrink-0 pb-2">
+      <DialogContent className="max-w-4xl w-[95vw] h-[70vh] flex flex-col p-0">
+        <DialogHeader className="flex-shrink-0 p-4 pb-2">
           <DialogTitle className="text-base font-light">{title}</DialogTitle>
         </DialogHeader>
-        <div className="flex-1 flex flex-col min-h-0">
-          <div ref={setCanvasRef} className="flex-1 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+        <div className="flex-1 flex flex-col">
+          <div ref={setCanvasRef} className="flex-1 w-full h-full p-4">
             <SignaturePad 
-              width={800}
-              height={500}
+              width={600}
+              height={200}
+              responsive={true}
               onChange={(signature) => setIsEmpty(!signature)} 
             />
           </div>
-          <div className="flex-shrink-0 flex items-center justify-between pt-3 border-t bg-white mt-2">
+          <div className="flex-shrink-0 flex items-center justify-between p-4 border-t bg-white">
             <Button type="button" variant="outline" onClick={handleClear} className="rounded-full">
               Clear
             </Button>

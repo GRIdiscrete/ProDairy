@@ -130,6 +130,9 @@ export default function ISTControlFormPage() {
     }
   }
 
+  // Get latest form for display
+  const latestForm = Array.isArray(forms) && forms.length > 0 ? forms[0] : null
+
   // Table columns with actions
   const columns = [
     {
@@ -144,7 +147,7 @@ export default function ISTControlFormPage() {
             </div>
             <div>
               <div className="flex items-center space-x-2">
-                <span className="font-medium">{form.item_description}</span>
+                <span className="font-light">{form.item_description}</span>
                 <Badge className="bg-blue-100 text-blue-800">{form.item_code}</Badge>
               </div>
               <p className="text-sm text-gray-500 mt-1">
@@ -164,7 +167,7 @@ export default function ISTControlFormPage() {
           <div className="space-y-1">
             <div className="flex items-center space-x-2">
               <ArrowRight className="w-4 h-4 text-blue-600" />
-              <span className="text-sm font-medium">{form.item_trans}</span>
+              <span className="text-sm font-light">{form.item_trans}</span>
             </div>
             <p className="text-xs text-gray-500">
               {form.from_warehouse} → {form.to_warehouse}
@@ -180,7 +183,7 @@ export default function ISTControlFormPage() {
         const form = row.original
         return (
           <div className="space-y-1">
-            <p className="text-sm font-medium">
+            <p className="text-sm font-light">
               Issued: {form.ist_control_form_issued_by_fkey
                 ? `${form.ist_control_form_issued_by_fkey.first_name} ${form.ist_control_form_issued_by_fkey.last_name}`
                 : `User: ${form.issued_by?.slice(0, 8)}...`
@@ -203,7 +206,7 @@ export default function ISTControlFormPage() {
         const form = row.original
         return (
           <div className="space-y-1">
-            <p className="text-sm font-medium">
+            <p className="text-sm font-light">
               {form.created_at ? new Date(form.created_at).toLocaleDateString() : 'N/A'}
             </p>
             <p className="text-xs text-gray-500">
@@ -220,10 +223,20 @@ export default function ISTControlFormPage() {
         const form = row.original
         return (
           <div className="flex space-x-2">
-            <LoadingButton variant="outline" size="sm" onClick={() => handleViewForm(form)}>
+            <LoadingButton 
+              variant="outline" 
+              size="sm" 
+              onClick={() => handleViewForm(form)}
+              className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full"
+            >
               <Eye className="w-4 h-4" />
             </LoadingButton>
-            <LoadingButton variant="outline" size="sm" onClick={() => handleEditForm(form)}>
+            <LoadingButton 
+              variant="outline" 
+              size="sm" 
+              onClick={() => handleEditForm(form)}
+              className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 rounded-full"
+            >
               <Edit className="w-4 h-4" />
             </LoadingButton>
             <LoadingButton 
@@ -232,6 +245,7 @@ export default function ISTControlFormPage() {
               onClick={() => handleDeleteForm(form)}
               loading={operationLoading.delete}
               disabled={operationLoading.delete}
+              className="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white border-0 rounded-full"
             >
               <Trash2 className="w-4 h-4" />
             </LoadingButton>
@@ -246,104 +260,135 @@ export default function ISTControlFormPage() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">IST Control Forms</h1>
-            <p className="text-muted-foreground">Manage item stock transfer control forms</p>
+            <h1 className="text-3xl font-light text-foreground">IST Control Forms</h1>
+            <p className="text-sm font-light text-muted-foreground">Manage item stock transfer control forms</p>
           </div>
-          <LoadingButton onClick={handleAddForm}>
+          <LoadingButton 
+            onClick={handleAddForm}
+            className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full px-6 py-2 font-light"
+          >
             <Plus className="mr-2 h-4 w-4" />
             Add IST Form
           </LoadingButton>
         </div>
 
-        {/* Counter Widgets with Icons */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Forms</CardTitle>
-              <FileText className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{Array.isArray(forms) ? forms.length : 0}</div>
-              <p className="text-xs text-muted-foreground">
-                All IST control forms
-              </p>
-            </CardContent>
-          </Card>
-          
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Active Transfers</CardTitle>
-              <Package className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-              <div className="text-2xl font-bold">{Array.isArray(forms) ? forms.length : 0}</div>
-              <p className="text-xs text-muted-foreground">
-                Recent transfers
-              </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">This Month</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-              <div className="text-2xl font-bold">
-                {Array.isArray(forms) ? forms.filter(form => {
-                  if (!form.created_at) return false
-                  const formDate = new Date(form.created_at)
-                  const now = new Date()
-                  return formDate.getMonth() === now.getMonth() && formDate.getFullYear() === now.getFullYear()
-                }).length : 0}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Forms created this month
-              </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Warehouses</CardTitle>
-              <Package className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-              <div className="text-2xl font-bold">
-                {Array.isArray(forms) ? new Set([...forms.map(f => f.from_warehouse), ...forms.map(f => f.to_warehouse)]).size : 0}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Unique warehouses
-              </p>
-              </CardContent>
-            </Card>
-          </div>
-
-        {/* Data Table */}
-        <Card>
-          <CardHeader>
-            <CardTitle>IST Control Forms</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <DataTableFilters
-              filters={tableFilters}
-              onFiltersChange={setTableFilters}
-              onSearch={(searchTerm) => setTableFilters(prev => ({ ...prev, search: searchTerm }))}
-              searchPlaceholder="Search IST forms..."
-              filterOptions={filterFields}
-            />
-            
+        {/* Current Form Details */}
         {loading ? (
           <ContentSkeleton sections={1} cardsPerSection={4} />
-        ) : (
-              <DataTable
-                columns={columns}
-                data={Array.isArray(forms) ? forms : []}
-                showSearch={false}
+        ) : latestForm ? (
+          <div className="border border-gray-200 rounded-lg bg-white border-l-4 border-l-blue-500">
+            <div className="p-6 pb-0">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2 text-lg font-light">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center">
+                    <Package className="h-4 w-4 text-white" />
+                  </div>
+                  <span>Current IST Control Form</span>
+                  <Badge className="bg-gradient-to-r from-blue-100 to-cyan-100 text-blue-800 font-light">Latest</Badge>
+                </div>
+                <LoadingButton 
+                  variant="outline" 
+                  onClick={() => handleViewForm(latestForm)}
+                  className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full px-4 py-2 font-light text-sm"
+                >
+                  <Eye className="mr-2 h-4 w-4" />
+                  View Details
+                </LoadingButton>
+              </div>
+            </div>
+            <div className="p-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <Package className="h-4 w-4 text-blue-500" />
+                    <p className="text-sm font-light text-gray-600">Item</p>
+                  </div>
+                  <p className="text-lg font-light text-blue-600">{latestForm.item_description}</p>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <TrendingUp className="h-4 w-4 text-green-500" />
+                    <p className="text-sm font-light text-gray-600">Transfer</p>
+                  </div>
+                  <p className="text-lg font-light text-green-600">{latestForm.from_warehouse} → {latestForm.to_warehouse}</p>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <ArrowRight className="h-4 w-4 text-gray-500" />
+                    <p className="text-sm font-light text-gray-600">Created</p>
+                  </div>
+                  <p className="text-lg font-light">{latestForm.created_at ? new Date(latestForm.created_at).toLocaleDateString('en-GB', { 
+                    day: 'numeric', 
+                    month: 'long', 
+                    year: 'numeric' 
+                  }) : 'N/A'}</p>
+                </div>
+              </div>
+              
+              {/* Item Details */}
+              <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <div className="flex items-center space-x-2 mb-3">
+                    <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
+                      <Package className="h-4 w-4 text-blue-600" />
+                    </div>
+                    <h4 className="text-sm font-light text-gray-900">Item Code</h4>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-light text-gray-600">Code</span>
+                      <span className="text-sm font-light text-blue-600">{latestForm.item_code}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg">
+                  <div className="flex items-center space-x-2 mb-3">
+                    <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center">
+                      <ArrowRight className="h-4 w-4 text-green-600" />
+                    </div>
+                    <h4 className="text-sm font-light text-gray-900">Transaction</h4>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-light text-gray-600">Type</span>
+                      <span className="text-sm font-light text-green-600">{latestForm.item_trans}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : null}
+
+        {/* Data Table */}
+        {!loading && (
+          <div className="border border-gray-200 rounded-lg bg-white">
+            <div className="p-6 pb-0">
+              <div className="text-lg font-light">IST Control Forms</div>
+            </div>
+            <div className="p-6 space-y-4">
+              <DataTableFilters
+                filters={tableFilters}
+                onFiltersChange={setTableFilters}
+                onSearch={(searchTerm) => setTableFilters(prev => ({ ...prev, search: searchTerm }))}
+                searchPlaceholder="Search IST forms..."
+                filterFields={filterFields}
               />
-            )}
-          </CardContent>
-        </Card>
+              
+              {loading ? (
+                <ContentSkeleton sections={1} cardsPerSection={4} />
+              ) : (
+                <DataTable 
+                  columns={columns} 
+                  data={forms} 
+                  showSearch={false}
+                  searchKey="item_description"
+                />
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Form Drawer */}
@@ -361,15 +406,15 @@ export default function ISTControlFormPage() {
         form={selectedForm}
       />
         
-        {/* Delete Confirmation Dialog */}
-        <DeleteConfirmationDialog
-          open={deleteDialogOpen}
-          onOpenChange={setDeleteDialogOpen}
-          onConfirm={confirmDelete}
+      {/* Delete Confirmation Dialog */}
+      <DeleteConfirmationDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        onConfirm={confirmDelete}
         title="Delete IST Control Form"
         description="Are you sure you want to delete this IST control form? This action cannot be undone."
-          loading={operationLoading.delete}
-        />
+        loading={operationLoading.delete}
+      />
     </ToolsDashboardLayout>
   )
 }
