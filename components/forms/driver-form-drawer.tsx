@@ -15,6 +15,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox"
 import { DatePicker } from "@/components/ui/date-picker"
 import { SignaturePad } from "@/components/ui/signature-pad"
+import { SignatureModal } from "@/components/ui/signature-modal"
+import { SignatureViewer } from "@/components/ui/signature-viewer"
+import { base64ToPngDataUrl } from "@/lib/utils/signature"
 import { toast } from "sonner"
 import { useAppDispatch, useAppSelector } from "@/lib/store"
 import { createDriverForm, updateDriverForm, fetchDriverForms } from "@/lib/store/slices/driverFormSlice"
@@ -73,6 +76,12 @@ export function DriverFormDrawer({
   onSuccess 
 }: DriverFormDrawerProps) {
   const [loading, setLoading] = useState(false)
+  const [supplierSignatureOpen, setSupplierSignatureOpen] = useState(false)
+  const [driverSignatureOpen, setDriverSignatureOpen] = useState(false)
+  const [supplierSignatureViewOpen, setSupplierSignatureViewOpen] = useState(false)
+  const [driverSignatureViewOpen, setDriverSignatureViewOpen] = useState(false)
+  const [currentSignatureIndex, setCurrentSignatureIndex] = useState<number | null>(null)
+  const [currentSignatureType, setCurrentSignatureType] = useState<'supplier' | 'driver' | null>(null)
   const dispatch = useAppDispatch()
   const isMobile = useIsMobile()
   const isTablet = typeof window !== 'undefined' && window.innerWidth >= 768 && window.innerWidth < 1024
@@ -678,12 +687,36 @@ export function DriverFormDrawer({
                               name={`collected_products.${index}.e-sign-supplier`}
                               control={control}
                               render={({ field }) => (
-                                <SignaturePad
-                                  value={field.value}
-                                  onChange={field.onChange}
-                                  width={280}
-                                  height={120}
-                                />
+                                <div className="space-y-2">
+                                  {field.value ? (
+                                    <img src={base64ToPngDataUrl(field.value)} alt="Supplier signature" className="h-24 border border-gray-200 rounded-md bg-white" />
+                                  ) : (
+                                    <div className="h-24 flex items-center justify-center border border-dashed border-gray-300 rounded-md text-xs text-gray-500 bg-white">
+                                      No signature captured
+                                    </div>
+                                  )}
+                                  <div className="flex items-center gap-2">
+                                    <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={() => {
+                                      setCurrentSignatureIndex(index)
+                                      setCurrentSignatureType('supplier')
+                                      setSupplierSignatureOpen(true)
+                                    }}>
+                                      Add Signature
+                                    </Button>
+                                    {field.value && (
+                                      <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={() => {
+                                        setCurrentSignatureIndex(index)
+                                        setCurrentSignatureType('supplier')
+                                        setSupplierSignatureViewOpen(true)
+                                      }}>
+                                        View Signature
+                                      </Button>
+                                    )}
+                                    {field.value && (
+                                      <Button type="button" variant="ghost" size="sm" className="rounded-full text-red-600" onClick={() => field.onChange("")}>Clear</Button>
+                                    )}
+                                  </div>
+                                </div>
                               )}
                             />
                             {errors.collected_products?.[index]?.["e-sign-supplier"] && (
@@ -699,12 +732,36 @@ export function DriverFormDrawer({
                               name={`collected_products.${index}.e-sign-driver`}
                               control={control}
                               render={({ field }) => (
-                                <SignaturePad
-                                  value={field.value}
-                                  onChange={field.onChange}
-                                  width={280}
-                                  height={120}
-                                />
+                                <div className="space-y-2">
+                                  {field.value ? (
+                                    <img src={base64ToPngDataUrl(field.value)} alt="Driver signature" className="h-24 border border-gray-200 rounded-md bg-white" />
+                                  ) : (
+                                    <div className="h-24 flex items-center justify-center border border-dashed border-gray-300 rounded-md text-xs text-gray-500 bg-white">
+                                      No signature captured
+                                    </div>
+                                  )}
+                                  <div className="flex items-center gap-2">
+                                    <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={() => {
+                                      setCurrentSignatureIndex(index)
+                                      setCurrentSignatureType('driver')
+                                      setDriverSignatureOpen(true)
+                                    }}>
+                                      Add Signature
+                                    </Button>
+                                    {field.value && (
+                                      <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={() => {
+                                        setCurrentSignatureIndex(index)
+                                        setCurrentSignatureType('driver')
+                                        setDriverSignatureViewOpen(true)
+                                      }}>
+                                        View Signature
+                                      </Button>
+                                    )}
+                                    {field.value && (
+                                      <Button type="button" variant="ghost" size="sm" className="rounded-full text-red-600" onClick={() => field.onChange("")}>Clear</Button>
+                                    )}
+                                  </div>
+                                </div>
                               )}
                             />
                             {errors.collected_products?.[index]?.["e-sign-driver"] && (
@@ -744,6 +801,44 @@ export function DriverFormDrawer({
             </LoadingButton>
           </div>
         </form>
+
+        {/* Signature Modals */}
+        {currentSignatureIndex !== null && currentSignatureType && (
+          <>
+            <SignatureModal
+              open={currentSignatureType === 'supplier' ? supplierSignatureOpen : driverSignatureOpen}
+              onOpenChange={currentSignatureType === 'supplier' ? setSupplierSignatureOpen : setDriverSignatureOpen}
+              onSave={(signature) => {
+                if (currentSignatureIndex !== null) {
+                  const fieldName = currentSignatureType === 'supplier' 
+                    ? `collected_products.${currentSignatureIndex}.e-sign-supplier`
+                    : `collected_products.${currentSignatureIndex}.e-sign-driver`
+                  setValue(fieldName as any, signature)
+                }
+                if (currentSignatureType === 'supplier') {
+                  setSupplierSignatureOpen(false)
+                } else {
+                  setDriverSignatureOpen(false)
+                }
+                setCurrentSignatureIndex(null)
+                setCurrentSignatureType(null)
+              }}
+              title={`${currentSignatureType === 'supplier' ? 'Supplier' : 'Driver'} Signature`}
+            />
+
+            <SignatureViewer
+              open={currentSignatureType === 'supplier' ? supplierSignatureViewOpen : driverSignatureViewOpen}
+              onOpenChange={currentSignatureType === 'supplier' ? setSupplierSignatureViewOpen : setDriverSignatureViewOpen}
+              signature={currentSignatureIndex !== null ? 
+                (currentSignatureType === 'supplier' 
+                  ? watch(`collected_products.${currentSignatureIndex}.e-sign-supplier`)
+                  : watch(`collected_products.${currentSignatureIndex}.e-sign-driver`)
+                ) : ""
+              }
+              title={`${currentSignatureType === 'supplier' ? 'Supplier' : 'Driver'} Signature`}
+            />
+          </>
+        )}
       </SheetContent>
     </Sheet>
   )
