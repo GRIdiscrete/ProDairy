@@ -35,6 +35,7 @@ interface SterilisedMilkProcessDrawerProps {
 // Step 1: Process Form Schema
 const processSchema = yup.object({
   approved_by: yup.string().required("Approved by is required"),
+  approver_signature: yup.string().required("Approver signature is required"),
   operator_id: yup.string().required("Operator is required"),
   operator_signature: yup.string().required("Operator signature is required"),
   supervisor_id: yup.string().required("Supervisor is required"),
@@ -83,14 +84,17 @@ export function SterilisedMilkProcessDrawer({
   const [loadingFilmaticForms, setLoadingFilmaticForms] = useState(false)
   const [operatorSignatureOpen, setOperatorSignatureOpen] = useState(false)
   const [supervisorSignatureOpen, setSupervisorSignatureOpen] = useState(false)
+  const [approverSignatureOpen, setApproverSignatureOpen] = useState(false)
   const [operatorSignatureViewOpen, setOperatorSignatureViewOpen] = useState(false)
   const [supervisorSignatureViewOpen, setSupervisorSignatureViewOpen] = useState(false)
+  const [approverSignatureViewOpen, setApproverSignatureViewOpen] = useState(false)
 
   // Process form
   const processForm = useForm<ProcessFormData>({
     resolver: yupResolver(processSchema),
     defaultValues: {
       approved_by: "",
+      approver_signature: "",
       operator_id: "",
       operator_signature: "",
       supervisor_id: "",
@@ -154,6 +158,7 @@ export function SterilisedMilkProcessDrawer({
       if (mode === "edit" && process) {
         processForm.reset({
           approved_by: process.approved_by,
+          approver_signature: process.approver_signature || "",
           operator_id: process.operator_id,
           operator_signature: process.operator_signature,
           supervisor_id: process.supervisor_id,
@@ -347,6 +352,41 @@ export function SterilisedMilkProcessDrawer({
             />
             {processForm.formState.errors.approved_by && (
               <p className="text-sm text-red-500">{processForm.formState.errors.approved_by.message}</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="approver_signature">Approver Signature *</Label>
+            <Controller
+              name="approver_signature"
+              control={processForm.control}
+              render={({ field }) => (
+                <div className="space-y-2">
+                  {field.value ? (
+                    <img src={base64ToPngDataUrl(field.value)} alt="Approver signature" className="h-24 border border-gray-200 rounded-md bg-white" />
+                  ) : (
+                    <div className="h-24 flex items-center justify-center border border-dashed border-gray-300 rounded-md text-xs text-gray-500 bg-white">
+                      No signature captured
+                    </div>
+                  )}
+                  <div className="flex items-center gap-2">
+                    <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={() => setApproverSignatureOpen(true)}>
+                      Add Signature
+                    </Button>
+                    {field.value && (
+                      <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={() => setApproverSignatureViewOpen(true)}>
+                        View Signature
+                      </Button>
+                    )}
+                    {field.value && (
+                      <Button type="button" variant="ghost" size="sm" className="rounded-full text-red-600" onClick={() => field.onChange("")}>Clear</Button>
+                    )}
+                  </div>
+                </div>
+              )}
+            />
+            {processForm.formState.errors.approver_signature && (
+              <p className="text-sm text-red-500">{processForm.formState.errors.approver_signature.message}</p>
             )}
           </div>
 
@@ -903,6 +943,20 @@ export function SterilisedMilkProcessDrawer({
         onOpenChange={setSupervisorSignatureViewOpen}
         title="Supervisor Signature"
         value={processForm.getValues("supervisor_signature")}
+      />
+      <SignatureModal
+        open={approverSignatureOpen}
+        onOpenChange={setApproverSignatureOpen}
+        title="Capture Approver Signature"
+        onSave={(dataUrl) => {
+          processForm.setValue("approver_signature", dataUrl, { shouldValidate: true })
+        }}
+      />
+      <SignatureViewer
+        open={approverSignatureViewOpen}
+        onOpenChange={setApproverSignatureViewOpen}
+        title="Approver Signature"
+        value={processForm.getValues("approver_signature")}
       />
     </Sheet>
   )

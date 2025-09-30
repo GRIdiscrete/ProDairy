@@ -15,6 +15,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox"
 import { DatePicker } from "@/components/ui/date-picker"
 import { SignaturePad } from "@/components/ui/signature-pad"
+import { SignatureModal } from "@/components/ui/signature-modal"
+import { SignatureViewer } from "@/components/ui/signature-viewer"
+import { base64ToPngDataUrl } from "@/lib/utils/signature"
 import { toast } from "sonner"
 import { useAppDispatch, useAppSelector } from "@/lib/store"
 import { createDriverForm, updateDriverForm, fetchDriverForms } from "@/lib/store/slices/driverFormSlice"
@@ -73,6 +76,12 @@ export function DriverFormDrawer({
   onSuccess 
 }: DriverFormDrawerProps) {
   const [loading, setLoading] = useState(false)
+  const [supplierSignatureOpen, setSupplierSignatureOpen] = useState(false)
+  const [driverSignatureOpen, setDriverSignatureOpen] = useState(false)
+  const [supplierSignatureViewOpen, setSupplierSignatureViewOpen] = useState(false)
+  const [driverSignatureViewOpen, setDriverSignatureViewOpen] = useState(false)
+  const [currentSignatureIndex, setCurrentSignatureIndex] = useState<number | null>(null)
+  const [currentSignatureType, setCurrentSignatureType] = useState<'supplier' | 'driver' | null>(null)
   const dispatch = useAppDispatch()
   const isMobile = useIsMobile()
   const isTablet = typeof window !== 'undefined' && window.innerWidth >= 768 && window.innerWidth < 1024
@@ -103,7 +112,31 @@ export function DriverFormDrawer({
   const drivers = isOnline ? users : offlineData.drivers
   const rawMaterialsData = isOnline ? rawMaterials : offlineData.rawMaterials
   const suppliersData = isOnline ? suppliers : offlineData.suppliers
-  const dataLoading = isOnline ? (rawMaterialLoading || usersLoading || suppliersLoading) : false
+  
+  // Fix loading states - handle different loading state structures
+  const dataLoading = isOnline ? (
+    rawMaterialLoading.fetch || 
+    usersLoading || 
+    suppliersLoading.fetch
+  ) : false
+  
+  // Debug logging
+  console.log('Driver Form Debug:', {
+    isOnline,
+    usersCount: users?.length || 0,
+    rawMaterialsCount: rawMaterials?.length || 0,
+    suppliersCount: suppliers?.length || 0,
+    offlineDriversCount: offlineData.drivers?.length || 0,
+    offlineMaterialsCount: offlineData.rawMaterials?.length || 0,
+    offlineSuppliersCount: offlineData.suppliers?.length || 0,
+    driversCount: drivers?.length || 0,
+    rawMaterialsDataCount: rawMaterialsData?.length || 0,
+    suppliersDataCount: suppliersData?.length || 0,
+    dataLoading,
+    usersLoading,
+    rawMaterialLoading,
+    suppliersLoading
+  })
   
   const {
     control,
@@ -131,11 +164,14 @@ export function DriverFormDrawer({
 
   // Load required data on component mount
   useEffect(() => {
+    console.log('Driver Form useEffect triggered:', { open, isOnline })
     if (open && isOnline) {
+      console.log('Fetching online data...')
       dispatch(fetchRawMaterials({}))
       dispatch(fetchUsers({}))
       dispatch(fetchSuppliers({}))
     } else if (open && !isOnline) {
+      console.log('Loading offline data...')
       // Refresh offline data from localStorage
       setOfflineData({
         drivers: LocalStorageService.getDrivers(),
@@ -145,11 +181,50 @@ export function DriverFormDrawer({
     }
   }, [dispatch, open, isOnline])
 
+  // Also load data when component mounts, regardless of drawer state
+  useEffect(() => {
+    console.log('Initial data load useEffect triggered:', { isOnline })
+    if (isOnline) {
+      console.log('Initial fetch of online data...')
+      dispatch(fetchRawMaterials({}))
+      dispatch(fetchUsers({}))
+      dispatch(fetchSuppliers({}))
+    } else {
+      console.log('Initial load of offline data...')
+      setOfflineData({
+        drivers: LocalStorageService.getDrivers(),
+        rawMaterials: LocalStorageService.getRawMaterials(),
+        suppliers: LocalStorageService.getSuppliers()
+      })
+    }
+  }, [dispatch, isOnline])
+
+  // Force data load when drawer opens if no data is available
+  useEffect(() => {
+    if (open && isOnline && (users.length === 0 || rawMaterials.length === 0 || suppliers.length === 0)) {
+      console.log('Force loading data because some data is missing...')
+      dispatch(fetchRawMaterials({}))
+      dispatch(fetchUsers({}))
+      dispatch(fetchSuppliers({}))
+    }
+  }, [open, isOnline, users.length, rawMaterials.length, suppliers.length, dispatch])
+
+  // Update offline data when online status changes
+  useEffect(() => {
+    if (!isOnline) {
+      setOfflineData({
+        drivers: LocalStorageService.getDrivers(),
+        rawMaterials: LocalStorageService.getRawMaterials(),
+        suppliers: LocalStorageService.getSuppliers()
+      })
+    }
+  }, [isOnline])
+
   // Reset form when driver form changes or mode changes
   useEffect(() => {
     if (open) {
       if (mode === "edit" && driverForm) {
-        setValue("driver", typeof driverForm.driver === 'string' ? driverForm.driver : driverForm.driver_id)
+        setValue("driver", typeof driverForm.driver === 'string' ? driverForm.driver : (driverForm as any).driver_id || driverForm.driver)
         setValue("start_date", driverForm.start_date.split('T')[0])
         setValue("end_date", driverForm.end_date.split('T')[0])
         setValue("delivered", driverForm.delivered)
@@ -235,7 +310,7 @@ export function DriverFormDrawer({
     })
   }
 
-  const isLoading = loading || !!operationLoading.create || !!operationLoading.update || dataLoading
+  const isLoading = loading || !!operationLoading.create || !!operationLoading.update || (typeof dataLoading === 'boolean' ? dataLoading : false)
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -276,6 +351,28 @@ export function DriverFormDrawer({
                   <span className="text-xs font-light">Offline</span>
                 </div>
               )}
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  console.log('Manual data refresh triggered')
+                  if (isOnline) {
+                    dispatch(fetchRawMaterials({}))
+                    dispatch(fetchUsers({}))
+                    dispatch(fetchSuppliers({}))
+                  } else {
+                    setOfflineData({
+                      drivers: LocalStorageService.getDrivers(),
+                      rawMaterials: LocalStorageService.getRawMaterials(),
+                      suppliers: LocalStorageService.getSuppliers()
+                    })
+                  }
+                }}
+                className="text-xs"
+              >
+                Refresh Data
+              </Button>
             </div>
           </div>
         </SheetHeader>
@@ -303,19 +400,21 @@ export function DriverFormDrawer({
             <SelectContent>
               {dataLoading ? (
                 <SelectItem value="loading" disabled>Loading users...</SelectItem>
+              ) : drivers.length === 0 ? (
+                <SelectItem value="no-data" disabled>No users available</SelectItem>
               ) : (
                 drivers.map((user) => (
-                              <SelectItem key={user.id} value={user.id}>
-                                <div className="flex flex-col">
-                                  <span className="font-light">{user.first_name} {user.last_name}</span>
-                                  {user.email && (
-                                    <span className="text-xs text-gray-500 font-light">{user.email}</span>
-                                  )}
-                                </div>
-                              </SelectItem>
-                            ))
-                          )}
-                        </SelectContent>
+                  <SelectItem key={user.id} value={user.id}>
+                    <div className="flex flex-col">
+                      <span className="font-light">{user.first_name} {user.last_name}</span>
+                      {user.email && (
+                        <span className="text-xs text-gray-500 font-light">{user.email}</span>
+                      )}
+                    </div>
+                  </SelectItem>
+                ))
+              )}
+            </SelectContent>
                       </Select>
                     )}
                   />
@@ -462,6 +561,8 @@ export function DriverFormDrawer({
                                   <SelectContent>
                                     {dataLoading ? (
                                       <SelectItem value="loading" disabled>Loading materials...</SelectItem>
+                                    ) : rawMaterialsData.length === 0 ? (
+                                      <SelectItem value="no-data" disabled>No materials available</SelectItem>
                                     ) : (
                                       rawMaterialsData.map((material) => (
                                         <SelectItem key={material.id} value={material.id}>
@@ -498,6 +599,8 @@ export function DriverFormDrawer({
                                   <SelectContent>
                                     {dataLoading ? (
                                       <SelectItem value="loading" disabled>Loading suppliers...</SelectItem>
+                                    ) : suppliersData.length === 0 ? (
+                                      <SelectItem value="no-data" disabled>No suppliers available</SelectItem>
                                     ) : (
                                       suppliersData.map((supplier) => (
                                         <SelectItem key={supplier.id} value={supplier.id}>
@@ -584,12 +687,36 @@ export function DriverFormDrawer({
                               name={`collected_products.${index}.e-sign-supplier`}
                               control={control}
                               render={({ field }) => (
-                                <SignaturePad
-                                  value={field.value}
-                                  onChange={field.onChange}
-                                  width={280}
-                                  height={120}
-                                />
+                                <div className="space-y-2">
+                                  {field.value ? (
+                                    <img src={base64ToPngDataUrl(field.value)} alt="Supplier signature" className="h-24 border border-gray-200 rounded-md bg-white" />
+                                  ) : (
+                                    <div className="h-24 flex items-center justify-center border border-dashed border-gray-300 rounded-md text-xs text-gray-500 bg-white">
+                                      No signature captured
+                                    </div>
+                                  )}
+                                  <div className="flex items-center gap-2">
+                                    <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={() => {
+                                      setCurrentSignatureIndex(index)
+                                      setCurrentSignatureType('supplier')
+                                      setSupplierSignatureOpen(true)
+                                    }}>
+                                      Add Signature
+                                    </Button>
+                                    {field.value && (
+                                      <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={() => {
+                                        setCurrentSignatureIndex(index)
+                                        setCurrentSignatureType('supplier')
+                                        setSupplierSignatureViewOpen(true)
+                                      }}>
+                                        View Signature
+                                      </Button>
+                                    )}
+                                    {field.value && (
+                                      <Button type="button" variant="ghost" size="sm" className="rounded-full text-red-600" onClick={() => field.onChange("")}>Clear</Button>
+                                    )}
+                                  </div>
+                                </div>
                               )}
                             />
                             {errors.collected_products?.[index]?.["e-sign-supplier"] && (
@@ -605,12 +732,36 @@ export function DriverFormDrawer({
                               name={`collected_products.${index}.e-sign-driver`}
                               control={control}
                               render={({ field }) => (
-                                <SignaturePad
-                                  value={field.value}
-                                  onChange={field.onChange}
-                                  width={280}
-                                  height={120}
-                                />
+                                <div className="space-y-2">
+                                  {field.value ? (
+                                    <img src={base64ToPngDataUrl(field.value)} alt="Driver signature" className="h-24 border border-gray-200 rounded-md bg-white" />
+                                  ) : (
+                                    <div className="h-24 flex items-center justify-center border border-dashed border-gray-300 rounded-md text-xs text-gray-500 bg-white">
+                                      No signature captured
+                                    </div>
+                                  )}
+                                  <div className="flex items-center gap-2">
+                                    <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={() => {
+                                      setCurrentSignatureIndex(index)
+                                      setCurrentSignatureType('driver')
+                                      setDriverSignatureOpen(true)
+                                    }}>
+                                      Add Signature
+                                    </Button>
+                                    {field.value && (
+                                      <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={() => {
+                                        setCurrentSignatureIndex(index)
+                                        setCurrentSignatureType('driver')
+                                        setDriverSignatureViewOpen(true)
+                                      }}>
+                                        View Signature
+                                      </Button>
+                                    )}
+                                    {field.value && (
+                                      <Button type="button" variant="ghost" size="sm" className="rounded-full text-red-600" onClick={() => field.onChange("")}>Clear</Button>
+                                    )}
+                                  </div>
+                                </div>
                               )}
                             />
                             {errors.collected_products?.[index]?.["e-sign-driver"] && (
@@ -650,6 +801,44 @@ export function DriverFormDrawer({
             </LoadingButton>
           </div>
         </form>
+
+        {/* Signature Modals */}
+        {currentSignatureIndex !== null && currentSignatureType && (
+          <>
+            <SignatureModal
+              open={currentSignatureType === 'supplier' ? supplierSignatureOpen : driverSignatureOpen}
+              onOpenChange={currentSignatureType === 'supplier' ? setSupplierSignatureOpen : setDriverSignatureOpen}
+              onSave={(signature) => {
+                if (currentSignatureIndex !== null) {
+                  const fieldName = currentSignatureType === 'supplier' 
+                    ? `collected_products.${currentSignatureIndex}.e-sign-supplier`
+                    : `collected_products.${currentSignatureIndex}.e-sign-driver`
+                  setValue(fieldName as any, signature)
+                }
+                if (currentSignatureType === 'supplier') {
+                  setSupplierSignatureOpen(false)
+                } else {
+                  setDriverSignatureOpen(false)
+                }
+                setCurrentSignatureIndex(null)
+                setCurrentSignatureType(null)
+              }}
+              title={`${currentSignatureType === 'supplier' ? 'Supplier' : 'Driver'} Signature`}
+            />
+
+            <SignatureViewer
+              open={currentSignatureType === 'supplier' ? supplierSignatureViewOpen : driverSignatureViewOpen}
+              onOpenChange={currentSignatureType === 'supplier' ? setSupplierSignatureViewOpen : setDriverSignatureViewOpen}
+              signature={currentSignatureIndex !== null ? 
+                (currentSignatureType === 'supplier' 
+                  ? watch(`collected_products.${currentSignatureIndex}.e-sign-supplier`)
+                  : watch(`collected_products.${currentSignatureIndex}.e-sign-driver`)
+                ) : ""
+              }
+              title={`${currentSignatureType === 'supplier' ? 'Supplier' : 'Driver'} Signature`}
+            />
+          </>
+        )}
       </SheetContent>
     </Sheet>
   )

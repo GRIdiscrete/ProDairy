@@ -17,211 +17,126 @@ export function ISTControlFormViewDrawer({ open, onOpenChange, form }: ISTContro
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-[50vw] sm:max-w-[50vw] p-6 overflow-y-auto">
-        <SheetHeader>
-          <SheetTitle className="flex items-center space-x-2">
-            <Package className="w-5 h-5 text-blue-600" />
-            <span>IST Control Form Details</span>
+      <SheetContent className="w-[60vw] sm:max-w-[60vw] p-0 overflow-hidden bg-white">
+        <SheetHeader className="p-6 pb-0">
+          <SheetTitle className="flex items-center gap-2 text-lg font-light">
+            <Package className="w-5 h-5" />
+            IST Control Form Details
           </SheetTitle>
+          <p className="text-sm font-light text-muted-foreground">
+            Complete information about the item stock transfer control form record
+          </p>
         </SheetHeader>
         
-        <div className="mt-6 space-y-6">
-          {/* Form Header */}
-          <Card>
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center">
-                    <Package className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-lg">{form.item_description}</CardTitle>
-                    <p className="text-sm text-gray-500 mt-1">
-                      {form.item_code} • {form.item_trans}
-                    </p>
-                  </div>
-                </div>
-                <Badge className="bg-blue-100 text-blue-800">IST Form</Badge>
-              </div>
-            </CardHeader>
-          </Card>
+        <div className="flex-1 overflow-y-auto p-6">
+          {/* Action Buttons */}
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center space-x-2">
+              <h2 className="text-xl font-light">IST Control Form</h2>
+            </div>
+          </div>
 
           {/* Item Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2 text-base">
-                <Package className="w-4 h-4" />
-                <span>Item Information</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <div className="flex items-center space-x-2">
-                    <Hash className="w-4 h-4 text-gray-400" />
-                    <span className="text-sm font-medium text-gray-600">Item Code</span>
-                  </div>
-                  <p className="text-sm font-semibold">{form.item_code}</p>
-                </div>
-                
-                <div className="space-y-2">
-                  <div className="flex items-center space-x-2">
-                    <Package className="w-4 h-4 text-gray-400" />
-                    <span className="text-sm font-medium text-gray-600">Transaction</span>
-                  </div>
-                  <p className="text-sm font-semibold">{form.item_trans}</p>
-                </div>
+          <div className="p-6 bg-white border border-gray-200 rounded-lg mb-6">
+            <div className="flex items-center space-x-2 mb-4">
+              <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
+                <Package className="w-4 h-4 text-blue-600" />
               </div>
-              
-              <div className="space-y-2">
-                <div className="flex items-center space-x-2">
-                  <Package className="w-4 h-4 text-gray-400" />
-                  <span className="text-sm font-medium text-gray-600">Description</span>
-                </div>
-                <p className="text-sm font-semibold">{form.item_description}</p>
+              <h3 className="text-lg font-light">Item Information</h3>
+            </div>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-light text-gray-600">Item Code</span>
+                <span className="text-sm font-light text-blue-600">{form.item_code}</span>
               </div>
-            </CardContent>
-          </Card>
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-light text-gray-600">Transaction</span>
+                <span className="text-sm font-light text-green-600">{form.item_trans}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-light text-gray-600">Description</span>
+                <span className="text-sm font-light">{form.item_description}</span>
+              </div>
+            </div>
+          </div>
 
           {/* Warehouse Transfer */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2 text-base">
-                <Building2 className="w-4 h-4" />
-                <span>Warehouse Transfer</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between">
-                <div className="text-center">
-                  <div className="w-16 h-16 rounded-lg bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center mb-2">
-                    <Building2 className="w-6 h-6 text-white" />
-                  </div>
-                  <p className="text-sm font-semibold">{form.from_warehouse}</p>
-                  <p className="text-xs text-gray-500">Source</p>
-                </div>
-                
-                <div className="flex flex-col items-center space-y-2">
-                  <ArrowRight className="w-6 h-6 text-blue-600" />
-                  <Badge className="bg-blue-100 text-blue-800">Transfer</Badge>
-                </div>
-                
-                <div className="text-center">
-                  <div className="w-16 h-16 rounded-lg bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center mb-2">
-                    <Building2 className="w-6 h-6 text-white" />
-                  </div>
-                  <p className="text-sm font-semibold">{form.to_warehouse}</p>
-                  <p className="text-xs text-gray-500">Destination</p>
-                </div>
+          <div className="p-6 bg-white border border-gray-200 rounded-lg mb-6">
+            <div className="flex items-center space-x-2 mb-4">
+              <div className="w-6 h-6 rounded-full bg-orange-100 flex items-center justify-center">
+                <Building2 className="w-4 h-4 text-orange-600" />
               </div>
-            </CardContent>
-          </Card>
+              <h3 className="text-lg font-light">Warehouse Transfer</h3>
+            </div>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-light text-gray-600">From Warehouse</span>
+                <span className="text-sm font-light text-orange-600">{form.from_warehouse}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-light text-gray-600">To Warehouse</span>
+                <span className="text-sm font-light text-green-600">{form.to_warehouse}</span>
+              </div>
+            </div>
+          </div>
 
           {/* Personnel Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2 text-base">
-                <User className="w-4 h-4" />
-                <span>Personnel Information</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
-                      <User className="w-4 h-4 text-blue-600" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-600">Issued By</p>
-                      <p className="text-sm font-semibold">
-                        {form.ist_control_form_issued_by_fkey
-                          ? `${form.ist_control_form_issued_by_fkey.first_name} ${form.ist_control_form_issued_by_fkey.last_name}`
-                          : `User: ${form.issued_by?.slice(0, 8)}...`
-                        }
-                      </p>
-                      {form.ist_control_form_issued_by_fkey && (
-                        <p className="text-xs text-gray-400">{form.ist_control_form_issued_by_fkey.department} • {form.ist_control_form_issued_by_fkey.email}</p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
-                      <User className="w-4 h-4 text-green-600" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-600">Received By</p>
-                      <p className="text-sm font-semibold">
-                        {form.ist_control_form_received_by_fkey
-                          ? `${form.ist_control_form_received_by_fkey.first_name} ${form.ist_control_form_received_by_fkey.last_name}`
-                          : `User: ${form.received_by?.slice(0, 8)}...`
-                        }
-                      </p>
-                      {form.ist_control_form_received_by_fkey && (
-                        <p className="text-xs text-gray-400">{form.ist_control_form_received_by_fkey.department} • {form.ist_control_form_received_by_fkey.email}</p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center">
-                      <User className="w-4 h-4 text-purple-600" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-600">Approver</p>
-                      <p className="text-sm font-semibold">
-                        {form.ist_control_form_approver_fkey
-                          ? `${form.ist_control_form_approver_fkey.first_name} ${form.ist_control_form_approver_fkey.last_name}`
-                          : `User: ${form.approver?.slice(0, 8)}...`
-                        }
-                      </p>
-                      {form.ist_control_form_approver_fkey && (
-                        <p className="text-xs text-gray-400">{form.ist_control_form_approver_fkey.department} • {form.ist_control_form_approver_fkey.email}</p>
-                      )}
-                    </div>
-                  </div>
-                </div>
+          <div className="p-6 bg-white border border-gray-200 rounded-lg mb-6">
+            <div className="flex items-center space-x-2 mb-4">
+              <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center">
+                <User className="w-4 h-4 text-purple-600" />
               </div>
-            </CardContent>
-          </Card>
-
-          {/* Form Metadata */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2 text-base">
-                <Calendar className="w-4 h-4" />
-                <span>Form Details</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <p className="text-sm font-medium text-gray-600">Created</p>
-                  <p className="text-sm">
-                    {form.created_at ? new Date(form.created_at).toLocaleDateString() : 'N/A'}
-                  </p>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-sm font-medium text-gray-600">Last Updated</p>
-                  <p className="text-sm">
-                    {form.updated_at ? new Date(form.updated_at).toLocaleDateString() : 'Never updated'}
-                  </p>
-                </div>
+              <h3 className="text-lg font-light">Personnel Information</h3>
+            </div>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-light text-gray-600">Issued By</span>
+                <span className="text-sm font-light">
+                  {form.ist_control_form_issued_by_fkey
+                    ? `${form.ist_control_form_issued_by_fkey.first_name} ${form.ist_control_form_issued_by_fkey.last_name}`
+                    : `User: ${form.issued_by?.slice(0, 8)}...`
+                  }
+                </span>
               </div>
-              
-              {form.id && (
-                <div className="space-y-1">
-                  <p className="text-sm font-medium text-gray-600">Form ID</p>
-                  <p className="text-xs font-mono text-gray-500 break-all">{form.id}</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-light text-gray-600">Received By</span>
+                <span className="text-sm font-light">
+                  {form.ist_control_form_received_by_fkey
+                    ? `${form.ist_control_form_received_by_fkey.first_name} ${form.ist_control_form_received_by_fkey.last_name}`
+                    : `User: ${form.received_by?.slice(0, 8)}...`
+                  }
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-light text-gray-600">Approver</span>
+                <span className="text-sm font-light">
+                  {form.ist_control_form_approver_fkey
+                    ? `${form.ist_control_form_approver_fkey.first_name} ${form.ist_control_form_approver_fkey.last_name}`
+                    : `User: ${form.approver?.slice(0, 8)}...`
+                  }
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Record Information */}
+          <div className="p-6 bg-white border border-gray-200 rounded-lg">
+            <h3 className="text-lg font-light mb-4">Record Information</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <p className="text-sm font-light text-gray-600">Created</p>
+                <p className="text-sm font-light">
+                  {form.created_at ? new Date(form.created_at).toLocaleDateString() : 'N/A'}
+                </p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm font-light text-gray-600">Last Updated</p>
+                <p className="text-sm font-light">
+                  {form.updated_at ? new Date(form.updated_at).toLocaleDateString() : 'Never updated'}
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       </SheetContent>
     </Sheet>

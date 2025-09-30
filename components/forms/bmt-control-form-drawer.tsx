@@ -13,6 +13,7 @@ import { SearchableSelect, SearchableSelectOption } from "@/components/ui/search
 import { DatePicker } from "@/components/ui/date-picker"
 import { useAppDispatch, useAppSelector } from "@/lib/store"
 import { createBMTControlFormAction, updateBMTControlFormAction, fetchBMTControlForms } from "@/lib/store/slices/bmtControlFormSlice"
+import { fetchProcesses } from "@/lib/store/slices/processSlice"
 import { siloApi } from "@/lib/api/silo"
 import { usersApi } from "@/lib/api/users"
 import { toast } from "sonner"
@@ -41,7 +42,7 @@ const bmtControlFormSchema = yup.object({
   llm_signature: yup.string().required("LLM signature is required"),
   dpp_operator_id: yup.string().required("DPP operator is required"),
   dpp_signature: yup.string().required("DPP signature is required"),
-  product: yup.string().required("Product type is required"),
+  product: yup.string().required("Product is required"),
 })
 
 type BMTControlFormData = yup.InferType<typeof bmtControlFormSchema>
@@ -56,6 +57,7 @@ interface BMTControlFormDrawerProps {
 export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTControlFormDrawerProps) {
   const dispatch = useAppDispatch()
   const { operationLoading } = useAppSelector((state) => state.bmtControlForms)
+  const { processes } = useAppSelector((state) => state.process)
 
   // State for searchable selects
   const [silos, setSilos] = useState<SearchableSelectOption[]>([])
@@ -70,6 +72,9 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
     try {
       setLoadingSilos(true)
       setLoadingUsers(true)
+      
+      // Load processes first
+      dispatch(fetchProcesses())
       
       const [silosResponse, usersResponse] = await Promise.all([
         siloApi.getSilos(),
@@ -243,8 +248,8 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
   return (
     <>
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-[50vw] sm:max-w-[50vw] overflow-y-auto">
-        <div className="p-6">
+      <SheetContent className="w-[50vw] sm:max-w-[50vw] overflow-y-auto bg-white">
+        <div className="p-6 bg-white">
           <SheetHeader>
             <SheetTitle>{mode === "create" ? "Add New BMT Control Form" : "Edit BMT Control Form"}</SheetTitle>
             <SheetDescription>
@@ -307,6 +312,7 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
                         id="flow_meter_start_reading"
                         type="number"
                         placeholder="Enter start reading"
+                        className="rounded-full border-gray-200"
                         {...field}
                         onChange={(e) => field.onChange(Number(e.target.value))}
                       />
@@ -325,6 +331,7 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
                         id="flow_meter_end_reading"
                         type="number"
                         placeholder="Enter end reading"
+                        className="rounded-full border-gray-200"
                         {...field}
                         onChange={(e) => field.onChange(Number(e.target.value))}
                       />
@@ -354,6 +361,7 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
                         emptyMessage="No silos found"
                         loading={loadingSilos}
                         onSearch={handleSiloSearch}
+                        className="w-full rounded-full border-gray-200"
                       />
                     )}
                   />
@@ -374,6 +382,7 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
                         emptyMessage="No silos found"
                         loading={loadingSilos}
                         onSearch={handleSiloSearch}
+                        className="w-full rounded-full border-gray-200"
                       />
                     )}
                   />
@@ -429,6 +438,7 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
                         id="volume"
                         type="number"
                         placeholder="Enter volume"
+                        className="rounded-full border-gray-200"
                         {...field}
                         onChange={(e) => field.onChange(Number(e.target.value))}
                       />
@@ -437,20 +447,26 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
                   {errors.volume && <p className="text-sm text-red-500">{errors.volume.message}</p>}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="product">Product Type *</Label>
+                  <Label htmlFor="product">Product *</Label>
                   <Controller
                     name="product"
                     control={control}
                     render={({ field }) => (
                       <Select onValueChange={field.onChange} value={field.value}>
-                        <SelectTrigger>
+                        <SelectTrigger className="w-full rounded-full border-gray-200">
                           <SelectValue placeholder="Select product" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="UHT milk">UHT Milk</SelectItem>
-                          <SelectItem value="Fresh milk">Fresh Milk</SelectItem>
-                          <SelectItem value="Cream">Cream</SelectItem>
-                          <SelectItem value="Buttermilk">Buttermilk</SelectItem>
+                          {processes?.map((process) => (
+                            <SelectItem key={process.id} value={process.id}>
+                              <div className="flex flex-col">
+                                <span className="font-light">{process.name}</span>
+                                <span className="text-xs text-gray-500">
+                                  {process.raw_material_ids.length} materials
+                                </span>
+                              </div>
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     )}
@@ -479,6 +495,7 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
                         emptyMessage="No users found"
                         loading={loadingUsers}
                         onSearch={handleUserSearch}
+                        className="w-full rounded-full border-gray-200"
                       />
                     )}
                   />
@@ -529,6 +546,7 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
                         emptyMessage="No users found"
                         loading={loadingUsers}
                         onSearch={handleUserSearch}
+                        className="w-full rounded-full border-gray-200"
                       />
                     )}
                   />

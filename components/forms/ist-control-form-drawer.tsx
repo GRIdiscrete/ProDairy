@@ -194,7 +194,7 @@ export function ISTControlFormDrawer({ open, onOpenChange, form, mode }: ISTCont
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-[50vw] sm:max-w-[50vw] overflow-y-auto">
+      <SheetContent className="w-[50vw] sm:max-w-[50vw] overflow-y-auto bg-white">
         <SheetHeader>
           <SheetTitle>
             {mode === "create" ? "Create IST Control Form" : "Edit IST Control Form"}
@@ -207,11 +207,11 @@ export function ISTControlFormDrawer({ open, onOpenChange, form, mode }: ISTCont
           </SheetDescription>
         </SheetHeader>
         
-        <div className="mt-6 p-6">
+        <div className="mt-6 p-6 bg-white">
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             {/* Item Information */}
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-900">Item Information</h3>
+              <h3 className="text-lg font-light text-gray-900 border-b pb-2">Item Information</h3>
               
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -224,7 +224,7 @@ export function ISTControlFormDrawer({ open, onOpenChange, form, mode }: ISTCont
                         {...field}
                         id="item_code"
                         placeholder="Enter item code"
-                        className={errors.item_code ? "border-red-500" : ""}
+                        className={`rounded-full border-gray-200 ${errors.item_code ? "border-red-500" : ""}`}
                       />
                     )}
                   />
@@ -241,7 +241,7 @@ export function ISTControlFormDrawer({ open, onOpenChange, form, mode }: ISTCont
                         {...field}
                         id="item_trans"
                         placeholder="Enter item transaction"
-                        className={errors.item_trans ? "border-red-500" : ""}
+                        className={`rounded-full border-gray-200 ${errors.item_trans ? "border-red-500" : ""}`}
                       />
                     )}
                   />
@@ -259,7 +259,7 @@ export function ISTControlFormDrawer({ open, onOpenChange, form, mode }: ISTCont
                       {...field}
                       id="item_description"
                       placeholder="Enter item description"
-                      className={errors.item_description ? "border-red-500" : ""}
+                      className={`rounded-full border-gray-200 ${errors.item_description ? "border-red-500" : ""}`}
                     />
                   )}
                 />
@@ -269,7 +269,7 @@ export function ISTControlFormDrawer({ open, onOpenChange, form, mode }: ISTCont
 
             {/* Warehouse Information */}
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-900">Warehouse Information</h3>
+              <h3 className="text-lg font-light text-gray-900 border-b pb-2">Warehouse Information</h3>
               
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -282,7 +282,7 @@ export function ISTControlFormDrawer({ open, onOpenChange, form, mode }: ISTCont
                         {...field}
                         id="from_warehouse"
                         placeholder="Enter source warehouse"
-                        className={errors.from_warehouse ? "border-red-500" : ""}
+                        className={`rounded-full border-gray-200 ${errors.from_warehouse ? "border-red-500" : ""}`}
                       />
                     )}
                   />
@@ -299,7 +299,7 @@ export function ISTControlFormDrawer({ open, onOpenChange, form, mode }: ISTCont
                         {...field}
                         id="to_warehouse"
                         placeholder="Enter destination warehouse"
-                        className={errors.to_warehouse ? "border-red-500" : ""}
+                        className={`rounded-full border-gray-200 ${errors.to_warehouse ? "border-red-500" : ""}`}
                       />
                     )}
                   />
@@ -310,7 +310,7 @@ export function ISTControlFormDrawer({ open, onOpenChange, form, mode }: ISTCont
 
             {/* Personnel Information */}
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-900">Personnel Information</h3>
+              <h3 className="text-lg font-light text-gray-900 border-b pb-2">Personnel Information</h3>
               
               <div className="space-y-4">
                 {/* Issued By and Received By in a row */}
@@ -330,6 +330,7 @@ export function ISTControlFormDrawer({ open, onOpenChange, form, mode }: ISTCont
                           emptyMessage="No users found"
                           loading={loadingUsers}
                           onSearch={handleUserSearch}
+                          className="w-full rounded-full border-gray-200"
                         />
                       )}
                     />
@@ -351,6 +352,7 @@ export function ISTControlFormDrawer({ open, onOpenChange, form, mode }: ISTCont
                           emptyMessage="No users found"
                           loading={loadingUsers}
                           onSearch={handleUserSearch}
+                          className="w-full rounded-full border-gray-200"
                         />
                       )}
                     />
@@ -374,6 +376,7 @@ export function ISTControlFormDrawer({ open, onOpenChange, form, mode }: ISTCont
                         emptyMessage="No users found"
                         loading={loadingUsers}
                         onSearch={handleUserSearch}
+                        className="w-full rounded-full border-gray-200"
                       />
                     )}
                   />

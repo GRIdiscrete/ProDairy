@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { useForm, Controller } from "react-hook-form"
 import { yupResolver } from "@hookform/resolvers/yup"
 import * as yup from "yup"
@@ -66,16 +66,20 @@ const ProcessOverview = () => (
   </div>
 )
 
-// Step 1: Basic Information Schema
-const basicInfoSchema = yup.object({
+// Step 1: Basic Information Schema (conditional validation based on shift)
+const createBasicInfoSchema = (selectedShift: string) => yup.object({
   date: yup.string().required("Date is required"),
   holding_tank_bmt: yup.string().required("Holding tank BMT is required"),
-  day_shift_opening_bottles: yup.number().required("Day shift opening bottles is required").min(0, "Must be positive"),
-  day_shift_closing_bottles: yup.number().required("Day shift closing bottles is required").min(0, "Must be positive"),
-  night_shift_opening_bottles: yup.number().required("Night shift opening bottles is required").min(0, "Must be positive"),
-  night_shift_closing_bottles: yup.number().required("Night shift closing bottles is required").min(0, "Must be positive"),
-  day_shift_waste_bottles: yup.number().required("Day shift waste bottles is required").min(0, "Must be positive"),
-  night_shift_waste_bottles: yup.number().required("Night shift waste bottles is required").min(0, "Must be positive"),
+  ...(selectedShift === "day_shift" && {
+    day_shift_opening_bottles: yup.number().required("Day shift opening bottles is required").min(0, "Must be positive"),
+    day_shift_closing_bottles: yup.number().required("Day shift closing bottles is required").min(0, "Must be positive"),
+    day_shift_waste_bottles: yup.number().required("Day shift waste bottles is required").min(0, "Must be positive"),
+  }),
+  ...(selectedShift === "night_shift" && {
+    night_shift_opening_bottles: yup.number().required("Night shift opening bottles is required").min(0, "Must be positive"),
+    night_shift_closing_bottles: yup.number().required("Night shift closing bottles is required").min(0, "Must be positive"),
+    night_shift_waste_bottles: yup.number().required("Night shift waste bottles is required").min(0, "Must be positive"),
+  }),
 })
 
 // Step 2: Shift Selection Schema
@@ -97,7 +101,16 @@ const shiftDetailsSchema = yup.object({
   filler_2: yup.number().required("Filler 2 stoppage time is required").min(0, "Must be positive"),
 })
 
-type BasicInfoFormData = yup.InferType<typeof basicInfoSchema>
+type BasicInfoFormData = {
+  date: string
+  holding_tank_bmt: string
+  day_shift_opening_bottles?: number
+  day_shift_closing_bottles?: number
+  night_shift_opening_bottles?: number
+  night_shift_closing_bottles?: number
+  day_shift_waste_bottles?: number
+  night_shift_waste_bottles?: number
+}
 type ShiftSelectionFormData = yup.InferType<typeof shiftSelectionSchema>
 type ShiftDetailsFormData = yup.InferType<typeof shiftDetailsSchema>
 
@@ -119,8 +132,24 @@ export function FilmaticLinesForm1Drawer({
   const [loadingSilos, setLoadingSilos] = useState(false)
   const [loadingBmtForms, setLoadingBmtForms] = useState(false)
 
-  // Basic info form
-  const basicInfoForm = useForm<BasicInfoFormData>({
+  // Shift selection form
+  const shiftSelectionForm = useForm<ShiftSelectionFormData>({
+    resolver: yupResolver(shiftSelectionSchema),
+    defaultValues: {
+      shift_type: "",
+    },
+  })
+
+  // Get selected shift
+  const selectedShift = shiftSelectionForm.watch("shift_type")
+  
+  // Create dynamic schema based on selected shift
+  const basicInfoSchema = useMemo(() => {
+    return createBasicInfoSchema(selectedShift || "")
+  }, [selectedShift])
+
+  // Basic info form with dynamic schema
+  const basicInfoForm = useForm({
     resolver: yupResolver(basicInfoSchema),
     defaultValues: {
       date: "",
@@ -131,14 +160,6 @@ export function FilmaticLinesForm1Drawer({
       night_shift_closing_bottles: 0,
       day_shift_waste_bottles: 0,
       night_shift_waste_bottles: 0,
-    },
-  })
-
-  // Shift selection form
-  const shiftSelectionForm = useForm<ShiftSelectionFormData>({
-    resolver: yupResolver(shiftSelectionSchema),
-    defaultValues: {
-      shift_type: "",
     },
   })
 
@@ -268,11 +289,11 @@ export function FilmaticLinesForm1Drawer({
     }
   }, [open, mode, form, basicInfoForm, shiftSelectionForm, shiftDetailsForm])
 
-  const handleBasicInfoSubmit = async (data: BasicInfoFormData) => {
+  const handleShiftSelectionSubmit = async (data: ShiftSelectionFormData) => {
     setCurrentStep(2)
   }
 
-  const handleShiftSelectionSubmit = async (data: ShiftSelectionFormData) => {
+  const handleBasicInfoSubmit = async (data: any) => {
     setCurrentStep(3)
   }
 
@@ -290,12 +311,12 @@ export function FilmaticLinesForm1Drawer({
         process_id: processId || "",
         date: basicInfo.date,
         holding_tank_bmt: basicInfo.holding_tank_bmt,
-        day_shift_opening_bottles: basicInfo.day_shift_opening_bottles,
-        day_shift_closing_bottles: basicInfo.day_shift_closing_bottles,
-        night_shift_opening_bottles: basicInfo.night_shift_opening_bottles,
-        night_shift_closing_bottles: basicInfo.night_shift_closing_bottles,
-        day_shift_waste_bottles: basicInfo.day_shift_waste_bottles,
-        night_shift_waste_bottles: basicInfo.night_shift_waste_bottles,
+        day_shift_opening_bottles: Number(basicInfo.day_shift_opening_bottles) || 0,
+        day_shift_closing_bottles: Number(basicInfo.day_shift_closing_bottles) || 0,
+        night_shift_opening_bottles: Number(basicInfo.night_shift_opening_bottles) || 0,
+        night_shift_closing_bottles: Number(basicInfo.night_shift_closing_bottles) || 0,
+        day_shift_waste_bottles: Number(basicInfo.day_shift_waste_bottles) || 0,
+        night_shift_waste_bottles: Number(basicInfo.night_shift_waste_bottles) || 0,
       }
 
       // Add shift data based on selection
@@ -364,9 +385,9 @@ export function FilmaticLinesForm1Drawer({
 
   const handleNext = () => {
     if (currentStep === 1) {
-      basicInfoForm.handleSubmit(handleBasicInfoSubmit)()
-    } else if (currentStep === 2) {
       shiftSelectionForm.handleSubmit(handleShiftSelectionSubmit)()
+    } else if (currentStep === 2) {
+      basicInfoForm.handleSubmit(handleBasicInfoSubmit)()
     }
   }
 
@@ -411,15 +432,23 @@ export function FilmaticLinesForm1Drawer({
     }
   }
 
-  const renderStep1 = () => (
-    <div className="space-y-6 p-6">
-      <ProcessOverview />
-      
-      <div className="space-y-4">
-        <div className="text-center mb-6">
-          <h3 className="text-xl font-light text-gray-900">Basic Information</h3>
-          <p className="text-sm font-light text-gray-600 mt-2">Enter the basic form information and bottle counts</p>
-        </div>
+  const renderStep1 = () => {
+    return (
+      <div className="space-y-6 p-6">
+        <ProcessOverview />
+        
+        <div className="space-y-4">
+          <div className="text-center mb-6">
+            <h3 className="text-xl font-light text-gray-900">Basic Information</h3>
+            <p className="text-sm font-light text-gray-600 mt-2">
+              Enter the basic form information and bottle counts
+              {selectedShift && (
+                <span className="block mt-1 text-blue-600">
+                  {selectedShift === "day_shift" ? "Day Shift" : "Night Shift"} - Showing relevant fields
+                </span>
+              )}
+            </p>
+          </div>
         
         <div className="space-y-2">
           <Controller
@@ -467,134 +496,160 @@ export function FilmaticLinesForm1Drawer({
           )}
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="day_shift_opening_bottles">Day Shift Opening Bottles *</Label>
-            <Controller
-              name="day_shift_opening_bottles"
-              control={basicInfoForm.control}
-              render={({ field }) => (
-                <Input
-                  id="day_shift_opening_bottles"
-                  type="number"
-                  placeholder="Enter opening bottles"
-                  {...field}
-                  onChange={(e) => field.onChange(Number(e.target.value))}
+        {/* Show shift-specific fields based on selected shift */}
+        {selectedShift === "day_shift" && (
+          <>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="day_shift_opening_bottles">Day Shift Opening Bottles *</Label>
+                <Controller
+                  name="day_shift_opening_bottles"
+                  control={basicInfoForm.control}
+                  render={({ field }) => (
+                    <Input
+                      id="day_shift_opening_bottles"
+                      type="number"
+                      placeholder="Enter opening bottles"
+                      className="rounded-full border-gray-200"
+                      value={String(field.value || "")}
+                      onChange={(e) => field.onChange(Number(e.target.value))}
+                      onBlur={field.onBlur}
+                      name={field.name}
+                    />
+                  )}
                 />
-              )}
-            />
-            {basicInfoForm.formState.errors.day_shift_opening_bottles && (
-              <p className="text-sm text-red-500">{basicInfoForm.formState.errors.day_shift_opening_bottles.message}</p>
-            )}
-          </div>
+                {basicInfoForm.formState.errors.day_shift_opening_bottles && (
+                  <p className="text-sm text-red-500">{basicInfoForm.formState.errors.day_shift_opening_bottles.message}</p>
+                )}
+              </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="day_shift_closing_bottles">Day Shift Closing Bottles *</Label>
-            <Controller
-              name="day_shift_closing_bottles"
-              control={basicInfoForm.control}
-              render={({ field }) => (
-                <Input
-                  id="day_shift_closing_bottles"
-                  type="number"
-                  placeholder="Enter closing bottles"
-                  {...field}
-                  onChange={(e) => field.onChange(Number(e.target.value))}
+              <div className="space-y-2">
+                <Label htmlFor="day_shift_closing_bottles">Day Shift Closing Bottles *</Label>
+                <Controller
+                  name="day_shift_closing_bottles"
+                  control={basicInfoForm.control}
+                  render={({ field }) => (
+                    <Input
+                      id="day_shift_closing_bottles"
+                      type="number"
+                      placeholder="Enter closing bottles"
+                      className="rounded-full border-gray-200"
+                      value={String(field.value || "")}
+                      onChange={(e) => field.onChange(Number(e.target.value))}
+                      onBlur={field.onBlur}
+                      name={field.name}
+                    />
+                  )}
                 />
-              )}
-            />
-            {basicInfoForm.formState.errors.day_shift_closing_bottles && (
-              <p className="text-sm text-red-500">{basicInfoForm.formState.errors.day_shift_closing_bottles.message}</p>
-            )}
-          </div>
-        </div>
+                {basicInfoForm.formState.errors.day_shift_closing_bottles && (
+                  <p className="text-sm text-red-500">{basicInfoForm.formState.errors.day_shift_closing_bottles.message}</p>
+                )}
+              </div>
+            </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="night_shift_opening_bottles">Night Shift Opening Bottles *</Label>
-            <Controller
-              name="night_shift_opening_bottles"
-              control={basicInfoForm.control}
-              render={({ field }) => (
-                <Input
-                  id="night_shift_opening_bottles"
-                  type="number"
-                  placeholder="Enter opening bottles"
-                  {...field}
-                  onChange={(e) => field.onChange(Number(e.target.value))}
-                />
+            <div className="space-y-2">
+              <Label htmlFor="day_shift_waste_bottles">Day Shift Waste Bottles *</Label>
+              <Controller
+                name="day_shift_waste_bottles"
+                control={basicInfoForm.control}
+                render={({ field }) => (
+                  <Input
+                    id="day_shift_waste_bottles"
+                    type="number"
+                    placeholder="Enter waste bottles"
+                    className="rounded-full border-gray-200"
+                    value={String(field.value || "")}
+                    onChange={(e) => field.onChange(Number(e.target.value))}
+                    onBlur={field.onBlur}
+                    name={field.name}
+                  />
+                )}
+              />
+              {basicInfoForm.formState.errors.day_shift_waste_bottles && (
+                <p className="text-sm text-red-500">{basicInfoForm.formState.errors.day_shift_waste_bottles.message}</p>
               )}
-            />
-            {basicInfoForm.formState.errors.night_shift_opening_bottles && (
-              <p className="text-sm text-red-500">{basicInfoForm.formState.errors.night_shift_opening_bottles.message}</p>
-            )}
-          </div>
+            </div>
+          </>
+        )}
 
-          <div className="space-y-2">
-            <Label htmlFor="night_shift_closing_bottles">Night Shift Closing Bottles *</Label>
-            <Controller
-              name="night_shift_closing_bottles"
-              control={basicInfoForm.control}
-              render={({ field }) => (
-                <Input
-                  id="night_shift_closing_bottles"
-                  type="number"
-                  placeholder="Enter closing bottles"
-                  {...field}
-                  onChange={(e) => field.onChange(Number(e.target.value))}
+        {selectedShift === "night_shift" && (
+          <>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="night_shift_opening_bottles">Night Shift Opening Bottles *</Label>
+                <Controller
+                  name="night_shift_opening_bottles"
+                  control={basicInfoForm.control}
+                  render={({ field }) => (
+                    <Input
+                      id="night_shift_opening_bottles"
+                      type="number"
+                      placeholder="Enter opening bottles"
+                      className="rounded-full border-gray-200"
+                      value={String(field.value || "")}
+                      onChange={(e) => field.onChange(Number(e.target.value))}
+                      onBlur={field.onBlur}
+                      name={field.name}
+                    />
+                  )}
                 />
-              )}
-            />
-            {basicInfoForm.formState.errors.night_shift_closing_bottles && (
-              <p className="text-sm text-red-500">{basicInfoForm.formState.errors.night_shift_closing_bottles.message}</p>
-            )}
-          </div>
-        </div>
+                {basicInfoForm.formState.errors.night_shift_opening_bottles && (
+                  <p className="text-sm text-red-500">{basicInfoForm.formState.errors.night_shift_opening_bottles.message}</p>
+                )}
+              </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="day_shift_waste_bottles">Day Shift Waste Bottles *</Label>
-            <Controller
-              name="day_shift_waste_bottles"
-              control={basicInfoForm.control}
-              render={({ field }) => (
-                <Input
-                  id="day_shift_waste_bottles"
-                  type="number"
-                  placeholder="Enter waste bottles"
-                  {...field}
-                  onChange={(e) => field.onChange(Number(e.target.value))}
+              <div className="space-y-2">
+                <Label htmlFor="night_shift_closing_bottles">Night Shift Closing Bottles *</Label>
+                <Controller
+                  name="night_shift_closing_bottles"
+                  control={basicInfoForm.control}
+                  render={({ field }) => (
+                    <Input
+                      id="night_shift_closing_bottles"
+                      type="number"
+                      placeholder="Enter closing bottles"
+                      className="rounded-full border-gray-200"
+                      value={String(field.value || "")}
+                      onChange={(e) => field.onChange(Number(e.target.value))}
+                      onBlur={field.onBlur}
+                      name={field.name}
+                    />
+                  )}
                 />
-              )}
-            />
-            {basicInfoForm.formState.errors.day_shift_waste_bottles && (
-              <p className="text-sm text-red-500">{basicInfoForm.formState.errors.day_shift_waste_bottles.message}</p>
-            )}
-          </div>
+                {basicInfoForm.formState.errors.night_shift_closing_bottles && (
+                  <p className="text-sm text-red-500">{basicInfoForm.formState.errors.night_shift_closing_bottles.message}</p>
+                )}
+              </div>
+            </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="night_shift_waste_bottles">Night Shift Waste Bottles *</Label>
-            <Controller
-              name="night_shift_waste_bottles"
-              control={basicInfoForm.control}
-              render={({ field }) => (
-                <Input
-                  id="night_shift_waste_bottles"
-                  type="number"
-                  placeholder="Enter waste bottles"
-                  {...field}
-                  onChange={(e) => field.onChange(Number(e.target.value))}
-                />
+            <div className="space-y-2">
+              <Label htmlFor="night_shift_waste_bottles">Night Shift Waste Bottles *</Label>
+              <Controller
+                name="night_shift_waste_bottles"
+                control={basicInfoForm.control}
+                render={({ field }) => (
+                  <Input
+                    id="night_shift_waste_bottles"
+                    type="number"
+                    placeholder="Enter waste bottles"
+                    className="rounded-full border-gray-200"
+                    value={String(field.value || "")}
+                    onChange={(e) => field.onChange(Number(e.target.value))}
+                    onBlur={field.onBlur}
+                    name={field.name}
+                  />
+                )}
+              />
+              {basicInfoForm.formState.errors.night_shift_waste_bottles && (
+                <p className="text-sm text-red-500">{basicInfoForm.formState.errors.night_shift_waste_bottles.message}</p>
               )}
-            />
-            {basicInfoForm.formState.errors.night_shift_waste_bottles && (
-              <p className="text-sm text-red-500">{basicInfoForm.formState.errors.night_shift_waste_bottles.message}</p>
-            )}
-          </div>
+            </div>
+          </>
+        )}
         </div>
       </div>
-    </div>
-  )
+    )
+  }
 
   const renderStep2 = () => (
     <div className="space-y-6 p-6">
@@ -890,16 +945,16 @@ export function FilmaticLinesForm1Drawer({
           </SheetTitle>
           <SheetDescription>
             {currentStep === 1 
-              ? "Basic Information: Enter the basic form information and bottle counts"
-              : currentStep === 2
               ? "Shift Selection: Choose which shift you are creating data for"
+              : currentStep === 2
+              ? "Basic Information: Enter the basic form information and bottle counts"
               : "Shift Details: Enter the specific shift details and production information"
             }
           </SheetDescription>
         </SheetHeader>
 
         <div className="flex-1 overflow-y-auto bg-white" key={`form-${open}-${currentStep}`}>
-          {currentStep === 1 ? renderStep1() : currentStep === 2 ? renderStep2() : renderStep3()}
+          {currentStep === 1 ? renderStep2() : currentStep === 2 ? renderStep1() : renderStep3()}
         </div>
 
         <div className="flex items-center justify-between p-6 pt-0 border-t bg-white">
@@ -915,7 +970,7 @@ export function FilmaticLinesForm1Drawer({
 
           <div className="flex items-center gap-2">
             <span className="text-sm text-muted-foreground">
-              {currentStep === 1 ? "Basic Information" : currentStep === 2 ? "Shift Selection" : "Shift Details"} • Step {currentStep} of 3
+              {currentStep === 1 ? "Shift Selection" : currentStep === 2 ? "Basic Information" : "Shift Details"} • Step {currentStep} of 3
             </span>
           </div>
 
