@@ -94,7 +94,7 @@ export function RawMilkIntakeLabTestDrawer({ open, onOpenChange, rawMilkIntakeFo
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-[60vw] sm:max-w-[60vw] p-0 bg-white">
+      <SheetContent className="w-[60vw] sm:max-w-[60vw] tablet-sheet-full p-0 bg-white">
         <SheetHeader className="p-6 pb-0">
           <SheetTitle className="text-lg font-light">{mode === "edit" ? "Update Lab Test" : "Create Lab Test"}</SheetTitle>
           <SheetDescription className="text-sm font-light">Capture or update laboratory results for this intake form</SheetDescription>

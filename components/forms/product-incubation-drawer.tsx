@@ -102,8 +102,8 @@ export function ProductIncubationDrawer({
       product_description: "",
       mnf: "",
       bb: "",
-      bn: 0,
-      incubation_days: 0,
+      bn: undefined,
+      incubation_days: undefined,
       date_in: "",
       expected_date_out: "",
       actual_date_out: "",
@@ -232,7 +232,7 @@ export function ProductIncubationDrawer({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-[50vw] sm:max-w-[50vw] p-0 bg-white">
+      <SheetContent className="tablet-sheet-full p-0 bg-white">
         <SheetHeader className="p-6 pb-0 bg-white">
           <SheetTitle>
             {mode === "edit" ? "Edit Product Incubation" : "Create Product Incubation"}
@@ -264,7 +264,8 @@ export function ProductIncubationDrawer({
                         type="number"
                         placeholder="Enter batch number"
                         {...field}
-                        onChange={(e) => field.onChange(Number(e.target.value))}
+                        value={field.value || ""}
+                        onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
                       />
                     )}
                   />
@@ -326,7 +327,8 @@ export function ProductIncubationDrawer({
                         type="number"
                         placeholder="Enter incubation days"
                         {...field}
-                        onChange={(e) => field.onChange(Number(e.target.value))}
+                        value={field.value || ""}
+                        onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
                       />
                     )}
                   />

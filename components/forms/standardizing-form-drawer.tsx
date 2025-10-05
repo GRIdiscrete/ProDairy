@@ -140,23 +140,23 @@ export function StandardizingFormDrawer({
       operator_signature: "",
       raw_milk: [
         {
-          quantity: 0,
-          fat: 0,
+          quantity: undefined,
+          fat: undefined,
           unit_of_measure: "L",
           source_silo_id: "",
         }
       ],
       skim_milk: [
         {
-          quantity: 0,
-          fat: 0,
+          quantity: undefined,
+          fat: undefined,
           destination_silo_id: "",
         }
       ],
       cream: [
         {
-          quantity: 0,
-          fat: 0,
+          quantity: undefined,
+          fat: undefined,
           destination_silo_id: "",
           transfer_start: "",
           transfer_end: "",
@@ -450,7 +450,8 @@ export function StandardizingFormDrawer({
                             step="0.1"
                             placeholder="Enter quantity"
                             {...field}
-                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                            value={field.value || ""}
+                            onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
                           />
                         )}
                       />
@@ -473,7 +474,8 @@ export function StandardizingFormDrawer({
                             step="0.1"
                             placeholder="Enter fat content"
                             {...field}
-                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                            value={field.value || ""}
+                            onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
                           />
                         )}
                       />
@@ -545,8 +547,8 @@ export function StandardizingFormDrawer({
                 variant="outline"
                 size="sm"
                 onClick={() => appendRawMilk({
-                  quantity: 0,
-                  fat: 0,
+                  quantity: undefined,
+                  fat: undefined,
                   unit_of_measure: "L",
                   source_silo_id: "",
                 })}
@@ -605,7 +607,8 @@ export function StandardizingFormDrawer({
                             step="0.1"
                             placeholder="Enter quantity"
                             {...field}
-                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                            value={field.value || ""}
+                            onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
                           />
                         )}
                       />
@@ -628,7 +631,8 @@ export function StandardizingFormDrawer({
                             step="0.1"
                             placeholder="Enter fat content"
                             {...field}
-                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                            value={field.value || ""}
+                            onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
                           />
                         )}
                       />
@@ -676,8 +680,8 @@ export function StandardizingFormDrawer({
                 variant="outline"
                 size="sm"
                 onClick={() => appendSkimMilk({
-                  quantity: 0,
-                  fat: 0,
+                  quantity: undefined,
+                  fat: undefined,
                   destination_silo_id: "",
                 })}
                 className="rounded-full px-4 py-2"
@@ -735,7 +739,8 @@ export function StandardizingFormDrawer({
                             step="0.1"
                             placeholder="Enter quantity"
                             {...field}
-                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                            value={field.value || ""}
+                            onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
                           />
                         )}
                       />
@@ -758,7 +763,8 @@ export function StandardizingFormDrawer({
                             step="0.1"
                             placeholder="Enter fat content"
                             {...field}
-                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                            value={field.value || ""}
+                            onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
                           />
                         )}
                       />
@@ -848,8 +854,8 @@ export function StandardizingFormDrawer({
                 variant="outline"
                 size="sm"
                 onClick={() => appendCream({
-                  quantity: 0,
-                  fat: 0,
+                  quantity: undefined,
+                  fat: undefined,
                   destination_silo_id: "",
                   transfer_start: "",
                   transfer_end: "",
@@ -869,7 +875,7 @@ export function StandardizingFormDrawer({
   return (
     <>
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-[50vw] sm:max-w-[50vw] p-0 bg-white">
+      <SheetContent className="tablet-sheet-full p-0 bg-white">
         <SheetHeader className="p-6 pb-0">
           <SheetTitle className="text-lg font-light">
             {mode === "edit" ? "Edit Standardizing Form" : "Create Standardizing Form"}

@@ -519,7 +519,8 @@ export function ProductionPlanFormDrawer({
                                   step="0.01"
                                   placeholder="0.00"
                                   disabled={isSubmitting}
-                                  onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                  value={field.value || ""}
+                                  onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
                                 />
                               )}
                             />

@@ -15,6 +15,9 @@ import { ProductionPlanViewDrawer } from "@/components/forms/production-plan-vie
 import { LoadingButton } from "@/components/ui/loading-button"
 import type { ProductionPlan } from "@/lib/types"
 import { AdminDashboardLayout } from "@/components/layout/admin-dashboard-layout"
+import { PermissionGuard } from "@/components/auth/permission-guard"
+import { PermissionButton } from "@/components/ui/permission-table-actions"
+import { PermissionTableActions } from "@/components/ui/permission-table-actions"
 
 export default function ProductionPage() {
   const dispatch = useDispatch<AppDispatch>()
@@ -145,24 +148,12 @@ export default function ProductionPage() {
       cell: ({ row }: any) => {
         const plan = row.original as ProductionPlan
         return (
-          <div className="flex space-x-2">
-            <LoadingButton 
-              variant="outline" 
-              size="sm" 
-              onClick={() => handleViewPlan(plan)}
-              className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full"
-            >
-              <Eye className="w-4 h-4" />
-            </LoadingButton>
-            <LoadingButton 
-              variant="outline" 
-              size="sm" 
-              onClick={() => handleEditPlan(plan)}
-              className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 rounded-full"
-            >
-              <Settings className="w-4 h-4" />
-            </LoadingButton>
-          </div>
+          <PermissionTableActions
+            feature="production_plan"
+            onView={() => handleViewPlan(plan)}
+            onEdit={() => handleEditPlan(plan)}
+            showDropdown={true}
+          />
         )
       },
     },
@@ -171,17 +162,23 @@ export default function ProductionPage() {
   const isLoading = operationLoading.fetch
 
   return (
-    <AdminDashboardLayout title="Production Plans" subtitle="Manage and monitor production planning">
+    <PermissionGuard requiredView="production_plan_tab">
+      <AdminDashboardLayout title="Production Plans" subtitle="Manage and monitor production planning">
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-light text-foreground">Production Plans</h1>
             <p className="text-sm font-light text-muted-foreground">Manage and monitor production planning</p>
           </div>
-          <LoadingButton onClick={handleAddPlan} loading={isLoading} className="bg-gradient-to-r from-gray-500 to-gray-700 hover:from-gray-600 hover:to-gray-800 text-white border-0 rounded-full px-6 py-2 font-light">
+          <PermissionButton
+            feature="production_plan"
+            permission="create"
+            onClick={handleAddPlan}
+            className="bg-gradient-to-r from-gray-500 to-gray-700 hover:from-gray-600 hover:to-gray-800 text-white border-0 rounded-full px-6 py-2 font-light"
+          >
             <Plus className="mr-2 h-4 w-4" />
             Create Plan
-          </LoadingButton>
+          </PermissionButton>
         </div>
 
         {/* Counter Widgets with Icons */}
@@ -316,5 +313,6 @@ export default function ProductionPage() {
         />
       </div>
     </AdminDashboardLayout>
+    </PermissionGuard>
   )
 }

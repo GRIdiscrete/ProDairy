@@ -237,41 +237,6 @@ export default function RawMilkIntakePage() {
       },
     },
     {
-      accessorKey: "samples",
-      header: "Samples",
-      cell: ({ row }: any) => {
-        const form = row.original
-        const totalAmount = form.samples_collected?.reduce((sum: number, sample: any) => sum + sample.amount_collected, 0) || 0
-        return (
-          <div className="space-y-1">
-            <div className="flex items-center space-x-2">
-              <div className="w-5 h-5 rounded-full bg-purple-100 flex items-center justify-center">
-                <TrendingUp className="h-3 w-3 text-purple-600" />
-              </div>
-              <p className="text-sm font-light">{form.samples_collected?.length || 0} samples</p>
-            </div>
-            <p className="text-xs text-gray-500">
-              Total: {totalAmount.toFixed(1)}L
-            </p>
-            {form.samples_collected && form.samples_collected.length > 0 && (
-              <div className="flex flex-wrap gap-1 mt-1">
-                {form.samples_collected.slice(0, 2).map((sample: any, index: number) => (
-                  <Badge key={index} className="text-xs bg-green-100 text-green-800">
-                    {sample.serial_no.slice(0, 6)}
-                  </Badge>
-                ))}
-                {form.samples_collected.length > 2 && (
-                  <Badge className="text-xs bg-gray-100 text-gray-600">
-                    +{form.samples_collected.length - 2}
-                  </Badge>
-                )}
-              </div>
-            )}
-          </div>
-        )
-      },
-    },
-    {
       accessorKey: "created_at",
       header: "Created",
       cell: ({ row }: any) => {

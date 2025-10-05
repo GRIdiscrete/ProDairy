@@ -26,7 +26,7 @@ export function FilmaticLinesForm2ViewDrawer({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-[50vw] sm:max-w-[50vw] p-0 bg-white">
+      <SheetContent className="tablet-sheet-full p-0 bg-white">
         <SheetHeader className="p-6 pb-0 bg-white">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">

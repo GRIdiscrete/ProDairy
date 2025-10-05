@@ -16,6 +16,9 @@ import { fetchMachines, deleteMachine, clearError } from "@/lib/store/slices/mac
 import { toast } from "sonner"
 import { TableFilters } from "@/lib/types"
 import { AdminDashboardLayout } from "@/components/layout/admin-dashboard-layout"
+import { PermissionGuard } from "@/components/auth/permission-guard"
+import { PermissionButton } from "@/components/ui/permission-table-actions"
+import { PermissionTableActions } from "@/components/ui/permission-table-actions"
 
 export default function MachinesPage() {
   const dispatch = useAppDispatch()
@@ -208,41 +211,36 @@ export default function MachinesPage() {
       cell: ({ row }: any) => {
         const machine = row.original
         return (
-          <div className="flex space-x-2">
-            <LoadingButton variant="outline" size="sm" onClick={() => handleViewMachine(machine)} className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full">
-              <Eye className="w-4 h-4" />
-            </LoadingButton>
-            <LoadingButton variant="outline" size="sm" onClick={() => handleEditMachine(machine)} className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 rounded-full">
-              <Settings className="w-4 h-4" />
-            </LoadingButton>
-            <LoadingButton 
-              variant="destructive" 
-              size="sm" 
-              onClick={() => handleDeleteMachine(machine)}
-              loading={operationLoading.delete}
-              disabled={operationLoading.delete}
-              className="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white border-0 rounded-full"
-            >
-              <Trash2 className="w-4 h-4" />
-            </LoadingButton>
-          </div>
+          <PermissionTableActions
+            feature="machine_item"
+            onView={() => handleViewMachine(machine)}
+            onEdit={() => handleEditMachine(machine)}
+            onDelete={() => handleDeleteMachine(machine)}
+            showDropdown={true}
+          />
         )
       },
     },
   ]
 
   return (
-    <AdminDashboardLayout title="Machine Configuration" subtitle="Manage and configure production machines">
+    <PermissionGuard requiredView="machine_tab">
+      <AdminDashboardLayout title="Machine Configuration" subtitle="Manage and configure production machines">
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-light text-foreground">Machine Configuration</h1>
             <p className="text-sm font-light text-muted-foreground">Manage and configure production machines</p>
           </div>
-          <LoadingButton onClick={handleAddMachine} className="bg-gradient-to-r from-gray-500 to-gray-700 hover:from-gray-600 hover:to-gray-800 text-white border-0 rounded-full px-6 py-2 font-light">
+          <PermissionButton
+            feature="machine_item"
+            permission="create"
+            onClick={handleAddMachine}
+            className="bg-gradient-to-r from-gray-500 to-gray-700 hover:from-gray-600 hover:to-gray-800 text-white border-0 rounded-full px-6 py-2 font-light"
+          >
             <Plus className="mr-2 h-4 w-4" />
             Add Machine
-          </LoadingButton>
+          </PermissionButton>
         </div>
 
         {/* Counter Widgets with Icons */}
@@ -383,5 +381,6 @@ export default function MachinesPage() {
         />
       </div>
     </AdminDashboardLayout>
+    </PermissionGuard>
   )
 }

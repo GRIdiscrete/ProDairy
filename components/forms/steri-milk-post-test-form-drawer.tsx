@@ -24,14 +24,14 @@ const schema = yup.object({
   temperature: yup.number().required("Temperature is required"),
   alcohol: yup.number().required("Alcohol is required"),
   phosphatase: yup.number().required("Phosphatase is required"),
-  res: yup.string().required("RES is required"),
+  res: yup.number().min(1, "RES must be at least 1").max(6, "RES must be at most 6").required("RES is required"),
   cob: yup.boolean().required("COB is required"),
   ph: yup.number().required("pH is required"),
   ci_si: yup.string().required("CI/SI is required"),
   lr_snf: yup.string().required("LR/SNF is required"),
   acidity: yup.number().required("Acidity is required"),
   coffee: yup.string().required("Coffee is required"),
-  turbidity: yup.string().required("Turbidity is required"),
+  turbidity: yup.boolean().required("Turbidity is required"),
   remarks: yup.string().required("Remarks are required"),
 })
 
@@ -53,19 +53,19 @@ export function SteriMilkPostTestFormDrawer({ open, onOpenChange, batchNumber, p
     resolver: yupResolver(schema) as any,
     defaultValues: {
       scientist_id: "",
-      batch_number: batchNumber ?? 0,
+      batch_number: batchNumber ?? undefined,
       time: "",
-      temperature: 0,
-      alcohol: 0,
-      phosphatase: 0,
-      res: "",
+      temperature: undefined,
+      alcohol: undefined,
+      phosphatase: undefined,
+      res: undefined,
       cob: false,
-      ph: 0,
+      ph: undefined,
       ci_si: "",
       lr_snf: "",
-      acidity: 0,
+      acidity: undefined,
       coffee: "",
-      turbidity: "",
+      turbidity: false,
       remarks: "",
     }
   })
@@ -120,7 +120,7 @@ export function SteriMilkPostTestFormDrawer({ open, onOpenChange, batchNumber, p
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-[50vw] sm:max-w-[50vw] p-6 bg-white overflow-y-auto">
+      <SheetContent className="tablet-sheet-full p-6 bg-white overflow-y-auto">
         <SheetHeader className="mb-6">
           <SheetTitle className="flex items-center gap-2">
             <Beaker className="w-5 h-5" />
@@ -180,7 +180,7 @@ export function SteriMilkPostTestFormDrawer({ open, onOpenChange, batchNumber, p
             <div>
               <Label>Temperature (°C)</Label>
               <Controller name="temperature" control={control} render={({ field }) => (
-                <Input {...field} type="number" step="0.1" onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)} />
+                <Input {...field} type="number" step="0.1" value={field.value || ""} onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)} />
               )} />
             </div>
           </div>
@@ -189,20 +189,21 @@ export function SteriMilkPostTestFormDrawer({ open, onOpenChange, batchNumber, p
             <div>
               <Label>Alcohol</Label>
               <Controller name="alcohol" control={control} render={({ field }) => (
-                <Input {...field} type="number" step="0.1" onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)} />
+                <Input {...field} type="number" step="0.1" value={field.value || ""} onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)} />
               )} />
             </div>
             <div>
               <Label>Phosphatase</Label>
               <Controller name="phosphatase" control={control} render={({ field }) => (
-                <Input {...field} type="number" step="0.1" onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)} />
+                <Input {...field} type="number" step="0.1" value={field.value || ""} onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)} />
               )} />
             </div>
             <div>
-              <Label>RES</Label>
+              <Label>RES (1-6)</Label>
               <Controller name="res" control={control} render={({ field }) => (
-                <Input {...field} />
+                <Input {...field} type="number" min="1" max="6" value={field.value || ""} onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)} />
               )} />
+              {errors.res && <p className="text-sm text-red-500">{errors.res.message}</p>}
             </div>
           </div>
 
@@ -216,7 +217,7 @@ export function SteriMilkPostTestFormDrawer({ open, onOpenChange, batchNumber, p
             <div>
               <Label>pH</Label>
               <Controller name="ph" control={control} render={({ field }) => (
-                <Input {...field} type="number" step="0.1" onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)} />
+                <Input {...field} type="number" step="0.1" value={field.value || ""} onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)} />
               )} />
             </div>
             <div>
@@ -237,7 +238,7 @@ export function SteriMilkPostTestFormDrawer({ open, onOpenChange, batchNumber, p
             <div>
               <Label>Acidity</Label>
               <Controller name="acidity" control={control} render={({ field }) => (
-                <Input {...field} type="number" step="0.1" onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)} />
+                <Input {...field} type="number" step="0.1" value={field.value || ""} onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)} />
               )} />
             </div>
             <div>
@@ -252,7 +253,15 @@ export function SteriMilkPostTestFormDrawer({ open, onOpenChange, batchNumber, p
             <div>
               <Label>Turbidity</Label>
               <Controller name="turbidity" control={control} render={({ field }) => (
-                <Input {...field} />
+                <div className="mt-2">
+                  <input
+                    type="checkbox"
+                    checked={field.value}
+                    onChange={field.onChange}
+                    className="mr-2"
+                  />
+                  <span className="text-sm">Turbidity Present</span>
+                </div>
               )} />
             </div>
             <div>

@@ -14,6 +14,9 @@ import { FilmaticLinesGroup } from "@/lib/api/filmatic-lines-groups"
 import { FilmaticLinesGroupFormDrawer } from "@/components/forms/filmatic-lines-group-form-drawer"
 import { FilmaticLinesGroupViewDrawer } from "@/components/forms/filmatic-lines-group-view-drawer"
 import { FilmaticLinesGroupsKanban } from "@/components/forms/filmatic-lines-groups-kanban"
+import { PermissionGuard } from "@/components/auth/permission-guard"
+import { PermissionButton } from "@/components/ui/permission-table-actions"
+import { PermissionTableActions } from "@/components/ui/permission-table-actions"
 
 export default function FilmaticLinesGroupsPage() {
   const dispatch = useAppDispatch()
@@ -90,9 +93,11 @@ export default function FilmaticLinesGroupsPage() {
       cell: ({ row }: any) => {
         const g: FilmaticLinesGroup = row.original
         return (
-          <LoadingButton variant="outline" size="sm" onClick={() => handleView(g)} className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full">
-            <FileText className="w-4 h-4 mr-2" /> View
-          </LoadingButton>
+          <PermissionTableActions
+            feature="filmatic_group"
+            onView={() => handleView(g)}
+            showDropdown={true}
+          />
         )
       }
     }
@@ -103,17 +108,23 @@ export default function FilmaticLinesGroupsPage() {
   ]
 
   return (
-    <AdminDashboardLayout title="Filmatic Lines Groups" subtitle="Manage Filmatic lines operator groups">
+    <PermissionGuard requiredView="filmatic_group_tab">
+      <AdminDashboardLayout title="Filmatic Lines Groups" subtitle="Manage Filmatic lines operator groups">
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-light text-foreground">Filmatic Lines Groups</h1>
             <p className="text-sm font-light text-muted-foreground">Create groups and assign operators</p>
           </div>
-          <LoadingButton onClick={handleAdd} className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full px-6 py-2 font-light">
+          <PermissionButton
+            feature="filmatic_group"
+            permission="create"
+            onClick={handleAdd}
+            className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full px-6 py-2 font-light"
+          >
             <Plus className="mr-2 h-4 w-4" />
             New Group
-          </LoadingButton>
+          </PermissionButton>
         </div>
 
         {operationLoading.fetch ? (
@@ -139,6 +150,7 @@ export default function FilmaticLinesGroupsPage() {
         <FilmaticLinesGroupViewDrawer open={viewDrawerOpen} onOpenChange={setViewDrawerOpen} group={selected} details={details} />
       </div>
     </AdminDashboardLayout>
+    </PermissionGuard>
   )
 }
 
