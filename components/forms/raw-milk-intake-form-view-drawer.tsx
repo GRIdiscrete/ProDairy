@@ -75,7 +75,7 @@ export function RawMilkIntakeFormViewDrawer({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-[60vw] sm:max-w-[60vw] p-0 overflow-hidden bg-white">
+      <SheetContent className="tablet-sheet-full p-0 overflow-hidden bg-white">
         <SheetHeader className="p-6 pb-0">
           <SheetTitle className="flex items-center gap-2 text-lg font-light">
             <Droplets className="w-5 h-5" />
@@ -336,10 +336,6 @@ export function RawMilkIntakeFormViewDrawer({
                   <span className="text-sm font-light text-gray-600">Quantity Received</span>
                   <span className="text-sm font-light text-blue-600">{form.quantity_received}L</span>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-light text-gray-600">Samples Collected</span>
-                  <span className="text-sm font-light text-green-600">{form.samples_collected?.length || 0}</span>
-                </div>
                 <div className="space-y-2 pt-2">
                   <span className="text-sm font-light text-gray-600">Operator Signature</span>
                   {form.operator_signature ? (
@@ -452,39 +448,6 @@ export function RawMilkIntakeFormViewDrawer({
               </div>
             )}
 
-            {/* Samples Information */}
-            <div className="p-6 bg-white border border-gray-200 rounded-lg">
-              <div className="flex items-center space-x-2 mb-4">
-                <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center">
-                  <TrendingUp className="w-4 h-4 text-purple-600" />
-                </div>
-                <h3 className="text-lg font-light">Samples Collected</h3>
-              </div>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-light text-gray-600">Total Samples</span>
-                  <span className="text-sm font-light text-purple-600">{form.samples_collected?.length || 0}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-light text-gray-600">Total Volume</span>
-                  <span className="text-sm font-light">
-                    {form.samples_collected?.reduce((sum, sample) => sum + sample.amount_collected, 0).toFixed(1)}L
-                  </span>
-                </div>
-                {form.samples_collected && form.samples_collected.length > 0 && (
-                  <div className="mt-4">
-                    <p className="text-xs font-light text-gray-600 mb-2">Sample Serial Numbers:</p>
-                    <div className="flex flex-wrap gap-1">
-                      {form.samples_collected.map((sample, index) => (
-                        <Badge key={index} className="text-xs bg-purple-100 text-purple-800">
-                          {sample.serial_no.slice(0, 8)}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
           </div>
 
           {/* Record Information */}

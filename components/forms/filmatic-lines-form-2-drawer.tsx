@@ -17,7 +17,6 @@ import {
   createFilmaticLinesForm2,
   fetchFilmaticLinesForm2s
 } from "@/lib/store/slices/filmaticLinesForm2Slice"
-import { usersApi } from "@/lib/api/users"
 import { silosApi } from "@/lib/api/silos"
 import { getBMTControlForms } from "@/lib/api/data-capture-forms"
 import { toast } from "sonner"
@@ -89,7 +88,6 @@ const shiftSelectionSchema = yup.object({
 
 // Step 3: Shift Details Schema - Form 2 specific stoppage fields
 const shiftDetailsSchema = yup.object({
-  operator_id: yup.string().required("Operator is required"),
   supervisor_approve: yup.boolean().required("Supervisor approval is required"),
   time: yup.string().required("Time is required"),
   pallets: yup.number().required("Pallets is required").min(0, "Must be positive"),
@@ -127,10 +125,8 @@ export function FilmaticLinesForm2Drawer({
   const { loading } = useAppSelector((state) => state.filmaticLinesForm2)
   
   const [currentStep, setCurrentStep] = useState(1)
-  const [users, setUsers] = useState<any[]>([])
   const [silos, setSilos] = useState<any[]>([])
   const [bmtForms, setBmtForms] = useState<any[]>([])
-  const [loadingUsers, setLoadingUsers] = useState(false)
   const [loadingSilos, setLoadingSilos] = useState(false)
   const [loadingBmtForms, setLoadingBmtForms] = useState(false)
 
@@ -156,12 +152,12 @@ export function FilmaticLinesForm2Drawer({
     defaultValues: {
       date: "",
       holding_tank_bmt: "",
-      day_shift_opening_bottles: 0,
-      day_shift_closing_bottles: 0,
-      night_shift_opening_bottles: 0,
-      night_shift_closing_bottles: 0,
-      day_shift_waste_bottles: 0,
-      night_shift_waste_bottles: 0,
+      day_shift_opening_bottles: undefined,
+      day_shift_closing_bottles: undefined,
+      night_shift_opening_bottles: undefined,
+      night_shift_closing_bottles: undefined,
+      day_shift_waste_bottles: undefined,
+      night_shift_waste_bottles: undefined,
     },
   })
 
@@ -169,49 +165,26 @@ export function FilmaticLinesForm2Drawer({
   const shiftDetailsForm = useForm<ShiftDetailsFormData>({
     resolver: yupResolver(shiftDetailsSchema),
     defaultValues: {
-      operator_id: "",
       supervisor_approve: false,
       time: "",
-      pallets: 0,
-      target: 0,
+      pallets: undefined,
+      target: undefined,
       setbacks: "",
-      capper_1: 0,
-      capper_2: 0,
-      sleever_1: 0,
-      sleever_2: 0,
-      shrink_1: 0,
-      shrink_2: 0,
+      capper_1: undefined,
+      capper_2: undefined,
+      sleever_1: undefined,
+      sleever_2: undefined,
+      shrink_1: undefined,
+      shrink_2: undefined,
     },
   })
 
-  // Load users and BMT forms on component mount
+  // Load BMT forms on component mount
   useEffect(() => {
     const loadData = async () => {
-      setLoadingUsers(true)
       setLoadingBmtForms(true)
       
       try {
-        // Load users
-        try {
-          console.log("Loading users...")
-          const usersResponse = await usersApi.getUsers()
-          console.log("Users response:", usersResponse)
-          setUsers(usersResponse.data || [])
-        } catch (userError) {
-          console.error("Failed to load users:", userError)
-          // Set fallback users data
-          setUsers([
-            {
-              id: "fallback-user-1",
-              first_name: "John",
-              last_name: "Doe",
-              email: "john.doe@example.com",
-              department: "Production",
-              role_id: "operator"
-            }
-          ])
-          console.warn("Using fallback users data")
-        }
         
         // Load BMT Control forms for holding tank selection
         try {
@@ -244,7 +217,6 @@ export function FilmaticLinesForm2Drawer({
         // Don't show error toast for data loading failures, just log them
         console.warn("Form will work with fallback data")
       } finally {
-        setLoadingUsers(false)
         setLoadingBmtForms(false)
       }
     }
@@ -277,7 +249,6 @@ export function FilmaticLinesForm2Drawer({
           shift_type: "",
         })
         shiftDetailsForm.reset({
-          operator_id: "",
           supervisor_approve: false,
           time: "",
           pallets: 0,
@@ -395,24 +366,6 @@ export function FilmaticLinesForm2Drawer({
     }
   }
 
-  const handleUserSearch = async (query: string) => {
-    if (!query.trim()) return []
-    
-    try {
-      const usersResponse = await usersApi.getUsers({
-        filters: { search: query }
-      })
-      return (usersResponse.data || [])
-        .map(user => ({
-          value: user.id,
-          label: `${user.first_name} ${user.last_name}`.trim() || user.email,
-          description: `${user.department} • ${user.email}`
-        }))
-    } catch (error) {
-      console.error("Failed to search users:", error)
-      return []
-    }
-  }
 
   const handleBmtFormSearch = async (query: string) => {
     if (!query.trim()) return []
@@ -518,7 +471,7 @@ export function FilmaticLinesForm2Drawer({
                       placeholder="Enter opening bottles"
                       className="rounded-full border-gray-200"
                       {...field}
-                      onChange={(e) => field.onChange(Number(e.target.value))}
+                      onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
                     />
                   )}
                 />
@@ -539,7 +492,7 @@ export function FilmaticLinesForm2Drawer({
                       placeholder="Enter closing bottles"
                       className="rounded-full border-gray-200"
                       {...field}
-                      onChange={(e) => field.onChange(Number(e.target.value))}
+                      onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
                     />
                   )}
                 />
@@ -587,7 +540,7 @@ export function FilmaticLinesForm2Drawer({
                       placeholder="Enter opening bottles"
                       className="rounded-full border-gray-200"
                       {...field}
-                      onChange={(e) => field.onChange(Number(e.target.value))}
+                      onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
                     />
                   )}
                 />
@@ -608,7 +561,7 @@ export function FilmaticLinesForm2Drawer({
                       placeholder="Enter closing bottles"
                       className="rounded-full border-gray-200"
                       {...field}
-                      onChange={(e) => field.onChange(Number(e.target.value))}
+                      onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
                     />
                   )}
                 />
@@ -712,33 +665,6 @@ export function FilmaticLinesForm2Drawer({
         </div>
         
         <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="operator_id">Operator *</Label>
-            <Controller
-              name="operator_id"
-              control={shiftDetailsForm.control}
-              render={({ field }) => (
-                <SearchableSelect
-                  options={users.map(user => ({
-                    value: user.id,
-                    label: `${user.first_name} ${user.last_name}`.trim() || user.email,
-                    description: `${user.department} • ${user.email}`
-                  }))}
-                  value={field.value}
-                  onValueChange={field.onChange}
-                  onSearch={handleUserSearch}
-                  placeholder="Search and select operator"
-                  searchPlaceholder="Search users..."
-                  emptyMessage="No users found"
-                  loading={loadingUsers}
-                />
-              )}
-            />
-            {shiftDetailsForm.formState.errors.operator_id && (
-              <p className="text-sm text-red-500">{shiftDetailsForm.formState.errors.operator_id.message}</p>
-            )}
-          </div>
-
           <div className="space-y-2">
             <Controller
               name="time"
@@ -972,7 +898,7 @@ export function FilmaticLinesForm2Drawer({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-[50vw] sm:max-w-[50vw] p-0 bg-white">
+      <SheetContent className="tablet-sheet-full p-0 bg-white">
         <SheetHeader className="p-6 pb-0 bg-white">
           <SheetTitle>
             {mode === "edit" ? "Edit Filmatic Lines Form 2" : "Create Filmatic Lines Form 2"}

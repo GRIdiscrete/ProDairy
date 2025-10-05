@@ -58,7 +58,7 @@ export function StandardizingFormViewDrawer({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-[60vw] sm:max-w-[60vw] p-0 overflow-hidden bg-white">
+      <SheetContent className="tablet-sheet-full p-0 overflow-hidden bg-white">
         <SheetHeader className="p-6 pb-0">
           <SheetTitle className="flex items-center gap-2 text-lg font-light">
             <Beaker className="w-5 h-5" />

@@ -124,7 +124,7 @@ export function ProcessFormDrawer({ open, onOpenChange, process, mode, onSuccess
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-[50vw] sm:max-w-[50vw] p-0 bg-white">
+      <SheetContent className="tablet-sheet-full p-0 bg-white">
         <SheetHeader className="p-6 pb-0 bg-white">
           <SheetTitle className="text-lg font-light">
             {mode === "create" ? "Add New Process" : "Edit Process"}

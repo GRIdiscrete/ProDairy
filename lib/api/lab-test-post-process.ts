@@ -10,14 +10,14 @@ export interface LabTestPostProcessEntity {
   temperature: number
   alcohol: number
   phosphatase: number
-  res: string
+  res: number
   cob: boolean
   ph: number
   ci_si: string
   lr_snf: string
   acidity: number
   coffee: string
-  turbidity: string
+  turbidity: boolean
   remarks: string
 }
 
@@ -34,14 +34,14 @@ export interface CreateLabTestPostProcessRequest {
   temperature: number
   alcohol: number
   phosphatase: number
-  res: string
+  res: number
   cob: boolean
   ph: number
   ci_si: string
   lr_snf: string
   acidity: number
   coffee: string
-  turbidity: string
+  turbidity: boolean
   remarks: string
 }
 

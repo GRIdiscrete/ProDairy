@@ -48,7 +48,6 @@ import {
 import { 
   fetchBMTControlForms 
 } from "@/lib/store/slices/bmtControlFormSlice"
-import { usersApi } from "@/lib/api/users"
 import { PasteurizingForm, CreatePasteurizingFormRequest, Production } from "@/lib/api/pasteurizing"
 import { toast } from "sonner"
 
@@ -88,7 +87,6 @@ const ProcessOverview = () => (
 
 // Form Schema
 const pasteurizingFormSchema = yup.object({
-  operator: yup.string().required("Operator is required"),
   date: yup.string().required("Date is required"),
   machine: yup.string().required("Machine is required"),
   source_silo: yup.string().required("Source silo is required"),
@@ -136,9 +134,6 @@ export function PasteurizingFormDrawer({
   const { machines } = useAppSelector((state) => state.machine)
   const { silos } = useAppSelector((state) => state.silo)
   const { forms: bmtForms } = useAppSelector((state) => state.bmtControlForms)
-  // State for users
-  const [users, setUsers] = useState<SearchableSelectOption[]>([])
-  const [loadingUsers, setLoadingUsers] = useState(false)
 
   const [loadingInitialData, setLoadingInitialData] = useState(false)
 
@@ -146,7 +141,6 @@ export function PasteurizingFormDrawer({
   const formHook = useForm<PasteurizingFormData>({
     resolver: yupResolver(pasteurizingFormSchema),
     defaultValues: {
-      operator: "",
       date: new Date().toISOString().split('T')[0],
       machine: "",
       source_silo: "",
@@ -157,16 +151,16 @@ export function PasteurizingFormDrawer({
       machine_start: "",
       machine_end: "",
       bmt: "",
-      fat: 0,
+      fat: undefined,
       production: [{
         time: "",
-        temp_hot_water: 0,
-        temp_product_pasteurisation: 0,
-        homogenisation_pressure_stage_1: 0,
-        homogenisation_pressure_stage_2: 0,
-        total_homogenisation_pressure: 0,
-        temperature_product_out: 0,
-        output_target_value: 0,
+        temp_hot_water: undefined,
+        temp_product_pasteurisation: undefined,
+        homogenisation_pressure_stage_1: undefined,
+        homogenisation_pressure_stage_2: undefined,
+        total_homogenisation_pressure: undefined,
+        temperature_product_out: undefined,
+        output_target_value: undefined,
         output_target_unit: "L",
       }],
     },
@@ -203,19 +197,11 @@ export function PasteurizingFormDrawer({
         await dispatch(fetchBMTControlForms())
       }
       
-      // Load users for the operator select using API
-      const usersResponse = await usersApi.getUsers()
-      setUsers(usersResponse.data?.map(user => ({
-        value: user.id,
-        label: `${user.first_name} ${user.last_name}`,
-        description: `${user.department} • ${user.email}`
-      })) || [])
     } catch (error) {
       console.error("Failed to load initial data:", error)
       toast.error("Failed to load form data")
     } finally {
       setLoadingInitialData(false)
-      setLoadingUsers(false)
     }
   }
 
@@ -234,7 +220,6 @@ export function PasteurizingFormDrawer({
       console.log('Operator from form:', (form as any).operator)
       
       formHook.reset({
-        operator: (form as any).operator || "",
         date: (form as any).date || new Date().toISOString().split('T')[0],
         machine: form.machine || "",
         source_silo: form.source_silo || "",
@@ -245,28 +230,28 @@ export function PasteurizingFormDrawer({
         machine_start: form.machine_start || "",
         machine_end: form.machine_end || "",
         bmt: form.bmt || "",
-        fat: form.fat || 0,
+        fat: form.fat ?? undefined,
         production: (form as any).production?.length > 0
           ? (form as any).production.map((p: any) => ({
               time: p.time || "",
-              temp_hot_water: p.temp_hot_water ?? 0,
-              temp_product_pasteurisation: p.temp_product_pasteurisation ?? 0,
-              homogenisation_pressure_stage_1: p.homogenisation_pressure_stage_1 ?? 0,
-              homogenisation_pressure_stage_2: p.homogenisation_pressure_stage_2 ?? 0,
-              total_homogenisation_pressure: p.total_homogenisation_pressure ?? 0,
-              temperature_product_out: p.temperature_product_out ?? 0,
-              output_target_value: p.output_target?.value ?? 0,
+              temp_hot_water: p.temp_hot_water ?? undefined,
+              temp_product_pasteurisation: p.temp_product_pasteurisation ?? undefined,
+              homogenisation_pressure_stage_1: p.homogenisation_pressure_stage_1 ?? undefined,
+              homogenisation_pressure_stage_2: p.homogenisation_pressure_stage_2 ?? undefined,
+              total_homogenisation_pressure: p.total_homogenisation_pressure ?? undefined,
+              temperature_product_out: p.temperature_product_out ?? undefined,
+              output_target_value: p.output_target?.value ?? undefined,
               output_target_unit: p.output_target?.unit_of_measure ?? "L",
             }))
           : [{
               time: "",
-              temp_hot_water: 0,
-              temp_product_pasteurisation: 0,
-              homogenisation_pressure_stage_1: 0,
-              homogenisation_pressure_stage_2: 0,
-              total_homogenisation_pressure: 0,
-              temperature_product_out: 0,
-              output_target_value: 0,
+              temp_hot_water: undefined,
+              temp_product_pasteurisation: undefined,
+              homogenisation_pressure_stage_1: undefined,
+              homogenisation_pressure_stage_2: undefined,
+              total_homogenisation_pressure: undefined,
+              temperature_product_out: undefined,
+              output_target_value: undefined,
               output_target_unit: "L",
             }],
       })
@@ -275,7 +260,6 @@ export function PasteurizingFormDrawer({
       console.log('Resetting form for create mode')
       
       formHook.reset({
-        operator: "",
         date: new Date().toISOString().split('T')[0],
         machine: "",
         source_silo: "",
@@ -286,16 +270,16 @@ export function PasteurizingFormDrawer({
         machine_start: "",
         machine_end: "",
         bmt: "",
-        fat: 0,
+        fat: undefined,
         production: [{
           time: "",
-          temp_hot_water: 0,
-          temp_product_pasteurisation: 0,
-          homogenisation_pressure_stage_1: 0,
-          homogenisation_pressure_stage_2: 0,
-          total_homogenisation_pressure: 0,
-          temperature_product_out: 0,
-          output_target_value: 0,
+          temp_hot_water: undefined,
+          temp_product_pasteurisation: undefined,
+          homogenisation_pressure_stage_1: undefined,
+          homogenisation_pressure_stage_2: undefined,
+          total_homogenisation_pressure: undefined,
+          temperature_product_out: undefined,
+          output_target_value: undefined,
           output_target_unit: "L",
         }],
       })
@@ -374,11 +358,6 @@ export function PasteurizingFormDrawer({
       description: `${bmt.volume}L • ${bmt.product}`
     }))
 
-    // Users are already loaded as SearchableSelectOption[] from the API
-    const operatorOptions: SearchableSelectOption[] = users
-
-    // Debug: Log all operator options
-    console.log('Operator options:', operatorOptions)
 
     return (
       <div className="space-y-6 p-6">
@@ -393,36 +372,6 @@ export function PasteurizingFormDrawer({
             </div>
             
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="operator">Operator *</Label>
-                <Controller
-                  name="operator"
-                  control={formHook.control}
-                  render={({ field }) => {
-                    // Debug: Log operator field value
-                    console.log('Operator field value:', field.value)
-                    
-                    return (
-                      <SearchableSelect
-                        options={operatorOptions}
-                        value={field.value}
-                        onValueChange={(value) => {
-                          console.log('Operator value changed to:', value)
-                          field.onChange(value)
-                        }}
-                        placeholder="Select operator..."
-                        searchPlaceholder="Search operators..."
-                        emptyMessage="No operators found"
-                        loading={loadingUsers}
-                      />
-                    )
-                  }}
-                />
-                {formHook.formState.errors.operator && (
-                  <p className="text-sm text-red-500">{formHook.formState.errors.operator.message}</p>
-                )}
-              </div>
-
               <div className="space-y-2">
                 <Controller
                   name="date"
@@ -521,7 +470,8 @@ export function PasteurizingFormDrawer({
                       step="0.1"
                       placeholder="Enter fat content"
                       {...field}
-                      onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                      value={field.value || ""}
+                      onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
                     />
                   )}
                 />
@@ -721,7 +671,8 @@ export function PasteurizingFormDrawer({
                             step="0.1"
                             placeholder="Enter temperature"
                             {...field}
-                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                            value={field.value || ""}
+                            onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
                           />
                         )}
                       />
@@ -744,7 +695,8 @@ export function PasteurizingFormDrawer({
                             step="0.1"
                             placeholder="Enter temperature"
                             {...field}
-                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                            value={field.value || ""}
+                            onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
                           />
                         )}
                       />
@@ -767,7 +719,8 @@ export function PasteurizingFormDrawer({
                             step="0.1"
                             placeholder="Enter pressure"
                             {...field}
-                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                            value={field.value || ""}
+                            onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
                           />
                         )}
                       />
@@ -790,7 +743,8 @@ export function PasteurizingFormDrawer({
                             step="0.1"
                             placeholder="Enter pressure"
                             {...field}
-                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                            value={field.value || ""}
+                            onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
                           />
                         )}
                       />
@@ -813,7 +767,8 @@ export function PasteurizingFormDrawer({
                             step="0.1"
                             placeholder="Enter total pressure"
                             {...field}
-                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                            value={field.value || ""}
+                            onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
                           />
                         )}
                       />
@@ -836,7 +791,8 @@ export function PasteurizingFormDrawer({
                             step="0.1"
                             placeholder="Enter temperature"
                             {...field}
-                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                            value={field.value || ""}
+                            onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
                           />
                         )}
                       />
@@ -859,7 +815,8 @@ export function PasteurizingFormDrawer({
                             step="0.1"
                             placeholder="Enter target value"
                             {...field}
-                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                            value={field.value || ""}
+                            onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
                           />
                         )}
                       />
@@ -903,13 +860,13 @@ export function PasteurizingFormDrawer({
                 variant="outline"
                 onClick={() => appendProduction({ 
                   time: "",
-                  temp_hot_water: 0,
-                  temp_product_pasteurisation: 0,
-                  homogenisation_pressure_stage_1: 0,
-                  homogenisation_pressure_stage_2: 0,
-                  total_homogenisation_pressure: 0,
-                  temperature_product_out: 0,
-                  output_target_value: 0,
+                  temp_hot_water: undefined,
+                  temp_product_pasteurisation: undefined,
+                  homogenisation_pressure_stage_1: undefined,
+                  homogenisation_pressure_stage_2: undefined,
+                  total_homogenisation_pressure: undefined,
+                  temperature_product_out: undefined,
+                  output_target_value: undefined,
                   output_target_unit: "L"
                 })}
                 className="w-full border-dashed border-2 border-gray-300 hover:border-blue-500 hover:bg-blue-50"
@@ -927,7 +884,7 @@ export function PasteurizingFormDrawer({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-[75vw] sm:max-w-[75vw] p-0 bg-white">
+      <SheetContent className="tablet-sheet-full p-0 bg-white">
         <SheetHeader className="p-6 pb-0">
           <SheetTitle className="text-lg font-light">
             {mode === "edit" ? "Edit Pasteurizing Form" : "Create Pasteurizing Form"}

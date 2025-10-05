@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { LoadingButton } from "@/components/ui/loading-button"
 import { CopyButton } from "@/components/ui/copy-button"
 import { FlaskConical, Package, User, Droplets, Clock, Calendar, FileText, Edit, Trash2, ArrowRight, Play, RotateCcw, TrendingUp, Factory } from "lucide-react"
-import { format } from "date-fns"
+import { format, parseISO, isValid } from "date-fns"
 import type { PasteurizingForm } from "@/lib/api/pasteurizing"
 
 interface PasteurizingFormViewDrawerProps {
@@ -29,6 +29,17 @@ export function PasteurizingFormViewDrawer({
   const [animationProgress, setAnimationProgress] = useState(0)
 
   if (!form) return null
+
+  const safeFormat = (value: any, fmt: string) => {
+    if (!value) return 'N/A'
+    const d = typeof value === 'string' ? parseISO(value) : new Date(value)
+    if (!isValid(d)) return 'N/A'
+    try {
+      return format(d, fmt)
+    } catch {
+      return 'N/A'
+    }
+  }
 
   const startAnimation = () => {
     setIsAnimating(true)
@@ -55,7 +66,7 @@ export function PasteurizingFormViewDrawer({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-[75vw] sm:max-w-[75vw] p-0 bg-white">
+      <SheetContent className="tablet-sheet-full p-0 bg-white">
         <SheetHeader className="p-6 pb-0">
           <SheetTitle className="text-lg font-light">
             Pasteurizing Form Details
@@ -168,7 +179,7 @@ export function PasteurizingFormViewDrawer({
                   <p className="text-sm font-light text-gray-600">Created</p>
                 </div>
                 <p className="text-2xl font-light text-gray-600">
-                  {form.created_at ? format(new Date(form.created_at), 'MMM dd, yyyy') : 'N/A'}
+                  {safeFormat(form.created_at, 'MMM dd, yyyy')}
                 </p>
               </div>
             </div>
@@ -258,7 +269,7 @@ export function PasteurizingFormViewDrawer({
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-600">Start Time</span>
                     <span className="text-sm font-light">
-                      {form.preheating_start ? format(new Date(form.preheating_start), 'MMM dd, yyyy HH:mm') : 'N/A'}
+                      {safeFormat(form.preheating_start, 'MMM dd, yyyy HH:mm')}
                     </span>
                   </div>
                 </div>
@@ -270,7 +281,7 @@ export function PasteurizingFormViewDrawer({
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-600">Start Time</span>
                     <span className="text-sm font-light">
-                      {form.water_circulation ? format(new Date(form.water_circulation), 'MMM dd, yyyy HH:mm') : 'N/A'}
+                      {safeFormat(form.water_circulation, 'MMM dd, yyyy HH:mm')}
                     </span>
                   </div>
                 </div>
@@ -282,13 +293,13 @@ export function PasteurizingFormViewDrawer({
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-600">Start Time</span>
                     <span className="text-sm font-light">
-                      {form.production_start ? format(new Date(form.production_start), 'MMM dd, yyyy HH:mm') : 'N/A'}
+                      {safeFormat(form.production_start, 'MMM dd, yyyy HH:mm')}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-600">End Time</span>
                     <span className="text-sm font-light">
-                      {form.production_end ? format(new Date(form.production_end), 'MMM dd, yyyy HH:mm') : 'N/A'}
+                      {safeFormat(form.production_end, 'MMM dd, yyyy HH:mm')}
                     </span>
                   </div>
                 </div>
@@ -300,13 +311,13 @@ export function PasteurizingFormViewDrawer({
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-600">Start Time</span>
                     <span className="text-sm font-light">
-                      {form.machine_start ? format(new Date(form.machine_start), 'MMM dd, yyyy HH:mm') : 'N/A'}
+                      {safeFormat(form.machine_start, 'MMM dd, yyyy HH:mm')}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-600">End Time</span>
                     <span className="text-sm font-light">
-                      {form.machine_end ? format(new Date(form.machine_end), 'MMM dd, yyyy HH:mm') : 'N/A'}
+                      {safeFormat(form.machine_end, 'MMM dd, yyyy HH:mm')}
                     </span>
                   </div>
                 </div>
@@ -382,13 +393,13 @@ export function PasteurizingFormViewDrawer({
               <div className="space-y-2">
                 <span className="text-sm text-gray-600">Created</span>
                 <p className="text-sm font-light">
-                  {form.created_at ? format(new Date(form.created_at), 'MMM dd, yyyy HH:mm') : 'N/A'}
+                  {safeFormat(form.created_at, 'MMM dd, yyyy HH:mm')}
                 </p>
               </div>
               <div className="space-y-2">
                 <span className="text-sm text-gray-600">Last Updated</span>
                 <p className="text-sm font-light">
-                  {form.updated_at ? format(new Date(form.updated_at), 'MMM dd, yyyy HH:mm') : 'Never'}
+                  {form.updated_at ? safeFormat(form.updated_at, 'MMM dd, yyyy HH:mm') : 'Never'}
                 </p>
               </div>
             </div>

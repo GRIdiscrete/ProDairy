@@ -72,7 +72,7 @@ export function ProcessViewDrawer({ open, onOpenChange, process, onEdit }: Proce
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-[50vw] sm:max-w-[50vw] p-6 bg-white">
+      <SheetContent className="tablet-sheet-full p-6 bg-white">
         <SheetHeader>
           <SheetTitle className="text-lg font-light">Process Details</SheetTitle>
           <SheetDescription className="text-sm font-light">View process information and raw materials</SheetDescription>

@@ -95,7 +95,8 @@ type TestReportFormData = {
     ci_si: string
     total_solids: number
     acidity: number
-    coffee: number
+    coffee: boolean
+    coffee_remarks: string
     hydrogen_peroxide_or_turbidity: string
     analyst: string
     remarks: string
@@ -149,64 +150,65 @@ export function SteriMilkTestReportFormDrawer({
       approved_by: "",
       approver_signature: "",
       date_of_production: new Date().toISOString().split('T')[0],
-      batch_number: 1001,
+      batch_number: undefined,
       variety: "Steri milk",
       raw_milk_silos: {
         tank: "",
         time: "",
-        temperature: 0,
-        alcohol: 0,
-        res: 0,
-        cob: 0,
-        ph: 0,
-        fat: 0,
+        temperature: undefined,
+        alcohol: undefined,
+        res: undefined,
+        cob: undefined,
+        ph: undefined,
+        fat: undefined,
         lr_snf: "",
-        acidity: 0,
+        acidity: undefined,
         remarks: ""
       },
       other_tests: {
         sample_details: "",
-        ph: 0,
-        caustic: 0,
-        acid: 0,
-        chlorine: 0,
-        hd: 0,
-        tds: 0,
-        hydrogen_peroxide: 0,
+        ph: undefined,
+        caustic: undefined,
+        acid: undefined,
+        chlorine: undefined,
+        hd: undefined,
+        tds: undefined,
+        hydrogen_peroxide: undefined,
         remarks: ""
       },
       standardisation_and_pasteurisation: {
         tank: "",
         batch: 1,
         time: "",
-        temperature: 0,
+        temperature: undefined,
         ot: "",
-        alcohol: 0,
+        alcohol: undefined,
         phosphatase: "",
-        ph: 0,
+        ph: undefined,
         cob: false,
-        fat: 0,
+        fat: undefined,
         ci_si: "",
         lr_snf: "",
-        acidity: 0,
+        acidity: undefined,
         analyst: "",
         remarks: ""
       },
       uht_steri_milk: {
         time: "",
         batch: "",
-        temperature: 0,
+        temperature: undefined,
         ot: "",
-        alc: 0,
-        res: 0,
+        alc: undefined,
+        res: undefined,
         cob: false,
-        ph: 0,
-        fat: 0,
+        ph: undefined,
+        fat: undefined,
         lr_snf: "",
         ci_si: "",
-        total_solids: 0,
-        acidity: 0,
-        coffee: 0,
+        total_solids: undefined,
+        acidity: undefined,
+        coffee: false,
+        coffee_remarks: "",
         hydrogen_peroxide_or_turbidity: "",
         analyst: "",
         remarks: ""
@@ -573,7 +575,7 @@ export function SteriMilkTestReportFormDrawer({
                   name="raw_milk_silos.temperature"
                   control={control}
                   render={({ field }) => (
-                    <Input {...field} type="number" step="0.1" className="mt-1" />
+                    <Input {...field} type="number" step="0.1" className="mt-1" value={field.value || ""} onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)} />
                   )}
                 />
               </div>
@@ -583,7 +585,7 @@ export function SteriMilkTestReportFormDrawer({
                   name="raw_milk_silos.alcohol"
                   control={control}
                   render={({ field }) => (
-                    <Input {...field} type="number" step="0.1" className="mt-1" />
+                    <Input {...field} type="number" step="0.1" className="mt-1" value={field.value || ""} onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)} />
                   )}
                 />
               </div>
@@ -593,7 +595,7 @@ export function SteriMilkTestReportFormDrawer({
                   name="raw_milk_silos.res"
                   control={control}
                   render={({ field }) => (
-                    <Input {...field} type="number" step="0.1" className="mt-1" />
+                    <Input {...field} type="number" step="0.1" className="mt-1" value={field.value || ""} onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)} />
                   )}
                 />
               </div>
@@ -605,7 +607,7 @@ export function SteriMilkTestReportFormDrawer({
                   name="raw_milk_silos.cob"
                   control={control}
                   render={({ field }) => (
-                    <Input {...field} type="number" step="0.1" className="mt-1" />
+                    <Input {...field} type="number" step="0.1" className="mt-1" value={field.value || ""} onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)} />
                   )}
                 />
               </div>
@@ -615,7 +617,7 @@ export function SteriMilkTestReportFormDrawer({
                   name="raw_milk_silos.ph"
                   control={control}
                   render={({ field }) => (
-                    <Input {...field} type="number" step="0.1" className="mt-1" />
+                    <Input {...field} type="number" step="0.1" className="mt-1" value={field.value || ""} onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)} />
                   )}
                 />
               </div>
@@ -625,7 +627,7 @@ export function SteriMilkTestReportFormDrawer({
                   name="raw_milk_silos.fat"
                   control={control}
                   render={({ field }) => (
-                    <Input {...field} type="number" step="0.1" className="mt-1" />
+                    <Input {...field} type="number" step="0.1" className="mt-1" value={field.value || ""} onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)} />
                   )}
                 />
               </div>
@@ -647,7 +649,7 @@ export function SteriMilkTestReportFormDrawer({
                   name="raw_milk_silos.acidity"
                   control={control}
                   render={({ field }) => (
-                    <Input {...field} type="number" step="0.01" className="mt-1" />
+                    <Input {...field} type="number" step="0.01" className="mt-1" value={field.value || ""} onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)} />
                   )}
                 />
               </div>
@@ -686,7 +688,7 @@ export function SteriMilkTestReportFormDrawer({
                   name="other_tests.ph"
                   control={control}
                   render={({ field }) => (
-                    <Input {...field} type="number" step="0.1" className="mt-1" />
+                    <Input {...field} type="number" step="0.1" className="mt-1" value={field.value || ""} onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)} />
                   )}
                 />
               </div>
@@ -696,7 +698,7 @@ export function SteriMilkTestReportFormDrawer({
                   name="other_tests.caustic"
                   control={control}
                   render={({ field }) => (
-                    <Input {...field} type="number" step="0.1" className="mt-1" />
+                    <Input {...field} type="number" step="0.1" className="mt-1" value={field.value || ""} onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)} />
                   )}
                 />
               </div>
@@ -706,7 +708,7 @@ export function SteriMilkTestReportFormDrawer({
                   name="other_tests.acid"
                   control={control}
                   render={({ field }) => (
-                    <Input {...field} type="number" step="0.1" className="mt-1" />
+                    <Input {...field} type="number" step="0.1" className="mt-1" value={field.value || ""} onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)} />
                   )}
                 />
               </div>
@@ -718,7 +720,7 @@ export function SteriMilkTestReportFormDrawer({
                   name="other_tests.chlorine"
                   control={control}
                   render={({ field }) => (
-                    <Input {...field} type="number" step="0.1" className="mt-1" />
+                    <Input {...field} type="number" step="0.1" className="mt-1" value={field.value || ""} onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)} />
                   )}
                 />
               </div>
@@ -728,7 +730,7 @@ export function SteriMilkTestReportFormDrawer({
                   name="other_tests.hd"
                   control={control}
                   render={({ field }) => (
-                    <Input {...field} type="number" step="0.1" className="mt-1" />
+                    <Input {...field} type="number" step="0.1" className="mt-1" value={field.value || ""} onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)} />
                   )}
                 />
               </div>
@@ -738,7 +740,7 @@ export function SteriMilkTestReportFormDrawer({
                   name="other_tests.tds"
                   control={control}
                   render={({ field }) => (
-                    <Input {...field} type="number" step="0.01" className="mt-1" />
+                    <Input {...field} type="number" step="0.01" className="mt-1" value={field.value || ""} onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)} />
                   )}
                 />
               </div>
@@ -827,7 +829,7 @@ export function SteriMilkTestReportFormDrawer({
                   name="standardisation_and_pasteurisation.temperature"
                   control={control}
                   render={({ field }) => (
-                    <Input {...field} type="number" step="0.1" className="mt-1" />
+                    <Input {...field} type="number" step="0.1" className="mt-1" value={field.value || ""} onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)} />
                   )}
                 />
               </div>
@@ -849,7 +851,7 @@ export function SteriMilkTestReportFormDrawer({
                   name="standardisation_and_pasteurisation.alcohol"
                   control={control}
                   render={({ field }) => (
-                    <Input {...field} type="number" step="0.1" className="mt-1" />
+                    <Input {...field} type="number" step="0.1" className="mt-1" value={field.value || ""} onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)} />
                   )}
                 />
               </div>
@@ -871,7 +873,7 @@ export function SteriMilkTestReportFormDrawer({
                   name="standardisation_and_pasteurisation.ph"
                   control={control}
                   render={({ field }) => (
-                    <Input {...field} type="number" step="0.1" className="mt-1" />
+                    <Input {...field} type="number" step="0.1" className="mt-1" value={field.value || ""} onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)} />
                   )}
                 />
               </div>
@@ -899,7 +901,7 @@ export function SteriMilkTestReportFormDrawer({
                   name="standardisation_and_pasteurisation.fat"
                   control={control}
                   render={({ field }) => (
-                    <Input {...field} type="number" step="0.1" className="mt-1" />
+                    <Input {...field} type="number" step="0.1" className="mt-1" value={field.value || ""} onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)} />
                   )}
                 />
               </div>
@@ -933,7 +935,7 @@ export function SteriMilkTestReportFormDrawer({
                   name="standardisation_and_pasteurisation.acidity"
                   control={control}
                   render={({ field }) => (
-                    <Input {...field} type="number" step="0.01" className="mt-1" />
+                    <Input {...field} type="number" step="0.01" className="mt-1" value={field.value || ""} onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)} />
                   )}
                 />
               </div>
@@ -1011,7 +1013,7 @@ export function SteriMilkTestReportFormDrawer({
                   name="uht_steri_milk.temperature"
                   control={control}
                   render={({ field }) => (
-                    <Input {...field} type="number" step="0.1" className="mt-1" />
+                    <Input {...field} type="number" step="0.1" className="mt-1" value={field.value || ""} onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)} />
                   )}
                 />
               </div>
@@ -1033,7 +1035,7 @@ export function SteriMilkTestReportFormDrawer({
                   name="uht_steri_milk.alc"
                   control={control}
                   render={({ field }) => (
-                    <Input {...field} type="number" step="0.1" className="mt-1" />
+                    <Input {...field} type="number" step="0.1" className="mt-1" value={field.value || ""} onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)} />
                   )}
                 />
               </div>
@@ -1043,7 +1045,7 @@ export function SteriMilkTestReportFormDrawer({
                   name="uht_steri_milk.res"
                   control={control}
                   render={({ field }) => (
-                    <Input {...field} type="number" step="0.1" className="mt-1" />
+                    <Input {...field} type="number" step="0.1" className="mt-1" value={field.value || ""} onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)} />
                   )}
                 />
               </div>
@@ -1073,7 +1075,7 @@ export function SteriMilkTestReportFormDrawer({
                   name="uht_steri_milk.ph"
                   control={control}
                   render={({ field }) => (
-                    <Input {...field} type="number" step="0.1" className="mt-1" />
+                    <Input {...field} type="number" step="0.1" className="mt-1" value={field.value || ""} onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)} />
                   )}
                 />
               </div>
@@ -1083,7 +1085,7 @@ export function SteriMilkTestReportFormDrawer({
                   name="uht_steri_milk.fat"
                   control={control}
                   render={({ field }) => (
-                    <Input {...field} type="number" step="0.1" className="mt-1" />
+                    <Input {...field} type="number" step="0.1" className="mt-1" value={field.value || ""} onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)} />
                   )}
                 />
               </div>
@@ -1115,7 +1117,7 @@ export function SteriMilkTestReportFormDrawer({
                   name="uht_steri_milk.total_solids"
                   control={control}
                   render={({ field }) => (
-                    <Input {...field} type="number" step="0.1" className="mt-1" />
+                    <Input {...field} type="number" step="0.1" className="mt-1" value={field.value || ""} onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)} />
                   )}
                 />
               </div>
@@ -1125,7 +1127,7 @@ export function SteriMilkTestReportFormDrawer({
                   name="uht_steri_milk.acidity"
                   control={control}
                   render={({ field }) => (
-                    <Input {...field} type="number" step="0.01" className="mt-1" />
+                    <Input {...field} type="number" step="0.01" className="mt-1" value={field.value || ""} onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)} />
                   )}
                 />
               </div>
@@ -1137,7 +1139,15 @@ export function SteriMilkTestReportFormDrawer({
                   name="uht_steri_milk.coffee"
                   control={control}
                   render={({ field }) => (
-                    <Input {...field} type="number" step="0.01" className="mt-1" />
+                    <div className="mt-1">
+                      <input
+                        type="checkbox"
+                        checked={field.value}
+                        onChange={field.onChange}
+                        className="mr-2"
+                      />
+                      <span className="text-sm">Coffee Present</span>
+                    </div>
                   )}
                 />
               </div>
@@ -1151,6 +1161,16 @@ export function SteriMilkTestReportFormDrawer({
                   )}
                 />
               </div>
+            </div>
+            <div>
+              <Label htmlFor="uht_steri_milk.coffee_remarks">Coffee Remarks</Label>
+              <Controller
+                name="uht_steri_milk.coffee_remarks"
+                control={control}
+                render={({ field }) => (
+                  <Input {...field} className="mt-1" />
+                )}
+              />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -1262,7 +1282,7 @@ export function SteriMilkTestReportFormDrawer({
   return (
     <>
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-[60vw] sm:max-w-[60vw] overflow-y-auto p-6 bg-white">
+      <SheetContent className="tablet-sheet-full overflow-y-auto p-6 bg-white">
         <SheetHeader className="mb-6">
           <SheetTitle className="flex items-center gap-2">
             <Beaker className="w-5 h-5" />

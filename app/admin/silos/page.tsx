@@ -16,6 +16,9 @@ import { fetchSilos, deleteSilo, clearError } from "@/lib/store/slices/siloSlice
 import { toast } from "sonner"
 import { TableFilters } from "@/lib/types"
 import { AdminDashboardLayout } from "@/components/layout/admin-dashboard-layout"
+import { PermissionGuard } from "@/components/auth/permission-guard"
+import { PermissionButton } from "@/components/ui/permission-table-actions"
+import { PermissionTableActions } from "@/components/ui/permission-table-actions"
 
 export default function SilosPage() {
   const dispatch = useAppDispatch()
@@ -230,41 +233,36 @@ export default function SilosPage() {
       cell: ({ row }: any) => {
         const silo = row.original
         return (
-          <div className="flex space-x-2">
-            <LoadingButton variant="outline" size="sm" onClick={() => handleViewSilo(silo)} className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full">
-              <Eye className="w-4 h-4" />
-            </LoadingButton>
-            <LoadingButton variant="outline" size="sm" onClick={() => handleEditSilo(silo)} className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 rounded-full">
-              <Settings className="w-4 h-4" />
-            </LoadingButton>
-            <LoadingButton 
-              variant="destructive" 
-              size="sm" 
-              onClick={() => handleDeleteSilo(silo)}
-              loading={operationLoading.delete}
-              disabled={operationLoading.delete}
-              className="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white border-0 rounded-full"
-            >
-              <Trash2 className="w-4 h-4" />
-            </LoadingButton>
-          </div>
+          <PermissionTableActions
+            feature="silo_item"
+            onView={() => handleViewSilo(silo)}
+            onEdit={() => handleEditSilo(silo)}
+            onDelete={() => handleDeleteSilo(silo)}
+            showDropdown={true}
+          />
         )
       },
     },
   ]
 
   return (
-    <AdminDashboardLayout title="Silo Configuration" subtitle="Manage and configure storage silos">
+    <PermissionGuard requiredView="silo_tab">
+      <AdminDashboardLayout title="Silo Configuration" subtitle="Manage and configure storage silos">
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-light text-foreground">Silo Configuration</h1>
             <p className="text-sm font-light text-muted-foreground">Manage and configure storage silos</p>
           </div>
-          <LoadingButton onClick={handleAddSilo} className="bg-gradient-to-r from-gray-500 to-gray-700 hover:from-gray-600 hover:to-gray-800 text-white border-0 rounded-full px-6 py-2 font-light">
+          <PermissionButton
+            feature="silo_item"
+            permission="create"
+            onClick={handleAddSilo}
+            className="bg-gradient-to-r from-gray-500 to-gray-700 hover:from-gray-600 hover:to-gray-800 text-white border-0 rounded-full px-6 py-2 font-light"
+          >
             <Plus className="mr-2 h-4 w-4" />
             Add Silo
-          </LoadingButton>
+          </PermissionButton>
         </div>
 
         {/* Counter Widgets with Icons */}
@@ -413,5 +411,6 @@ export default function SilosPage() {
         />
       </div>
     </AdminDashboardLayout>
+    </PermissionGuard>
   )
 }

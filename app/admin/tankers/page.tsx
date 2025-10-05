@@ -16,6 +16,9 @@ import ContentSkeleton from "@/components/ui/content-skeleton"
 import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-dialog"
 import { TankerFormDrawer } from "@/components/forms/tanker-form-drawer"
 import { TankerViewDrawer } from "@/components/forms/tanker-view-drawer"
+import { PermissionGuard } from "@/components/auth/permission-guard"
+import { PermissionButton } from "@/components/ui/permission-table-actions"
+import { PermissionTableActions } from "@/components/ui/permission-table-actions"
 
 export default function AdminTankersPage() {
   const dispatch = useAppDispatch()
@@ -126,17 +129,13 @@ export default function AdminTankersPage() {
       cell: ({ row }: any) => {
         const t: Tanker = row.original
         return (
-          <div className="flex space-x-2">
-            <LoadingButton variant="outline" size="sm" onClick={() => handleView(t)} className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full">
-              <Eye className="w-4 h-4" />
-            </LoadingButton>
-            <LoadingButton variant="outline" size="sm" onClick={() => handleEdit(t)} className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 rounded-full">
-              <Edit className="w-4 h-4" />
-            </LoadingButton>
-            <LoadingButton variant="destructive" size="sm" onClick={() => handleDelete(t)} loading={operationLoading.delete} disabled={operationLoading.delete} className="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white border-0 rounded-full">
-              <Trash2 className="w-4 h-4" />
-            </LoadingButton>
-          </div>
+          <PermissionTableActions
+            feature="tanker"
+            onView={() => handleView(t)}
+            onEdit={() => handleEdit(t)}
+            onDelete={() => handleDelete(t)}
+            showDropdown={true}
+          />
         )
       }
     }
@@ -148,17 +147,23 @@ export default function AdminTankersPage() {
   ]
 
   return (
-    <AdminDashboardLayout title="Tankers" subtitle="Manage vehicle tankers and assignments">
+    <PermissionGuard requiredView="tanker_tab">
+      <AdminDashboardLayout title="Tankers" subtitle="Manage vehicle tankers and assignments">
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-light text-foreground">Tankers</h1>
             <p className="text-sm font-light text-muted-foreground">Manage vehicle tankers and assignments</p>
           </div>
-          <LoadingButton onClick={handleAdd} className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full px-6 py-2 font-light">
+          <PermissionButton
+            feature="tanker"
+            permission="create"
+            onClick={handleAdd}
+            className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full px-6 py-2 font-light"
+          >
             <Plus className="mr-2 h-4 w-4" />
             Add Tanker
-          </LoadingButton>
+          </PermissionButton>
         </div>
 
         {operationLoading.fetch ? (
@@ -192,6 +197,7 @@ export default function AdminTankersPage() {
         <DeleteConfirmationDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen} title="Delete Tanker" description={`Are you sure you want to delete this tanker? This action cannot be undone.`} onConfirm={confirmDelete} loading={operationLoading.delete} />
       </div>
     </AdminDashboardLayout>
+    </PermissionGuard>
   )
 }
 

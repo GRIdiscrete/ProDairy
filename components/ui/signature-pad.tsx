@@ -64,11 +64,15 @@ export function SignaturePad({
     canvas.width = finalWidth
     canvas.height = finalHeight
 
-    // Set drawing styles
+    // Set drawing styles - optimized for touch devices
     ctx.strokeStyle = '#000000'
     ctx.lineWidth = 2
     ctx.lineCap = 'round'
     ctx.lineJoin = 'round'
+    
+    // Enable image smoothing for better quality
+    ctx.imageSmoothingEnabled = true
+    ctx.imageSmoothingQuality = 'high'
 
     // Load existing signature if provided
     if (value) {
@@ -81,14 +85,40 @@ export function SignaturePad({
     }
   }, [value, width, height, canvasSize, responsive])
 
-  const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
+  const getCoordinates = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current
+    if (!canvas) return { x: 0, y: 0 }
+
+    const rect = canvas.getBoundingClientRect()
+    let clientX: number, clientY: number
+
+    if ('touches' in e) {
+      // Touch event
+      clientX = e.touches[0].clientX
+      clientY = e.touches[0].clientY
+    } else {
+      // Mouse event
+      clientX = e.clientX
+      clientY = e.clientY
+    }
+
+    // Calculate coordinates relative to canvas
+    const scaleX = canvas.width / rect.width
+    const scaleY = canvas.height / rect.height
+    
+    return {
+      x: (clientX - rect.left) * scaleX,
+      y: (clientY - rect.top) * scaleY
+    }
+  }
+
+  const startDrawing = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
+    e.preventDefault()
+    
     const canvas = canvasRef.current
     if (!canvas) return
 
-    const rect = canvas.getBoundingClientRect()
-    const x = e.clientX - rect.left
-    const y = e.clientY - rect.top
-
+    const { x, y } = getCoordinates(e)
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
@@ -97,16 +127,15 @@ export function SignaturePad({
     setIsDrawing(true)
   }
 
-  const draw = (e: React.MouseEvent<HTMLCanvasElement>) => {
+  const draw = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
+    e.preventDefault()
+    
     if (!isDrawing) return
 
     const canvas = canvasRef.current
     if (!canvas) return
 
-    const rect = canvas.getBoundingClientRect()
-    const x = e.clientX - rect.left
-    const y = e.clientY - rect.top
-
+    const { x, y } = getCoordinates(e)
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
@@ -114,7 +143,9 @@ export function SignaturePad({
     ctx.stroke()
   }
 
-  const stopDrawing = () => {
+  const stopDrawing = (e?: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
+    if (e) e.preventDefault()
+    
     if (!isDrawing) return
 
     setIsDrawing(false)
@@ -141,38 +172,32 @@ export function SignaturePad({
     onClear?.()
   }
 
+  // Touch event handlers - now properly implemented
   const handleTouchStart = (e: React.TouchEvent<HTMLCanvasElement>) => {
-    e.preventDefault()
-    const touch = e.touches[0]
-    const mouseEvent = new MouseEvent('mousedown', {
-      clientX: touch.clientX,
-      clientY: touch.clientY
-    })
-    canvasRef.current?.dispatchEvent(mouseEvent)
+    startDrawing(e)
   }
 
   const handleTouchMove = (e: React.TouchEvent<HTMLCanvasElement>) => {
-    e.preventDefault()
-    const touch = e.touches[0]
-    const mouseEvent = new MouseEvent('mousemove', {
-      clientX: touch.clientX,
-      clientY: touch.clientY
-    })
-    canvasRef.current?.dispatchEvent(mouseEvent)
+    draw(e)
   }
 
   const handleTouchEnd = (e: React.TouchEvent<HTMLCanvasElement>) => {
-    e.preventDefault()
-    const mouseEvent = new MouseEvent('mouseup', {})
-    canvasRef.current?.dispatchEvent(mouseEvent)
+    stopDrawing(e)
   }
 
   const finalWidth = responsive ? canvasSize.width : width
   const finalHeight = responsive ? canvasSize.height : height
 
   return (
-    <div className={`w-full h-full flex flex-col ${className}`} ref={containerRef}>
-      <div className="flex-1 w-full h-full relative bg-white border-2 border-dashed border-gray-300">
+    <div 
+      className={`w-full h-full flex flex-col ${className}`} 
+      ref={containerRef}
+      style={{ touchAction: 'none' }}
+    >
+      <div 
+        className="flex-1 w-full h-full relative bg-white border-2 border-dashed border-gray-300"
+        style={{ touchAction: 'none' }}
+      >
         <canvas
           ref={canvasRef}
           className="absolute inset-0 w-full h-full cursor-crosshair"
@@ -183,9 +208,11 @@ export function SignaturePad({
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
+          onTouchCancel={handleTouchEnd}
           style={{ 
             width: '100%', 
-            height: '100%'
+            height: '100%',
+            touchAction: 'none'
           }}
         />
         

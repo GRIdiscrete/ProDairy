@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react"
 import { useRouter, usePathname } from "next/navigation"
-import { Search, Bell, MapPin, ChevronDown, LogOut, User, Settings, HelpCircle, Users, Truck, ClipboardList, Wrench, ArrowRight } from "lucide-react"
+import { Search, Bell, MapPin, ChevronDown, LogOut, User, Settings, HelpCircle, Users, Truck, ClipboardList, Wrench, ArrowRight, Menu, ExternalLink, Plus, Pencil, Trash2 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -31,13 +31,18 @@ import {
 import { useAppDispatch, useAppSelector } from "@/lib/store"
 import { logoutUser } from "@/lib/store/slices/authSlice"
 import { motion, AnimatePresence } from "framer-motion"
+import { useTablet } from "@/hooks/use-tablet"
+import { getRecentNotifications, humanizeModule, moduleToRoute, type NotificationItem } from "@/lib/api/notifications"
+import { formatDistanceToNow, parseISO, isValid } from "date-fns"
+// import { useAccessibleModules } from "@/hooks/use-permissions" // Removed - no longer using permissions
 
 interface HeaderProps {
   title?: string
   subtitle?: string
+  onOpenSidebar?: () => void
 }
 
-export function Header({ title = "Dashboard", subtitle = "Welcome back!" }: HeaderProps) {
+export function Header({ title = "Dashboard", subtitle = "Welcome back!", onOpenSidebar }: HeaderProps) {
   const dispatch = useAppDispatch()
   const authState = useAppSelector((state) => state.auth)
   const { user, profile, isAuthenticated } = authState || { user: null, profile: null, isAuthenticated: false }
@@ -47,6 +52,15 @@ export function Header({ title = "Dashboard", subtitle = "Welcome back!" }: Head
   const [isClient, setIsClient] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
+  const { isTablet, isLandscape } = useTablet()
+  const [notifications, setNotifications] = useState<NotificationItem[]>([])
+  const [notifOpen, setNotifOpen] = useState(false)
+
+  useEffect(() => {
+    // prefetch notifications on mount
+    getRecentNotifications(8).then(setNotifications).catch(() => setNotifications([]))
+  }, [])
+  // const accessibleModules = useAccessibleModules() // Removed - no longer using permissions
 
   // Prevent hydration mismatch
   useEffect(() => {
@@ -59,14 +73,15 @@ export function Header({ title = "Dashboard", subtitle = "Welcome back!" }: Head
   }
 
   // Dashboard configuration
-  const dashboards = [
+  const allDashboards = [
     {
       id: "admin",
       name: "Admin Dashboard",
       icon: Users,
       path: "/admin",
       emoji: "🧑‍💻",
-      description: "System administration and management"
+      description: "System administration and management",
+      module: "admin"
     },
     {
       id: "drivers",
@@ -74,7 +89,8 @@ export function Header({ title = "Dashboard", subtitle = "Welcome back!" }: Head
       icon: Truck,
       path: "/drivers",
       emoji: "🚚",
-      description: "Driver tools and delivery management"
+      description: "Driver tools and delivery management",
+      module: "drivers"
     },
     {
       id: "data-capture",
@@ -82,7 +98,8 @@ export function Header({ title = "Dashboard", subtitle = "Welcome back!" }: Head
       icon: ClipboardList,
       path: "/data-capture",
       emoji: "📋",
-      description: "Data entry and laboratory management"
+      description: "Data entry and laboratory management",
+      module: "data-capture"
     },
     {
       id: "tools",
@@ -90,9 +107,13 @@ export function Header({ title = "Dashboard", subtitle = "Welcome back!" }: Head
       icon: Wrench,
       path: "/tools",
       emoji: "🛠️",
-      description: "Utilities for transfers and cleaning"
+      description: "Utilities for transfers and cleaning",
+      module: "tools"
     }
   ]
+
+  // Show all dashboards (permissions removed)
+  const dashboards = allDashboards
 
   // Comprehensive route list for search
   const allRoutes = [
@@ -144,7 +165,7 @@ export function Header({ title = "Dashboard", subtitle = "Welcome back!" }: Head
     { path: "/login", title: "Login", category: "Account", icon: User, description: "User authentication" },
   ]
 
-  // Filter routes based on search query
+  // Filter routes based on search query only (permissions removed)
   const filteredRoutes = useMemo(() => {
     if (!searchQuery.trim()) return allRoutes.slice(0, 10) // Show first 10 by default
     
@@ -159,11 +180,19 @@ export function Header({ title = "Dashboard", subtitle = "Welcome back!" }: Head
 
   // Get current dashboard based on pathname
   const getCurrentDashboard = () => {
-    if (pathname.startsWith("/admin")) return dashboards[0]
-    if (pathname.startsWith("/drivers")) return dashboards[1]
-    if (pathname.startsWith("/data-capture")) return dashboards[2]
-    if (pathname.startsWith("/tools")) return dashboards[3]
-    return dashboards[0] // Default to admin
+    if (pathname.startsWith("/admin")) {
+      return dashboards.find(d => d.id === "admin") || dashboards[0]
+    }
+    if (pathname.startsWith("/drivers")) {
+      return dashboards.find(d => d.id === "drivers") || dashboards[0]
+    }
+    if (pathname.startsWith("/data-capture")) {
+      return dashboards.find(d => d.id === "data-capture") || dashboards[0]
+    }
+    if (pathname.startsWith("/tools")) {
+      return dashboards.find(d => d.id === "tools") || dashboards[0]
+    }
+    return dashboards[0] // Default to first dashboard
   }
 
   const currentDashboard = getCurrentDashboard()
@@ -187,7 +216,19 @@ export function Header({ title = "Dashboard", subtitle = "Welcome back!" }: Head
       />
       <div className="flex h-16 items-center justify-between px-3 md:px-6">
         {/* Left: Dashboard Switcher */}
-        <div className="flex items-center">
+        <div className="flex items-center gap-2">
+          {/* Tablet drawer toggle */}
+          {onOpenSidebar && isTablet && isLandscape && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className=""
+              aria-label="Open navigation"
+              onClick={onOpenSidebar}
+            >
+              <Menu className="h-5 w-5" />
+            </Button>
+          )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button 
@@ -319,12 +360,69 @@ export function Header({ title = "Dashboard", subtitle = "Welcome back!" }: Head
           </div>
 
           {/* Notifications */}
-          <Button variant="ghost" size="icon" className="relative hover:bg-zinc-100">
-            <Bell className="h-5 w-5 text-zinc-700" />
-            <Badge className="absolute -right-1 -top-1 h-5 w-5 rounded-full p-0 text-[10px] leading-5">
-              3
-            </Badge>
-          </Button>
+          <DropdownMenu open={notifOpen} onOpenChange={setNotifOpen}>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="relative hover:bg-zinc-100 overflow-visible">
+                <Bell className="h-5 w-5 text-zinc-700" />
+                {notifications.length > 0 && (
+                  <Badge className="absolute -right-2 -top-2 z-50 h-5 min-w-5 rounded-full p-0 text-[10px] leading-5 flex items-center justify-center shadow-sm">
+                    {Math.min(notifications.length, 9)}
+                  </Badge>
+                )}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-96" sideOffset={6}>
+              <DropdownMenuLabel className="font-light flex items-center justify-between">
+                Notifications
+                <button
+                  className="text-xs text-blue-600 hover:underline"
+                  onClick={() => {
+                    setNotifOpen(false)
+                    router.push('/notifications')
+                  }}
+                >
+                  View all
+                </button>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {notifications.length === 0 ? (
+                <div className="p-4 text-sm text-zinc-500">No recent notifications</div>
+              ) : (
+                <div className="max-h-80 overflow-y-auto">
+                  {notifications.slice(0,8).map((n, idx) => {
+                    const d = typeof n.created_at === 'string' ? parseISO(n.created_at) : new Date(n.created_at)
+                    const when = isValid(d) ? formatDistanceToNow(d, { addSuffix: true }) : ''
+                    const label = `${humanizeModule(n.module)} · ${n.action}`
+                    const ActionIcon = (n.action === 'created' ? Plus : n.action === 'updated' ? Pencil : Trash2)
+                    const color = n.action === 'created' ? 'text-green-600 bg-green-50' : n.action === 'updated' ? 'text-amber-600 bg-amber-50' : 'text-red-600 bg-red-50'
+                    return (
+                      <DropdownMenuItem key={n.id} className={`p-0 border-b border-zinc-200 ${idx === Math.min(notifications.length,8)-1 ? 'last:border-0' : ''}`}>
+                        <button
+                          className="w-full text-left px-3 py-2 hover:bg-zinc-50"
+                          onClick={() => {
+                            const href = moduleToRoute(n.module, n.form_id)
+                            setNotifOpen(false)
+                            if (href) router.push(href)
+                          }}
+                        >
+                          <div className="flex items-start gap-3">
+                            <div className={`mt-0.5 inline-flex h-7 w-7 items-center justify-center rounded-full ${color}`}>
+                              <ActionIcon className="h-4 w-4" />
+                            </div>
+                            <div className="flex-1">
+                              <div className="text-sm text-zinc-900">{label}</div>
+                              <div className="text-xs text-zinc-500">{when}</div>
+                            </div>
+                            <ExternalLink className="h-3.5 w-3.5 text-zinc-400" />
+                          </div>
+                        </button>
+                      </DropdownMenuItem>
+                    )
+                  })}
+                </div>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
 
           {/* User menu */}
           <DropdownMenu>

@@ -122,7 +122,7 @@ export function PalletiserSheetDrawer({
       machine_id: "",
       manufacturing_date: "",
       expiry_date: "",
-      batch_number: 0,
+      batch_number: undefined,
       approved_by: "",
     },
   })
@@ -131,10 +131,10 @@ export function PalletiserSheetDrawer({
   const sheetDetailsForm = useForm<SheetDetailsFormData>({
     resolver: yupResolver(sheetDetailsSchema),
     defaultValues: {
-      pallet_number: 0,
+      pallet_number: undefined,
       start_time: "",
       end_time: "",
-      cases_packed: 0,
+      cases_packed: undefined,
       serial_number: "",
       counter_id: "",
       counter_signature: "",
@@ -185,17 +185,17 @@ export function PalletiserSheetDrawer({
           machine_id: sheet.machine_id || "",
           manufacturing_date: sheet.manufacturing_date || "",
           expiry_date: sheet.expiry_date || "",
-          batch_number: sheet.batch_number || 0,
+          batch_number: sheet.batch_number ?? undefined,
           approved_by: sheet.approved_by || "",
         })
         
         // For edit mode, reset sheet details form with clean defaults
         // In a real implementation, you would fetch the sheet details separately
         sheetDetailsForm.reset({
-          pallet_number: 0,
+          pallet_number: undefined,
           start_time: "",
           end_time: "",
-          cases_packed: 0,
+          cases_packed: undefined,
           serial_number: "",
           counter_id: "",
           counter_signature: "",
@@ -209,14 +209,14 @@ export function PalletiserSheetDrawer({
           machine_id: "",
           manufacturing_date: "",
           expiry_date: "",
-          batch_number: 0,
+          batch_number: undefined,
           approved_by: "",
         })
         sheetDetailsForm.reset({
-          pallet_number: 0,
+          pallet_number: undefined,
           start_time: "",
           end_time: "",
-          cases_packed: 0,
+          cases_packed: undefined,
           serial_number: "",
           counter_id: "",
           counter_signature: "",
@@ -450,7 +450,8 @@ export function PalletiserSheetDrawer({
                   type="number"
                   placeholder="Enter batch number"
                   {...field}
-                  onChange={(e) => field.onChange(Number(e.target.value))}
+                  value={field.value || ""}
+                  onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
                 />
               )}
             />
@@ -507,16 +508,15 @@ export function PalletiserSheetDrawer({
               name="pallet_number"
               control={sheetDetailsForm.control}
               render={({ field }) => {
-                const safeValue = typeof field.value === 'number' ? field.value : 0
                 return (
                   <Input
                     id="pallet_number"
                     type="number"
                     placeholder="Enter pallet number"
-                    value={safeValue || ""}
+                    value={field.value || ""}
                     onChange={(e) => {
                       const value = e.target.value
-                      const numValue = value === "" ? 0 : parseInt(value, 10) || 0
+                      const numValue = value === "" ? undefined : parseInt(value, 10) || undefined
                       field.onChange(numValue)
                     }}
                   />
@@ -534,16 +534,15 @@ export function PalletiserSheetDrawer({
               name="cases_packed"
               control={sheetDetailsForm.control}
               render={({ field }) => {
-                const safeValue = typeof field.value === 'number' ? field.value : 0
                 return (
                   <Input
                     id="cases_packed"
                     type="number"
                     placeholder="Enter cases packed"
-                    value={safeValue || ""}
+                    value={field.value || ""}
                     onChange={(e) => {
                       const value = e.target.value
-                      const numValue = value === "" ? 0 : parseInt(value, 10) || 0
+                      const numValue = value === "" ? undefined : parseInt(value, 10) || undefined
                       field.onChange(numValue)
                     }}
                   />
@@ -708,7 +707,7 @@ export function PalletiserSheetDrawer({
   return (
     <>
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-[50vw] sm:max-w-[50vw] p-0 bg-white">
+      <SheetContent className="tablet-sheet-full p-0 bg-white">
         <SheetHeader className="p-6 pb-0 bg-white">
           <SheetTitle>
             {mode === "edit" ? "Edit Palletiser Sheet" : "Create Palletiser Sheet"}

@@ -116,8 +116,8 @@ export function AdminSidebar({ collapsed = false, onToggle }: AdminSidebarProps)
   const { user, profile } = useAppSelector((state) => state.auth)
   const [openDropdowns, setOpenDropdowns] = useState<string[]>([])
   
-  // Filter navigation based on user permissions
-  const filteredNavigation = useFilteredNavigation(adminNavigation)
+  // For now, show all navigation items (permissions removed for dashboard view role)
+  const filteredNavigation = adminNavigation
 
   const toggleDropdown = (itemName: string) => {
     setOpenDropdowns((prev) =>
