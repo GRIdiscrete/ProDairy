@@ -1,9 +1,9 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit"
-import { standardizingFormApi, StandardizingForm, CreateStandardizingFormRequest } from "@/lib/api/standardizing-form"
+import { skimmingFormApi, SkimmingForm, CreateSkimmingFormRequest } from "@/lib/api/skimming-form"
 
-interface StandardizingState {
-  forms: StandardizingForm[]
-  currentForm: StandardizingForm | null
+interface SkimmingState {
+  forms: SkimmingForm[]
+  currentForm: SkimmingForm | null
   loading: boolean
   error: string | null
   operationLoading: {
@@ -15,7 +15,7 @@ interface StandardizingState {
   isInitialized: boolean
 }
 
-const initialState: StandardizingState = {
+const initialState: SkimmingState = {
   forms: [],
   currentForm: null,
   loading: false,
@@ -30,74 +30,74 @@ const initialState: StandardizingState = {
 }
 
 // Async thunks
-export const fetchStandardizingForms = createAsyncThunk(
-  "standardizing/fetchForms",
+export const fetchSkimmingForms = createAsyncThunk(
+  "skimming/fetchForms",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await standardizingFormApi.getAll()
+      const response = await skimmingFormApi.getAll()
       return response
     } catch (error: any) {
-      return rejectWithValue(error.message || "Failed to fetch standardizing forms")
+      return rejectWithValue(error.message || "Failed to fetch skimming forms")
     }
   }
 )
 
-export const fetchStandardizingFormById = createAsyncThunk(
-  "standardizing/fetchFormById",
+export const fetchSkimmingFormById = createAsyncThunk(
+  "skimming/fetchFormById",
   async (id: string, { rejectWithValue }) => {
     try {
-      const response = await standardizingFormApi.getById(id)
+      const response = await skimmingFormApi.getById(id)
       return response
     } catch (error: any) {
-      return rejectWithValue(error.message || "Failed to fetch standardizing form")
+      return rejectWithValue(error.message || "Failed to fetch skimming form")
     }
   }
 )
 
-export const createStandardizingForm = createAsyncThunk(
-  "standardizing/createForm",
-  async (formData: CreateStandardizingFormRequest, { rejectWithValue }) => {
+export const createSkimmingForm = createAsyncThunk(
+  "skimming/createForm",
+  async (formData: CreateSkimmingFormRequest, { rejectWithValue }) => {
     try {
-      const response = await standardizingFormApi.create(formData)
+      const response = await skimmingFormApi.create(formData)
       return response.data
     } catch (error: any) {
-      return rejectWithValue(error.message || "Failed to create standardizing form")
+      return rejectWithValue(error.message || "Failed to create skimming form")
     }
   }
 )
 
-export const updateStandardizingForm = createAsyncThunk(
-  "standardizing/updateForm",
+export const updateSkimmingForm = createAsyncThunk(
+  "skimming/updateForm",
   async (formData: any, { rejectWithValue }) => {
     try {
-      const response = await standardizingFormApi.update(formData)
+      const response = await skimmingFormApi.update(formData)
       return response.data
     } catch (error: any) {
-      return rejectWithValue(error.message || "Failed to update standardizing form")
+      return rejectWithValue(error.message || "Failed to update skimming form")
     }
   }
 )
 
-export const deleteStandardizingForm = createAsyncThunk(
-  "standardizing/deleteForm",
+export const deleteSkimmingForm = createAsyncThunk(
+  "skimming/deleteForm",
   async (id: string, { rejectWithValue }) => {
     try {
-      await standardizingFormApi.delete(id)
+      await skimmingFormApi.delete(id)
       return id
     } catch (error: any) {
-      return rejectWithValue(error.message || "Failed to delete standardizing form")
+      return rejectWithValue(error.message || "Failed to delete skimming form")
     }
   }
 )
 
-const standardizingSlice = createSlice({
-  name: "standardizing",
+const skimmingSlice = createSlice({
+  name: "skimming",
   initialState,
   reducers: {
     clearError: (state) => {
       state.error = null
     },
-    setCurrentForm: (state, action: PayloadAction<StandardizingForm | null>) => {
+    setCurrentForm: (state, action: PayloadAction<SkimmingForm | null>) => {
       state.currentForm = action.payload
     },
     clearCurrentForm: (state) => {
@@ -107,18 +107,18 @@ const standardizingSlice = createSlice({
   extraReducers: (builder) => {
     // Fetch all forms
     builder
-      .addCase(fetchStandardizingForms.pending, (state) => {
+      .addCase(fetchSkimmingForms.pending, (state) => {
         state.operationLoading.fetch = true
         state.loading = true
         state.error = null
       })
-      .addCase(fetchStandardizingForms.fulfilled, (state, action) => {
+      .addCase(fetchSkimmingForms.fulfilled, (state, action) => {
         state.operationLoading.fetch = false
         state.loading = false
         state.forms = action.payload
         state.isInitialized = true
       })
-      .addCase(fetchStandardizingForms.rejected, (state, action) => {
+      .addCase(fetchSkimmingForms.rejected, (state, action) => {
         state.operationLoading.fetch = false
         state.loading = false
         state.error = action.payload as string
@@ -126,17 +126,17 @@ const standardizingSlice = createSlice({
 
     // Fetch form by ID
     builder
-      .addCase(fetchStandardizingFormById.pending, (state) => {
+      .addCase(fetchSkimmingFormById.pending, (state) => {
         state.operationLoading.fetch = true
         state.loading = true
         state.error = null
       })
-      .addCase(fetchStandardizingFormById.fulfilled, (state, action) => {
+      .addCase(fetchSkimmingFormById.fulfilled, (state, action) => {
         state.operationLoading.fetch = false
         state.loading = false
         state.currentForm = action.payload
       })
-      .addCase(fetchStandardizingFormById.rejected, (state, action) => {
+      .addCase(fetchSkimmingFormById.rejected, (state, action) => {
         state.operationLoading.fetch = false
         state.loading = false
         state.error = action.payload as string
@@ -144,26 +144,26 @@ const standardizingSlice = createSlice({
 
     // Create form
     builder
-      .addCase(createStandardizingForm.pending, (state) => {
+      .addCase(createSkimmingForm.pending, (state) => {
         state.operationLoading.create = true
         state.error = null
       })
-      .addCase(createStandardizingForm.fulfilled, (state, action) => {
+      .addCase(createSkimmingForm.fulfilled, (state, action) => {
         state.operationLoading.create = false
         state.forms.unshift(action.payload) // Add to beginning of array
       })
-      .addCase(createStandardizingForm.rejected, (state, action) => {
+      .addCase(createSkimmingForm.rejected, (state, action) => {
         state.operationLoading.create = false
         state.error = action.payload as string
       })
 
     // Update form
     builder
-      .addCase(updateStandardizingForm.pending, (state) => {
+      .addCase(updateSkimmingForm.pending, (state) => {
         state.operationLoading.update = true
         state.error = null
       })
-      .addCase(updateStandardizingForm.fulfilled, (state, action) => {
+      .addCase(updateSkimmingForm.fulfilled, (state, action) => {
         state.operationLoading.update = false
         const index = state.forms.findIndex(form => form.id === action.payload.id)
         if (index !== -1) {
@@ -173,30 +173,30 @@ const standardizingSlice = createSlice({
           state.currentForm = action.payload
         }
       })
-      .addCase(updateStandardizingForm.rejected, (state, action) => {
+      .addCase(updateSkimmingForm.rejected, (state, action) => {
         state.operationLoading.update = false
         state.error = action.payload as string
       })
 
     // Delete form
     builder
-      .addCase(deleteStandardizingForm.pending, (state) => {
+      .addCase(deleteSkimmingForm.pending, (state) => {
         state.operationLoading.delete = true
         state.error = null
       })
-      .addCase(deleteStandardizingForm.fulfilled, (state, action) => {
+      .addCase(deleteSkimmingForm.fulfilled, (state, action) => {
         state.operationLoading.delete = false
         state.forms = state.forms.filter(form => form.id !== action.payload)
         if (state.currentForm?.id === action.payload) {
           state.currentForm = null
         }
       })
-      .addCase(deleteStandardizingForm.rejected, (state, action) => {
+      .addCase(deleteSkimmingForm.rejected, (state, action) => {
         state.operationLoading.delete = false
         state.error = action.payload as string
       })
   },
 })
 
-export const { clearError, setCurrentForm, clearCurrentForm } = standardizingSlice.actions
-export default standardizingSlice.reducer
+export const { clearError, setCurrentForm, clearCurrentForm } = skimmingSlice.actions
+export default skimmingSlice.reducer

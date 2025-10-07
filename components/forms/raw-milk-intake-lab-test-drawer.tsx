@@ -8,7 +8,7 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Checkbox } from "@/components/ui/checkbox"
+import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
 import { DatePicker } from "@/components/ui/date-picker"
 import { SearchableSelect, SearchableSelectOption } from "@/components/ui/searchable-select"
@@ -19,13 +19,12 @@ import { toast } from "sonner"
 
 const schema = yup.object({
   date: yup.string().required("Date is required"),
-  organol_eptic: yup.string().required("Organoleptic is required"),
-  no_water: yup.string().required("No water result is required"),
-  no_starch: yup.string().required("No starch result is required"),
-  milk_freshness: yup.string().required("Milk freshness is required"),
-  bacteria_load: yup.string().required("Bacteria load is required"),
-  accepted: yup.boolean().required(),
   scientist_id: yup.string().required("Scientist is required"),
+  organol_eptic: yup.string().required("Organoleptic is required"),
+  accepted: yup.boolean().required(),
+  alcohol: yup.number().nullable(),
+  cob: yup.boolean().nullable(),
+  remarks: yup.string(),
 })
 
 export type LabTestFormData = yup.InferType<typeof schema>
@@ -33,12 +32,12 @@ export type LabTestFormData = yup.InferType<typeof schema>
 interface Props {
   open: boolean
   onOpenChange: (open: boolean) => void
-  rawMilkIntakeFormId: string
+  driversFormId: string
   mode: "create" | "edit"
   existingId?: string
 }
 
-export function RawMilkIntakeLabTestDrawer({ open, onOpenChange, rawMilkIntakeFormId, mode, existingId }: Props) {
+export function RawMilkIntakeLabTestDrawer({ open, onOpenChange, driversFormId, mode, existingId }: Props) {
   const dispatch = useAppDispatch()
   const { operationLoading } = useAppSelector((s) => (s as any).rawMilkIntakeLabTests)
   const [users, setUsers] = useState<SearchableSelectOption[]>([])
@@ -48,13 +47,12 @@ export function RawMilkIntakeLabTestDrawer({ open, onOpenChange, rawMilkIntakeFo
     resolver: yupResolver(schema),
     defaultValues: {
       date: new Date().toISOString().split("T")[0],
-      organol_eptic: "",
-      no_water: "",
-      no_starch: "",
-      milk_freshness: "",
-      bacteria_load: "",
-      accepted: true,
       scientist_id: "",
+      organol_eptic: "",
+      accepted: true,
+      alcohol: null,
+      cob: null,
+      remarks: "",
     },
   })
 
@@ -80,15 +78,23 @@ export function RawMilkIntakeLabTestDrawer({ open, onOpenChange, rawMilkIntakeFo
   const onSubmit = async (data: LabTestFormData) => {
     try {
       if (mode === "edit" && existingId) {
-        await dispatch(updateRawMilkIntakeLabTest({ id: existingId, raw_milk_intake_id: rawMilkIntakeFormId, ...data })).unwrap()
-        toast.success("Lab test updated")
+        await dispatch(updateRawMilkIntakeLabTest({ 
+          id: existingId, 
+          drivers_form_id: driversFormId, 
+          ...data,
+          updated_at: new Date().toISOString()
+        })).unwrap()
+        toast.success("Milk Test updated")
       } else {
-        await dispatch(createRawMilkIntakeLabTest({ raw_milk_intake_id: rawMilkIntakeFormId, ...data })).unwrap()
-        toast.success("Lab test created")
+        await dispatch(createRawMilkIntakeLabTest({ 
+          drivers_form_id: driversFormId, 
+          ...data 
+        })).unwrap()
+        toast.success("Milk Test created")
       }
       onOpenChange(false)
     } catch (e: any) {
-      toast.error(e || "Failed to save lab test")
+      toast.error(e || "Failed to save Milk Test")
     }
   }
 
@@ -96,7 +102,7 @@ export function RawMilkIntakeLabTestDrawer({ open, onOpenChange, rawMilkIntakeFo
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-[60vw] sm:max-w-[60vw] tablet-sheet-full p-0 bg-white">
         <SheetHeader className="p-6 pb-0">
-          <SheetTitle className="text-lg font-light">{mode === "edit" ? "Update Lab Test" : "Create Lab Test"}</SheetTitle>
+          <SheetTitle className="text-lg font-light">{mode === "edit" ? "Update Milk Test" : "Create Milk Test"}</SheetTitle>
           <SheetDescription className="text-sm font-light">Capture or update laboratory results for this intake form</SheetDescription>
         </SheetHeader>
         <form onSubmit={form.handleSubmit(onSubmit)} className="p-6 space-y-6">
@@ -117,42 +123,44 @@ export function RawMilkIntakeLabTestDrawer({ open, onOpenChange, rawMilkIntakeFo
           </div>
 
           {/* Row 2 */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Organoleptic</Label>
-              <Controller name="organol_eptic" control={form.control} render={({ field }) => (
-                <Input placeholder="e.g., Normal" {...field} />
-              )} />
-            </div>
-            <div className="space-y-2">
-              <Label>No Water</Label>
-              <Controller name="no_water" control={form.control} render={({ field }) => (
-                <Input placeholder="e.g., No water detected" {...field} />
-              )} />
-            </div>
+          <div className="space-y-2">
+            <Label>Organoleptic</Label>
+            <Controller name="organol_eptic" control={form.control} render={({ field }) => (
+              <Input placeholder="e.g., Normal" {...field} />
+            )} />
           </div>
 
           {/* Row 3 */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>No Starch</Label>
-              <Controller name="no_starch" control={form.control} render={({ field }) => (
-                <Input placeholder="e.g., No starch detected" {...field} />
+              <Label>Alcohol</Label>
+              <Controller name="alcohol" control={form.control} render={({ field }) => (
+                <Input 
+                  type="number" 
+                  step="0.01" 
+                  placeholder="e.g., 22" 
+                  {...field} 
+                  value={field.value || ""} 
+                  onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : null)}
+                />
               )} />
             </div>
             <div className="space-y-2">
-              <Label>Milk Freshness</Label>
-              <Controller name="milk_freshness" control={form.control} render={({ field }) => (
-                <Input placeholder="e.g., Fresh" {...field} />
+              <Label>COB</Label>
+              <Controller name="cob" control={form.control} render={({ field }) => (
+                <div className="flex items-center space-x-2">
+                  <Switch checked={field.value || false} onCheckedChange={field.onChange} />
+                  <Label>COB Detected</Label>
+                </div>
               )} />
             </div>
           </div>
 
-          {/* Row 4 (full width) */}
+          {/* Row 4 */}
           <div className="space-y-2">
-            <Label>Bacteria Load</Label>
-            <Controller name="bacteria_load" control={form.control} render={({ field }) => (
-              <Textarea rows={3} placeholder="e.g., Within acceptable limits" {...field} />
+            <Label>Remarks</Label>
+            <Controller name="remarks" control={form.control} render={({ field }) => (
+              <Textarea rows={2} placeholder="Additional remarks..." {...field} />
             )} />
           </div>
 
@@ -160,7 +168,7 @@ export function RawMilkIntakeLabTestDrawer({ open, onOpenChange, rawMilkIntakeFo
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <Controller name="accepted" control={form.control} render={({ field }) => (
-                <Checkbox checked={field.value} onCheckedChange={(v) => field.onChange(Boolean(v))} />
+                <Switch checked={field.value} onCheckedChange={field.onChange} />
               )} />
               <Label>Accepted</Label>
             </div>

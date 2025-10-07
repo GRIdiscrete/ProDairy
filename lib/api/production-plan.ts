@@ -13,20 +13,27 @@ export interface CreateProductionPlanRequest {
   description?: string
   start_date: string
   end_date: string
-  raw_products: ProductionPlanRawProduct[]
+  raw_products_object: Array<{
+    raw_material_id: string
+    requested_amount: number
+    units: string
+  }>
   supervisor: string
   status: "planned" | "ongoing" | "completed" | "cancelled"
   process_id: string
-  output: {
-    value: number
-    unit_of_measure: string
-  }
+  output_value: number
+  output_units: string
 }
 
-export interface UpdateProductionPlanRequest extends CreateProductionPlanRequest {
+export interface UpdateProductionPlanRequest extends Omit<CreateProductionPlanRequest, 'raw_products_object'> {
   id: string
   created_at: string
   updated_at: string
+  raw_products: Array<{
+    raw_material_id: string
+    requested_amount: number
+    units: string
+  }>
 }
 
 export const productionPlanApi = {

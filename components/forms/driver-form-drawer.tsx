@@ -39,14 +39,14 @@ const driverFormSchema = yup.object({
   end_date: yup.string().required("End date is required"),
   delivered: yup.boolean(),
   rejected: yup.boolean(),
-  collected_products: yup.array().of(
+  drivers_form_collected_products: yup.array().of(
     yup.object({
       raw_material_id: yup.string().required("Raw material is required"),
       supplier_id: yup.string().required("Supplier is required"),
       collected_amount: yup.number().positive("Amount must be positive").required("Amount is required"),
       unit_of_measure: yup.string().required("Unit of measure is required"),
-      "e-sign-supplier": yup.string().required("Supplier signature is required"),
-      "e-sign-driver": yup.string().required("Driver signature is required"),
+      e_sign_supplier: yup.string().required("Supplier signature is required"),
+      e_sign_driver: yup.string().required("Driver signature is required"),
     })
   ),
 })
@@ -57,7 +57,7 @@ type DriverFormFormData = {
   end_date: string
   delivered: boolean
   rejected: boolean
-  collected_products: DriverFormCollectedProduct[]
+  drivers_form_collected_products: DriverFormCollectedProduct[]
 }
 
 interface DriverFormDrawerProps {
@@ -153,13 +153,13 @@ export function DriverFormDrawer({
       end_date: "",
       delivered: false,
       rejected: false,
-      collected_products: [],
+      drivers_form_collected_products: [],
     },
   })
 
   const { fields, append, remove } = useFieldArray({
     control,
-    name: "collected_products",
+    name: "drivers_form_collected_products",
   })
 
   // Load required data on component mount
@@ -229,7 +229,7 @@ export function DriverFormDrawer({
         setValue("end_date", driverForm.end_date.split('T')[0])
         setValue("delivered", driverForm.delivered)
         setValue("rejected", driverForm.rejected)
-        setValue("collected_products", driverForm.collected_products || [])
+        setValue("drivers_form_collected_products", driverForm.drivers_form_collected_products || [])
       } else {
         reset({
           driver: "",
@@ -237,7 +237,7 @@ export function DriverFormDrawer({
           end_date: "",
           delivered: false,
           rejected: false,
-          collected_products: [],
+          drivers_form_collected_products: [],
         })
       }
     }
@@ -262,7 +262,6 @@ export function DriverFormDrawer({
           await dispatch(updateDriverForm({
             ...submitData,
             id: driverForm.id,
-            created_at: driverForm.created_at,
             updated_at: new Date().toISOString(),
           })).unwrap()
           toast.success("Driver form updated successfully")
@@ -279,12 +278,22 @@ export function DriverFormDrawer({
             end_date: submitData.end_date,
             delivered: submitData.delivered,
             rejected: submitData.rejected,
-            collected_products: submitData.collected_products
+            drivers_form_collected_products: submitData.drivers_form_collected_products
           }
           LocalStorageService.saveDriverForm(offlineFormData)
           toast.success("Driver form saved offline. It will be synced when you're back online.")
         } else if (driverForm) {
-          // For offline edit, we'll need to implement update functionality
+          const offlineFormData = {
+            ...driverForm,
+            driver_id: submitData.driver,
+            start_date: submitData.start_date,
+            end_date: submitData.end_date,
+            delivered: submitData.delivered,
+            rejected: submitData.rejected,
+            drivers_form_collected_products: submitData.drivers_form_collected_products
+          }
+          LocalStorageService.updateDriverForm(offlineFormData)
+          toast.success("Driver form updated offline. It will be synced when you're back online.")
           toast.info("Offline editing not yet implemented")
         }
       }
@@ -305,8 +314,8 @@ export function DriverFormDrawer({
       supplier_id: "",
       collected_amount: 0,
       unit_of_measure: "KG",
-      "e-sign-supplier": "",
-      "e-sign-driver": "",
+      e_sign_supplier: "",
+      e_sign_driver: "",
     })
   }
 
@@ -316,11 +325,7 @@ export function DriverFormDrawer({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side={isMobile || isTablet ? "bottom" : "right"}
-        className={
-          isMobile || isTablet
-            ? "h-[85vh] w-full max-w-full overflow-y-auto p-0 bg-white rounded-t-2xl"
-            : "w-[50vw] sm:max-w-[50vw] overflow-y-auto p-6 bg-white"
-        }
+        className="tablet-sheet-full p-0 bg-white"
       >
         <SheetHeader className={isMobile || isTablet ? "p-6 pb-0 bg-white" : "mb-6"}>
           <div className="flex items-center justify-between">
@@ -551,7 +556,7 @@ export function DriverFormDrawer({
                           <div className="space-y-2">
                             <Label className="font-light">Raw Material *</Label>
                             <Controller
-                              name={`collected_products.${index}.raw_material_id`}
+                              name={`drivers_form_collected_products.${index}.raw_material_id`}
                               control={control}
                               render={({ field }) => (
                                 <Select value={field.value} onValueChange={field.onChange} disabled={isSubmitting}>
@@ -579,9 +584,9 @@ export function DriverFormDrawer({
                                 </Select>
                               )}
                             />
-                            {errors.collected_products?.[index]?.raw_material_id && (
+                            {errors.drivers_form_collected_products?.[index]?.raw_material_id && (
                               <p className="text-sm text-red-500 font-light">
-                                {errors.collected_products[index]?.raw_material_id?.message}
+                                {errors.drivers_form_collected_products[index]?.raw_material_id?.message}
                               </p>
                             )}
                           </div>
@@ -589,7 +594,7 @@ export function DriverFormDrawer({
                           <div className="space-y-2">
                             <Label className="font-light">Supplier *</Label>
                             <Controller
-                              name={`collected_products.${index}.supplier_id`}
+                              name={`drivers_form_collected_products.${index}.supplier_id`}
                               control={control}
                               render={({ field }) => (
                                 <Select value={field.value} onValueChange={field.onChange} disabled={isSubmitting}>
@@ -619,9 +624,9 @@ export function DriverFormDrawer({
                                 </Select>
                               )}
                             />
-                            {errors.collected_products?.[index]?.supplier_id && (
+                            {errors.drivers_form_collected_products?.[index]?.supplier_id && (
                               <p className="text-sm text-red-500 font-light">
-                                {errors.collected_products[index]?.supplier_id?.message}
+                                {errors.drivers_form_collected_products[index]?.supplier_id?.message}
                               </p>
                             )}
                           </div>
@@ -631,7 +636,7 @@ export function DriverFormDrawer({
                           <div className="space-y-2">
                             <Label className="font-light">Collected Amount *</Label>
                             <Controller
-                              name={`collected_products.${index}.collected_amount`}
+                              name={`drivers_form_collected_products.${index}.collected_amount`}
                               control={control}
                               render={({ field }) => (
                                 <Input
@@ -646,9 +651,9 @@ export function DriverFormDrawer({
                                 />
                               )}
                             />
-                            {errors.collected_products?.[index]?.collected_amount && (
+                            {errors.drivers_form_collected_products?.[index]?.collected_amount && (
                               <p className="text-sm text-red-500 font-light">
-                                {errors.collected_products[index]?.collected_amount?.message}
+                                {errors.drivers_form_collected_products[index]?.collected_amount?.message}
                               </p>
                             )}
                           </div>
@@ -656,7 +661,7 @@ export function DriverFormDrawer({
                           <div className="space-y-2">
                             <Label className="font-light">Unit of Measure *</Label>
                             <Controller
-                              name={`collected_products.${index}.unit_of_measure`}
+                              name={`drivers_form_collected_products.${index}.unit_of_measure`}
                               control={control}
                               render={({ field }) => (
                                 <Select value={field.value} onValueChange={field.onChange} disabled={isSubmitting}>
@@ -673,9 +678,9 @@ export function DriverFormDrawer({
                                 </Select>
                               )}
                             />
-                            {errors.collected_products?.[index]?.unit_of_measure && (
+                            {errors.drivers_form_collected_products?.[index]?.unit_of_measure && (
                               <p className="text-sm text-red-500 font-light">
-                                {errors.collected_products[index]?.unit_of_measure?.message}
+                                {errors.drivers_form_collected_products[index]?.unit_of_measure?.message}
                               </p>
                             )}
                           </div>
@@ -685,7 +690,7 @@ export function DriverFormDrawer({
                           <div className="space-y-2">
                             <Label className="font-light">Supplier E-Signature *</Label>
                             <Controller
-                              name={`collected_products.${index}.e-sign-supplier`}
+                              name={`drivers_form_collected_products.${index}.e_sign_supplier`}
                               control={control}
                               render={({ field }) => (
                                 <div className="space-y-2">
@@ -720,9 +725,9 @@ export function DriverFormDrawer({
                                 </div>
                               )}
                             />
-                            {errors.collected_products?.[index]?.["e-sign-supplier"] && (
+                            {errors.drivers_form_collected_products?.[index]?.e_sign_supplier && (
                               <p className="text-sm text-red-500 font-light">
-                                {errors.collected_products[index]?.["e-sign-supplier"]?.message}
+                                {errors.drivers_form_collected_products[index]?.e_sign_supplier?.message}
                               </p>
                             )}
                           </div>
@@ -730,7 +735,7 @@ export function DriverFormDrawer({
                           <div className="space-y-2">
                             <Label className="font-light">Driver E-Signature *</Label>
                             <Controller
-                              name={`collected_products.${index}.e-sign-driver`}
+                              name={`drivers_form_collected_products.${index}.e_sign_driver`}
                               control={control}
                               render={({ field }) => (
                                 <div className="space-y-2">
@@ -765,9 +770,9 @@ export function DriverFormDrawer({
                                 </div>
                               )}
                             />
-                            {errors.collected_products?.[index]?.["e-sign-driver"] && (
+                            {errors.drivers_form_collected_products?.[index]?.e_sign_driver && (
                               <p className="text-sm text-red-500 font-light">
-                                {errors.collected_products[index]?.["e-sign-driver"]?.message}
+                                {errors.drivers_form_collected_products[index]?.e_sign_driver?.message}
                               </p>
                             )}
                           </div>
@@ -777,8 +782,8 @@ export function DriverFormDrawer({
                   ))}
                 </div>
               )}
-              {errors.collected_products && (
-                <p className="text-sm text-red-500 font-light">{errors.collected_products.message}</p>
+              {errors.drivers_form_collected_products && (
+                <p className="text-sm text-red-500 font-light">{errors.drivers_form_collected_products.message}</p>
               )}
             </div>
           </div>
@@ -812,8 +817,8 @@ export function DriverFormDrawer({
               onSave={(signature) => {
                 if (currentSignatureIndex !== null) {
                   const fieldName = currentSignatureType === 'supplier' 
-                    ? `collected_products.${currentSignatureIndex}.e-sign-supplier`
-                    : `collected_products.${currentSignatureIndex}.e-sign-driver`
+                    ? `drivers_form_collected_products.${currentSignatureIndex}.e_sign_supplier`
+                    : `drivers_form_collected_products.${currentSignatureIndex}.e_sign_driver`
                   setValue(fieldName as any, signature)
                 }
                 if (currentSignatureType === 'supplier') {
@@ -832,8 +837,8 @@ export function DriverFormDrawer({
               onOpenChange={currentSignatureType === 'supplier' ? setSupplierSignatureViewOpen : setDriverSignatureViewOpen}
               signature={currentSignatureIndex !== null ? 
                 (currentSignatureType === 'supplier' 
-                  ? watch(`collected_products.${currentSignatureIndex}.e-sign-supplier`)
-                  : watch(`collected_products.${currentSignatureIndex}.e-sign-driver`)
+                  ? watch(`drivers_form_collected_products.${currentSignatureIndex}.e_sign_supplier`)
+                  : watch(`drivers_form_collected_products.${currentSignatureIndex}.e_sign_driver`)
                 ) : ""
               }
               title={`${currentSignatureType === 'supplier' ? 'Supplier' : 'Driver'} Signature`}

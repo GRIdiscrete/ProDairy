@@ -38,7 +38,7 @@ export interface OfflineDriverForm {
   end_date: string
   delivered: boolean
   rejected: boolean
-  collected_products: OfflineCollectedProduct[]
+  drivers_form_collected_products: OfflineCollectedProduct[]
   created_at: string
   updated_at: string
   sync_status: 'pending' | 'synced' | 'failed'
@@ -50,8 +50,8 @@ export interface OfflineCollectedProduct {
   supplier_id: string
   collected_amount: number
   unit_of_measure: string
-  'e-sign-supplier': string
-  'e-sign-driver': string
+  e_sign_supplier: string
+  e_sign_driver: string
 }
 
 // Database class

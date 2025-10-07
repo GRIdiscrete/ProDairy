@@ -10,39 +10,113 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { SearchableSelect, SearchableSelectOption } from "@/components/ui/searchable-select"
+import { MultiSelect, MultiSelectOption } from "@/components/ui/multi-select"
 import { DatePicker } from "@/components/ui/date-picker"
+import { ShadcnTimePicker } from "@/components/ui/shadcn-time-picker"
 import { useAppDispatch, useAppSelector } from "@/lib/store"
 import { createBMTControlFormAction, updateBMTControlFormAction, fetchBMTControlForms } from "@/lib/store/slices/bmtControlFormSlice"
 import { fetchProcesses } from "@/lib/store/slices/processSlice"
 import { siloApi } from "@/lib/api/silo"
 import { usersApi } from "@/lib/api/users"
 import { toast } from "sonner"
-import type { BMTControlForm } from "@/lib/api/data-capture-forms"
+import type { BMTControlForm, CreateBMTControlFormRequest } from "@/lib/api/bmt-control-form"
 import { SignatureModal } from "@/components/ui/signature-modal"
 import { SignatureViewer } from "@/components/ui/signature-viewer"
 import { base64ToPngDataUrl, normalizeDataUrlToBase64 } from "@/lib/utils/signature"
 
 const bmtControlFormSchema = yup.object({
-  flow_meter_start: yup.string().required("Flow meter start time is required"),
-  flow_meter_start_reading: yup.number().required("Flow meter start reading is required").min(0, "Reading must be positive"),
-  flow_meter_end: yup.string().required("Flow meter end time is required"),
-  flow_meter_end_reading: yup.number().required("Flow meter end reading is required").min(0, "Reading must be positive"),
-  source_silo_id: yup.string().required("Source silo is required"),
-  destination_silo_id: yup.string().required("Destination silo is required").test(
-    'different-from-source',
-    'Destination silo must be different from source silo',
-    function(value) {
-      return value !== this.parent.source_silo_id
-    }
-  ),
-  movement_start: yup.string().required("Movement start time is required"),
-  movement_end: yup.string().required("Movement end time is required"),
-  volume: yup.number().required("Volume is required").min(0, "Volume must be positive"),
+  flow_meter_start: yup
+    .string()
+    .required("Flow meter start time is required")
+    .test('valid-time', 'Please select a valid time', (value) => {
+      if (!value) return false
+      // Accept datetime strings from ShadcnTimePicker
+      return value.includes('T') || value.includes(' ') || value.includes(':')
+    }),
+  flow_meter_start_reading: yup
+    .number()
+    .required("Flow meter start reading is required")
+    .min(0, "Reading must be positive")
+    .typeError("Start reading must be a valid number"),
+  flow_meter_end: yup
+    .string()
+    .required("Flow meter end time is required")
+    .test('valid-time', 'Please select a valid time', (value) => {
+      if (!value) return false
+      return value.includes('T') || value.includes(' ') || value.includes(':')
+    })
+    .test('end-after-start', 'End time must be after start time', function(value) {
+      const { flow_meter_start } = this.parent
+      if (!value || !flow_meter_start) return true
+      
+      try {
+        const startDate = new Date(flow_meter_start)
+        const endDate = new Date(value)
+        return endDate > startDate
+      } catch {
+        return true // Let other validations handle invalid dates
+      }
+    }),
+  flow_meter_end_reading: yup
+    .number()
+    .required("Flow meter end reading is required")
+    .min(0, "Reading must be positive")
+    .typeError("End reading must be a valid number")
+    .test('end-greater-than-start', 'End reading must be greater than start reading', function(value) {
+      const { flow_meter_start_reading } = this.parent
+      if (value === undefined || flow_meter_start_reading === undefined) return true
+      return value > flow_meter_start_reading
+    }),
+  source_silo_id: yup
+    .array()
+    .of(yup.string().required())
+    .required("At least one source silo is required")
+    .min(1, "At least one source silo is required"),
+  destination_silo_id: yup
+    .string()
+    .required("Destination silo is required")
+    .test('different-from-source', 'Destination silo must be different from source silos', function(value) {
+      const { source_silo_id } = this.parent
+      if (!value || !source_silo_id || !Array.isArray(source_silo_id)) return true
+      return !source_silo_id.includes(value)
+    }),
+  movement_start: yup
+    .string()
+    .required("Movement start time is required")
+    .test('valid-time', 'Please select a valid time', (value) => {
+      if (!value) return false
+      return value.includes('T') || value.includes(' ') || value.includes(':')
+    }),
+  movement_end: yup
+    .string()
+    .required("Movement end time is required")
+    .test('valid-time', 'Please select a valid time', (value) => {
+      if (!value) return false
+      return value.includes('T') || value.includes(' ') || value.includes(':')
+    })
+    .test('end-after-start', 'Movement end time must be after start time', function(value) {
+      const { movement_start } = this.parent
+      if (!value || !movement_start) return true
+      
+      try {
+        const startDate = new Date(movement_start)
+        const endDate = new Date(value)
+        return endDate > startDate
+      } catch {
+        return true
+      }
+    }),
+  volume: yup
+    .number()
+    .required("Volume is required")
+    .min(0.1, "Volume must be greater than 0")
+    .typeError("Volume must be a valid number"),
   llm_operator_id: yup.string().required("LLM operator is required"),
-  llm_signature: yup.string().required("LLM signature is required"),
+  llm_signature: yup.string().required("LLM operator signature is required"),
   dpp_operator_id: yup.string().required("DPP operator is required"),
-  dpp_signature: yup.string().required("DPP signature is required"),
-  product: yup.string().required("Product is required"),
+  dpp_signature: yup.string().required("DPP operator signature is required"),
+  product: yup.string().required("Product selection is required"),
+  id: yup.string().optional(),
 })
 
 type BMTControlFormData = yup.InferType<typeof bmtControlFormSchema>
@@ -152,7 +226,7 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
       flow_meter_start_reading: 0,
       flow_meter_end: "",
       flow_meter_end_reading: 0,
-      source_silo_id: "",
+      source_silo_id: [],
       destination_silo_id: "",
       movement_start: "",
       movement_end: "",
@@ -162,6 +236,7 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
       dpp_operator_id: "",
       dpp_signature: "",
       product: "",
+      id: "",
     },
   })
 
@@ -173,6 +248,9 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
         dpp_signature: normalizeDataUrlToBase64(data.dpp_signature),
       }
 
+      // Debug: Log the payload to see what's being sent
+      console.log('BMT Form Payload:', JSON.stringify(payload, null, 2))
+
       if (mode === "create") {
         await dispatch(createBMTControlFormAction(payload)).unwrap()
         toast.success('BMT Control Form created successfully')
@@ -181,12 +259,17 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
           dispatch(fetchBMTControlForms())
         }, 100)
       } else if (form) {
-        await dispatch(updateBMTControlFormAction({
+        const updatePayload = {
           ...payload,
           id: form.id,
           created_at: form.created_at,
           updated_at: form.updated_at,
-        })).unwrap()
+        }
+        
+        // Debug: Log the update payload
+        console.log('BMT Update Payload Id IyI:', form.id)
+        
+        await dispatch(updateBMTControlFormAction(updatePayload)).unwrap()
         toast.success('BMT Control Form updated successfully')
         // Refresh the data to get complete relationship information
         setTimeout(() => {
@@ -202,21 +285,27 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
 
   useEffect(() => {
     if (open && form && mode === "edit") {
+      // Debug: Log the entire form object to see what we're getting
+      console.log('Form object in useEffect:', form)
+      console.log('Form ID specifically:', form.id)
+      console.log('Form keys:', Object.keys(form))
+      
       reset({
-        flow_meter_start: form.flow_meter_start || "",
+        flow_meter_start: form.flow_meter_start ? form.flow_meter_start.split('+')[0].substring(0, 5) : "",
         flow_meter_start_reading: form.flow_meter_start_reading || 0,
-        flow_meter_end: form.flow_meter_end || "",
+        flow_meter_end: form.flow_meter_end ? form.flow_meter_end.split('+')[0].substring(0, 5) : "",
         flow_meter_end_reading: form.flow_meter_end_reading || 0,
-        source_silo_id: form.source_silo_id || "",
+        source_silo_id: Array.isArray(form.source_silo_id) ? form.source_silo_id : [],
         destination_silo_id: form.destination_silo_id || "",
-        movement_start: form.movement_start || "",
-        movement_end: form.movement_end || "",
+        movement_start: form.movement_start ? form.movement_start.split('+')[0].substring(0, 5) : "",
+        movement_end: form.movement_end ? form.movement_end.split('+')[0].substring(0, 5) : "",
         volume: form.volume || 0,
         llm_operator_id: form.llm_operator_id || "",
         llm_signature: form.llm_signature || "",
         dpp_operator_id: form.dpp_operator_id || "",
         dpp_signature: form.dpp_signature || "",
         product: form.product || "",
+        id: form.id || "",
       })
     } else if (open && mode === "create") {
       reset({
@@ -224,7 +313,7 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
         flow_meter_start_reading: 0,
         flow_meter_end: "",
         flow_meter_end_reading: 0,
-        source_silo_id: "",
+        source_silo_id: [],
         destination_silo_id: "",
         movement_start: "",
         movement_end: "",
@@ -248,7 +337,7 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
   return (
     <>
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-[50vw] sm:max-w-[50vw] overflow-y-auto bg-white">
+      <SheetContent className="tablet-sheet-full p-0 bg-white">
         <div className="p-6 bg-white">
           <SheetHeader>
             <SheetTitle>{mode === "create" ? "Add New BMT Control Form" : "Edit BMT Control Form"}</SheetTitle>
@@ -268,13 +357,13 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
                     name="flow_meter_start"
                     control={control}
                     render={({ field }) => (
-                      <DatePicker
-                        label="Flow Meter Start Time *"
+                      <ShadcnTimePicker
+                        label="Flow Meter Start Time"
                         value={field.value}
                         onChange={field.onChange}
                         placeholder="Select start time"
-                        showTime={true}
                         error={!!errors.flow_meter_start}
+                        required
                       />
                     )}
                   />
@@ -286,13 +375,13 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
                     name="flow_meter_end"
                     control={control}
                     render={({ field }) => (
-                      <DatePicker
-                        label="Flow Meter End Time *"
+                      <ShadcnTimePicker
+                        label="Flow Meter End Time"
                         value={field.value}
                         onChange={field.onChange}
                         placeholder="Select end time"
-                        showTime={true}
                         error={!!errors.flow_meter_end}
+                        required
                       />
                     )}
                   />
@@ -347,23 +436,30 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
               <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Movement Information</h3>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="source_silo_id">Source Silo *</Label>
+                  <Label htmlFor="source_silo_id">Source Silos *</Label>
                   <Controller
                     name="source_silo_id"
                     control={control}
-                    render={({ field }) => (
-                      <SearchableSelect
-                        options={silos}
-                        value={field.value}
-                        onValueChange={field.onChange}
-                        placeholder="Select source silo"
-                        searchPlaceholder="Search silos..."
-                        emptyMessage="No silos found"
-                        loading={loadingSilos}
-                        onSearch={handleSiloSearch}
-                        className="w-full rounded-full border-gray-200"
-                      />
-                    )}
+                    render={({ field }) => {
+                      // Debug: Log the field value to see what's happening
+                      console.log('Source Silo Field Value:', field.value, typeof field.value)
+                      
+                      return (
+                        <MultiSelect
+                          options={silos}
+                          value={Array.isArray(field.value) ? field.value : []}
+                          onValueChange={(newValue) => {
+                            console.log('MultiSelect onChange:', newValue)
+                            field.onChange(newValue)
+                          }}
+                          placeholder="Select source silos"
+                          searchPlaceholder="Search silos..."
+                          emptyMessage="No silos found"
+                          loading={loadingSilos}
+                          className="w-full"
+                        />
+                      )
+                    }}
                   />
                   {errors.source_silo_id && <p className="text-sm text-red-500">{errors.source_silo_id.message}</p>}
                 </div>
@@ -396,13 +492,13 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
                     name="movement_start"
                     control={control}
                     render={({ field }) => (
-                      <DatePicker
-                        label="Movement Start Time *"
+                      <ShadcnTimePicker
+                        label="Movement Start Time"
                         value={field.value}
                         onChange={field.onChange}
                         placeholder="Select start time"
-                        showTime={true}
                         error={!!errors.movement_start}
+                        required
                       />
                     )}
                   />
@@ -414,13 +510,13 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
                     name="movement_end"
                     control={control}
                     render={({ field }) => (
-                      <DatePicker
-                        label="Movement End Time *"
+                      <ShadcnTimePicker
+                        label="Movement End Time"
                         value={field.value}
                         onChange={field.onChange}
                         placeholder="Select end time"
-                        showTime={true}
                         error={!!errors.movement_end}
+                        required
                       />
                     )}
                   />

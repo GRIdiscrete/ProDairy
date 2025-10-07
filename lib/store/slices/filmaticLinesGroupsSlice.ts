@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit"
-import { filmaticLinesGroupsApi, FilmaticLinesGroup, FilmaticLinesGroupCreateRequest, FilmaticLinesGroupDetail } from "@/lib/api/filmatic-lines-groups"
+import { filmaticLinesGroupsApi, FilmaticLinesGroup, FilmaticLinesGroupCreateRequest, FilmaticLinesGroupDetail, FilmaticLinesGroupUpdateRequest } from "@/lib/api/filmatic-lines-groups"
 
 interface OperationLoading { create: boolean; update: boolean; delete: boolean; fetch: boolean }
 
@@ -39,6 +39,10 @@ export const createFilmaticGroupDetails = createAsyncThunk("flg/createDetails", 
   try { const res = await filmaticLinesGroupsApi.createDetails(body as any); return res.data } catch (e: any) { return rejectWithValue(e?.body?.message || e?.message) }
 })
 
+export const updateFilmaticGroup = createAsyncThunk("flg/updateGroup", async ({ id, ...body }: FilmaticLinesGroupUpdateRequest, { rejectWithValue }) => {
+  try { const res = await filmaticLinesGroupsApi.updateGroup(id, { id, ...body }); return res.data } catch (e: any) { return rejectWithValue(e?.body?.message || e?.message) }
+})
+
 const slice = createSlice({
   name: "flg",
   initialState,
@@ -57,6 +61,13 @@ const slice = createSlice({
       .addCase(createFilmaticGroupDetails.pending, (s)=>{ s.operationLoading.update = true; s.error = null })
       .addCase(createFilmaticGroupDetails.fulfilled, (s, a: PayloadAction<FilmaticLinesGroupDetail>)=>{ s.operationLoading.update = false; s.details.unshift(a.payload) })
       .addCase(createFilmaticGroupDetails.rejected, (s, a)=>{ s.operationLoading.update = false; s.error = a.payload as string })
+      .addCase(updateFilmaticGroup.pending, (s)=>{ s.operationLoading.update = true; s.error = null })
+      .addCase(updateFilmaticGroup.fulfilled, (s, a: PayloadAction<FilmaticLinesGroup>)=>{ 
+        s.operationLoading.update = false; 
+        const index = s.groups.findIndex(g => g.id === a.payload.id);
+        if (index !== -1) s.groups[index] = a.payload;
+      })
+      .addCase(updateFilmaticGroup.rejected, (s, a)=>{ s.operationLoading.update = false; s.error = a.payload as string })
   }
 })
 

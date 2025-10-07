@@ -167,6 +167,20 @@ export function TimePicker({
   className,
   error = false,
 }: TimePickerProps) {
+  // Extract time from datetime string for display
+  const displayTime = value ? 
+    (value.includes('T') ? value.split('T')[1]?.substring(0, 5) : 
+     value.includes(' ') ? value.split(' ')[1]?.substring(0, 5) : value) : ""
+
+  const handleTimeChange = (timeValue: string) => {
+    if (timeValue && onChange) {
+      // Convert time to datetime string for API (using current date)
+      const currentDate = new Date().toISOString().split('T')[0]
+      const dateTimeString = `${currentDate} ${timeValue}:00.000000+00`
+      onChange(dateTimeString)
+    }
+  }
+
   return (
     <div className={cn("space-y-2", className)}>
       {label && (
@@ -179,8 +193,8 @@ export function TimePicker({
         <Clock className="h-4 w-4 text-muted-foreground" />
         <Input
           type="time"
-          value={value || ""}
-          onChange={(e) => onChange?.(e.target.value)}
+          value={displayTime}
+          onChange={(e) => handleTimeChange(e.target.value)}
           placeholder={placeholder}
           disabled={disabled}
           className={cn(

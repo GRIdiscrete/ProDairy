@@ -27,7 +27,8 @@ import {
   ChevronLeft,
   ChevronRight,
   ArrowRight,
-  Beaker
+  Beaker,
+  User
 } from "lucide-react"
 import { useAppDispatch, useAppSelector } from "@/lib/store"
 import { 
@@ -90,6 +91,7 @@ const rawMilkIntakeFormSchema = yup.object({
   quantity_received: yup.number().required("Quantity is required").min(0.1, "Quantity must be greater than 0"),
   drivers_form_id: yup.string().required("Driver form ID is required"),
   destination_silo_id: yup.string().required("Destination silo ID is required"),
+  operator_id: yup.string().required("Operator ID is required"),
   operator_signature: yup.string().required("Operator signature is required"),
 })
 
@@ -111,6 +113,7 @@ export function RawMilkIntakeFormDrawer({
   const dispatch = useAppDispatch()
   const { operationLoading } = useAppSelector((state) => state.rawMilkIntake)
   const { driverForms } = useAppSelector((state) => state.driverForm)
+  const { user, profile } = useAppSelector((state) => state.auth)
 
   const [loadingDriverForms, setLoadingDriverForms] = useState(false)
   
@@ -127,6 +130,7 @@ export function RawMilkIntakeFormDrawer({
       quantity_received: undefined,
       drivers_form_id: "",
       destination_silo_id: "",
+      operator_id: user?.id || "",
       operator_signature: "",
     },
   })
@@ -194,6 +198,16 @@ export function RawMilkIntakeFormDrawer({
     }
   }, [open, dispatch, driverForms.length])
 
+  // Auto-populate operator fields when user changes
+  useEffect(() => {
+    if (user?.id) {
+      formHook.setValue("operator_id", user.id)
+      // If user has a saved signature, auto-populate it
+      // For now, we'll leave signature empty for manual entry
+      // In the future, this could be retrieved from user profile
+    }
+  }, [user, formHook])
+
   // Reset form when drawer opens/closes
   useEffect(() => {
     if (open) {
@@ -203,6 +217,7 @@ export function RawMilkIntakeFormDrawer({
           quantity_received: form.quantity_received,
           drivers_form_id: form.drivers_form_id,
           destination_silo_id: form.destination_silo_id,
+          operator_id: form.operator_id || user?.id || "",
           operator_signature: form.operator_signature,
         })
       } else {
@@ -211,6 +226,7 @@ export function RawMilkIntakeFormDrawer({
           quantity_received: undefined,
           drivers_form_id: "",
           destination_silo_id: "",
+          operator_id: user?.id || "",
           operator_signature: "",
         })
       }
@@ -224,7 +240,11 @@ export function RawMilkIntakeFormDrawer({
       const formData: CreateRawMilkIntakeFormRequest = {
         id: mode === "edit" && form ? form.id : crypto.randomUUID(),
         created_at: mode === "edit" && form ? form.created_at : new Date().toISOString(),
-        ...data,
+        date: data.date,
+        quantity_received: data.quantity_received,
+        drivers_form_id: data.drivers_form_id,
+        destination_silo_id: data.destination_silo_id,
+        operator_id: data.operator_id,
         operator_signature: normalizedSignature,
       }
 
@@ -254,7 +274,7 @@ export function RawMilkIntakeFormDrawer({
         <div className="space-y-4">
           <div className="text-center mb-6">
             <h3 className="text-xl font-light text-gray-900">Basic Information</h3>
-            <p className="text-sm font-light text-gray-600 mt-2">Enter the basic raw milk intake details and operator information</p>
+            <p className="text-sm font-light text-gray-600 mt-2">Enter the basic raw milk intake details</p>
           </div>
           
           <div className="grid grid-cols-2 gap-4">
@@ -350,6 +370,24 @@ export function RawMilkIntakeFormDrawer({
             </div>
           </div>
 
+          {/* Hidden operator_id field - auto-populated but not visible */}
+          <Controller
+            name="operator_id"
+            control={formHook.control}
+            render={({ field }) => (
+              <input type="hidden" {...field} />
+            )}
+          />
+        </div>
+
+
+        {/* Operator Signature Section */}
+        <div className="space-y-4">
+          <div className="text-center mb-6">
+            <h3 className="text-xl font-light text-gray-900">Operator Signature</h3>
+            <p className="text-sm font-light text-gray-600 mt-2">Provide your signature to authorize this intake</p>
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor="operator_signature">Operator Signature *</Label>
             <div className="flex items-start gap-4">
@@ -389,7 +427,6 @@ export function RawMilkIntakeFormDrawer({
             </div>
           </div>
         </div>
-
       </div>
     </div>
   )
