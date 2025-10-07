@@ -54,12 +54,12 @@ export interface RawMilkIntakeForm {
 export interface CreateRawMilkIntakeFormRequest {
   id: string
   created_at: string
+  operator_id?: string
   operator_signature: string
   date: string
   quantity_received: number
   drivers_form_id: string
   destination_silo_id: string
-  samples_collected: RawMilkIntakeSample[]
 }
 
 export interface RawMilkIntakeFormResponse {
@@ -131,14 +131,14 @@ export const rawMilkIntakeApi = {
   update: async (id: string, formData: Partial<CreateRawMilkIntakeFormRequest>): Promise<RawMilkIntakeFormResponse> => {
     try {
       // Only send the required fields for PATCH request
-      const patchData = {
+      const updateData = {
         id,
         operator_signature: formData.operator_signature,
         date: formData.date,
         quantity_received: formData.quantity_received,
         drivers_form_id: formData.drivers_form_id,
         destination_silo_id: formData.destination_silo_id,
-        samples_collected: formData.samples_collected || []
+        operator_id: formData.operator_id
       }
 
       const response = await apiRequest<RawMilkIntakeFormResponse>("/raw-milk-intake-form", {
@@ -147,7 +147,7 @@ export const rawMilkIntakeApi = {
           accept: "application/json",
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(patchData),
+        body: JSON.stringify(updateData),
       })
       return response
     } catch (error) {

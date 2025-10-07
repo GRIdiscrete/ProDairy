@@ -10,8 +10,8 @@ import { Droplets, Truck, User, Package, Clock, Calendar, FileText, Beaker, Edit
 import { format } from "date-fns"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useAppDispatch, useAppSelector } from "@/lib/store"
-import { fetchRawMilkIntakeLabTests, deleteRawMilkIntakeLabTest } from "@/lib/store/slices/rawMilkIntakeLabTestSlice"
-import { RawMilkIntakeLabTestDrawer } from "@/components/forms/raw-milk-intake-lab-test-drawer"
+import { fetchRawMilkResultSlips, deleteRawMilkResultSlip } from "@/lib/store/slices/rawMilkResultSlipSlice"
+import { RawMilkResultSlipDrawer } from "@/components/forms/raw-milk-result-slip-drawer"
 import type { RawMilkIntakeForm } from "@/lib/api/raw-milk-intake"
 import { base64ToPngDataUrl } from "@/lib/utils/signature"
 
@@ -34,21 +34,21 @@ export function RawMilkIntakeFormViewDrawer({
   const [animationProgress, setAnimationProgress] = useState(0)
   const [activeTab, setActiveTab] = useState<string>("details")
   const dispatch = useAppDispatch()
-  const { tests, isInitialized, operationLoading } = useAppSelector((s) => (s as any).rawMilkIntakeLabTests)
-  const [labDrawerOpen, setLabDrawerOpen] = useState(false)
-  const [labMode, setLabMode] = useState<"create" | "edit">("create")
-  const [labExistingId, setLabExistingId] = useState<string | undefined>(undefined)
+  const { slips, isInitialized, operationLoading } = useAppSelector((s) => (s as any).rawMilkResultSlips)
+  const [resultSlipDrawerOpen, setResultSlipDrawerOpen] = useState(false)
+  const [resultSlipMode, setResultSlipMode] = useState<"create" | "edit">("create")
+  const [resultSlipExistingId, setResultSlipExistingId] = useState<string | undefined>(undefined)
 
   useEffect(() => {
     if (open && !isInitialized) {
-      dispatch(fetchRawMilkIntakeLabTests())
+      dispatch(fetchRawMilkResultSlips())
     }
   }, [open, isInitialized, dispatch])
 
-  const currentLabTest = useMemo(() => {
+  const currentResultSlip = useMemo(() => {
     if (!form) return null
-    return (tests || []).find((t: any) => t.raw_milk_intake_id === form.id) || null
-  }, [tests, form])
+    return (slips || []).find((s: any) => s.raw_milk_intake_id === form.id) || null
+  }, [slips, form])
 
   if (!form) return null
 
@@ -75,7 +75,7 @@ export function RawMilkIntakeFormViewDrawer({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="tablet-sheet-full p-0 overflow-hidden bg-white">
+      <SheetContent className="tablet-sheet-full p-0 bg-white">
         <SheetHeader className="p-6 pb-0">
           <SheetTitle className="flex items-center gap-2 text-lg font-light">
             <Droplets className="w-5 h-5" />
@@ -155,13 +155,13 @@ export function RawMilkIntakeFormViewDrawer({
                 variant="outline"
                 size="sm"
                 onClick={() => {
-                  if (currentLabTest) { setLabMode("edit"); setLabExistingId(currentLabTest.id) } else { setLabMode("create"); setLabExistingId(undefined) }
-                  setLabDrawerOpen(true)
+                  if (currentResultSlip) { setResultSlipMode("edit"); setResultSlipExistingId(currentResultSlip.id) } else { setResultSlipMode("create"); setResultSlipExistingId(undefined) }
+                  setResultSlipDrawerOpen(true)
                 }}
                 className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full"
               >
                 <Beaker className="w-4 h-4 mr-2" />
-                {currentLabTest ? "Update Lab Test" : "Create Lab Test"}
+                {currentResultSlip ? "Update Result Slip" : "Create Result Slip"}
               </LoadingButton>
             </div>
           </div>
@@ -178,7 +178,7 @@ export function RawMilkIntakeFormViewDrawer({
                 value="lab"
                 className="rounded-none bg-transparent border-0 border-b-2 border-transparent text-lg font-light text-gray-700 px-0 mr-6 data-[state=active]:text-blue-700 data-[state=active]:border-blue-600"
               >
-                <Beaker className="w-4 h-4 mr-2" /> Lab Test
+                <Beaker className="w-4 h-4 mr-2" /> Result Slip
               </TabsTrigger>
             </TabsList>
 
@@ -472,43 +472,67 @@ export function RawMilkIntakeFormViewDrawer({
 
             <TabsContent value="lab" className="mt-4">
               <div className="space-y-4">
-                {currentLabTest ? (
+                {currentResultSlip ? (
                   <div className="p-6 bg-white border border-gray-200 rounded-lg">
                     <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-lg font-light">Lab Test Result</h3>
+                      <h3 className="text-lg font-light">Result Slip</h3>
                       <div className="flex items-center gap-2">
-                        <Badge className={"text-xs " + (currentLabTest.accepted ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800')}>
-                          {currentLabTest.accepted ? 'Accepted' : 'Rejected'}
+                        <Badge className="text-xs bg-blue-100 text-blue-800">
+                          Completed
                         </Badge>
                         <LoadingButton size="sm" variant="outline" className="rounded-full"
-                          onClick={() => { setLabMode("edit"); setLabExistingId(currentLabTest.id); setLabDrawerOpen(true) }}>
+                          onClick={() => { setResultSlipMode("edit"); setResultSlipExistingId(currentResultSlip.id); setResultSlipDrawerOpen(true) }}>
                           Edit
                         </LoadingButton>
                         <LoadingButton size="sm" variant="destructive" className="rounded-full"
                           loading={operationLoading.delete}
-                          onClick={() => dispatch(deleteRawMilkIntakeLabTest(currentLabTest.id))}
+                          onClick={() => dispatch(deleteRawMilkResultSlip(currentResultSlip.id))}
                         >
                           Delete
                         </LoadingButton>
                       </div>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="flex items-center justify-between"><span className="text-sm text-gray-600">Date</span><span className="text-sm font-light">{currentLabTest.date}</span></div>
-                      <div className="flex items-center justify-between"><span className="text-sm text-gray-600">Organoleptic</span><span className="text-sm font-light">{currentLabTest.organol_eptic}</span></div>
-                      <div className="flex items-center justify-between"><span className="text-sm text-gray-600">No Water</span><span className="text-sm font-light">{currentLabTest.no_water}</span></div>
-                      <div className="flex items-center justify-between"><span className="text-sm text-gray-600">No Starch</span><span className="text-sm font-light">{currentLabTest.no_starch}</span></div>
-                      <div className="flex items-center justify-between"><span className="text-sm text-gray-600">Milk Freshness</span><span className="text-sm font-light">{currentLabTest.milk_freshness}</span></div>
-                      <div className="flex items-center justify-between"><span className="text-sm text-gray-600">Bacteria Load</span><span className="text-sm font-light">{currentLabTest.bacteria_load}</span></div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                      <div className="flex items-center justify-between"><span className="text-sm text-gray-600">Date</span><span className="text-sm font-light">{currentResultSlip.date}</span></div>
+                      <div className="flex items-center justify-between"><span className="text-sm text-gray-600">Time In</span><span className="text-sm font-light">{currentResultSlip.time_in}</span></div>
+                      <div className="flex items-center justify-between"><span className="text-sm text-gray-600">Time Out</span><span className="text-sm font-light">{currentResultSlip.time_out}</span></div>
+                      <div className="flex items-center justify-between"><span className="text-sm text-gray-600">Details Count</span><span className="text-sm font-light">{currentResultSlip.raw_milk_result_slip_details?.length || 0}</span></div>
                     </div>
+                    
+                    {currentResultSlip.raw_milk_result_slip_details && currentResultSlip.raw_milk_result_slip_details.length > 0 && (
+                      <div className="space-y-3">
+                        <h4 className="text-md font-light">Test Details</h4>
+                        {currentResultSlip.raw_milk_result_slip_details.map((detail: any, index: number) => (
+                          <div key={detail.id} className="p-4 bg-gray-50 rounded-lg">
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                              <div className="flex items-center justify-between"><span className="text-gray-600">Temperature</span><span className="font-light">{detail.temperature}°C</span></div>
+                              <div className="flex items-center justify-between"><span className="text-gray-600">pH</span><span className="font-light">{detail.ph}</span></div>
+                              <div className="flex items-center justify-between"><span className="text-gray-600">Fat</span><span className="font-light">{detail.fat}%</span></div>
+                              <div className="flex items-center justify-between"><span className="text-gray-600">Protein</span><span className="font-light">{detail.protein}%</span></div>
+                              <div className="flex items-center justify-between"><span className="text-gray-600">Alcohol</span><span className="font-light">{detail.alcohol}</span></div>
+                              <div className="flex items-center justify-between"><span className="text-gray-600">Resazurin</span><span className="font-light">{detail.resazurin}</span></div>
+                              <div className="flex items-center justify-between"><span className="text-gray-600">Total Solids</span><span className="font-light">{detail.total_solids}</span></div>
+                              <div className="flex items-center justify-between"><span className="text-gray-600">Density</span><span className="font-light">{detail.density}</span></div>
+                            </div>
+                            {detail.remark && (
+                              <div className="mt-2 pt-2 border-t border-gray-200">
+                                <span className="text-xs text-gray-600">Remark: </span>
+                                <span className="text-xs font-light">{detail.remark}</span>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="p-6 bg-white border border-gray-200 rounded-lg">
                     <div className="flex items-center justify-between mb-2">
-                      <h3 className="text-lg font-light">Lab Test</h3>
+                      <h3 className="text-lg font-light">Result Slip</h3>
                       <Badge className="text-xs bg-yellow-100 text-yellow-800">No Result</Badge>
                     </div>
-                    <p className="text-sm text-gray-600 mb-3">No lab test found for this intake form.</p>
-                    <LoadingButton className="rounded-full" onClick={() => { setLabMode("create"); setLabExistingId(undefined); setLabDrawerOpen(true) }}>Create Lab Test</LoadingButton>
+                    <p className="text-sm text-gray-600 mb-3">No result slip found for this intake form.</p>
+                    <LoadingButton className="rounded-full" onClick={() => { setResultSlipMode("create"); setResultSlipExistingId(undefined); setResultSlipDrawerOpen(true) }}>Create Result Slip</LoadingButton>
                   </div>
                 )}
               </div>
@@ -516,12 +540,13 @@ export function RawMilkIntakeFormViewDrawer({
           </Tabs>
         </div>
 
-        <RawMilkIntakeLabTestDrawer
-          open={labDrawerOpen}
-          onOpenChange={setLabDrawerOpen}
+        <RawMilkResultSlipDrawer
+          open={resultSlipDrawerOpen}
+          onOpenChange={setResultSlipDrawerOpen}
           rawMilkIntakeFormId={form.id}
-          mode={labMode}
-          existingId={labExistingId}
+          mode={resultSlipMode}
+          existingId={resultSlipExistingId}
+          existingData={currentResultSlip}
         />
       </SheetContent>
     </Sheet>

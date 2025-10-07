@@ -1,17 +1,20 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useMemo } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Truck, Package, Calendar, User, Edit, Trash2, CheckCircle, XCircle, Eye, EyeOff } from "lucide-react"
+import { Truck, Package, Calendar, User, Edit, Trash2, CheckCircle, XCircle, Eye, EyeOff, Beaker, FileText } from "lucide-react"
 import { toast } from "sonner"
 import { useAppDispatch, useAppSelector } from "@/lib/store"
 import { deleteDriverForm, fetchDriverForms } from "@/lib/store/slices/driverFormSlice"
+import { fetchDriverFormLabTests, deleteDriverFormLabTest } from "@/lib/store/slices/driverFormLabTestSlice"
 import { LoadingButton } from "@/components/ui/loading-button"
 import { base64ToPngDataUrl } from "@/lib/utils/signature"
+import { DriverFormLabTestDrawer } from "@/components/forms/driver-form-lab-test-drawer"
 import type { DriverForm } from "@/lib/types"
 import type { OfflineDriverForm } from "@/lib/offline/database"
 
@@ -69,11 +72,27 @@ export function DriverFormViewDrawer({
   onEdit 
 }: DriverFormViewDrawerProps): JSX.Element {
   const [loading, setLoading] = useState(false)
+  const [activeTab, setActiveTab] = useState<string>("details")
+  const [labDrawerOpen, setLabDrawerOpen] = useState(false)
+  const [labMode, setLabMode] = useState<"create" | "edit">("create")
+  const [labExistingId, setLabExistingId] = useState<string | undefined>(undefined)
   const dispatch = useAppDispatch()
   const isMobile = useIsMobile()
   const isTablet = typeof window !== 'undefined' && window.innerWidth >= 768 && window.innerWidth < 1024
 
   const { operationLoading } = useAppSelector((state) => state.driverForm)
+  const { tests, isInitialized, operationLoading: labOperationLoading } = useAppSelector((s) => (s as any).driverFormLabTests)
+
+  useEffect(() => {
+    if (open && !isInitialized) {
+      dispatch(fetchDriverFormLabTests())
+    }
+  }, [open, isInitialized, dispatch])
+
+  const currentLabTest = useMemo(() => {
+    if (!driverForm) return null
+    return (tests || []).find((t: any) => t.drivers_form_id === driverForm.id) || null
+  }, [tests, driverForm])
 
   const handleDelete = async () => {
     if (!driverForm) return
@@ -107,11 +126,7 @@ export function DriverFormViewDrawer({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side={isMobile || isTablet ? "bottom" : "right"}
-        className={
-          isMobile || isTablet
-            ? "h-[85vh] w-full max-w-full overflow-y-auto p-0 bg-white rounded-t-2xl"
-            : "w-[50vw] sm:max-w-[50vw] overflow-y-auto p-6 bg-white"
-        }
+        className="tablet-sheet-full p-0 bg-white"
       >
         <SheetHeader className={isMobile || isTablet ? "p-6 pb-0 bg-white" : "mb-6"}>
           <div className="flex items-center justify-between">
@@ -140,6 +155,18 @@ export function DriverFormViewDrawer({
                 </Button>
               )}
               <LoadingButton
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  if (currentLabTest) { setLabMode("edit"); setLabExistingId(currentLabTest.id) } else { setLabMode("create"); setLabExistingId(undefined) }
+                  setLabDrawerOpen(true)
+                }}
+                className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full"
+              >
+                <Beaker className="w-4 h-4 mr-2" />
+                {currentLabTest ? "Update Milk Test" : "Create Milk Test"}
+              </LoadingButton>
+              <LoadingButton
                 variant="destructive"
                 size="sm"
                 onClick={handleDelete}
@@ -153,7 +180,25 @@ export function DriverFormViewDrawer({
           </div>
         </SheetHeader>
 
-        <div className={isMobile || isTablet ? "space-y-6 p-6" : "space-y-6"}>
+        <div className={isMobile || isTablet ? "p-6" : "p-6"}>          
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="h-auto p-0 bg-transparent border-0 border-b border-gray-200 mb-6">
+              <TabsTrigger 
+                value="details"
+                className="rounded-none bg-transparent border-0 border-b-2 border-transparent text-lg font-light text-gray-700 px-0 mr-6 data-[state=active]:text-blue-700 data-[state=active]:border-blue-600"
+              >
+                <FileText className="w-4 h-4 mr-2" /> Details
+              </TabsTrigger>
+              <TabsTrigger 
+                value="lab"
+                className="rounded-none bg-transparent border-0 border-b-2 border-transparent text-lg font-light text-gray-700 px-0 mr-6 data-[state=active]:text-blue-700 data-[state=active]:border-blue-600"
+              >
+                <Beaker className="w-4 h-4 mr-2" /> Milk Test
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="details" className="mt-4">
+              <div className="space-y-6">
           <div className="border border-gray-200 rounded-lg bg-white">
             <div className="p-6 pb-0">
               <div className="flex items-center space-x-2">
@@ -265,76 +310,152 @@ export function DriverFormViewDrawer({
             <div className="p-6 pb-0">
               <div className="flex items-center space-x-2">
                 <Package className="w-5 h-5 text-blue-600" />
-                <div className="text-lg font-light">Collected Products ({driverForm.collected_products?.length || 0})</div>
+                <div className="text-lg font-light">Collected Products ({(() => {
+                  const legacyProducts = driverForm.collected_products?.length || 0
+                  const newProducts = (driverForm as any).drivers_form_collected_products?.length || 0
+                  return legacyProducts + newProducts
+                })()})</div>
               </div>
             </div>
             <div className="p-6">
-              {!driverForm.collected_products || driverForm.collected_products.length === 0 ? (
-                <p className="text-muted-foreground text-sm font-light">No products collected</p>
-              ) : (
-                <div className="space-y-4">
-                  {driverForm.collected_products.map((product, index) => (
-                    <div key={index} className="p-4 border border-gray-200 rounded-lg space-y-3">
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-center space-x-3">
-                          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center">
-                            <Package className="w-4 h-4 text-white" />
+              {(() => {
+                const legacyProducts = driverForm.collected_products || []
+                const newProducts = (driverForm as any).drivers_form_collected_products || []
+                const allProducts = [...legacyProducts, ...newProducts]
+                
+                if (allProducts.length === 0) {
+                  return <p className="text-muted-foreground text-sm font-light">No products collected</p>
+                }
+                
+                return (
+                  <div className="space-y-4">
+                    {allProducts.map((product, index) => {
+                      // Handle both legacy and new product formats
+                      const isNewFormat = !product.hasOwnProperty('e-sign-supplier')
+                      const supplierSignature = isNewFormat ? product.e_sign_supplier : product["e-sign-supplier"]
+                      const driverSignature = isNewFormat ? product.e_sign_driver : product["e-sign-driver"]
+                      
+                      return (
+                        <div key={index} className="p-4 border border-gray-200 rounded-lg space-y-3">
+                          <div className="flex items-start justify-between">
+                            <div className="flex items-center space-x-3">
+                              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center">
+                                <Package className="w-4 h-4 text-white" />
+                              </div>
+                              <div>
+                                <p className="font-light">Product #{index + 1}</p>
+                                <p className="text-muted-foreground text-sm font-light">Raw Material Collection</p>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <p className="font-light">
+                                {product.collected_amount} {product.unit_of_measure}
+                              </p>
+                              <p className="text-muted-foreground text-sm font-light">Collected</p>
+                            </div>
                           </div>
-                          <div>
-                            <p className="font-light">Product #{index + 1}</p>
-                            <p className="text-muted-foreground text-sm font-light">Raw Material Collection</p>
+
+                          <div className="grid grid-cols-2 gap-4 text-sm">
+                            <div className="space-y-1">
+                              <div className="text-xs text-gray-500">Unit of Measure</div>
+                              <p className="font-light">{product.unit_of_measure}</p>
+                            </div>
+                            <div className="space-y-1">
+                              <div className="text-xs text-gray-500">Collected Amount</div>
+                              <p className="font-light">{product.collected_amount} {product.unit_of_measure}</p>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-4 text-sm">
+                            <SignatureViewer 
+                              signature={supplierSignature || ""} 
+                              title="Supplier Signature" 
+                              type="supplier" 
+                            />
+                            <SignatureViewer 
+                              signature={driverSignature || ""} 
+                              title="Driver Signature" 
+                              type="driver" 
+                            />
                           </div>
                         </div>
-                        <div className="text-right">
-                          <p className="font-light">
-                            {product.collected_amount} {product.unit_of_measure}
-                          </p>
-                          <p className="text-muted-foreground text-sm font-light">Collected</p>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-4 text-sm">
-                        <div className="space-y-1">
-                          <div className="text-xs text-gray-500">Unit of Measure</div>
-                          <p className="font-light">{product.unit_of_measure}</p>
-                        </div>
-                        <div className="space-y-1">
-                          <div className="text-xs text-gray-500">Collected Amount</div>
-                          <p className="font-light">{product.collected_amount} {product.unit_of_measure}</p>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-4 text-sm">
-                        <SignatureViewer 
-                          signature={product["e-sign-supplier"] || ""} 
-                          title="Supplier Signature" 
-                          type="supplier" 
-                        />
-                        <SignatureViewer 
-                          signature={product["e-sign-driver"] || ""} 
-                          title="Driver Signature" 
-                          type="driver" 
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+                      )
+                    })}
+                  </div>
+                )
+              })()}
             </div>
           </div>
 
-          <div className="flex justify-end pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              disabled={isLoading}
-              className="bg-gradient-to-r from-gray-500 to-gray-700 hover:from-gray-600 hover:to-gray-800 text-white border-0 rounded-full px-6 py-2 font-light"
-            >
-              Close
-            </Button>
-          </div>
+              <div className="flex justify-end pt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => onOpenChange(false)}
+                  disabled={isLoading}
+                  className="bg-gradient-to-r from-gray-500 to-gray-700 hover:from-gray-600 hover:to-gray-800 text-white border-0 rounded-full px-6 py-2 font-light"
+                >
+                  Close
+                </Button>
+              </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="lab" className="mt-4">
+              <div className="space-y-4">
+                {currentLabTest ? (
+                  <div className="p-6 bg-white border border-gray-200 rounded-lg">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-light">Milk Test Result</h3>
+                      <div className="flex items-center gap-2">
+                        <Badge className={"text-xs " + (currentLabTest.accepted ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800')}>
+                          {currentLabTest.accepted ? 'Accepted' : 'Rejected'}
+                        </Badge>
+                        <LoadingButton size="sm" variant="outline" className="rounded-full"
+                          onClick={() => { setLabMode("edit"); setLabExistingId(currentLabTest.id); setLabDrawerOpen(true) }}>
+                          Edit
+                        </LoadingButton>
+                        <LoadingButton size="sm" variant="destructive" className="rounded-full"
+                          loading={labOperationLoading.delete}
+                          onClick={() => dispatch(deleteDriverFormLabTest(currentLabTest.id))}
+                        >
+                          Delete
+                        </LoadingButton>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="flex items-center justify-between"><span className="text-sm text-gray-600">Date</span><span className="text-sm font-light">{currentLabTest.date}</span></div>
+                      <div className="flex items-center justify-between"><span className="text-sm text-gray-600">Organoleptic</span><span className="text-sm font-light">{currentLabTest.organol_eptic}</span></div>
+                      <div className="flex items-center justify-between"><span className="text-sm text-gray-600">Alcohol</span><span className="text-sm font-light">{currentLabTest.alcohol || 'N/A'}</span></div>
+                      <div className="flex items-center justify-between"><span className="text-sm text-gray-600">COB</span><span className="text-sm font-light">{currentLabTest.cob !== null ? (currentLabTest.cob ? 'Yes' : 'No') : 'N/A'}</span></div>
+                      {currentLabTest.remarks && (
+                        <div className="flex items-center justify-between md:col-span-2"><span className="text-sm text-gray-600">Remarks</span><span className="text-sm font-light">{currentLabTest.remarks}</span></div>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-6 bg-white border border-gray-200 rounded-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="text-lg font-light">Milk Test</h3>
+                      <Badge className="text-xs bg-yellow-100 text-yellow-800">No Result</Badge>
+                    </div>
+                    <p className="text-sm text-gray-600 mb-3">No Milk Test found for this driver form.</p>
+                    <LoadingButton className="rounded-full" onClick={() => { setLabMode("create"); setLabExistingId(undefined); setLabDrawerOpen(true) }}>Create Milk Test</LoadingButton>
+                  </div>
+                )}
+              </div>
+            </TabsContent>
+          </Tabs>
         </div>
+
+        <DriverFormLabTestDrawer
+          open={labDrawerOpen}
+          onOpenChange={setLabDrawerOpen}
+          driversFormId={driverForm?.id || ""}
+          mode={labMode}
+          existingId={labExistingId}
+          existingData={currentLabTest}
+        />
       </SheetContent>
     </Sheet>
   )

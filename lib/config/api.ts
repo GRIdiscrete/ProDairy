@@ -11,6 +11,8 @@ export const API_CONFIG = {
     PROCESSES: '/process',
     PRODUCTION_PLANS: '/production-plan',
     DRIVER_FORMS: '/drivers-form',
+    RAW_MILK_INTAKE_LAB_TEST: '/raw-milk-intake-lab-test',
     STERI_MILK_TEST_REPORT: '/steri-milk-test-report',
+    RAW_MILK_RESULT_SLIP: '/raw-milk-result-slip',
   },
 } as const

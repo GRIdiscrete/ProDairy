@@ -26,9 +26,9 @@ const initialState: State = {
 
 export const fetchRawMilkIntakeLabTests = createAsyncThunk(
   "rawMilkIntakeLabTests/fetchAll",
-  async (_, { rejectWithValue }) => {
+  async (params?: { drivers_form_id?: string }, { rejectWithValue }) => {
     try {
-      const res = await rawMilkIntakeLabTestApi.getAll()
+      const res = await rawMilkIntakeLabTestApi.getRawMilkIntakeLabTests(params)
       return res.data
     } catch (err: any) {
       return rejectWithValue(err?.message || "Failed to load lab tests")
@@ -40,7 +40,7 @@ export const createRawMilkIntakeLabTest = createAsyncThunk(
   "rawMilkIntakeLabTests/create",
   async (payload: CreateRawMilkIntakeLabTestRequest, { rejectWithValue }) => {
     try {
-      const res = await rawMilkIntakeLabTestApi.create(payload)
+      const res = await rawMilkIntakeLabTestApi.createRawMilkIntakeLabTest(payload)
       return res.data
     } catch (err: any) {
       return rejectWithValue(err?.message || "Failed to create lab test")
@@ -52,7 +52,7 @@ export const updateRawMilkIntakeLabTest = createAsyncThunk(
   "rawMilkIntakeLabTests/update",
   async (payload: UpdateRawMilkIntakeLabTestRequest, { rejectWithValue }) => {
     try {
-      const res = await rawMilkIntakeLabTestApi.update(payload)
+      const res = await rawMilkIntakeLabTestApi.updateRawMilkIntakeLabTest(payload)
       return res.data
     } catch (err: any) {
       return rejectWithValue(err?.message || "Failed to update lab test")
@@ -64,7 +64,7 @@ export const deleteRawMilkIntakeLabTest = createAsyncThunk(
   "rawMilkIntakeLabTests/delete",
   async (id: string, { rejectWithValue }) => {
     try {
-      await rawMilkIntakeLabTestApi.delete(id)
+      await rawMilkIntakeLabTestApi.deleteRawMilkIntakeLabTest(id)
       return id
     } catch (err: any) {
       return rejectWithValue(err?.message || "Failed to delete lab test")

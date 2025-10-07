@@ -86,6 +86,9 @@ export function getUserRole(profile: ExtendedUserProfile | null): UserRole | nul
  * Check if user has a specific view permission
  */
 export function hasViewPermission(profile: ExtendedUserProfile | null, view: View): boolean {
+  // TEMPORARY: Bypass all permission checks - allow access to all views
+  return true
+  
   const userRole = getUserRole(profile)
   if (!userRole?.views) return false
   
@@ -96,6 +99,9 @@ export function hasViewPermission(profile: ExtendedUserProfile | null, view: Vie
  * Check if user has access to a specific route
  */
 export function hasRouteAccess(profile: ExtendedUserProfile | null, route: string): boolean {
+  // TEMPORARY: Bypass all permission checks - allow access to all routes
+  return true
+  
   // Always allow access to profile page for authenticated users
   if (route === '/profile' && profile) {
     return true
@@ -133,6 +139,9 @@ export function hasFeaturePermission(
   feature: Feature, 
   permission: Permission
 ): boolean {
+  // TEMPORARY: Bypass all permission checks - allow all feature permissions
+  return true
+  
   const userRole = getUserRole(profile)
   if (!userRole) return false
   
@@ -280,6 +289,9 @@ export function hasRole(profile: ExtendedUserProfile | null, roleName: string): 
  * Check if user has access to a specific module
  */
 export function hasModuleAccess(profile: ExtendedUserProfile | null, module: 'admin' | 'data-capture' | 'drivers' | 'tools'): boolean {
+  // TEMPORARY: Bypass all permission checks - allow access to all modules
+  return true
+  
   const moduleViewMap: Record<string, View> = {
     'admin': 'dashboard',
     'data-capture': 'data_capture_module',

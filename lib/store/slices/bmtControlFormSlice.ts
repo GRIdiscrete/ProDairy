@@ -1,12 +1,5 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit'
-import { 
-  BMTControlForm,
-  getBMTControlForms,
-  getBMTControlForm,
-  createBMTControlForm,
-  updateBMTControlForm,
-  deleteBMTControlForm
-} from '@/lib/api/data-capture-forms'
+import { bmtControlFormApi, BMTControlForm } from '@/lib/api/bmt-control-form'
 
 interface BMTControlFormState {
   forms: BMTControlForm[]
@@ -51,7 +44,17 @@ export const fetchBMTControlForms = createAsyncThunk(
         return state.bmtControlForms.forms
       }
       
-      const forms = await getBMTControlForms()
+      const forms = await bmtControlFormApi.getAll()
+      
+      // Debug: Log what the API is returning
+      console.log('API Forms:', forms)
+      if (forms && forms.length > 0) {
+        console.log('First form:', forms[0])
+        console.log('First form ID:', forms[0].id)
+        console.log('First form ID type:', typeof forms[0].id)
+        console.log('First form keys:', Object.keys(forms[0]))
+      }
+      
       return forms
     } catch (error: any) {
       const errorMessage = error?.response?.data?.message || error.message || 'Failed to fetch BMT control forms'
@@ -64,7 +67,7 @@ export const fetchBMTControlForm = createAsyncThunk(
   'bmtControlForms/fetchOne',
   async (id: string, { rejectWithValue }) => {
     try {
-      const form = await getBMTControlForm(id)
+      const form = await bmtControlFormApi.getById(id)
       return form
     } catch (error: any) {
       const errorMessage = error?.response?.data?.message || error.message || 'Failed to fetch BMT control form'
@@ -77,8 +80,8 @@ export const createBMTControlFormAction = createAsyncThunk(
   'bmtControlForms/create',
   async (formData: Omit<BMTControlForm, 'id' | 'created_at' | 'updated_at'>, { rejectWithValue }) => {
     try {
-      const newForm = await createBMTControlForm(formData)
-      return newForm
+      const response = await bmtControlFormApi.create(formData)
+      return response.data
     } catch (error: any) {
       const errorMessage = error?.response?.data?.message || error.message || 'Failed to create BMT control form'
       return rejectWithValue(errorMessage)
@@ -90,8 +93,14 @@ export const updateBMTControlFormAction = createAsyncThunk(
   'bmtControlForms/update',
   async (formData: BMTControlForm, { rejectWithValue }) => {
     try {
-      const updatedForm = await updateBMTControlForm(formData)
-      return updatedForm
+      const { id, ...updateData } = formData
+      
+      // Debug: Log what's being sent to API
+      console.log('Redux Action - Form ID:', id)
+      console.log('Redux Action - Update Data:', JSON.stringify(updateData, null, 2))
+      
+      const response = await bmtControlFormApi.update(id, updateData)
+      return response.data
     } catch (error: any) {
       const errorMessage = error?.response?.data?.message || error.message || 'Failed to update BMT control form'
       return rejectWithValue(errorMessage)
@@ -103,7 +112,7 @@ export const deleteBMTControlFormAction = createAsyncThunk(
   'bmtControlForms/delete',
   async (id: string, { rejectWithValue }) => {
     try {
-      await deleteBMTControlForm(id)
+      await bmtControlFormApi.delete(id)
       return id
     } catch (error: any) {
       const errorMessage = error?.response?.data?.message || error.message || 'Failed to delete BMT control form'

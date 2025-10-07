@@ -21,6 +21,7 @@ import { fetchUsers } from "@/lib/store/slices/usersSlice"
 import { fetchProcesses } from "@/lib/store/slices/processSlice"
 import { LoadingButton } from "@/components/ui/loading-button"
 import type { ProductionPlan, ProductionPlanRawProduct } from "@/lib/types"
+import type { CreateProductionPlanRequest, UpdateProductionPlanRequest } from "@/lib/api/production-plan"
 
 const productionPlanSchema = yup.object({
   name: yup.string().required("Production plan name is required"),
@@ -53,7 +54,7 @@ type ProductionPlanFormData = {
   status: "planned" | "ongoing" | "completed" | "cancelled"
   process_id: string
   output: {
-    value: number
+    value: number | null
     unit_of_measure: string
   }
   raw_products: ProductionPlanRawProduct[]
@@ -100,7 +101,7 @@ export function ProductionPlanFormDrawer({
       status: "planned",
       process_id: "",
       output: {
-        value: 0,
+        value: null,
         unit_of_measure: "litres",
       },
       raw_products: [],
@@ -132,7 +133,7 @@ export function ProductionPlanFormDrawer({
         setValue("supervisor", productionPlan.supervisor)
         setValue("status", productionPlan.status)
         setValue("process_id", productionPlan.process_id || "")
-        setValue("output", productionPlan.output || { value: 0, unit_of_measure: "litres" })
+        setValue("output", productionPlan.output || { value: null, unit_of_measure: "litres" })
         setValue("raw_products", productionPlan.raw_products)
       } else {
         reset({
@@ -144,7 +145,7 @@ export function ProductionPlanFormDrawer({
           status: "planned",
           process_id: "",
           output: {
-            value: 0,
+            value: null,
             unit_of_measure: "litres",
           },
           raw_products: [],
@@ -157,22 +158,40 @@ export function ProductionPlanFormDrawer({
     try {
       setLoading(true)
       
-      const submitData = {
-        ...data,
+      // Transform data for API request
+      const baseData = {
+        name: data.name,
+        description: data.description,
         start_date: new Date(data.start_date).toISOString(),
         end_date: new Date(data.end_date).toISOString(),
+        supervisor: data.supervisor,
+        status: data.status,
+        process_id: data.process_id,
+        output_value: data.output.value,
+        output_units: data.output.unit_of_measure,
       }
 
+      const rawProductsData = data.raw_products.map(item => ({
+        raw_material_id: item.raw_material_id,
+        requested_amount: item.requested_amount,
+        units: item.unit_of_measure
+      }))
+
       if (mode === "create") {
-        await dispatch(createProductionPlan(submitData)).unwrap()
+        const createData: CreateProductionPlanRequest = {
+          ...baseData,
+          raw_products_object: rawProductsData
+        }
+        await dispatch(createProductionPlan(createData)).unwrap()
         toast.success("Production plan created successfully")
       } else if (productionPlan) {
-        await dispatch(updateProductionPlan({
-          ...submitData,
+        const updateData: UpdateProductionPlanRequest = {
+          ...baseData,
           id: productionPlan.id,
           created_at: productionPlan.created_at,
-          updated_at: new Date().toISOString(),
-        })).unwrap()
+          raw_products: rawProductsData
+        }
+        await dispatch(updateProductionPlan(updateData)).unwrap()
         toast.success("Production plan updated successfully")
       }
 
@@ -393,9 +412,9 @@ export function ProductionPlanFormDrawer({
                         {...field}
                         type="number"
                         step="0.01"
-                        placeholder="0.00"
+                        placeholder=""
                         disabled={isSubmitting}
-                        onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                        onChange={(e) => field.onChange(parseFloat(e.target.value))}
                       />
                     )}
                   />

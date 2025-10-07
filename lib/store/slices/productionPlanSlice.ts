@@ -36,7 +36,23 @@ export const fetchProductionPlans = createAsyncThunk(
   async (params: { filters?: TableFilters } = {}, { rejectWithValue }) => {
     try {
       const response = await productionPlanApi.getProductionPlans(params)
-      return response.data
+      
+      // Normalize the data structure - some records use raw_products, others use production_plan_raw_products
+      const normalizedData = response.data.map((plan: any) => ({
+        ...plan,
+        raw_products: plan.raw_products || plan.production_plan_raw_products?.map((item: any) => ({
+          raw_material_id: item.raw_material_id,
+          raw_material_name: item.raw_material_name || '', // May need to be fetched separately
+          requested_amount: item.requested_amount,
+          unit_of_measure: item.units || item.unit_of_measure
+        })) || [],
+        output: plan.output || {
+          value: plan.output_value || 0,
+          unit_of_measure: plan.output_units || 'litres'
+        }
+      }))
+      
+      return normalizedData
     } catch (error: any) {
       const message = error?.body?.message || error?.message || 'Failed to fetch production plans'
       return rejectWithValue(message)
@@ -49,7 +65,24 @@ export const fetchProductionPlan = createAsyncThunk(
   async (id: string, { rejectWithValue }) => {
     try {
       const response = await productionPlanApi.getProductionPlan(id)
-      return response.data
+      
+      // Normalize the data structure for single plan
+      const plan = response.data
+      const normalizedPlan = {
+        ...plan,
+        raw_products: plan.raw_products || plan.production_plan_raw_products?.map((item: any) => ({
+          raw_material_id: item.raw_material_id,
+          raw_material_name: item.raw_material_name || '', // May need to be fetched separately
+          requested_amount: item.requested_amount,
+          unit_of_measure: item.units || item.unit_of_measure
+        })) || [],
+        output: plan.output || {
+          value: plan.output_value || 0,
+          unit_of_measure: plan.output_units || 'litres'
+        }
+      }
+      
+      return normalizedPlan
     } catch (error: any) {
       const message = error?.body?.message || error?.message || 'Failed to fetch production plan'
       return rejectWithValue(message)
@@ -62,7 +95,24 @@ export const createProductionPlan = createAsyncThunk(
   async (planData: CreateProductionPlanRequest, { rejectWithValue }) => {
     try {
       const response = await productionPlanApi.createProductionPlan(planData)
-      return response.data
+      
+      // Normalize the created plan data back to internal format
+      const plan = response.data
+      const normalizedPlan = {
+        ...plan,
+        raw_products: plan.raw_products || plan.production_plan_raw_products?.map((item: any) => ({
+          raw_material_id: item.raw_material_id,
+          raw_material_name: item.raw_material_name || '',
+          requested_amount: item.requested_amount,
+          unit_of_measure: item.units || item.unit_of_measure
+        })) || [],
+        output: plan.output || {
+          value: plan.output_value || 0,
+          unit_of_measure: plan.output_units || 'litres'
+        }
+      }
+      
+      return normalizedPlan
     } catch (error: any) {
       const message = error?.body?.message || error?.message || 'Failed to create production plan'
       return rejectWithValue(message)
@@ -75,7 +125,24 @@ export const updateProductionPlan = createAsyncThunk(
   async (planData: UpdateProductionPlanRequest, { rejectWithValue }) => {
     try {
       const response = await productionPlanApi.updateProductionPlan(planData)
-      return response.data
+      
+      // Normalize the updated plan data back to internal format
+      const plan = response.data
+      const normalizedPlan = {
+        ...plan,
+        raw_products: plan.raw_products || plan.production_plan_raw_products?.map((item: any) => ({
+          raw_material_id: item.raw_material_id,
+          raw_material_name: item.raw_material_name || '',
+          requested_amount: item.requested_amount,
+          unit_of_measure: item.units || item.unit_of_measure
+        })) || [],
+        output: plan.output || {
+          value: plan.output_value || 0,
+          unit_of_measure: plan.output_units || 'litres'
+        }
+      }
+      
+      return normalizedPlan
     } catch (error: any) {
       const message = error?.body?.message || error?.message || 'Failed to update production plan'
       return rejectWithValue(message)

@@ -29,7 +29,7 @@ export function CIPControlFormViewDrawer({ open, onClose, form, onEdit }: CIPCon
 
   return (
     <Sheet open={open} onOpenChange={onClose}>
-      <SheetContent className="w-[60vw] sm:max-w-[60vw] tablet-sheet-full p-0 overflow-hidden bg-white">
+      <SheetContent className="tablet-sheet-full p-0 bg-white">
         <SheetHeader className="p-6 pb-0">
           <SheetTitle className="flex items-center gap-2 text-lg font-light">
             <Droplets className="w-5 h-5" />

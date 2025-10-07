@@ -9,8 +9,42 @@ import { CopyButton } from "@/components/ui/copy-button"
 import { AnimatedSiloTransfer } from "@/components/ui/animated-silo-transfer"
 import { Edit, Beaker, Droplets, Users, Clock, BarChart3, ArrowRight, Play, RotateCcw, FileText, Package, TrendingUp } from "lucide-react"
 import { format } from "date-fns"
+
+// Helper function to safely extract and format time from datetime strings
+const formatTimeOnly = (dateTimeString: string | null | undefined): string => {
+  if (!dateTimeString) return 'N/A'
+  
+  try {
+    // Handle different datetime formats
+    let timeString = ''
+    
+    if (dateTimeString.includes('T')) {
+      // ISO format: "2025-01-06T12:00:00.000000+00"
+      timeString = dateTimeString.split('T')[1]?.substring(0, 5) || ''
+    } else if (dateTimeString.includes(' ')) {
+      // Space format: "2025-01-06 12:00:00.000000+00"
+      timeString = dateTimeString.split(' ')[1]?.substring(0, 5) || ''
+    } else if (dateTimeString.match(/^\d{2}:\d{2}$/)) {
+      // Already time format: "12:00"
+      timeString = dateTimeString
+    } else {
+      // Try to parse as date and extract time
+      const date = new Date(dateTimeString)
+      if (!isNaN(date.getTime())) {
+        timeString = format(date, 'HH:mm')
+      } else {
+        return 'Invalid Time'
+      }
+    }
+    
+    return timeString || 'N/A'
+  } catch (error) {
+    console.error('Error formatting time:', error, dateTimeString)
+    return 'Invalid Time'
+  }
+}
 import { base64ToPngDataUrl } from "@/lib/utils/signature"
-import type { BMTControlForm } from "@/lib/api/data-capture-forms"
+import type { BMTControlForm } from "@/lib/api/bmt-control-form"
 
 interface BMTControlFormViewDrawerProps {
   open: boolean
@@ -50,7 +84,7 @@ export function BMTControlFormViewDrawer({ open, onClose, form, onEdit }: BMTCon
 
   return (
     <Sheet open={open} onOpenChange={onClose}>
-      <SheetContent className="w-[60vw] sm:max-w-[60vw] tablet-sheet-full p-0 overflow-hidden bg-white">
+      <SheetContent className="tablet-sheet-full p-0 bg-white">
         <SheetHeader className="p-6 pb-0">
           <SheetTitle className="flex items-center gap-2 text-lg font-light">
             <Beaker className="w-5 h-5" />
@@ -218,13 +252,13 @@ export function BMTControlFormViewDrawer({ open, onClose, form, onEdit }: BMTCon
               <div className="flex items-center justify-between">
                 <span className="text-sm font-light text-gray-600">Start Time</span>
                 <span className="text-sm font-light">
-                  {form.flow_meter_start ? format(new Date(form.flow_meter_start), 'PPp') : 'N/A'}
+                  {formatTimeOnly(form.flow_meter_start)}
                 </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm font-light text-gray-600">End Time</span>
                 <span className="text-sm font-light">
-                  {form.flow_meter_end ? format(new Date(form.flow_meter_end), 'PPp') : 'N/A'}
+                  {formatTimeOnly(form.flow_meter_end)}
                 </span>
               </div>
             </div>
@@ -242,20 +276,31 @@ export function BMTControlFormViewDrawer({ open, onClose, form, onEdit }: BMTCon
               <div className="flex items-center justify-between">
                 <span className="text-sm font-light text-gray-600">Movement Start</span>
                 <span className="text-sm font-light">
-                  {form.movement_start ? format(new Date(form.movement_start), 'PPp') : 'N/A'}
+                  {formatTimeOnly(form.movement_start)}
                 </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm font-light text-gray-600">Movement End</span>
                 <span className="text-sm font-light">
-                  {form.movement_end ? format(new Date(form.movement_end), 'PPp') : 'N/A'}
+                  {formatTimeOnly(form.movement_end)}
                 </span>
               </div>
               {form.movement_start && form.movement_end && (
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-light text-gray-600">Total Duration</span>
                   <span className="text-sm font-light text-indigo-600">
-                    {Math.round((new Date(form.movement_end).getTime() - new Date(form.movement_start).getTime()) / (1000 * 60))} minutes
+                    {(() => {
+                      try {
+                        const startDate = new Date(form.movement_start)
+                        const endDate = new Date(form.movement_end)
+                        if (!isNaN(startDate.getTime()) && !isNaN(endDate.getTime())) {
+                          return Math.round((endDate.getTime() - startDate.getTime()) / (1000 * 60)) + ' minutes'
+                        }
+                        return 'N/A'
+                      } catch (error) {
+                        return 'N/A'
+                      }
+                    })()}
                   </span>
                 </div>
               )}
