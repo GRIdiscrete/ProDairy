@@ -140,157 +140,250 @@ export function FilmaticLinesForm1ViewDrawer({
             </CardContent>
           </Card>
 
-          {/* Bottle Counts */}
+          {/* Groups Information */}
+          {form.groups && (
+            <Card className="shadow-none border border-gray-200 rounded-lg">
+              <CardHeader className="pb-4">
+                <div className="flex items-center space-x-2">
+                  <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center">
+                    <Package className="h-4 w-4 text-purple-600" />
+                  </div>
+                  <CardTitle className="text-base font-light">Groups Information</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <span className="text-xs font-light text-gray-500">Manager ID</span>
+                    <p className="text-sm font-light">{form.groups.manager_id?.slice(0, 8) || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <span className="text-xs font-light text-gray-500">Groups ID</span>
+                    <p className="text-sm font-light">{form.groups.id?.slice(0, 8) || 'N/A'}</p>
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* Group A */}
+                {form.groups.group_a && form.groups.group_a.length > 0 && (
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-medium">Group A</h4>
+                    <div className="pl-4">
+                      <p className="text-sm font-light"><span className="font-medium">Members:</span> {form.groups.group_a.length}</p>
+                      <div className="mt-2 flex flex-wrap gap-1">
+                        {form.groups.group_a.slice(0, 3).map((member, index) => (
+                          <span key={index} className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                            {member.slice(0, 8)}
+                          </span>
+                        ))}
+                        {form.groups.group_a.length > 3 && (
+                          <span className="text-xs text-gray-500">+{form.groups.group_a.length - 3} more</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Group B */}
+                {form.groups.group_b && form.groups.group_b.length > 0 && (
+                  <>
+                    <Separator />
+                    <div className="space-y-2">
+                      <h4 className="text-sm font-medium">Group B</h4>
+                      <div className="pl-4">
+                        <p className="text-sm font-light"><span className="font-medium">Members:</span> {form.groups.group_b.length}</p>
+                        <div className="mt-2 flex flex-wrap gap-1">
+                          {form.groups.group_b.slice(0, 3).map((member, index) => (
+                            <span key={index} className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
+                              {member.slice(0, 8)}
+                            </span>
+                          ))}
+                          {form.groups.group_b.length > 3 && (
+                            <span className="text-xs text-gray-500">+{form.groups.group_b.length - 3} more</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {/* Group C */}
+                {form.groups.group_c && form.groups.group_c.length > 0 && (
+                  <>
+                    <Separator />
+                    <div className="space-y-2">
+                      <h4 className="text-sm font-medium">Group C</h4>
+                      <div className="pl-4">
+                        <p className="text-sm font-light"><span className="font-medium">Members:</span> {form.groups.group_c.length}</p>
+                        <div className="mt-2 flex flex-wrap gap-1">
+                          {form.groups.group_c.slice(0, 3).map((member, index) => (
+                            <span key={index} className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded">
+                              {member.slice(0, 8)}
+                            </span>
+                          ))}
+                          {form.groups.group_c.length > 3 && (
+                            <span className="text-xs text-gray-500">+{form.groups.group_c.length - 3} more</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Day Shift Information */}
           <Card className="shadow-none border border-gray-200 rounded-lg">
             <CardHeader className="pb-4">
               <div className="flex items-center space-x-2">
-                <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center">
-                  <Package className="h-4 w-4 text-purple-600" />
+                <div className="w-6 h-6 rounded-full bg-yellow-100 flex items-center justify-center">
+                  <Sun className="h-4 w-4 text-yellow-600" />
                 </div>
-                <CardTitle className="text-base font-light">Bottle Counts</CardTitle>
+                <CardTitle className="text-base font-light">Day Shift Information</CardTitle>
               </div>
             </CardHeader>
             <CardContent className="space-y-6">
-              {/* Day Shift Bottles */}
-              <div className="space-y-2">
-                <h4 className="text-sm font-medium flex items-center space-x-2">
-                  <Sun className="h-4 w-4 text-yellow-600" />
-                  Day Shift Bottles
-                </h4>
-                <div className="grid grid-cols-2 gap-4 pl-4">
-                  <div>
-                    <p className="text-sm font-light"><span className="font-medium">Opening:</span> {form.day_shift_opening_bottles}</p>
+              {form.filmatic_line_form_1_day_shift && form.filmatic_line_form_1_day_shift.length > 0 ? (
+                form.filmatic_line_form_1_day_shift.map((shift, shiftIndex) => (
+                  <div key={shiftIndex} className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-sm font-medium">Shift Entry #{shiftIndex + 1}</h4>
+                      <Badge className={shift.supervisor_approve ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"}>
+                        {shift.supervisor_approve ? 'Approved' : 'Pending'}
+                      </Badge>
+                    </div>
+                    <div className="pl-4 space-y-2">
+                      <p className="text-sm font-light"><span className="font-medium">Operator ID:</span> {shift.operator_id?.slice(0, 8) || 'N/A'}</p>
+                      <p className="text-sm font-light"><span className="font-medium">Details Count:</span> {shift.filmatic_line_form_1_day_shift_details?.length || 0}</p>
+                      
+                      {shift.filmatic_line_form_1_day_shift_details && shift.filmatic_line_form_1_day_shift_details.length > 0 && (
+                        <div className="mt-3">
+                          <h5 className="text-xs font-medium text-gray-700 mb-2">Production Details:</h5>
+                          <div className="space-y-2">
+                            {shift.filmatic_line_form_1_day_shift_details.map((detail, detailIndex) => (
+                              <div key={detailIndex} className="bg-gray-50 p-3 rounded text-xs">
+                                <div className="grid grid-cols-2 gap-2">
+                                  <span><strong>Time:</strong> {detail.time}</span>
+                                  <span><strong>Target:</strong> {detail.target}</span>
+                                  <span><strong>Pallets:</strong> {detail.pallets}</span>
+                                  <span><strong>Setbacks:</strong> {detail.setbacks || 'None'}</span>
+                                </div>
+                                {detail.filmatic_line_form_1_day_shift_details_stoppage_time && detail.filmatic_line_form_1_day_shift_details_stoppage_time.length > 0 && (
+                                  <div className="mt-2">
+                                    <strong>Stoppage Times:</strong>
+                                    <div className="grid grid-cols-2 gap-1 mt-1">
+                                      {detail.filmatic_line_form_1_day_shift_details_stoppage_time.map((stoppage, stoppageIndex) => (
+                                        <div key={stoppageIndex} className="text-xs">
+                                          {Object.entries(stoppage).map(([key, value]) => (
+                                            value !== undefined && value !== 0 && (
+                                              <div key={key}>{key}: {value}min</div>
+                                            )
+                                          ))}
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    {shiftIndex < form.filmatic_line_form_1_day_shift.length - 1 && <Separator />}
                   </div>
-                  <div>
-                    <p className="text-sm font-light"><span className="font-medium">Closing:</span> {form.day_shift_closing_bottles}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-light"><span className="font-medium">Waste:</span> {form.day_shift_waste_bottles}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-light"><span className="font-medium">Net:</span> {form.day_shift_closing_bottles - form.day_shift_opening_bottles - form.day_shift_waste_bottles}</p>
-                  </div>
-                </div>
-              </div>
-
-              <Separator />
-
-              {/* Night Shift Bottles */}
-              <div className="space-y-2">
-                <h4 className="text-sm font-medium flex items-center space-x-2">
-                  <Moon className="h-4 w-4 text-blue-600" />
-                  Night Shift Bottles
-                </h4>
-                <div className="grid grid-cols-2 gap-4 pl-4">
-                  <div>
-                    <p className="text-sm font-light"><span className="font-medium">Opening:</span> {form.night_shift_opening_bottles}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-light"><span className="font-medium">Closing:</span> {form.night_shift_closing_bottles}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-light"><span className="font-medium">Waste:</span> {form.night_shift_waste_bottles}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-light"><span className="font-medium">Net:</span> {form.night_shift_closing_bottles - form.night_shift_opening_bottles - form.night_shift_waste_bottles}</p>
-                  </div>
-                </div>
-              </div>
-
-              <Separator />
-
-              {/* Summary */}
-              <div className="space-y-2">
-                <h4 className="text-sm font-medium">Summary</h4>
-                <div className="grid grid-cols-2 gap-4 pl-4">
-                  <div>
-                    <p className="text-sm font-light"><span className="font-medium">Total Opening:</span> {form.day_shift_opening_bottles + form.night_shift_opening_bottles}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-light"><span className="font-medium">Total Closing:</span> {form.day_shift_closing_bottles + form.night_shift_closing_bottles}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-light"><span className="font-medium">Total Waste:</span> {form.day_shift_waste_bottles + form.night_shift_waste_bottles}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-light"><span className="font-medium">Total Net:</span> {(form.day_shift_closing_bottles + form.night_shift_closing_bottles) - (form.day_shift_opening_bottles + form.night_shift_opening_bottles) - (form.day_shift_waste_bottles + form.night_shift_waste_bottles)}</p>
-                  </div>
-                </div>
-              </div>
+                ))
+              ) : (
+                <p className="text-sm text-gray-500">No day shift data available</p>
+              )}
             </CardContent>
           </Card>
 
-          {/* Shift Information */}
+          {/* Night Shift Information */}
+          <Card className="shadow-none border border-gray-200 rounded-lg">
+            <CardHeader className="pb-4">
+              <div className="flex items-center space-x-2">
+                <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
+                  <Moon className="h-4 w-4 text-blue-600" />
+                </div>
+                <CardTitle className="text-base font-light">Night Shift Information</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {form.filmatic_line_form_1_night_shift && form.filmatic_line_form_1_night_shift.length > 0 ? (
+                form.filmatic_line_form_1_night_shift.map((shift, shiftIndex) => (
+                  <div key={shiftIndex} className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-sm font-medium">Shift Entry #{shiftIndex + 1}</h4>
+                      <Badge className={shift.supervisor_approve ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"}>
+                        {shift.supervisor_approve ? 'Approved' : 'Pending'}
+                      </Badge>
+                    </div>
+                    <div className="pl-4 space-y-2">
+                      <p className="text-sm font-light"><span className="font-medium">Operator ID:</span> {shift.operator_id?.slice(0, 8) || 'N/A'}</p>
+                      <p className="text-sm font-light"><span className="font-medium">Details Count:</span> {shift.filmatic_line_form_1_night_shift_details?.length || 0}</p>
+                      
+                      {shift.filmatic_line_form_1_night_shift_details && shift.filmatic_line_form_1_night_shift_details.length > 0 && (
+                        <div className="mt-3">
+                          <h5 className="text-xs font-medium text-gray-700 mb-2">Production Details:</h5>
+                          <div className="space-y-2">
+                            {shift.filmatic_line_form_1_night_shift_details.map((detail, detailIndex) => (
+                              <div key={detailIndex} className="bg-gray-50 p-3 rounded text-xs">
+                                <div className="grid grid-cols-2 gap-2">
+                                  <span><strong>Time:</strong> {detail.time}</span>
+                                  <span><strong>Target:</strong> {detail.target}</span>
+                                  <span><strong>Pallets:</strong> {detail.pallets}</span>
+                                  <span><strong>Setbacks:</strong> {detail.setbacks || 'None'}</span>
+                                </div>
+                                {detail.filmatic_line_form_1_night_shift_details_stoppage_time && detail.filmatic_line_form_1_night_shift_details_stoppage_time.length > 0 && (
+                                  <div className="mt-2">
+                                    <strong>Stoppage Times:</strong>
+                                    <div className="grid grid-cols-2 gap-1 mt-1">
+                                      {detail.filmatic_line_form_1_night_shift_details_stoppage_time.map((stoppage, stoppageIndex) => (
+                                        <div key={stoppageIndex} className="text-xs">
+                                          {Object.entries(stoppage).map(([key, value]) => (
+                                            value !== undefined && value !== 0 && (
+                                              <div key={key}>{key}: {value}min</div>
+                                            )
+                                          ))}
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    {shiftIndex < form.filmatic_line_form_1_night_shift.length - 1 && <Separator />}
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-gray-500">No night shift data available</p>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Approval Status */}
           <Card className="shadow-none border border-gray-200 rounded-lg">
             <CardHeader className="pb-4">
               <div className="flex items-center space-x-2">
                 <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center">
-                  <Clock className="h-4 w-4 text-green-600" />
+                  <CheckCircle className="h-4 w-4 text-green-600" />
                 </div>
-                <CardTitle className="text-base font-light">Shift Information</CardTitle>
+                <CardTitle className="text-base font-light">Approval Status</CardTitle>
               </div>
             </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Day Shift */}
-              <div className="space-y-2">
-                <h4 className="text-sm font-medium flex items-center space-x-2">
-                  <Sun className="h-4 w-4 text-yellow-600" />
-                  Day Shift
-                </h4>
-                <div className="pl-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-light">Status</span>
-                    <Badge className={form.day_shift_id ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"}>
-                      {form.day_shift_id ? 'Completed' : 'Pending'}
-                    </Badge>
-                  </div>
-                  {form.day_shift_id && (
-                    <div className="mt-2">
-                      <p className="text-sm font-light"><span className="font-medium">Shift ID:</span> {String(form.day_shift_id).slice(0, 8)}</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <Separator />
-
-              {/* Night Shift */}
-              <div className="space-y-2">
-                <h4 className="text-sm font-medium flex items-center space-x-2">
-                  <Moon className="h-4 w-4 text-blue-600" />
-                  Night Shift
-                </h4>
-                <div className="pl-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-light">Status</span>
-                    <Badge className={form.night_shift_id ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"}>
-                      {form.night_shift_id ? 'Completed' : 'Pending'}
-                    </Badge>
-                  </div>
-                  {form.night_shift_id && (
-                    <div className="mt-2">
-                      <p className="text-sm font-light"><span className="font-medium">Shift ID:</span> {String(form.night_shift_id).slice(0, 8)}</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <Separator />
-
-              {/* Approval Status */}
-              <div className="space-y-2">
-                <h4 className="text-sm font-medium flex items-center space-x-2">
-                  <CheckCircle className="h-4 w-4 text-purple-600" />
-                  Approval Status
-                </h4>
-                <div className="pl-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-light">Status</span>
-                    <Badge className={form.approved ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"}>
-                      {form.approved ? 'Approved' : 'Pending Approval'}
-                    </Badge>
-                  </div>
-                </div>
+            <CardContent>
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-light">Overall Status</span>
+                <Badge className={form.approved ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"}>
+                  {form.approved ? 'Approved' : 'Pending Approval'}
+                </Badge>
               </div>
             </CardContent>
           </Card>
