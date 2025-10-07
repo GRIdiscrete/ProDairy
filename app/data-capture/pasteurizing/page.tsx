@@ -137,6 +137,8 @@ export default function PasteurizingPage() {
 
   // Helper functions to get names from IDs
   const getMachineName = (form: any) => {
+    if (!form) return 'Unknown Machine'
+    
     if (form.steri_milk_pasteurizing_form_machine_fkey) {
       return form.steri_milk_pasteurizing_form_machine_fkey.name
     }
@@ -148,6 +150,8 @@ export default function PasteurizingPage() {
   }
 
   const getSiloName = (form: any) => {
+    if (!form) return 'Unknown Silo'
+    
     if (form.steri_milk_pasteurizing_form_source_silo_fkey) {
       return form.steri_milk_pasteurizing_form_source_silo_fkey.name
     }
@@ -159,6 +163,8 @@ export default function PasteurizingPage() {
   }
 
   const getBMTFormInfo = (form: any) => {
+    if (!form) return { name: 'Unknown BMT Form', product: 'Unknown', volume: 0 }
+    
     if (form.steri_milk_pasteurizing_form_bmt_fkey) {
       return {
         name: `BMT Form #${form.bmt?.slice(0, 8) || 'Unknown'}`,
@@ -485,21 +491,21 @@ export default function PasteurizingPage() {
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-light text-gray-600">Machine</span>
                       <div className="flex items-center space-x-2">
-                        <span className="text-xs font-light">{getMachineName(latestForm.machine)}</span>
+                        <span className="text-xs font-light">{getMachineName(latestForm)}</span>
                         <CopyButton text={latestForm.machine} />
                       </div>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-light text-gray-600">Source Silo</span>
                       <div className="flex items-center space-x-2">
-                        <span className="text-xs font-light">{getSiloName(latestForm.source_silo)}</span>
+                        <span className="text-xs font-light">{getSiloName(latestForm)}</span>
                         <CopyButton text={latestForm.source_silo} />
                       </div>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-light text-gray-600">BMT Form</span>
                       <div className="flex items-center space-x-2">
-                        <span className="text-xs font-light text-blue-600">{getBMTFormInfo(latestForm.bmt).name}</span>
+                        <span className="text-xs font-light text-blue-600">{getBMTFormInfo(latestForm).name}</span>
                         <CopyButton text={latestForm.bmt} />
                       </div>
                     </div>
