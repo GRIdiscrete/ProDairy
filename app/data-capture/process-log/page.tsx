@@ -127,13 +127,19 @@ export default function ProcessLogPage() {
       header: "Batch",
       cell: ({ row }: any) => {
         const log = row.original
+        const batches = log.steri_milk_process_log_batch || []
+        const totalBatches = batches.length
+        const completedBatches = batches.filter((batch: any) => 
+          batch.filling_start && batch.sterilization_finish
+        ).length
+        
         return (
           <div className="space-y-1">
             <p className="text-sm font-light">
-              {(log as any).batch_id ? `Batch #${(log as any).batch_id.batch_number}` : "No batch"}
+              {totalBatches > 0 ? `${totalBatches} batch${totalBatches > 1 ? 'es' : ''}` : "No batches"}
             </p>
             <p className="text-xs text-gray-500">
-              {(log as any).batch_id ? `Created: ${((log as any).batch_id.created_at ? new Date((log as any).batch_id.created_at).toLocaleDateString() : 'N/A')}` : "Not created"}
+              {totalBatches > 0 ? `${completedBatches} completed` : "Not created"}
             </p>
           </div>
         )
@@ -306,7 +312,7 @@ export default function ProcessLogPage() {
                 </div>
               </div>
 
-              {latest.batch_id_fkey && (
+              {latest.steri_milk_process_log_batch && latest.steri_milk_process_log_batch.length > 0 && (
                 <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-4">
                   <div className="p-4 bg-gray-50 rounded-lg">
                     <div className="flex items-center space-x-2 mb-3">
@@ -317,12 +323,12 @@ export default function ProcessLogPage() {
                     </div>
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-light text-gray-600">Batch Number</span>
-                        <span className="text-xs font-light">{latest.batch_id_fkey.batch_number || 'N/A'}</span>
+                        <span className="text-xs font-light text-gray-600">Total Batches</span>
+                        <span className="text-xs font-light">{latest.steri_milk_process_log_batch.length}</span>
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-light text-gray-600">Created</span>
-                        <span className="text-xs font-light">{latest.batch_id_fkey.created_at ? new Date(latest.batch_id_fkey.created_at).toLocaleDateString() : 'N/A'}</span>
+                        <span className="text-xs font-light text-gray-600">Latest Batch</span>
+                        <span className="text-xs font-light">#{latest.steri_milk_process_log_batch[0]?.batch_number || 'N/A'}</span>
                       </div>
                     </div>
                   </div>
@@ -337,11 +343,11 @@ export default function ProcessLogPage() {
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-light text-gray-600">Filling Start</span>
-                        <span className="text-xs font-light">{latest.batch_id_fkey.filling_start ? 'Completed' : 'Pending'}</span>
+                        <span className="text-xs font-light">{latest.steri_milk_process_log_batch[0]?.filling_start ? 'Completed' : 'Pending'}</span>
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-light text-gray-600">Sterilization</span>
-                        <span className="text-xs font-light">{latest.batch_id_fkey.sterilization_start ? 'Completed' : 'Pending'}</span>
+                        <span className="text-xs font-light">{latest.steri_milk_process_log_batch[0]?.sterilization_start ? 'Completed' : 'Pending'}</span>
                       </div>
                     </div>
                   </div>
