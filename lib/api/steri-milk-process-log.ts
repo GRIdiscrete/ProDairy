@@ -1,5 +1,10 @@
 import { apiRequest } from "@/lib/utils/api-request"
-import { ApiEnvelope } from "@/lib/types"
+
+export interface ApiEnvelope<T> {
+  statusCode: number
+  message: string
+  data: T
+}
 
 export interface ProcessDetail {
   time: string
@@ -7,21 +12,8 @@ export interface ProcessDetail {
   pressure: number
 }
 
-export interface Batch {
+export interface BatchDetails {
   batch_number: number
-  filling_start: string
-  autoclave_start: string
-  heating_start: string
-  heating_finish: string
-  sterilization_start: string
-  sterilization_after_5: string
-  sterilization_finish: string
-  pre_cooling_start: string
-  pre_cooling_finish: string
-  cooling_1_start: string
-  cooling_1_finish: string
-  cooling_2_start: string
-  cooling_2_finish: string
   filling_start_details: ProcessDetail
   autoclave_start_details: ProcessDetail
   heating_start_details: ProcessDetail
@@ -37,45 +29,44 @@ export interface Batch {
   cooling_2_finish_details: ProcessDetail
 }
 
+export interface BatchEntry {
+  batch_number: number
+  filling_start: ProcessDetail | null
+  heating_start: ProcessDetail | null
+  heating_finish: ProcessDetail | null
+  autoclave_start: ProcessDetail | null
+  cooling_1_start: ProcessDetail | null
+  cooling_2_start: ProcessDetail | null
+  cooling_1_finish: ProcessDetail | null
+  cooling_2_finish: ProcessDetail | null
+  pre_cooling_start: ProcessDetail | null
+  pre_cooling_finish: ProcessDetail | null
+  sterilization_start: ProcessDetail | null
+  sterilization_finish: ProcessDetail | null
+  sterilization_after_5: ProcessDetail | null
+}
+
 export interface SteriMilkProcessLog {
   id: string
-  created_at: string
-  updated_at: string | null
-  approved: boolean
+  created_at?: string
+  updated_at?: string | null
+  approved: boolean | null
   approver_id: string
   filmatic_form_id: string
-  batch_id: string | null
-  batch_id_fkey?: {
-    id: string
-    created_at: string
-    updated_at: string | null
-    batch_number: number
-    filling_start: ProcessDetail | null
-    heating_start: ProcessDetail | null
-    heating_finish: ProcessDetail | null
-    autoclave_start: ProcessDetail | null
-    cooling_1_start: ProcessDetail | null
-    cooling_2_start: ProcessDetail | null
-    cooling_1_finish: ProcessDetail | null
-    cooling_2_finish: ProcessDetail | null
-    pre_cooling_start: ProcessDetail | null
-    pre_cooling_finish: ProcessDetail | null
-    sterilization_start: ProcessDetail | null
-    sterilization_finish: ProcessDetail | null
-    sterilization_after_5: ProcessDetail | null
-    steri_milk_process_log_id: string
-  }
+  batch_id?: string | null
+  filmatic_form_2_id?: string | null
+  steri_milk_process_log_batch: BatchEntry[]
 }
 
 export interface CreateSteriMilkProcessLogRequest {
   approved: boolean
   approver_id: string
   filmatic_form_id: string
-  batch: Batch
+  batch: BatchDetails
 }
 
 export const steriMilkProcessLogApi = {
-  async getLogs(params?: { filters?: { filmatic_form_id?: string; search?: string } }): Promise<ApiEnvelope<SteriMilkProcessLog[]>> {
+  async getLogs(params?: { filters?: { filmatic_form_id?: string; search?: string } }): Promise<SteriMilkProcessLog[]> {
     const queryParams = new URLSearchParams()
     if (params?.filters?.filmatic_form_id) {
       queryParams.append('filmatic_form_id', params.filters.filmatic_form_id)
@@ -85,22 +76,32 @@ export const steriMilkProcessLogApi = {
     }
     const queryString = queryParams.toString()
     const endpoint = queryString ? `/steri-milk-process-log?${queryString}` : '/steri-milk-process-log'
-    return apiRequest<ApiEnvelope<SteriMilkProcessLog[]>>(endpoint, { method: 'GET' })
+    const response = await apiRequest<ApiEnvelope<SteriMilkProcessLog[]>>(endpoint, { method: 'GET' })
+    return response.data
   },
 
-  async getLog(id: string): Promise<ApiEnvelope<SteriMilkProcessLog>> {
-    return apiRequest<ApiEnvelope<SteriMilkProcessLog>>(`/steri-milk-process-log/${id}`, { method: 'GET' })
+  async getLog(id: string): Promise<SteriMilkProcessLog> {
+    const response = await apiRequest<ApiEnvelope<SteriMilkProcessLog>>(`/steri-milk-process-log/${id}`, { method: 'GET' })
+    return response.data
   },
 
-  async createLog(data: CreateSteriMilkProcessLogRequest): Promise<ApiEnvelope<SteriMilkProcessLog>> {
-    return apiRequest<ApiEnvelope<SteriMilkProcessLog>>('/steri-milk-process-log', { method: 'POST', body: JSON.stringify(data) })
+  async createLog(data: CreateSteriMilkProcessLogRequest): Promise<SteriMilkProcessLog> {
+    const response = await apiRequest<ApiEnvelope<SteriMilkProcessLog>>('/steri-milk-process-log', { 
+      method: 'POST', 
+      body: JSON.stringify(data) 
+    })
+    return response.data
   },
 
-  async updateLog(id: string, data: Partial<CreateSteriMilkProcessLogRequest>): Promise<ApiEnvelope<SteriMilkProcessLog>> {
-    return apiRequest<ApiEnvelope<SteriMilkProcessLog>>(`/steri-milk-process-log/${id}`, { method: 'PATCH', body: JSON.stringify(data) })
+  async updateLog(id: string, data: Partial<CreateSteriMilkProcessLogRequest>): Promise<SteriMilkProcessLog> {
+    const response = await apiRequest<ApiEnvelope<SteriMilkProcessLog>>(`/steri-milk-process-log/${id}`, { 
+      method: 'PATCH', 
+      body: JSON.stringify(data) 
+    })
+    return response.data
   },
 
-  async deleteLog(id: string): Promise<ApiEnvelope<void>> {
-    return apiRequest<ApiEnvelope<void>>(`/steri-milk-process-log/${id}`, { method: 'DELETE' })
+  async deleteLog(id: string): Promise<void> {
+    await apiRequest<ApiEnvelope<void>>(`/steri-milk-process-log/${id}`, { method: 'DELETE' })
   },
 }

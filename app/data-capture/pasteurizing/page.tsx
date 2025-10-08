@@ -21,7 +21,6 @@ import {
 } from "@/lib/store/slices/pasteurizingSlice"
 import { fetchStandardizingForms } from "@/lib/store/slices/standardizingSlice"
 import { fetchMachines } from "@/lib/store/slices/machineSlice"
-import { fetchSilos } from "@/lib/store/slices/siloSlice"
 import { fetchBMTControlForms } from "@/lib/store/slices/bmtControlFormSlice"
 import { toast } from "sonner"
 import { TableFilters } from "@/lib/types"
@@ -32,7 +31,6 @@ export default function PasteurizingPage() {
   const dispatch = useAppDispatch()
   const { forms, loading, error, operationLoading, isInitialized } = useAppSelector((state) => state.pasteurizing)
   const { machines } = useAppSelector((state) => state.machine)
-  const { silos } = useAppSelector((state) => state.silo)
   const { forms: bmtForms } = useAppSelector((state) => state.bmtControlForms)
   
   const [tableFilters, setTableFilters] = useState<TableFilters>({})
@@ -45,7 +43,6 @@ export default function PasteurizingPage() {
       dispatch(fetchPasteurizingForms())
       dispatch(fetchStandardizingForms()) // Load standardizing forms for the form drawer
       dispatch(fetchMachines({})) // Load machines for display
-      dispatch(fetchSilos({})) // Load silos for display
       dispatch(fetchBMTControlForms()) // Load BMT forms for display
     }
   }, [dispatch, isInitialized])
@@ -88,12 +85,6 @@ export default function PasteurizingPage() {
       type: "text" as const,
       placeholder: "Filter by machine"
     },
-    {
-      key: "source_silo",
-      label: "Source Silo",
-      type: "text" as const,
-      placeholder: "Filter by source silo"
-    }
   ], [])
 
   // Action handlers
@@ -149,18 +140,6 @@ export default function PasteurizingPage() {
     return 'Unknown Machine'
   }
 
-  const getSiloName = (form: any) => {
-    if (!form) return 'Unknown Silo'
-    
-    if (form.steri_milk_pasteurizing_form_source_silo_fkey) {
-      return form.steri_milk_pasteurizing_form_source_silo_fkey.name
-    }
-    if (form.source_silo) {
-      const silo = silos.find(s => s.id === form.source_silo)
-      return silo ? silo.name : `Silo #${form.source_silo.slice(0, 8)}`
-    }
-    return 'Unknown Silo'
-  }
 
   const getBMTFormInfo = (form: any) => {
     if (!form) return { name: 'Unknown BMT Form', product: 'Unknown', volume: 0 }
@@ -198,7 +177,7 @@ export default function PasteurizingPage() {
       header: "Form",
       cell: ({ row }: any) => {
         const form = row.original
-        const totalProduction = form.production?.reduce((sum: number, item: any) => sum + (item.output_target?.value || 0), 0) || 0
+        const totalProduction = form.steri_milk_pasteurizing_form_production?.reduce((sum: number, item: any) => sum + (item.output_target_value || 0), 0) || 0
         return (
           <div className="flex items-center space-x-3">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center">
@@ -210,7 +189,7 @@ export default function PasteurizingPage() {
                 <Badge className="bg-blue-100 text-blue-800 font-light">{totalProduction}L</Badge>
               </div>
               <p className="text-sm text-gray-500 mt-1">
-                {new Date(form.created_at).toLocaleDateString()} • {form.production?.length || 0} production entries
+                {new Date(form.created_at).toLocaleDateString()} • {form.steri_milk_pasteurizing_form_production?.length || 0} production entries
               </p>
             </div>
           </div>
@@ -245,40 +224,11 @@ export default function PasteurizingPage() {
       },
     },
     {
-      accessorKey: "source_silo",
-      header: "Source Silo",
-      cell: ({ row }: any) => {
-        const form = row.original
-        return (
-          <div className="space-y-2">
-            <div className="flex items-center space-x-2">
-              <div className="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center">
-                <Package className="w-3 h-3 text-green-600" />
-              </div>
-              <p className="text-sm font-light">
-                Source Silo
-              </p>
-            </div>
-            <div className="space-y-1">
-              <p className="text-xs text-gray-500">
-                {getSiloName(form)}
-              </p>
-              <div className="flex items-center space-x-2">
-                <Badge className="text-xs bg-green-100 text-green-800">
-                  Connected
-                </Badge>
-              </div>
-            </div>
-          </div>
-        )
-      },
-    },
-    {
       accessorKey: "production",
       header: "Production",
       cell: ({ row }: any) => {
         const form = row.original
-        const totalQuantity = form.production?.reduce((sum: number, item: any) => sum + (item.output_target?.value || 0), 0) || 0
+        const totalQuantity = form.steri_milk_pasteurizing_form_production?.reduce((sum: number, item: any) => sum + (item.output_target_value || 0), 0) || 0
         const avgFat = form.fat || 0
         return (
           <div className="space-y-2">
@@ -287,7 +237,7 @@ export default function PasteurizingPage() {
                 <FlaskConical className="w-3 h-3 text-blue-600" />
               </div>
               <p className="text-sm font-light">
-                {form.production?.length || 0} entries
+                {form.steri_milk_pasteurizing_form_production?.length || 0} entries
               </p>
             </div>
             <div className="space-y-1">
@@ -452,7 +402,7 @@ export default function PasteurizingPage() {
                     <p className="text-sm font-light text-gray-600">Production</p>
                   </div>
                   <p className="text-lg font-light text-blue-600">
-                    {latestForm.production?.reduce((sum, item) => sum + (item.output_target?.value || 0), 0).toFixed(1)}L
+                    {latestForm.steri_milk_pasteurizing_form_production?.reduce((sum: number, item: any) => sum + (item.output_target_value || 0), 0).toFixed(1)}L
                   </p>
                 </div>
                 <div className="space-y-2">
@@ -496,13 +446,6 @@ export default function PasteurizingPage() {
                       </div>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-light text-gray-600">Source Silo</span>
-                      <div className="flex items-center space-x-2">
-                        <span className="text-xs font-light">{getSiloName(latestForm)}</span>
-                        <CopyButton text={latestForm.source_silo} />
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between">
                       <span className="text-xs font-light text-gray-600">BMT Form</span>
                       <div className="flex items-center space-x-2">
                         <span className="text-xs font-light text-blue-600">{getBMTFormInfo(latestForm).name}</span>
@@ -523,12 +466,12 @@ export default function PasteurizingPage() {
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-light text-gray-600">Production Entries</span>
-                      <span className="text-xs font-light text-blue-600">{latestForm.production?.length || 0}</span>
+                      <span className="text-xs font-light text-blue-600">{latestForm.steri_milk_pasteurizing_form_production?.length || 0}</span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-light text-gray-600">Total Volume</span>
                       <span className="text-xs font-light text-blue-600">
-                        {latestForm.production?.reduce((sum, item) => sum + (item.output_target?.value || 0), 0).toFixed(1)}L
+                        {latestForm.steri_milk_pasteurizing_form_production?.reduce((sum: number, item: any) => sum + (item.output_target_value || 0), 0).toFixed(1)}L
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
