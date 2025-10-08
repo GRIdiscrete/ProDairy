@@ -1,91 +1,82 @@
 import { apiRequest } from "@/lib/utils/api-request"
 
-// Types based on the API structure
+// Updated Types based on the actual API response structure
 export interface FilmaticLinesForm2 {
-  id: string
-  created_at: string
-  updated_at: string | null
-  approved: boolean
+  id?: string
+  created_at?: string
+  updated_at?: string | null
+  approved: boolean | null
   process_id: string | null
   date: string
-  holding_tank_bmt: string
-  day_shift_id: string | null
-  night_shift_id: string | null
-  day_shift_opening_bottles: number
-  day_shift_closing_bottles: number
-  night_shift_opening_bottles: number
-  night_shift_closing_bottles: number
-  day_shift_waste_bottles: number
-  night_shift_waste_bottles: number
-  // Relationships
-  filmatic_line_form_2_day_shift_id_fkey?: FilmaticLinesForm2DayShift | null
-  filmatic_line_form_2_night_shift_id_fkey?: FilmaticLinesForm2NightShift | null
+  day_shift_opening_bottles?: number
+  day_shift_closing_bottles?: number
+  night_shift_opening_bottles?: number
+  night_shift_closing_bottles?: number
+  day_shift_waste_bottles?: number
+  night_shift_waste_bottles?: number
+  groups?: {
+    id?: string
+    group_a?: string[]
+    group_b?: string[]
+    group_c?: string[]
+    manager_id?: string
+    created_at?: string
+    updated_at?: string
+  } | null
+  filmatic_line_form_2_day_shift: FilmaticLinesForm2DayShift[]
+  filmatic_line_form_2_night_shift: FilmaticLinesForm2NightShift[]
 }
 
 export interface FilmaticLinesForm2DayShift {
-  id: string
-  created_at: string
-  updated_at: string | null
+  id?: string
+  created_at?: string
+  updated_at?: string | null
   operator_id: string
-  shift_details: string
   supervisor_approve: boolean
-  filmatic_line_form_2_id: string
-  // Relationships
-  filmatic_line_form_2_day_shift_shift_details_fkey?: FilmaticLinesForm2DayShiftDetails | null
+  filmatic_line_form_2_day_shift_details?: FilmaticLinesForm2DayShiftDetails[]
 }
 
 export interface FilmaticLinesForm2NightShift {
-  id: string
-  created_at: string
-  updated_at: string | null
+  id?: string
+  created_at?: string
+  updated_at?: string | null
   operator_id: string
-  shift_details: string
   supervisor_approve: boolean
-  filmatic_line_form_2_id: string
-  // Relationships
-  filmatic_line_form_2_night_shift_shift_details_fkey?: FilmaticLinesForm2NightShiftDetails | null
+  filmatic_line_form_2_night_shift_details?: FilmaticLinesForm2NightShiftDetails[]
 }
 
 export interface FilmaticLinesForm2DayShiftDetails {
-  id: string
+  id?: string
   time: string
   target: number
   pallets: number
   setbacks: string
-  created_at: string
-  updated_at: string | null
-  day_shift_id: string
-  stoppage_time_id: string | null
-  // Relationships
-  filmatic_line_form_2_day_shift_details_stoppage_time_id_fkey?: FilmaticLinesForm2StoppageTime | null
+  created_at?: string
+  updated_at?: string | null
+  filmatic_line_form_2_day_shift_details_stoppage_time?: FilmaticLinesForm2StoppageTime[]
 }
 
 export interface FilmaticLinesForm2NightShiftDetails {
-  id: string
+  id?: string
   time: string
   target: number
   pallets: number
   setbacks: string
-  created_at: string
-  updated_at: string | null
-  night_shift_id: string
-  stoppage_time_id: string | null
-  // Relationships
-  filmatic_line_form_2_night_shift_details_stoppage_time_id_fkey?: FilmaticLinesForm2StoppageTime | null
+  created_at?: string
+  updated_at?: string | null
+  filmatic_line_form_2_night_shift_details_stoppage_time?: FilmaticLinesForm2StoppageTime[]
 }
 
 export interface FilmaticLinesForm2StoppageTime {
-  id: string
-  capper_1: number | null
-  capper_2: number | null
-  sleever_1: number | null
-  sleever_2: number | null
-  shrink_1: number | null
-  shrink_2: number | null
-  created_at: string
-  updated_at: string | null
-  filmatic_line_form_2_day_shift_details_id?: string | null
-  filmatic_line_form_2_night_shift_details_id?: string | null
+  id?: string
+  capper_1?: number
+  capper_2?: number
+  sleever_1?: number
+  sleever_2?: number
+  shrink_1?: number
+  shrink_2?: number
+  created_at?: string
+  updated_at?: string | null
 }
 
 // Request Types
@@ -93,48 +84,53 @@ export interface CreateFilmaticLinesForm2Request {
   approved: boolean
   process_id: string
   date: string
-  holding_tank_bmt: string
-  day_shift_opening_bottles: number
-  day_shift_closing_bottles: number
-  night_shift_opening_bottles: number
-  night_shift_closing_bottles: number
-  day_shift_waste_bottles: number
-  night_shift_waste_bottles: number
+  day_shift_opening_bottles?: number
+  day_shift_closing_bottles?: number
+  night_shift_opening_bottles?: number
+  night_shift_closing_bottles?: number
+  day_shift_waste_bottles?: number
+  night_shift_waste_bottles?: number
+  groups?: {
+    group_a?: string[]
+    group_b?: string[]
+    group_c?: string[]
+    manager_id?: string
+  }
   day_shift?: {
     supervisor_approve: boolean
     operator_id: string
-    shift_details: {
+    details: Array<{
       time: string
       pallets: number
       target: number
       setbacks: string
-      stoppage_time: {
-        capper_1: number
-        capper_2: number
-        sleever_1: number
-        sleever_2: number
-        shrink_1: number
-        shrink_2: number
-      }
-    }
+      stoppage_time: Array<{
+        capper_1?: number
+        capper_2?: number
+        sleever_1?: number
+        sleever_2?: number
+        shrink_1?: number
+        shrink_2?: number
+      }>
+    }>
   }
   night_shift?: {
     supervisor_approve: boolean
     operator_id: string
-    shift_details: {
+    details: Array<{
       time: string
       pallets: number
       target: number
       setbacks: string
-      stoppage_time: {
-        capper_1: number
-        capper_2: number
-        sleever_1: number
-        sleever_2: number
-        shrink_1: number
-        shrink_2: number
-      }
-    }
+      stoppage_time: Array<{
+        capper_1?: number
+        capper_2?: number
+        sleever_1?: number
+        sleever_2?: number
+        shrink_1?: number
+        shrink_2?: number
+      }>
+    }>
   }
 }
 
@@ -142,9 +138,10 @@ export interface CreateFilmaticLinesForm2Request {
 export const filmaticLinesForm2Api = {
   // Get all forms
   getForms: async () => {
-    return apiRequest<FilmaticLinesForm2[]>('/filmatic-lines-form-2', {
+    const response = await apiRequest<{statusCode: number, message: string, data: FilmaticLinesForm2[]}>('/filmatic-lines-form-2', {
       method: 'GET',
     })
+    return response.data
   },
 
   // Get form by ID

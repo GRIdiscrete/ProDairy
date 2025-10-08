@@ -19,7 +19,7 @@ import {
 } from "@/lib/store/slices/bmtControlFormSlice"
 import { toast } from "sonner"
 import { TableFilters } from "@/lib/types"
-import { BMTControlForm } from "@/lib/api/data-capture-forms"
+import { BMTControlForm } from "@/lib/api/bmt-control-form"
 import ContentSkeleton from "@/components/ui/content-skeleton"
 import { ToolsDashboardLayout } from "@/components/layout/tools-dashboard-layout"
 
@@ -104,6 +104,15 @@ export default function BMTControlFormPage() {
   }
 
   const handleEditForm = (form: BMTControlForm) => {
+    // Debug: Log the form being passed to edit
+    console.log('handleEditForm - Form object:', form)
+    console.log('handleEditForm - Form ID:', form.id)
+    console.log('handleEditForm - Form ID type:', typeof form.id)
+    console.log('handleEditForm - Form ID === undefined:', form.id === undefined)
+    console.log('handleEditForm - Form ID === null:', form.id === null)
+    console.log('handleEditForm - Form keys:', Object.keys(form))
+    console.log('handleEditForm - Form values:', Object.values(form))
+    
     setSelectedForm(form)
     setFormMode("edit")
     setFormDrawerOpen(true)

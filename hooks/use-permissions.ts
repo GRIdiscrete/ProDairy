@@ -25,6 +25,8 @@ import {
   getUserRoleName,
   hasRole,
   filterNavigationByPermissions,
+  hasModuleAccess,
+  getAccessibleModules,
 } from '@/lib/utils/permissions'
 
 /**
@@ -131,6 +133,22 @@ export function useFilteredNavigation<T extends { href: string }>(navigationItem
 }
 
 /**
+ * Hook to check if user has access to a specific module
+ */
+export function useModuleAccess(module: 'admin' | 'data-capture' | 'drivers' | 'tools') {
+  const { profile } = useCurrentUser()
+  return useMemo(() => hasModuleAccess(profile, module), [profile, module])
+}
+
+/**
+ * Hook to get accessible modules for current user
+ */
+export function useAccessibleModules() {
+  const { profile } = useCurrentUser()
+  return useMemo(() => getAccessibleModules(profile), [profile])
+}
+
+/**
  * Comprehensive permission hook that provides all permission-related data
  */
 export function usePermissions() {
@@ -159,6 +177,10 @@ export function usePermissions() {
     // Data getters
     getFeaturePermissions: (feature: Feature) => getFeaturePermissions(profile, feature),
     getAccessibleRoutes: () => getAccessibleRoutes(profile),
+    getAccessibleModules: () => getAccessibleModules(profile),
     filterNavigation: <T extends { href: string }>(items: T[]) => filterNavigationByPermissions(items, profile),
+    
+    // Module access
+    hasModuleAccess: (module: 'admin' | 'data-capture' | 'drivers' | 'tools') => hasModuleAccess(profile, module),
   }), [profile, isAuthenticated])
 }

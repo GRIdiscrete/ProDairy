@@ -22,6 +22,7 @@ import {
 import { ProfilePulseLoading } from '@/components/ui/pulse-loading'
 import { EditProfileDrawer } from '@/components/forms/edit-profile-drawer'
 import { ChangePasswordDrawer } from '@/components/forms/change-password-drawer'
+import { PermissionGuard } from '@/components/auth/permission-guard'
 
 export default function ProfilePage() {
   const { user, profile, isAuthenticated, isLoading } = useAppSelector((state) => state.auth)
@@ -382,30 +383,36 @@ export default function ProfilePage() {
   )
 
   // Render with appropriate dashboard layout
-  switch (dashboardLayout) {
-    case 'admin':
-      return (
-        <AdminDashboardLayout title="Profile" subtitle="Your personal profile and settings">
-          {profileContent}
-        </AdminDashboardLayout>
-      )
-    case 'drivers':
-      return (
-        <DriversDashboardLayout title="Profile" subtitle="Your personal profile and settings">
-          {profileContent}
-        </DriversDashboardLayout>
-      )
-    case 'data-capture':
-      return (
-        <DataCaptureDashboardLayout title="Profile" subtitle="Your personal profile and settings">
-          {profileContent}
-        </DataCaptureDashboardLayout>
-      )
-    default:
-      return (
-        <AdminDashboardLayout title="Profile" subtitle="Your personal profile and settings">
-          {profileContent}
-        </AdminDashboardLayout>
-      )
-  }
+  return (
+    <PermissionGuard requiredView="profile_tab">
+      {(() => {
+        switch (dashboardLayout) {
+          case 'admin':
+            return (
+              <AdminDashboardLayout title="Profile" subtitle="Your personal profile and settings">
+                {profileContent}
+              </AdminDashboardLayout>
+            )
+          case 'drivers':
+            return (
+              <DriversDashboardLayout title="Profile" subtitle="Your personal profile and settings">
+                {profileContent}
+              </DriversDashboardLayout>
+            )
+          case 'data-capture':
+            return (
+              <DataCaptureDashboardLayout title="Profile" subtitle="Your personal profile and settings">
+                {profileContent}
+              </DataCaptureDashboardLayout>
+            )
+          default:
+            return (
+              <AdminDashboardLayout title="Profile" subtitle="Your personal profile and settings">
+                {profileContent}
+              </AdminDashboardLayout>
+            )
+        }
+      })()}
+    </PermissionGuard>
+  )
 }

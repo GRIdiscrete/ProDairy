@@ -17,14 +17,10 @@ import {
 } from "@/lib/store/slices/steriMilkProcessLogSlice"
 import { usersApi } from "@/lib/api/users"
 import { filmaticLinesForm1Api } from "@/lib/api/filmatic-lines-form-1"
-import { filmaticLinesForm2Api } from "@/lib/api/filmatic-lines-form-2"
 import { toast } from "sonner"
 import { SteriMilkProcessLog, CreateSteriMilkProcessLogRequest } from "@/lib/api/steri-milk-process-log"
 import { ChevronLeft, ChevronRight, ArrowRight, Factory, Beaker, FileText, Package, Clock, Thermometer, Gauge } from "lucide-react"
-import { SignaturePad } from "@/components/ui/signature-pad"
-import { SignatureModal } from "@/components/ui/signature-modal"
-import { SignatureViewer } from "@/components/ui/signature-viewer"
-import { base64ToPngDataUrl } from "@/lib/utils/signature"
+import { Switch } from "@/components/ui/switch"
 
 interface SteriMilkProcessLogDrawerProps {
   open: boolean
@@ -72,7 +68,6 @@ const ProcessOverview = () => (
 const basicInfoSchema = yup.object({
   approved: yup.boolean().required("Approval status is required"),
   approver_id: yup.string().required("Approver is required"),
-  approver_signature: yup.string().required("Approver signature is required"),
   filmatic_form_id: yup.string().required("Filmatic form is required"),
   batch_number: yup.number().required("Batch number is required").min(1, "Must be positive"),
 })
@@ -182,8 +177,6 @@ export function SteriMilkProcessLogDrawer({
   const [filmaticForms, setFilmaticForms] = useState<any[]>([])
   const [loadingUsers, setLoadingUsers] = useState(false)
   const [loadingFilmaticForms, setLoadingFilmaticForms] = useState(false)
-  const [approverSignatureOpen, setApproverSignatureOpen] = useState(false)
-  const [approverSignatureViewOpen, setApproverSignatureViewOpen] = useState(false)
 
   // Basic info form
   const basicInfoForm = useForm<BasicInfoFormData>({
@@ -191,9 +184,8 @@ export function SteriMilkProcessLogDrawer({
     defaultValues: {
       approved: true,
       approver_id: "",
-      approver_signature: "",
       filmatic_form_id: "",
-      batch_number: 1,
+      batch_number: undefined,
     },
   })
 
@@ -261,19 +253,20 @@ export function SteriMilkProcessLogDrawer({
           ])
         }
         
-        // Load Filmatic forms
+        // Load Filmatic forms (Form 1 only)
         try {
-          const [form1Response, form2Response] = await Promise.all([
-            filmaticLinesForm1Api.getForms(),
-            filmaticLinesForm2Api.getForms()
-          ])
+          const form1Response = await filmaticLinesForm1Api.getForms()
+          
+          console.log('Form1 Response:', form1Response)
           
           const allForms = [
-            ...(form1Response.data || []).map(form => ({ ...form, type: 'Form 1' })),
-            ...(form2Response.data || []).map(form => ({ ...form, type: 'Form 2' }))
+            ...(form1Response || []).map((form: any) => ({ ...form, type: 'Form 1' }))
           ]
+          
+          console.log('All Forms:', allForms)
           setFilmaticForms(allForms)
         } catch (formError) {
+          console.error('Error loading Filmatic forms:', formError)
           setFilmaticForms([
             {
               id: "fallback-form-1",
@@ -326,7 +319,6 @@ export function SteriMilkProcessLogDrawer({
       const formData: CreateSteriMilkProcessLogRequest = {
         approved: basicInfo.approved,
         approver_id: basicInfo.approver_id,
-        approver_signature: basicInfo.approver_signature,
         filmatic_form_id: basicInfo.filmatic_form_id,
         batch: {
           batch_number: basicInfo.batch_number,
@@ -384,14 +376,10 @@ export function SteriMilkProcessLogDrawer({
     if (!query.trim()) return []
     
     try {
-      const [form1Response, form2Response] = await Promise.all([
-        filmaticLinesForm1Api.getForms(),
-        filmaticLinesForm2Api.getForms()
-      ])
+      const form1Response = await filmaticLinesForm1Api.getForms()
       
       const allForms = [
-        ...(form1Response.data || []).map(form => ({ ...form, type: 'Form 1' })),
-        ...(form2Response.data || []).map(form => ({ ...form, type: 'Form 2' }))
+        ...(form1Response || []).map((form: any) => ({ ...form, type: 'Form 1' }))
       ]
       
       return allForms
@@ -402,8 +390,8 @@ export function SteriMilkProcessLogDrawer({
         )
         .map(form => ({
           value: form.id,
-          label: `${form.type} - ${form.date} - ${form.holding_tank_bmt}`,
-          description: `ID: ${form.id.slice(0, 8)}...`
+          label: `${form.type} - ${form.date || 'N/A'} - ${form.holding_tank_bmt || 'N/A'}`,
+          description: `ID: ${form.id?.slice(0, 8) || 'N/A'}...`
         }))
     } catch (error) {
       return []
@@ -431,7 +419,8 @@ export function SteriMilkProcessLogDrawer({
                 type="number"
                 placeholder="Enter batch number"
                 {...field}
-                onChange={(e) => field.onChange(Number(e.target.value))}
+                value={field.value || ""}
+                onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
               />
             )}
           />
@@ -468,37 +457,21 @@ export function SteriMilkProcessLogDrawer({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="approver_signature">Approver Signature *</Label>
-          <Controller
-            name="approver_signature"
-            control={basicInfoForm.control}
-            render={({ field }) => (
-              <div className="space-y-2">
-                {field.value ? (
-                  <img src={base64ToPngDataUrl(field.value)} alt="Approver signature" className="h-24 border border-gray-200 rounded-md bg-white" />
-                ) : (
-                  <div className="h-24 flex items-center justify-center border border-dashed border-gray-300 rounded-md text-xs text-gray-500 bg-white">
-                    No signature captured
-                  </div>
-                )}
-                <div className="flex items-center gap-2">
-                  <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={() => setApproverSignatureOpen(true)}>
-                    Add Signature
-                  </Button>
-                  {field.value && (
-                    <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={() => setApproverSignatureViewOpen(true)}>
-                      View Signature
-                    </Button>
-                  )}
-                  {field.value && (
-                    <Button type="button" variant="ghost" size="sm" className="rounded-full text-red-600" onClick={() => field.onChange("")}>Clear</Button>
-                  )}
-                </div>
-              </div>
-            )}
-          />
-          {basicInfoForm.formState.errors.approver_signature && (
-            <p className="text-sm text-red-500">{basicInfoForm.formState.errors.approver_signature.message}</p>
+          <div className="flex items-center justify-between">
+            <Label htmlFor="approved">Approved</Label>
+            <Controller
+              name="approved"
+              control={basicInfoForm.control}
+              render={({ field }) => (
+                <Switch
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              )}
+            />
+          </div>
+          {basicInfoForm.formState.errors.approved && (
+            <p className="text-sm text-red-500">{basicInfoForm.formState.errors.approved.message}</p>
           )}
         </div>
 
@@ -511,8 +484,8 @@ export function SteriMilkProcessLogDrawer({
               <SearchableSelect
                 options={filmaticForms.map(form => ({
                   value: form.id,
-                  label: `${form.type} - ${form.date} - ${form.holding_tank_bmt}`,
-                  description: `ID: ${form.id.slice(0, 8)}...`
+                  label: `${form.type} - ${form.date || 'N/A'} - ${form.holding_tank_bmt || 'N/A'}`,
+                  description: `ID: ${form.id?.slice(0, 8) || 'N/A'}...`
                 }))}
                 value={field.value}
                 onValueChange={field.onChange}
@@ -1552,7 +1525,7 @@ export function SteriMilkProcessLogDrawer({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-[50vw] sm:max-w-[50vw] p-0 bg-white">
+      <SheetContent className="tablet-sheet-full p-0 bg-white">
         <SheetHeader className="p-6 pb-0 bg-white">
           <SheetTitle>
             {mode === "edit" ? "Edit Steri Milk Process Log" : "Create Steri Milk Process Log"}
@@ -1607,20 +1580,6 @@ export function SteriMilkProcessLogDrawer({
           )}
         </div>
       </SheetContent>
-      <SignatureModal
-        open={approverSignatureOpen}
-        onOpenChange={setApproverSignatureOpen}
-        title="Capture Approver Signature"
-        onSave={(dataUrl) => {
-          basicInfoForm.setValue("approver_signature", dataUrl, { shouldValidate: true })
-        }}
-      />
-      <SignatureViewer
-        open={approverSignatureViewOpen}
-        onOpenChange={setApproverSignatureViewOpen}
-        title="Approver Signature"
-        value={basicInfoForm.getValues("approver_signature")}
-      />
     </Sheet>
   )
 }

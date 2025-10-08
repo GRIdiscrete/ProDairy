@@ -29,7 +29,9 @@ export function PermissionDebug() {
     canRead,
     canUpdate,
     canDelete,
-    getAccessibleRoutes
+    getAccessibleRoutes,
+    getAccessibleModules,
+    hasModuleAccess
   } = usePermissions()
   
   const [isVisible, setIsVisible] = useState(false)
@@ -40,10 +42,12 @@ export function PermissionDebug() {
 
   const userRole = profile.users_role_id_fkey
   const accessibleRoutes = getAccessibleRoutes()
+  const accessibleModules = getAccessibleModules()
   
-  const allViews = ['dashboard', 'settings', 'user_tab', 'role_tab', 'machine_tab', 'silo_tab', 'supplier_tab', 'process_tab', 'devices_tab']
+  const allViews = ['dashboard', 'settings', 'user_tab', 'role_tab', 'machine_tab', 'silo_tab', 'supplier_tab', 'process_tab', 'devices_tab', 'data_capture_module', 'drivers_module', 'tools_module']
   const allFeatures = ['user', 'role', 'machine_item', 'silo_item', 'supplier', 'process', 'devices']
   const allPermissions = ['create', 'read', 'update', 'delete']
+  const allModules = ['admin', 'data-capture', 'drivers', 'tools']
 
   return (
     <Card className="w-full max-w-4xl mx-auto">
@@ -112,6 +116,30 @@ export function PermissionDebug() {
                   {view}: {hasViewPermission(view) ? '✓' : '✗'}
                 </Badge>
               ))}
+            </div>
+          </div>
+
+          {/* Module Access */}
+          <div>
+            <h3 className="text-sm font-semibold mb-2">Module Access</h3>
+            <div className="flex flex-wrap gap-2 mb-4">
+              {allModules.map(module => (
+                <Badge 
+                  key={module} 
+                  variant={hasModuleAccess(module as any) ? "default" : "secondary"}
+                  className={hasModuleAccess(module as any) ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-600"}
+                >
+                  {module}: {hasModuleAccess(module as any) ? '✓' : '✗'}
+                </Badge>
+              ))}
+            </div>
+            <div className="bg-gray-50 p-3 rounded text-sm">
+              <p><strong>Accessible Modules:</strong></p>
+              <ul className="ml-4 space-y-1">
+                {accessibleModules.map(module => (
+                  <li key={module} className="text-green-600">✓ {module}</li>
+                ))}
+              </ul>
             </div>
           </div>
 

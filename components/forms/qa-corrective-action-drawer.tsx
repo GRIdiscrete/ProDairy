@@ -110,7 +110,7 @@ export function QACorrectiveActionDrawer({
     defaultValues: {
       date_of_production: "",
       date_analysed: "",
-      batch_number: 0,
+      batch_number: undefined,
       product: processId || "",
       checked_by: "",
       issue: "",
@@ -122,7 +122,7 @@ export function QACorrectiveActionDrawer({
   const actionDetailsForm = useForm<ActionDetailsFormData>({
     resolver: yupResolver(actionDetailsSchema),
     defaultValues: {
-      ph_after_7_days_at_30_degrees: 0,
+      ph_after_7_days_at_30_degrees: undefined,
       packaging_integrity: "",
       defects: "",
     }
@@ -206,7 +206,7 @@ export function QACorrectiveActionDrawer({
       actionForm.reset({
         date_of_production: action.date_of_production || "",
         date_analysed: action.date_analysed || "",
-        batch_number: action.batch_number || 0,
+        batch_number: action.batch_number ?? undefined,
         product: action.product || processId || "",
         checked_by: action.checked_by || "",
         issue: action.issue || "",
@@ -217,7 +217,7 @@ export function QACorrectiveActionDrawer({
       if (action.qa_corrective_action_details_fkey) {
         const details = action.qa_corrective_action_details_fkey
         actionDetailsForm.reset({
-          ph_after_7_days_at_30_degrees: details.ph_after_7_days_at_30_degrees || 0,
+          ph_after_7_days_at_30_degrees: details.ph_after_7_days_at_30_degrees ?? undefined,
           packaging_integrity: details.packaging_integrity || "",
           defects: details.defects || "",
         })
@@ -335,7 +335,7 @@ export function QACorrectiveActionDrawer({
 
   return (
     <Sheet open={open} onOpenChange={handleClose}>
-      <SheetContent className="w-full sm:max-w-2xl overflow-y-auto  p-6 bg-white">
+      <SheetContent className="tablet-sheet-full overflow-y-auto p-6 bg-white">
         <SheetHeader>
           <SheetTitle className="text-xl font-light">
             {mode === "create" ? "Add QA Corrective Action" : "Edit QA Corrective Action"}
@@ -414,6 +414,8 @@ export function QACorrectiveActionDrawer({
                     type="number"
                     {...actionForm.register("batch_number", { valueAsNumber: true })}
                     placeholder="Enter batch number"
+                    value={actionForm.watch("batch_number") || ""}
+                    onChange={(e) => actionForm.setValue("batch_number", e.target.value ? Number(e.target.value) : undefined)}
                   />
                   {actionForm.formState.errors.batch_number && (
                     <p className="text-sm text-red-600">{actionForm.formState.errors.batch_number.message}</p>
@@ -551,6 +553,8 @@ export function QACorrectiveActionDrawer({
                   step="0.1"
                   {...actionDetailsForm.register("ph_after_7_days_at_30_degrees", { valueAsNumber: true })}
                   placeholder="Enter pH level"
+                  value={actionDetailsForm.watch("ph_after_7_days_at_30_degrees") || ""}
+                  onChange={(e) => actionDetailsForm.setValue("ph_after_7_days_at_30_degrees", e.target.value ? Number(e.target.value) : undefined)}
                 />
                 {actionDetailsForm.formState.errors.ph_after_7_days_at_30_degrees && (
                   <p className="text-sm text-red-600">{actionDetailsForm.formState.errors.ph_after_7_days_at_30_degrees.message}</p>

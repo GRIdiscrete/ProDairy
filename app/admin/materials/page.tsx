@@ -15,6 +15,9 @@ import { useAppDispatch, useAppSelector } from "@/lib/store"
 import { fetchRawMaterials, deleteRawMaterial, clearError } from "@/lib/store/slices/rawMaterialSlice"
 import { toast } from "sonner"
 import { AdminDashboardLayout } from "@/components/layout/admin-dashboard-layout"
+import { PermissionGuard } from "@/components/auth/permission-guard"
+import { PermissionButton } from "@/components/ui/permission-table-actions"
+import { PermissionTableActions } from "@/components/ui/permission-table-actions"
 
 export default function MaterialsPage() {
   const dispatch = useAppDispatch()
@@ -191,43 +194,36 @@ export default function MaterialsPage() {
       cell: ({ row }: any) => {
         const rawMaterial = row.original
         return (
-          <div className="flex space-x-2">
-            <LoadingButton variant="outline" size="sm" onClick={() => handleViewRawMaterial(rawMaterial)}>
-              <Eye className="w-4 h-4" />
-            </LoadingButton>
-            <LoadingButton variant="outline" size="sm" onClick={() => handleEditRawMaterial(rawMaterial)}>
-              <Edit className="w-4 h-4" />
-            </LoadingButton>
-            <LoadingButton 
-              variant="destructive" 
-              size="sm" 
-              onClick={() => handleDeleteRawMaterial(rawMaterial)}
-              loading={operationLoading.delete}
-              disabled={operationLoading.delete}
-            >
-              <Trash2 className="w-4 h-4" />
-            </LoadingButton>
-          </div>
+          <PermissionTableActions
+            feature="material"
+            onView={() => handleViewRawMaterial(rawMaterial)}
+            onEdit={() => handleEditRawMaterial(rawMaterial)}
+            onDelete={() => handleDeleteRawMaterial(rawMaterial)}
+            showDropdown={true}
+          />
         )
       },
     },
   ]
 
   return (
-    <AdminDashboardLayout title="Raw Materials" subtitle="Manage and configure raw materials">
+    <PermissionGuard requiredView="material_tab">
+      <AdminDashboardLayout title="Raw Materials" subtitle="Manage and configure raw materials">
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-light text-foreground">Raw Materials</h1>
             <p className="text-sm font-light text-muted-foreground">Manage raw materials inventory and specifications</p>
           </div>
-          <LoadingButton 
+          <PermissionButton
+            feature="material"
+            permission="create"
             onClick={handleAddRawMaterial}
             className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full px-6 py-2 font-light"
           >
             <Plus className="mr-2 h-4 w-4" />
             Add Raw Material
-          </LoadingButton>
+          </PermissionButton>
         </div>
 
         {/* Stats (no shadow, gray border, rounded) */}
@@ -357,5 +353,6 @@ export default function MaterialsPage() {
         />
       </div>
     </AdminDashboardLayout>
+    </PermissionGuard>
   )
 }

@@ -120,7 +120,7 @@ export default function FilmaticLines2Page() {
     if (!selectedForm) return
     
     try {
-      await dispatch(deleteFilmaticLinesForm2(selectedForm.id)).unwrap()
+      await dispatch(deleteFilmaticLinesForm2(selectedForm.id!)).unwrap()
       toast.success('Filmatic Lines Form 2 deleted successfully')
       setDeleteDialogOpen(false)
       setSelectedForm(null)
@@ -154,13 +154,12 @@ export default function FilmaticLines2Page() {
             </div>
             <div>
               <div className="flex items-center space-x-2">
-                <span className="font-light">#{form.id.slice(0, 8)}</span>
                 <Badge className={`${form.approved ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'} font-light`}>
                   {form.approved ? 'Approved' : 'Pending'}
                 </Badge>
               </div>
               <p className="text-sm text-gray-500 mt-1">
-                {new Date(form.created_at).toLocaleDateString()} • {form.holding_tank_bmt ? form.holding_tank_bmt.slice(0, 8) + '...' : 'N/A'}
+                {form.created_at ? new Date(form.created_at).toLocaleDateString() : 'N/A'}
               </p>
             </div>
           </div>
@@ -168,26 +167,28 @@ export default function FilmaticLines2Page() {
       },
     },
     {
-      accessorKey: "bottle_counts",
-      header: "Bottle Counts",
+      accessorKey: "production_info",
+      header: "Production Info",
       cell: ({ row }: any) => {
         const form = row.original
+        const dayShiftCount = form.filmatic_line_form_2_day_shift?.length || 0
+        const nightShiftCount = form.filmatic_line_form_2_night_shift?.length || 0
         return (
           <div className="space-y-2">
             <div className="flex items-center space-x-2">
               <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center">
                 <Package className="w-3 h-3 text-blue-600" />
               </div>
-              <span className="text-sm font-light">Bottles</span>
+              <span className="text-sm font-light">Production</span>
             </div>
             <div className="space-y-1">
               <div className="flex items-center justify-between">
                 <span className="text-xs text-gray-500">Day Shift</span>
-                <span className="text-xs font-light">{form.day_shift_opening_bottles} → {form.day_shift_closing_bottles}</span>
+                <span className="text-xs font-light">{dayShiftCount} entries</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-xs text-gray-500">Night Shift</span>
-                <span className="text-xs font-light">{form.night_shift_opening_bottles} → {form.night_shift_closing_bottles}</span>
+                <span className="text-xs font-light">{nightShiftCount} entries</span>
               </div>
             </div>
           </div>
@@ -195,27 +196,38 @@ export default function FilmaticLines2Page() {
       },
     },
     {
-      accessorKey: "waste_info",
-      header: "Waste",
+      accessorKey: "groups_info",
+      header: "Groups",
       cell: ({ row }: any) => {
         const form = row.original
+        const groups = form.groups
         return (
           <div className="space-y-2">
             <div className="flex items-center space-x-2">
-              <div className="w-5 h-5 rounded-full bg-red-100 flex items-center justify-center">
-                <TrendingUp className="w-3 h-3 text-red-600" />
+              <div className="w-5 h-5 rounded-full bg-purple-100 flex items-center justify-center">
+                <TrendingUp className="w-3 h-3 text-purple-600" />
               </div>
-              <span className="text-sm font-light">Waste</span>
+              <span className="text-sm font-light">Groups</span>
             </div>
             <div className="space-y-1">
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-gray-500">Day Shift</span>
-                <span className="text-xs font-light text-red-600">{form.day_shift_waste_bottles}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-gray-500">Night Shift</span>
-                <span className="text-xs font-light text-red-600">{form.night_shift_waste_bottles}</span>
-              </div>
+              {groups ? (
+                <>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-gray-500">Group A</span>
+                    <span className="text-xs font-light">{groups.group_a?.length || 0} members</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-gray-500">Group B</span>
+                    <span className="text-xs font-light">{groups.group_b?.length || 0} members</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-gray-500">Group C</span>
+                    <span className="text-xs font-light">{groups.group_c?.length || 0} members</span>
+                  </div>
+                </>
+              ) : (
+                <div className="text-xs text-gray-400">No groups assigned</div>
+              )}
             </div>
           </div>
         )
@@ -226,6 +238,11 @@ export default function FilmaticLines2Page() {
       header: "Shifts",
       cell: ({ row }: any) => {
         const form = row.original
+        const dayShiftHasData = form.filmatic_line_form_2_day_shift?.length > 0
+        const nightShiftHasData = form.filmatic_line_form_2_night_shift?.length > 0
+        const dayShiftApproved = dayShiftHasData && form.filmatic_line_form_2_day_shift.some((shift: any) => shift.supervisor_approve)
+        const nightShiftApproved = nightShiftHasData && form.filmatic_line_form_2_night_shift.some((shift: any) => shift.supervisor_approve)
+        
         return (
           <div className="space-y-2">
             <div className="flex items-center space-x-2">
@@ -237,11 +254,21 @@ export default function FilmaticLines2Page() {
             <div className="space-y-1">
               <div className="flex items-center justify-between">
                 <span className="text-xs text-gray-500">Day</span>
-                <span className="text-xs font-light text-green-600">{form.day_shift_id ? 'Completed' : 'Pending'}</span>
+                <span className={`text-xs font-light ${
+                  dayShiftApproved ? 'text-green-600' : 
+                  dayShiftHasData ? 'text-yellow-600' : 'text-gray-400'
+                }`}>
+                  {dayShiftApproved ? 'Approved' : dayShiftHasData ? 'Pending' : 'No Data'}
+                </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-xs text-gray-500">Night</span>
-                <span className="text-xs font-light text-blue-600">{form.night_shift_id ? 'Completed' : 'Pending'}</span>
+                <span className={`text-xs font-light ${
+                  nightShiftApproved ? 'text-green-600' : 
+                  nightShiftHasData ? 'text-yellow-600' : 'text-gray-400'
+                }`}>
+                  {nightShiftApproved ? 'Approved' : nightShiftHasData ? 'Pending' : 'No Data'}
+                </span>
               </div>
             </div>
           </div>
@@ -378,14 +405,13 @@ export default function FilmaticLines2Page() {
                     <p className="text-sm font-light text-gray-600">Form ID</p>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <p className="text-lg font-light">#{latestForm.id.slice(0, 8)}</p>
-                    <CopyButton text={latestForm.id} />
+                    <p className="text-lg font-light">#{latestForm.id?.slice(0, 8) || 'N/A'}</p>
+                    {latestForm.id && <CopyButton text={latestForm.id} />}
                   </div>
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center space-x-2">
                     <Factory className="h-4 w-4 text-blue-500" />
-                    <p className="text-sm font-light text-gray-600">Holding Tank</p>
                   </div>
                   <p className="text-lg font-light text-blue-600">{latestForm.holding_tank_bmt ? latestForm.holding_tank_bmt.slice(0, 8) + '...' : 'N/A'}</p>
                 </div>
@@ -394,11 +420,11 @@ export default function FilmaticLines2Page() {
                     <Clock className="h-4 w-4 text-gray-500" />
                     <p className="text-sm font-light text-gray-600">Created</p>
                   </div>
-                  <p className="text-lg font-light">{new Date(latestForm.created_at).toLocaleDateString('en-GB', { 
+                  <p className="text-lg font-light">{latestForm.created_at ? new Date(latestForm.created_at).toLocaleDateString('en-GB', { 
                     day: 'numeric', 
                     month: 'long', 
                     year: 'numeric' 
-                  })}</p>
+                  }) : 'N/A'}</p>
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center space-x-2">
@@ -413,46 +439,49 @@ export default function FilmaticLines2Page() {
               
               {/* Process Flow Information */}
               <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-4">
-                {/* Bottle Summary */}
+                {/* Production Summary */}
                 <div className="p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg">
                   <div className="flex items-center space-x-2 mb-3">
                     <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
                       <Package className="h-4 w-4 text-blue-600" />
                     </div>
-                    <h4 className="text-sm font-light text-gray-900">Bottle Summary</h4>
+                    <h4 className="text-sm font-light text-gray-900">Production Summary</h4>
                   </div>
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-light text-gray-600">Day Shift</span>
-                      <span className="text-xs font-light text-blue-600">{latestForm.day_shift_opening_bottles} → {latestForm.day_shift_closing_bottles}</span>
+                      <span className="text-xs font-light text-gray-600">Day Shift Entries</span>
+                      <span className="text-xs font-light text-blue-600">{latestForm.filmatic_line_form_2_day_shift?.length || 0}</span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-light text-gray-600">Night Shift</span>
-                      <span className="text-xs font-light text-blue-600">{latestForm.night_shift_opening_bottles} → {latestForm.night_shift_closing_bottles}</span>
+                      <span className="text-xs font-light text-gray-600">Night Shift Entries</span>
+                      <span className="text-xs font-light text-blue-600">{latestForm.filmatic_line_form_2_night_shift?.length || 0}</span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-light text-gray-600">Total Waste</span>
-                      <span className="text-xs font-light text-red-600">{latestForm.day_shift_waste_bottles + latestForm.night_shift_waste_bottles}</span>
+                      <span className="text-xs font-light text-gray-600">Total Details</span>
+                      <span className="text-xs font-light text-green-600">
+                        {(latestForm.filmatic_line_form_2_day_shift?.reduce((acc: number, shift: any) => acc + (shift.filmatic_line_form_2_day_shift_details?.length || 0), 0) || 0) +
+                         (latestForm.filmatic_line_form_2_night_shift?.reduce((acc: number, shift: any) => acc + (shift.filmatic_line_form_2_night_shift_details?.length || 0), 0) || 0)}
+                      </span>
                     </div>
                   </div>
                 </div>
 
-                {/* Shift Status */}
+                {/* Groups & Approval Status */}
                 <div className="p-4 bg-gray-50 rounded-lg">
                   <div className="flex items-center space-x-2 mb-3">
                     <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center">
                       <Clock className="h-4 w-4 text-gray-600" />
                     </div>
-                    <h4 className="text-sm font-light text-gray-900">Shift Status</h4>
+                    <h4 className="text-sm font-light text-gray-900">Groups & Status</h4>
                   </div>
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-light text-gray-600">Day Shift</span>
-                      <span className="text-xs font-light text-green-600">{latestForm.day_shift_id ? 'Completed' : 'Pending'}</span>
+                      <span className="text-xs font-light text-gray-600">Groups Assigned</span>
+                      <span className="text-xs font-light text-green-600">{latestForm.groups ? 'Yes' : 'No'}</span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-light text-gray-600">Night Shift</span>
-                      <span className="text-xs font-light text-blue-600">{latestForm.night_shift_id ? 'Completed' : 'Pending'}</span>
+                      <span className="text-xs font-light text-gray-600">Manager ID</span>
+                      <span className="text-xs font-light text-blue-600">{latestForm.groups?.manager_id?.slice(0, 8) || 'N/A'}</span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-light text-gray-600">Approval</span>

@@ -642,10 +642,10 @@ export function UHTQualityCheckDrawer({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-[50vw] sm:max-w-[50vw] p-0 bg-white">
+      <SheetContent className="tablet-sheet-full p-0 bg-white">
         <SheetHeader className="p-6 pb-0 bg-white">
           <SheetTitle>
-            {mode === "edit" ? "Edit UHT Quality Check" : "Create UHT Quality Check"}
+            {mode === "edit" ? "Edit Incubation Test" : "Create Incubation Test"}
           </SheetTitle>
           <SheetDescription>
             {currentStep === 1 

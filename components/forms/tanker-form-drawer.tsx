@@ -38,7 +38,7 @@ export function TankerFormDrawer({ open, onOpenChange, tanker, mode }: Props) {
 
   const { control, handleSubmit, reset, formState: { errors } } = useForm<FormData>({
     resolver: yupResolver(schema),
-    defaultValues: { driver_id: "", reg_number: "", capacity: 0, condition: "", age: 0, mileage: 0 }
+    defaultValues: { driver_id: "", reg_number: "", capacity: undefined, condition: "", age: undefined, mileage: undefined }
   })
 
   const [loadingUsers, setLoadingUsers] = useState(false)
@@ -67,7 +67,7 @@ export function TankerFormDrawer({ open, onOpenChange, tanker, mode }: Props) {
           mileage: tanker.mileage,
         })
       } else {
-        reset({ driver_id: "", reg_number: "", capacity: 0, condition: "", age: 0, mileage: 0 })
+        reset({ driver_id: "", reg_number: "", capacity: undefined, condition: "", age: undefined, mileage: undefined })
       }
     }
   }, [open, mode, tanker, reset])
@@ -115,7 +115,7 @@ export function TankerFormDrawer({ open, onOpenChange, tanker, mode }: Props) {
               <div className="space-y-2">
                 <Label>Capacity (L) *</Label>
                 <Controller name="capacity" control={control} render={({ field }) => (
-                  <Input type="number" step="0.1" {...field} onChange={(e) => field.onChange(parseFloat(e.target.value))} />
+                  <Input type="number" step="0.1" {...field} value={field.value || ""} onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)} />
                 )} />
                 {errors.capacity && <p className="text-sm text-red-500">{errors.capacity.message}</p>}
               </div>
@@ -129,14 +129,14 @@ export function TankerFormDrawer({ open, onOpenChange, tanker, mode }: Props) {
               <div className="space-y-2">
                 <Label>Age (years) *</Label>
                 <Controller name="age" control={control} render={({ field }) => (
-                  <Input type="number" step="0.1" {...field} onChange={(e) => field.onChange(parseFloat(e.target.value))} />
+                  <Input type="number" step="0.1" {...field} value={field.value || ""} onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)} />
                 )} />
                 {errors.age && <p className="text-sm text-red-500">{errors.age.message}</p>}
               </div>
               <div className="space-y-2">
                 <Label>Mileage (km) *</Label>
                 <Controller name="mileage" control={control} render={({ field }) => (
-                  <Input type="number" step="0.1" {...field} onChange={(e) => field.onChange(parseFloat(e.target.value))} />
+                  <Input type="number" step="0.1" {...field} value={field.value || ""} onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)} />
                 )} />
                 {errors.mileage && <p className="text-sm text-red-500">{errors.mileage.message}</p>}
               </div>

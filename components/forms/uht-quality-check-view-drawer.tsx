@@ -28,10 +28,10 @@ export function UHTQualityCheckViewDrawer({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-[50vw] sm:max-w-[50vw] p-0 bg-white">
+      <SheetContent className="tablet-sheet-full p-0 bg-white">
         <SheetHeader className="p-6 pb-0 bg-white">
           <SheetTitle className="text-lg font-light">
-            UHT Quality Check Details
+            Incubation Test Details
           </SheetTitle>
           <SheetDescription className="text-sm font-light">
             View detailed information about the UHT quality check and its analysis results

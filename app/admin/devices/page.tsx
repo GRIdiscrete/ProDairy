@@ -13,6 +13,9 @@ import { DeviceFormDrawer } from "@/components/forms/device-form-drawer"
 import { DeviceViewDrawer } from "@/components/forms/device-view-drawer"
 import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-dialog"
 import { AdminDashboardLayout } from "@/components/layout/admin-dashboard-layout"
+import { PermissionGuard } from "@/components/auth/permission-guard"
+import { PermissionButton } from "@/components/ui/permission-table-actions"
+import { PermissionTableActions } from "@/components/ui/permission-table-actions"
 
 // Mock data for devices
 const mockDevices = [
@@ -116,39 +119,23 @@ export default function DevicesPage() {
       cell: ({ row }: any) => {
         const device = row.original
         return (
-          <div className="flex space-x-1">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={() => {
-                setSelectedDevice(device)
-                setViewDrawerOpen(true)
-              }}
-            >
-              <Eye className="h-4 w-4" />
-            </Button>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={() => {
-                setSelectedDevice(device)
-                setFormMode("edit")
-                setFormDrawerOpen(true)
-              }}
-            >
-              <Edit className="h-4 w-4" />
-            </Button>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={() => {
-                setSelectedDevice(device)
-                setDeleteDialogOpen(true)
-              }}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </div>
+          <PermissionTableActions
+            feature="devices"
+            onView={() => {
+              setSelectedDevice(device)
+              setViewDrawerOpen(true)
+            }}
+            onEdit={() => {
+              setSelectedDevice(device)
+              setFormMode("edit")
+              setFormDrawerOpen(true)
+            }}
+            onDelete={() => {
+              setSelectedDevice(device)
+              setDeleteDialogOpen(true)
+            }}
+            showDropdown={true}
+          />
         )
       },
     },
@@ -189,17 +176,22 @@ export default function DevicesPage() {
     }
   }
   return (
-    <AdminDashboardLayout title="Device Configuration" subtitle="Manage and configure IoT devices and sensors">
+    <PermissionGuard requiredView="devices_tab">
+      <AdminDashboardLayout title="Device Configuration" subtitle="Manage and configure IoT devices and sensors">
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-foreground">Devices Management</h1>
             <p className="text-muted-foreground">Manage IoT devices and sensors</p>
           </div>
-          <Button onClick={handleAddDevice}>
+          <PermissionButton
+            feature="devices"
+            permission="create"
+            onClick={handleAddDevice}
+          >
             <Plus className="mr-2 h-4 w-4" />
             Add Device
-          </Button>
+          </PermissionButton>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -324,5 +316,6 @@ export default function DevicesPage() {
         />
       </div>
     </AdminDashboardLayout>
+    </PermissionGuard>
   )
 }

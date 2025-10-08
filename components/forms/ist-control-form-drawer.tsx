@@ -194,7 +194,7 @@ export function ISTControlFormDrawer({ open, onOpenChange, form, mode }: ISTCont
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-[50vw] sm:max-w-[50vw] overflow-y-auto bg-white">
+      <SheetContent className="tablet-sheet-full p-0 bg-white">
         <SheetHeader>
           <SheetTitle>
             {mode === "create" ? "Create IST Control Form" : "Edit IST Control Form"}

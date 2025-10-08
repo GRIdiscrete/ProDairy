@@ -12,14 +12,19 @@ export interface CreateDriverFormRequest {
   driver: string
   start_date: string
   end_date: string
-  collected_products?: DriverFormCollectedProduct[]
+  drivers_form_collected_products: DriverFormCollectedProduct[]
   delivered: boolean
   rejected: boolean
 }
 
-export interface UpdateDriverFormRequest extends CreateDriverFormRequest {
+export interface UpdateDriverFormRequest {
   id: string
-  created_at: string
+  driver: string
+  start_date: string
+  end_date: string
+  drivers_form_collected_products: DriverFormCollectedProduct[]
+  delivered: boolean
+  rejected: boolean
   updated_at: string
 }
 
@@ -39,9 +44,12 @@ export const driverFormApi = {
   // Create new driver form
   async createDriverForm(formData: CreateDriverFormRequest): Promise<ApiEnvelope<DriverForm>> {
     const requestData = {
-      ...formData,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+      driver: formData.driver,
+      start_date: formData.start_date,
+      end_date: formData.end_date,
+      delivered: formData.delivered,
+      rejected: formData.rejected,
+      drivers_form_collected_products: formData.drivers_form_collected_products,
     }
     
     return apiRequest<ApiEnvelope<DriverForm>>(API_CONFIG.ENDPOINTS.DRIVER_FORMS, {
@@ -53,8 +61,14 @@ export const driverFormApi = {
   // Update existing driver form
   async updateDriverForm(formData: UpdateDriverFormRequest): Promise<ApiEnvelope<DriverForm>> {
     const requestData = {
-      ...formData,
-      updated_at: new Date().toISOString(),
+      id: formData.id,
+      driver: formData.driver,
+      start_date: formData.start_date,
+      end_date: formData.end_date,
+      delivered: formData.delivered,
+      rejected: formData.rejected,
+      updated_at: formData.updated_at,
+      drivers_form_collected_products: formData.drivers_form_collected_products,
     }
     
     return apiRequest<ApiEnvelope<DriverForm>>(API_CONFIG.ENDPOINTS.DRIVER_FORMS, {

@@ -8,14 +8,16 @@ import { fetchUsers } from "@/lib/store/slices/usersSlice"
 import { fetchRawMaterials } from "@/lib/store/slices/rawMaterialSlice"
 import { fetchSuppliers } from "@/lib/store/slices/supplierSlice"
 import { DriversDashboardLayout } from "@/components/layout/drivers-dashboard-layout"
-import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Plus, Edit, Eye, Truck, Calendar, User, CheckCircle, XCircle, Settings, Trash2, Search, Filter, ChevronLeft, ChevronRight, Download, Wifi, WifiOff } from "lucide-react"
 import { DataTable } from "@/components/ui/data-table"
 import { DriverFormDrawer } from "@/components/forms/driver-form-drawer"
 import { DriverFormViewDrawer } from "@/components/forms/driver-form-view-drawer"
+import { RawMilkIntakeLabTestDrawer } from "@/components/forms/raw-milk-intake-lab-test-drawer"
+import { fetchRawMilkIntakeLabTests } from "@/lib/store/slices/rawMilkIntakeLabTestSlice"
 import { LoadingButton } from "@/components/ui/loading-button"
 import { useOfflineData } from "@/hooks/use-offline-data"
 import { DataSyncService } from "@/lib/offline/data-sync"
@@ -49,8 +51,11 @@ export default function DriverFormsPage() {
   
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
   const [isViewDrawerOpen, setIsViewDrawerOpen] = useState(false)
+  const [isLabTestDrawerOpen, setIsLabTestDrawerOpen] = useState(false)
   const [editingForm, setEditingForm] = useState<UnifiedForm | null>(null)
   const [viewingForm, setViewingForm] = useState<UnifiedForm | null>(null)
+  const [selectedFormForLabTest, setSelectedFormForLabTest] = useState<UnifiedForm | null>(null)
+  const [editingLabTest, setEditingLabTest] = useState<any>(null)
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [currentPage, setCurrentPage] = useState(1)
@@ -165,6 +170,18 @@ export default function DriverFormsPage() {
     setIsViewDrawerOpen(true)
   }
 
+  const handleCreateLabTest = (form: UnifiedForm) => {
+    setSelectedFormForLabTest(form)
+    setEditingLabTest(null)
+    setIsLabTestDrawerOpen(true)
+  }
+
+  const handleEditLabTest = (form: UnifiedForm, labTest: any) => {
+    setSelectedFormForLabTest(form)
+    setEditingLabTest(labTest)
+    setIsLabTestDrawerOpen(true)
+  }
+
   const getStatusBadge = (form: UnifiedForm) => {
     if (form.delivered) {
       return (
@@ -189,22 +206,29 @@ export default function DriverFormsPage() {
     }
   }
 
-  // Filter and paginate data
+  // Filter and sort data
   const filteredForms = useMemo(() => {
     if (!displayDriverForms) return []
     
-    return displayDriverForms.filter((form) => {
-      const driverName = getDriverName(form)
-      const matchesSearch = form.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        driverName.toLowerCase().includes(searchTerm.toLowerCase())
-      
-      const matchesStatus = statusFilter === "all" || 
-        (statusFilter === "delivered" && form.delivered) ||
-        (statusFilter === "rejected" && form.rejected) ||
-        (statusFilter === "pending" && !form.delivered && !form.rejected)
-      
-      return matchesSearch && matchesStatus
-    })
+    return displayDriverForms
+      .filter((form) => {
+        const driverName = getDriverName(form)
+        const matchesSearch = form.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          driverName.toLowerCase().includes(searchTerm.toLowerCase())
+        
+        const matchesStatus = statusFilter === "all" || 
+          (statusFilter === "delivered" && form.delivered) ||
+          (statusFilter === "rejected" && form.rejected) ||
+          (statusFilter === "pending" && !form.delivered && !form.rejected)
+        
+        return matchesSearch && matchesStatus
+      })
+      .sort((a, b) => {
+        // Sort by created_at in descending order (most recent first)
+        const dateA = new Date(a.created_at).getTime()
+        const dateB = new Date(b.created_at).getTime()
+        return dateB - dateA
+      })
   }, [displayDriverForms, searchTerm, statusFilter])
 
   const paginatedForms = useMemo(() => {
@@ -267,12 +291,12 @@ export default function DriverFormsPage() {
       },
     },
     {
-      accessorKey: "collected_products",
+      accessorKey: "drivers_form_collected_products",
       header: "Products",
       cell: ({ row }: any) => {
         const form = row.original as UnifiedForm
         return (
-          <span className="text-sm font-light">{form.collected_products?.length || 0} products</span>
+          <span className="text-sm font-light">{form.drivers_form_collected_products?.length || 0} products</span>
         )
       },
     },
@@ -317,6 +341,14 @@ export default function DriverFormsPage() {
               className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 rounded-full"
             >
               <Settings className="w-4 h-4" />
+            </LoadingButton>
+            <LoadingButton 
+              variant="outline" 
+              size="sm" 
+              onClick={() => handleCreateLabTest(form)}
+              className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white border-0 rounded-full"
+            >
+              <Plus className="w-4 h-4" />
             </LoadingButton>
           </div>
         )
@@ -574,12 +606,20 @@ export default function DriverFormsPage() {
                             <Settings className="h-4 w-4 mr-1" />
                             Edit
                           </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => handleCreateLabTest(form)}
+                            className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white border-0 rounded-full"
+                          >
+                            <Plus className="h-4 w-4 mr-1" />
+                            Test
+                          </Button>
                         </div>
                       </div>
                     ))}
                   </div>
                 </div>
-
                 {/* Tablet: card grid */}
                 <div className="hidden md:grid lg:hidden grid-cols-1 md:grid-cols-2 gap-4">
                   {paginatedForms.map((form: UnifiedForm) => (
@@ -628,6 +668,15 @@ export default function DriverFormsPage() {
                         >
                           <Settings className="h-4 w-4 mr-1" />
                           Edit
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => handleCreateLabTest(form)}
+                          className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white border-0 rounded-full"
+                        >
+                          <Plus className="h-4 w-4 mr-1" />
+                          Test
                         </Button>
                       </div>
                     </div>
@@ -698,6 +747,18 @@ export default function DriverFormsPage() {
             setEditingForm(form)
             setIsDrawerOpen(true)
             setIsViewDrawerOpen(false)
+          }}
+        />
+        <RawMilkIntakeLabTestDrawer
+          open={isLabTestDrawerOpen}
+          onOpenChange={setIsLabTestDrawerOpen}
+          driversFormId={selectedFormForLabTest?.id || ""}
+          mode={editingLabTest ? "edit" : "create"}
+          existingTest={editingLabTest}
+          onSuccess={() => {
+            setIsLabTestDrawerOpen(false)
+            setSelectedFormForLabTest(null)
+            setEditingLabTest(null)
           }}
         />
       </div>

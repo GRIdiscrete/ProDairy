@@ -61,7 +61,7 @@ export function DeviceFormDrawer({ open, onOpenChange, device, mode }: DeviceFor
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="!w-[50vw] !max-w-[50vw] overflow-y-auto" style={{ width: '50vw', maxWidth: '50vw' }}>
+      <SheetContent className="!w-[50vw] !max-w-[50vw] tablet-sheet-full overflow-y-auto">
         <div className="p-6">
           <SheetHeader>
             <SheetTitle>{mode === "create" ? "Add New Device" : "Edit Device"}</SheetTitle>

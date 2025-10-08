@@ -249,7 +249,7 @@ export function CIPControlFormDrawer({ open, onOpenChange, form, mode }: CIPCont
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-[50vw] sm:max-w-[50vw] overflow-y-auto bg-white">
+      <SheetContent className="tablet-sheet-full p-0 bg-white">
         <div className="p-6 bg-white">
           <SheetHeader>
             <SheetTitle>{mode === "create" ? "Add New CIP Control Form" : "Edit CIP Control Form"}</SheetTitle>
