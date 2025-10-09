@@ -10,12 +10,14 @@ import { Label } from "@/components/ui/label"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { SearchableSelect } from "@/components/ui/searchable-select"
 import { DatePicker } from "@/components/ui/date-picker"
+import { ShadcnTimePicker } from "@/components/ui/shadcn-time-picker"
 import { useAppDispatch, useAppSelector } from "@/lib/store"
 import { 
   createSteriMilkProcessLog,
   fetchSteriMilkProcessLogs
 } from "@/lib/store/slices/steriMilkProcessLogSlice"
 import { usersApi } from "@/lib/api/users"
+import { rolesApi } from "@/lib/api/roles"
 import { filmaticLinesForm1Api } from "@/lib/api/filmatic-lines-form-1"
 import { toast } from "sonner"
 import { SteriMilkProcessLog, CreateSteriMilkProcessLogRequest } from "@/lib/api/steri-milk-process-log"
@@ -66,96 +68,96 @@ const ProcessOverview = () => (
 
 // Step 1: Basic Information Schema
 const basicInfoSchema = yup.object({
-  approved: yup.boolean().required("Approval status is required"),
-  approver_id: yup.string().required("Approver is required"),
-  filmatic_form_id: yup.string().required("Filmatic form is required"),
-  batch_number: yup.number().required("Batch number is required").min(1, "Must be positive"),
+  approved: yup.boolean().optional(),
+  approver_id: yup.string().optional(),
+  filmatic_form_id: yup.string().optional(),
+  batch_number: yup.number().optional(),
 })
 
 // Step 2: Process Times Schema
 const processTimesSchema = yup.object({
-  filling_start: yup.string().required("Filling start is required"),
-  autoclave_start: yup.string().required("Autoclave start is required"),
-  heating_start: yup.string().required("Heating start is required"),
-  heating_finish: yup.string().required("Heating finish is required"),
-  sterilization_start: yup.string().required("Sterilization start is required"),
-  sterilization_after_5: yup.string().required("Sterilization after 5 is required"),
-  sterilization_finish: yup.string().required("Sterilization finish is required"),
-  pre_cooling_start: yup.string().required("Pre cooling start is required"),
-  pre_cooling_finish: yup.string().required("Pre cooling finish is required"),
-  cooling_1_start: yup.string().required("Cooling 1 start is required"),
-  cooling_1_finish: yup.string().required("Cooling 1 finish is required"),
-  cooling_2_start: yup.string().required("Cooling 2 start is required"),
-  cooling_2_finish: yup.string().required("Cooling 2 finish is required"),
+  filling_start: yup.string().optional(),
+  autoclave_start: yup.string().optional(),
+  heating_start: yup.string().optional(),
+  heating_finish: yup.string().optional(),
+  sterilization_start: yup.string().optional(),
+  sterilization_after_5: yup.string().optional(),
+  sterilization_finish: yup.string().optional(),
+  pre_cooling_start: yup.string().optional(),
+  pre_cooling_finish: yup.string().optional(),
+  cooling_1_start: yup.string().optional(),
+  cooling_1_finish: yup.string().optional(),
+  cooling_2_start: yup.string().optional(),
+  cooling_2_finish: yup.string().optional(),
 })
 
 // Step 3: Process Details Schema
 const processDetailsSchema = yup.object({
   filling_start_details: yup.object({
-    time: yup.string().required("Time is required"),
-    temperature: yup.number().required("Temperature is required"),
-    pressure: yup.number().required("Pressure is required"),
-  }),
+    time: yup.string().optional(),
+    temperature: yup.number().optional(),
+    pressure: yup.number().optional(),
+  }).optional(),
   autoclave_start_details: yup.object({
-    time: yup.string().required("Time is required"),
-    temperature: yup.number().required("Temperature is required"),
-    pressure: yup.number().required("Pressure is required"),
-  }),
+    time: yup.string().optional(),
+    temperature: yup.number().optional(),
+    pressure: yup.number().optional(),
+  }).optional(),
   heating_start_details: yup.object({
-    time: yup.string().required("Time is required"),
-    temperature: yup.number().required("Temperature is required"),
-    pressure: yup.number().required("Pressure is required"),
-  }),
+    time: yup.string().optional(),
+    temperature: yup.number().optional(),
+    pressure: yup.number().optional(),
+  }).optional(),
   heating_finish_details: yup.object({
-    time: yup.string().required("Time is required"),
-    temperature: yup.number().required("Temperature is required"),
-    pressure: yup.number().required("Pressure is required"),
-  }),
+    time: yup.string().optional(),
+    temperature: yup.number().optional(),
+    pressure: yup.number().optional(),
+  }).optional(),
   sterilization_start_details: yup.object({
-    time: yup.string().required("Time is required"),
-    temperature: yup.number().required("Temperature is required"),
-    pressure: yup.number().required("Pressure is required"),
-  }),
+    time: yup.string().optional(),
+    temperature: yup.number().optional(),
+    pressure: yup.number().optional(),
+  }).optional(),
   sterilization_after_5_details: yup.object({
-    time: yup.string().required("Time is required"),
-    temperature: yup.number().required("Temperature is required"),
-    pressure: yup.number().required("Pressure is required"),
-  }),
+    time: yup.string().optional(),
+    temperature: yup.number().optional(),
+    pressure: yup.number().optional(),
+  }).optional(),
   sterilization_finish_details: yup.object({
-    time: yup.string().required("Time is required"),
-    temperature: yup.number().required("Temperature is required"),
-    pressure: yup.number().required("Pressure is required"),
-  }),
+    time: yup.string().optional(),
+    temperature: yup.number().optional(),
+    pressure: yup.number().optional(),
+  }).optional(),
   pre_cooling_start_details: yup.object({
-    time: yup.string().required("Time is required"),
-    temperature: yup.number().required("Temperature is required"),
-    pressure: yup.number().required("Pressure is required"),
-  }),
+    time: yup.string().optional(),
+    temperature: yup.number().optional(),
+    pressure: yup.number().optional(),
+  }).optional(),
   pre_cooling_finish_details: yup.object({
-    time: yup.string().required("Time is required"),
-    temperature: yup.number().required("Temperature is required"),
-    pressure: yup.number().required("Pressure is required"),
-  }),
+    time: yup.string().optional(),
+    temperature: yup.number().optional(),
+    pressure: yup.number().optional(),
+  }).optional(),
   cooling_1_start_details: yup.object({
-    time: yup.string().required("Time is required"),
-    temperature: yup.number().required("Temperature is required"),
-    pressure: yup.number().required("Pressure is required"),
-  }),
+    time: yup.string().optional(),
+    temperature: yup.number().optional(),
+    pressure: yup.number().optional(),
+  }).optional(),
   cooling_1_finish_details: yup.object({
-    time: yup.string().required("Time is required"),
-    temperature: yup.number().required("Temperature is required"),
-    pressure: yup.number().required("Pressure is required"),
-  }),
+    time: yup.string().optional(),
+    temperature: yup.number().optional(),
+    pressure: yup.number().optional(),
+  }).optional(),
   cooling_2_start_details: yup.object({
-    time: yup.string().required("Time is required"),
-    temperature: yup.number().required("Temperature is required"),
-    pressure: yup.number().required("Pressure is required"),
-  }),
+    time: yup.string().optional(),
+    temperature: yup.number().optional(),
+    pressure: yup.number().optional(),
+  }).optional(),
   cooling_2_finish_details: yup.object({
-    time: yup.string().required("Time is required"),
-    temperature: yup.number().required("Temperature is required"),
-    pressure: yup.number().required("Pressure is required"),
-  }),
+    time: yup.string().optional(),
+    temperature: yup.number().optional(),
+    pressure: yup.number().optional(),
+  }).optional(),
 })
 
 type BasicInfoFormData = yup.InferType<typeof basicInfoSchema>
@@ -174,24 +176,24 @@ export function SteriMilkProcessLogDrawer({
   
   const [currentStep, setCurrentStep] = useState(1)
   const [users, setUsers] = useState<any[]>([])
+  const [userRoles, setUserRoles] = useState<any[]>([])
   const [filmaticForms, setFilmaticForms] = useState<any[]>([])
   const [loadingUsers, setLoadingUsers] = useState(false)
+  const [loadingUserRoles, setLoadingUserRoles] = useState(false)
   const [loadingFilmaticForms, setLoadingFilmaticForms] = useState(false)
 
   // Basic info form
-  const basicInfoForm = useForm<BasicInfoFormData>({
-    resolver: yupResolver(basicInfoSchema),
+  const basicInfoForm = useForm({
     defaultValues: {
       approved: true,
       approver_id: "",
       filmatic_form_id: "",
-      batch_number: undefined,
+      batch_number: 1,
     },
   })
 
   // Process times form
-  const processTimesForm = useForm<ProcessTimesFormData>({
-    resolver: yupResolver(processTimesSchema),
+  const processTimesForm = useForm({
     defaultValues: {
       filling_start: "",
       autoclave_start: "",
@@ -210,8 +212,7 @@ export function SteriMilkProcessLogDrawer({
   })
 
   // Process details form
-  const processDetailsForm = useForm<ProcessDetailsFormData>({
-    resolver: yupResolver(processDetailsSchema),
+  const processDetailsForm = useForm({
     defaultValues: {
       filling_start_details: { time: "", temperature: 0, pressure: 0 },
       autoclave_start_details: { time: "", temperature: 0, pressure: 0 },
@@ -229,10 +230,11 @@ export function SteriMilkProcessLogDrawer({
     },
   })
 
-  // Load users and filmatic forms on component mount
+  // Load users, user roles and filmatic forms on component mount
   useEffect(() => {
     const loadData = async () => {
       setLoadingUsers(true)
+      setLoadingUserRoles(true)
       setLoadingFilmaticForms(true)
       
       try {
@@ -249,6 +251,20 @@ export function SteriMilkProcessLogDrawer({
               email: "john.doe@example.com",
               department: "Production",
               role_id: "supervisor"
+            }
+          ])
+        }
+        
+        // Load user roles
+        try {
+          const rolesResponse = await rolesApi.getRoles()
+          setUserRoles(rolesResponse.data || [])
+        } catch (roleError) {
+          setUserRoles([
+            {
+              id: "fallback-role-1",
+              role_name: "Supervisor",
+              description: "Production Supervisor"
             }
           ])
         }
@@ -280,6 +296,7 @@ export function SteriMilkProcessLogDrawer({
         console.warn("Form will work with fallback data")
       } finally {
         setLoadingUsers(false)
+        setLoadingUserRoles(false)
         setLoadingFilmaticForms(false)
       }
     }
@@ -311,19 +328,98 @@ export function SteriMilkProcessLogDrawer({
     setCurrentStep(3)
   }
 
-  const handleProcessDetailsSubmit = async (data: ProcessDetailsFormData) => {
+  const handleProcessDetailsSubmit = async (data: any) => {
     try {
       const basicInfo = basicInfoForm.getValues()
       const processTimes = processTimesForm.getValues()
       
+      // Helper function to convert empty string to null
+      const emptyToNull = (value: any) => value === "" || value === null || value === undefined ? null : value
+      
       const formData: CreateSteriMilkProcessLogRequest = {
-        approved: basicInfo.approved,
-        approver_id: basicInfo.approver_id,
-        filmatic_form_id: basicInfo.filmatic_form_id,
+        approved: basicInfo.approved || false,
+        approver_id: basicInfo.approver_id || "",
+        filmatic_form_id: basicInfo.filmatic_form_id || "",
         batch: {
-          batch_number: basicInfo.batch_number,
-          ...processTimes,
-          ...data
+          batch_number: basicInfo.batch_number || 1,
+          filling_start: emptyToNull(processTimes.filling_start),
+          autoclave_start: emptyToNull(processTimes.autoclave_start),
+          heating_start: emptyToNull(processTimes.heating_start),
+          heating_finish: emptyToNull(processTimes.heating_finish),
+          sterilization_start: emptyToNull(processTimes.sterilization_start),
+          sterilization_after_5: emptyToNull(processTimes.sterilization_after_5),
+          sterilization_finish: emptyToNull(processTimes.sterilization_finish),
+          pre_cooling_start: emptyToNull(processTimes.pre_cooling_start),
+          pre_cooling_finish: emptyToNull(processTimes.pre_cooling_finish),
+          cooling_1_start: emptyToNull(processTimes.cooling_1_start),
+          cooling_1_finish: emptyToNull(processTimes.cooling_1_finish),
+          cooling_2_start: emptyToNull(processTimes.cooling_2_start),
+          cooling_2_finish: emptyToNull(processTimes.cooling_2_finish),
+          filling_start_details: data.filling_start_details ? {
+            time: emptyToNull(data.filling_start_details.time),
+            temperature: data.filling_start_details.temperature || 0,
+            pressure: data.filling_start_details.pressure || 0
+          } : null,
+          autoclave_start_details: data.autoclave_start_details ? {
+            time: emptyToNull(data.autoclave_start_details.time),
+            temperature: data.autoclave_start_details.temperature || 0,
+            pressure: data.autoclave_start_details.pressure || 0
+          } : null,
+          heating_start_details: data.heating_start_details ? {
+            time: emptyToNull(data.heating_start_details.time),
+            temperature: data.heating_start_details.temperature || 0,
+            pressure: data.heating_start_details.pressure || 0
+          } : null,
+          heating_finish_details: data.heating_finish_details ? {
+            time: emptyToNull(data.heating_finish_details.time),
+            temperature: data.heating_finish_details.temperature || 0,
+            pressure: data.heating_finish_details.pressure || 0
+          } : null,
+          sterilization_start_details: data.sterilization_start_details ? {
+            time: emptyToNull(data.sterilization_start_details.time),
+            temperature: data.sterilization_start_details.temperature || 0,
+            pressure: data.sterilization_start_details.pressure || 0
+          } : null,
+          sterilization_after_5_details: data.sterilization_after_5_details ? {
+            time: emptyToNull(data.sterilization_after_5_details.time),
+            temperature: data.sterilization_after_5_details.temperature || 0,
+            pressure: data.sterilization_after_5_details.pressure || 0
+          } : null,
+          sterilization_finish_details: data.sterilization_finish_details ? {
+            time: emptyToNull(data.sterilization_finish_details.time),
+            temperature: data.sterilization_finish_details.temperature || 0,
+            pressure: data.sterilization_finish_details.pressure || 0
+          } : null,
+          pre_cooling_start_details: data.pre_cooling_start_details ? {
+            time: emptyToNull(data.pre_cooling_start_details.time),
+            temperature: data.pre_cooling_start_details.temperature || 0,
+            pressure: data.pre_cooling_start_details.pressure || 0
+          } : null,
+          pre_cooling_finish_details: data.pre_cooling_finish_details ? {
+            time: emptyToNull(data.pre_cooling_finish_details.time),
+            temperature: data.pre_cooling_finish_details.temperature || 0,
+            pressure: data.pre_cooling_finish_details.pressure || 0
+          } : null,
+          cooling_1_start_details: data.cooling_1_start_details ? {
+            time: emptyToNull(data.cooling_1_start_details.time),
+            temperature: data.cooling_1_start_details.temperature || 0,
+            pressure: data.cooling_1_start_details.pressure || 0
+          } : null,
+          cooling_1_finish_details: data.cooling_1_finish_details ? {
+            time: emptyToNull(data.cooling_1_finish_details.time),
+            temperature: data.cooling_1_finish_details.temperature || 0,
+            pressure: data.cooling_1_finish_details.pressure || 0
+          } : null,
+          cooling_2_start_details: data.cooling_2_start_details ? {
+            time: emptyToNull(data.cooling_2_start_details.time),
+            temperature: data.cooling_2_start_details.temperature || 0,
+            pressure: data.cooling_2_start_details.pressure || 0
+          } : null,
+          cooling_2_finish_details: data.cooling_2_finish_details ? {
+            time: emptyToNull(data.cooling_2_finish_details.time),
+            temperature: data.cooling_2_finish_details.temperature || 0,
+            pressure: data.cooling_2_finish_details.pressure || 0
+          } : null
         }
       }
 
@@ -331,7 +427,7 @@ export function SteriMilkProcessLogDrawer({
       toast.success("Steri Milk Process Log created successfully")
       
       setTimeout(() => {
-        dispatch(fetchSteriMilkProcessLogs())
+        dispatch(fetchSteriMilkProcessLogs({ filters: {} }))
       }, 1000)
 
       onOpenChange(false)
@@ -366,6 +462,24 @@ export function SteriMilkProcessLogDrawer({
           value: user.id,
           label: `${user.first_name} ${user.last_name}`.trim() || user.email,
           description: `${user.department} • ${user.email}`
+        }))
+    } catch (error) {
+      return []
+    }
+  }
+
+  const handleUserRoleSearch = async (query: string) => {
+    if (!query.trim()) return []
+    
+    try {
+      const rolesResponse = await rolesApi.getRoles({
+        filters: { search: query }
+      })
+      return (rolesResponse.data || [])
+        .map(role => ({
+          value: role.id,
+          label: role.role_name,
+          description: 'User Role'
         }))
     } catch (error) {
       return []
@@ -409,7 +523,7 @@ export function SteriMilkProcessLogDrawer({
         </div>
         
         <div className="space-y-2">
-          <Label htmlFor="batch_number">Batch Number *</Label>
+          <Label htmlFor="batch_number">Batch Number</Label>
           <Controller
             name="batch_number"
             control={basicInfoForm.control}
@@ -430,24 +544,24 @@ export function SteriMilkProcessLogDrawer({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="approver_id">Approver *</Label>
+          <Label htmlFor="approver_id">Approver</Label>
           <Controller
             name="approver_id"
             control={basicInfoForm.control}
             render={({ field }) => (
               <SearchableSelect
-                options={users.map(user => ({
-                  value: user.id,
-                  label: `${user.first_name} ${user.last_name}`.trim() || user.email,
-                  description: `${user.department} • ${user.email}`
+                options={userRoles.map(role => ({
+                  value: role.id,
+                  label: role.role_name,
+                  description: role.description || 'User Role'
                 }))}
                 value={field.value}
                 onValueChange={field.onChange}
-                onSearch={handleUserSearch}
-                placeholder="Search and select approver"
-                searchPlaceholder="Search users..."
-                emptyMessage="No users found"
-                loading={loadingUsers}
+                onSearch={handleUserRoleSearch}
+                placeholder="Search and select approver role"
+                searchPlaceholder="Search roles..."
+                emptyMessage="No roles found"
+                loading={loadingUserRoles}
               />
             )}
           />
@@ -476,7 +590,7 @@ export function SteriMilkProcessLogDrawer({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="filmatic_form_id">Filmatic Form *</Label>
+          <Label htmlFor="filmatic_form_id">Filmatic Form</Label>
           <Controller
             name="filmatic_form_id"
             control={basicInfoForm.control}
@@ -517,15 +631,15 @@ export function SteriMilkProcessLogDrawer({
         
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="filling_start">Filling Start *</Label>
             <Controller
               name="filling_start"
               control={processTimesForm.control}
               render={({ field }) => (
-                <Input
-                  id="filling_start"
-                  placeholder="Enter time (e.g., 20)"
-                  {...field}
+                <ShadcnTimePicker
+                  label="Filling Start"
+                  value={field.value}
+                  onChange={field.onChange}
+                  placeholder="Select filling start time"
                 />
               )}
             />
@@ -535,15 +649,15 @@ export function SteriMilkProcessLogDrawer({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="autoclave_start">Autoclave Start *</Label>
             <Controller
               name="autoclave_start"
               control={processTimesForm.control}
               render={({ field }) => (
-                <Input
-                  id="autoclave_start"
-                  placeholder="Enter time (e.g., 30)"
-                  {...field}
+                <ShadcnTimePicker
+                  label="Autoclave Start"
+                  value={field.value}
+                  onChange={field.onChange}
+                  placeholder="Select autoclave start time"
                 />
               )}
             />
@@ -553,15 +667,15 @@ export function SteriMilkProcessLogDrawer({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="heating_start">Heating Start *</Label>
             <Controller
               name="heating_start"
               control={processTimesForm.control}
               render={({ field }) => (
-                <Input
-                  id="heating_start"
-                  placeholder="Enter time (e.g., 40)"
-                  {...field}
+                <ShadcnTimePicker
+                  label="Heating Start"
+                  value={field.value}
+                  onChange={field.onChange}
+                  placeholder="Select heating start time"
                 />
               )}
             />
@@ -571,15 +685,15 @@ export function SteriMilkProcessLogDrawer({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="heating_finish">Heating Finish *</Label>
             <Controller
               name="heating_finish"
               control={processTimesForm.control}
               render={({ field }) => (
-                <Input
-                  id="heating_finish"
-                  placeholder="Enter time (e.g., 50)"
-                  {...field}
+                <ShadcnTimePicker
+                  label="Heating Finish"
+                  value={field.value}
+                  onChange={field.onChange}
+                  placeholder="Select heating finish time"
                 />
               )}
             />
@@ -589,15 +703,15 @@ export function SteriMilkProcessLogDrawer({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="sterilization_start">Sterilization Start *</Label>
             <Controller
               name="sterilization_start"
               control={processTimesForm.control}
               render={({ field }) => (
-                <Input
-                  id="sterilization_start"
-                  placeholder="Enter time (e.g., 60)"
-                  {...field}
+                <ShadcnTimePicker
+                  label="Sterilization Start"
+                  value={field.value}
+                  onChange={field.onChange}
+                  placeholder="Select sterilization start time"
                 />
               )}
             />
@@ -607,15 +721,15 @@ export function SteriMilkProcessLogDrawer({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="sterilization_after_5">Sterilization After 5 *</Label>
             <Controller
               name="sterilization_after_5"
               control={processTimesForm.control}
               render={({ field }) => (
-                <Input
-                  id="sterilization_after_5"
-                  placeholder="Enter time (e.g., 70)"
-                  {...field}
+                <ShadcnTimePicker
+                  label="Sterilization After 5"
+                  value={field.value}
+                  onChange={field.onChange}
+                  placeholder="Select sterilization after 5 time"
                 />
               )}
             />
@@ -625,15 +739,15 @@ export function SteriMilkProcessLogDrawer({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="sterilization_finish">Sterilization Finish *</Label>
             <Controller
               name="sterilization_finish"
               control={processTimesForm.control}
               render={({ field }) => (
-                <Input
-                  id="sterilization_finish"
-                  placeholder="Enter time (e.g., 80)"
-                  {...field}
+                <ShadcnTimePicker
+                  label="Sterilization Finish"
+                  value={field.value}
+                  onChange={field.onChange}
+                  placeholder="Select sterilization finish time"
                 />
               )}
             />
@@ -643,15 +757,15 @@ export function SteriMilkProcessLogDrawer({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="pre_cooling_start">Pre Cooling Start *</Label>
             <Controller
               name="pre_cooling_start"
               control={processTimesForm.control}
               render={({ field }) => (
-                <Input
-                  id="pre_cooling_start"
-                  placeholder="Enter time (e.g., 30)"
-                  {...field}
+                <ShadcnTimePicker
+                  label="Pre Cooling Start"
+                  value={field.value}
+                  onChange={field.onChange}
+                  placeholder="Select pre cooling start time"
                 />
               )}
             />
@@ -661,15 +775,15 @@ export function SteriMilkProcessLogDrawer({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="pre_cooling_finish">Pre Cooling Finish *</Label>
             <Controller
               name="pre_cooling_finish"
               control={processTimesForm.control}
               render={({ field }) => (
-                <Input
-                  id="pre_cooling_finish"
-                  placeholder="Enter time (e.g., 40)"
-                  {...field}
+                <ShadcnTimePicker
+                  label="Pre Cooling Finish"
+                  value={field.value}
+                  onChange={field.onChange}
+                  placeholder="Select pre cooling finish time"
                 />
               )}
             />
@@ -679,15 +793,15 @@ export function SteriMilkProcessLogDrawer({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="cooling_1_start">Cooling 1 Start *</Label>
             <Controller
               name="cooling_1_start"
               control={processTimesForm.control}
               render={({ field }) => (
-                <Input
-                  id="cooling_1_start"
-                  placeholder="Enter time (e.g., 50)"
-                  {...field}
+                <ShadcnTimePicker
+                  label="Cooling 1 Start"
+                  value={field.value}
+                  onChange={field.onChange}
+                  placeholder="Select cooling 1 start time"
                 />
               )}
             />
@@ -697,15 +811,15 @@ export function SteriMilkProcessLogDrawer({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="cooling_1_finish">Cooling 1 Finish *</Label>
             <Controller
               name="cooling_1_finish"
               control={processTimesForm.control}
               render={({ field }) => (
-                <Input
-                  id="cooling_1_finish"
-                  placeholder="Enter time (e.g., 60)"
-                  {...field}
+                <ShadcnTimePicker
+                  label="Cooling 1 Finish"
+                  value={field.value}
+                  onChange={field.onChange}
+                  placeholder="Select cooling 1 finish time"
                 />
               )}
             />
@@ -715,15 +829,15 @@ export function SteriMilkProcessLogDrawer({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="cooling_2_start">Cooling 2 Start *</Label>
             <Controller
               name="cooling_2_start"
               control={processTimesForm.control}
               render={({ field }) => (
-                <Input
-                  id="cooling_2_start"
-                  placeholder="Enter time (e.g., 80)"
-                  {...field}
+                <ShadcnTimePicker
+                  label="Cooling 2 Start"
+                  value={field.value}
+                  onChange={field.onChange}
+                  placeholder="Select cooling 2 start time"
                 />
               )}
             />
@@ -733,15 +847,15 @@ export function SteriMilkProcessLogDrawer({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="cooling_2_finish">Cooling 2 Finish *</Label>
             <Controller
               name="cooling_2_finish"
               control={processTimesForm.control}
               render={({ field }) => (
-                <Input
-                  id="cooling_2_finish"
-                  placeholder="Enter time (e.g., 90)"
-                  {...field}
+                <ShadcnTimePicker
+                  label="Cooling 2 Finish"
+                  value={field.value}
+                  onChange={field.onChange}
+                  placeholder="Select cooling 2 finish time"
                 />
               )}
             />
@@ -773,21 +887,21 @@ export function SteriMilkProcessLogDrawer({
             </h4>
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="filling_start_details_time">Time *</Label>
                 <Controller
                   name="filling_start_details.time"
                   control={processDetailsForm.control}
                   render={({ field }) => (
-                    <Input
-                      id="filling_start_details_time"
-                      placeholder="10:30:00+00"
-                      {...field}
+                    <ShadcnTimePicker
+                      label="Time"
+                      value={field.value}
+                      onChange={field.onChange}
+                      placeholder="Select time"
                     />
                   )}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="filling_start_details_temperature">Temperature *</Label>
+                <Label htmlFor="filling_start_details_temperature">Temperature</Label>
                 <Controller
                   name="filling_start_details.temperature"
                   control={processDetailsForm.control}
@@ -804,7 +918,7 @@ export function SteriMilkProcessLogDrawer({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="filling_start_details_pressure">Pressure *</Label>
+                <Label htmlFor="filling_start_details_pressure">Pressure</Label>
                 <Controller
                   name="filling_start_details.pressure"
                   control={processDetailsForm.control}
@@ -831,21 +945,21 @@ export function SteriMilkProcessLogDrawer({
             </h4>
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="autoclave_start_details_time">Time *</Label>
                 <Controller
                   name="autoclave_start_details.time"
                   control={processDetailsForm.control}
                   render={({ field }) => (
-                    <Input
-                      id="autoclave_start_details_time"
-                      placeholder="10:30:00+00"
-                      {...field}
+                    <ShadcnTimePicker
+                      label="Time"
+                      value={field.value}
+                      onChange={field.onChange}
+                      placeholder="Select time"
                     />
                   )}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="autoclave_start_details_temperature">Temperature *</Label>
+                <Label htmlFor="autoclave_start_details_temperature">Temperature</Label>
                 <Controller
                   name="autoclave_start_details.temperature"
                   control={processDetailsForm.control}
@@ -862,7 +976,7 @@ export function SteriMilkProcessLogDrawer({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="autoclave_start_details_pressure">Pressure *</Label>
+                <Label htmlFor="autoclave_start_details_pressure">Pressure</Label>
                 <Controller
                   name="autoclave_start_details.pressure"
                   control={processDetailsForm.control}
@@ -889,21 +1003,21 @@ export function SteriMilkProcessLogDrawer({
             </h4>
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="heating_start_details_time">Time *</Label>
                 <Controller
                   name="heating_start_details.time"
                   control={processDetailsForm.control}
                   render={({ field }) => (
-                    <Input
-                      id="heating_start_details_time"
-                      placeholder="10:30:00+00"
-                      {...field}
+                    <ShadcnTimePicker
+                      label="Time"
+                      value={field.value}
+                      onChange={field.onChange}
+                      placeholder="Select time"
                     />
                   )}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="heating_start_details_temperature">Temperature *</Label>
+                <Label htmlFor="heating_start_details_temperature">Temperature</Label>
                 <Controller
                   name="heating_start_details.temperature"
                   control={processDetailsForm.control}
@@ -920,7 +1034,7 @@ export function SteriMilkProcessLogDrawer({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="heating_start_details_pressure">Pressure *</Label>
+                <Label htmlFor="heating_start_details_pressure">Pressure</Label>
                 <Controller
                   name="heating_start_details.pressure"
                   control={processDetailsForm.control}
@@ -947,21 +1061,21 @@ export function SteriMilkProcessLogDrawer({
             </h4>
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="heating_finish_details_time">Time *</Label>
                 <Controller
                   name="heating_finish_details.time"
                   control={processDetailsForm.control}
                   render={({ field }) => (
-                    <Input
-                      id="heating_finish_details_time"
-                      placeholder="10:30:00+00"
-                      {...field}
+                    <ShadcnTimePicker
+                      label="Time"
+                      value={field.value}
+                      onChange={field.onChange}
+                      placeholder="Select time"
                     />
                   )}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="heating_finish_details_temperature">Temperature *</Label>
+                <Label htmlFor="heating_finish_details_temperature">Temperature</Label>
                 <Controller
                   name="heating_finish_details.temperature"
                   control={processDetailsForm.control}
@@ -978,7 +1092,7 @@ export function SteriMilkProcessLogDrawer({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="heating_finish_details_pressure">Pressure *</Label>
+                <Label htmlFor="heating_finish_details_pressure">Pressure</Label>
                 <Controller
                   name="heating_finish_details.pressure"
                   control={processDetailsForm.control}
@@ -1005,21 +1119,21 @@ export function SteriMilkProcessLogDrawer({
             </h4>
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="sterilization_start_details_time">Time *</Label>
                 <Controller
                   name="sterilization_start_details.time"
                   control={processDetailsForm.control}
                   render={({ field }) => (
-                    <Input
-                      id="sterilization_start_details_time"
-                      placeholder="10:30:00+00"
-                      {...field}
+                    <ShadcnTimePicker
+                      label="Time"
+                      value={field.value}
+                      onChange={field.onChange}
+                      placeholder="Select time"
                     />
                   )}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="sterilization_start_details_temperature">Temperature *</Label>
+                <Label htmlFor="sterilization_start_details_temperature">Temperature</Label>
                 <Controller
                   name="sterilization_start_details.temperature"
                   control={processDetailsForm.control}
@@ -1036,7 +1150,7 @@ export function SteriMilkProcessLogDrawer({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="sterilization_start_details_pressure">Pressure *</Label>
+                <Label htmlFor="sterilization_start_details_pressure">Pressure</Label>
                 <Controller
                   name="sterilization_start_details.pressure"
                   control={processDetailsForm.control}
@@ -1063,21 +1177,21 @@ export function SteriMilkProcessLogDrawer({
             </h4>
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="sterilization_after_5_details_time">Time *</Label>
                 <Controller
                   name="sterilization_after_5_details.time"
                   control={processDetailsForm.control}
                   render={({ field }) => (
-                    <Input
-                      id="sterilization_after_5_details_time"
-                      placeholder="10:30:00+00"
-                      {...field}
+                    <ShadcnTimePicker
+                      label="Time"
+                      value={field.value}
+                      onChange={field.onChange}
+                      placeholder="Select time"
                     />
                   )}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="sterilization_after_5_details_temperature">Temperature *</Label>
+                <Label htmlFor="sterilization_after_5_details_temperature">Temperature</Label>
                 <Controller
                   name="sterilization_after_5_details.temperature"
                   control={processDetailsForm.control}
@@ -1094,7 +1208,7 @@ export function SteriMilkProcessLogDrawer({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="sterilization_after_5_details_pressure">Pressure *</Label>
+                <Label htmlFor="sterilization_after_5_details_pressure">Pressure</Label>
                 <Controller
                   name="sterilization_after_5_details.pressure"
                   control={processDetailsForm.control}
@@ -1135,7 +1249,7 @@ export function SteriMilkProcessLogDrawer({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="sterilization_finish_details_temperature">Temperature *</Label>
+                <Label htmlFor="sterilization_finish_details_temperature">Temperature</Label>
                 <Controller
                   name="sterilization_finish_details.temperature"
                   control={processDetailsForm.control}
@@ -1152,7 +1266,7 @@ export function SteriMilkProcessLogDrawer({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="sterilization_finish_details_pressure">Pressure *</Label>
+                <Label htmlFor="sterilization_finish_details_pressure">Pressure</Label>
                 <Controller
                   name="sterilization_finish_details.pressure"
                   control={processDetailsForm.control}
@@ -1193,7 +1307,7 @@ export function SteriMilkProcessLogDrawer({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="pre_cooling_start_details_temperature">Temperature *</Label>
+                <Label htmlFor="pre_cooling_start_details_temperature">Temperature</Label>
                 <Controller
                   name="pre_cooling_start_details.temperature"
                   control={processDetailsForm.control}
@@ -1210,7 +1324,7 @@ export function SteriMilkProcessLogDrawer({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="pre_cooling_start_details_pressure">Pressure *</Label>
+                <Label htmlFor="pre_cooling_start_details_pressure">Pressure</Label>
                 <Controller
                   name="pre_cooling_start_details.pressure"
                   control={processDetailsForm.control}
@@ -1251,7 +1365,7 @@ export function SteriMilkProcessLogDrawer({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="pre_cooling_finish_details_temperature">Temperature *</Label>
+                <Label htmlFor="pre_cooling_finish_details_temperature">Temperature</Label>
                 <Controller
                   name="pre_cooling_finish_details.temperature"
                   control={processDetailsForm.control}
@@ -1268,7 +1382,7 @@ export function SteriMilkProcessLogDrawer({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="pre_cooling_finish_details_pressure">Pressure *</Label>
+                <Label htmlFor="pre_cooling_finish_details_pressure">Pressure</Label>
                 <Controller
                   name="pre_cooling_finish_details.pressure"
                   control={processDetailsForm.control}
@@ -1309,7 +1423,7 @@ export function SteriMilkProcessLogDrawer({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="cooling_1_start_details_temperature">Temperature *</Label>
+                <Label htmlFor="cooling_1_start_details_temperature">Temperature</Label>
                 <Controller
                   name="cooling_1_start_details.temperature"
                   control={processDetailsForm.control}
@@ -1326,7 +1440,7 @@ export function SteriMilkProcessLogDrawer({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="cooling_1_start_details_pressure">Pressure *</Label>
+                <Label htmlFor="cooling_1_start_details_pressure">Pressure</Label>
                 <Controller
                   name="cooling_1_start_details.pressure"
                   control={processDetailsForm.control}
@@ -1411,15 +1525,15 @@ export function SteriMilkProcessLogDrawer({
             </h4>
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="cooling_2_start_details_time">Time *</Label>
                 <Controller
-                  name="cooling_2_start_details.time"
+                  name="cooling_1_start_details.time"
                   control={processDetailsForm.control}
                   render={({ field }) => (
-                    <Input
-                      id="cooling_2_start_details_time"
-                      placeholder="10:30:00+00"
-                      {...field}
+                    <ShadcnTimePicker
+                      label="Time"
+                      value={field.value}
+                      onChange={field.onChange}
+                      placeholder="Select time"
                     />
                   )}
                 />
