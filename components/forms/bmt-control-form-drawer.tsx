@@ -15,7 +15,6 @@ import { DatePicker } from "@/components/ui/date-picker"
 import { ShadcnTimePicker } from "@/components/ui/shadcn-time-picker"
 import { useAppDispatch, useAppSelector } from "@/lib/store"
 import { createBMTControlFormAction, updateBMTControlFormAction, fetchBMTControlForms } from "@/lib/store/slices/bmtControlFormSlice"
-import { fetchProcesses } from "@/lib/store/slices/processSlice"
 import { siloApi } from "@/lib/api/silo"
 import { usersApi } from "@/lib/api/users"
 import { toast } from "sonner"
@@ -25,48 +24,10 @@ import { SignatureViewer } from "@/components/ui/signature-viewer"
 import { base64ToPngDataUrl, normalizeDataUrlToBase64 } from "@/lib/utils/signature"
 
 const bmtControlFormSchema = yup.object({
-  flow_meter_start: yup
-    .string()
-    .required("Flow meter start time is required")
-    .test('valid-time', 'Please select a valid time', (value) => {
-      if (!value) return false
-      // Accept datetime strings from ShadcnTimePicker
-      return value.includes('T') || value.includes(' ') || value.includes(':')
-    }),
-  flow_meter_start_reading: yup
-    .number()
-    .required("Flow meter start reading is required")
-    .min(0, "Reading must be positive")
-    .typeError("Start reading must be a valid number"),
-  flow_meter_end: yup
-    .string()
-    .required("Flow meter end time is required")
-    .test('valid-time', 'Please select a valid time', (value) => {
-      if (!value) return false
-      return value.includes('T') || value.includes(' ') || value.includes(':')
-    })
-    .test('end-after-start', 'End time must be after start time', function(value) {
-      const { flow_meter_start } = this.parent
-      if (!value || !flow_meter_start) return true
-      
-      try {
-        const startDate = new Date(flow_meter_start)
-        const endDate = new Date(value)
-        return endDate > startDate
-      } catch {
-        return true // Let other validations handle invalid dates
-      }
-    }),
-  flow_meter_end_reading: yup
-    .number()
-    .required("Flow meter end reading is required")
-    .min(0, "Reading must be positive")
-    .typeError("End reading must be a valid number")
-    .test('end-greater-than-start', 'End reading must be greater than start reading', function(value) {
-      const { flow_meter_start_reading } = this.parent
-      if (value === undefined || flow_meter_start_reading === undefined) return true
-      return value > flow_meter_start_reading
-    }),
+  flow_meter_start: yup.string().optional(),
+  flow_meter_start_reading: yup.number().optional().typeError("Start reading must be a valid number"),
+  flow_meter_end: yup.string().optional(),
+  flow_meter_end_reading: yup.number().optional().typeError("End reading must be a valid number"),
   source_silo_id: yup
     .array()
     .of(yup.string().required())
@@ -80,41 +41,13 @@ const bmtControlFormSchema = yup.object({
       if (!value || !source_silo_id || !Array.isArray(source_silo_id)) return true
       return !source_silo_id.includes(value)
     }),
-  movement_start: yup
-    .string()
-    .required("Movement start time is required")
-    .test('valid-time', 'Please select a valid time', (value) => {
-      if (!value) return false
-      return value.includes('T') || value.includes(' ') || value.includes(':')
-    }),
-  movement_end: yup
-    .string()
-    .required("Movement end time is required")
-    .test('valid-time', 'Please select a valid time', (value) => {
-      if (!value) return false
-      return value.includes('T') || value.includes(' ') || value.includes(':')
-    })
-    .test('end-after-start', 'Movement end time must be after start time', function(value) {
-      const { movement_start } = this.parent
-      if (!value || !movement_start) return true
-      
-      try {
-        const startDate = new Date(movement_start)
-        const endDate = new Date(value)
-        return endDate > startDate
-      } catch {
-        return true
-      }
-    }),
-  volume: yup
-    .number()
-    .required("Volume is required")
-    .min(0.1, "Volume must be greater than 0")
-    .typeError("Volume must be a valid number"),
-  llm_operator_id: yup.string().required("LLM operator is required"),
-  llm_signature: yup.string().required("LLM operator signature is required"),
-  dpp_operator_id: yup.string().required("DPP operator is required"),
-  dpp_signature: yup.string().required("DPP operator signature is required"),
+  movement_start: yup.string().optional(),
+  movement_end: yup.string().optional(),
+  volume: yup.number().optional().typeError("Volume must be a valid number"),
+  llm_operator_id: yup.string().optional(),
+  llm_signature: yup.string().optional(),
+  dpp_operator_id: yup.string().optional(),
+  dpp_signature: yup.string().optional(),
   product: yup.string().required("Product selection is required"),
   id: yup.string().optional(),
 })
@@ -131,7 +64,6 @@ interface BMTControlFormDrawerProps {
 export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTControlFormDrawerProps) {
   const dispatch = useAppDispatch()
   const { operationLoading } = useAppSelector((state) => state.bmtControlForms)
-  const { processes } = useAppSelector((state) => state.process)
 
   // State for searchable selects
   const [silos, setSilos] = useState<SearchableSelectOption[]>([])
@@ -146,9 +78,6 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
     try {
       setLoadingSilos(true)
       setLoadingUsers(true)
-      
-      // Load processes first
-      dispatch(fetchProcesses())
       
       const [silosResponse, usersResponse] = await Promise.all([
         siloApi.getSilos(),
@@ -349,7 +278,7 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 mt-6">
             {/* Flow Meter Information */}
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Flow Meter Information</h3>
+              <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Flow Meter Information (Optional)</h3>
               {/* Flow Meter Times */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -363,7 +292,6 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
                         onChange={field.onChange}
                         placeholder="Select start time"
                         error={!!errors.flow_meter_start}
-                        required
                       />
                     )}
                   />
@@ -381,7 +309,6 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
                         onChange={field.onChange}
                         placeholder="Select end time"
                         error={!!errors.flow_meter_end}
-                        required
                       />
                     )}
                   />
@@ -392,7 +319,7 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
               {/* Flow Meter Readings */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="flow_meter_start_reading">Start Reading *</Label>
+                  <Label htmlFor="flow_meter_start_reading">Start Reading</Label>
                   <Controller
                     name="flow_meter_start_reading"
                     control={control}
@@ -411,7 +338,7 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="flow_meter_end_reading">End Reading *</Label>
+                  <Label htmlFor="flow_meter_end_reading">End Reading</Label>
                   <Controller
                     name="flow_meter_end_reading"
                     control={control}
@@ -433,7 +360,7 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
 
             {/* Movement Information */}
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Movement Information</h3>
+              <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">BMT Information</h3>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="source_silo_id">Source Silos *</Label>
@@ -498,7 +425,6 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
                         onChange={field.onChange}
                         placeholder="Select start time"
                         error={!!errors.movement_start}
-                        required
                       />
                     )}
                   />
@@ -516,7 +442,6 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
                         onChange={field.onChange}
                         placeholder="Select end time"
                         error={!!errors.movement_end}
-                        required
                       />
                     )}
                   />
@@ -525,7 +450,7 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="volume">Volume (Liters) *</Label>
+                  <Label htmlFor="volume">Volume (Liters)</Label>
                   <Controller
                     name="volume"
                     control={control}
@@ -553,16 +478,18 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
                           <SelectValue placeholder="Select product" />
                         </SelectTrigger>
                         <SelectContent>
-                          {processes?.map((process) => (
-                            <SelectItem key={process.id} value={process.id}>
-                              <div className="flex flex-col">
-                                <span className="font-light">{process.name}</span>
-                                <span className="text-xs text-gray-500">
-                                  {process.raw_material_ids.length} materials
-                                </span>
-                              </div>
-                            </SelectItem>
-                          ))}
+                          <SelectItem value="Raw Milk">
+                            <span className="font-light">Raw Milk</span>
+                          </SelectItem>
+                          <SelectItem value="Skim Milk">
+                            <span className="font-light">Skim Milk</span>
+                          </SelectItem>
+                          <SelectItem value="Standardized Milk">
+                            <span className="font-light">Standardized Milk</span>
+                          </SelectItem>
+                          <SelectItem value="Pasteurized Milk">
+                            <span className="font-light">Pasteurized Milk</span>
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                     )}
@@ -574,10 +501,10 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
 
             {/* Operator Information */}
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Operator Information</h3>
+              <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Operator Information (Optional)</h3>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="llm_operator_id">LLM Operator *</Label>
+                  <Label htmlFor="llm_operator_id">LLM Operator</Label>
                   <Controller
                     name="llm_operator_id"
                     control={control}
@@ -598,7 +525,7 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
                   {errors.llm_operator_id && <p className="text-sm text-red-500">{errors.llm_operator_id.message}</p>}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="llm_signature">LLM Signature *</Label>
+                  <Label htmlFor="llm_signature">LLM Signature</Label>
                   <Controller
                     name="llm_signature"
                     control={control}
@@ -628,7 +555,7 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="dpp_operator_id">DPP Operator *</Label>
+                  <Label htmlFor="dpp_operator_id">DPP Operator</Label>
                   <Controller
                     name="dpp_operator_id"
                     control={control}
@@ -649,7 +576,7 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
                   {errors.dpp_operator_id && <p className="text-sm text-red-500">{errors.dpp_operator_id.message}</p>}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="dpp_signature">DPP Signature *</Label>
+                  <Label htmlFor="dpp_signature">DPP Signature</Label>
                   <Controller
                     name="dpp_signature"
                     control={control}
