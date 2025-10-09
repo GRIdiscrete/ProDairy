@@ -14,19 +14,19 @@ export interface ProcessDetail {
 
 export interface BatchDetails {
   batch_number: number
-  filling_start_details: ProcessDetail
-  autoclave_start_details: ProcessDetail
-  heating_start_details: ProcessDetail
-  heating_finish_details: ProcessDetail
-  sterilization_start_details: ProcessDetail
-  sterilization_after_5_details: ProcessDetail
-  sterilization_finish_details: ProcessDetail
-  pre_cooling_start_details: ProcessDetail
-  pre_cooling_finish_details: ProcessDetail
-  cooling_1_start_details: ProcessDetail
-  cooling_1_finish_details: ProcessDetail
-  cooling_2_start_details: ProcessDetail
-  cooling_2_finish_details: ProcessDetail
+  filling_start_details: ProcessDetail | null
+  autoclave_start_details: ProcessDetail | null
+  heating_start_details: ProcessDetail | null
+  heating_finish_details: ProcessDetail | null
+  sterilization_start_details: ProcessDetail | null
+  sterilization_after_5_details: ProcessDetail | null
+  sterilization_finish_details: ProcessDetail | null
+  pre_cooling_start_details: ProcessDetail | null
+  pre_cooling_finish_details: ProcessDetail | null
+  cooling_1_start_details: ProcessDetail | null
+  cooling_1_finish_details: ProcessDetail | null
+  cooling_2_start_details: ProcessDetail | null
+  cooling_2_finish_details: ProcessDetail | null
 }
 
 export interface BatchEntry {

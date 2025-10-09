@@ -70,10 +70,10 @@ export default function BMTControlFormPage() {
       type: "select" as const,
       placeholder: "Select Product",
       options: [
-        { label: "UHT Milk", value: "UHT milk" },
-        { label: "Fresh Milk", value: "Fresh milk" },
-        { label: "Cream", value: "Cream" },
-        { label: "Buttermilk", value: "Buttermilk" }
+        { label: "Raw Milk", value: "Raw Milk" },
+        { label: "Skim Milk", value: "Skim Milk" },
+        { label: "Standardized Milk", value: "Standardized Milk" },
+        { label: "Pasteurized Milk", value: "Pasteurized Milk" }
       ]
     },
     {
