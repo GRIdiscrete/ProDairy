@@ -340,87 +340,79 @@ export function SteriMilkProcessLogDrawer({
         approved: basicInfo.approved || false,
         approver_id: basicInfo.approver_id || "",
         filmatic_form_id: basicInfo.filmatic_form_id || "",
-        batch: {
+        steri_milk_process_log_batch: [{
           batch_number: basicInfo.batch_number || 1,
-          filling_start: emptyToNull(processTimes.filling_start),
-          autoclave_start: emptyToNull(processTimes.autoclave_start),
-          heating_start: emptyToNull(processTimes.heating_start),
-          heating_finish: emptyToNull(processTimes.heating_finish),
-          sterilization_start: emptyToNull(processTimes.sterilization_start),
-          sterilization_after_5: emptyToNull(processTimes.sterilization_after_5),
-          sterilization_finish: emptyToNull(processTimes.sterilization_finish),
-          pre_cooling_start: emptyToNull(processTimes.pre_cooling_start),
-          pre_cooling_finish: emptyToNull(processTimes.pre_cooling_finish),
-          cooling_1_start: emptyToNull(processTimes.cooling_1_start),
-          cooling_1_finish: emptyToNull(processTimes.cooling_1_finish),
-          cooling_2_start: emptyToNull(processTimes.cooling_2_start),
-          cooling_2_finish: emptyToNull(processTimes.cooling_2_finish),
-          filling_start_details: data.filling_start_details ? {
-            time: emptyToNull(data.filling_start_details.time),
-            temperature: data.filling_start_details.temperature || 0,
-            pressure: data.filling_start_details.pressure || 0
-          } : null,
-          autoclave_start_details: data.autoclave_start_details ? {
-            time: emptyToNull(data.autoclave_start_details.time),
-            temperature: data.autoclave_start_details.temperature || 0,
-            pressure: data.autoclave_start_details.pressure || 0
-          } : null,
-          heating_start_details: data.heating_start_details ? {
-            time: emptyToNull(data.heating_start_details.time),
-            temperature: data.heating_start_details.temperature || 0,
-            pressure: data.heating_start_details.pressure || 0
-          } : null,
-          heating_finish_details: data.heating_finish_details ? {
-            time: emptyToNull(data.heating_finish_details.time),
-            temperature: data.heating_finish_details.temperature || 0,
-            pressure: data.heating_finish_details.pressure || 0
-          } : null,
-          sterilization_start_details: data.sterilization_start_details ? {
-            time: emptyToNull(data.sterilization_start_details.time),
-            temperature: data.sterilization_start_details.temperature || 0,
-            pressure: data.sterilization_start_details.pressure || 0
-          } : null,
-          sterilization_after_5_details: data.sterilization_after_5_details ? {
-            time: emptyToNull(data.sterilization_after_5_details.time),
-            temperature: data.sterilization_after_5_details.temperature || 0,
-            pressure: data.sterilization_after_5_details.pressure || 0
-          } : null,
-          sterilization_finish_details: data.sterilization_finish_details ? {
-            time: emptyToNull(data.sterilization_finish_details.time),
-            temperature: data.sterilization_finish_details.temperature || 0,
-            pressure: data.sterilization_finish_details.pressure || 0
-          } : null,
-          pre_cooling_start_details: data.pre_cooling_start_details ? {
-            time: emptyToNull(data.pre_cooling_start_details.time),
-            temperature: data.pre_cooling_start_details.temperature || 0,
-            pressure: data.pre_cooling_start_details.pressure || 0
-          } : null,
-          pre_cooling_finish_details: data.pre_cooling_finish_details ? {
-            time: emptyToNull(data.pre_cooling_finish_details.time),
-            temperature: data.pre_cooling_finish_details.temperature || 0,
-            pressure: data.pre_cooling_finish_details.pressure || 0
-          } : null,
-          cooling_1_start_details: data.cooling_1_start_details ? {
-            time: emptyToNull(data.cooling_1_start_details.time),
-            temperature: data.cooling_1_start_details.temperature || 0,
-            pressure: data.cooling_1_start_details.pressure || 0
-          } : null,
-          cooling_1_finish_details: data.cooling_1_finish_details ? {
-            time: emptyToNull(data.cooling_1_finish_details.time),
-            temperature: data.cooling_1_finish_details.temperature || 0,
-            pressure: data.cooling_1_finish_details.pressure || 0
-          } : null,
-          cooling_2_start_details: data.cooling_2_start_details ? {
-            time: emptyToNull(data.cooling_2_start_details.time),
-            temperature: data.cooling_2_start_details.temperature || 0,
-            pressure: data.cooling_2_start_details.pressure || 0
-          } : null,
-          cooling_2_finish_details: data.cooling_2_finish_details ? {
-            time: emptyToNull(data.cooling_2_finish_details.time),
-            temperature: data.cooling_2_finish_details.temperature || 0,
-            pressure: data.cooling_2_finish_details.pressure || 0
-          } : null
-        }
+          filling_start: {
+            time: emptyToNull(processTimes.filling_start),
+            pressure: data.filling_start_details?.pressure || 0,
+            temperature: data.filling_start_details?.temperature || 0
+          },
+          filling_start: {
+            time: emptyToNull(processTimes.filling_start),
+            pressure: data.filling_start_details?.pressure || 0,
+            temperature: data.filling_start_details?.temperature || 0
+          },
+          heating_start: {
+            time: emptyToNull(processTimes.heating_start),
+            pressure: data.heating_start_details?.pressure || 0,
+            temperature: data.heating_start_details?.temperature || 0
+          },
+          heating_finish: {
+            time: emptyToNull(processTimes.heating_finish),
+            pressure: data.heating_finish_details?.pressure || 0,
+            temperature: data.heating_finish_details?.temperature || 0
+          },
+          autoclave_start: {
+            time: emptyToNull(processTimes.autoclave_start),
+            pressure: data.autoclave_start_details?.pressure || 0,
+            temperature: data.autoclave_start_details?.temperature || 0
+          },
+          sterilization_start: {
+            time: emptyToNull(processTimes.sterilization_start),
+            pressure: data.sterilization_start_details?.pressure || 0,
+            temperature: data.sterilization_start_details?.temperature || 0
+          },
+          sterilization_after_5: {
+            time: emptyToNull(processTimes.sterilization_after_5),
+            pressure: data.sterilization_after_5_details?.pressure || 0,
+            temperature: data.sterilization_after_5_details?.temperature || 0
+          },
+          sterilization_finish: {
+            time: emptyToNull(processTimes.sterilization_finish),
+            pressure: data.sterilization_finish_details?.pressure || 0,
+            temperature: data.sterilization_finish_details?.temperature || 0
+          },
+          pre_cooling_start: {
+            time: emptyToNull(processTimes.pre_cooling_start),
+            pressure: data.pre_cooling_start_details?.pressure || 0,
+            temperature: data.pre_cooling_start_details?.temperature || 0
+          },
+          pre_cooling_finish: {
+            time: emptyToNull(processTimes.pre_cooling_finish),
+            pressure: data.pre_cooling_finish_details?.pressure || 0,
+            temperature: data.pre_cooling_finish_details?.temperature || 0
+          },
+          cooling_1_start: {
+            time: emptyToNull(processTimes.cooling_1_start),
+            pressure: data.cooling_1_start_details?.pressure || 0,
+            temperature: data.cooling_1_start_details?.temperature || 0
+          },
+          cooling_1_finish: {
+            time: emptyToNull(processTimes.cooling_1_finish),
+            pressure: data.cooling_1_finish_details?.pressure || 0,
+            temperature: data.cooling_1_finish_details?.temperature || 0
+          },
+          cooling_2_start: {
+            time: emptyToNull(processTimes.cooling_2_start),
+            pressure: data.cooling_2_start_details?.pressure || 0,
+            temperature: data.cooling_2_start_details?.temperature || 0
+          },
+          cooling_2_finish: {
+            time: emptyToNull(processTimes.cooling_2_finish),
+            pressure: data.cooling_2_finish_details?.pressure || 0,
+            temperature: data.cooling_2_finish_details?.temperature || 0
+          }
+        }]
       }
 
       await dispatch(createSteriMilkProcessLog(formData)).unwrap()

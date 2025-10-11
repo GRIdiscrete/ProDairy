@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input"
 import { Truck, User, Package, Plus, Trash2, Wifi, WifiOff } from "lucide-react"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Checkbox } from "@/components/ui/checkbox"
+import { Switch } from "@/components/ui/switch"
 import { DatePicker } from "@/components/ui/date-picker"
 import { SignaturePad } from "@/components/ui/signature-pad"
 import { SignatureModal } from "@/components/ui/signature-modal"
@@ -27,6 +27,7 @@ import { fetchSuppliers } from "@/lib/store/slices/supplierSlice"
 import { LoadingButton } from "@/components/ui/loading-button"
 import { useOfflineData } from "@/hooks/use-offline-data"
 import { LocalStorageService } from "@/lib/offline/local-storage-service"
+import { generateDriverFormId } from "@/lib/utils/form-id-generator"
 import type { DriverForm, DriverFormCollectedProduct } from "@/lib/types"
 import type { OfflineDriverForm } from "@/lib/offline/database"
 
@@ -313,7 +314,7 @@ export function DriverFormDrawer({
       raw_material_id: "",
       supplier_id: "",
       collected_amount: 0,
-      unit_of_measure: "KG",
+      unit_of_measure: "Kilograms",
       e_sign_supplier: "",
       e_sign_driver: "",
     })
@@ -335,7 +336,7 @@ export function DriverFormDrawer({
               </div>
               <div>
                 <SheetTitle className="text-lg font-light m-0">
-                  {mode === "create" ? "Add New Driver Form" : `Edit Driver Form: #${driverForm?.id.slice(0, 8)}`}
+                  {mode === "create" ? "Add New Driver Form" : `Edit Driver Form: ${generateDriverFormId(driverForm?.created_at || new Date().toISOString())}`}
                 </SheetTitle>
                 <SheetDescription className="text-sm font-light">
                   {mode === "create" 
@@ -470,44 +471,12 @@ export function DriverFormDrawer({
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="flex items-center space-x-2">
-                    <Controller
-                      name="delivered"
-                      control={control}
-                      render={({ field }) => (
-                        <Checkbox
-                          id="delivered"
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                          disabled={isSubmitting}
-                        />
-                      )}
-                    />
-                    <Label htmlFor="delivered" className="font-light">Delivered</Label>
-                  </div>
 
-                  <div className="flex items-center space-x-2">
-                    <Controller
-                      name="rejected"
-                      control={control}
-                      render={({ field }) => (
-                        <Checkbox
-                          id="rejected"
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                          disabled={isSubmitting}
-                        />
-                      )}
-                    />
-                    <Label htmlFor="rejected" className="font-light">Rejected</Label>
-                  </div>
-                </div>
               </div>
             </div>
           </div>
 
-          <div className="border border-gray-200 rounded-lg bg-white">
+          <div className="border border-gray-200 rounded-lg bg-white m-6">
             <div className="p-6 pb-0">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
@@ -669,11 +638,11 @@ export function DriverFormDrawer({
                                     <SelectValue placeholder="Select unit" />
                                   </SelectTrigger>
                                   <SelectContent>
-                                    <SelectItem value="KG">KG</SelectItem>
-                                    <SelectItem value="L">L</SelectItem>
-                                    <SelectItem value="ML">ML</SelectItem>
-                                    <SelectItem value="G">G</SelectItem>
-                                    <SelectItem value="PCS">PCS</SelectItem>
+                                    <SelectItem value="Kilograms">Kilograms</SelectItem>
+                                    <SelectItem value="Liters">Liters</SelectItem>
+                                    <SelectItem value="Milliliters">Milliliters</SelectItem>
+                                    <SelectItem value="Grams">Grams</SelectItem>
+                                    <SelectItem value="Pieces">Pieces</SelectItem>
                                   </SelectContent>
                                 </Select>
                               )}
@@ -788,7 +757,52 @@ export function DriverFormDrawer({
             </div>
           </div>
 
-          <div className="flex justify-end space-x-3 pt-4">
+          {/* Delivery Status Section */}
+          <div className="border border-gray-200 rounded-lg bg-white m-6">
+            <div className="p-6 pb-0">
+              <div className="flex items-center space-x-2">
+                <Package className="w-5 h-5 text-blue-600" />
+                <div className="text-lg font-light">Delivery Status</div>
+              </div>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="grid grid-cols-2 gap-6">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="delivered" className="font-light">Delivered</Label>
+                  <Controller
+                    name="delivered"
+                    control={control}
+                    render={({ field }) => (
+                      <Switch
+                        id="delivered"
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        disabled={isSubmitting}
+                      />
+                    )}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="rejected" className="font-light">Rejected</Label>
+                  <Controller
+                    name="rejected"
+                    control={control}
+                    render={({ field }) => (
+                      <Switch
+                        id="rejected"
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        disabled={isSubmitting}
+                      />
+                    )}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-end space-x-3 pt-4 m-6">
             <Button
               type="button"
               variant="outline"
@@ -835,7 +849,7 @@ export function DriverFormDrawer({
             <SignatureViewer
               open={currentSignatureType === 'supplier' ? supplierSignatureViewOpen : driverSignatureViewOpen}
               onOpenChange={currentSignatureType === 'supplier' ? setSupplierSignatureViewOpen : setDriverSignatureViewOpen}
-              signature={currentSignatureIndex !== null ? 
+              value={currentSignatureIndex !== null ? 
                 (currentSignatureType === 'supplier' 
                   ? watch(`drivers_form_collected_products.${currentSignatureIndex}.e_sign_supplier`)
                   : watch(`drivers_form_collected_products.${currentSignatureIndex}.e_sign_driver`)

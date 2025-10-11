@@ -33,22 +33,16 @@ const bmtControlFormSchema = yup.object({
     .of(yup.string().required())
     .required("At least one source silo is required")
     .min(1, "At least one source silo is required"),
-  destination_silo_id: yup
-    .string()
-    .required("Destination silo is required")
-    .test('different-from-source', 'Destination silo must be different from source silos', function(value) {
-      const { source_silo_id } = this.parent
-      if (!value || !source_silo_id || !Array.isArray(source_silo_id)) return true
-      return !source_silo_id.includes(value)
-    }),
+  destination_silo_id: yup.string().optional(),
   movement_start: yup.string().optional(),
   movement_end: yup.string().optional(),
   volume: yup.number().optional().typeError("Volume must be a valid number"),
-  llm_operator_id: yup.string().optional(),
-  llm_signature: yup.string().optional(),
-  dpp_operator_id: yup.string().optional(),
-  dpp_signature: yup.string().optional(),
+  dispatch_operator_id: yup.string().required("Dispatch operator is required"),
+  dispatch_operator_signature: yup.string().required("Dispatch operator signature is required"),
+  receiver_operator_id: yup.string().required("Receiver operator is required"),
+  receiver_operator_signature: yup.string().required("Receiver operator signature is required"),
   product: yup.string().required("Product selection is required"),
+  status: yup.string().oneOf(["Draft", "Pending", "Final"]).required("Status is required"),
   id: yup.string().optional(),
 })
 
@@ -70,8 +64,8 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
   const [users, setUsers] = useState<SearchableSelectOption[]>([])
   const [loadingSilos, setLoadingSilos] = useState(false)
   const [loadingUsers, setLoadingUsers] = useState(false)
-  const [llmSigOpen, setLlmSigOpen] = useState(false)
-  const [dppSigOpen, setDppSigOpen] = useState(false)
+  const [dispatchSigOpen, setDispatchSigOpen] = useState(false)
+  const [receiverSigOpen, setReceiverSigOpen] = useState(false)
 
   // Load initial data
   const loadInitialData = async () => {
@@ -152,36 +146,99 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
     resolver: yupResolver(bmtControlFormSchema),
     defaultValues: {
       flow_meter_start: "",
-      flow_meter_start_reading: 0,
+      flow_meter_start_reading: undefined,
       flow_meter_end: "",
-      flow_meter_end_reading: 0,
+      flow_meter_end_reading: undefined,
       source_silo_id: [],
       destination_silo_id: "",
       movement_start: "",
       movement_end: "",
-      volume: 0,
-      llm_operator_id: "",
-      llm_signature: "",
-      dpp_operator_id: "",
-      dpp_signature: "",
+      volume: undefined,
+      dispatch_operator_id: "",
+      dispatch_operator_signature: "",
+      receiver_operator_id: "",
+      receiver_operator_signature: "",
       product: "",
+      status: "Draft",
       id: "",
     },
   })
 
   const onSubmit = async (data: BMTControlFormData) => {
     try {
+      // Helper function to extract time only from datetime string
+      const extractTimeOnly = (timeString: string | undefined): string | undefined => {
+        if (!timeString) return undefined
+        
+        // If it's already in HH:MM format, return as is
+        if (timeString.match(/^\d{2}:\d{2}$/)) {
+          return timeString
+        }
+        
+        // Handle time-only formats with seconds/microseconds
+        if (timeString.match(/^\d{2}:\d{2}:\d{2}/)) {
+          // Handle HH:MM:SS or HH:MM:SS.microseconds format
+          return timeString.substring(0, 5) // Extract HH:MM
+        }
+        
+        // Extract time from datetime string
+        if (timeString.includes('T')) {
+          return timeString.split('T')[1]?.substring(0, 5)
+        } else if (timeString.includes(' ')) {
+          return timeString.split(' ')[1]?.substring(0, 5)
+        }
+        
+        return timeString
+      }
+
+      // Helper function to convert time to full timestamp
+      const timeToTimestamp = (timeString: string | undefined): string | undefined => {
+        if (!timeString) return undefined
+        
+        // If it's already a full timestamp, return as is
+        if (timeString.includes('T') || timeString.includes(' ')) {
+          return timeString
+        }
+        
+        // If it's in HH:MM format, convert to full timestamp
+        if (timeString.match(/^\d{2}:\d{2}$/)) {
+          const currentDate = new Date().toISOString().split('T')[0]
+          return `${currentDate}T${timeString}:00.000000+00:00`
+        }
+        
+        return timeString
+      }
+
       const payload = {
         ...data,
-        llm_signature: normalizeDataUrlToBase64(data.llm_signature),
-        dpp_signature: normalizeDataUrlToBase64(data.dpp_signature),
+        // Flow meter times: send as time-only (HH:MM format)
+        flow_meter_start: extractTimeOnly(data.flow_meter_start) || null,
+        flow_meter_end: extractTimeOnly(data.flow_meter_end) || null,
+        // Movement times: send as full timestamps
+        movement_start: timeToTimestamp(data.movement_start) || null,
+        movement_end: timeToTimestamp(data.movement_end) || null,
+        // Handle null values for undefined readings
+        flow_meter_start_reading: data.flow_meter_start_reading ?? null,
+        flow_meter_end_reading: data.flow_meter_end_reading ?? null,
+        volume: data.volume ?? null,
+        // Handle null values for unselected users - map to API field names
+        llm_operator_id: data.dispatch_operator_id || null,
+        dpp_operator_id: data.receiver_operator_id || null,
+        // Handle signatures - map to API field names
+        llm_signature: data.dispatch_operator_signature ? normalizeDataUrlToBase64(data.dispatch_operator_signature) : null,
+        dpp_signature: data.receiver_operator_signature ? normalizeDataUrlToBase64(data.receiver_operator_signature) : null,
+        // Remove the form fields that don't exist in API
+        dispatch_operator_id: undefined,
+        receiver_operator_id: undefined,
+        dispatch_operator_signature: undefined,
+        receiver_operator_signature: undefined,
       }
 
       // Debug: Log the payload to see what's being sent
       console.log('BMT Form Payload:', JSON.stringify(payload, null, 2))
 
       if (mode === "create") {
-        await dispatch(createBMTControlFormAction(payload)).unwrap()
+        await dispatch(createBMTControlFormAction(payload as any)).unwrap()
         toast.success('BMT Control Form created successfully')
         // Refresh the data to get complete relationship information
         setTimeout(() => {
@@ -196,9 +253,10 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
         }
         
         // Debug: Log the update payload
-        console.log('BMT Update Payload Id IyI:', form.id)
+        console.log('BMT Update Payload Id:', form)
+        console.log('BMT Update Full Payload:', updatePayload)
         
-        await dispatch(updateBMTControlFormAction(updatePayload)).unwrap()
+        await dispatch(updateBMTControlFormAction({ id: form.id, formData: payload as any })).unwrap()
         toast.success('BMT Control Form updated successfully')
         // Refresh the data to get complete relationship information
         setTimeout(() => {
@@ -219,39 +277,67 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
       console.log('Form ID specifically:', form.id)
       console.log('Form keys:', Object.keys(form))
       
+      // Helper to extract time from datetime strings - handles multiple formats
+      const extractTime = (timeString: string | undefined) => {
+        if (!timeString) return ""
+        
+        // Handle ISO timestamp format (2025-01-11T12:58:15.357772)
+        if (timeString.includes('T')) {
+          return timeString.split('T')[1]?.substring(0, 5) || ""
+        } 
+        // Handle space-separated datetime (2025-01-11 12:58:15.357772)
+        else if (timeString.includes(' ')) {
+          return timeString.split(' ')[1]?.substring(0, 5) || ""
+        } 
+        // Handle time-only formats
+        else if (timeString.match(/^\d{2}:\d{2}:\d{2}/)) {
+          // Handle HH:MM:SS or HH:MM:SS.microseconds format
+          return timeString.substring(0, 5) // Extract HH:MM
+        } 
+        else if (timeString.match(/^\d{2}:\d{2}$/)) {
+          // Handle HH:MM format
+          return timeString
+        }
+        
+        return ""
+      }
+
       reset({
-        flow_meter_start: form.flow_meter_start ? form.flow_meter_start.split('+')[0].substring(0, 5) : "",
-        flow_meter_start_reading: form.flow_meter_start_reading || 0,
-        flow_meter_end: form.flow_meter_end ? form.flow_meter_end.split('+')[0].substring(0, 5) : "",
-        flow_meter_end_reading: form.flow_meter_end_reading || 0,
+        flow_meter_start: extractTime(form.flow_meter_start),
+        flow_meter_start_reading: form.flow_meter_start_reading || undefined,
+        flow_meter_end: extractTime(form.flow_meter_end),
+        flow_meter_end_reading: form.flow_meter_end_reading || undefined,
         source_silo_id: Array.isArray(form.source_silo_id) ? form.source_silo_id : [],
         destination_silo_id: form.destination_silo_id || "",
-        movement_start: form.movement_start ? form.movement_start.split('+')[0].substring(0, 5) : "",
-        movement_end: form.movement_end ? form.movement_end.split('+')[0].substring(0, 5) : "",
-        volume: form.volume || 0,
-        llm_operator_id: form.llm_operator_id || "",
-        llm_signature: form.llm_signature || "",
-        dpp_operator_id: form.dpp_operator_id || "",
-        dpp_signature: form.dpp_signature || "",
+        movement_start: extractTime(form.movement_start),
+        movement_end: extractTime(form.movement_end),
+        volume: form.volume || undefined,
+        // Map API fields to form fields
+        dispatch_operator_id: (form as any).dispatch_operator_id || form.llm_operator_id || "",
+        dispatch_operator_signature: (form as any).dispatch_operator_signature || form.llm_signature || "",
+        receiver_operator_id: (form as any).receiver_operator_id || form.dpp_operator_id || "",
+        receiver_operator_signature: (form as any).receiver_operator_signature || form.dpp_signature || "",
         product: form.product || "",
+        status: (form as any).status || "Draft",
         id: form.id || "",
       })
     } else if (open && mode === "create") {
       reset({
         flow_meter_start: "",
-        flow_meter_start_reading: 0,
+        flow_meter_start_reading: undefined,
         flow_meter_end: "",
-        flow_meter_end_reading: 0,
+        flow_meter_end_reading: undefined,
         source_silo_id: [],
         destination_silo_id: "",
         movement_start: "",
         movement_end: "",
-        volume: 0,
-        llm_operator_id: "",
-        llm_signature: "",
-        dpp_operator_id: "",
-        dpp_signature: "",
+        volume: undefined,
+        dispatch_operator_id: "",
+        dispatch_operator_signature: "",
+        receiver_operator_id: "",
+        receiver_operator_signature: "",
         product: "",
+        status: "Draft",
       })
     }
   }, [open, form, mode, reset])
@@ -266,7 +352,7 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
   return (
     <>
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="tablet-sheet-full p-0 bg-white">
+      <SheetContent className="tablet-sheet-full p-0 bg-white overflow-y-auto max-h-screen">
         <div className="p-6 bg-white">
           <SheetHeader>
             <SheetTitle>{mode === "create" ? "Add New BMT Control Form" : "Edit BMT Control Form"}</SheetTitle>
@@ -290,7 +376,7 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
                         label="Flow Meter Start Time"
                         value={field.value}
                         onChange={field.onChange}
-                        placeholder="Select start time"
+                        placeholder="Select start time (24h)"
                         error={!!errors.flow_meter_start}
                       />
                     )}
@@ -307,7 +393,7 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
                         label="Flow Meter End Time"
                         value={field.value}
                         onChange={field.onChange}
-                        placeholder="Select end time"
+                        placeholder="Select end time (24h)"
                         error={!!errors.flow_meter_end}
                       />
                     )}
@@ -330,7 +416,8 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
                         placeholder="Enter start reading"
                         className="rounded-full border-gray-200"
                         {...field}
-                        onChange={(e) => field.onChange(Number(e.target.value))}
+                        value={field.value || ""}
+                        onChange={(e) => field.onChange(e.target.value === "" ? undefined : Number(e.target.value))}
                       />
                     )}
                   />
@@ -349,7 +436,8 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
                         placeholder="Enter end reading"
                         className="rounded-full border-gray-200"
                         {...field}
-                        onChange={(e) => field.onChange(Number(e.target.value))}
+                        value={field.value || ""}
+                        onChange={(e) => field.onChange(e.target.value === "" ? undefined : Number(e.target.value))}
                       />
                     )}
                   />
@@ -423,7 +511,7 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
                         label="Movement Start Time"
                         value={field.value}
                         onChange={field.onChange}
-                        placeholder="Select start time"
+                        placeholder="Select start time (24h)"
                         error={!!errors.movement_start}
                       />
                     )}
@@ -440,7 +528,7 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
                         label="Movement End Time"
                         value={field.value}
                         onChange={field.onChange}
-                        placeholder="Select end time"
+                        placeholder="Select end time (24h)"
                         error={!!errors.movement_end}
                       />
                     )}
@@ -461,7 +549,8 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
                         placeholder="Enter volume"
                         className="rounded-full border-gray-200"
                         {...field}
-                        onChange={(e) => field.onChange(Number(e.target.value))}
+                        value={field.value || ""}
+                        onChange={(e) => field.onChange(e.target.value === "" ? undefined : Number(e.target.value))}
                       />
                     )}
                   />
@@ -501,19 +590,19 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
 
             {/* Operator Information */}
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Operator Information (Optional)</h3>
+              <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Operator Information</h3>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="llm_operator_id">LLM Operator</Label>
+                  <Label htmlFor="dispatch_operator_id">Dispatch Operator *</Label>
                   <Controller
-                    name="llm_operator_id"
+                    name="dispatch_operator_id"
                     control={control}
                     render={({ field }) => (
                       <SearchableSelect
                         options={users}
                         value={field.value}
                         onValueChange={field.onChange}
-                        placeholder="Select LLM operator"
+                        placeholder="Select dispatch operator"
                         searchPlaceholder="Search users..."
                         emptyMessage="No users found"
                         loading={loadingUsers}
@@ -522,49 +611,58 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
                       />
                     )}
                   />
-                  {errors.llm_operator_id && <p className="text-sm text-red-500">{errors.llm_operator_id.message}</p>}
+                  {errors.dispatch_operator_id && <p className="text-sm text-red-500">{errors.dispatch_operator_id.message}</p>}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="llm_signature">LLM Signature</Label>
+                  <Label htmlFor="dispatch_operator_signature">Dispatch Operator Signature *</Label>
                   <Controller
-                    name="llm_signature"
+                    name="dispatch_operator_signature"
                     control={control}
                     render={({ field }) => (
                       <div className="space-y-2">
                         {field.value ? (
-                          <img src={base64ToPngDataUrl(field.value)} alt="LLM signature" className="h-24 border border-gray-200 rounded-md bg-white" />
+                          <img src={base64ToPngDataUrl(field.value)} alt="Dispatch signature" className="h-24 border border-gray-200 rounded-md bg-white" />
                         ) : (
                           <div className="h-24 flex items-center justify-center border border-dashed border-gray-300 rounded-md text-xs text-gray-500 bg-white">
                             No signature captured
                           </div>
                         )}
                         <div className="flex items-center gap-2">
-                          <LoadingButton type="button" variant="outline" onClick={() => setLlmSigOpen(true)}>Add Signature</LoadingButton>
+                          <LoadingButton type="button" variant="outline" onClick={() => setDispatchSigOpen(true)}>Add Signature</LoadingButton>
                           {field.value && (
                             <>
-                              <LoadingButton type="button" variant="outline" onClick={() => setLlmSigOpen(true)}>View Signature</LoadingButton>
+                              <LoadingButton type="button" variant="outline" onClick={() => setDispatchSigOpen(true)}>View Signature</LoadingButton>
                               <LoadingButton type="button" variant="ghost" onClick={() => field.onChange("")}>Clear</LoadingButton>
                             </>
                           )}
                         </div>
+                        <SignatureModal
+                          open={dispatchSigOpen}
+                          onOpenChange={setDispatchSigOpen}
+                          title="Capture Dispatch Operator Signature"
+                          onSave={(dataUrl) => {
+                            field.onChange(dataUrl)
+                            setDispatchSigOpen(false)
+                          }}
+                        />
                       </div>
                     )}
                   />
-                  {errors.llm_signature && <p className="text-sm text-red-500">{errors.llm_signature.message}</p>}
+                  {errors.dispatch_operator_signature && <p className="text-sm text-red-500">{errors.dispatch_operator_signature.message}</p>}
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="dpp_operator_id">DPP Operator</Label>
+                  <Label htmlFor="receiver_operator_id">Receiver Operator *</Label>
                   <Controller
-                    name="dpp_operator_id"
+                    name="receiver_operator_id"
                     control={control}
                     render={({ field }) => (
                       <SearchableSelect
                         options={users}
                         value={field.value}
                         onValueChange={field.onChange}
-                        placeholder="Select DPP operator"
+                        placeholder="Select receiver operator"
                         searchPlaceholder="Search users..."
                         emptyMessage="No users found"
                         loading={loadingUsers}
@@ -573,36 +671,65 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
                       />
                     )}
                   />
-                  {errors.dpp_operator_id && <p className="text-sm text-red-500">{errors.dpp_operator_id.message}</p>}
+                  {errors.receiver_operator_id && <p className="text-sm text-red-500">{errors.receiver_operator_id.message}</p>}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="dpp_signature">DPP Signature</Label>
+                  <Label htmlFor="receiver_operator_signature">Receiver Operator Signature *</Label>
                   <Controller
-                    name="dpp_signature"
+                    name="receiver_operator_signature"
                     control={control}
                     render={({ field }) => (
                       <div className="space-y-2">
                         {field.value ? (
-                          <img src={base64ToPngDataUrl(field.value)} alt="DPP signature" className="h-24 border border-gray-200 rounded-md bg-white" />
+                          <img src={base64ToPngDataUrl(field.value)} alt="Receiver signature" className="h-24 border border-gray-200 rounded-md bg-white" />
                         ) : (
                           <div className="h-24 flex items-center justify-center border border-dashed border-gray-300 rounded-md text-xs text-gray-500 bg-white">
                             No signature captured
                           </div>
                         )}
                         <div className="flex items-center gap-2">
-                          <LoadingButton type="button" variant="outline" onClick={() => setDppSigOpen(true)}>Add Signature</LoadingButton>
+                          <LoadingButton type="button" variant="outline" onClick={() => setReceiverSigOpen(true)}>Add Signature</LoadingButton>
                           {field.value && (
                             <>
-                              <LoadingButton type="button" variant="outline" onClick={() => setDppSigOpen(true)}>View Signature</LoadingButton>
+                              <LoadingButton type="button" variant="outline" onClick={() => setReceiverSigOpen(true)}>View Signature</LoadingButton>
                               <LoadingButton type="button" variant="ghost" onClick={() => field.onChange("")}>Clear</LoadingButton>
                             </>
                           )}
                         </div>
+                        <SignatureModal
+                          open={receiverSigOpen}
+                          onOpenChange={setReceiverSigOpen}
+                          title="Capture Receiver Operator Signature"
+                          onSave={(dataUrl) => {
+                            field.onChange(dataUrl)
+                            setReceiverSigOpen(false)
+                          }}
+                        />
                       </div>
                     )}
                   />
-                  {errors.dpp_signature && <p className="text-sm text-red-500">{errors.dpp_signature.message}</p>}
+                  {errors.receiver_operator_signature && <p className="text-sm text-red-500">{errors.receiver_operator_signature.message}</p>}
                 </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="status">Status *</Label>
+                <Controller
+                  name="status"
+                  control={control}
+                  render={({ field }) => (
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <SelectTrigger className="w-full rounded-full border-gray-200">
+                        <SelectValue placeholder="Select status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Draft">Draft</SelectItem>
+                        <SelectItem value="Pending">Pending</SelectItem>
+                        <SelectItem value="Final">Final</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+                {errors.status && <p className="text-sm text-red-500">{errors.status.message}</p>}
               </div>
             </div>
 
@@ -623,31 +750,31 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
       </SheetContent>
     </Sheet>
     <SignatureModal
-      open={llmSigOpen}
-      onOpenChange={setLlmSigOpen}
-      title="Capture LLM Signature"
+      open={dispatchSigOpen}
+      onOpenChange={setDispatchSigOpen}
+      title="Capture Dispatch Operator Signature"
       onSave={(dataUrl) => {
-        setValue("llm_signature", dataUrl, { shouldValidate: true, shouldDirty: true })
+        setValue("dispatch_operator_signature", dataUrl, { shouldValidate: true, shouldDirty: true })
       }}
     />
     <SignatureViewer
       open={false}
       onOpenChange={() => {}}
-      title="LLM Signature"
+      title="Dispatch Operator Signature"
       value={undefined}
     />
     <SignatureModal
-      open={dppSigOpen}
-      onOpenChange={setDppSigOpen}
-      title="Capture DPP Signature"
+      open={receiverSigOpen}
+      onOpenChange={setReceiverSigOpen}
+      title="Capture Receiver Operator Signature"
       onSave={(dataUrl) => {
-        setValue("dpp_signature", dataUrl, { shouldValidate: true, shouldDirty: true })
+        setValue("receiver_operator_signature", dataUrl, { shouldValidate: true, shouldDirty: true })
       }}
     />
     <SignatureViewer
       open={false}
       onOpenChange={() => {}}
-      title="DPP Signature"
+      title="Receiver Operator Signature"
       value={undefined}
     />
     </>
