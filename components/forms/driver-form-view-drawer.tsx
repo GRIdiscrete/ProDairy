@@ -12,8 +12,12 @@ import { toast } from "sonner"
 import { useAppDispatch, useAppSelector } from "@/lib/store"
 import { deleteDriverForm, fetchDriverForms } from "@/lib/store/slices/driverFormSlice"
 import { fetchDriverFormLabTests, deleteDriverFormLabTest } from "@/lib/store/slices/driverFormLabTestSlice"
+import { fetchUsers, selectUserById } from "@/lib/store/slices/usersSlice"
 import { LoadingButton } from "@/components/ui/loading-button"
 import { base64ToPngDataUrl } from "@/lib/utils/signature"
+import { generateDriverFormId } from "@/lib/utils/form-id-generator"
+import { UserAvatar } from "@/components/ui/user-avatar"
+import { FormIdCopy } from "@/components/ui/form-id-copy"
 import { DriverFormLabTestDrawer } from "@/components/forms/driver-form-lab-test-drawer"
 import type { DriverForm } from "@/lib/types"
 import type { OfflineDriverForm } from "@/lib/offline/database"
@@ -82,12 +86,17 @@ export function DriverFormViewDrawer({
 
   const { operationLoading } = useAppSelector((state) => state.driverForm)
   const { tests, isInitialized, operationLoading: labOperationLoading } = useAppSelector((s) => (s as any).driverFormLabTests)
-
+  const { items: users, loading: usersLoading } = useAppSelector((state) => state.users)
   useEffect(() => {
     if (open && !isInitialized) {
       dispatch(fetchDriverFormLabTests())
     }
-  }, [open, isInitialized, dispatch])
+    
+    // Load users if not already loaded
+    if (open && users.length === 0) {
+      dispatch(fetchUsers({}))
+    }
+  }, [open, isInitialized, dispatch, users.length])
 
   const currentLabTest = useMemo(() => {
     if (!driverForm) return null
@@ -207,33 +216,68 @@ export function DriverFormViewDrawer({
               </div>
             </div>
             <div className="p-6 space-y-4">
-              <div className="space-y-1">
-                <div className="text-xs text-gray-500 flex items-center gap-1"><User className="h-3 w-3" />Driver</div>
-                <div className="text-sm font-light">
-                  {(() => {
-                    // Handle online form with driver relationship
+              <div className="space-y-3">
+                <div className="text-xs text-gray-500 flex items-center gap-1"><User className="h-3 w-3" />Driver Information</div>
+                <div className="flex items-start gap-4">
+                  <FormIdCopy 
+                    displayId={generateDriverFormId(driverForm.created_at)}
+                    actualId={driverForm.id}
+                    size="md"
+                  />
+                </div>
+                {(() => {
+                  // Get driver ID from form
+                  const driverId = typeof driverForm.driver === 'string' ? driverForm.driver : (driverForm as any).driver_id
+                  
+                  // Find user in users state
+                  const driverUser = users.find(user => user.id === driverId)
+                  
+                  if (driverUser) {
+                    return (
+                      <UserAvatar 
+                        user={driverUser} 
+                        size="lg" 
+                        showName={true} 
+                        showEmail={true}
+                        showDropdown={true}
+                      />
+                    )
+                  }
+                  
+                  // Fallback display for when user is not found
+                  const fallbackName = (() => {
                     if ((driverForm as any).drivers_driver_fkey) {
                       return `${(driverForm as any).drivers_driver_fkey.first_name} ${(driverForm as any).drivers_driver_fkey.last_name}`
                     }
-                    // Handle offline form with driver object
                     if (driverForm.driver && typeof driverForm.driver === 'object') {
                       return `${(driverForm.driver as any).first_name} ${(driverForm.driver as any).last_name}`
                     }
-                    // Handle string driver ID
-                    if (typeof driverForm.driver === 'string') {
-                      return driverForm.driver
-                    }
                     return 'Unknown Driver'
-                  })()}
-                </div>
-                {(() => {
-                  if ((driverForm as any).drivers_driver_fkey?.email) {
-                    return <div className="text-xs text-gray-500 font-light">{(driverForm as any).drivers_driver_fkey.email}</div>
-                  }
-                  if (driverForm.driver && typeof driverForm.driver === 'object' && (driverForm.driver as any).email) {
-                    return <div className="text-xs text-gray-500 font-light">{(driverForm.driver as any).email}</div>
-                  }
-                  return null
+                  })()
+                  
+                  const fallbackEmail = (() => {
+                    if ((driverForm as any).drivers_driver_fkey?.email) {
+                      return (driverForm as any).drivers_driver_fkey.email
+                    }
+                    if (driverForm.driver && typeof driverForm.driver === 'object' && (driverForm.driver as any).email) {
+                      return (driverForm.driver as any).email
+                    }
+                    return null
+                  })()
+                  
+                  return (
+                    <div className="flex items-center gap-3">
+                      <div className="h-12 w-12 rounded-full bg-gray-200 flex items-center justify-center">
+                        <User className="h-6 w-6 text-gray-500" />
+                      </div>
+                      <div>
+                        <div className="font-medium text-base">{fallbackName}</div>
+                        {fallbackEmail && (
+                          <div className="text-sm text-gray-500">{fallbackEmail}</div>
+                        )}
+                      </div>
+                    </div>
+                  )
                 })()}
               </div>
               
@@ -311,7 +355,7 @@ export function DriverFormViewDrawer({
               <div className="flex items-center space-x-2">
                 <Package className="w-5 h-5 text-blue-600" />
                 <div className="text-lg font-light">Collected Products ({(() => {
-                  const legacyProducts = driverForm.collected_products?.length || 0
+                  const legacyProducts = (driverForm as any).collected_products?.length || 0
                   const newProducts = (driverForm as any).drivers_form_collected_products?.length || 0
                   return legacyProducts + newProducts
                 })()})</div>
@@ -319,7 +363,7 @@ export function DriverFormViewDrawer({
             </div>
             <div className="p-6">
               {(() => {
-                const legacyProducts = driverForm.collected_products || []
+                const legacyProducts = (driverForm as any).collected_products || []
                 const newProducts = (driverForm as any).drivers_form_collected_products || []
                 const allProducts = [...legacyProducts, ...newProducts]
                 

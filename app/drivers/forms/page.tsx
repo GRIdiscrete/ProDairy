@@ -7,6 +7,9 @@ import { fetchDriverForms } from "@/lib/store/slices/driverFormSlice"
 import { fetchUsers } from "@/lib/store/slices/usersSlice"
 import { fetchRawMaterials } from "@/lib/store/slices/rawMaterialSlice"
 import { fetchSuppliers } from "@/lib/store/slices/supplierSlice"
+import { generateDriverFormId } from "@/lib/utils/form-id-generator"
+import { UserAvatar } from "@/components/ui/user-avatar"
+import { FormIdCopy } from "@/components/ui/form-id-copy"
 import { DriversDashboardLayout } from "@/components/layout/drivers-dashboard-layout"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
@@ -63,17 +66,44 @@ export default function DriverFormsPage() {
   const itemsPerPage = 10
   const isMobile = useIsMobile()
 
-  // Helper function to get driver name from form
-  const getDriverName = (form: any) => {
-    if (isOnline) {
-      return form.drivers_driver_fkey ? 
-        `${form.drivers_driver_fkey.first_name} ${form.drivers_driver_fkey.last_name}` : 
-        'N/A'
-    } else {
-      return form.driver ? 
-        `${form.driver.first_name} ${form.driver.last_name}` : 
-        'N/A'
+  // Helper function to get driver info from form
+  const getDriverInfo = (form: any) => {
+    // Get driver ID from form
+    const driverId = typeof form.driver === 'string' ? form.driver : form.driver_id
+    
+    // Find user in users state
+    const driverUser = displayUsers.find((user: any) => user.id === driverId)
+    
+    if (driverUser) {
+      return {
+        name: `${driverUser.first_name} ${driverUser.last_name}`,
+        email: driverUser.email
+      }
     }
+    
+    // Fallback to legacy methods
+    if (form.drivers_driver_fkey) {
+      return {
+        name: `${form.drivers_driver_fkey.first_name} ${form.drivers_driver_fkey.last_name}`,
+        email: form.drivers_driver_fkey.email
+      }
+    }
+    if (form.driver && typeof form.driver === 'object') {
+      return {
+        name: `${form.driver.first_name} ${form.driver.last_name}`,
+        email: form.driver.email
+      }
+    }
+    
+    return {
+      name: 'Unknown Driver',
+      email: null
+    }
+  }
+
+  // Helper function to get driver name (for backward compatibility)
+  const getDriverName = (form: any) => {
+    return getDriverInfo(form).name
   }
 
   // Get offline data from localStorage (SSR-safe)
@@ -93,6 +123,7 @@ export default function DriverFormsPage() {
   useEffect(() => {
     if (isOnline) {
       dispatch(fetchDriverForms({}))
+      dispatch(fetchUsers({})) // Load users for driver information
     } else {
       // When going offline, refresh offline data from localStorage (SSR-safe)
       if (typeof window !== 'undefined') {
@@ -206,6 +237,23 @@ export default function DriverFormsPage() {
     }
   }
 
+  // Helper function to handle search input and mask form IDs
+  const handleSearchChange = (value: string) => {
+    // Check if the input looks like a database ID (long string)
+    if (value.length > 20 && !value.includes('-')) {
+      // Try to find a form with this ID and convert to display format
+      const matchingForm = displayDriverForms.find(form => 
+        form.id.toLowerCase().includes(value.toLowerCase())
+      )
+      if (matchingForm) {
+        const displayId = generateDriverFormId(matchingForm.created_at)
+        setSearchTerm(displayId)
+        return
+      }
+    }
+    setSearchTerm(value)
+  }
+
   // Filter and sort data
   const filteredForms = useMemo(() => {
     if (!displayDriverForms) return []
@@ -213,8 +261,11 @@ export default function DriverFormsPage() {
     return displayDriverForms
       .filter((form) => {
         const driverName = getDriverName(form)
+        const formDisplayId = generateDriverFormId(form.created_at)
+        
         const matchesSearch = form.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          driverName.toLowerCase().includes(searchTerm.toLowerCase())
+          driverName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          formDisplayId.toLowerCase().includes(searchTerm.toLowerCase())
         
         const matchesStatus = statusFilter === "all" || 
           (statusFilter === "delivered" && form.delivered) ||
@@ -229,7 +280,7 @@ export default function DriverFormsPage() {
         const dateB = new Date(b.created_at).getTime()
         return dateB - dateA
       })
-  }, [displayDriverForms, searchTerm, statusFilter])
+  }, [displayDriverForms, searchTerm, statusFilter, generateDriverFormId])
 
   const paginatedForms = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage
@@ -244,30 +295,50 @@ export default function DriverFormsPage() {
       header: "Form ID",
       cell: ({ row }: any) => {
         const form = row.original as UnifiedForm
+        const formId = generateDriverFormId(form.created_at)
         return (
           <div className="flex items-center gap-3">
             <div className="h-9 w-9 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center">
               <Truck className="h-4 w-4 text-white" />
             </div>
-            <div>
-              <p className="font-light text-sm">#{form.id.slice(0, 8)}</p>
-              <p className="text-gray-500 text-xs font-light">Driver Form</p>
-            </div>
+            <FormIdCopy 
+              displayId={formId}
+              actualId={form.id}
+              size="sm"
+            />
           </div>
         )
       },
     },
     {
-      accessorKey: "driver",
+      accessorKey: "driver_info",
       header: "Driver",
       cell: ({ row }: any) => {
-        const form = row.original as UnifiedForm
+        const form = row.original
+        const driverId = form.driver_id || form.driver
+        const driverUser = users.find((user: any) => user.id === driverId)
+        
+        if (driverUser) {
+          return (
+            <UserAvatar 
+              user={driverUser} 
+              size="md" 
+              showName={true} 
+              showEmail={true}
+              showDropdown={true}
+            />
+          )
+        }
+        
         return (
           <div className="flex items-center gap-2">
-            <User className="w-4 h-4 text-gray-500" />
-            <span className="text-sm font-light">
-              {getDriverName(form)}
-            </span>
+            <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
+              <User className="w-4 h-4 text-gray-500" />
+            </div>
+            <div>
+              <div className="text-sm font-light text-gray-400">Unknown Driver</div>
+              <div className="text-xs text-gray-500">No user data</div>
+            </div>
           </div>
         )
       },
@@ -377,7 +448,7 @@ export default function DriverFormsPage() {
                   <Input
                     placeholder="Search forms..."
                     value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onChange={(e) => handleSearchChange(e.target.value)}
                     className="pl-10 bg-white border-gray-200 rounded-full font-light"
                   />
                 </div>
@@ -564,12 +635,11 @@ export default function DriverFormsPage() {
                             <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center">
                               <Truck className="h-5 w-5 text-white" />
                             </div>
-                            <div>
-                              <p className="font-light">#{form.id.slice(0, 8)}</p>
-                              <p className="text-xs text-gray-500 font-light">
-                                {new Date(form.start_date).toLocaleDateString()} — {new Date(form.end_date).toLocaleDateString()}
-                              </p>
-                            </div>
+                            <FormIdCopy 
+                              displayId={generateDriverFormId(form.created_at)}
+                              actualId={form.id}
+                              size="sm"
+                            />
                           </div>
                           {getStatusBadge(form)}
                         </div>
@@ -630,7 +700,7 @@ export default function DriverFormsPage() {
                             <Truck className="h-5 w-5 text-white" />
                           </div>
                           <div>
-                            <p className="font-light">#{form.id.slice(0, 8)}</p>
+                            <p className="font-light">{generateDriverFormId(form.created_at)}</p>
                             <p className="text-xs text-gray-500 font-light">
                               {new Date(form.start_date).toLocaleDateString()} — {new Date(form.end_date).toLocaleDateString()}
                             </p>
@@ -754,12 +824,6 @@ export default function DriverFormsPage() {
           onOpenChange={setIsLabTestDrawerOpen}
           driversFormId={selectedFormForLabTest?.id || ""}
           mode={editingLabTest ? "edit" : "create"}
-          existingTest={editingLabTest}
-          onSuccess={() => {
-            setIsLabTestDrawerOpen(false)
-            setSelectedFormForLabTest(null)
-            setEditingLabTest(null)
-          }}
         />
       </div>
     </DriversDashboardLayout>

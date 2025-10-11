@@ -68,7 +68,7 @@ export const createRawMilkIntakeForm = createAsyncThunk(
 
 export const updateRawMilkIntakeForm = createAsyncThunk(
   "rawMilkIntake/updateForm",
-  async ({ id, formData }: { id: string; formData: Partial<CreateRawMilkIntakeFormRequest> }, { rejectWithValue }) => {
+  async ({ id, formData }: { id: string; formData: Partial<any> }, { rejectWithValue }) => {
     try {
       const response = await rawMilkIntakeApi.update(id, formData)
       return response.data
