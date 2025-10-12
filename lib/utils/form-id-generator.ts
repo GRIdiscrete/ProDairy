@@ -86,3 +86,31 @@ export function generateRawMilkIntakeFormId(createdAt: string | Date): string {
     createdAt
   })
 }
+
+/**
+ * Generate form ID for standardizing forms
+ */
+
+//update this function to use the new ID format
+export const generateStandardizingFormId = (createdAt: string): string => {
+  return generateFormId({
+    featureInitial: 'standardizingform',
+    createdAt
+  })
+}
+
+/**
+ * Generate form ID for BMT forms
+ */
+
+/**
+ * Generate form ID for skimming forms
+ */
+
+//update this function to use the new ID format
+export const generateSkimmingFormId = (createdAt: string): string => {
+  return generateFormId({
+    featureInitial:"skim",
+    createdAt
+  })
+}
