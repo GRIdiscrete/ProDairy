@@ -8,6 +8,16 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence, Variants } from "framer-motion";
 import { ChevronLeft, Beaker, Droplets, TestTube, Wrench } from "lucide-react";
+import { useAppSelector } from "@/lib/store";
+
+// Map sidebar links to permission keys in views[]
+const toolsPermissionMap: Record<string, string> = {
+  "/tools": "settings",
+  "/tools/bmt-control-form": "bmt",
+  "/tools/cip-control-form": "cip",
+  "/tools/ist-control-form": "ist",
+  "/tools/general-lab-test": "general_lab_test",
+};
 
 const toolsNavigation = [
   { name: "Tools Dashboard", href: "/tools", icon: Wrench },
@@ -15,7 +25,7 @@ const toolsNavigation = [
   { name: "CIP Control Form", href: "/tools/cip-control-form", icon: Droplets },
   { name: "IST Control Form", href: "/tools/ist-control-form", icon: TestTube },
   { name: "General Lab Test", href: "/tools/general-lab-test", icon: TestTube },
-]
+];
 
 interface ToolsSidebarProps {
   collapsed?: boolean;
@@ -24,6 +34,21 @@ interface ToolsSidebarProps {
 
 export function ToolsSidebar({ collapsed = false, onToggle }: ToolsSidebarProps) {
   const pathname = usePathname();
+  const { profile, user } = useAppSelector((state) => state.auth);
+
+  // Get allowed views from user profile
+  const allowedViews: string[] =
+    profile?.users_role_id_fkey?.views && Array.isArray(profile.users_role_id_fkey.views)
+      ? profile.users_role_id_fkey.views
+      : [];
+
+  // Filter navigation based on permissions
+  const filteredNavigation = toolsNavigation.filter((item) => {
+    const permKey = toolsPermissionMap[item.href];
+    if (!permKey) return true;
+    return allowedViews.includes(permKey);
+  });
+
   const openWidth = 272;
   const closedWidth = 80;
   const width = collapsed ? closedWidth : openWidth;
@@ -67,18 +92,18 @@ export function ToolsSidebar({ collapsed = false, onToggle }: ToolsSidebarProps)
 
       <nav className="flex-1 overflow-y-auto px-3 py-3">
         <ul className="space-y-1">
-          {toolsNavigation.map((item) => {
+          {filteredNavigation.map((item) => {
             const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
-            const Icon = item.icon as any
+            const Icon = item.icon as any;
             return (
               <li key={item.name} className="relative">
-                <Link href={item.href} className={cn("group flex items-center rounded-xl px-2.5 py-2 text-sm transition-all", isActive ? "bg-gradient-to-r from-blue-50 to-lime-50 text-zinc-900 ring-1 ring-inset ring-blue-200/50" : "text-zinc-700 hover:bg-zinc-50")}> 
+                <Link href={item.href} className={cn("group flex items-center rounded-xl px-2.5 py-2 text-sm transition-all", isActive ? "bg-gradient-to-r from-blue-50 to-lime-50 text-zinc-900 ring-1 ring-inset ring-blue-200/50" : "text-zinc-700 hover:bg-zinc-50")}>
                   <Icon className={cn("h-5 w-5 flex-shrink-0", isActive ? "text-blue-600" : "text-zinc-500 group-hover:text-zinc-700")} />
                   {!collapsed && <span className="ml-3 font-light tracking-wide">{item.name}</span>}
                 </Link>
                 {isActive && <motion.span layoutId="active-rail" className="absolute left-0 top-1/2 h-6 w-1 -translate-y-1/2 rounded-full bg-gradient-to-b from-blue-500 to-lime-500" />}
               </li>
-            )
+            );
           })}
         </ul>
       </nav>
