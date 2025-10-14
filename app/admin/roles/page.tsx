@@ -80,6 +80,48 @@ export default function AdminRolesPage() {
     }
   ], [])
 
+  // Update permissions and view labels for table columns
+  const permissionLabels: Record<string, string> = {
+    user_operations: "Users",
+    devices_operations: "Devices",
+    process_operations: "Processes",
+    supplier_operations: "Suppliers",
+    silo_item_operations: "Silos",
+    machine_item_operations: "Machines",
+    raw_product_collection_operations: "Raw Product Collection",
+    raw_milk_intake_operations: "Raw Milk Intake",
+    raw_milk_lab_test_operations: "Raw Milk Lab Test",
+    before_and_after_autoclave_lab_test_operations: "Before & After Autoclave Lab Test",
+    pasteurizing_operations: "Pasteurizing",
+    filmatic_operation_operations: "Filmatic Operation",
+    steri_process_operation_operations: "Steri Process Operation",
+    incubation_operations: "Incubation",
+    incubation_lab_test_operations: "Incubation Lab Test",
+    dispatch_operations: "Dispatch",
+    production_plan_operations: "Production Plan",
+    bmt_operations: "BMT",
+  };
+
+  const viewLabels: Record<string, string> = {
+    admin_panel: "Admin Panel",
+    production_dashboard: "Production Dashboard",
+    user_tab: "Users Tab",
+    machine_tab: "Machine Tab",
+    supplier_tab: "Supplier Tab",
+    devices_tab: "Devices Tab",
+    data_capture_module: "Data Capture Module",
+    settings: "Settings",
+    role_tab: "Role Tab",
+    silo_tab: "Silo Tab",
+    process_tab: "Process Tab",
+    driver_ui: "Driver UI",
+    lab_tests: "Lab Tests",
+    bmt: "BMT",
+    general_lab_test: "General Lab Test",
+    cip: "CIP",
+    ist: "IST",
+  };
+
   // Define columns for DataTable
   const columns: ColumnDef<UserRole>[] = [
     {
@@ -118,28 +160,24 @@ export default function AdminRolesPage() {
       header: "Permissions",
       cell: ({ row }) => {
         const role = row.original
-        const permissions = [
-          { key: 'user_operations', label: 'Users', icon: Users, color: 'bg-blue-100 text-blue-800' },
-          { key: 'devices_operations', label: 'Devices', icon: Database, color: 'bg-green-100 text-green-800' },
-          { key: 'process_operations', label: 'Processes', icon: Wrench, color: 'bg-orange-100 text-orange-800' },
-          { key: 'supplier_operations', label: 'Suppliers', icon: Truck, color: 'bg-purple-100 text-purple-800' },
-          { key: 'silo_item_operations', label: 'Silos', icon: Database, color: 'bg-indigo-100 text-indigo-800' },
-          { key: 'machine_item_operations', label: 'Machines', icon: Wrench, color: 'bg-red-100 text-red-800' }
-        ]
-
+        // Show only first 5 permission keys with at least one operation, then "+N more"
+        const allPerms = Object.keys(permissionLabels).filter((permKey) =>
+          Array.isArray(role[permKey as keyof UserRole]) && (role[permKey as keyof UserRole] as any[]).length > 0
+        )
+        const shownPerms = allPerms.slice(0, 5)
+        const moreCount = allPerms.length - shownPerms.length
         return (
           <div className="flex flex-wrap gap-1">
-            {permissions.map((perm) => {
-              const hasPermission = role[perm.key as keyof UserRole]?.length > 0
-              if (!hasPermission) return null
-              
-              return (
-                <Badge key={perm.key} variant="outline" className={`text-xs ${perm.color}`}>
-                  <perm.icon className="w-3 h-3 mr-1" />
-                  {perm.label}
-                </Badge>
-              )
-            })}
+            {shownPerms.map((permKey) => (
+              <Badge key={permKey} variant="outline" className="text-xs">
+                {permissionLabels[permKey]}
+              </Badge>
+            ))}
+            {moreCount > 0 && (
+              <Badge variant="outline" className="text-xs">
+                +{moreCount} more
+              </Badge>
+            )}
           </div>
         )
       },
@@ -157,7 +195,7 @@ export default function AdminRolesPage() {
             <div className="flex flex-wrap gap-1">
               {role.views?.slice(0, 3).map((view, index) => (
                 <Badge key={index} variant="secondary" className="text-xs">
-                  {view}
+                  {viewLabels[view] || view}
                 </Badge>
               ))}
               {role.views && role.views.length > 3 && (

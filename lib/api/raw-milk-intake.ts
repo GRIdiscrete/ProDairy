@@ -80,7 +80,7 @@ export const rawMilkIntakeApi = {
   // Get all raw milk intake forms
   getAll: async (): Promise<RawMilkIntakeForm[]> => {
     try {
-      const response = await apiRequest<RawMilkIntakeFormsResponse>("/raw-milk-intake-form", {
+      const response = await apiRequest<RawMilkIntakeFormsResponse>("/raw-milk-intake", {
         method: "GET",
         headers: {
           accept: "application/json",
@@ -96,7 +96,7 @@ export const rawMilkIntakeApi = {
   // Get single raw milk intake form by ID
   getById: async (id: string): Promise<RawMilkIntakeForm> => {
     try {
-      const response = await apiRequest<RawMilkIntakeFormResponse>(`/raw-milk-intake-form/${id}`, {
+      const response = await apiRequest<RawMilkIntakeFormResponse>(`/raw-milk-intake/${id}`, {
         method: "GET",
         headers: {
           accept: "application/json",
@@ -112,7 +112,7 @@ export const rawMilkIntakeApi = {
   // Create new raw milk intake form
   create: async (formData: CreateRawMilkIntakeFormRequest): Promise<RawMilkIntakeFormResponse> => {
     try {
-      const response = await apiRequest<RawMilkIntakeFormResponse>("/raw-milk-intake-form", {
+      const response = await apiRequest<RawMilkIntakeFormResponse>("/raw-milk-intake", {
         method: "POST",
         headers: {
           accept: "application/json",
@@ -131,23 +131,23 @@ export const rawMilkIntakeApi = {
   update: async (id: string, formData: Partial<CreateRawMilkIntakeFormRequest>): Promise<RawMilkIntakeFormResponse> => {
     try {
       // Only send the required fields for PATCH request
-      const updateData = {
-        id,
-        operator_signature: formData.operator_signature,
-        date: formData.date,
-        quantity_received: formData.quantity_received,
-        drivers_form_id: formData.drivers_form_id,
-        destination_silo_id: formData.destination_silo_id,
-        operator_id: formData.operator_id
-      }
+      // const updateData = {
+      //   id,
+      //   operator_signature: formData.operator_signature,
+      //   date: formData.date,
+      //   quantity_received: formData.quantity_received,
+      //   drivers_form_id: formData.drivers_form_id,
+      //   destination_silo_id: formData.destination_silo_id,
+      //   operator_id: formData.operator_id
+      // }
 
-      const response = await apiRequest<RawMilkIntakeFormResponse>("/raw-milk-intake-form", {
+      const response = await apiRequest<RawMilkIntakeFormResponse>("/raw-milk-intake", {
         method: "PATCH",
         headers: {
           accept: "application/json",
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(updateData),
+        body: JSON.stringify(formData),
       })
       return response
     } catch (error) {
@@ -159,7 +159,7 @@ export const rawMilkIntakeApi = {
   // Delete raw milk intake form
   delete: async (id: string): Promise<void> => {
     try {
-      await apiRequest(`/raw-milk-intake-form/${id}`, {
+      await apiRequest(`/raw-milk-intake/${id}`, {
         method: "DELETE",
         headers: {
           accept: "application/json",

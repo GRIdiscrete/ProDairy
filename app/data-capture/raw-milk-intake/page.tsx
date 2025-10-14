@@ -7,18 +7,27 @@ import { LoadingButton } from "@/components/ui/loading-button"
 import { DataTable } from "@/components/ui/data-table"
 import { DataTableFilters } from "@/components/ui/data-table-filters"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Eye, Edit, Trash2, Droplets, TrendingUp, FileText, Clock, Truck, Package } from "lucide-react"
+import { Plus, Eye, Edit, Trash2, Droplets, TrendingUp, FileText, Clock, Truck, Package, User } from "lucide-react"
 import { RawMilkIntakeFormDrawer } from "@/components/forms/raw-milk-intake-form-drawer"
 import { RawMilkIntakeFormViewDrawer } from "@/components/forms/raw-milk-intake-form-view-drawer"
 import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-dialog"
 import { Skeleton } from "@/components/ui/skeleton"
 import { CopyButton } from "@/components/ui/copy-button"
+import { UserAvatar } from "@/components/ui/user-avatar"
+import { FormIdCopy } from "@/components/ui/form-id-copy"
+import { generateRawMilkIntakeFormId } from "@/lib/utils/form-id-generator"
 import { useAppDispatch, useAppSelector } from "@/lib/store"
+import type { RootState } from "@/lib/store"
 import { 
   fetchRawMilkIntakeForms, 
   deleteRawMilkIntakeForm,
   clearError
 } from "@/lib/store/slices/rawMilkIntakeSlice"
+import { fetchUsers } from "@/lib/store/slices/usersSlice"
+import { fetchSilos } from "@/lib/store/slices/siloSlice"
+import { fetchDriverForms } from "@/lib/store/slices/driverFormSlice"
+import { fetchSuppliers } from "@/lib/store/slices/supplierSlice"
+import { generateDriverFormId } from "@/lib/utils/form-id-generator"
 import { toast } from "sonner"
 import { TableFilters } from "@/lib/types"
 import { RawMilkIntakeForm } from "@/lib/api/raw-milk-intake"
@@ -27,15 +36,52 @@ import ContentSkeleton from "@/components/ui/content-skeleton"
 export default function RawMilkIntakePage() {
   const dispatch = useAppDispatch()
   const { forms, loading, error, operationLoading, isInitialized } = useAppSelector((state) => state.rawMilkIntake)
+  const { items: users } = useAppSelector((state: RootState) => state.users)
+  const { silos } = useAppSelector((state: RootState) => state.silo)
+  const { driverForms } = useAppSelector((state: RootState) => state.driverForm)
+  const { suppliers } = useAppSelector((state: RootState) => state.supplier)
   
   const [tableFilters, setTableFilters] = useState<TableFilters>({})
   const hasFetchedRef = useRef(false)
+
+  // Helper function to get silo by ID
+  const getSiloById = (siloId: string) => {
+    return silos.find((silo: any) => silo.id === siloId)
+  }
+
+  // Helper function to get driver form by ID
+  const getDriverFormById = (driverFormId: string) => {
+    return driverForms.find((form: any) => form.id === driverFormId)
+  }
+
+  // Helper function to get driver info from driver form
+  const getDriverInfoFromForm = (driverFormId: string) => {
+    const driverForm = getDriverFormById(driverFormId)
+    if (!driverForm) return null
+    
+    const driverId = typeof driverForm.driver === 'string' ? driverForm.driver : (driverForm as any).driver_id
+    const driverUser = users.find((user: any) => user.id === driverId)
+    
+    if (driverUser) {
+      return {
+        name: `${driverUser.first_name} ${driverUser.last_name}`,
+        email: driverUser.email,
+        user: driverUser
+      }
+    }
+    
+    return null
+  }
   
-  // Load raw milk intake forms on initial mount
+  // Load raw milk intake forms and related data on initial mount
   useEffect(() => {
     if (!isInitialized && !hasFetchedRef.current) {
       hasFetchedRef.current = true
       dispatch(fetchRawMilkIntakeForms())
+      dispatch(fetchUsers({})) // Load users for operator information
+      dispatch(fetchSilos({})) // Load silos for destination information
+      dispatch(fetchDriverForms({})) // Load driver forms for reference
+      dispatch(fetchSuppliers({})) // Load suppliers for sample information
     }
   }, [dispatch, isInitialized])
   
@@ -137,19 +183,24 @@ export default function RawMilkIntakePage() {
       header: "Form",
       cell: ({ row }: any) => {
         const form = row.original
+        const formId = generateRawMilkIntakeFormId(form.created_at)
         return (
           <div className="flex items-center space-x-3">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center">
               <Droplets className="w-4 h-4 text-white" />
             </div>
             <div>
-              <div className="flex items-center space-x-2">
-                <span className="font-light">#{form.id.slice(0, 8)}</span>
+              <FormIdCopy 
+                displayId={form.tag}
+                actualId={form.id}
+                size="sm"
+              />
+              <div className="flex items-center space-x-2 mt-1">
                 <Badge className="bg-blue-100 text-blue-800 font-light">{form.quantity_received}L</Badge>
+                <span className="text-xs text-gray-500">
+                  {(form as any).raw_milk_intake_form_samples?.length || 0} samples
+                </span>
               </div>
-              <p className="text-sm text-gray-500 mt-1">
-                {new Date(form.date).toLocaleDateString()} • {form.samples_collected?.length || 0} samples
-              </p>
             </div>
           </div>
         )
@@ -160,7 +211,10 @@ export default function RawMilkIntakePage() {
       header: "Driver Form",
       cell: ({ row }: any) => {
         const form = row.original
-        const driverForm = form.raw_milk_intake_form_drivers_form_id_fkey
+        const driverFormId = form.drivers_form_id
+        const driverForm = getDriverFormById(driverFormId)
+        const driverInfo = getDriverInfoFromForm(driverFormId)
+        
         return (
           <div className="space-y-2">
             <div className="flex items-center space-x-2">
@@ -171,25 +225,54 @@ export default function RawMilkIntakePage() {
             </div>
             {driverForm ? (
               <div className="space-y-1">
-                <p className="text-xs text-gray-500">
-                  {new Date(driverForm.start_date).toLocaleDateString('en-GB', { 
-                    day: 'numeric', 
-                    month: 'short', 
-                    year: 'numeric' 
-                  })}
-                </p>
-                <div className="flex items-center space-x-2">
-                  <Badge className={`text-xs ${driverForm.delivered ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
-                    {driverForm.delivered ? 'Delivered' : 'Pending'}
-                  </Badge>
-                  {driverForm.rejected && (
-                    <Badge className="text-xs bg-red-100 text-red-800">Rejected</Badge>
-                  )}
-                </div>
+                <FormIdCopy 
+                  displayId={generateDriverFormId(driverForm.created_at)}
+                  actualId={driverFormId}
+                  size="sm"
+                />
+              </div>
+            ) : driverFormId ? (
+              <div className="flex items-center space-x-2 text-xs">
+                <span className="font-light">#{driverFormId.slice(0, 8)}</span>
+                <CopyButton text={driverFormId} />
               </div>
             ) : (
-              <p className="text-xs text-gray-400">No details</p>
+              <p className="text-xs text-gray-400">No driver form</p>
             )}
+          </div>
+        )
+      },
+    },
+    {
+      accessorKey: "operator_info",
+      header: "Operator",
+      cell: ({ row }: any) => {
+        const form = row.original
+        const operatorId = form.operator_id
+        const operatorUser = users.find((user: any) => user.id === operatorId)
+        
+        if (operatorUser) {
+          return (
+            <UserAvatar 
+              user={operatorUser} 
+              size="md" 
+              showName={true} 
+              showEmail={true}
+              showDropdown={true}
+            />
+          )
+        }
+        
+        // Show unknown operator when no user match found
+        return (
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
+              <User className="w-4 h-4 text-gray-500" />
+            </div>
+            <div>
+              <div className="text-sm font-light text-gray-400">Unknown Operator</div>
+              <div className="text-xs text-gray-500">No user data</div>
+            </div>
           </div>
         )
       },
@@ -199,16 +282,16 @@ export default function RawMilkIntakePage() {
       header: "Destination Silo",
       cell: ({ row }: any) => {
         const form = row.original
-        const silo = form.raw_milk_intake_form_destination_silo_id_fkey
+        const silo = getSiloById(form.destination_silo_id) || form.raw_milk_intake_form_destination_silo_id_fkey
+        const siloName = silo?.name ?? (form.destination_silo_id ? `Silo #${form.destination_silo_id.slice(0, 8)}` : 'Unknown Silo')
+        
         return (
           <div className="space-y-2">
             <div className="flex items-center space-x-2">
               <div className="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center">
                 <Package className="w-3 h-3 text-green-600" />
               </div>
-              <p className="text-sm font-light">
-                {silo ? silo.name : `Silo #${form.destination_silo_id.slice(0, 8)}`}
-              </p>
+              <p className="text-sm font-light">{siloName}</p>
             </div>
             {silo ? (
               <div className="space-y-1">
@@ -340,10 +423,11 @@ export default function RawMilkIntakePage() {
                     <FileText className="h-4 w-4 text-gray-500" />
                     <p className="text-sm font-light text-gray-600">Form ID</p>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <p className="text-lg font-light">#{latestForm.id.slice(0, 8)}</p>
-                    <CopyButton text={latestForm.id} />
-                  </div>
+                  <FormIdCopy 
+                    displayId={generateRawMilkIntakeFormId(latestForm.created_at)}
+                    actualId={latestForm.id}
+                    size="md"
+                  />
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center space-x-2">
@@ -368,14 +452,14 @@ export default function RawMilkIntakePage() {
                     <TrendingUp className="h-4 w-4 text-green-500" />
                     <p className="text-sm font-light text-gray-600">Samples</p>
                   </div>
-                  <p className="text-lg font-light text-green-600">{latestForm.samples_collected?.length || 0} samples</p>
+                  <p className="text-lg font-light text-green-600">{(latestForm as any).raw_milk_intake_form_samples?.length || 0} samples</p>
                 </div>
               </div>
               
-              {/* Driver Form and Silo Details in Row */}
-              <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {/* Driver Form, Operator, and Silo Details */}
+              <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-4">
                 {/* Driver Form Details */}
-                {latestForm.raw_milk_intake_form_drivers_form_id_fkey && (
+                {latestForm?.drivers_form_id && (
                   <div className="p-4 bg-gray-50 rounded-lg">
                     <div className="flex items-center space-x-2 mb-3">
                       <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
@@ -384,84 +468,120 @@ export default function RawMilkIntakePage() {
                       <h4 className="text-sm font-light text-gray-900">Driver Form</h4>
                     </div>
                     <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-light text-gray-600">Form ID</span>
-                        <div className="flex items-center space-x-2">
-                          <span className="text-xs font-light">#{latestForm.drivers_form_id.slice(0, 8)}</span>
-                          <CopyButton text={latestForm.drivers_form_id} />
-                        </div>
+                      {(() => {
+                        const driverForm = getDriverFormById(latestForm.drivers_form_id)
+                        const driverInfo = getDriverInfoFromForm(latestForm.drivers_form_id)
+                        
+                        return driverForm ? (
+                          <>
+                            <FormIdCopy 
+                              displayId={generateDriverFormId(driverForm.created_at)}
+                              actualId={latestForm.drivers_form_id}
+                              size="sm"
+                            />
+                            {driverInfo && (
+                              <div className="flex items-center space-x-2 mt-2">
+                                <UserAvatar 
+                                  user={driverInfo.user} 
+                                  size="sm" 
+                                  showName={false}
+                                  showEmail={false}
+                                  showDropdown={true}
+                                />
+                                <div>
+                                  <div className="text-xs font-light text-gray-900">{driverInfo.name}</div>
+                                  <div className="text-xs text-gray-500">{driverInfo.email}</div>
+                                </div>
+                              </div>
+                            )}
+                          </>
+                        ) : (
+                          <div className="flex items-center space-x-2">
+                            <span className="text-xs font-light">#{latestForm.drivers_form_id.slice(0, 8)}</span>
+                            <CopyButton text={latestForm.drivers_form_id} />
+                          </div>
+                        )
+                      })()}
+                    </div>
+                  </div>
+                )}
+
+                {/* Operator Details */}
+                {latestForm?.operator_id && (
+                  <div className="p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg">
+                    <div className="flex items-center space-x-2 mb-3">
+                      <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center">
+                        <User className="h-4 w-4 text-purple-600" />
                       </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-light text-gray-600">Start Date</span>
-                        <span className="text-xs font-light">
-                          {new Date(latestForm.raw_milk_intake_form_drivers_form_id_fkey.start_date).toLocaleDateString('en-GB', { 
-                            day: 'numeric', 
-                            month: 'short', 
-                            year: 'numeric' 
-                          })}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-light text-gray-600">Status</span>
-                        <Badge className={`text-xs ${latestForm.raw_milk_intake_form_drivers_form_id_fkey.delivered ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
-                          {latestForm.raw_milk_intake_form_drivers_form_id_fkey.delivered ? 'Delivered' : 'Pending'}
-                        </Badge>
-                      </div>
+                      <h4 className="text-sm font-light text-gray-900">Operator</h4>
+                    </div>
+                    <div className="space-y-2">
+                      {(() => {
+                        const operatorUser = users.find((user: any) => user.id === latestForm.operator_id)
+                        
+                        return operatorUser ? (
+                          <UserAvatar 
+                            user={operatorUser} 
+                            size="md" 
+                            showName={true} 
+                            showEmail={true}
+                            showDropdown={true}
+                          />
+                        ) : (
+                          <div className="text-xs text-gray-400">Unknown operator</div>
+                        )
+                      })()}
                     </div>
                   </div>
                 )}
 
                 {/* Silo Details */}
-                {latestForm.raw_milk_intake_form_destination_silo_id_fkey && (
-                  <div className="p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg">
+                {latestForm?.destination_silo_id && (
+                  <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg">
                     <div className="flex items-center space-x-2 mb-3">
-                      <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
-                        <Package className="h-4 w-4 text-blue-600" />
+                      <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center">
+                        <Package className="h-4 w-4 text-green-600" />
                       </div>
                       <h4 className="text-sm font-light text-gray-900">Destination Silo</h4>
                     </div>
                     <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-light text-gray-600">Name</span>
-                        <span className="text-xs font-light text-blue-900">{latestForm.raw_milk_intake_form_destination_silo_id_fkey.name}</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-light text-gray-600">Capacity</span>
-                        <span className="text-xs font-light">{latestForm.raw_milk_intake_form_destination_silo_id_fkey.capacity.toLocaleString()}L</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-light text-gray-600">Current Volume</span>
-                        <span className="text-xs font-light text-green-600">{latestForm.raw_milk_intake_form_destination_silo_id_fkey.milk_volume.toLocaleString()}L</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-light text-gray-600">Expected New</span>
-                        <span className="text-xs font-light text-orange-600">
-                          {(latestForm.raw_milk_intake_form_destination_silo_id_fkey.milk_volume + latestForm.quantity_received).toLocaleString()}L
-                        </span>
-                      </div>
-                      
-                      {/* Capacity Bar */}
-                      <div className="mt-2">
-                        <div className="flex justify-between text-xs font-light text-gray-600 mb-1">
-                          <span>Usage</span>
-                          <span>{Math.round((latestForm.raw_milk_intake_form_destination_silo_id_fkey.milk_volume / latestForm.raw_milk_intake_form_destination_silo_id_fkey.capacity) * 100)}%</span>
-                        </div>
-                        <div className="w-full bg-gray-200 rounded-full h-1.5">
-                          <div 
-                            className="bg-gradient-to-r from-blue-500 to-cyan-500 h-1.5 rounded-full transition-all duration-300"
-                            style={{ 
-                              width: `${Math.min((latestForm.raw_milk_intake_form_destination_silo_id_fkey.milk_volume / latestForm.raw_milk_intake_form_destination_silo_id_fkey.capacity) * 100, 100)}%` 
-                            }}
-                          ></div>
-                        </div>
-                      </div>
+                      {(() => {
+                        const silo = getSiloById(latestForm.destination_silo_id)
+                        
+                        return silo ? (
+                          <>
+                            <div className="text-sm font-light text-green-900">{silo.name}</div>
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs text-gray-600">Capacity</span>
+                              <span className="text-xs font-light">{silo.capacity.toLocaleString()}L</span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs text-gray-600">Current</span>
+                              <span className="text-xs font-light text-green-600">{silo.milk_volume.toLocaleString()}L</span>
+                            </div>
+                            <div className="w-full bg-gray-200 rounded-full h-1.5 mt-2">
+                              <div 
+                                className="bg-gradient-to-r from-green-500 to-emerald-500 h-1.5 rounded-full"
+                                style={{ 
+                                  width: `${Math.min((silo.milk_volume / silo.capacity) * 100, 100)}%` 
+                                }}
+                              ></div>
+                            </div>
+                          </>
+                        ) : (
+                          <div className="flex items-center space-x-2">
+                            <span className="text-xs font-light">#{latestForm.destination_silo_id.slice(0, 8)}</span>
+                            <CopyButton text={latestForm.destination_silo_id} />
+                          </div>
+                        )
+                      })()}
                     </div>
                   </div>
                 )}
-                </div>
+              </div>
 
-                </div>
-                </div>
+            </div>
+          </div>
         ) : null}
 
 

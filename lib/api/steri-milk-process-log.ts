@@ -46,15 +46,36 @@ export interface BatchEntry {
   sterilization_after_5: ProcessDetail | null
 }
 
+export interface ProcessDetail {
+  time: string | null
+  pressure: number
+  temperature: number
+}
+
+export interface BatchEntry {
+  batch_number: number
+  filling_start: ProcessDetail
+  heating_start: ProcessDetail
+  heating_finish: ProcessDetail
+  autoclave_start: ProcessDetail
+  cooling_1_start: ProcessDetail
+  cooling_2_start: ProcessDetail
+  cooling_1_finish: ProcessDetail
+  cooling_2_finish: ProcessDetail
+  pre_cooling_start: ProcessDetail
+  pre_cooling_finish: ProcessDetail
+  sterilization_start: ProcessDetail
+  sterilization_finish: ProcessDetail
+  sterilization_after_5: ProcessDetail
+}
+
 export interface SteriMilkProcessLog {
   id: string
   created_at?: string
   updated_at?: string | null
-  approved: boolean | null
+  approved: boolean
   approver_id: string
   filmatic_form_id: string
-  batch_id?: string | null
-  filmatic_form_2_id?: string | null
   steri_milk_process_log_batch: BatchEntry[]
 }
 
@@ -62,7 +83,7 @@ export interface CreateSteriMilkProcessLogRequest {
   approved: boolean
   approver_id: string
   filmatic_form_id: string
-  batch: BatchDetails
+  steri_milk_process_log_batch: BatchEntry[]
 }
 
 export const steriMilkProcessLogApi = {

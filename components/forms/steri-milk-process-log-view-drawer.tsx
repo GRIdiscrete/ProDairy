@@ -86,9 +86,9 @@ export function SteriMilkProcessLogViewDrawer({
             </div>
             <div className="flex items-center space-x-2">
               {(() => {
-                const bn = (log as any).batch_id?.batch_number
-                const hasTest = typeof bn !== 'undefined' && testReports.some(r => r.batch_number === bn)
-                const hasPost = typeof bn !== 'undefined' && postTests.some(p => p.batch_number === bn)
+                const batchNumbers = log.steri_milk_process_log_batch?.map(b => b.batch_number) || []
+                const hasTest = batchNumbers.some(bn => testReports.some(r => r.batch_number === bn))
+                const hasPost = batchNumbers.some(bn => postTests.some(p => p.batch_number === bn))
                 return (
                   <>
                     <Button
@@ -209,9 +209,11 @@ export function SteriMilkProcessLogViewDrawer({
                   </p>
                 </div>
                 <div>
-                  <span className="text-xs font-light text-gray-500">Batch ID</span>
+                  <span className="text-xs font-light text-gray-500">Batch Numbers</span>
                   <p className="text-sm font-light">
-                    {log.batch_id ? `Batch #${String(log.batch_id).slice(0, 8)}` : "No batch"}
+                    {log.steri_milk_process_log_batch?.length > 0 
+                      ? log.steri_milk_process_log_batch.map(batch => `#${batch.batch_number}`).join(', ')
+                      : "No batch"}
                   </p>
                 </div>
               </div>
@@ -219,7 +221,7 @@ export function SteriMilkProcessLogViewDrawer({
           </Card>
 
           {/* Batch Information */}
-          {log.batch_id && (
+          {log.steri_milk_process_log_batch?.length > 0 && (
             <Card className="shadow-none border border-gray-200 rounded-lg">
               <CardHeader className="pb-4">
                 <div className="flex items-center space-x-2">
@@ -234,10 +236,10 @@ export function SteriMilkProcessLogViewDrawer({
                   <h4 className="text-sm font-medium">Batch Details</h4>
                   <div className="grid grid-cols-2 gap-4 pl-4">
                     <div>
-                      <p className="text-sm font-light"><span className="font-medium">Batch Number:</span> {(log as any).batch_id?.batch_number}</p>
+                      <p className="text-sm font-light"><span className="font-medium">Number of Batches:</span> {log.steri_milk_process_log_batch.length}</p>
                     </div>
                     <div>
-                      <p className="text-sm font-light"><span className="font-medium">Created:</span> {(log as any).batch_id?.created_at ? format(new Date((log as any).batch_id.created_at), "PPP 'at' p") : "N/A"}</p>
+                      <p className="text-sm font-light"><span className="font-medium">Latest Batch:</span> #{log.steri_milk_process_log_batch[log.steri_milk_process_log_batch.length - 1].batch_number}</p>
                     </div>
                   </div>
                 </div>
@@ -247,105 +249,59 @@ export function SteriMilkProcessLogViewDrawer({
                 {/* Process Times */}
                 <div className="space-y-2">
                   <h4 className="text-sm font-medium">Process Times</h4>
-                  <div className="grid grid-cols-2 gap-4 pl-4">
-                    <div>
-                      <p className="text-sm font-light"><span className="font-medium">Filling Start:</span> {(log as any).batch_id?.filling_start?.time || 'N/A'}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-light"><span className="font-medium">Autoclave Start:</span> {(log as any).batch_id?.autoclave_start?.time || 'N/A'}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-light"><span className="font-medium">Heating Start:</span> {(log as any).batch_id?.heating_start?.time || 'N/A'}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-light"><span className="font-medium">Heating Finish:</span> {(log as any).batch_id?.heating_finish?.time || 'N/A'}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-light"><span className="font-medium">Sterilization Start:</span> {(log as any).batch_id?.sterilization_start?.time || 'N/A'}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-light"><span className="font-medium">Sterilization After 5:</span> {(log as any).batch_id?.sterilization_after_5?.time || 'N/A'}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-light"><span className="font-medium">Sterilization Finish:</span> {(log as any).batch_id?.sterilization_finish?.time || 'N/A'}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-light"><span className="font-medium">Pre Cooling Start:</span> {(log as any).batch_id?.pre_cooling_start?.time || 'N/A'}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-light"><span className="font-medium">Pre Cooling Finish:</span> {(log as any).batch_id?.pre_cooling_finish?.time || 'N/A'}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-light"><span className="font-medium">Cooling 1 Start:</span> {(log as any).batch_id?.cooling_1_start?.time || 'N/A'}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-light"><span className="font-medium">Cooling 1 Finish:</span> {(log as any).batch_id?.cooling_1_finish?.time || 'N/A'}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-light"><span className="font-medium">Cooling 2 Start:</span> {(log as any).batch_id?.cooling_2_start?.time || 'N/A'}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-light"><span className="font-medium">Cooling 2 Finish:</span> {(log as any).batch_id?.cooling_2_finish?.time || 'N/A'}</p>
-                    </div>
+                  <div className="space-y-6">
+                    {log.steri_milk_process_log_batch.map((batch, index) => (
+                      <div key={batch.batch_number} className="space-y-4">
+                        <div className="flex items-center space-x-2">
+                          <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
+                            <Hash className="h-4 w-4 text-blue-600" />
+                          </div>
+                          <h3 className="text-base font-medium">Batch #{batch.batch_number}</h3>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg">
+                          {Object.entries(batch).map(([key, value]) => {
+                            if (key === 'batch_number') return null;
+                            const processDetail = value as ProcessDetail;
+                            const formattedKey = key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+                            
+                            return (
+                              <div key={key} className="bg-white p-3 rounded-md shadow-sm border border-gray-100">
+                                <h4 className="text-sm font-medium text-gray-700 mb-2 flex items-center space-x-2">
+                                  {key.includes('temperature') ? (
+                                    <Thermometer className="h-4 w-4 text-red-500" />
+                                  ) : key.includes('pressure') ? (
+                                    <Gauge className="h-4 w-4 text-blue-500" />
+                                  ) : (
+                                    <Clock className="h-4 w-4 text-gray-500" />
+                                  )}
+                                  <span>{formattedKey}</span>
+                                </h4>
+                                <div className="space-y-2">
+                                  <div className="flex items-center space-x-2">
+                                    <Clock className="h-4 w-4 text-gray-400" />
+                                    <p className="text-sm">{processDetail.time || 'N/A'}</p>
+                                  </div>
+                                  <div className="flex items-center space-x-2">
+                                    <Thermometer className="h-4 w-4 text-red-400" />
+                                    <p className="text-sm">{processDetail.temperature}°C</p>
+                                  </div>
+                                  <div className="flex items-center space-x-2">
+                                    <Gauge className="h-4 w-4 text-blue-400" />
+                                    <p className="text-sm">{processDetail.pressure} Bar</p>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                        {index < log.steri_milk_process_log_batch.length - 1 && <Separator className="my-4" />}
+                      </div>
+                    ))}
                   </div>
                 </div>
 
                 <Separator />
-
-                {/* Process Details */}
-                <div className="space-y-4">
-                  <h4 className="text-sm font-medium">Process Details</h4>
-                  
-                  {/* Filling Start Details */}
-                  {(log as any).batch_id?.filling_start && (
-                    <div className="border border-gray-200 rounded-lg p-4">
-                      <h5 className="text-sm font-medium mb-2 flex items-center space-x-2">
-                        <Clock className="h-4 w-4 text-blue-600" />
-                        <span>Filling Start Details</span>
-                      </h5>
-                      <div className="grid grid-cols-3 gap-4">
-                        <div>
-                          <p className="text-xs text-gray-500">Time</p>
-                          <p className="text-sm font-light">{(log as any).batch_id.filling_start.time}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-gray-500">Temperature</p>
-                          <p className="text-sm font-light">{(log as any).batch_id.filling_start.temperature}°C</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-gray-500">Pressure</p>
-                          <p className="text-sm font-light">{(log as any).batch_id.filling_start.pressure} bar</p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Autoclave Start Details */}
-                  {(log as any).batch_id?.autoclave_start && (
-                    <div className="border border-gray-200 rounded-lg p-4">
-                      <h5 className="text-sm font-medium mb-2 flex items-center space-x-2">
-                        <Thermometer className="h-4 w-4 text-red-600" />
-                        <span>Autoclave Start Details</span>
-                      </h5>
-                      <div className="grid grid-cols-3 gap-4">
-                        <div>
-                          <p className="text-xs text-gray-500">Time</p>
-                          <p className="text-sm font-light">{(log as any).batch_id.autoclave_start.time}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-gray-500">Temperature</p>
-                          <p className="text-sm font-light">{(log as any).batch_id.autoclave_start.temperature}°C</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-gray-500">Pressure</p>
-                          <p className="text-sm font-light">{(log as any).batch_id.autoclave_start.pressure} bar</p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Add more process details as needed... */}
-                </div>
               </CardContent>
             </Card>
           )}
@@ -373,27 +329,6 @@ export function SteriMilkProcessLogViewDrawer({
                   {log.approver_id ? `Approver #${String(log.approver_id).slice(0, 8)}` : "Not assigned"}
                 </span>
               </div>
-            </CardContent>
-          </Card>
-
-          {/* Approver Signature */}
-          <Card className="shadow-none border border-gray-200 rounded-lg">
-            <CardHeader className="pb-4">
-              <div className="flex items-center space-x-2">
-                <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
-                  <User className="h-4 w-4 text-blue-600" />
-                </div>
-                <CardTitle className="text-base font-light">Approver Signature</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <SignaturePad
-                value={log.approver_signature || ''}
-                onChange={() => {}} // Read-only display
-                width={400}
-                height={120}
-                className="bg-white"
-              />
             </CardContent>
           </Card>
 
@@ -426,8 +361,8 @@ export function SteriMilkProcessLogViewDrawer({
                   <CardTitle className="text-base font-light">Test Reports</CardTitle>
                 </div>
                 {(() => {
-                  const bn = (log as any).batch_id?.batch_number
-                  const hasTest = typeof bn !== 'undefined' && testReports.some(r => r.batch_number === bn)
+                  const batchNumbers = log.steri_milk_process_log_batch?.map(b => b.batch_number) || []
+                  const hasTest = batchNumbers.some(bn => testReports.some(r => r.batch_number === bn))
                   return (
                     <Button
                       onClick={() => setShowTestReportForm(true)}

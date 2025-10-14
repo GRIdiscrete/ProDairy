@@ -40,6 +40,7 @@ interface HeaderProps {
   title?: string
   subtitle?: string
   onOpenSidebar?: () => void
+  allowedSwitches?: Array<{ key: string, label: string, perm?: string, path?: string }> // path is optional for compatibility
 }
 
 export function Header({ title = "Dashboard", subtitle = "Welcome back!", onOpenSidebar }: HeaderProps) {
@@ -112,8 +113,37 @@ export function Header({ title = "Dashboard", subtitle = "Welcome back!", onOpen
     }
   ]
 
-  // Show all dashboards (permissions removed)
-  const dashboards = allDashboards
+  // Dashboard permission mapping
+  const dashboardSwitchPermissions = [
+    { key: "admin", label: "Admin Dashboard", perm: "admin_panel" },
+    { key: "drivers", label: "Driver Dashboard", perm: "driver_ui" },
+    { key: "data-capture", label: "Production Processes", perm: "data_capture_module" },
+    { key: "tools", label: "Tools", perm: "settings" },
+  ]
+
+  // Get allowed views from user profile
+  const allowedViews: string[] =
+    profile?.users_role_id_fkey?.views && Array.isArray(profile.users_role_id_fkey.views)
+      ? profile.users_role_id_fkey.views
+      : []
+
+  // Filter dashboards based on permissions
+  const dashboards = dashboardSwitchPermissions
+    .filter(sw => allowedViews.includes(sw.perm))
+    .map(sw => {
+      const match = allDashboards.find(d => d.id === sw.key)
+      return match
+        ? match
+        : {
+            id: sw.key,
+            name: sw.label,
+            icon: Users,
+            path: "/",
+            emoji: "🧑‍💻",
+            description: "",
+            module: sw.key
+          }
+    })
 
   // Comprehensive route list for search
   const allRoutes = [
@@ -178,23 +208,23 @@ export function Header({ title = "Dashboard", subtitle = "Welcome back!", onOpen
     )
   }, [searchQuery])
 
-  // Get current dashboard based on pathname
+  // Get current dashboard based on pathname, but only from dashboards list
   const getCurrentDashboard = () => {
-    if (pathname.startsWith("/admin")) {
-      return dashboards.find(d => d.id === "admin") || dashboards[0]
+    // If dashboards is empty, return a safe fallback
+    if (!dashboards || dashboards.length === 0) {
+      return {
+        id: "none",
+        name: "Dashboard",
+        icon: Users,
+        path: "/",
+        emoji: "🧑‍💻",
+        description: "",
+        module: "none"
+      }
     }
-    if (pathname.startsWith("/drivers")) {
-      return dashboards.find(d => d.id === "drivers") || dashboards[0]
-    }
-    if (pathname.startsWith("/data-capture")) {
-      return dashboards.find(d => d.id === "data-capture") || dashboards[0]
-    }
-    if (pathname.startsWith("/tools")) {
-      return dashboards.find(d => d.id === "tools") || dashboards[0]
-    }
-    return dashboards[0] // Default to first dashboard
+    const found = dashboards.find(d => pathname.startsWith(d.path))
+    return found || dashboards[0]
   }
-
   const currentDashboard = getCurrentDashboard()
 
   const handleDashboardSwitch = (dashboardPath: string) => {
@@ -236,7 +266,7 @@ export function Header({ title = "Dashboard", subtitle = "Welcome back!", onOpen
                 className="flex items-center gap-2 px-3 py-2 hover:bg-zinc-100"
               >
                 <div className="flex items-center gap-2">
-                  <span className="text-lg">{currentDashboard.emoji}</span>
+                  <span className="text-lg">{currentDashboard.emoji || "🧑‍💻"}</span>
                   <div className="hidden md:block text-left">
                     <p className="text-sm font-medium text-zinc-900">
                       {currentDashboard.name}

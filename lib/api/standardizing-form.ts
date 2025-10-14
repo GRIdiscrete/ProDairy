@@ -8,6 +8,7 @@ export interface StandardizingForm {
   operator_signature: string
   bmt_id: string
   skim_milk: string | null
+  tag: string | null
   standardizing_form_no_skim_skim_milk: Array<{
     id: string
     quantity: number

@@ -42,6 +42,7 @@ import { toast } from "sonner"
 import { SignatureModal } from "@/components/ui/signature-modal"
 import { SignatureViewer } from "@/components/ui/signature-viewer"
 import { base64ToPngDataUrl, normalizeDataUrlToBase64 } from "@/lib/utils/signature"
+import { generateBMTFormId } from "@/lib/utils/form-id-generator"
 
 // Process Overview Component
 const ProcessOverview = () => (
@@ -186,7 +187,13 @@ export function StandardizingFormDrawer({
       const formData: any = {
         id: mode === "edit" && form ? form.id : crypto.randomUUID(),
         operator_id: user.id, // Use actual user ID from auth state
+        
         ...data,
+        skim:{
+          quantity: data.skim?.quantity,
+          resulting_fat: data.skim?.resulting_fat,
+          id:form?.skim_milk
+        },
         operator_signature: normalizeDataUrlToBase64(data.operator_signature),
       }
 
@@ -246,12 +253,34 @@ export function StandardizingFormDrawer({
                         .filter(bmtForm => bmtForm.id) // Filter out forms without ID
                         .map(bmtForm => ({
                           value: bmtForm.id!,
-                          label: `#${bmtForm.id!.slice(0, 8)}`,
+                          label: generateBMTFormId(bmtForm.created_at),
                           description: `${bmtForm.volume}L • ${bmtForm.product} • ${bmtForm.created_at ? new Date(bmtForm.created_at).toLocaleDateString() : 'No date'}`
                         }))}
                       value={field.value}
                       onValueChange={field.onChange}
-                      placeholder="Search and select BMT form"
+                      onSearch={(searchTerm) => {
+                        // Check if user pasted an actual BMT ID (UUID format)
+                        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+                        if (uuidRegex.test(searchTerm)) {
+                          // Find the BMT form with this actual ID
+                          const foundForm = bmtForms.find(form => form.id === searchTerm)
+                          if (foundForm) {
+                            field.onChange(foundForm.id)
+                            return
+                          }
+                        }
+                        
+                        // Check if user pasted a partial ID (first 8 chars)
+                        if (searchTerm.length >= 8 && searchTerm.match(/^[0-9a-f-]+$/i)) {
+                          const foundForm = bmtForms.find(form => form.id?.startsWith(searchTerm.replace(/-/g, '')))
+                          if (foundForm) {
+                            field.onChange(foundForm.id)
+                            return
+                          }
+                        }
+                      }}
+                      placeholder="Search BMT forms or paste BMT ID"
+                      searchPlaceholder="Search by generated ID or paste actual BMT ID..."
                       loading={loadingBmtForms}
                     />
                   )}
@@ -318,9 +347,18 @@ export function StandardizingFormDrawer({
                         type="number"
                         step="0.1"
                         placeholder="Enter quantity"
-                        {...field}
-                        value={field.value || ""}
-                        onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
+                        value={field.value === undefined ? "" : field.value.toString()}
+                        onChange={(e) => {
+                          const value = e.target.value
+                          if (value === "" || value === "-") {
+                            field.onChange(undefined)
+                          } else {
+                            const numValue = parseFloat(value)
+                            field.onChange(isNaN(numValue) ? undefined : numValue)
+                          }
+                        }}
+                        onBlur={field.onBlur}
+                        name={field.name}
                       />
                     )}
                   />
@@ -342,9 +380,18 @@ export function StandardizingFormDrawer({
                         type="number"
                         step="0.1"
                         placeholder="Enter resulting fat content"
-                        {...field}
-                        value={field.value || ""}
-                        onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
+                        value={field.value === undefined ? "" : field.value.toString()}
+                        onChange={(e) => {
+                          const value = e.target.value
+                          if (value === "" || value === "-") {
+                            field.onChange(undefined)
+                          } else {
+                            const numValue = parseFloat(value)
+                            field.onChange(isNaN(numValue) ? undefined : numValue)
+                          }
+                        }}
+                        onBlur={field.onBlur}
+                        name={field.name}
                       />
                     )}
                   />
