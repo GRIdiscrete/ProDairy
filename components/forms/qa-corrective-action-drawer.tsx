@@ -148,25 +148,9 @@ export function QACorrectiveActionDrawer({
         
         setUsers(Array.isArray(usersData) ? usersData : [])
         setRoles(Array.isArray(rolesData) ? rolesData : [])
+      
         
-        // Mock products - in real app, this would come from an API
-        const baseProducts = [
-          { id: "a4de97cc-e132-431e-a0a7-5c5e85e53d11", name: "UHT Milk 1L" },
-          { id: "b5ef98dd-f243-542f-b1b8-6d6f96f64e22", name: "UHT Milk 500ml" },
-          { id: "c6fg99ee-g354-653g-c2c9-7e7g07g75f33", name: "UHT Milk 250ml" },
-        ]
-        
-        // If processId is provided, add it to the products list
-        if (processId) {
-          const processProduct = baseProducts.find(p => p.id === processId)
-          if (processProduct) {
-            setProducts([processProduct, ...baseProducts.filter(p => p.id !== processId)])
-          } else {
-            setProducts([{ id: processId, name: `Process ${processId.substring(0, 8)}...` }, ...baseProducts])
-          }
-        } else {
-          setProducts(baseProducts)
-        }
+       
       } catch (error) {
         console.error("Error loading data:", error)
         setUsers([])
@@ -207,7 +191,7 @@ export function QACorrectiveActionDrawer({
         date_of_production: action.date_of_production || "",
         date_analysed: action.date_analysed || "",
         batch_number: action.batch_number ?? undefined,
-        product: action.product || processId || "",
+        product:  processId || "",
         checked_by: action.checked_by || "",
         issue: action.issue || "",
         analyst: action.analyst || "",
@@ -421,7 +405,7 @@ export function QACorrectiveActionDrawer({
                     <p className="text-sm text-red-600">{actionForm.formState.errors.batch_number.message}</p>
                   )}
                 </div>
-
+{/* 
                 <div className="space-y-2">
                   <Label htmlFor="product">Product *</Label>
                   {processId ? (
@@ -448,7 +432,7 @@ export function QACorrectiveActionDrawer({
                   {actionForm.formState.errors.product && (
                     <p className="text-sm text-red-600">{actionForm.formState.errors.product.message}</p>
                   )}
-                </div>
+                </div> */}
 
                 <div className="space-y-2">
                   <Label htmlFor="checked_by">Checked By *</Label>
