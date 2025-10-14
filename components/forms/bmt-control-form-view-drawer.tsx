@@ -151,10 +151,27 @@ export function BMTControlFormViewDrawer({ open, onClose, form, onEdit }: BMTCon
     }
   }
 
-  if (!form) return null
+  // Helper: get all source silos from form.bmt_control_form_source_silo
+  const getSourceSilos = () => {
+    if (Array.isArray(form.bmt_control_form_source_silo)) {
+      return form.bmt_control_form_source_silo;
+    }
+    return [];
+  };
 
-  const sourceSilo = getSiloById(form.source_silo_id)
-  const destinationSilo = getSiloById(form.destination_silo_id)
+  // Helper: get destination silo from form.destination_silo
+  const getDestinationSilo = () => {
+    if (form.destination_silo) {
+      return form.destination_silo;
+    }
+    return null;
+  };
+
+  if (!form) return null;
+
+  const sourceSilos = getSourceSilos();
+  const destinationSiloObj = getDestinationSilo();
+
   const dispatchUser = getUserById((form as any).dispatch_operator_id || form.llm_operator_id)
   const receiverUser = getUserById((form as any).receiver_operator_id || form.dpp_operator_id)
 
@@ -181,11 +198,6 @@ export function BMTControlFormViewDrawer({ open, onClose, form, onEdit }: BMTCon
     setAnimationProgress(0)
   }
 
-  // For destination silo, use new BMT object structure if available
-  const destinationSiloObj = (form as any).destination_silo_details
-    ? silos.find((silo: any) => silo.id === (form as any).destination_silo_details.id)
-    : getSiloById(form.destination_silo_id)
-
   return (
     <Sheet open={open} onOpenChange={onClose}>
       <SheetContent className="tablet-sheet-full p-0 bg-white">
@@ -197,7 +209,7 @@ export function BMTControlFormViewDrawer({ open, onClose, form, onEdit }: BMTCon
           <SheetDescription className="text-sm font-light flex items-center gap-2">
             <span>Complete information about the bulk milk transfer control form record</span>
             <FormIdCopy 
-              displayId={generateBMTFormId(form.created_at)}
+              displayId={form?.tag}
               actualId={form.id || ''}
               size="md"
             />
@@ -259,7 +271,7 @@ export function BMTControlFormViewDrawer({ open, onClose, form, onEdit }: BMTCon
           <div className="mb-6 flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <FormIdCopy 
-                displayId={generateBMTFormId(form.created_at)}
+                displayId={form?.tag}
                 actualId={form.id}
                 size="lg"
               />
@@ -347,41 +359,51 @@ export function BMTControlFormViewDrawer({ open, onClose, form, onEdit }: BMTCon
 
           {/* Silo Information */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Source Silo */}
+            {/* Source Silos */}
             <div className="p-6 bg-white border border-gray-200 rounded-lg">
               <div className="flex items-center space-x-2 mb-4">
                 <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
                   <Package className="h-4 w-4 text-blue-600" />
                 </div>
-                <h3 className="text-lg font-light">Source Silo</h3>
+                <h3 className="text-lg font-light">Source Silos</h3>
               </div>
               <div className="space-y-3">
-                {sourceSilo ? (
-                  <>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-light text-gray-600">Name</span>
-                      <span className="text-sm font-light text-blue-900">{sourceSilo.name}</span>
+                {sourceSilos.length > 0 ? (
+                  sourceSilos.map((silo: any, idx: number) => (
+                    <div key={silo.id} className="border-b border-gray-100 pb-2 mb-2 last:border-b-0 last:pb-0 last:mb-0">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-light text-gray-600">Name</span>
+                        <span className="text-sm font-light text-blue-900">{silo.name}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-light text-gray-600">Product</span>
+                        <span className="text-sm font-light">{silo.product}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-light text-gray-600">Flow Meter Start</span>
+                        <span className="text-sm font-light">{silo.flow_meter_start}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-light text-gray-600">Flow Meter Start Reading</span>
+                        <span className="text-sm font-light">{silo.flow_meter_start_reading}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-light text-gray-600">Flow Meter End</span>
+                        <span className="text-sm font-light">{silo.flow_meter_end}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-light text-gray-600">Flow Meter End Reading</span>
+                        <span className="text-sm font-light">{silo.flow_meter_end_reading}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-light text-gray-600">Quantity Requested</span>
+                        <span className="text-sm font-light">{silo.source_silo_quantity_requested}</span>
+                      </div>
                     </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-light text-gray-600">Capacity</span>
-                      <span className="text-sm font-light">{sourceSilo.capacity?.toLocaleString()}L</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-light text-gray-600">Location</span>
-                      <span className="text-sm font-light">{sourceSilo.location}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-light text-gray-600">Category</span>
-                      <span className="text-sm font-light">{sourceSilo.category}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-light text-gray-600">Current Volume</span>
-                      <span className="text-sm font-light text-green-600">{sourceSilo.milk_volume?.toLocaleString()}L</span>
-                    </div>
-                  </>
+                  ))
                 ) : (
                   <div className="text-sm text-gray-500">
-                    {Array.isArray(form.source_silo_id) ? `Silo ID: ${form.source_silo_id[0]}` : `Silo ID: ${form.source_silo_id}`}
+                  No source silos available
                   </div>
                 )}
               </div>
@@ -403,82 +425,40 @@ export function BMTControlFormViewDrawer({ open, onClose, form, onEdit }: BMTCon
                       <span className="text-sm font-light text-green-900">{destinationSiloObj.name}</span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-light text-gray-600">Capacity</span>
-                      <span className="text-sm font-light">{destinationSiloObj.capacity?.toLocaleString()}L</span>
+                      <span className="text-sm font-light text-gray-600">Product</span>
+                      <span className="text-sm font-light">{destinationSiloObj.product}</span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-light text-gray-600">Location</span>
-                      <span className="text-sm font-light">{destinationSiloObj.location}</span>
+                      <span className="text-sm font-light text-gray-600">Flow Meter Start</span>
+                      <span className="text-sm font-light">{destinationSiloObj.flow_meter_start}</span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-light text-gray-600">Category</span>
-                      <span className="text-sm font-light">{destinationSiloObj.category}</span>
+                      <span className="text-sm font-light text-gray-600">Flow Meter Start Reading</span>
+                      <span className="text-sm font-light">{destinationSiloObj.flow_meter_start_reading}</span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-light text-gray-600">Current Volume</span>
-                      <span className="text-sm font-light text-blue-600">{destinationSiloObj.milk_volume?.toLocaleString()}L</span>
+                      <span className="text-sm font-light text-gray-600">Flow Meter End</span>
+                      <span className="text-sm font-light">{destinationSiloObj.flow_meter_end}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-light text-gray-600">Flow Meter End Reading</span>
+                      <span className="text-sm font-light">{destinationSiloObj.flow_meter_end_reading}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-light text-gray-600">Quantity Requested</span>
+                      <span className="text-sm font-light">{destinationSiloObj.source_silo_quantity_requested}</span>
                     </div>
                   </>
                 ) : (
                   <div className="text-sm text-gray-500">
-                    Silo ID: {(form as any).destination_silo_details?.id || form.destination_silo_id || 'N/A'}
+                  No destination silo available
                   </div>
                 )}
               </div>
             </div>
           </div>
 
-          {/* Animated Silo Transfer Visualization */}
-          {sourceSilo && destinationSilo && (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-gray-900">Milk Transfer Visualization</h3>
-                <div className="flex space-x-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={startAnimation}
-                    disabled={isAnimating}
-                    className="flex items-center space-x-1"
-                  >
-                    <Play className="w-4 h-4" />
-                    <span>Demo Transfer</span>
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={resetAnimation}
-                    className="flex items-center space-x-1"
-                  >
-                    <RotateCcw className="w-4 h-4" />
-                    <span>Reset</span>
-                  </Button>
-                </div>
-              </div>
-              
-              <AnimatedSiloTransfer
-                sourceSilo={{
-                  id: sourceSilo.id,
-                  name: sourceSilo.name,
-                  capacity: sourceSilo.capacity,
-                  currentVolume: sourceSilo.milk_volume - (isAnimating ? (animationProgress / 100) * (form.volume || 0) : (form.volume || 0)),
-                  location: sourceSilo.location,
-                  category: sourceSilo.category
-                }}
-                destinationSilo={{
-                  id: destinationSilo.id,
-                  name: destinationSilo.name,
-                  capacity: destinationSilo.capacity,
-                  currentVolume: destinationSilo.milk_volume + (isAnimating ? (animationProgress / 100) * (form.volume || 0) : (form.volume || 0)),
-                  location: destinationSilo.location,
-                  category: destinationSilo.category
-                }}
-                transferVolume={form.volume || 0}
-                isTransferring={isAnimating}
-                transferProgress={animationProgress}
-              />
-            </div>
-          )}
+       
 
           {/* Flow Meter Readings */}
           <div className="p-6 bg-white border border-gray-200 rounded-lg">
@@ -681,13 +661,7 @@ export function BMTControlFormViewDrawer({ open, onClose, form, onEdit }: BMTCon
                 <span className="text-sm font-light text-gray-600">Form ID</span>
                 <div className="flex items-center space-x-2">
                   <Badge variant="outline" className="font-mono">
-                    {(() => {
-                      const createdDate = form.created_at ? new Date(form.created_at) : null
-                      const formId = form.id ? form.id.slice(-3) : '000'
-                      return createdDate 
-                        ? `bmt-${formId}-${(createdDate.getMonth() + 1).toString().padStart(2, '0')}-${createdDate.getDate().toString().padStart(2, '0')}-${createdDate.getFullYear()}`
-                        : 'bmt-000-00-00-0000'
-                    })()}
+                    {form?.tag}
                   </Badge>
                   <CopyButton text={form.id || ''} />
                 </div>

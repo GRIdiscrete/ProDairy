@@ -216,77 +216,112 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
     }
   }, [destinationSiloId, silos, setValue, watch])
 
+  // Helper to convert "HH:mm" to ISO string with today's date and UTC timezone
+  const toIsoDateTime = (time: string | undefined | null) => {
+    if (!time) return null;
+    // If already ISO, return as is
+    if (time.includes("T")) return time;
+    // Use today's date
+    const today = new Date();
+    const [hh, mm] = time.split(":");
+    today.setHours(Number(hh), Number(mm), 0, 0);
+    // Return as ISO string with Z (UTC)
+    return today.toISOString();
+  };
+
   const onSubmit = async (data: BMTControlFormData) => {
     try {
-      // Send data as is, matches new API structure
+      // Convert all time fields to ISO string
+      const convertSiloDetails = (details: any[]) =>
+        details.map((silo) => ({
+          ...silo,
+          flow_meter_start: toIsoDateTime(silo.flow_meter_start),
+          flow_meter_end: toIsoDateTime(silo.flow_meter_end),
+        }));
+
       const payload = {
         ...data,
-      }
+        movement_start: toIsoDateTime(data.movement_start),
+        movement_end: toIsoDateTime(data.movement_end),
+        source_silo_details: convertSiloDetails(data.source_silo_details || []),
+        destination_silo_details: data.destination_silo_details
+          ? {
+              ...data.destination_silo_details,
+              flow_meter_start: toIsoDateTime(data.destination_silo_details.flow_meter_start),
+              flow_meter_end: toIsoDateTime(data.destination_silo_details.flow_meter_end),
+            }
+          : undefined,
+      };
 
       if (mode === "create") {
-        await dispatch(createBMTControlFormAction(payload as any)).unwrap()
-        toast.success('BMT Control Form created successfully')
-        // Refresh the data to get complete relationship information
+        await dispatch(createBMTControlFormAction(payload as any)).unwrap();
+        toast.success('BMT Control Form created successfully');
         setTimeout(() => {
-          dispatch(fetchBMTControlForms())
-        }, 100)
+          dispatch(fetchBMTControlForms());
+        }, 100);
       } else if (form) {
         const updatePayload = {
           ...payload,
           id: form.id,
           created_at: form.created_at,
           updated_at: form.updated_at,
-        }
-        
-        // Debug: Log the update payload
-        console.log('BMT Update Payload Id:', form)
-        console.log('BMT Update Full Payload:', updatePayload)
-        
-        await dispatch(updateBMTControlFormAction({ id: form.id, formData: payload as any })).unwrap()
-        toast.success('BMT Control Form updated successfully')
-        // Refresh the data to get complete relationship information
+        };
+        await dispatch(updateBMTControlFormAction({ id: form.id, formData: payload as any })).unwrap();
+        toast.success('BMT Control Form updated successfully');
         setTimeout(() => {
-          dispatch(fetchBMTControlForms())
-        }, 100)
+          dispatch(fetchBMTControlForms());
+        }, 100);
       }
-      onOpenChange(false)
-      reset()
+      onOpenChange(false);
+      reset();
     } catch (error: any) {
-      toast.error(error || (mode === "create" ? 'Failed to create BMT control form' : 'Failed to update BMT control form'))
+      toast.error(error || (mode === "create" ? 'Failed to create BMT control form' : 'Failed to update BMT control form'));
     }
   }
 
   useEffect(() => {
     if (open && form && mode === "edit") {
-      // Debug: Log the entire form object to see what we're getting
-      console.log('Form object in useEffect:', form)
-      console.log('Form ID specifically:', form.id)
-      console.log('Form keys:', Object.keys(form))
-      
       // Helper to extract time from datetime strings - handles multiple formats
-      const extractTime = (timeString: string | undefined) => {
+      const extractTime = (timeString: string | undefined | null) => {
         if (!timeString) return ""
-        
-        // Handle ISO timestamp format (2025-01-11T12:58:15.357772)
         if (timeString.includes('T')) {
           return timeString.split('T')[1]?.substring(0, 5) || ""
-        } 
-        // Handle space-separated datetime (2025-01-11 12:58:15.357772)
-        else if (timeString.includes(' ')) {
+        } else if (timeString.includes(' ')) {
           return timeString.split(' ')[1]?.substring(0, 5) || ""
-        } 
-        // Handle time-only formats
-        else if (timeString.match(/^\d{2}:\d{2}:\d{2}/)) {
-          // Handle HH:MM:SS or HH:MM:SS.microseconds format
-          return timeString.substring(0, 5) // Extract HH:MM
-        } 
-        else if (timeString.match(/^\d{2}:\d{2}$/)) {
-          // Handle HH:MM format
+        } else if (timeString.match(/^\d{2}:\d{2}:\d{2}/)) {
+          return timeString.substring(0, 5)
+        } else if (timeString.match(/^\d{2}:\d{2}$/)) {
           return timeString
         }
-        
         return ""
       }
+
+      // Prefill source silos and destination silo from API object
+      const sourceSiloDetails = Array.isArray((form as any).bmt_control_form_source_silo)
+        ? (form as any).bmt_control_form_source_silo.map((silo: any) => ({
+            id: silo.id,
+            name: silo.name,
+            flow_meter_start: extractTime(silo.flow_meter_start),
+            flow_meter_start_reading: silo.flow_meter_start_reading ?? 0,
+            flow_meter_end: extractTime(silo.flow_meter_end),
+            flow_meter_end_reading: silo.flow_meter_end_reading ?? 0,
+            source_silo_quantity_requested: silo.source_silo_quantity_requested ?? 0,
+            product: silo.product ?? "",
+          }))
+        : []
+
+      const destinationSilo = (form as any).destination_silo
+        ? {
+            id: (form as any).destination_silo.id,
+            name: (form as any).destination_silo.name,
+            flow_meter_start: extractTime((form as any).destination_silo.flow_meter_start),
+            flow_meter_start_reading: (form as any).destination_silo.flow_meter_start_reading ?? 0,
+            flow_meter_end: extractTime((form as any).destination_silo.flow_meter_end),
+            flow_meter_end_reading: (form as any).destination_silo.flow_meter_end_reading ?? 0,
+            source_silo_quantity_requested: (form as any).destination_silo.source_silo_quantity_requested ?? 0,
+            product: (form as any).destination_silo.product ?? "",
+          }
+        : undefined
 
       reset({
         flow_meter_start: extractTime(form.flow_meter_start),
@@ -305,25 +340,26 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
         receiver_operator_signature: (form as any).receiver_operator_signature || form.dpp_signature || "",
         product: form.product || "",
         status: (form as any).status || "Draft",
+        tag: (form as any).tag || "",
         id: form.id || "",
+        source_silo_details: sourceSiloDetails,
+        destination_silo_details: destinationSilo,
       })
     } else if (open && mode === "create") {
       reset({
-        flow_meter_start: "",
-        flow_meter_start_reading: undefined,
-        flow_meter_end: "",
-        flow_meter_end_reading: undefined,
-        source_silo_id: [],
-        destination_silo_id: "",
+        source_silo_details: [],
         movement_start: "",
         movement_end: "",
-        volume: undefined,
+        destination_silo_id: "",
+        destination_silo_details: undefined,
         dispatch_operator_id: "",
         dispatch_operator_signature: "",
         receiver_operator_id: "",
         receiver_operator_signature: "",
         product: "",
         status: "Draft",
+        tag: "",
+        id: "",
       })
     }
   }, [open, form, mode, reset])
