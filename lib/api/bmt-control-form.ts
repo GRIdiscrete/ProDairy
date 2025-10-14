@@ -16,6 +16,7 @@ export interface BMTControlForm {
   llm_signature: string
   dpp_operator_id: string
   dpp_signature: string
+  tag: string
   product: "Raw Milk" | "Skim Milk" | "Standardized Milk" | "Pasteurized Milk"
   updated_at?: string
 }

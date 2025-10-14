@@ -147,6 +147,8 @@ export interface DriverForm {
   driver: string
   start_date: string
   end_date: string
+  tanker:string
+  tag:string
   collected_products?: any[] | null
   collected_products_?: string | null
   drivers_form_collected_products: DriverFormCollectedProduct[]

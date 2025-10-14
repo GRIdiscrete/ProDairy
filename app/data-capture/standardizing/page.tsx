@@ -240,7 +240,7 @@ export default function StandardizingPage() {
             </div>
             <div>
               <FormIdCopy 
-                displayId={formId}
+                displayId={form.tag}
                 actualId={form.id}
                 size="sm"
               />
@@ -270,7 +270,7 @@ export default function StandardizingPage() {
             {bmtForm ? (
               <div className="space-y-1">
                 <FormIdCopy 
-                  displayId={generateBMTFormId(bmtForm.created_at)}
+                  displayId={bmtForm.tag}
                   actualId={form.bmt_id}
                   size="sm"
                 />
@@ -444,7 +444,7 @@ export default function StandardizingPage() {
             </div>
             <div>
               <FormIdCopy 
-                displayId={formId}
+                displayId={form.tag}
                 actualId={form.id}
                 size="sm"
               />
@@ -474,7 +474,7 @@ export default function StandardizingPage() {
             {bmtForm ? (
               <div className="space-y-1">
                 <FormIdCopy 
-                  displayId={generateBMTFormId(bmtForm.created_at)}
+                  displayId={bmtForm.tag}
                   actualId={form.bmt_id}
                   size="sm"
                 />
@@ -665,7 +665,7 @@ export default function StandardizingPage() {
                       <span>Current Standardizing Process</span>
                       <Badge className="bg-gradient-to-r from-orange-100 to-red-100 text-orange-800 font-light">Latest</Badge>
                       <FormIdCopy 
-                        displayId={generateStandardizingFormId(latestForm.created_at)}
+                        displayId={latestForm.tag}
                         actualId={latestForm.id}
                         size="sm"
                       />
@@ -688,7 +688,7 @@ export default function StandardizingPage() {
                         <p className="text-sm font-light text-gray-600">Form ID</p>
                       </div>
                       <FormIdCopy 
-                        displayId={generateStandardizingFormId(latestForm.created_at)}
+                        displayId={latestForm.tag}
                         actualId={latestForm.id}
                         size="md"
                       />
@@ -745,7 +745,7 @@ export default function StandardizingPage() {
                             return bmtForm ? (
                               <>
                                 <FormIdCopy 
-                                  displayId={generateBMTFormId(bmtForm.created_at)}
+                                  displayId={bmtForm.tag}
                                   actualId={latestForm.bmt_id}
                                   size="sm"
                                 />
@@ -837,7 +837,7 @@ export default function StandardizingPage() {
                       <span>Current Skimming Process</span>
                       <Badge className="bg-gradient-to-r from-blue-100 to-cyan-100 text-blue-800 font-light">Latest</Badge>
                       <FormIdCopy 
-                        displayId={generateSkimmingFormId(latestSkimmingForm.created_at)}
+                        displayId={latestSkimmingForm.tag}
                         actualId={latestSkimmingForm.id}
                         size="sm"
                       />
@@ -860,7 +860,7 @@ export default function StandardizingPage() {
                         <p className="text-sm font-light text-gray-600">Form ID</p>
                       </div>
                       <FormIdCopy 
-                        displayId={generateSkimmingFormId(latestSkimmingForm.created_at)}
+                        displayId={latestSkimmingForm.tag}
                         actualId={latestSkimmingForm.id}
                         size="md"
                       />
@@ -914,7 +914,7 @@ export default function StandardizingPage() {
                             return bmtForm ? (
                               <>
                                 <FormIdCopy 
-                                  displayId={generateBMTFormId(bmtForm.created_at)}
+                                  displayId={bmtForm.tag}
                                   actualId={latestSkimmingForm.bmt_id}
                                   size="sm"
                                 />

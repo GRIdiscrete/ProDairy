@@ -30,9 +30,46 @@ import { toast } from "sonner"
 import type { DriverForm } from "@/lib/types"
 import type { OfflineDriverForm } from "@/lib/offline/database"
 import { useIsMobile } from "@/hooks/use-mobile"
+import { Download as DownloadIcon } from "lucide-react"
 
 // Unified form type for display
 type UnifiedForm = DriverForm | OfflineDriverForm
+
+function exportDriverFormsToCSV(forms: UnifiedForm[], users: any[], generateDriverFormId: (date: string) => string) {
+  const headers = [
+    "Form ID",
+    "Driver Name",
+    "Driver Email",
+    "Collection Start",
+    "Collection End",
+    "Products Count",
+    "Status",
+    "Created At"
+  ]
+  const rows = forms.map(form => {
+    const driverId = form.driver_id || form.driver
+    const driverUser = users.find((u: any) => u.id === driverId)
+    const driverName = driverUser ? `${driverUser.first_name} ${driverUser.last_name}` : "Unknown"
+    const driverEmail = driverUser ? driverUser.email : ""
+    const status = form.delivered ? "Delivered" : form.rejected ? "Rejected" : "Pending"
+    return [
+      form.tag || "", // <-- Use tag field for Form ID in CSV
+      driverName,
+      driverEmail,
+      form.start_date,
+      form.end_date,
+      form.drivers_form_collected_products?.length ?? 0,
+      status,
+      form.created_at
+    ]
+  })
+  const csv =
+    [headers, ...rows]
+      .map(row => row.map(field => `"${String(field).replace(/"/g, '""')}"`).join(","))
+      .join("\r\n")
+  const blob = new Blob([csv], { type: "text/csv" })
+  return URL.createObjectURL(blob)
+}
 
 export default function DriverFormsPage() {
   const dispatch = useDispatch<AppDispatch>()
@@ -40,18 +77,18 @@ export default function DriverFormsPage() {
   const { items: users } = useSelector((state: RootState) => state.users)
   const { rawMaterials } = useSelector((state: RootState) => state.rawMaterial)
   const { suppliers } = useSelector((state: RootState) => state.supplier)
-  
+
   // Offline data hook
-  const { 
-    isOnline, 
-    drivers: offlineDrivers, 
-    rawMaterials: offlineRawMaterials, 
-    suppliers: offlineSuppliers, 
+  const {
+    isOnline,
+    drivers: offlineDrivers,
+    rawMaterials: offlineRawMaterials,
+    suppliers: offlineSuppliers,
     driverForms: offlineDriverForms,
     loading: offlineLoading,
-    refreshData 
+    refreshData
   } = useOfflineData()
-  
+
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
   const [isViewDrawerOpen, setIsViewDrawerOpen] = useState(false)
   const [isLabTestDrawerOpen, setIsLabTestDrawerOpen] = useState(false)
@@ -70,17 +107,17 @@ export default function DriverFormsPage() {
   const getDriverInfo = (form: any) => {
     // Get driver ID from form
     const driverId = typeof form.driver === 'string' ? form.driver : form.driver_id
-    
+
     // Find user in users state
     const driverUser = displayUsers.find((user: any) => user.id === driverId)
-    
+
     if (driverUser) {
       return {
         name: `${driverUser.first_name} ${driverUser.last_name}`,
         email: driverUser.email
       }
     }
-    
+
     // Fallback to legacy methods
     if (form.drivers_driver_fkey) {
       return {
@@ -94,7 +131,7 @@ export default function DriverFormsPage() {
         email: form.driver.email
       }
     }
-    
+
     return {
       name: 'Unknown Driver',
       email: null
@@ -242,7 +279,7 @@ export default function DriverFormsPage() {
     // Check if the input looks like a database ID (long string)
     if (value.length > 20 && !value.includes('-')) {
       // Try to find a form with this ID and convert to display format
-      const matchingForm = displayDriverForms.find(form => 
+      const matchingForm = displayDriverForms.find(form =>
         form.id.toLowerCase().includes(value.toLowerCase())
       )
       if (matchingForm) {
@@ -257,21 +294,21 @@ export default function DriverFormsPage() {
   // Filter and sort data
   const filteredForms = useMemo(() => {
     if (!displayDriverForms) return []
-    
+
     return displayDriverForms
       .filter((form) => {
         const driverName = getDriverName(form)
         const formDisplayId = generateDriverFormId(form.created_at)
-        
+
         const matchesSearch = form.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
           driverName.toLowerCase().includes(searchTerm.toLowerCase()) ||
           formDisplayId.toLowerCase().includes(searchTerm.toLowerCase())
-        
-        const matchesStatus = statusFilter === "all" || 
+
+        const matchesStatus = statusFilter === "all" ||
           (statusFilter === "delivered" && form.delivered) ||
           (statusFilter === "rejected" && form.rejected) ||
           (statusFilter === "pending" && !form.delivered && !form.rejected)
-        
+
         return matchesSearch && matchesStatus
       })
       .sort((a, b) => {
@@ -301,8 +338,8 @@ export default function DriverFormsPage() {
             <div className="h-9 w-9 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center">
               <Truck className="h-4 w-4 text-white" />
             </div>
-            <FormIdCopy 
-              displayId={formId}
+            <FormIdCopy
+              displayId={form.tag}
               actualId={form.id}
               size="sm"
             />
@@ -317,19 +354,19 @@ export default function DriverFormsPage() {
         const form = row.original
         const driverId = form.driver_id || form.driver
         const driverUser = users.find((user: any) => user.id === driverId)
-        
+
         if (driverUser) {
           return (
-            <UserAvatar 
-              user={driverUser} 
-              size="md" 
-              showName={true} 
+            <UserAvatar
+              user={driverUser}
+              size="md"
+              showName={true}
               showEmail={true}
               showDropdown={true}
             />
           )
         }
-        
+
         return (
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
@@ -397,25 +434,25 @@ export default function DriverFormsPage() {
         const form = row.original as UnifiedForm
         return (
           <div className="flex space-x-2">
-            <LoadingButton 
-              variant="outline" 
-              size="sm" 
+            <LoadingButton
+              variant="outline"
+              size="sm"
               onClick={() => handleViewForm(form)}
               className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full"
             >
               <Eye className="w-4 h-4" />
             </LoadingButton>
-            <LoadingButton 
-              variant="outline" 
-              size="sm" 
+            <LoadingButton
+              variant="outline"
+              size="sm"
               onClick={() => handleEditForm(form)}
               className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 rounded-full"
             >
               <Settings className="w-4 h-4" />
             </LoadingButton>
-            <LoadingButton 
-              variant="outline" 
-              size="sm" 
+            <LoadingButton
+              variant="outline"
+              size="sm"
               onClick={() => handleCreateLabTest(form)}
               className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white border-0 rounded-full"
             >
@@ -428,6 +465,16 @@ export default function DriverFormsPage() {
   ]
 
   const isLoading = operationLoading.fetch || offlineLoading
+
+  // Add this state for CSV URL
+  const [csvUrl, setCsvUrl] = useState<string | null>(null)
+
+  // Add this effect to update CSV when filteredForms changes
+  useEffect(() => {
+    if (csvUrl) URL.revokeObjectURL(csvUrl)
+    setCsvUrl(exportDriverFormsToCSV(filteredForms, displayUsers, generateDriverFormId))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filteredForms, displayUsers])
 
   return (
     <DriversDashboardLayout title="Driver Forms" subtitle="Manage driver collection forms and deliveries">
@@ -442,7 +489,7 @@ export default function DriverFormsPage() {
           ) : (
             <>
               {/* Mobile/Tablet Filters */}
-              <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+              {/* <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                   <Input
@@ -464,8 +511,9 @@ export default function DriverFormsPage() {
                     <SelectItem value="pending">Pending</SelectItem>
                   </SelectContent>
                 </Select>
-              </div>
-              
+              </div> */}
+              <div></div>
+
               <div className="flex flex-col sm:flex-row gap-3">
                 {/* Online/Offline Status */}
                 <div className="flex items-center gap-2 px-3 py-2 rounded-full border border-gray-200 bg-white">
@@ -499,10 +547,21 @@ export default function DriverFormsPage() {
                   <Download className="mr-2 h-4 w-4" />
                   Load Data
                 </LoadingButton>
-
+                <div className="flex justify-end mb-2">
+                  {csvUrl && (
+                    <a
+                      href={csvUrl}
+                      download="driver-forms.csv"
+                      className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-700 text-white rounded-full text-sm font-light hover:from-blue-600 hover:to-blue-800 transition"
+                    >
+                      <DownloadIcon className="w-4 h-4 mr-2" />
+                      Export CSV
+                    </a>
+                  )}
+                </div>
                 {/* Create Form Button */}
-                <LoadingButton 
-                  onClick={handleAddForm} 
+                <LoadingButton
+                  onClick={handleAddForm}
                   loading={isLoading}
                   className="bg-gradient-to-r from-gray-500 to-gray-700 hover:from-gray-600 hover:to-gray-800 text-white border-0 rounded-full px-6 py-2 font-light"
                 >
@@ -513,6 +572,9 @@ export default function DriverFormsPage() {
             </>
           )}
         </div>
+
+        {/* CSV Export Button (add next to columns button or above table) */}
+
 
         <div className="bg-white border border-gray-200 rounded-lg">
           <div className="p-6">
@@ -635,7 +697,7 @@ export default function DriverFormsPage() {
                             <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center">
                               <Truck className="h-5 w-5 text-white" />
                             </div>
-                            <FormIdCopy 
+                            <FormIdCopy
                               displayId={generateDriverFormId(form.created_at)}
                               actualId={form.id}
                               size="sm"
@@ -658,27 +720,27 @@ export default function DriverFormsPage() {
                         </div>
 
                         <div className="mt-4 flex items-center justify-end gap-2">
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
+                          <Button
+                            variant="outline"
+                            size="sm"
                             onClick={() => handleViewForm(form)}
                             className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full"
                           >
                             <Eye className="h-4 w-4 mr-1" />
                             View
                           </Button>
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
+                          <Button
+                            variant="outline"
+                            size="sm"
                             onClick={() => handleEditForm(form)}
                             className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 rounded-full"
                           >
                             <Settings className="h-4 w-4 mr-1" />
                             Edit
                           </Button>
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
+                          <Button
+                            variant="outline"
+                            size="sm"
                             onClick={() => handleCreateLabTest(form)}
                             className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white border-0 rounded-full"
                           >
@@ -721,27 +783,27 @@ export default function DriverFormsPage() {
                         </div>
                       </div>
                       <div className="mt-4 flex items-center justify-end gap-2">
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
+                        <Button
+                          variant="outline"
+                          size="sm"
                           onClick={() => handleViewForm(form)}
                           className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full"
                         >
                           <Eye className="h-4 w-4 mr-1" />
                           View
                         </Button>
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
+                        <Button
+                          variant="outline"
+                          size="sm"
                           onClick={() => handleEditForm(form)}
                           className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 rounded-full"
                         >
                           <Settings className="h-4 w-4 mr-1" />
                           Edit
                         </Button>
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
+                        <Button
+                          variant="outline"
+                          size="sm"
                           onClick={() => handleCreateLabTest(form)}
                           className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white border-0 rounded-full"
                         >
@@ -799,10 +861,10 @@ export default function DriverFormsPage() {
           </div>
         </div>
 
-        <DriverFormDrawer 
-          open={isDrawerOpen} 
-          onOpenChange={setIsDrawerOpen} 
-          driverForm={editingForm ?? undefined} 
+        <DriverFormDrawer
+          open={isDrawerOpen}
+          onOpenChange={setIsDrawerOpen}
+          driverForm={editingForm ?? undefined}
           mode={editingForm ? "edit" : "create"}
           onSuccess={() => {
             setIsDrawerOpen(false)

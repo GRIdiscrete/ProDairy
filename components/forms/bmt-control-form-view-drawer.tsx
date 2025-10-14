@@ -181,6 +181,11 @@ export function BMTControlFormViewDrawer({ open, onClose, form, onEdit }: BMTCon
     setAnimationProgress(0)
   }
 
+  // For destination silo, use new BMT object structure if available
+  const destinationSiloObj = (form as any).destination_silo_details
+    ? silos.find((silo: any) => silo.id === (form as any).destination_silo_details.id)
+    : getSiloById(form.destination_silo_id)
+
   return (
     <Sheet open={open} onOpenChange={onClose}>
       <SheetContent className="tablet-sheet-full p-0 bg-white">
@@ -391,32 +396,32 @@ export function BMTControlFormViewDrawer({ open, onClose, form, onEdit }: BMTCon
                 <h3 className="text-lg font-light">Destination Silo</h3>
               </div>
               <div className="space-y-3">
-                {destinationSilo ? (
+                {destinationSiloObj ? (
                   <>
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-light text-gray-600">Name</span>
-                      <span className="text-sm font-light text-green-900">{destinationSilo.name}</span>
+                      <span className="text-sm font-light text-green-900">{destinationSiloObj.name}</span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-light text-gray-600">Capacity</span>
-                      <span className="text-sm font-light">{destinationSilo.capacity?.toLocaleString()}L</span>
+                      <span className="text-sm font-light">{destinationSiloObj.capacity?.toLocaleString()}L</span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-light text-gray-600">Location</span>
-                      <span className="text-sm font-light">{destinationSilo.location}</span>
+                      <span className="text-sm font-light">{destinationSiloObj.location}</span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-light text-gray-600">Category</span>
-                      <span className="text-sm font-light">{destinationSilo.category}</span>
+                      <span className="text-sm font-light">{destinationSiloObj.category}</span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-light text-gray-600">Current Volume</span>
-                      <span className="text-sm font-light text-blue-600">{destinationSilo.milk_volume?.toLocaleString()}L</span>
+                      <span className="text-sm font-light text-blue-600">{destinationSiloObj.milk_volume?.toLocaleString()}L</span>
                     </div>
                   </>
                 ) : (
                   <div className="text-sm text-gray-500">
-                    Silo ID: {form.destination_silo_id || 'N/A'}
+                    Silo ID: {(form as any).destination_silo_details?.id || form.destination_silo_id || 'N/A'}
                   </div>
                 )}
               </div>

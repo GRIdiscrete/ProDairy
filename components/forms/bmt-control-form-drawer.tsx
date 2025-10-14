@@ -23,29 +23,35 @@ import { SignatureModal } from "@/components/ui/signature-modal"
 import { SignatureViewer } from "@/components/ui/signature-viewer"
 import { base64ToPngDataUrl, normalizeDataUrlToBase64 } from "@/lib/utils/signature"
 
+// Update schema to match new API structure
+const sourceSiloDetailSchema = yup.object({
+  id: yup.string().required(),
+  name: yup.string().required(),
+  flow_meter_start: yup.string().required("Start time is required"),
+  flow_meter_start_reading: yup.number().required("Start reading is required"),
+  flow_meter_end: yup.string().required("End time is required"),
+  flow_meter_end_reading: yup.number().required("End reading is required"),
+  source_silo_quantity_requested: yup.number().required("Quantity requested is required"),
+  product: yup.string().required("Product is required"),
+})
+
 const bmtControlFormSchema = yup.object({
-  flow_meter_start: yup.string().optional(),
-  flow_meter_start_reading: yup.number().optional().typeError("Start reading must be a valid number"),
-  flow_meter_end: yup.string().optional(),
-  flow_meter_end_reading: yup.number().optional().typeError("End reading must be a valid number"),
-  source_silo_id: yup
-    .array()
-    .of(yup.string().required())
-    .required("At least one source silo is required")
-    .min(1, "At least one source silo is required"),
-  destination_silo_id: yup.string().optional(),
-  movement_start: yup.string().optional(),
-  movement_end: yup.string().optional(),
-  volume: yup.number().optional().typeError("Volume must be a valid number"),
+  source_silo_details: yup.array().of(sourceSiloDetailSchema).min(1, "At least one source silo is required"),
+  movement_start: yup.string().required("Movement start is required"),
+  movement_end: yup.string().required("Movement end is required"),
+  destination_silo_id: yup.string().required("Destination silo is required"),
+  destination_silo_details: sourceSiloDetailSchema.required("Destination silo details are required"),
   dispatch_operator_id: yup.string().required("Dispatch operator is required"),
   dispatch_operator_signature: yup.string().required("Dispatch operator signature is required"),
   receiver_operator_id: yup.string().required("Receiver operator is required"),
   receiver_operator_signature: yup.string().required("Receiver operator signature is required"),
   product: yup.string().required("Product selection is required"),
   status: yup.string().oneOf(["Draft", "Pending", "Final"]).required("Status is required"),
+  tag: yup.string().optional(),
   id: yup.string().optional(),
 })
 
+type SourceSiloDetail = yup.InferType<typeof sourceSiloDetailSchema>
 type BMTControlFormData = yup.InferType<typeof bmtControlFormSchema>
 
 interface BMTControlFormDrawerProps {
@@ -66,6 +72,10 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
   const [loadingUsers, setLoadingUsers] = useState(false)
   const [dispatchSigOpen, setDispatchSigOpen] = useState(false)
   const [receiverSigOpen, setReceiverSigOpen] = useState(false)
+
+  // State for source silo details
+  const [selectedSourceSilos, setSelectedSourceSilos] = useState<SourceSiloDetail[]>([])
+  const [destinationSiloDetail, setDestinationSiloDetail] = useState<SourceSiloDetail | null>(null)
 
   // Load initial data
   const loadInitialData = async () => {
@@ -142,100 +152,76 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
     formState: { errors },
     reset,
     setValue,
+    watch,
   } = useForm<BMTControlFormData>({
     resolver: yupResolver(bmtControlFormSchema),
     defaultValues: {
-      flow_meter_start: "",
-      flow_meter_start_reading: undefined,
-      flow_meter_end: "",
-      flow_meter_end_reading: undefined,
-      source_silo_id: [],
-      destination_silo_id: "",
+      source_silo_details: [],
       movement_start: "",
       movement_end: "",
-      volume: undefined,
+      destination_silo_id: "",
+      destination_silo_details: undefined,
       dispatch_operator_id: "",
       dispatch_operator_signature: "",
       receiver_operator_id: "",
       receiver_operator_signature: "",
       product: "",
       status: "Draft",
+      tag: "",
       id: "",
     },
   })
 
+  // Watch for changes in selected silos and update details
+  const sourceSiloDetails = watch("source_silo_details") || []
+  const sourceSiloIds = Array.isArray(sourceSiloDetails) ? sourceSiloDetails.map((s: any) => s.id) : []
+  const destinationSiloId = watch("destination_silo_id")
+
+  // Handler for updating a source silo detail
+  const updateSourceSiloDetail = (idx: number, field: keyof SourceSiloDetail, value: any) => {
+    const details = [...(watch("source_silo_details") || [])]
+    details[idx] = { ...details[idx], [field]: value }
+    setValue("source_silo_details", details)
+  }
+
+  // Handler for updating destination silo detail
+  const updateDestinationSiloDetail = (field: keyof SourceSiloDetail, value: any) => {
+    setValue("destination_silo_details", { ...watch("destination_silo_details"), [field]: value })
+  }
+
+  // When user selects source silos, initialize their details if not present
+  useEffect(() => {
+    const selected = (watch("source_silo_details") as SourceSiloDetail[]) || []
+    if (selected.length === 0 && selectedSourceSilos.length > 0) {
+      setValue("source_silo_details", selectedSourceSiloDetails)
+    }
+  }, [selectedSourceSilos, setValue, watch])
+
+  // When user selects destination silo, initialize its details if not present
+  useEffect(() => {
+    if (destinationSiloId && !watch("destination_silo_details")) {
+      const silo = silos.find(s => s.value === destinationSiloId)
+      if (silo) {
+        setValue("destination_silo_details", {
+          id: silo.value,
+          name: silo.label,
+          flow_meter_start: "",
+          flow_meter_start_reading: 0,
+          flow_meter_end: "",
+          flow_meter_end_reading: 0,
+          source_silo_quantity_requested: 0,
+          product: "",
+        })
+      }
+    }
+  }, [destinationSiloId, silos, setValue, watch])
+
   const onSubmit = async (data: BMTControlFormData) => {
     try {
-      // Helper function to extract time only from datetime string
-      const extractTimeOnly = (timeString: string | undefined): string | undefined => {
-        if (!timeString) return undefined
-        
-        // If it's already in HH:MM format, return as is
-        if (timeString.match(/^\d{2}:\d{2}$/)) {
-          return timeString
-        }
-        
-        // Handle time-only formats with seconds/microseconds
-        if (timeString.match(/^\d{2}:\d{2}:\d{2}/)) {
-          // Handle HH:MM:SS or HH:MM:SS.microseconds format
-          return timeString.substring(0, 5) // Extract HH:MM
-        }
-        
-        // Extract time from datetime string
-        if (timeString.includes('T')) {
-          return timeString.split('T')[1]?.substring(0, 5)
-        } else if (timeString.includes(' ')) {
-          return timeString.split(' ')[1]?.substring(0, 5)
-        }
-        
-        return timeString
-      }
-
-      // Helper function to convert time to full timestamp
-      const timeToTimestamp = (timeString: string | undefined): string | undefined => {
-        if (!timeString) return undefined
-        
-        // If it's already a full timestamp, return as is
-        if (timeString.includes('T') || timeString.includes(' ')) {
-          return timeString
-        }
-        
-        // If it's in HH:MM format, convert to full timestamp
-        if (timeString.match(/^\d{2}:\d{2}$/)) {
-          const currentDate = new Date().toISOString().split('T')[0]
-          return `${currentDate}T${timeString}:00.000000+00:00`
-        }
-        
-        return timeString
-      }
-
+      // Send data as is, matches new API structure
       const payload = {
         ...data,
-        // Flow meter times: send as time-only (HH:MM format)
-        flow_meter_start: extractTimeOnly(data.flow_meter_start) || null,
-        flow_meter_end: extractTimeOnly(data.flow_meter_end) || null,
-        // Movement times: send as full timestamps
-        movement_start: timeToTimestamp(data.movement_start) || null,
-        movement_end: timeToTimestamp(data.movement_end) || null,
-        // Handle null values for undefined readings
-        flow_meter_start_reading: data.flow_meter_start_reading ?? null,
-        flow_meter_end_reading: data.flow_meter_end_reading ?? null,
-        volume: data.volume ?? null,
-        // Handle null values for unselected users - map to API field names
-        llm_operator_id: data.dispatch_operator_id || null,
-        dpp_operator_id: data.receiver_operator_id || null,
-        // Handle signatures - map to API field names
-        llm_signature: data.dispatch_operator_signature ? normalizeDataUrlToBase64(data.dispatch_operator_signature) : null,
-        dpp_signature: data.receiver_operator_signature ? normalizeDataUrlToBase64(data.receiver_operator_signature) : null,
-        // Remove the form fields that don't exist in API
-        dispatch_operator_id: undefined,
-        receiver_operator_id: undefined,
-        dispatch_operator_signature: undefined,
-        receiver_operator_signature: undefined,
       }
-
-      // Debug: Log the payload to see what's being sent
-      console.log('BMT Form Payload:', JSON.stringify(payload, null, 2))
 
       if (mode === "create") {
         await dispatch(createBMTControlFormAction(payload as any)).unwrap()
@@ -362,10 +348,11 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
           </SheetHeader>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 mt-6">
-            {/* Flow Meter Information */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Flow Meter Information (Optional)</h3>
-              {/* Flow Meter Times */}
+            {/* Source Silo Details */}
+             <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">BMT Information</h3>
+              
+              {/* Flow Meter Start/End */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Controller
@@ -373,27 +360,26 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
                     control={control}
                     render={({ field }) => (
                       <ShadcnTimePicker
-                        label="Flow Meter Start Time"
+                        label="Flow Meter Start"
                         value={field.value}
                         onChange={field.onChange}
-                        placeholder="Select start time (24h)"
+                        placeholder="Select flow meter start time"
                         error={!!errors.flow_meter_start}
                       />
                     )}
                   />
                   {errors.flow_meter_start && <p className="text-sm text-red-500">{errors.flow_meter_start.message}</p>}
                 </div>
-                
                 <div className="space-y-2">
                   <Controller
                     name="flow_meter_end"
                     control={control}
                     render={({ field }) => (
                       <ShadcnTimePicker
-                        label="Flow Meter End Time"
+                        label="Flow Meter End"
                         value={field.value}
                         onChange={field.onChange}
-                        placeholder="Select end time (24h)"
+                        placeholder="Select flow meter end time"
                         error={!!errors.flow_meter_end}
                       />
                     )}
@@ -402,104 +388,6 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
                 </div>
               </div>
 
-              {/* Flow Meter Readings */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="flow_meter_start_reading">Start Reading</Label>
-                  <Controller
-                    name="flow_meter_start_reading"
-                    control={control}
-                    render={({ field }) => (
-                      <Input
-                        id="flow_meter_start_reading"
-                        type="number"
-                        placeholder="Enter start reading"
-                        className="rounded-full border-gray-200"
-                        {...field}
-                        value={field.value || ""}
-                        onChange={(e) => field.onChange(e.target.value === "" ? undefined : Number(e.target.value))}
-                      />
-                    )}
-                  />
-                  {errors.flow_meter_start_reading && <p className="text-sm text-red-500">{errors.flow_meter_start_reading.message}</p>}
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="flow_meter_end_reading">End Reading</Label>
-                  <Controller
-                    name="flow_meter_end_reading"
-                    control={control}
-                    render={({ field }) => (
-                      <Input
-                        id="flow_meter_end_reading"
-                        type="number"
-                        placeholder="Enter end reading"
-                        className="rounded-full border-gray-200"
-                        {...field}
-                        value={field.value || ""}
-                        onChange={(e) => field.onChange(e.target.value === "" ? undefined : Number(e.target.value))}
-                      />
-                    )}
-                  />
-                  {errors.flow_meter_end_reading && <p className="text-sm text-red-500">{errors.flow_meter_end_reading.message}</p>}
-                </div>
-              </div>
-            </div>
-
-            {/* Movement Information */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">BMT Information</h3>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="source_silo_id">Source Silos *</Label>
-                  <Controller
-                    name="source_silo_id"
-                    control={control}
-                    render={({ field }) => {
-                      // Debug: Log the field value to see what's happening
-                      console.log('Source Silo Field Value:', field.value, typeof field.value)
-                      
-                      return (
-                        <MultiSelect
-                          options={silos}
-                          value={Array.isArray(field.value) ? field.value : []}
-                          onValueChange={(newValue) => {
-                            console.log('MultiSelect onChange:', newValue)
-                            field.onChange(newValue)
-                          }}
-                          placeholder="Select source silos"
-                          searchPlaceholder="Search silos..."
-                          emptyMessage="No silos found"
-                          loading={loadingSilos}
-                          className="w-full"
-                        />
-                      )
-                    }}
-                  />
-                  {errors.source_silo_id && <p className="text-sm text-red-500">{errors.source_silo_id.message}</p>}
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="destination_silo_id">Destination Silo *</Label>
-                  <Controller
-                    name="destination_silo_id"
-                    control={control}
-                    render={({ field }) => (
-                      <SearchableSelect
-                        options={silos}
-                        value={field.value}
-                        onValueChange={field.onChange}
-                        placeholder="Select destination silo"
-                        searchPlaceholder="Search silos..."
-                        emptyMessage="No silos found"
-                        loading={loadingSilos}
-                        onSearch={handleSiloSearch}
-                        className="w-full rounded-full border-gray-200"
-                      />
-                    )}
-                  />
-                  {errors.destination_silo_id && <p className="text-sm text-red-500">{errors.destination_silo_id.message}</p>}
-                </div>
-              </div>
               {/* Movement Times */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -588,6 +476,250 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
               </div>
             </div>
 
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Source Silo(s) Details</h3>
+              <Controller
+                name="source_silo_details"
+                control={control}
+                render={({ field }) => (
+                  <>
+                    <MultiSelect
+                      options={silos}
+                      value={Array.isArray(field.value) ? field.value.map((s: SourceSiloDetail) => s.id) : []}
+                      onValueChange={(ids) => {
+                        // When silos are selected, initialize their details if not present
+                        const details = ids.map((id: string) => {
+                          const silo = silos.find(s => s.value === id)
+                          const existing = Array.isArray(field.value) ? field.value.find((s: SourceSiloDetail) => s.id === id) : undefined
+                          return existing || {
+                            id,
+                            name: silo?.label || "",
+                            flow_meter_start: "",
+                            flow_meter_start_reading: 0,
+                            flow_meter_end: "",
+                            flow_meter_end_reading: 0,
+                            source_silo_quantity_requested: 0,
+                            product: "",
+                          }
+                        })
+                        field.onChange(details)
+                      }}
+                      placeholder="Select source silos"
+                      searchPlaceholder="Search silos..."
+                      emptyMessage="No silos found"
+                      loading={loadingSilos}
+                      className="w-full"
+                    />
+                    {Array.isArray(field.value) && field.value.map((silo: SourceSiloDetail, idx: number) => (
+                      <div key={silo.id} className="border rounded p-3 mt-2 bg-gray-50">
+                        <div className="font-semibold mb-2">{silo.name}</div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <Label>Flow Meter Start</Label>
+                            <ShadcnTimePicker
+                              label=""
+                              value={silo.flow_meter_start}
+                              onChange={val => updateSourceSiloDetail(idx, "flow_meter_start", val)}
+                              placeholder="Select start time (24h)"
+                              error={false}
+                            />
+                          </div>
+                          <div>
+                            <Label>Start Reading</Label>
+                            <Input
+                              type="number"
+                              value={silo.flow_meter_start_reading}
+                              onChange={e => updateSourceSiloDetail(idx, "flow_meter_start_reading", Number(e.target.value))}
+                              placeholder="Start reading"
+                            />
+                          </div>
+                          <div>
+                            <Label>Flow Meter End</Label>
+                            <ShadcnTimePicker
+                              label=""
+                              value={silo.flow_meter_end}
+                              onChange={val => updateSourceSiloDetail(idx, "flow_meter_end", val)}
+                              placeholder="Select end time (24h)"
+                              error={false}
+                            />
+                          </div>
+                          <div>
+                            <Label>End Reading</Label>
+                            <Input
+                              type="number"
+                              value={silo.flow_meter_end_reading}
+                              onChange={e => updateSourceSiloDetail(idx, "flow_meter_end_reading", Number(e.target.value))}
+                              placeholder="End reading"
+                            />
+                          </div>
+                          <div>
+                            <Label>Quantity Requested</Label>
+                            <Input
+                              type="number"
+                              value={silo.source_silo_quantity_requested}
+                              onChange={e => updateSourceSiloDetail(idx, "source_silo_quantity_requested", Number(e.target.value))}
+                              placeholder="Quantity requested"
+                            />
+                          </div>
+                          <div>
+                            <Label>Product</Label>
+                            {/* Use dropdown for product */}
+                            <Select
+                              value={silo.product}
+                              onValueChange={val => updateSourceSiloDetail(idx, "product", val)}
+                            >
+                              <SelectTrigger className="w-full rounded-full border-gray-200">
+                                <SelectValue placeholder="Select product" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="Raw Milk">
+                                  <span className="font-light">Raw Milk</span>
+                                </SelectItem>
+                                <SelectItem value="Skim Milk">
+                                  <span className="font-light">Skim Milk</span>
+                                </SelectItem>
+                                <SelectItem value="Standardized Milk">
+                                  <span className="font-light">Standardized Milk</span>
+                                </SelectItem>
+                                <SelectItem value="Pasteurized Milk">
+                                  <span className="font-light">Pasteurized Milk</span>
+                                </SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </>
+                )}
+              />
+              {errors.source_silo_details && <p className="text-sm text-red-500">{(errors.source_silo_details as any).message}</p>}
+            </div>
+
+            {/* Destination Silo Details */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Destination Silo Details</h3>
+              <Controller
+                name="destination_silo_id"
+                control={control}
+                render={({ field }) => (
+                  <SearchableSelect
+                    options={silos}
+                    value={field.value}
+                    onValueChange={val => {
+                      field.onChange(val)
+                      const silo = silos.find(s => s.value === val)
+                      if (silo) {
+                        setValue("destination_silo_details", {
+                          id: silo.value,
+                          name: silo.label,
+                          flow_meter_start: "",
+                          flow_meter_start_reading: 0,
+                          flow_meter_end: "",
+                          flow_meter_end_reading: 0,
+                          source_silo_quantity_requested: 0,
+                          product: "",
+                        })
+                      }
+                    }}
+                    placeholder="Select destination silo"
+                    searchPlaceholder="Search silos..."
+                    emptyMessage="No silos found"
+                    loading={loadingSilos}
+                    onSearch={handleSiloSearch}
+                    className="w-full rounded-full border-gray-200"
+                  />
+                )}
+              />
+              <Controller
+                name="destination_silo_details"
+                control={control}
+                render={({ field }) => field.value && (
+                  <div className="border rounded p-3 mt-2 bg-gray-50">
+                    <div className="font-semibold mb-2">{field.value.name}</div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label>Flow Meter Start</Label>
+                        <ShadcnTimePicker
+                          label=""
+                          value={field.value.flow_meter_start}
+                          onChange={val => updateDestinationSiloDetail("flow_meter_start", val)}
+                          placeholder="Select start time (24h)"
+                          error={false}
+                        />
+                      </div>
+                      <div>
+                        <Label>Start Reading</Label>
+                        <Input
+                          type="number"
+                          value={field.value.flow_meter_start_reading}
+                          onChange={e => updateDestinationSiloDetail("flow_meter_start_reading", Number(e.target.value))}
+                          placeholder="Start reading"
+                        />
+                      </div>
+                      <div>
+                        <Label>Flow Meter End</Label>
+                        <ShadcnTimePicker
+                          label=""
+                          value={field.value.flow_meter_end}
+                          onChange={val => updateDestinationSiloDetail("flow_meter_end", val)}
+                          placeholder="Select end time (24h)"
+                          error={false}
+                        />
+                      </div>
+                      <div>
+                        <Label>End Reading</Label>
+                        <Input
+                          type="number"
+                          value={field.value.flow_meter_end_reading}
+                          onChange={e => updateDestinationSiloDetail("flow_meter_end_reading", Number(e.target.value))}
+                          placeholder="End reading"
+                        />
+                      </div>
+                      <div>
+                        <Label>Quantity Requested</Label>
+                        <Input
+                          type="number"
+                          value={field.value.source_silo_quantity_requested}
+                          onChange={e => updateDestinationSiloDetail("source_silo_quantity_requested", Number(e.target.value))}
+                          placeholder="Quantity requested"
+                        />
+                      </div>
+                      <div>
+                        <Label>Product</Label>
+                        {/* Use dropdown for product */}
+                        <Select
+                          value={field.value.product}
+                          onValueChange={val => updateDestinationSiloDetail("product", val)}
+                        >
+                          <SelectTrigger className="w-full rounded-full border-gray-200">
+                            <SelectValue placeholder="Select product" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Raw Milk">
+                              <span className="font-light">Raw Milk</span>
+                            </SelectItem>
+                            <SelectItem value="Skim Milk">
+                              <span className="font-light">Skim Milk</span>
+                            </SelectItem>
+                            <SelectItem value="Standardized Milk">
+                              <span className="font-light">Standardized Milk</span>
+                            </SelectItem>
+                            <SelectItem value="Pasteurized Milk">
+                              <span className="font-light">Pasteurized Milk</span>
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              />
+              {errors.destination_silo_details && <p className="text-sm text-red-500">{(errors.destination_silo_details as any).message}</p>}
+            </div>
+
+            {/* Movement Information */}
+           
             {/* Operator Information */}
             <div className="space-y-4">
               <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Operator Information</h3>
