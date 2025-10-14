@@ -73,49 +73,43 @@ export default function ProfilePage() {
   const roleName = userRole?.role_name || 'Unknown Role'
   const roleDescription = `Role created on ${userRole?.created_at ? new Date(userRole.created_at).toLocaleDateString() : 'Unknown date'}`
   
-  // Transform the operations into a more organized structure
-  const permissions = [
-    {
-      category: 'Views',
-      permissions: userRole?.views || [],
-      icon: '👁️'
-    },
-    {
-      category: 'Role Operations',
-      permissions: userRole?.role_operations || [],
-      icon: '👥'
-    },
-    {
-      category: 'User Operations',
-      permissions: userRole?.user_operations || [],
-      icon: '👤'
-    },
-    {
-      category: 'Device Operations',
-      permissions: userRole?.devices_operations || [],
-      icon: '📱'
-    },
-    {
-      category: 'Process Operations',
-      permissions: userRole?.process_operations || [],
-      icon: '⚙️'
-    },
-    {
-      category: 'Supplier Operations',
-      permissions: userRole?.supplier_operations || [],
-      icon: '🏢'
-    },
-    {
-      category: 'Silo Operations',
-      permissions: userRole?.silo_item_operations || [],
-      icon: '🏭'
-    },
-    {
-      category: 'Machine Operations',
-      permissions: userRole?.machine_item_operations || [],
-      icon: '🔧'
-    }
-  ].filter(category => category.permissions.length > 0) // Only show categories with permissions
+  // Dynamically extract all *_operations arrays and flatten them
+  const permissionCategories = [
+    { key: "views", label: "Views", icon: "👁️" },
+    { key: "role_operations", label: "Role Operations", icon: "👥" },
+    { key: "user_operations", label: "User Operations", icon: "👤" },
+    { key: "devices_operations", label: "Device Operations", icon: "📱" },
+    { key: "process_operations", label: "Process Operations", icon: "⚙️" },
+    { key: "supplier_operations", label: "Supplier Operations", icon: "🏢" },
+    { key: "silo_item_operations", label: "Silo Operations", icon: "🏭" },
+    { key: "machine_item_operations", label: "Machine Operations", icon: "🔧" },
+    { key: "bmt_operations", label: "BMT Operations", icon: "🧪" },
+    { key: "dispatch_operations", label: "Dispatch Operations", icon: "🚚" },
+    { key: "incubation_operations", label: "Incubation Operations", icon: "🥚" },
+    { key: "pasteurizing_operations", label: "Pasteurizing Operations", icon: "🔥" },
+    { key: "production_plan_operations", label: "Production Plan Operations", icon: "📋" },
+    { key: "raw_milk_intake_operations", label: "Raw Milk Intake Operations", icon: "🥛" },
+    { key: "raw_milk_lab_test_operations", label: "Raw Milk Lab Test Operations", icon: "🧫" },
+    { key: "filmatic_operation_operations", label: "Filmatic Operations", icon: "🧴" },
+    { key: "incubation_lab_test_operations", label: "Incubation Lab Test Operations", icon: "🔬" },
+    { key: "raw_product_collection_operations", label: "Raw Product Collection Operations", icon: "🧺" },
+    { key: "steri_process_operation_operations", label: "Steri Process Operations", icon: "🧯" },
+    { key: "before_and_after_autoclave_lab_test_operations", label: "Autoclave Lab Test Operations", icon: "🧪" },
+  ]
+
+  // Build permissions array from all present categories
+  const permissions = permissionCategories
+    .map(cat => ({
+      category: cat.label,
+      icon: cat.icon,
+      permissions: Array.isArray(userRole?.[cat.key]) && userRole[cat.key]
+        ? userRole[cat.key]
+        : (userRole?.[cat.key] ? [userRole[cat.key]] : [])
+    }))
+    .filter(cat => cat.permissions && cat.permissions.length > 0)
+
+  // Stats grid: count all permissions
+  const totalPermissions = permissions.reduce((acc, cat) => acc + cat.permissions.length, 0)
 
   const profileContent = (
     <div className="space-y-6">
@@ -188,7 +182,7 @@ export default function ProfilePage() {
             <div>
               <p className="text-sm text-gray-600">Permissions</p>
               <p className="text-3xl text-gray-900">
-                {permissions.reduce((acc, cat) => acc + cat.permissions.length, 0)}
+                {totalPermissions}
               </p>
             </div>
           </div>
