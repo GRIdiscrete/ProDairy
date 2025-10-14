@@ -41,6 +41,7 @@ import rawMilkResultSlipsReducer from "./slices/rawMilkResultSlipSlice"
 import productIncubationReducer from "./slices/productIncubationSlice"
 import uhtQualityCheckReducer from "./slices/uhtQualityCheckSlice"
 import qaCorrectiveActionReducer from "./slices/qaCorrectiveActionSlice"
+import generalLabTestSlice from "./slices/generalLabTestSlice"
 export const store = configureStore({
   reducer: {
     dashboard: dashboardReducer,
@@ -52,6 +53,7 @@ export const store = configureStore({
     roles: rolesReducer,
     users: usersReducer,
     silo: siloReducer,
+    generalLabTests: generalLabTestSlice,
     rawMaterial: rawMaterialReducer,
     process: processReducer,
     productionPlan: productionPlanReducer,

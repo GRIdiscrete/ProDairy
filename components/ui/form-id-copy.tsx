@@ -67,10 +67,10 @@ export function FormIdCopy({ displayId, actualId, showCopyButton = true, size = 
   return (
     <div className="flex items-center gap-2">
       <div className="flex flex-col">
-        <div className={`font-light ${sizeClasses.text}`}>{displayId}</div>
-        <div className={`text-gray-500 font-light ${sizeClasses.subtitle}`}>
+        <div className={`font-light ${sizeClasses.text}`}>{displayId ?? "N/A"}</div>
+        {/* <div className={`text-gray-500 font-light ${sizeClasses.subtitle}`}>
           Driver Form
-        </div>
+        </div> */}
       </div>
       
       {showCopyButton && (

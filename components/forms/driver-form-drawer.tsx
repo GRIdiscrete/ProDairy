@@ -24,6 +24,7 @@ import { createDriverForm, updateDriverForm, fetchDriverForms } from "@/lib/stor
 import { fetchRawMaterials } from "@/lib/store/slices/rawMaterialSlice"
 import { fetchUsers } from "@/lib/store/slices/usersSlice"
 import { fetchSuppliers } from "@/lib/store/slices/supplierSlice"
+import { fetchTankers } from "@/lib/store/slices/tankerSlice"
 import { LoadingButton } from "@/components/ui/loading-button"
 import { useOfflineData } from "@/hooks/use-offline-data"
 import { LocalStorageService } from "@/lib/offline/local-storage-service"
@@ -38,6 +39,7 @@ const driverFormSchema = yup.object({
   driver: yup.string().required("Driver is required"),
   start_date: yup.string().required("Start date is required"),
   end_date: yup.string().required("End date is required"),
+  tanker: yup.string().required("Tanker is required"),
   delivered: yup.boolean(),
   rejected: yup.boolean(),
   drivers_form_collected_products: yup.array().of(
@@ -56,6 +58,7 @@ type DriverFormFormData = {
   driver: string
   start_date: string
   end_date: string
+  tanker: string
   delivered: boolean
   rejected: boolean
   drivers_form_collected_products: DriverFormCollectedProduct[]
@@ -69,12 +72,12 @@ interface DriverFormDrawerProps {
   onSuccess?: () => void
 }
 
-export function DriverFormDrawer({ 
-  open, 
-  onOpenChange, 
-  driverForm, 
-  mode, 
-  onSuccess 
+export function DriverFormDrawer({
+  open,
+  onOpenChange,
+  driverForm,
+  mode,
+  onSuccess
 }: DriverFormDrawerProps) {
   const [loading, setLoading] = useState(false)
   const [supplierSignatureOpen, setSupplierSignatureOpen] = useState(false)
@@ -88,19 +91,25 @@ export function DriverFormDrawer({
   const isTablet = typeof window !== 'undefined' && window.innerWidth >= 768 && window.innerWidth < 1024
 
   // Use offline data hook
-  const { 
-    drivers: offlineDrivers, 
-    rawMaterials: offlineRawMaterials, 
-    suppliers: offlineSuppliers, 
-    isOnline, 
+  const {
+    drivers: offlineDrivers,
+    rawMaterials: offlineRawMaterials,
+    suppliers: offlineSuppliers,
+    isOnline,
     saveDriverForm: saveOfflineForm,
-    loading: offlineLoading 
+    loading: offlineLoading
   } = useOfflineData()
 
   const { operationLoading } = useAppSelector((state) => state.driverForm)
   const { rawMaterials, operationLoading: rawMaterialLoading } = useAppSelector((state) => state.rawMaterial)
   const { items: users, loading: usersLoading } = useAppSelector((state) => state.users)
   const { suppliers, operationLoading: suppliersLoading } = useAppSelector((state) => state.supplier)
+  const { items: tankers = [], loading: tankersLoading } = useAppSelector((state) => state.tankers)
+  const { user, profile, isAuthenticated, isLoading: userLoading } = useAppSelector((state) => state.auth)
+
+
+
+
 
   // Get offline data from localStorage
   const [offlineData, setOfflineData] = useState({
@@ -113,14 +122,16 @@ export function DriverFormDrawer({
   const drivers = isOnline ? users : offlineData.drivers
   const rawMaterialsData = isOnline ? rawMaterials : offlineData.rawMaterials
   const suppliersData = isOnline ? suppliers : offlineData.suppliers
-  
+  const tankersData = isOnline ? tankers : []
+
   // Fix loading states - handle different loading state structures
   const dataLoading = isOnline ? (
-    rawMaterialLoading.fetch || 
-    usersLoading || 
-    suppliersLoading.fetch
+    rawMaterialLoading.fetch ||
+    usersLoading ||
+    suppliersLoading.fetch ||
+    tankersLoading
   ) : false
-  
+
   // Debug logging
   console.log('Driver Form Debug:', {
     isOnline,
@@ -138,7 +149,7 @@ export function DriverFormDrawer({
     rawMaterialLoading,
     suppliersLoading
   })
-  
+
   const {
     control,
     handleSubmit,
@@ -149,9 +160,10 @@ export function DriverFormDrawer({
   } = useForm<DriverFormFormData>({
     resolver: yupResolver(driverFormSchema) as any,
     defaultValues: {
-      driver: "",
+      driver: user?.id || "", // <-- Set default to logged in user id
       start_date: "",
       end_date: "",
+      tanker: "",
       delivered: false,
       rejected: false,
       drivers_form_collected_products: [],
@@ -171,27 +183,27 @@ export function DriverFormDrawer({
       dispatch(fetchRawMaterials({}))
       dispatch(fetchUsers({}))
       dispatch(fetchSuppliers({}))
+      dispatch(fetchTankers({}))
     } else if (open && !isOnline) {
       console.log('Loading offline data...')
       // Refresh offline data from localStorage
       setOfflineData({
         drivers: LocalStorageService.getDrivers(),
         rawMaterials: LocalStorageService.getRawMaterials(),
-        suppliers: LocalStorageService.getSuppliers()
+        suppliers: LocalStorageService.getSuppliers(),
+
       })
     }
   }, [dispatch, open, isOnline])
 
   // Also load data when component mounts, regardless of drawer state
   useEffect(() => {
-    console.log('Initial data load useEffect triggered:', { isOnline })
     if (isOnline) {
-      console.log('Initial fetch of online data...')
       dispatch(fetchRawMaterials({}))
       dispatch(fetchUsers({}))
       dispatch(fetchSuppliers({}))
+      dispatch(fetchTankers({}))
     } else {
-      console.log('Initial load of offline data...')
       setOfflineData({
         drivers: LocalStorageService.getDrivers(),
         rawMaterials: LocalStorageService.getRawMaterials(),
@@ -202,13 +214,14 @@ export function DriverFormDrawer({
 
   // Force data load when drawer opens if no data is available
   useEffect(() => {
-    if (open && isOnline && (users.length === 0 || rawMaterials.length === 0 || suppliers.length === 0)) {
-      console.log('Force loading data because some data is missing...')
+    if (open && isOnline && (users.length === 0 || rawMaterials.length === 0 || suppliers.length === 0 || tankers.length === 0)) {
+
       dispatch(fetchRawMaterials({}))
       dispatch(fetchUsers({}))
       dispatch(fetchSuppliers({}))
+      dispatch(fetchTankers({}))
     }
-  }, [open, isOnline, users.length, rawMaterials.length, suppliers.length, dispatch])
+  }, [open, isOnline, users.length, rawMaterials.length, suppliers.length, tankers.length, dispatch])
 
   // Update offline data when online status changes
   useEffect(() => {
@@ -228,31 +241,38 @@ export function DriverFormDrawer({
         setValue("driver", typeof driverForm.driver === 'string' ? driverForm.driver : (driverForm as any).driver_id || driverForm.driver)
         setValue("start_date", driverForm.start_date.split('T')[0])
         setValue("end_date", driverForm.end_date.split('T')[0])
+        setValue("tanker", (driverForm as any).tanker || "")
         setValue("delivered", driverForm.delivered)
         setValue("rejected", driverForm.rejected)
         setValue("drivers_form_collected_products", driverForm.drivers_form_collected_products || [])
       } else {
         reset({
-          driver: "",
+          driver: user?.id || "", // <-- Set default to logged in user id on reset
           start_date: "",
           end_date: "",
+          tanker: "",
           delivered: false,
           rejected: false,
           drivers_form_collected_products: [],
         })
       }
     }
-  }, [open, mode, driverForm, setValue, reset])
+  }, [open, mode, driverForm, setValue, reset, user?.id])
 
   const onSubmit: SubmitHandler<DriverFormFormData> = async (data) => {
     try {
       setLoading(true)
-      
+      console.log('Submitting driver tanker:', data.tanker)
+
       const submitData = {
         ...data,
         start_date: new Date(data.start_date).toISOString(),
         end_date: new Date(data.end_date).toISOString(),
       }
+
+
+      // console.log('Submitting driver form:', submitData)
+      
 
       if (isOnline) {
         // Online mode - submit to API
@@ -277,6 +297,7 @@ export function DriverFormDrawer({
             driver_id: submitData.driver,
             start_date: submitData.start_date,
             end_date: submitData.end_date,
+            tanker: submitData.tanker,
             delivered: submitData.delivered,
             rejected: submitData.rejected,
             drivers_form_collected_products: submitData.drivers_form_collected_products
@@ -289,6 +310,7 @@ export function DriverFormDrawer({
             driver_id: submitData.driver,
             start_date: submitData.start_date,
             end_date: submitData.end_date,
+            tanker: submitData.tanker,
             delivered: submitData.delivered,
             rejected: submitData.rejected,
             drivers_form_collected_products: submitData.drivers_form_collected_products
@@ -339,13 +361,13 @@ export function DriverFormDrawer({
                   {mode === "create" ? "Add New Driver Form" : `Edit Driver Form: ${generateDriverFormId(driverForm?.created_at || new Date().toISOString())}`}
                 </SheetTitle>
                 <SheetDescription className="text-sm font-light">
-                  {mode === "create" 
-                    ? "Create a new driver collection form" 
+                  {mode === "create"
+                    ? "Create a new driver collection form"
                     : "Update driver form information"}
                 </SheetDescription>
               </div>
             </div>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2 mt-3">
               {isOnline ? (
                 <div className="flex items-center space-x-1 text-green-600">
                   <Wifi className="h-4 w-4" />
@@ -367,6 +389,7 @@ export function DriverFormDrawer({
                     dispatch(fetchRawMaterials({}))
                     dispatch(fetchUsers({}))
                     dispatch(fetchSuppliers({}))
+                    dispatch(fetchTankers({}))
                   } else {
                     setOfflineData({
                       drivers: LocalStorageService.getDrivers(),
@@ -403,24 +426,24 @@ export function DriverFormDrawer({
                         <SelectTrigger className="w-full rounded-full border-gray-200">
                           <SelectValue placeholder="Select driver" />
                         </SelectTrigger>
-            <SelectContent>
-              {dataLoading ? (
-                <SelectItem value="loading" disabled>Loading users...</SelectItem>
-              ) : drivers.length === 0 ? (
-                <SelectItem value="no-data" disabled>No users available</SelectItem>
-              ) : (
-                drivers.map((user) => (
-                  <SelectItem key={user.id} value={user.id}>
-                    <div className="flex flex-col">
-                      <span className="font-light">{user.first_name} {user.last_name}</span>
-                      {user.email && (
-                        <span className="text-xs text-gray-500 font-light">{user.email}</span>
-                      )}
-                    </div>
-                  </SelectItem>
-                ))
-              )}
-            </SelectContent>
+                        <SelectContent>
+                          {dataLoading ? (
+                            <SelectItem value="loading" disabled>Loading users...</SelectItem>
+                          ) : drivers.length === 0 ? (
+                            <SelectItem value="no-data" disabled>No users available</SelectItem>
+                          ) : (
+                            drivers.map((user) => (
+                              <SelectItem key={user.id} value={user.id}>
+                                <div className="flex flex-col">
+                                  <span className="font-light">{user.first_name} {user.last_name}</span>
+                                  {user.email && (
+                                    <span className="text-xs text-gray-500 font-light">{user.email}</span>
+                                  )}
+                                </div>
+                              </SelectItem>
+                            ))
+                          )}
+                        </SelectContent>
                       </Select>
                     )}
                   />
@@ -471,7 +494,42 @@ export function DriverFormDrawer({
                   </div>
                 </div>
 
-
+                {/* TANKER SELECTOR */}
+                <div className="space-y-2">
+                  <Label htmlFor="tanker" className="font-light">Tanker (Reg Number) *</Label>
+                  <Controller
+                    name="tanker"
+                    control={control}
+                    render={({ field }) => (
+                      <Select value={field.value} onValueChange={field.onChange} disabled={isSubmitting}>
+                        <SelectTrigger className="w-full rounded-full border-gray-200">
+                          <SelectValue placeholder="Select tanker" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {tankersLoading ? (
+                            <SelectItem value="loading" disabled>Loading tankers...</SelectItem>
+                          ) : tankersData.length === 0 ? (
+                            <SelectItem value="no-data" disabled>No tankers available</SelectItem>
+                          ) : (
+                            tankersData.map((tanker: any) => (
+                              <SelectItem key={tanker.reg_number} value={tanker.reg_number}>
+                                <div className="flex flex-col">
+                                  <span className="font-light">{tanker.reg_number}</span>
+                                  {tanker.condition && (
+                                    <span className="text-xs text-gray-500 font-light">{tanker.condition}</span>
+                                  )}
+                                </div>
+                              </SelectItem>
+                            ))
+                          )}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                  {errors.tanker && (
+                    <p className="text-sm text-red-500 font-light">{errors.tanker.message}</p>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -519,7 +577,7 @@ export function DriverFormDrawer({
                           <Trash2 className="w-4 h-4" />
                         </Button>
                       </div>
-                      
+
                       <div className="grid grid-cols-1 gap-4">
                         <div className="grid grid-cols-2 gap-4">
                           <div className="space-y-2">
@@ -830,7 +888,7 @@ export function DriverFormDrawer({
               onOpenChange={currentSignatureType === 'supplier' ? setSupplierSignatureOpen : setDriverSignatureOpen}
               onSave={(signature) => {
                 if (currentSignatureIndex !== null) {
-                  const fieldName = currentSignatureType === 'supplier' 
+                  const fieldName = currentSignatureType === 'supplier'
                     ? `drivers_form_collected_products.${currentSignatureIndex}.e_sign_supplier`
                     : `drivers_form_collected_products.${currentSignatureIndex}.e_sign_driver`
                   setValue(fieldName as any, signature)
@@ -849,8 +907,8 @@ export function DriverFormDrawer({
             <SignatureViewer
               open={currentSignatureType === 'supplier' ? supplierSignatureViewOpen : driverSignatureViewOpen}
               onOpenChange={currentSignatureType === 'supplier' ? setSupplierSignatureViewOpen : setDriverSignatureViewOpen}
-              value={currentSignatureIndex !== null ? 
-                (currentSignatureType === 'supplier' 
+              value={currentSignatureIndex !== null ?
+                (currentSignatureType === 'supplier'
                   ? watch(`drivers_form_collected_products.${currentSignatureIndex}.e_sign_supplier`)
                   : watch(`drivers_form_collected_products.${currentSignatureIndex}.e_sign_driver`)
                 ) : ""

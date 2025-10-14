@@ -14,6 +14,7 @@ const toolsNavigation = [
   { name: "Bulk Milk Transfer", href: "/tools/bmt-control-form", icon: Beaker },
   { name: "CIP Control Form", href: "/tools/cip-control-form", icon: Droplets },
   { name: "IST Control Form", href: "/tools/ist-control-form", icon: TestTube },
+  { name: "General Lab Test", href: "/tools/general-lab-test", icon: TestTube },
 ]
 
 interface ToolsSidebarProps {

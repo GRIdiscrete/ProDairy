@@ -38,6 +38,8 @@ export interface OfflineDriverForm {
   end_date: string
   delivered: boolean
   rejected: boolean
+  tanker: string
+  tag: string
   drivers_form_collected_products: OfflineCollectedProduct[]
   created_at: string
   updated_at: string

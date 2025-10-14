@@ -240,48 +240,16 @@ export default function BMTControlFormPage() {
       header: "Form ID",
       cell: ({ row }: any) => {
         const form = row.original
-        const formId = generateBMTFormId(form.created_at);
         return (
           <FormIdCopy 
-            displayId={formId}
+            displayId={form.tag}
             actualId={form.id}
             size="sm"
           />
         )
       },
     },
-    {
-      accessorKey: "product",
-      header: "BMT Form",
-      cell: ({ row }: any) => {
-        const form = row.original
-        const createdDate = form.created_at ? new Date(form.created_at) : null
-        const formId = form.id ? form.id.slice(-3) : '000' // Get last 3 digits of ID or default to '000'
-        const formIdentifier = createdDate 
-          ? `bmt-${formId}-${(createdDate.getMonth() + 1).toString().padStart(2, '0')}-${createdDate.getDate().toString().padStart(2, '0')}-${createdDate.getFullYear()}`
-          : 'bmt-000-00-00-0000'
-        
-        return (
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center">
-              <Beaker className="w-4 h-4 text-white" />
-            </div>
-            <div>
-              <div className="flex items-center space-x-2">
-                <span className="font-light">{formIdentifier}</span>
-                <Badge className="bg-blue-100 text-blue-800 font-light">{form.volume}L</Badge>
-              </div>
-              <div className="flex items-center space-x-2 mt-1">
-                <span className="text-sm text-gray-500">{form.product}</span>
-              </div>
-              <p className="text-sm text-gray-500 mt-1">
-                {form.bmt_control_form_source_silo_id_fkey?.name || 'Source Silo'} → {form.bmt_control_form_destination_silo_id_fkey?.name || 'Destination Silo'}
-              </p>
-            </div>
-          </div>
-        )
-      },
-    },
+   
     {
       accessorKey: "movement_details",
       header: "Movement",
@@ -408,10 +376,9 @@ export default function BMTControlFormPage() {
                   <span>Current BMT Control Form</span>
                   <Badge className="bg-gradient-to-r from-blue-100 to-cyan-100 text-blue-800 font-light">Latest</Badge>
                   {(() => {
-                    const formId = generateBMTFormId(latestForm.created_at);
                     return (
                       <FormIdCopy 
-                        displayId={formId}
+                        displayId={latestForm.tag}
                         actualId={latestForm.id}
                         size="sm"
                       />
@@ -457,70 +424,7 @@ export default function BMTControlFormPage() {
                 </div>
               </div>
               
-              {/* Show more info: silos, operators, status, etc. */}
-              <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-4">
-                {/* Source Silo */}
-                {(() => {
-                  const sourceSilo = Array.isArray(latestForm.source_silo_id) 
-                    ? getSiloById(latestForm.source_silo_id[0])
-                    : getSiloById(latestForm.source_silo_id);
-                  
-                  return (
-                    <div className="p-4 bg-gray-50 rounded-lg">
-                      <div className="flex items-center space-x-2 mb-3">
-                        <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
-                          <Package className="h-4 w-4 text-blue-600" />
-                        </div>
-                        <h4 className="text-sm font-light text-gray-900">Source Silo</h4>
-                      </div>
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-light text-gray-600">Name</span>
-                          <span className="text-sm font-light text-blue-900">{sourceSilo?.name || 'N/A'}</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-light text-gray-600">Capacity</span>
-                          <span className="text-sm font-light">{sourceSilo?.capacity?.toLocaleString() || 'N/A'}L</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-light text-gray-600">Location</span>
-                          <span className="text-sm font-light">{sourceSilo?.location || 'N/A'}</span>
-                        </div>
-                      </div>
-                    </div>
-                  )
-                })()}
-                
-                {/* Destination Silo */}
-                {(() => {
-                  const destSilo = getSiloById(latestForm.destination_silo_id);
-                  
-                  return (
-                    <div className="p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg">
-                      <div className="flex items-center space-x-2 mb-3">
-                        <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
-                          <Package className="h-4 w-4 text-blue-600" />
-                        </div>
-                        <h4 className="text-sm font-light text-gray-900">Destination Silo</h4>
-                      </div>
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-light text-gray-600">Name</span>
-                          <span className="text-sm font-light text-blue-900">{destSilo?.name || 'N/A'}</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-light text-gray-600">Capacity</span>
-                          <span className="text-sm font-light">{destSilo?.capacity?.toLocaleString() || 'N/A'}L</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-light text-gray-600">Location</span>
-                          <span className="text-sm font-light">{destSilo?.location || 'N/A'}</span>
-                        </div>
-                      </div>
-                    </div>
-                  )
-                })()}
-              </div>
+              {/* Remove source silos and destination silo snapshot section */}
               
               {/* Operators Information */}
               <div className="mt-4 grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -605,16 +509,11 @@ export default function BMTControlFormPage() {
                 })()}
               </div>
               
+              <div className="mt-4 grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {/* ...existing code... */}
+              </div>
               <div className="mt-4 flex flex-wrap gap-4">
-                <Badge className="bg-gray-100 text-gray-800 font-light">
-                  Status: {(latestForm as any).status || 'Draft'}
-                </Badge>
-                <Badge className="bg-gray-100 text-gray-800 font-light">
-                  Volume: {latestForm.volume || 'N/A'}L
-                </Badge>
-                <Badge className="bg-gray-100 text-gray-800 font-light">
-                  Product: {latestForm.product || 'N/A'}
-                </Badge>
+                {/* ...existing code... */}
               </div>
             </div>
           </div>

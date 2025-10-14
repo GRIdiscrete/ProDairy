@@ -191,7 +191,7 @@ export default function RawMilkIntakePage() {
             </div>
             <div>
               <FormIdCopy 
-                displayId={formId}
+                displayId={form.tag}
                 actualId={form.id}
                 size="sm"
               />
