@@ -124,7 +124,7 @@ export function StandardizingFormViewDrawer({
             <div className="flex items-center space-x-2">
               <h2 className="text-xl font-light">Standardizing Form</h2>
               <FormIdCopy 
-                displayId={generateStandardizingFormId(form.created_at)}
+                displayId={form?.tag}
                 actualId={form.id}
                 size="md"
               />
@@ -168,7 +168,7 @@ export function StandardizingFormViewDrawer({
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-light text-gray-600">Form ID</span>
                   <FormIdCopy 
-                    displayId={generateStandardizingFormId(form.created_at)}
+                    displayId={form?.tag}
                     actualId={form.id}
                     size="sm"
                   />
@@ -180,7 +180,7 @@ export function StandardizingFormViewDrawer({
                       const bmtForm = getBMTFormById(form.bmt_id)
                       return bmtForm ? (
                         <FormIdCopy 
-                          displayId={generateBMTFormId(bmtForm.created_at)}
+                          displayId={bmtForm?.tag}
                           actualId={form.bmt_id}
                           size="sm"
                         />
@@ -267,7 +267,7 @@ export function StandardizingFormViewDrawer({
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-light text-gray-600">BMT Form ID</span>
                       <FormIdCopy 
-                        displayId={generateBMTFormId(bmtForm.created_at)}
+                        displayId={bmtForm?.tag}
                         actualId={form.bmt_id}
                         size="sm"
                       />

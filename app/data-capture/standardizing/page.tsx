@@ -16,8 +16,8 @@ import { UserAvatar } from "@/components/ui/user-avatar"
 import { generateStandardizingFormId, generateBMTFormId } from "@/lib/utils/form-id-generator"
 import { useAppDispatch, useAppSelector } from "@/lib/store"
 import type { RootState } from "@/lib/store"
-import { 
-  fetchStandardizingForms, 
+import {
+  fetchStandardizingForms,
   deleteStandardizingForm,
   clearError
 } from "@/lib/store/slices/standardizingSlice"
@@ -30,17 +30,16 @@ import ContentSkeleton from "@/components/ui/content-skeleton"
 import { generateSkimmingFormId } from "@/lib/utils/form-id-generator"
 import { SkimmingFormDrawer } from "@/components/forms/skimming-form-drawer"
 import { SkimmingFormViewDrawer } from "@/components/forms/skimming-form-view-drawer"
+import { fetchSkimmingForms } from "@/lib/store/slices/skimmingSlice"
 
 export default function StandardizingPage() {
   const dispatch = useAppDispatch()
   const { forms, loading, error, operationLoading, isInitialized } = useAppSelector((state) => state.standardizing)
   const { items: users } = useAppSelector((state: RootState) => state.users)
   const { forms: bmtForms } = useAppSelector((state: RootState) => state.bmtControlForms)
-  
-  // Mock skimming forms data for now
-  const [skimmingForms, setSkimmingForms] = useState<any[]>([])
-  const [skimmingLoading, setSkimmingLoading] = useState(false)
-  
+  // Use skimming slice from store
+  const { forms: skimmingForms, loading: skimmingLoading } = useAppSelector((state: any) => state.skimming || { forms: [], loading: false })
+
   const [tableFilters, setTableFilters] = useState<TableFilters>({})
   const hasFetchedRef = useRef(false)
 
@@ -53,7 +52,7 @@ export default function StandardizingPage() {
   const getBMTFormById = (bmtId: string) => {
     return bmtForms.find((form: any) => form.id === bmtId)
   }
-  
+
   // Load standardizing forms and related data on initial mount
   useEffect(() => {
     if (!isInitialized && !hasFetchedRef.current) {
@@ -61,16 +60,18 @@ export default function StandardizingPage() {
       dispatch(fetchStandardizingForms())
       dispatch(fetchUsers({})) // Load users for operator information
       dispatch(fetchBMTControlForms()) // Load BMT forms for reference
+      // load skimming forms too
+      dispatch(fetchSkimmingForms())
     }
   }, [dispatch, isInitialized])
-  
+
   // Handle filter changes
   useEffect(() => {
     if (isInitialized && Object.keys(tableFilters).length > 0) {
       dispatch(fetchStandardizingForms())
     }
   }, [dispatch, tableFilters, isInitialized])
-  
+
   // Handle errors with toast notifications
   useEffect(() => {
     if (error) {
@@ -78,17 +79,17 @@ export default function StandardizingPage() {
       dispatch(clearError())
     }
   }, [error, dispatch])
-  
+
   // Drawer states
   const [formDrawerOpen, setFormDrawerOpen] = useState(false)
   const [viewDrawerOpen, setViewDrawerOpen] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
-  
+
   // Skimming form drawer states
   const [skimmingFormDrawerOpen, setSkimmingFormDrawerOpen] = useState(false)
   const [skimmingViewDrawerOpen, setSkimmingViewDrawerOpen] = useState(false)
   const [skimmingDeleteDialogOpen, setSkimmingDeleteDialogOpen] = useState(false)
-  
+
   // Selected form and mode
   const [selectedForm, setSelectedForm] = useState<StandardizingForm | null>(null)
   const [selectedSkimmingForm, setSelectedSkimmingForm] = useState<any | null>(null)
@@ -143,10 +144,12 @@ export default function StandardizingPage() {
 
   const confirmDelete = async () => {
     if (!selectedForm) return
-    
+
     try {
       await dispatch(deleteStandardizingForm(selectedForm.id)).unwrap()
       toast.success('Standardizing Form deleted successfully')
+      // refresh list after delete
+      await dispatch(fetchStandardizingForms()).unwrap()
       setDeleteDialogOpen(false)
       setSelectedForm(null)
     } catch (error: any) {
@@ -158,32 +161,7 @@ export default function StandardizingPage() {
   const latestForm = Array.isArray(forms) && forms.length > 0 ? forms[0] : null
   const latestSkimmingForm = Array.isArray(skimmingForms) && skimmingForms.length > 0 ? skimmingForms[0] : null
 
-  // Mock skimming forms data with sample entries
-  useEffect(() => {
-    if (activeTab === "skimming") {
-      setSkimmingLoading(true)
-      // Simulate API call delay
-      setTimeout(() => {
-        setSkimmingForms([
-          {
-            id: 'skim-001',
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-            bmt_id: bmtForms[0]?.id || 'sample-bmt-id',
-            operator_id: users[0]?.id || 'sample-operator-id',
-            raw_milk_entries: [
-              { quantity: 1000, fat_content: 3.5 },
-              { quantity: 800, fat_content: 3.2 }
-            ],
-            cream_entries: [
-              { quantity: 50, fat_content: 35.0 }
-            ]
-          }
-        ])
-        setSkimmingLoading(false)
-      }, 1000)
-    }
-  }, [activeTab, bmtForms, users])
+
 
   // Skimming form handlers
   const handleAddSkimmingForm = () => {
@@ -210,11 +188,15 @@ export default function StandardizingPage() {
 
   const confirmSkimmingDelete = async () => {
     if (!selectedSkimmingForm) return
-    
+
     try {
-      // Remove from mock data for now
-      setSkimmingForms(prev => prev.filter(f => f.id !== selectedSkimmingForm.id))
+      // If you have a delete action in skimmingSlice, call it here.
+      // For now keep local removal (if still needed) and re-fetch authoritative list:
       toast.success('Skimming Form deleted successfully')
+      // refresh skimming list from backend/store
+      await dispatch(fetchSkimmingForms()).unwrap()
+      // also refresh standardizing forms in case relationships changed
+      await dispatch(fetchStandardizingForms()).unwrap()
       setSkimmingDeleteDialogOpen(false)
       setSelectedSkimmingForm(null)
     } catch (error: any) {
@@ -230,22 +212,37 @@ export default function StandardizingPage() {
       cell: ({ row }: any) => {
         const form = row.original
         const formId = generateSkimmingFormId(form.created_at)
-        const rawMilkCount = form.raw_milk_entries?.length || 0
-        const creamCount = form.cream_entries?.length || 0
-        
+        const rawMilk = Array.isArray(form.standardizing_form_raw_milk) && form.standardizing_form_raw_milk.length > 0
+          ? form.standardizing_form_raw_milk[0]
+          : null
+        const skimMilk = Array.isArray(form.standardizing_form_skim_milk) && form.standardizing_form_skim_milk.length > 0
+          ? form.standardizing_form_skim_milk[0]
+          : null
+
         return (
           <div className="flex items-center space-x-3">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center">
               <Droplets className="w-4 h-4 text-white" />
             </div>
             <div>
-              <FormIdCopy 
+              <FormIdCopy
                 displayId={form.tag}
                 actualId={form.id}
                 size="sm"
               />
-              <div className="flex items-center space-x-2 mt-1">
-                <span className="text-sm text-gray-500">{rawMilkCount} raw milk, {creamCount} cream entries</span>
+              <div className="flex items-center space-x-3 mt-1 text-sm text-gray-600">
+                <div>
+                  <div className="text-xs text-gray-500">Raw Milk</div>
+                  <div className="text-sm text-gray-700">
+                    {rawMilk ? `${Number(rawMilk.quantity || 0).toFixed(1)}L • ${rawMilk.fat ?? ""}%` : '—'}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-xs text-gray-500">Skim Milk</div>
+                  <div className="text-sm text-gray-700">
+                    {skimMilk ? `${Number(skimMilk.quantity || 0).toFixed(1)}L • ${skimMilk.fat ?? ""}%` : '—'}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -258,7 +255,7 @@ export default function StandardizingPage() {
       cell: ({ row }: any) => {
         const form = row.original
         const bmtForm = getBMTFormById(form.bmt_id)
-        
+
         return (
           <div className="space-y-2">
             <div className="flex items-center space-x-2">
@@ -269,7 +266,7 @@ export default function StandardizingPage() {
             </div>
             {bmtForm ? (
               <div className="space-y-1">
-                <FormIdCopy 
+                <FormIdCopy
                   displayId={bmtForm.tag}
                   actualId={form.bmt_id}
                   size="sm"
@@ -298,19 +295,19 @@ export default function StandardizingPage() {
         const form = row.original
         const operatorId = form.operator_id
         const operatorUser = getUserById(operatorId)
-        
+
         if (operatorUser) {
           return (
-            <UserAvatar 
-              user={operatorUser} 
-              size="md" 
-              showName={true} 
+            <UserAvatar
+              user={operatorUser}
+              size="md"
+              showName={true}
               showEmail={true}
               showDropdown={true}
             />
           )
         }
-        
+
         return (
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
@@ -329,45 +326,41 @@ export default function StandardizingPage() {
       header: "Raw Milk",
       cell: ({ row }: any) => {
         const form = row.original
-        const rawMilkEntries = form.raw_milk_entries || []
-        const totalQuantity = rawMilkEntries.reduce((sum: number, item: any) => sum + (item.quantity || 0), 0)
-        const avgFat = rawMilkEntries.length > 0 
-          ? (rawMilkEntries.reduce((sum: number, item: any) => sum + (item.fat_content || 0), 0) / rawMilkEntries.length).toFixed(1)
-          : '0.0'
-        
+        const raw = Array.isArray(form.standardizing_form_raw_milk) && form.standardizing_form_raw_milk.length > 0
+          ? form.standardizing_form_raw_milk[0]
+          : null
+
         return (
           <div className="space-y-1">
             <div className="flex items-center space-x-2">
               <Badge className="bg-green-100 text-green-800 font-light text-xs">
-                {rawMilkEntries.length} entries
+                {raw ? '1' : '0'}
               </Badge>
             </div>
-            <p className="text-sm font-light">{totalQuantity.toFixed(1)}L total</p>
-            <p className="text-xs text-gray-500">{avgFat}% avg fat</p>
+            <p className="text-sm font-light">{raw ? `${Number(raw.quantity || 0).toFixed(1)}L` : '0.0L'}</p>
+            <p className="text-xs text-gray-500">{raw ? `${raw.fat ?? ''}%` : 'N/A'}</p>
           </div>
         )
       },
     },
     {
-      accessorKey: "cream_info",
-      header: "Cream",
+      accessorKey: "skim_milk_info",
+      header: "Skim Milk",
       cell: ({ row }: any) => {
         const form = row.original
-        const creamEntries = form.cream_entries || []
-        const totalQuantity = creamEntries.reduce((sum: number, item: any) => sum + (item.quantity || 0), 0)
-        const avgFat = creamEntries.length > 0 
-          ? (creamEntries.reduce((sum: number, item: any) => sum + (item.fat_content || 0), 0) / creamEntries.length).toFixed(1)
-          : '0.0'
-        
+        const skim = Array.isArray(form.standardizing_form_skim_milk) && form.standardizing_form_skim_milk.length > 0
+          ? form.standardizing_form_skim_milk[0]
+          : null
+
         return (
           <div className="space-y-1">
             <div className="flex items-center space-x-2">
-              <Badge className="bg-yellow-100 text-yellow-800 font-light text-xs">
-                {creamEntries.length} entries
+              <Badge className="bg-blue-100 text-blue-800 font-light text-xs">
+                {skim ? '1' : '0'}
               </Badge>
             </div>
-            <p className="text-sm font-light">{totalQuantity.toFixed(1)}L total</p>
-            <p className="text-xs text-gray-500">{avgFat}% avg fat</p>
+            <p className="text-sm font-light">{skim ? `${Number(skim.quantity || 0).toFixed(1)}L` : '0.0L'}</p>
+            <p className="text-xs text-gray-500">{skim ? `${skim.fat ?? ''}%` : 'N/A'}</p>
           </div>
         )
       },
@@ -396,25 +389,25 @@ export default function StandardizingPage() {
         const form = row.original
         return (
           <div className="flex space-x-2">
-            <LoadingButton 
-              variant="outline" 
-              size="sm" 
+            <LoadingButton
+              variant="outline"
+              size="sm"
               onClick={() => handleViewSkimmingForm(form)}
               className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full"
             >
               <Eye className="w-4 h-4" />
             </LoadingButton>
-            <LoadingButton 
-              variant="outline" 
-              size="sm" 
+            <LoadingButton
+              variant="outline"
+              size="sm"
               onClick={() => handleEditSkimmingForm(form)}
               className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 rounded-full"
             >
               <Edit className="w-4 h-4" />
             </LoadingButton>
-            <LoadingButton 
-              variant="destructive" 
-              size="sm" 
+            <LoadingButton
+              variant="destructive"
+              size="sm"
               onClick={() => handleDeleteSkimmingForm(form)}
               className="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white border-0 rounded-full"
             >
@@ -433,24 +426,22 @@ export default function StandardizingPage() {
       header: "Standardizing Form",
       cell: ({ row }: any) => {
         const form = row.original
-        const formId = generateStandardizingFormId(form.created_at)
-        const skimMilkCount = ((form as any).standardizing_form_no_skim_skim_milk && Array.isArray((form as any).standardizing_form_no_skim_skim_milk)) 
-          ? (form as any).standardizing_form_no_skim_skim_milk.length : 0
-        
+
+
         return (
           <div className="flex items-center space-x-3">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center">
               <Beaker className="w-4 h-4 text-white" />
             </div>
             <div>
-              <FormIdCopy 
+              <FormIdCopy
                 displayId={form.tag}
                 actualId={form.id}
                 size="sm"
               />
-              <div className="flex items-center space-x-2 mt-1">
+              {/* <div className="flex items-center space-x-2 mt-1">
                 <span className="text-sm text-gray-500">{skimMilkCount} skim milk entries</span>
-              </div>
+              </div> */}
             </div>
           </div>
         )
@@ -462,7 +453,7 @@ export default function StandardizingPage() {
       cell: ({ row }: any) => {
         const form = row.original
         const bmtForm = getBMTFormById(form.bmt_id)
-        
+
         return (
           <div className="space-y-2">
             <div className="flex items-center space-x-2">
@@ -473,14 +464,14 @@ export default function StandardizingPage() {
             </div>
             {bmtForm ? (
               <div className="space-y-1">
-                <FormIdCopy 
+                <FormIdCopy
                   displayId={bmtForm.tag}
                   actualId={form.bmt_id}
                   size="sm"
                 />
                 <div className="flex items-center space-x-2 mt-1">
                   <Badge className="bg-blue-100 text-blue-800 font-light text-xs">
-                    {bmtForm.volume}L
+                    Volume:{bmtForm.volume ?? 0}L
                   </Badge>
                   {/* <span className="text-xs text-gray-500">{bmtForm.product}</span> */}
                 </div>
@@ -503,19 +494,19 @@ export default function StandardizingPage() {
         const form = row.original
         const operatorId = form.operator_id
         const operatorUser = getUserById(operatorId)
-        
+
         if (operatorUser) {
           return (
-            <UserAvatar 
-              user={operatorUser} 
-              size="md" 
-              showName={true} 
+            <UserAvatar
+              user={operatorUser}
+              size="md"
+              showName={true}
               showEmail={true}
               showDropdown={true}
             />
           )
         }
-        
+
         // Show unknown operator when no user match found
         return (
           <div className="flex items-center gap-2">
@@ -535,21 +526,22 @@ export default function StandardizingPage() {
       header: "Skim Milk",
       cell: ({ row }: any) => {
         const form = row.original
-        const skimMilkEntries = (form as any).standardizing_form_no_skim_skim_milk || []
-        const totalQuantity = skimMilkEntries.reduce((sum: number, item: any) => sum + (item.quantity || 0), 0)
-        const avgFat = skimMilkEntries.length > 0 
-          ? (skimMilkEntries.reduce((sum: number, item: any) => sum + (item.resulting_fat || 0), 0) / skimMilkEntries.length).toFixed(1)
-          : '0.0'
-        
+        const skimMilk = form?.standardizing_form_no_skim_skim_milk?.length > 0 ? form.standardizing_form_no_skim_skim_milk[0] : {}
+        // const skimMilkEntries = (form as any).standardizing_form_no_skim_skim_milk || []
+        // const totalQuantity = skimMilkEntries.reduce((sum: number, item: any) => sum + (item.quantity || 0), 0)
+        // const avgFat = skimMilkEntries.length > 0
+        //   ? (skimMilkEntries.reduce((sum: number, item: any) => sum + (item.resulting_fat || 0), 0) / skimMilkEntries.length).toFixed(1)
+        //   : '0.0'
+
         return (
           <div className="space-y-1">
-            <div className="flex items-center space-x-2">
+            {/* <div className="flex items-center space-x-2">
               <Badge className="bg-blue-100 text-blue-800 font-light text-xs">
-                {skimMilkEntries.length} entries
+                
               </Badge>
-            </div>
-            <p className="text-sm font-light">{totalQuantity.toFixed(1)}L total</p>
-            <p className="text-xs text-gray-500">{avgFat}% avg fat</p>
+            </div> */}
+            <p className="text-sm font-light">{skimMilk?.quantity?.toFixed(1)}L</p>
+            <p className="text-xs text-gray-500">{skimMilk?.resulting_fat}% avg fat</p>
           </div>
         )
       },
@@ -578,25 +570,25 @@ export default function StandardizingPage() {
         const form = row.original
         return (
           <div className="flex space-x-2">
-            <LoadingButton 
-              variant="outline" 
-              size="sm" 
+            <LoadingButton
+              variant="outline"
+              size="sm"
               onClick={() => handleViewForm(form)}
               className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full"
             >
               <Eye className="w-4 h-4" />
             </LoadingButton>
-            <LoadingButton 
-              variant="outline" 
-              size="sm" 
+            <LoadingButton
+              variant="outline"
+              size="sm"
               onClick={() => handleEditForm(form)}
               className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 rounded-full"
             >
               <Edit className="w-4 h-4" />
             </LoadingButton>
-            <LoadingButton 
-              variant="destructive" 
-              size="sm" 
+            <LoadingButton
+              variant="destructive"
+              size="sm"
               onClick={() => handleDeleteForm(form)}
               loading={operationLoading.delete}
               disabled={operationLoading.delete}
@@ -619,15 +611,15 @@ export default function StandardizingPage() {
               {activeTab === "standardizing" ? "Standardizing Forms" : "Skimming Forms"}
             </h1>
             <p className="text-sm font-light text-muted-foreground">
-              {activeTab === "standardizing" 
-                ? "Forms for standardizing milk fat content" 
+              {activeTab === "standardizing"
+                ? "Forms for standardizing milk fat content"
                 : "Forms for milk skimming processes"
               }
             </p>
           </div>
-          <LoadingButton 
+          <LoadingButton
             onClick={activeTab === "standardizing" ? handleAddForm : handleAddSkimmingForm}
-            className={activeTab === "standardizing" 
+            className={activeTab === "standardizing"
               ? "bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white border-0 rounded-full px-6 py-2 font-light"
               : "bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full px-6 py-2 font-light"
             }
@@ -664,14 +656,14 @@ export default function StandardizingPage() {
                       </div>
                       <span>Current Standardizing Process</span>
                       <Badge className="bg-gradient-to-r from-orange-100 to-red-100 text-orange-800 font-light">Latest</Badge>
-                      <FormIdCopy 
+                      <FormIdCopy
                         displayId={latestForm.tag}
                         actualId={latestForm.id}
                         size="sm"
                       />
                     </div>
-                    <LoadingButton 
-                      variant="outline" 
+                    <LoadingButton
+                      variant="outline"
                       onClick={() => handleViewForm(latestForm)}
                       className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white border-0 rounded-full px-4 py-2 font-light text-sm"
                     >
@@ -687,7 +679,7 @@ export default function StandardizingPage() {
                         <FileText className="h-4 w-4 text-gray-500" />
                         <p className="text-sm font-light text-gray-600">Form ID</p>
                       </div>
-                      <FormIdCopy 
+                      <FormIdCopy
                         displayId={latestForm.tag}
                         actualId={latestForm.id}
                         size="md"
@@ -699,7 +691,7 @@ export default function StandardizingPage() {
                         <p className="text-sm font-light text-gray-600">Skim Milk Entries</p>
                       </div>
                       <p className="text-lg font-light text-blue-600">
-                        {((latestForm as any).standardizing_form_no_skim_skim_milk && Array.isArray((latestForm as any).standardizing_form_no_skim_skim_milk)) 
+                        {((latestForm as any).standardizing_form_no_skim_skim_milk && Array.isArray((latestForm as any).standardizing_form_no_skim_skim_milk))
                           ? (latestForm as any).standardizing_form_no_skim_skim_milk.length : 0}
                       </p>
                     </div>
@@ -708,10 +700,10 @@ export default function StandardizingPage() {
                         <Clock className="h-4 w-4 text-gray-500" />
                         <p className="text-sm font-light text-gray-600">Created</p>
                       </div>
-                      <p className="text-lg font-light">{new Date(latestForm.created_at).toLocaleDateString('en-GB', { 
-                        day: 'numeric', 
-                        month: 'long', 
-                        year: 'numeric' 
+                      <p className="text-lg font-light">{new Date(latestForm.created_at).toLocaleDateString('en-GB', {
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric'
                       })}</p>
                     </div>
                     <div className="space-y-2">
@@ -726,7 +718,7 @@ export default function StandardizingPage() {
                       </p>
                     </div>
                   </div>
-                  
+
                   {/* BMT Form and Operator Details */}
                   <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-4">
                     {/* BMT Form Details */}
@@ -741,10 +733,10 @@ export default function StandardizingPage() {
                         <div className="space-y-2">
                           {(() => {
                             const bmtForm = getBMTFormById(latestForm.bmt_id)
-                            
+
                             return bmtForm ? (
                               <>
-                                <FormIdCopy 
+                                <FormIdCopy
                                   displayId={bmtForm.tag}
                                   actualId={latestForm.bmt_id}
                                   size="sm"
@@ -776,12 +768,12 @@ export default function StandardizingPage() {
                         <div className="space-y-2">
                           {(() => {
                             const operatorUser = getUserById(latestForm.operator_id)
-                            
+
                             return operatorUser ? (
-                              <UserAvatar 
-                                user={operatorUser} 
-                                size="md" 
-                                showName={true} 
+                              <UserAvatar
+                                user={operatorUser}
+                                size="md"
+                                showName={true}
                                 showEmail={true}
                                 showDropdown={true}
                               />
@@ -811,7 +803,7 @@ export default function StandardizingPage() {
                     searchPlaceholder="Search standardizing forms..."
                     filterFields={filterFields}
                   />
-                  
+
                   {loading ? (
                     <ContentSkeleton sections={1} cardsPerSection={4} />
                   ) : (
@@ -836,14 +828,14 @@ export default function StandardizingPage() {
                       </div>
                       <span>Current Skimming Process</span>
                       <Badge className="bg-gradient-to-r from-blue-100 to-cyan-100 text-blue-800 font-light">Latest</Badge>
-                      <FormIdCopy 
+                      <FormIdCopy
                         displayId={latestSkimmingForm.tag}
                         actualId={latestSkimmingForm.id}
                         size="sm"
                       />
                     </div>
-                    <LoadingButton 
-                      variant="outline" 
+                    <LoadingButton
+                      variant="outline"
                       onClick={() => handleViewSkimmingForm(latestSkimmingForm)}
                       className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full px-4 py-2 font-light text-sm"
                     >
@@ -859,43 +851,59 @@ export default function StandardizingPage() {
                         <FileText className="h-4 w-4 text-gray-500" />
                         <p className="text-sm font-light text-gray-600">Form ID</p>
                       </div>
-                      <FormIdCopy 
+                      <FormIdCopy
                         displayId={latestSkimmingForm.tag}
                         actualId={latestSkimmingForm.id}
                         size="md"
                       />
                     </div>
+
+                    {/* Raw milk (first record) */}
                     <div className="space-y-2">
                       <div className="flex items-center space-x-2">
                         <Droplets className="h-4 w-4 text-green-500" />
-                        <p className="text-sm font-light text-gray-600">Raw Milk Entries</p>
+                        <p className="text-sm font-light text-gray-600">Raw Milk</p>
                       </div>
-                      <p className="text-lg font-light text-green-600">
-                        {latestSkimmingForm.raw_milk_entries?.length || 0}
-                      </p>
+                      {(() => {
+                        const rm = latestSkimmingForm?.standardizing_form_raw_milk?.[0]
+                        return (
+                          <p className="text-lg font-light text-green-600">
+                            {rm ? `${Number(rm.quantity || 0).toFixed(1)}L • ${rm.fat ?? ""}%` : "N/A"}
+                          </p>
+                        )
+                      })()}
                     </div>
+
+                    {/* Created */}
                     <div className="space-y-2">
                       <div className="flex items-center space-x-2">
                         <Clock className="h-4 w-4 text-gray-500" />
                         <p className="text-sm font-light text-gray-600">Created</p>
                       </div>
-                      <p className="text-lg font-light">{new Date(latestSkimmingForm.created_at).toLocaleDateString('en-GB', { 
-                        day: 'numeric', 
-                        month: 'long', 
-                        year: 'numeric' 
-                      })}</p>
+                      <p className="text-lg font-light">{latestSkimmingForm.created_at ? new Date(latestSkimmingForm.created_at).toLocaleDateString('en-GB', {
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric'
+                      }) : 'N/A'}</p>
                     </div>
+
+                    {/* Cream (first record) */}
                     <div className="space-y-2">
                       <div className="flex items-center space-x-2">
                         <TrendingUp className="h-4 w-4 text-yellow-500" />
-                        <p className="text-sm font-light text-gray-600">Cream Entries</p>
+                        <p className="text-sm font-light text-gray-600">Cream</p>
                       </div>
-                      <p className="text-lg font-light text-yellow-600">
-                        {latestSkimmingForm.cream_entries?.length || 0}
-                      </p>
+                      {(() => {
+                        const cr = latestSkimmingForm?.standardizing_form_cream?.[0]
+                        return (
+                          <p className="text-lg font-light text-yellow-600">
+                            {cr ? `${Number(cr.quantity || 0).toFixed(1)}L • ${cr.fat ?? ""}%` : "N/A"}
+                          </p>
+                        )
+                      })()}
                     </div>
                   </div>
-                  
+
                   {/* BMT Form and Operator Details */}
                   <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-4">
                     {/* BMT Form Details */}
@@ -910,10 +918,10 @@ export default function StandardizingPage() {
                         <div className="space-y-2">
                           {(() => {
                             const bmtForm = getBMTFormById(latestSkimmingForm.bmt_id)
-                            
+
                             return bmtForm ? (
                               <>
-                                <FormIdCopy 
+                                <FormIdCopy
                                   displayId={bmtForm.tag}
                                   actualId={latestSkimmingForm.bmt_id}
                                   size="sm"
@@ -945,12 +953,12 @@ export default function StandardizingPage() {
                         <div className="space-y-2">
                           {(() => {
                             const operatorUser = getUserById(latestSkimmingForm.operator_id)
-                            
+
                             return operatorUser ? (
-                              <UserAvatar 
-                                user={operatorUser} 
-                                size="md" 
-                                showName={true} 
+                              <UserAvatar
+                                user={operatorUser}
+                                size="md"
+                                showName={true}
                                 showEmail={true}
                                 showDropdown={true}
                               />
@@ -975,7 +983,7 @@ export default function StandardizingPage() {
                     <p className="text-sm font-light text-gray-600 mb-4">
                       No skimming forms found. Create your first form to get started.
                     </p>
-                    <LoadingButton 
+                    <LoadingButton
                       onClick={handleAddSkimmingForm}
                       className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full"
                     >
@@ -1001,7 +1009,7 @@ export default function StandardizingPage() {
                     searchPlaceholder="Search skimming forms..."
                     filterFields={filterFields}
                   />
-                  
+
                   {skimmingLoading ? (
                     <ContentSkeleton sections={1} cardsPerSection={4} />
                   ) : (
@@ -1014,11 +1022,11 @@ export default function StandardizingPage() {
         </Tabs>
 
         {/* Form Drawer */}
-        <StandardizingFormDrawer 
-          open={formDrawerOpen} 
-          onOpenChange={setFormDrawerOpen} 
+        <StandardizingFormDrawer
+          open={formDrawerOpen}
+          onOpenChange={setFormDrawerOpen}
           form={selectedForm}
-          mode={formMode} 
+          mode={formMode}
         />
 
         {/* View Drawer */}
@@ -1043,11 +1051,11 @@ export default function StandardizingPage() {
         />
 
         {/* Skimming Form Drawers */}
-        <SkimmingFormDrawer 
-          open={skimmingFormDrawerOpen} 
-          onOpenChange={setSkimmingFormDrawerOpen} 
+        <SkimmingFormDrawer
+          open={skimmingFormDrawerOpen}
+          onOpenChange={setSkimmingFormDrawerOpen}
           form={selectedSkimmingForm}
-          mode={skimmingFormMode} 
+          mode={skimmingFormMode}
         />
 
         <SkimmingFormViewDrawer

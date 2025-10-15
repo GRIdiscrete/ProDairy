@@ -14,42 +14,49 @@ import { FilmaticLinesForm2ViewDrawer } from "@/components/forms/filmatic-lines-
 import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-dialog"
 import { Skeleton } from "@/components/ui/skeleton"
 import { CopyButton } from "@/components/ui/copy-button"
-import { useAppDispatch, useAppSelector } from "@/lib/store"
-import { 
-  fetchFilmaticLinesForm2s, 
+import { useAppDispatch, useAppSelector, RootState } from "@/lib/store"
+import {
+  fetchFilmaticLinesForm2s,
   deleteFilmaticLinesForm2,
   clearError
 } from "@/lib/store/slices/filmaticLinesForm2Slice"
+import { fetchUsers } from "@/lib/store/slices/usersSlice"
+import { fetchBMTControlForms } from "@/lib/store/slices/bmtControlFormSlice"
 import { toast } from "sonner"
 import { TableFilters } from "@/lib/types"
 import { FilmaticLinesForm2 } from "@/lib/api/filmatic-lines-form-2"
 import ContentSkeleton from "@/components/ui/content-skeleton"
+import { UserAvatar } from "@/components/ui/user-avatar"
+import { FormIdCopy } from "@/components/ui/form-id-copy"
 
 export default function FilmaticLines2Page() {
   const params = useParams()
   const processId = params.process_id as string
-  
+
   const dispatch = useAppDispatch()
   const { forms, loading, error, isInitialized } = useAppSelector((state) => state.filmaticLinesForm2)
-  
+
   const [tableFilters, setTableFilters] = useState<TableFilters>({})
   const hasFetchedRef = useRef(false)
-  
+
   // Load Filmatic lines form 2 data on initial mount
   useEffect(() => {
     if (!isInitialized && !hasFetchedRef.current) {
       hasFetchedRef.current = true
       dispatch(fetchFilmaticLinesForm2s())
+      // load users and bmt forms for display
+      dispatch(fetchUsers({}))
+      dispatch(fetchBMTControlForms())
     }
   }, [dispatch, isInitialized])
-  
+
   // Handle filter changes
   useEffect(() => {
     if (isInitialized && Object.keys(tableFilters).length > 0) {
       dispatch(fetchFilmaticLinesForm2s())
     }
   }, [dispatch, tableFilters, isInitialized])
-  
+
   // Handle errors with toast notifications
   useEffect(() => {
     if (error) {
@@ -57,12 +64,12 @@ export default function FilmaticLines2Page() {
       dispatch(clearError())
     }
   }, [error, dispatch])
-  
+
   // Drawer states
   const [formDrawerOpen, setFormDrawerOpen] = useState(false)
   const [viewDrawerOpen, setViewDrawerOpen] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
-  
+
   // Selected form and mode
   const [selectedForm, setSelectedForm] = useState<FilmaticLinesForm2 | null>(null)
   const [formMode, setFormMode] = useState<"create" | "edit">("create")
@@ -118,7 +125,7 @@ export default function FilmaticLines2Page() {
 
   const confirmDelete = async () => {
     if (!selectedForm) return
-    
+
     try {
       await dispatch(deleteFilmaticLinesForm2(selectedForm.id!)).unwrap()
       toast.success('Filmatic Lines Form 2 deleted successfully')
@@ -131,6 +138,9 @@ export default function FilmaticLines2Page() {
 
   // Get latest form for display
   const latestForm = Array.isArray(forms) && forms.length > 0 ? forms[0] : null
+  // selectors for users and BMT forms
+  const { items: users } = useAppSelector((state: RootState) => state.users)
+  const { forms: bmtForms } = useAppSelector((state: RootState) => state.bmtControlForms)
 
   if (loading.fetch) {
     return (
@@ -154,12 +164,14 @@ export default function FilmaticLines2Page() {
             </div>
             <div>
               <div className="flex items-center space-x-2">
-                <Badge className={`${form.approved ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'} font-light`}>
-                  {form.approved ? 'Approved' : 'Pending'}
-                </Badge>
+                <FormIdCopy
+                  displayId={form.tag}
+                  actualId={form.id}
+                  size="sm"
+                />
               </div>
               <p className="text-sm text-gray-500 mt-1">
-                {form.created_at ? new Date(form.created_at).toLocaleDateString() : 'N/A'}
+                {form.date ? new Date(form.date).toLocaleDateString() : 'N/A'}
               </p>
             </div>
           </div>
@@ -242,7 +254,7 @@ export default function FilmaticLines2Page() {
         const nightShiftHasData = form.filmatic_line_form_2_night_shift?.length > 0
         const dayShiftApproved = dayShiftHasData && form.filmatic_line_form_2_day_shift.some((shift: any) => shift.supervisor_approve)
         const nightShiftApproved = nightShiftHasData && form.filmatic_line_form_2_night_shift.some((shift: any) => shift.supervisor_approve)
-        
+
         return (
           <div className="space-y-2">
             <div className="flex items-center space-x-2">
@@ -254,19 +266,17 @@ export default function FilmaticLines2Page() {
             <div className="space-y-1">
               <div className="flex items-center justify-between">
                 <span className="text-xs text-gray-500">Day</span>
-                <span className={`text-xs font-light ${
-                  dayShiftApproved ? 'text-green-600' : 
+                <span className={`text-xs font-light ${dayShiftApproved ? 'text-green-600' :
                   dayShiftHasData ? 'text-yellow-600' : 'text-gray-400'
-                }`}>
+                  }`}>
                   {dayShiftApproved ? 'Approved' : dayShiftHasData ? 'Pending' : 'No Data'}
                 </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-xs text-gray-500">Night</span>
-                <span className={`text-xs font-light ${
-                  nightShiftApproved ? 'text-green-600' : 
+                <span className={`text-xs font-light ${nightShiftApproved ? 'text-green-600' :
                   nightShiftHasData ? 'text-yellow-600' : 'text-gray-400'
-                }`}>
+                  }`}>
                   {nightShiftApproved ? 'Approved' : nightShiftHasData ? 'Pending' : 'No Data'}
                 </span>
               </div>
@@ -275,23 +285,7 @@ export default function FilmaticLines2Page() {
         )
       },
     },
-    {
-      accessorKey: "created_at",
-      header: "Created",
-      cell: ({ row }: any) => {
-        const form = row.original
-        return (
-          <div className="space-y-1">
-            <p className="text-sm font-light">
-              {form.created_at ? new Date(form.created_at).toLocaleDateString() : 'N/A'}
-            </p>
-            <p className="text-xs text-gray-500">
-              {form.updated_at ? `Updated: ${new Date(form.updated_at).toLocaleDateString()}` : 'Never updated'}
-            </p>
-          </div>
-        )
-      },
-    },
+
     {
       id: "actions",
       header: "Actions",
@@ -299,25 +293,25 @@ export default function FilmaticLines2Page() {
         const form = row.original
         return (
           <div className="flex space-x-2">
-            <LoadingButton 
-              variant="outline" 
-              size="sm" 
+            <LoadingButton
+              variant="outline"
+              size="sm"
               onClick={() => handleViewForm(form)}
               className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full"
             >
               <Eye className="w-4 h-4" />
             </LoadingButton>
-            <LoadingButton 
-              variant="outline" 
-              size="sm" 
+            <LoadingButton
+              variant="outline"
+              size="sm"
               onClick={() => handleEditForm(form)}
               className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 rounded-full"
             >
               <Edit className="w-4 h-4" />
             </LoadingButton>
-            <LoadingButton 
-              variant="destructive" 
-              size="sm" 
+            <LoadingButton
+              variant="destructive"
+              size="sm"
               onClick={() => handleDeleteForm(form)}
               loading={loading.delete}
               disabled={loading.delete}
@@ -339,7 +333,7 @@ export default function FilmaticLines2Page() {
             <h1 className="text-3xl font-light text-foreground">Filmatic Lines Form 2</h1>
             <p className="text-sm font-light text-muted-foreground">Manage Filmatic lines form 2 production data and process control</p>
           </div>
-          <LoadingButton 
+          <LoadingButton
             onClick={handleAddForm}
             className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full px-6 py-2 font-light"
           >
@@ -387,8 +381,8 @@ export default function FilmaticLines2Page() {
                   <span>Current Filmatic Lines Form 2</span>
                   <Badge className="bg-gradient-to-r from-blue-100 to-cyan-100 text-blue-800 font-light">Latest</Badge>
                 </div>
-                <LoadingButton 
-                  variant="outline" 
+                <LoadingButton
+                  variant="outline"
                   onClick={() => handleViewForm(latestForm)}
                   className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full px-4 py-2 font-light text-sm"
                 >
@@ -402,28 +396,29 @@ export default function FilmaticLines2Page() {
                 <div className="space-y-2">
                   <div className="flex items-center space-x-2">
                     <FileText className="h-4 w-4 text-gray-500" />
-                    <p className="text-sm font-light text-gray-600">Form ID</p>
+                    <p className="text-sm font-light text-gray-600">Form</p>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <p className="text-lg font-light">#{latestForm.id?.slice(0, 8) || 'N/A'}</p>
-                    {latestForm.id && <CopyButton text={latestForm.id} />}
+                    {latestForm?.tag ? (
+                      <FormIdCopy displayId={latestForm.tag} actualId={latestForm.id} size="sm" />
+                    ) : (
+                      <>
+                        <p className="text-lg font-light">#{latestForm.id?.slice(0, 8) || 'N/A'}</p>
+                        {latestForm.id && <CopyButton text={latestForm.id} />}
+                      </>
+                    )}
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <div className="flex items-center space-x-2">
-                    <Factory className="h-4 w-4 text-blue-500" />
-                  </div>
-                  <p className="text-lg font-light text-blue-600">{latestForm.holding_tank_bmt ? latestForm.holding_tank_bmt.slice(0, 8) + '...' : 'N/A'}</p>
-                </div>
+
                 <div className="space-y-2">
                   <div className="flex items-center space-x-2">
                     <Clock className="h-4 w-4 text-gray-500" />
-                    <p className="text-sm font-light text-gray-600">Created</p>
+                    <p className="text-sm font-light text-gray-600">Date</p>
                   </div>
-                  <p className="text-lg font-light">{latestForm.created_at ? new Date(latestForm.created_at).toLocaleDateString('en-GB', { 
-                    day: 'numeric', 
-                    month: 'long', 
-                    year: 'numeric' 
+                  <p className="text-lg font-light">{latestForm.date ? new Date(latestForm.date).toLocaleDateString('en-GB', {
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric'
                   }) : 'N/A'}</p>
                 </div>
                 <div className="space-y-2">
@@ -436,7 +431,7 @@ export default function FilmaticLines2Page() {
                   </Badge>
                 </div>
               </div>
-              
+
               {/* Process Flow Information */}
               <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {/* Production Summary */}
@@ -460,7 +455,7 @@ export default function FilmaticLines2Page() {
                       <span className="text-xs font-light text-gray-600">Total Details</span>
                       <span className="text-xs font-light text-green-600">
                         {(latestForm.filmatic_line_form_2_day_shift?.reduce((acc: number, shift: any) => acc + (shift.filmatic_line_form_2_day_shift_details?.length || 0), 0) || 0) +
-                         (latestForm.filmatic_line_form_2_night_shift?.reduce((acc: number, shift: any) => acc + (shift.filmatic_line_form_2_night_shift_details?.length || 0), 0) || 0)}
+                          (latestForm.filmatic_line_form_2_night_shift?.reduce((acc: number, shift: any) => acc + (shift.filmatic_line_form_2_night_shift_details?.length || 0), 0) || 0)}
                       </span>
                     </div>
                   </div>
@@ -480,8 +475,18 @@ export default function FilmaticLines2Page() {
                       <span className="text-xs font-light text-green-600">{latestForm.groups ? 'Yes' : 'No'}</span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-light text-gray-600">Manager ID</span>
-                      <span className="text-xs font-light text-blue-600">{latestForm.groups?.manager_id?.slice(0, 8) || 'N/A'}</span>
+                      <span className="text-xs font-light text-gray-600">Manager</span>
+                      <div>
+                        {(() => {
+                          const managerId = latestForm.groups?.manager_id
+                          const managerUser = users.find((u: any) => u.id === managerId)
+                          return managerUser ? (
+                            <UserAvatar user={managerUser} size="md" showName={true} showEmail={true} showDropdown={true} />
+                          ) : (
+                            <span className="text-xs font-light text-blue-600">{managerId ? managerId.slice(0, 8) : 'N/A'}</span>
+                          )
+                        })()}
+                      </div>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-light text-gray-600">Approval</span>
@@ -501,27 +506,27 @@ export default function FilmaticLines2Page() {
               <div className="text-lg font-light">Filmatic Lines Form 2 Records</div>
             </div>
             <div className="p-6 space-y-4">
-            <DataTableFilters
-              filters={tableFilters}
-              onFiltersChange={setTableFilters}
-              onSearch={(searchTerm) => setTableFilters(prev => ({ ...prev, search: searchTerm }))}
-              searchPlaceholder="Search Filmatic lines form 2 records..."
-              filterFields={filterFields}
-            />
-            
-            {loading.fetch ? (
-              <ContentSkeleton sections={1} cardsPerSection={4} />
-            ) : (
-              <DataTable columns={columns} data={forms} showSearch={false} />
-            )}
+              <DataTableFilters
+                filters={tableFilters}
+                onFiltersChange={setTableFilters}
+                onSearch={(searchTerm) => setTableFilters(prev => ({ ...prev, search: searchTerm }))}
+                searchPlaceholder="Search Filmatic lines form 2 records..."
+                filterFields={filterFields}
+              />
+
+              {loading.fetch ? (
+                <ContentSkeleton sections={1} cardsPerSection={4} />
+              ) : (
+                <DataTable columns={columns} data={forms} showSearch={false} />
+              )}
             </div>
           </div>
         )}
 
         {/* Form Drawer */}
-        <FilmaticLinesForm2Drawer 
-          open={formDrawerOpen} 
-          onOpenChange={setFormDrawerOpen} 
+        <FilmaticLinesForm2Drawer
+          open={formDrawerOpen}
+          onOpenChange={setFormDrawerOpen}
           form={selectedForm}
           mode={formMode}
           processId={processId}

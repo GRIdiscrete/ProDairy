@@ -29,9 +29,9 @@ interface RawMilkIntakeFormViewDrawerProps {
   onDelete?: () => void
 }
 
-export function RawMilkIntakeFormViewDrawer({ 
-  open, 
-  onOpenChange, 
+export function RawMilkIntakeFormViewDrawer({
+  open,
+  onOpenChange,
   form,
   onEdit,
   onDelete
@@ -63,10 +63,10 @@ export function RawMilkIntakeFormViewDrawer({
   const getDriverInfoFromForm = (driverFormId: string) => {
     const driverForm = getDriverFormById(driverFormId)
     if (!driverForm) return null
-    
+
     const driverId = typeof driverForm.driver === 'string' ? driverForm.driver : (driverForm as any).driver_id
     const driverUser = users.find((user: any) => user.id === driverId)
-    
+
     if (driverUser) {
       return {
         name: `${driverUser.first_name} ${driverUser.last_name}`,
@@ -74,7 +74,7 @@ export function RawMilkIntakeFormViewDrawer({
         user: driverUser
       }
     }
-    
+
     return null
   }
 
@@ -100,7 +100,7 @@ export function RawMilkIntakeFormViewDrawer({
   const startAnimation = () => {
     setIsAnimating(true)
     setAnimationProgress(0)
-    
+
     const interval = setInterval(() => {
       setAnimationProgress(prev => {
         if (prev >= 100) {
@@ -174,8 +174,8 @@ export function RawMilkIntakeFormViewDrawer({
           {/* Action Buttons */}
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center space-x-2">
-              <FormIdCopy 
-                displayId={generateRawMilkIntakeFormId(form.created_at)}
+              <FormIdCopy
+                displayId={form?.tag}
                 actualId={form.id}
                 size="lg"
               />
@@ -204,17 +204,17 @@ export function RawMilkIntakeFormViewDrawer({
 
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="h-auto p-0 bg-transparent border-0 border-b border-gray-200">
-              <TabsTrigger 
+              <TabsTrigger
                 value="details"
                 className="rounded-none bg-transparent border-0 border-b-2 border-transparent text-lg font-light text-gray-700 px-0 mr-6 data-[state=active]:text-blue-700 data-[state=active]:border-blue-600"
               >
                 <FileText className="w-4 h-4 mr-2" /> Details
               </TabsTrigger>
-              <TabsTrigger 
+              <TabsTrigger
                 value="lab"
                 className="rounded-none bg-transparent border-0 border-b-2 border-transparent text-lg font-light text-gray-700 px-0 mr-6 data-[state=active]:text-blue-700 data-[state=active]:border-blue-600"
               >
-                <Beaker className="w-4 h-4 mr-2" /> Result Slip
+                <Beaker className="w-4 h-4 mr-2" /> Lab Test
               </TabsTrigger>
             </TabsList>
 
@@ -232,8 +232,8 @@ export function RawMilkIntakeFormViewDrawer({
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-light text-gray-600">Form ID</span>
-                      <FormIdCopy 
-                        displayId={generateRawMilkIntakeFormId(form.created_at)}
+                      <FormIdCopy
+                        displayId={form?.tag}
                         actualId={form.id}
                         size="sm"
                       />
@@ -241,10 +241,10 @@ export function RawMilkIntakeFormViewDrawer({
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-light text-gray-600">Date</span>
                       <span className="text-sm font-light">
-                        {new Date(form.date).toLocaleDateString('en-GB', { 
-                          day: 'numeric', 
-                          month: 'long', 
-                          year: 'numeric' 
+                        {new Date(form.date).toLocaleDateString('en-GB', {
+                          day: 'numeric',
+                          month: 'long',
+                          year: 'numeric'
                         })}
                       </span>
                     </div>
@@ -272,14 +272,14 @@ export function RawMilkIntakeFormViewDrawer({
                   <div className="space-y-3">
                     {(() => {
                       const operatorUser = users.find((user: any) => user.id === form.operator_id)
-                      
+
                       if (operatorUser) {
                         return (
                           <div className="space-y-3">
-                            <UserAvatar 
-                              user={operatorUser} 
-                              size="lg" 
-                              showName={true} 
+                            <UserAvatar
+                              user={operatorUser}
+                              size="lg"
+                              showName={true}
                               showEmail={true}
                               showDropdown={true}
                             />
@@ -298,7 +298,7 @@ export function RawMilkIntakeFormViewDrawer({
                           </div>
                         )
                       }
-                      
+
                       return (
                         <div className="space-y-3">
                           <div className="text-sm text-gray-500">
@@ -335,14 +335,14 @@ export function RawMilkIntakeFormViewDrawer({
                       {(() => {
                         const driverForm = getDriverFormById(form.drivers_form_id)
                         const driverInfo = getDriverInfoFromForm(form.drivers_form_id)
-                        
+
                         if (driverForm) {
                           return (
                             <>
                               <div className="flex items-center justify-between">
                                 <span className="text-sm font-light text-gray-600">Form ID</span>
-                                <FormIdCopy 
-                                  displayId={generateDriverFormId(driverForm.created_at)}
+                                <FormIdCopy
+                                  displayId={form?.tag}
                                   actualId={form.drivers_form_id}
                                   size="sm"
                                 />
@@ -350,21 +350,21 @@ export function RawMilkIntakeFormViewDrawer({
                               {driverInfo && (
                                 <div className="space-y-2">
                                   <span className="text-sm font-light text-gray-600">Driver</span>
-                                  <UserAvatar 
-                                    user={driverInfo.user} 
-                                    size="md" 
-                                    showName={true} 
-                                    showEmail={true} 
+                                  <UserAvatar
+                                    user={driverInfo.user}
+                                    size="md"
+                                    showName={true}
+                                    showEmail={true}
                                   />
                                 </div>
                               )}
                               <div className="flex items-center justify-between">
                                 <span className="text-sm font-light text-gray-600">Start Date</span>
                                 <span className="text-sm font-light">
-                                  {new Date(driverForm.start_date).toLocaleDateString('en-GB', { 
-                                    day: 'numeric', 
-                                    month: 'short', 
-                                    year: 'numeric' 
+                                  {new Date(driverForm.start_date).toLocaleDateString('en-GB', {
+                                    day: 'numeric',
+                                    month: 'short',
+                                    year: 'numeric'
                                   })}
                                 </span>
                               </div>
@@ -408,7 +408,7 @@ export function RawMilkIntakeFormViewDrawer({
                     <div className="space-y-3">
                       {(() => {
                         const silo = getSiloById(form.destination_silo_id) || form.raw_milk_intake_form_destination_silo_id_fkey
-                        
+
                         if (silo) {
                           return (
                             <>
@@ -434,7 +434,7 @@ export function RawMilkIntakeFormViewDrawer({
                                   {(silo.milk_volume + form.quantity_received).toLocaleString()}L
                                 </span>
                               </div>
-                              
+
                               {/* Capacity Bar */}
                               <div className="mt-4">
                                 <div className="flex justify-between text-xs font-light text-gray-600 mb-2">
@@ -442,10 +442,10 @@ export function RawMilkIntakeFormViewDrawer({
                                   <span>{Math.round((silo.milk_volume / silo.capacity) * 100)}%</span>
                                 </div>
                                 <div className="w-full bg-gray-200 rounded-full h-2">
-                                  <div 
+                                  <div
                                     className="bg-gradient-to-r from-blue-500 to-green-500 h-2 rounded-full transition-all duration-300"
-                                    style={{ 
-                                      width: `${Math.min((silo.milk_volume / silo.capacity) * 100, 100)}%` 
+                                    style={{
+                                      width: `${Math.min((silo.milk_volume / silo.capacity) * 100, 100)}%`
                                     }}
                                   ></div>
                                 </div>
@@ -480,7 +480,7 @@ export function RawMilkIntakeFormViewDrawer({
                     {(() => {
                       // Use only raw_milk_intake_form_samples
                       const rawMilkSamples = (form as any).raw_milk_intake_form_samples || []
-                      
+
                       if (rawMilkSamples.length > 0) {
                         return (
                           <div className="space-y-3">
@@ -506,13 +506,13 @@ export function RawMilkIntakeFormViewDrawer({
                                         <span className="text-xs text-gray-600">Supplier</span>
                                         {(() => {
                                           const supplier = getSupplierById(sample.supplier_id)
-                                          
+
                                           if (supplier) {
                                             return (
-                                              <SupplierAvatar 
-                                                supplier={supplier} 
-                                                size="sm" 
-                                                showName={true} 
+                                              <SupplierAvatar
+                                                supplier={supplier}
+                                                size="sm"
+                                                showName={true}
                                                 showEmail={false}
                                                 showDropdown={true}
                                               />
@@ -583,7 +583,7 @@ export function RawMilkIntakeFormViewDrawer({
                 {currentResultSlip ? (
                   <div className="p-6 bg-white border border-gray-200 rounded-lg">
                     <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-lg font-light">Result Slip</h3>
+                      <h3 className="text-lg font-light">Lab Test</h3>
                       <div className="flex items-center gap-2">
                         <Badge className="text-xs bg-blue-100 text-blue-800">
                           Completed
@@ -606,7 +606,7 @@ export function RawMilkIntakeFormViewDrawer({
                       <div className="flex items-center justify-between"><span className="text-sm text-gray-600">Time Out</span><span className="text-sm font-light">{currentResultSlip.time_out}</span></div>
                       <div className="flex items-center justify-between"><span className="text-sm text-gray-600">Details Count</span><span className="text-sm font-light">{currentResultSlip.raw_milk_result_slip_details?.length || 0}</span></div>
                     </div>
-                    
+
                     {currentResultSlip.raw_milk_result_slip_details && currentResultSlip.raw_milk_result_slip_details.length > 0 && (
                       <div className="space-y-3">
                         <h4 className="text-md font-light">Test Details</h4>
@@ -636,11 +636,11 @@ export function RawMilkIntakeFormViewDrawer({
                 ) : (
                   <div className="p-6 bg-white border border-gray-200 rounded-lg">
                     <div className="flex items-center justify-between mb-2">
-                      <h3 className="text-lg font-light">Result Slip</h3>
+                      <h3 className="text-lg font-light">Lab Test</h3>
                       <Badge className="text-xs bg-yellow-100 text-yellow-800">No Result</Badge>
                     </div>
                     <p className="text-sm text-gray-600 mb-3">No result slip found for this intake form.</p>
-                    <LoadingButton className="rounded-full" onClick={() => { setResultSlipMode("create"); setResultSlipExistingId(undefined); setResultSlipDrawerOpen(true) }}>Create Result Slip</LoadingButton>
+                    <LoadingButton className="rounded-full" onClick={() => { setResultSlipMode("create"); setResultSlipExistingId(undefined); setResultSlipDrawerOpen(true) }}>Create Lab Test</LoadingButton>
                   </div>
                 )}
               </div>

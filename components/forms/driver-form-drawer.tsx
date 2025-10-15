@@ -272,7 +272,7 @@ export function DriverFormDrawer({
 
 
       // console.log('Submitting driver form:', submitData)
-      
+
 
       if (isOnline) {
         // Online mode - submit to API
@@ -350,536 +350,539 @@ export function DriverFormDrawer({
         side={isMobile || isTablet ? "bottom" : "right"}
         className="tablet-sheet-full p-0 bg-white"
       >
-        <SheetHeader className={isMobile || isTablet ? "p-6 pb-0 bg-white" : "mb-6"}>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center">
-                <Truck className="w-4 h-4 text-white" />
-              </div>
-              <div>
-                <SheetTitle className="text-lg font-light m-0">
-                  {mode === "create" ? "Add New Driver Form" : `Edit Driver Form: ${generateDriverFormId(driverForm?.created_at || new Date().toISOString())}`}
-                </SheetTitle>
-                <SheetDescription className="text-sm font-light">
-                  {mode === "create"
-                    ? "Create a new driver collection form"
-                    : "Update driver form information"}
-                </SheetDescription>
-              </div>
-            </div>
-            <div className="flex items-center space-x-2 mt-3">
-              {isOnline ? (
-                <div className="flex items-center space-x-1 text-green-600">
-                  <Wifi className="h-4 w-4" />
-                  <span className="text-xs font-light">Online</span>
+        {/* Make the content scrollable on desktop/tablet */}
+        <div className="h-full flex flex-col">
+          <SheetHeader className={isMobile || isTablet ? "p-6 pb-0 bg-white" : "mb-6"}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center">
+                  <Truck className="w-4 h-4 text-white" />
                 </div>
-              ) : (
-                <div className="flex items-center space-x-1 text-orange-600">
-                  <WifiOff className="h-4 w-4" />
-                  <span className="text-xs font-light">Offline</span>
+                <div>
+                  <SheetTitle className="text-lg font-light m-0">
+                    {mode === "create" ? "Add New Driver Form" : `Edit Driver Form: ${generateDriverFormId(driverForm?.created_at || new Date().toISOString())}`}
+                  </SheetTitle>
+                  <SheetDescription className="text-sm font-light">
+                    {mode === "create"
+                      ? "Create a new driver collection form"
+                      : "Update driver form information"}
+                  </SheetDescription>
                 </div>
-              )}
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                onClick={() => {
-                  console.log('Manual data refresh triggered')
-                  if (isOnline) {
-                    dispatch(fetchRawMaterials({}))
-                    dispatch(fetchUsers({}))
-                    dispatch(fetchSuppliers({}))
-                    dispatch(fetchTankers({}))
-                  } else {
-                    setOfflineData({
-                      drivers: LocalStorageService.getDrivers(),
-                      rawMaterials: LocalStorageService.getRawMaterials(),
-                      suppliers: LocalStorageService.getSuppliers()
-                    })
-                  }
-                }}
-                className="text-xs"
-              >
-                Refresh Data
-              </Button>
-            </div>
-          </div>
-        </SheetHeader>
-
-        <form onSubmit={handleSubmit(onSubmit)} className={isMobile || isTablet ? "space-y-6 p-6" : "space-y-6"}>
-          <div className="border border-gray-200 rounded-lg bg-white">
-            <div className="p-6 pb-0">
-              <div className="flex items-center space-x-2">
-                <User className="w-5 h-5 text-blue-600" />
-                <div className="text-lg font-light">Driver Information</div>
               </div>
-            </div>
-            <div className="p-6 space-y-4">
-              <div className="grid grid-cols-1 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="driver" className="font-light">Driver *</Label>
-                  <Controller
-                    name="driver"
-                    control={control}
-                    render={({ field }) => (
-                      <Select value={field.value} onValueChange={field.onChange} disabled={isSubmitting}>
-                        <SelectTrigger className="w-full rounded-full border-gray-200">
-                          <SelectValue placeholder="Select driver" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {dataLoading ? (
-                            <SelectItem value="loading" disabled>Loading users...</SelectItem>
-                          ) : drivers.length === 0 ? (
-                            <SelectItem value="no-data" disabled>No users available</SelectItem>
-                          ) : (
-                            drivers.map((user) => (
-                              <SelectItem key={user.id} value={user.id}>
-                                <div className="flex flex-col">
-                                  <span className="font-light">{user.first_name} {user.last_name}</span>
-                                  {user.email && (
-                                    <span className="text-xs text-gray-500 font-light">{user.email}</span>
-                                  )}
-                                </div>
-                              </SelectItem>
-                            ))
-                          )}
-                        </SelectContent>
-                      </Select>
-                    )}
-                  />
-                  {errors.driver && (
-                    <p className="text-sm text-red-500 font-light">{errors.driver.message}</p>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Controller
-                      name="start_date"
-                      control={control}
-                      render={({ field }) => (
-                        <DatePicker
-                          label="Start Date *"
-                          value={field.value}
-                          onChange={field.onChange}
-                          placeholder="Select start date"
-                          disabled={isSubmitting}
-                          error={!!errors.start_date}
-                        />
-                      )}
-                    />
-                    {errors.start_date && (
-                      <p className="text-sm text-red-500 font-light">{errors.start_date.message}</p>
-                    )}
+              <div className="flex items-center space-x-2 mt-3">
+                {isOnline ? (
+                  <div className="flex items-center space-x-1 text-green-600">
+                    <Wifi className="h-4 w-4" />
+                    <span className="text-xs font-light">Online</span>
                   </div>
-
-                  <div className="space-y-2">
-                    <Controller
-                      name="end_date"
-                      control={control}
-                      render={({ field }) => (
-                        <DatePicker
-                          label="End Date *"
-                          value={field.value}
-                          onChange={field.onChange}
-                          placeholder="Select end date"
-                          disabled={isSubmitting}
-                          error={!!errors.end_date}
-                        />
-                      )}
-                    />
-                    {errors.end_date && (
-                      <p className="text-sm text-red-500 font-light">{errors.end_date.message}</p>
-                    )}
+                ) : (
+                  <div className="flex items-center space-x-1 text-orange-600">
+                    <WifiOff className="h-4 w-4" />
+                    <span className="text-xs font-light">Offline</span>
                   </div>
-                </div>
-
-                {/* TANKER SELECTOR */}
-                <div className="space-y-2">
-                  <Label htmlFor="tanker" className="font-light">Tanker (Reg Number) *</Label>
-                  <Controller
-                    name="tanker"
-                    control={control}
-                    render={({ field }) => (
-                      <Select value={field.value} onValueChange={field.onChange} disabled={isSubmitting}>
-                        <SelectTrigger className="w-full rounded-full border-gray-200">
-                          <SelectValue placeholder="Select tanker" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {tankersLoading ? (
-                            <SelectItem value="loading" disabled>Loading tankers...</SelectItem>
-                          ) : tankersData.length === 0 ? (
-                            <SelectItem value="no-data" disabled>No tankers available</SelectItem>
-                          ) : (
-                            tankersData.map((tanker: any) => (
-                              <SelectItem key={tanker.reg_number} value={tanker.reg_number}>
-                                <div className="flex flex-col">
-                                  <span className="font-light">{tanker.reg_number}</span>
-                                  {tanker.condition && (
-                                    <span className="text-xs text-gray-500 font-light">{tanker.condition}</span>
-                                  )}
-                                </div>
-                              </SelectItem>
-                            ))
-                          )}
-                        </SelectContent>
-                      </Select>
-                    )}
-                  />
-                  {errors.tanker && (
-                    <p className="text-sm text-red-500 font-light">{errors.tanker.message}</p>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="border border-gray-200 rounded-lg bg-white m-6">
-            <div className="p-6 pb-0">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <Package className="w-5 h-5 text-blue-600" />
-                  <div className="text-lg font-light">Collected Products</div>
-                </div>
+                )}
                 <Button
                   type="button"
-                  onClick={addCollectedProduct}
                   size="sm"
-                  disabled={isSubmitting}
-                  className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full"
+                  variant="outline"
+                  onClick={() => {
+                    console.log('Manual data refresh triggered')
+                    if (isOnline) {
+                      dispatch(fetchRawMaterials({}))
+                      dispatch(fetchUsers({}))
+                      dispatch(fetchSuppliers({}))
+                      dispatch(fetchTankers({}))
+                    } else {
+                      setOfflineData({
+                        drivers: LocalStorageService.getDrivers(),
+                        rawMaterials: LocalStorageService.getRawMaterials(),
+                        suppliers: LocalStorageService.getSuppliers()
+                      })
+                    }
+                  }}
+                  className="text-xs"
                 >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Product
+                  Refresh Data
                 </Button>
               </div>
             </div>
-            <div className="p-6 space-y-4">
-              {fields.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  <Package className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p className="font-light">No collected products added yet</p>
-                  <p className="text-sm font-light">Click "Add Product" to get started</p>
+          </SheetHeader>
+          <div className="flex-1 overflow-y-auto">
+            <form onSubmit={handleSubmit(onSubmit)} className={isMobile || isTablet ? "space-y-6 p-6" : "space-y-6"}>
+              <div className="border border-gray-200 rounded-lg bg-white">
+                <div className="p-6 pb-0">
+                  <div className="flex items-center space-x-2">
+                    <User className="w-5 h-5 text-blue-600" />
+                    <div className="text-lg font-light">Driver Information</div>
+                  </div>
                 </div>
-              ) : (
-                <div className="space-y-6 max-h-96 overflow-y-auto">
-                  {fields.map((field, index) => (
-                    <div key={field.id} className="p-4 border border-gray-200 rounded-lg space-y-4">
-                      <div className="flex items-center justify-between">
-                        <h4 className="font-light">Product #{index + 1}</h4>
-                        <Button
-                          type="button"
-                          onClick={() => remove(index)}
-                          size="sm"
-                          variant="destructive"
-                          disabled={isSubmitting}
-                          className="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white border-0 rounded-full"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
+                <div className="p-6 space-y-4">
+                  <div className="grid grid-cols-1 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="driver" className="font-light">Driver *</Label>
+                      <Controller
+                        name="driver"
+                        control={control}
+                        render={({ field }) => (
+                          <Select value={field.value} onValueChange={field.onChange} disabled={isSubmitting}>
+                            <SelectTrigger className="w-full rounded-full border-gray-200">
+                              <SelectValue placeholder="Select driver" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {dataLoading ? (
+                                <SelectItem value="loading" disabled>Loading users...</SelectItem>
+                              ) : drivers.length === 0 ? (
+                                <SelectItem value="no-data" disabled>No users available</SelectItem>
+                              ) : (
+                                drivers.map((user) => (
+                                  <SelectItem key={user.id} value={user.id}>
+                                    <div className="flex flex-col">
+                                      <span className="font-light">{user.first_name} {user.last_name}</span>
+                                      {user.email && (
+                                        <span className="text-xs text-gray-500 font-light">{user.email}</span>
+                                      )}
+                                    </div>
+                                  </SelectItem>
+                                ))
+                              )}
+                            </SelectContent>
+                          </Select>
+                        )}
+                      />
+                      {errors.driver && (
+                        <p className="text-sm text-red-500 font-light">{errors.driver.message}</p>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Controller
+                          name="start_date"
+                          control={control}
+                          render={({ field }) => (
+                            <DatePicker
+                              label="Start Date *"
+                              value={field.value}
+                              onChange={field.onChange}
+                              placeholder="Select start date"
+                              disabled={isSubmitting}
+                              error={!!errors.start_date}
+                            />
+                          )}
+                        />
+                        {errors.start_date && (
+                          <p className="text-sm text-red-500 font-light">{errors.start_date.message}</p>
+                        )}
                       </div>
 
-                      <div className="grid grid-cols-1 gap-4">
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <Label className="font-light">Raw Material *</Label>
-                            <Controller
-                              name={`drivers_form_collected_products.${index}.raw_material_id`}
-                              control={control}
-                              render={({ field }) => (
-                                <Select value={field.value} onValueChange={field.onChange} disabled={isSubmitting}>
-                                  <SelectTrigger className="w-full rounded-full border-gray-200">
-                                    <SelectValue placeholder="Select raw material" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {dataLoading ? (
-                                      <SelectItem value="loading" disabled>Loading materials...</SelectItem>
-                                    ) : rawMaterialsData.length === 0 ? (
-                                      <SelectItem value="no-data" disabled>No materials available</SelectItem>
-                                    ) : (
-                                      rawMaterialsData.map((material) => (
-                                        <SelectItem key={material.id} value={material.id}>
-                                          <div className="flex flex-col">
-                                            <span className="font-light">{material.name}</span>
-                                            {material.description && (
-                                              <span className="text-xs text-gray-500 font-light">{material.description}</span>
-                                            )}
-                                          </div>
-                                        </SelectItem>
-                                      ))
-                                    )}
-                                  </SelectContent>
-                                </Select>
-                              )}
+                      <div className="space-y-2">
+                        <Controller
+                          name="end_date"
+                          control={control}
+                          render={({ field }) => (
+                            <DatePicker
+                              label="End Date *"
+                              value={field.value}
+                              onChange={field.onChange}
+                              placeholder="Select end date"
+                              disabled={isSubmitting}
+                              error={!!errors.end_date}
                             />
-                            {errors.drivers_form_collected_products?.[index]?.raw_material_id && (
-                              <p className="text-sm text-red-500 font-light">
-                                {errors.drivers_form_collected_products[index]?.raw_material_id?.message}
-                              </p>
-                            )}
-                          </div>
-
-                          <div className="space-y-2">
-                            <Label className="font-light">Supplier *</Label>
-                            <Controller
-                              name={`drivers_form_collected_products.${index}.supplier_id`}
-                              control={control}
-                              render={({ field }) => (
-                                <Select value={field.value} onValueChange={field.onChange} disabled={isSubmitting}>
-                                  <SelectTrigger className="w-full rounded-full border-gray-200">
-                                    <SelectValue placeholder="Select supplier" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {dataLoading ? (
-                                      <SelectItem value="loading" disabled>Loading suppliers...</SelectItem>
-                                    ) : suppliersData.length === 0 ? (
-                                      <SelectItem value="no-data" disabled>No suppliers available</SelectItem>
-                                    ) : (
-                                      suppliersData.map((supplier) => (
-                                        <SelectItem key={supplier.id} value={supplier.id}>
-                                          <div className="flex flex-col">
-                                            <span className="font-light">
-                                              {'name' in supplier ? supplier.name : `${supplier.first_name} ${supplier.last_name}`}
-                                            </span>
-                                            {supplier.email && (
-                                              <span className="text-xs text-gray-500 font-light">{supplier.email}</span>
-                                            )}
-                                          </div>
-                                        </SelectItem>
-                                      ))
-                                    )}
-                                  </SelectContent>
-                                </Select>
-                              )}
-                            />
-                            {errors.drivers_form_collected_products?.[index]?.supplier_id && (
-                              <p className="text-sm text-red-500 font-light">
-                                {errors.drivers_form_collected_products[index]?.supplier_id?.message}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <Label className="font-light">Collected Amount *</Label>
-                            <Controller
-                              name={`drivers_form_collected_products.${index}.collected_amount`}
-                              control={control}
-                              render={({ field }) => (
-                                <Input
-                                  {...field}
-                                  type="number"
-                                  step="0.01"
-                                  placeholder="0.00"
-                                  disabled={isSubmitting}
-                                  value={field.value || ""}
-                                  onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
-                                  className="rounded-full border-gray-200 font-light"
-                                />
-                              )}
-                            />
-                            {errors.drivers_form_collected_products?.[index]?.collected_amount && (
-                              <p className="text-sm text-red-500 font-light">
-                                {errors.drivers_form_collected_products[index]?.collected_amount?.message}
-                              </p>
-                            )}
-                          </div>
-
-                          <div className="space-y-2">
-                            <Label className="font-light">Unit of Measure *</Label>
-                            <Controller
-                              name={`drivers_form_collected_products.${index}.unit_of_measure`}
-                              control={control}
-                              render={({ field }) => (
-                                <Select value={field.value} onValueChange={field.onChange} disabled={isSubmitting}>
-                                  <SelectTrigger className="w-full rounded-full border-gray-200">
-                                    <SelectValue placeholder="Select unit" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="Kilograms">Kilograms</SelectItem>
-                                    <SelectItem value="Liters">Liters</SelectItem>
-                                    <SelectItem value="Milliliters">Milliliters</SelectItem>
-                                    <SelectItem value="Grams">Grams</SelectItem>
-                                    <SelectItem value="Pieces">Pieces</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              )}
-                            />
-                            {errors.drivers_form_collected_products?.[index]?.unit_of_measure && (
-                              <p className="text-sm text-red-500 font-light">
-                                {errors.drivers_form_collected_products[index]?.unit_of_measure?.message}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <Label className="font-light">Supplier E-Signature *</Label>
-                            <Controller
-                              name={`drivers_form_collected_products.${index}.e_sign_supplier`}
-                              control={control}
-                              render={({ field }) => (
-                                <div className="space-y-2">
-                                  {field.value ? (
-                                    <img src={base64ToPngDataUrl(field.value)} alt="Supplier signature" className="h-24 border border-gray-200 rounded-md bg-white" />
-                                  ) : (
-                                    <div className="h-24 flex items-center justify-center border border-dashed border-gray-300 rounded-md text-xs text-gray-500 bg-white">
-                                      No signature captured
-                                    </div>
-                                  )}
-                                  <div className="flex items-center gap-2">
-                                    <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={() => {
-                                      setCurrentSignatureIndex(index)
-                                      setCurrentSignatureType('supplier')
-                                      setSupplierSignatureOpen(true)
-                                    }}>
-                                      Add Signature
-                                    </Button>
-                                    {field.value && (
-                                      <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={() => {
-                                        setCurrentSignatureIndex(index)
-                                        setCurrentSignatureType('supplier')
-                                        setSupplierSignatureViewOpen(true)
-                                      }}>
-                                        View Signature
-                                      </Button>
-                                    )}
-                                    {field.value && (
-                                      <Button type="button" variant="ghost" size="sm" className="rounded-full text-red-600" onClick={() => field.onChange("")}>Clear</Button>
-                                    )}
-                                  </div>
-                                </div>
-                              )}
-                            />
-                            {errors.drivers_form_collected_products?.[index]?.e_sign_supplier && (
-                              <p className="text-sm text-red-500 font-light">
-                                {errors.drivers_form_collected_products[index]?.e_sign_supplier?.message}
-                              </p>
-                            )}
-                          </div>
-
-                          <div className="space-y-2">
-                            <Label className="font-light">Driver E-Signature *</Label>
-                            <Controller
-                              name={`drivers_form_collected_products.${index}.e_sign_driver`}
-                              control={control}
-                              render={({ field }) => (
-                                <div className="space-y-2">
-                                  {field.value ? (
-                                    <img src={base64ToPngDataUrl(field.value)} alt="Driver signature" className="h-24 border border-gray-200 rounded-md bg-white" />
-                                  ) : (
-                                    <div className="h-24 flex items-center justify-center border border-dashed border-gray-300 rounded-md text-xs text-gray-500 bg-white">
-                                      No signature captured
-                                    </div>
-                                  )}
-                                  <div className="flex items-center gap-2">
-                                    <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={() => {
-                                      setCurrentSignatureIndex(index)
-                                      setCurrentSignatureType('driver')
-                                      setDriverSignatureOpen(true)
-                                    }}>
-                                      Add Signature
-                                    </Button>
-                                    {field.value && (
-                                      <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={() => {
-                                        setCurrentSignatureIndex(index)
-                                        setCurrentSignatureType('driver')
-                                        setDriverSignatureViewOpen(true)
-                                      }}>
-                                        View Signature
-                                      </Button>
-                                    )}
-                                    {field.value && (
-                                      <Button type="button" variant="ghost" size="sm" className="rounded-full text-red-600" onClick={() => field.onChange("")}>Clear</Button>
-                                    )}
-                                  </div>
-                                </div>
-                              )}
-                            />
-                            {errors.drivers_form_collected_products?.[index]?.e_sign_driver && (
-                              <p className="text-sm text-red-500 font-light">
-                                {errors.drivers_form_collected_products[index]?.e_sign_driver?.message}
-                              </p>
-                            )}
-                          </div>
-                        </div>
+                          )}
+                        />
+                        {errors.end_date && (
+                          <p className="text-sm text-red-500 font-light">{errors.end_date.message}</p>
+                        )}
                       </div>
                     </div>
-                  ))}
-                </div>
-              )}
-              {errors.drivers_form_collected_products && (
-                <p className="text-sm text-red-500 font-light">{errors.drivers_form_collected_products.message}</p>
-              )}
-            </div>
-          </div>
 
-          {/* Delivery Status Section */}
-          <div className="border border-gray-200 rounded-lg bg-white m-6">
-            <div className="p-6 pb-0">
-              <div className="flex items-center space-x-2">
-                <Package className="w-5 h-5 text-blue-600" />
-                <div className="text-lg font-light">Delivery Status</div>
-              </div>
-            </div>
-            <div className="p-6 space-y-4">
-              <div className="grid grid-cols-2 gap-6">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="delivered" className="font-light">Delivered</Label>
-                  <Controller
-                    name="delivered"
-                    control={control}
-                    render={({ field }) => (
-                      <Switch
-                        id="delivered"
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                        disabled={isSubmitting}
+                    {/* TANKER SELECTOR */}
+                    <div className="space-y-2">
+                      <Label htmlFor="tanker" className="font-light">Tanker (Reg Number) *</Label>
+                      <Controller
+                        name="tanker"
+                        control={control}
+                        render={({ field }) => (
+                          <Select value={field.value} onValueChange={field.onChange} disabled={isSubmitting}>
+                            <SelectTrigger className="w-full rounded-full border-gray-200">
+                              <SelectValue placeholder="Select tanker" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {tankersLoading ? (
+                                <SelectItem value="loading" disabled>Loading tankers...</SelectItem>
+                              ) : tankersData.length === 0 ? (
+                                <SelectItem value="no-data" disabled>No tankers available</SelectItem>
+                              ) : (
+                                tankersData.map((tanker: any) => (
+                                  <SelectItem key={tanker.reg_number} value={tanker.reg_number}>
+                                    <div className="flex flex-col">
+                                      <span className="font-light">{tanker.reg_number}</span>
+                                      {tanker.condition && (
+                                        <span className="text-xs text-gray-500 font-light">{tanker.condition}</span>
+                                      )}
+                                    </div>
+                                  </SelectItem>
+                                ))
+                              )}
+                            </SelectContent>
+                          </Select>
+                        )}
                       />
-                    )}
-                  />
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="rejected" className="font-light">Rejected</Label>
-                  <Controller
-                    name="rejected"
-                    control={control}
-                    render={({ field }) => (
-                      <Switch
-                        id="rejected"
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                        disabled={isSubmitting}
-                      />
-                    )}
-                  />
+                      {errors.tanker && (
+                        <p className="text-sm text-red-500 font-light">{errors.tanker.message}</p>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
 
-          <div className="flex justify-end space-x-3 pt-4 m-6">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              disabled={isLoading}
-              className="bg-white border-gray-200 rounded-full font-light"
-            >
-              Cancel
-            </Button>
-            <LoadingButton
-              type="submit"
-              loading={isLoading}
-              className="bg-gradient-to-r from-gray-500 to-gray-700 hover:from-gray-600 hover:to-gray-800 text-white border-0 rounded-full px-6 py-2 font-light"
-            >
-              {mode === "create" ? "Create Form" : "Save Changes"}
-            </LoadingButton>
-          </div>
-        </form>
+              <div className="border border-gray-200 rounded-lg bg-white m-6">
+                <div className="p-6 pb-0">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <Package className="w-5 h-5 text-blue-600" />
+                      <div className="text-lg font-light">Collected Products</div>
+                    </div>
+                    <Button
+                      type="button"
+                      onClick={addCollectedProduct}
+                      size="sm"
+                      disabled={isSubmitting}
+                      className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full"
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add Product
+                    </Button>
+                  </div>
+                </div>
+                <div className="p-6 space-y-4">
+                  {fields.length === 0 ? (
+                    <div className="text-center py-8 text-gray-500">
+                      <Package className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                      <p className="font-light">No collected products added yet</p>
+                      <p className="text-sm font-light">Click "Add Product" to get started</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-6 max-h-96 overflow-y-auto">
+                      {fields.map((field, index) => (
+                        <div key={field.id} className="p-4 border border-gray-200 rounded-lg space-y-4">
+                          <div className="flex items-center justify-between">
+                            <h4 className="font-light">Product #{index + 1}</h4>
+                            <Button
+                              type="button"
+                              onClick={() => remove(index)}
+                              size="sm"
+                              variant="destructive"
+                              disabled={isSubmitting}
+                              className="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white border-0 rounded-full"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
 
+                          <div className="grid grid-cols-1 gap-4">
+                            <div className="grid grid-cols-2 gap-4">
+                              <div className="space-y-2">
+                                <Label className="font-light">Raw Material *</Label>
+                                <Controller
+                                  name={`drivers_form_collected_products.${index}.raw_material_id`}
+                                  control={control}
+                                  render={({ field }) => (
+                                    <Select value={field.value} onValueChange={field.onChange} disabled={isSubmitting}>
+                                      <SelectTrigger className="w-full rounded-full border-gray-200">
+                                        <SelectValue placeholder="Select raw material" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        {dataLoading ? (
+                                          <SelectItem value="loading" disabled>Loading materials...</SelectItem>
+                                        ) : rawMaterialsData.length === 0 ? (
+                                          <SelectItem value="no-data" disabled>No materials available</SelectItem>
+                                        ) : (
+                                          rawMaterialsData.map((material) => (
+                                            <SelectItem key={material.id} value={material.id}>
+                                              <div className="flex flex-col">
+                                                <span className="font-light">{material.name}</span>
+                                                {material.description && (
+                                                  <span className="text-xs text-gray-500 font-light">{material.description}</span>
+                                                )}
+                                              </div>
+                                            </SelectItem>
+                                          ))
+                                        )}
+                                      </SelectContent>
+                                    </Select>
+                                  )}
+                                />
+                                {errors.drivers_form_collected_products?.[index]?.raw_material_id && (
+                                  <p className="text-sm text-red-500 font-light">
+                                    {errors.drivers_form_collected_products[index]?.raw_material_id?.message}
+                                  </p>
+                                )}
+                              </div>
+
+                              <div className="space-y-2">
+                                <Label className="font-light">Supplier *</Label>
+                                <Controller
+                                  name={`drivers_form_collected_products.${index}.supplier_id`}
+                                  control={control}
+                                  render={({ field }) => (
+                                    <Select value={field.value} onValueChange={field.onChange} disabled={isSubmitting}>
+                                      <SelectTrigger className="w-full rounded-full border-gray-200">
+                                        <SelectValue placeholder="Select supplier" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        {dataLoading ? (
+                                          <SelectItem value="loading" disabled>Loading suppliers...</SelectItem>
+                                        ) : suppliersData.length === 0 ? (
+                                          <SelectItem value="no-data" disabled>No suppliers available</SelectItem>
+                                        ) : (
+                                          suppliersData.map((supplier) => (
+                                            <SelectItem key={supplier.id} value={supplier.id}>
+                                              <div className="flex flex-col">
+                                                <span className="font-light">
+                                                  {'name' in supplier ? supplier.name : `${supplier.first_name} ${supplier.last_name}`}
+                                                </span>
+                                                {supplier.email && (
+                                                  <span className="text-xs text-gray-500 font-light">{supplier.email}</span>
+                                                )}
+                                              </div>
+                                            </SelectItem>
+                                          ))
+                                        )}
+                                      </SelectContent>
+                                    </Select>
+                                  )}
+                                />
+                                {errors.drivers_form_collected_products?.[index]?.supplier_id && (
+                                  <p className="text-sm text-red-500 font-light">
+                                    {errors.drivers_form_collected_products[index]?.supplier_id?.message}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                              <div className="space-y-2">
+                                <Label className="font-light">Collected Amount *</Label>
+                                <Controller
+                                  name={`drivers_form_collected_products.${index}.collected_amount`}
+                                  control={control}
+                                  render={({ field }) => (
+                                    <Input
+                                      {...field}
+                                      type="number"
+                                      step="0.01"
+                                      placeholder="0.00"
+                                      disabled={isSubmitting}
+                                      value={field.value || ""}
+                                      onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
+                                      className="rounded-full border-gray-200 font-light"
+                                    />
+                                  )}
+                                />
+                                {errors.drivers_form_collected_products?.[index]?.collected_amount && (
+                                  <p className="text-sm text-red-500 font-light">
+                                    {errors.drivers_form_collected_products[index]?.collected_amount?.message}
+                                  </p>
+                                )}
+                              </div>
+
+                              <div className="space-y-2">
+                                <Label className="font-light">Unit of Measure *</Label>
+                                <Controller
+                                  name={`drivers_form_collected_products.${index}.unit_of_measure`}
+                                  control={control}
+                                  render={({ field }) => (
+                                    <Select value={field.value} onValueChange={field.onChange} disabled={isSubmitting}>
+                                      <SelectTrigger className="w-full rounded-full border-gray-200">
+                                        <SelectValue placeholder="Select unit" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="Kilograms">Kilograms</SelectItem>
+                                        <SelectItem value="Liters">Liters</SelectItem>
+                                        <SelectItem value="Milliliters">Milliliters</SelectItem>
+                                        <SelectItem value="Grams">Grams</SelectItem>
+                                        <SelectItem value="Pieces">Pieces</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  )}
+                                />
+                                {errors.drivers_form_collected_products?.[index]?.unit_of_measure && (
+                                  <p className="text-sm text-red-500 font-light">
+                                    {errors.drivers_form_collected_products[index]?.unit_of_measure?.message}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div className="space-y-2">
+                                <Label className="font-light">Supplier E-Signature *</Label>
+                                <Controller
+                                  name={`drivers_form_collected_products.${index}.e_sign_supplier`}
+                                  control={control}
+                                  render={({ field }) => (
+                                    <div className="space-y-2">
+                                      {field.value ? (
+                                        <img src={base64ToPngDataUrl(field.value)} alt="Supplier signature" className="h-24 border border-gray-200 rounded-md bg-white" />
+                                      ) : (
+                                        <div className="h-24 flex items-center justify-center border border-dashed border-gray-300 rounded-md text-xs text-gray-500 bg-white">
+                                          No signature captured
+                                        </div>
+                                      )}
+                                      <div className="flex items-center gap-2">
+                                        <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={() => {
+                                          setCurrentSignatureIndex(index)
+                                          setCurrentSignatureType('supplier')
+                                          setSupplierSignatureOpen(true)
+                                        }}>
+                                          Add Signature
+                                        </Button>
+                                        {field.value && (
+                                          <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={() => {
+                                            setCurrentSignatureIndex(index)
+                                            setCurrentSignatureType('supplier')
+                                            setSupplierSignatureViewOpen(true)
+                                          }}>
+                                            View Signature
+                                          </Button>
+                                        )}
+                                        {field.value && (
+                                          <Button type="button" variant="ghost" size="sm" className="rounded-full text-red-600" onClick={() => field.onChange("")}>Clear</Button>
+                                        )}
+                                      </div>
+                                    </div>
+                                  )}
+                                />
+                                {errors.drivers_form_collected_products?.[index]?.e_sign_supplier && (
+                                  <p className="text-sm text-red-500 font-light">
+                                    {errors.drivers_form_collected_products[index]?.e_sign_supplier?.message}
+                                  </p>
+                                )}
+                              </div>
+
+                              <div className="space-y-2">
+                                <Label className="font-light">Driver E-Signature *</Label>
+                                <Controller
+                                  name={`drivers_form_collected_products.${index}.e_sign_driver`}
+                                  control={control}
+                                  render={({ field }) => (
+                                    <div className="space-y-2">
+                                      {field.value ? (
+                                        <img src={base64ToPngDataUrl(field.value)} alt="Driver signature" className="h-24 border border-gray-200 rounded-md bg-white" />
+                                      ) : (
+                                        <div className="h-24 flex items-center justify-center border border-dashed border-gray-300 rounded-md text-xs text-gray-500 bg-white">
+                                          No signature captured
+                                        </div>
+                                      )}
+                                      <div className="flex items-center gap-2">
+                                        <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={() => {
+                                          setCurrentSignatureIndex(index)
+                                          setCurrentSignatureType('driver')
+                                          setDriverSignatureOpen(true)
+                                        }}>
+                                          Add Signature
+                                        </Button>
+                                        {field.value && (
+                                          <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={() => {
+                                            setCurrentSignatureIndex(index)
+                                            setCurrentSignatureType('driver')
+                                            setDriverSignatureViewOpen(true)
+                                          }}>
+                                            View Signature
+                                          </Button>
+                                        )}
+                                        {field.value && (
+                                          <Button type="button" variant="ghost" size="sm" className="rounded-full text-red-600" onClick={() => field.onChange("")}>Clear</Button>
+                                        )}
+                                      </div>
+                                    </div>
+                                  )}
+                                />
+                                {errors.drivers_form_collected_products?.[index]?.e_sign_driver && (
+                                  <p className="text-sm text-red-500 font-light">
+                                    {errors.drivers_form_collected_products[index]?.e_sign_driver?.message}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {errors.drivers_form_collected_products && (
+                    <p className="text-sm text-red-500 font-light">{errors.drivers_form_collected_products.message}</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Delivery Status Section */}
+              <div className="border border-gray-200 rounded-lg bg-white m-6">
+                <div className="p-6 pb-0">
+                  <div className="flex items-center space-x-2">
+                    <Package className="w-5 h-5 text-blue-600" />
+                    <div className="text-lg font-light">Delivery Status</div>
+                  </div>
+                </div>
+                <div className="p-6 space-y-4">
+                  <div className="grid grid-cols-2 gap-6">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="delivered" className="font-light">Delivered</Label>
+                      <Controller
+                        name="delivered"
+                        control={control}
+                        render={({ field }) => (
+                          <Switch
+                            id="delivered"
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                            disabled={isSubmitting}
+                          />
+                        )}
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="rejected" className="font-light">Rejected</Label>
+                      <Controller
+                        name="rejected"
+                        control={control}
+                        render={({ field }) => (
+                          <Switch
+                            id="rejected"
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                            disabled={isSubmitting}
+                          />
+                        )}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end space-x-3 pt-4 m-6">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => onOpenChange(false)}
+                  disabled={isLoading}
+                  className="bg-white border-gray-200 rounded-full font-light"
+                >
+                  Cancel
+                </Button>
+                <LoadingButton
+                  type="submit"
+                  loading={isLoading}
+                  className="bg-gradient-to-r from-gray-500 to-gray-700 hover:from-gray-600 hover:to-gray-800 text-white border-0 rounded-full px-6 py-2 font-light"
+                >
+                  {mode === "create" ? "Create Form" : "Save Changes"}
+                </LoadingButton>
+              </div>
+            </form>
+          </div>
+        </div>
         {/* Signature Modals */}
         {currentSignatureIndex !== null && currentSignatureType && (
           <>

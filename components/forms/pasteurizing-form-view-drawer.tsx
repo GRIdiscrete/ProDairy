@@ -7,7 +7,11 @@ import { Separator } from "@/components/ui/separator"
 import { PasteurizingForm } from "@/lib/api/pasteurizing"
 import { format } from "date-fns"
 import { Button } from "@/components/ui/button"
-import { Beaker, FileText, User, Package, ArrowRight, Clock, FlaskConical, Factory, TrendingUp, Droplets } from "lucide-react"
+import { Beaker, FileText, User, Package, ArrowRight, Clock, FlaskConical, Factory, TrendingUp, Droplets, ChevronDown, ChevronUp } from "lucide-react"
+import { useState } from "react"
+import { UserAvatar } from "@/components/ui/user-avatar"
+import { FormIdCopy } from "../ui/form-id-copy"
+import { RootState, useAppSelector } from "@/lib/store"
 
 interface PasteurizingFormViewDrawerProps {
   open: boolean
@@ -16,13 +20,25 @@ interface PasteurizingFormViewDrawerProps {
   onEdit?: () => void
 }
 
-export function PasteurizingFormViewDrawer({ 
-  open, 
-  onOpenChange, 
+export function PasteurizingFormViewDrawer({
+  open,
+  onOpenChange,
   form,
   onEdit
 }: PasteurizingFormViewDrawerProps) {
+  const { forms: bmtForms } = useAppSelector((state: RootState) => state.bmtControlForms)
+  const { machines } = useAppSelector((state) => state.machine)
+  const { items: users } = useAppSelector((state: RootState) => state.users)
+  const [machineOpen, setMachineOpen] = useState(false)
+
+  const getBMTFormById = (bmtId: string) => {
+    return bmtForms.find((form: any) => form.id === bmtId)
+  }
   if (!form) return null
+
+  const getMachineById = (machineId: string) => {
+    return machines.find((machine: any) => machine.id === machineId)
+  }
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -97,7 +113,11 @@ export function PasteurizingFormViewDrawer({
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <span className="text-xs font-light text-gray-500">Form ID</span>
-                  <p className="text-sm font-light">{form.id}</p>
+                  <FormIdCopy
+                    displayId={form?.tag}
+                    actualId={form.id}
+                    size="sm"
+                  />
                 </div>
                 <div>
                   <span className="text-xs font-light text-gray-500">Created At</span>
@@ -124,19 +144,55 @@ export function PasteurizingFormViewDrawer({
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <span className="text-xs font-light text-gray-500">Operator ID</span>
-                  <p className="text-sm font-light">{form.operator?.slice(0, 8) || 'N/A'}</p>
+                  <span className="text-xs font-light text-gray-500">Operator</span>
+                  {(() => {
+                    const operatorUser = users.find((u: any) => u.id === form.operator)
+                    return operatorUser ? (
+                      <UserAvatar
+                        user={operatorUser}
+                        size="md"
+                        showName={true}
+                        showEmail={true}
+                        showDropdown={true}
+                      />
+                    ) : (
+                      <p className="text-sm font-light">{form.operator?.slice(0, 8) || 'N/A'}</p>
+                    )
+                  })()}
                 </div>
+
                 <div>
-                  <span className="text-xs font-light text-gray-500">Machine ID</span>
-                  <p className="text-sm font-light">{form.machine?.slice(0, 8) || 'N/A'}</p>
+                  <span className="text-xs font-light text-gray-500">Machine</span>
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-light">
+                      {(() => {
+                        const machine = machines.find((m:any) => m.id === form.machine)
+                        return machine ? machine.name : (form.machine?.slice(0,8) || 'N/A')
+                      })()}
+                    </p>
+                    <button type="button" onClick={() => setMachineOpen(v => !v)} className="p-1 rounded-full hover:bg-gray-100">
+                      {machineOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                    </button>
+                  </div>
+                  {machineOpen && (() => {
+                    const m = machines.find((m:any) => m.id === form.machine)
+                    if (!m) return null
+                    return (
+                      <div className="mt-2 p-3 border rounded bg-gray-50 text-sm">
+                        <div><strong>Name:</strong> {m.name}</div>
+                        <div><strong>Category:</strong> {m.category || "N/A"}</div>
+                        <div><strong>Location:</strong> {m.location || "N/A"}</div>
+                        <div><strong>Status:</strong> {m.status}</div>
+                      </div>
+                    )
+                  })()}
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <span className="text-xs font-light text-gray-500">BMT ID</span>
-                  <p className="text-sm font-light">{form.bmt?.slice(0, 8) || 'N/A'}</p>
+                  <span className="text-xs font-light text-gray-500">Cream Index</span>
+                  <p className="text-sm font-light">{form.cream_index}</p>
                 </div>
                 <div>
                   <span className="text-xs font-light text-gray-500">Fat Content</span>
@@ -144,16 +200,52 @@ export function PasteurizingFormViewDrawer({
                 </div>
               </div>
 
-              {form.cream_index && (
-                <div className="grid grid-cols-1 gap-4">
-                  <div>
-                    <span className="text-xs font-light text-gray-500">Cream Index</span>
-                    <p className="text-sm font-light">{form.cream_index}</p>
-                  </div>
-                </div>
-              )}
+
             </CardContent>
           </Card>
+
+          {form.bmt && (() => {
+            const bmtForm = getBMTFormById(form.bmt)
+            return bmtForm ? (
+              <div className="p-6 bg-white border border-gray-200 rounded-lg">
+                <div className="flex items-center space-x-2 mb-4">
+                  <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
+                    <Package className="w-4 h-4 text-blue-600" />
+                  </div>
+                  <h3 className="text-lg font-light">BMT Form Details</h3>
+                </div>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-light text-gray-600">BMT Form ID</span>
+                    <FormIdCopy
+                      displayId={bmtForm?.tag}
+                      actualId={form.bmt_id}
+                      size="sm"
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-light text-gray-600">Volume</span>
+                    <span className="text-sm font-light">{bmtForm.volume}L</span>
+                  </div>
+                  {/* <div className="flex items-center justify-between">
+                                <span className="text-sm font-light text-gray-600">Product</span>
+                                <span className="text-sm font-light text-blue-600">{bmtForm.product}</span>
+                              </div> */}
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-light text-gray-600">BMT Created</span>
+                    <span className="text-sm font-light">
+                      {new Date(bmtForm.created_at).toLocaleDateString('en-GB', {
+                        day: 'numeric',
+                        month: 'short',
+                        year: 'numeric'
+                      })}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ) : null
+          })()}
+
 
           {/* Time Information */}
           <Card className="shadow-none border border-gray-200 rounded-lg">
@@ -238,7 +330,7 @@ export function PasteurizingFormViewDrawer({
                           <p className="text-sm font-light">{production.output_target_value} {production.ouput_target_units}</p>
                         </div>
                       </div>
-                      
+
                       <div className="mt-3">
                         <h5 className="text-xs font-medium text-gray-700 mb-2">Temperature Data:</h5>
                         <div className="bg-gray-50 p-3 rounded text-xs">
