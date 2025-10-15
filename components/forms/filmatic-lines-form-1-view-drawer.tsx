@@ -7,7 +7,11 @@ import { Separator } from "@/components/ui/separator"
 import { FilmaticLinesForm1 } from "@/lib/api/filmatic-lines-form-1"
 import { format } from "date-fns"
 import { Button } from "@/components/ui/button"
-import { Beaker, FileText, CheckCircle, User, Package, ArrowRight, Hash, Clock, Sun, Moon, Factory } from "lucide-react"
+import { Beaker, FileText, CheckCircle, Package, ArrowRight, Clock, Sun, Moon, Factory } from "lucide-react"
+import { RootState, useAppSelector } from "@/lib/store"
+import { UserAvatar } from "@/components/ui/user-avatar"
+import { FormIdCopy } from "@/components/ui/form-id-copy"
+import { CopyButton } from "@/components/ui/copy-button"
 
 interface FilmaticLinesForm1ViewDrawerProps {
   open: boolean
@@ -22,6 +26,10 @@ export function FilmaticLinesForm1ViewDrawer({
   form,
   onEdit
 }: FilmaticLinesForm1ViewDrawerProps) {
+  // select users and bmt forms from store
+  const { items: users } = useAppSelector((state: RootState) => state.users)
+  const { forms: bmtForms } = useAppSelector((state: RootState) => state.bmtControlForms)
+
   if (!form) return null
 
   return (
@@ -99,8 +107,15 @@ export function FilmaticLinesForm1ViewDrawer({
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <span className="text-xs font-light text-gray-500">Form ID</span>
-                  <p className="text-sm font-light">{form.id}</p>
+                  <span className="text-xs font-light text-gray-500">Form</span>
+                  <div className="mt-1">
+                    {/* show form tag with FormIdCopy */}
+                    {form.tag ? (
+                      <FormIdCopy displayId={form.tag} actualId={form.id} size="sm" />
+                    ) : (
+                      <p className="text-sm font-light">{form.id}</p>
+                    )}
+                  </div>
                 </div>
                 <div>
                   <span className="text-xs font-light text-gray-500">Created At</span>
@@ -133,10 +148,49 @@ export function FilmaticLinesForm1ViewDrawer({
                   </p>
                 </div>
                 <div>
-                  <span className="text-xs font-light text-gray-500">Holding Tank BMT</span>
-                  <p className="text-sm font-light">{form.holding_tank_bmt}</p>
+                  {/* placeholder left intentionally blank — BMT details shown in separate card below */}
                 </div>
               </div>
+            </CardContent>
+          </Card>
+
+          {/* BMT Form Details (separate card) */}
+          <Card className="shadow-none border border-gray-200 rounded-lg">
+            <CardHeader className="pb-4">
+              <div className="flex items-center space-x-2">
+                <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
+                  <Package className="h-4 w-4 text-blue-600" />
+                </div>
+                <CardTitle className="text-base font-light">Holding Tank (BMT) Details</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {(() => {
+                const bmt = bmtForms.find((b: any) => b.id === form.holding_tank_bmt)
+                if (bmt) {
+                  return (
+                    <>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-light text-gray-600">BMT Form</span>
+                        <FormIdCopy displayId={bmt.tag} actualId={bmt.id} size="sm" />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-light text-gray-600">Volume</span>
+                        <span className="text-sm font-light">{bmt.volume ?? 0} L</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-light text-gray-600">Product</span>
+                        <span className="text-sm font-light">{bmt.product || 'N/A'}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-light text-gray-600">Created</span>
+                        <span className="text-sm font-light">{bmt.created_at ? format(new Date(bmt.created_at), "PPP") : 'N/A'}</span>
+                      </div>
+                    </>
+                  )
+                }
+                return <p className="text-sm text-gray-500">No BMT details available</p>
+              })()}
             </CardContent>
           </Card>
 
@@ -154,31 +208,45 @@ export function FilmaticLinesForm1ViewDrawer({
               <CardContent className="space-y-6">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <span className="text-xs font-light text-gray-500">Manager ID</span>
-                    <p className="text-sm font-light">{form.groups.manager_id?.slice(0, 8) || 'N/A'}</p>
+                    <span className="text-xs font-light text-gray-500">Manager</span>
+                    <div className="mt-1">
+                      {(() => {
+                        const managerUser = users.find((u: any) => u.id === form.groups.manager_id)
+                        return managerUser ? (
+                          <UserAvatar user={managerUser} size="md" showName={true} showEmail={true} showDropdown={true} />
+                        ) : (
+                          <p className="text-sm font-light">{form.groups.manager_id?.slice(0, 8) || 'N/A'}</p>
+                        )
+                      })()}
+                    </div>
                   </div>
                   <div>
                     <span className="text-xs font-light text-gray-500">Groups ID</span>
                     <p className="text-sm font-light">{form.groups.id?.slice(0, 8) || 'N/A'}</p>
                   </div>
                 </div>
-
+ 
                 <Separator />
-
+ 
                 {/* Group A */}
                 {form.groups.group_a && form.groups.group_a.length > 0 && (
                   <div className="space-y-2">
                     <h4 className="text-sm font-medium">Group A</h4>
                     <div className="pl-4">
                       <p className="text-sm font-light"><span className="font-medium">Members:</span> {form.groups.group_a.length}</p>
-                      <div className="mt-2 flex flex-wrap gap-1">
-                        {form.groups.group_a.slice(0, 3).map((member, index) => (
-                          <span key={index} className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                            {member.slice(0, 8)}
-                          </span>
-                        ))}
-                        {form.groups.group_a.length > 3 && (
-                          <span className="text-xs text-gray-500">+{form.groups.group_a.length - 3} more</span>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {form.groups.group_a.slice(0, 8).map((memberId: string, index: number) => {
+                          const user = users.find((u: any) => u.id === memberId)
+                          return user ? (
+                            <div key={index} className="flex items-center">
+                              <UserAvatar user={user} size="md" showName={true} showEmail={false} showDropdown={true} />
+                            </div>
+                          ) : (
+                            <span key={index} className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">{memberId.slice(0,8)}</span>
+                          )
+                        })}
+                        {form.groups.group_a.length > 8 && (
+                          <span className="text-xs text-gray-500">+{form.groups.group_a.length - 8} more</span>
                         )}
                       </div>
                     </div>
@@ -193,14 +261,19 @@ export function FilmaticLinesForm1ViewDrawer({
                       <h4 className="text-sm font-medium">Group B</h4>
                       <div className="pl-4">
                         <p className="text-sm font-light"><span className="font-medium">Members:</span> {form.groups.group_b.length}</p>
-                        <div className="mt-2 flex flex-wrap gap-1">
-                          {form.groups.group_b.slice(0, 3).map((member, index) => (
-                            <span key={index} className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
-                              {member.slice(0, 8)}
-                            </span>
-                          ))}
-                          {form.groups.group_b.length > 3 && (
-                            <span className="text-xs text-gray-500">+{form.groups.group_b.length - 3} more</span>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {form.groups.group_b.slice(0, 8).map((memberId: string, index: number) => {
+                            const user = users.find((u: any) => u.id === memberId)
+                            return user ? (
+                              <div key={index} className="flex items-center">
+                                <UserAvatar user={user} size="md" showName={true} showEmail={false} showDropdown={true} />
+                              </div>
+                            ) : (
+                              <span key={index} className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">{memberId.slice(0,8)}</span>
+                            )
+                          })}
+                          {form.groups.group_b.length > 8 && (
+                            <span className="text-xs text-gray-500">+{form.groups.group_b.length - 8} more</span>
                           )}
                         </div>
                       </div>
@@ -216,14 +289,19 @@ export function FilmaticLinesForm1ViewDrawer({
                       <h4 className="text-sm font-medium">Group C</h4>
                       <div className="pl-4">
                         <p className="text-sm font-light"><span className="font-medium">Members:</span> {form.groups.group_c.length}</p>
-                        <div className="mt-2 flex flex-wrap gap-1">
-                          {form.groups.group_c.slice(0, 3).map((member, index) => (
-                            <span key={index} className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded">
-                              {member.slice(0, 8)}
-                            </span>
-                          ))}
-                          {form.groups.group_c.length > 3 && (
-                            <span className="text-xs text-gray-500">+{form.groups.group_c.length - 3} more</span>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {form.groups.group_c.slice(0, 8).map((memberId: string, index: number) => {
+                            const user = users.find((u: any) => u.id === memberId)
+                            return user ? (
+                              <div key={index} className="flex items-center">
+                                <UserAvatar user={user} size="md" showName={true} showEmail={false} showDropdown={true} />
+                              </div>
+                            ) : (
+                              <span key={index} className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded">{memberId.slice(0,8)}</span>
+                            )
+                          })}
+                          {form.groups.group_c.length > 8 && (
+                            <span className="text-xs text-gray-500">+{form.groups.group_c.length - 8} more</span>
                           )}
                         </div>
                       </div>
@@ -255,7 +333,10 @@ export function FilmaticLinesForm1ViewDrawer({
                       </Badge>
                     </div>
                     <div className="pl-4 space-y-2">
-                      <p className="text-sm font-light"><span className="font-medium">Operator ID:</span> {shift.operator_id?.slice(0, 8) || 'N/A'}</p>
+                      <p className="text-sm font-light"><span className="font-medium">Operator:</span> {(() => {
+                        const op = users.find((u:any) => u.id === shift.operator_id)
+                        return op ? <UserAvatar user={op} size="md" showName={true} showEmail={true} showDropdown={true} /> : (shift.operator_id ? shift.operator_id.slice(0,8) : 'N/A')
+                      })()}</p>
                       <p className="text-sm font-light"><span className="font-medium">Details Count:</span> {shift.filmatic_line_form_1_day_shift_details?.length || 0}</p>
                       
                       {shift.filmatic_line_form_1_day_shift_details && shift.filmatic_line_form_1_day_shift_details.length > 0 && (
@@ -322,7 +403,10 @@ export function FilmaticLinesForm1ViewDrawer({
                       </Badge>
                     </div>
                     <div className="pl-4 space-y-2">
-                      <p className="text-sm font-light"><span className="font-medium">Operator ID:</span> {shift.operator_id?.slice(0, 8) || 'N/A'}</p>
+                      <p className="text-sm font-light"><span className="font-medium">Operator:</span> {(() => {
+                        const op = users.find((u:any) => u.id === shift.operator_id)
+                        return op ? <UserAvatar user={op} size="md" showName={true} showEmail={true} showDropdown={true} /> : (shift.operator_id ? shift.operator_id.slice(0,8) : 'N/A')
+                      })()}</p>
                       <p className="text-sm font-light"><span className="font-medium">Details Count:</span> {shift.filmatic_line_form_1_night_shift_details?.length || 0}</p>
                       
                       {shift.filmatic_line_form_1_night_shift_details && shift.filmatic_line_form_1_night_shift_details.length > 0 && (

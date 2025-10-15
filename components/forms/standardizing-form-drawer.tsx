@@ -31,7 +31,8 @@ import {
 import { useAppDispatch, useAppSelector } from "@/lib/store"
 import { 
   createStandardizingForm, 
-  updateStandardizingForm
+  updateStandardizingForm,
+  fetchStandardizingForms
 } from "@/lib/store/slices/standardizingSlice"
 import { 
   fetchBMTControlForms 
@@ -199,15 +200,20 @@ export function StandardizingFormDrawer({
 
       if (mode === "edit" && form) {
         await dispatch(updateStandardizingForm(formData)).unwrap()
+        // refresh list after successful update
+        await dispatch(fetchStandardizingForms()).unwrap()
         toast.success("Form updated successfully")
       } else {
         await dispatch(createStandardizingForm(formData)).unwrap()
+        // refresh list after successful create
+        await dispatch(fetchStandardizingForms()).unwrap()
         toast.success("Form created successfully")
       }
 
       onOpenChange(false)
     } catch (error: any) {
-      toast.error(error || "Failed to save form")
+      const msg = typeof error === "string" ? error : (error?.message ?? "Failed to save form")
+      toast.error(msg)
     }
   }
 
@@ -253,8 +259,8 @@ export function StandardizingFormDrawer({
                         .filter(bmtForm => bmtForm.id) // Filter out forms without ID
                         .map(bmtForm => ({
                           value: bmtForm.id!,
-                          label: generateBMTFormId(bmtForm.created_at),
-                          description: `${bmtForm.volume}L • ${bmtForm.product} • ${bmtForm.created_at ? new Date(bmtForm.created_at).toLocaleDateString() : 'No date'}`
+                          label: bmtForm?.tag,
+                          description: `${bmtForm.volume ?? 0}L • ${bmtForm.product} • ${bmtForm.created_at ? new Date(bmtForm.created_at).toLocaleDateString() : 'No date'}`
                         }))}
                       value={field.value}
                       onValueChange={field.onChange}

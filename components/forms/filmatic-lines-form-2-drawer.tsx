@@ -8,6 +8,7 @@ import { FilmaticLinesForm2, filmaticLinesForm2Api, CreateFilmaticLinesForm2Requ
 import { BMTControlForm, bmtControlFormApi } from "@/lib/api/bmt-control-form"
 import { FilmaticLinesGroup, filmaticLinesGroupsApi } from "@/lib/api/filmatic-lines-groups"
 import { useAuth } from "@/hooks/use-auth"
+import { useAppDispatch } from "@/lib/store"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -20,6 +21,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { ArrowRight, Factory, Beaker, FileText, Package, Clock, Sun, Moon, Users, Plus, Trash2, ChevronLeft, ChevronRight } from "lucide-react"
+import { fetchFilmaticLinesForm2s } from "@/lib/store/slices/filmaticLinesForm2Slice"
 
 interface FilmaticLinesForm2DrawerProps {
   open: boolean
@@ -146,6 +148,7 @@ export function FilmaticLinesForm2Drawer({
 }: FilmaticLinesForm2DrawerProps) {
   const { user } = useAuth()
   const [loading, setLoading] = useState({ create: false })
+  const dispatch = useAppDispatch()
   
   const [currentStep, setCurrentStep] = useState(1)
   const [bmtForms, setBmtForms] = useState<BMTControlForm[]>([])
@@ -458,6 +461,13 @@ export function FilmaticLinesForm2Drawer({
       await filmaticLinesForm2Api.createForm(formData)
       toast.success("Filmatic Lines Form 2 created successfully")
       
+      // Refresh list so the page updates immediately
+      try {
+        await dispatch(fetchFilmaticLinesForm2s()).unwrap()
+      } catch (e) {
+        console.warn("Failed to refresh Filmatic Lines Form 2 list:", e)
+      }
+       
       onOpenChange(false)
     } catch (error: any) {
       toast.error(error?.message || "Failed to create Filmatic Lines Form 2")

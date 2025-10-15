@@ -25,21 +25,21 @@ import { SignatureViewer } from "@/components/ui/signature-viewer"
 import { base64ToPngDataUrl, normalizeDataUrlToBase64 } from "@/lib/utils/signature"
 
 const detailSchema = yup.object({
-  temperature: yup.number().required("Temperature is required"),
+  temperature: yup.number().nullable(),
   time: yup.string().required("Time is required"),
   ot: yup.string().required("OT is required"),
   cob: yup.boolean().required(),
-  alcohol: yup.number().required("Alcohol is required"),
-  titrable_acidity: yup.number().required("Titrable acidity is required"),
-  ph: yup.number().required("pH is required"),
+  alcohol: yup.number().nullable(),
+  titrable_acidity: yup.number().nullable(),
+  ph: yup.number().nullable(),
   resazurin: yup.string().required("Resazurin is required"),
-  fat: yup.number().required("Fat is required"),
-  protein: yup.number().required("Protein is required"),
+  fat: yup.number().nullable(),
+  protein: yup.number().nullable(),
   lr_snf: yup.string().required("LR SNF is required"),
-  total_solids: yup.number().required("Total solids is required"),
-  fpd: yup.number().required("FPD is required"),
-  scc: yup.number().required("SCC is required"),
-  density: yup.number().required("Density is required"),
+  total_solids: yup.number().nullable(),
+  fpd: yup.number().nullable(),
+  scc: yup.number().nullable(),
+  density: yup.number().nullable(),
   antibiotics: yup.boolean().required(),
   silo: yup.string().required("Silo is required"),
   remark: yup.string().required("Remark is required"),
@@ -83,32 +83,32 @@ export function RawMilkResultSlipDrawer({ open, onOpenChange, rawMilkIntakeFormI
     resolver: yupResolver(schema),
     defaultValues: {
       date: new Date().toISOString().split("T")[0],
-      time_in: "12:00",
-      time_out: "13:00",
+      time_in: "",
+      time_out: "",
       approved_by: "",
       approver_signature: "",
       source: "",
       analyst: "",
       results_collected_by: "",
       details: [{
-        temperature: 72.5,
-        time: "12:00",
-        ot: "OK",
-        cob: true,
-        alcohol: 0.1,
-        titrable_acidity: 0.1,
-        ph: 6.8,
-        resazurin: "LB",
-        fat: 3.5,
-        protein: 3.5,
-        lr_snf: "30/8.95",
-        total_solids: 12.55,
-        fpd: 12.55,
-        scc: 12.55,
-        density: 12.55,
+        temperature: undefined,
+        time: "",
+        ot: "",
+        cob: false,
+        alcohol: undefined,
+        titrable_acidity: undefined,
+        ph: undefined,
+        resazurin: "",
+        fat: undefined,
+        protein: undefined,
+        lr_snf: "",
+        total_solids: undefined,
+        fpd: undefined,
+        scc: undefined,
+        density: undefined,
         antibiotics: false,
         silo: "",
-        remark: "Test completed successfully"
+        remark: ""
       }],
     },
   })
@@ -133,26 +133,43 @@ export function RawMilkResultSlipDrawer({ open, onOpenChange, rawMilkIntakeFormI
           results_collected_by: existingData.results_collected_by || "",
           details: existingData.raw_milk_result_slip_details?.map((detail: any) => ({
             ...detail,
+            temperature: detail.temperature ?? undefined,
             time: detail.time ? detail.time.split('+')[0].substring(0, 5) : "",
+            ot: detail.ot ?? "",
+            cob: detail.cob ?? false,
+            alcohol: detail.alcohol ?? undefined,
+            titrable_acidity: detail.titrable_acidity ?? undefined,
+            ph: detail.ph ?? undefined,
+            resazurin: detail.resazurin ?? "",
+            fat: detail.fat ?? undefined,
+            protein: detail.protein ?? undefined,
+            lr_snf: detail.lr_snf ?? "",
+            total_solids: detail.total_solids ?? undefined,
+            fpd: detail.fpd ?? undefined,
+            scc: detail.scc ?? undefined,
+            density: detail.density ?? undefined,
+            antibiotics: detail.antibiotics ?? false,
+            silo: detail.silo ?? "",
+            remark: detail.remark ?? ""
           })) || [{
-            temperature: 72.5,
+            temperature: undefined,
             time: "",
-            ot: "OK",
-            cob: true,
-            alcohol: 0.1,
-            titrable_acidity: 0.1,
-            ph: 6.8,
-            resazurin: "LB",
-            fat: 3.5,
-            protein: 3.5,
-            lr_snf: "30/8.95",
-            total_solids: 12.55,
-            fpd: 12.55,
-            scc: 12.55,
-            density: 12.55,
+            ot: "",
+            cob: false,
+            alcohol: undefined,
+            titrable_acidity: undefined,
+            ph: undefined,
+            resazurin: "",
+            fat: undefined,
+            protein: undefined,
+            lr_snf: "",
+            total_solids: undefined,
+            fpd: undefined,
+            scc: undefined,
+            density: undefined,
             antibiotics: false,
             silo: "",
-            remark: "Test completed successfully"
+            remark: ""
           }],
         })
       }
@@ -232,24 +249,24 @@ export function RawMilkResultSlipDrawer({ open, onOpenChange, rawMilkIntakeFormI
 
   const addDetail = () => {
     append({
-      temperature: 72.5,
-      time: "12:00",
-      ot: "OK",
-      cob: true,
-      alcohol: 0.1,
-      titrable_acidity: 0.1,
-      ph: 6.8,
-      resazurin: "LB",
-      fat: 3.5,
-      protein: 3.5,
-      lr_snf: "30/8.95",
-      total_solids: 12.55,
-      fpd: 12.55,
-      scc: 12.55,
-      density: 12.55,
+      temperature: undefined,
+      time: "",
+      ot: "",
+      cob: false,
+      alcohol: undefined,
+      titrable_acidity: undefined,
+      ph: undefined,
+      resazurin: "",
+      fat: undefined,
+      protein: undefined,
+      lr_snf: "",
+      total_solids: undefined,
+      fpd: undefined,
+      scc: undefined,
+      density: undefined,
       antibiotics: false,
       silo: "",
-      remark: "Test completed successfully"
+      remark: ""
     })
   }
 
@@ -258,7 +275,7 @@ export function RawMilkResultSlipDrawer({ open, onOpenChange, rawMilkIntakeFormI
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="tablet-sheet-full p-0 bg-white overflow-y-auto">
         <SheetHeader className="p-6 pb-0">
-          <SheetTitle className="text-lg font-light">{mode === "edit" ? "Update Result Slip" : "Create Result Slip"}</SheetTitle>
+          <SheetTitle className="text-lg font-light">{mode === "edit" ? "Update Lab Test" : "Create Lab Test"}</SheetTitle>
           <SheetDescription className="text-sm font-light">Capture or update raw milk result slip for this intake form</SheetDescription>
         </SheetHeader>
         <form onSubmit={form.handleSubmit(onSubmit)} className="p-6 space-y-6">
@@ -356,16 +373,13 @@ export function RawMilkResultSlipDrawer({ open, onOpenChange, rawMilkIntakeFormI
                 Add Detail
               </Button>
             </div>
-
             {fields.map((field, index) => (
-              <div key={field.id} className="p-4 border border-gray-200 rounded-lg space-y-4">
-                <div className="flex items-center justify-between">
-                  <h4 className="font-medium">Test Detail #{index + 1}</h4>
-                  {fields.length > 1 && (
-                    <Button type="button" variant="destructive" size="sm" onClick={() => remove(index)}>
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  )}
+              <div key={field.id} className="p-4 bg-gray-50 rounded-md border">
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="text-md font-medium">Detail {index + 1}</h4>
+                  <Button type="button" variant="ghost" onClick={() => remove(index)}>
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -509,7 +523,7 @@ export function RawMilkResultSlipDrawer({ open, onOpenChange, rawMilkIntakeFormI
               Cancel
             </Button>
             <Button type="submit" disabled={operationLoading.create || operationLoading.update} className="rounded-full">
-              {mode === "edit" ? "Update Result Slip" : "Create Result Slip"}
+              {mode === "edit" ? "Update Lab Test" : "Create Lab Test"}
             </Button>
           </div>
         </form>

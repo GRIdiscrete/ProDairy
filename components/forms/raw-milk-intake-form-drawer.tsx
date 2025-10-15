@@ -16,11 +16,11 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "
 import { SearchableSelect, SearchableSelectOption } from "@/components/ui/searchable-select"
 import { DatePicker } from "@/components/ui/date-picker"
 import { SignatureModal } from "@/components/ui/signature-modal"
-import { 
-  Plus, 
-  Trash2, 
-  Droplets, 
-  Truck, 
+import {
+  Plus,
+  Trash2,
+  Droplets,
+  Truck,
   Package,
   Save,
   X,
@@ -31,15 +31,15 @@ import {
   User
 } from "lucide-react"
 import { useAppDispatch, useAppSelector } from "@/lib/store"
-import { 
-  createRawMilkIntakeForm, 
+import {
+  createRawMilkIntakeForm,
   updateRawMilkIntakeForm
 } from "@/lib/store/slices/rawMilkIntakeSlice"
-import { 
-  fetchDriverForms 
+import {
+  fetchDriverForms
 } from "@/lib/store/slices/driverFormSlice"
-import { 
-  fetchSuppliers 
+import {
+  fetchSuppliers
 } from "@/lib/store/slices/supplierSlice"
 import { RawMilkIntakeForm, CreateRawMilkIntakeFormRequest } from "@/lib/api/raw-milk-intake"
 import { siloApi } from "@/lib/api/silo"
@@ -115,11 +115,11 @@ interface RawMilkIntakeFormDrawerProps {
   mode: "create" | "edit"
 }
 
-export function RawMilkIntakeFormDrawer({ 
-  open, 
-  onOpenChange, 
-  form, 
-  mode = "create" 
+export function RawMilkIntakeFormDrawer({
+  open,
+  onOpenChange,
+  form,
+  mode = "create"
 }: RawMilkIntakeFormDrawerProps) {
   const dispatch = useAppDispatch()
   const { operationLoading } = useAppSelector((state) => state.rawMilkIntake)
@@ -128,11 +128,11 @@ export function RawMilkIntakeFormDrawer({
   const { user, profile } = useAppSelector((state) => state.auth)
 
   const [loadingDriverForms, setLoadingDriverForms] = useState(false)
-  
+
   // State for searchable silos
   const [silos, setSilos] = useState<SearchableSelectOption[]>([])
   const [loadingSilos, setLoadingSilos] = useState(false)
-  
+
 
   // Single form for all data
   const formHook = useForm<RawMilkIntakeFormData>({
@@ -157,20 +157,20 @@ export function RawMilkIntakeFormDrawer({
     try {
       setLoadingDriverForms(true)
       setLoadingSilos(true)
-      
+
       // Load driver forms
       if (driverForms.length === 0) {
         await dispatch(fetchDriverForms({}))
       }
-      
+
       // Load suppliers
       if (suppliers.length === 0) {
         await dispatch(fetchSuppliers({}))
       }
-      
+
       // Load silos
       const silosResponse = await siloApi.getSilos()
-      
+
       console.log('Silos response:', silosResponse)
       const silosData = silosResponse.data?.map(silo => ({
         value: silo.id,
@@ -262,9 +262,12 @@ export function RawMilkIntakeFormDrawer({
         samplesWithAllFields = samplesWithAllFields.map((sample, idx) => {
           const existing = (form as any).raw_milk_intake_form_samples[idx];
           return {
-            ...sample,
-            // id: existing?.id || sample.id,
-            // raw_milk_intake_form_id: form.id,
+            // ...sample,
+            id: sample.id,
+            supplier_id: sample.supplier_id,
+            unit_of_measure: sample.unit_of_measure,
+            amount_collected: sample.amount_collected,
+            raw_milk_intake_form_id: form.id,
             // lab_test_id: existing?.lab_test_id || sample.lab_test_id,
           };
         });
@@ -276,6 +279,7 @@ export function RawMilkIntakeFormDrawer({
         operator_signature: normalizedSignature,
         date: data.date,
         destination_silo_name: data.destination_silo_name,
+        drivers_form_id: data.drivers_form_id,
         status: data.status,
         raw_milk_intake_form_samples: Array.isArray(samplesWithAllFields) ? samplesWithAllFields : [],
       } : {
@@ -318,7 +322,7 @@ export function RawMilkIntakeFormDrawer({
             <h3 className="text-xl font-light text-gray-900">Basic Information</h3>
             <p className="text-sm font-light text-gray-600 mt-2">Enter the basic raw milk intake details</p>
           </div>
-          
+
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Controller
@@ -373,7 +377,7 @@ export function RawMilkIntakeFormDrawer({
                   <SearchableSelect
                     options={driverForms.map(driverForm => ({
                       value: driverForm.id,
-                      label: generateDriverFormId(driverForm.created_at),
+                      label: driverForm?.tag ?? 'N/A',
                       description: `${new Date(driverForm.start_date).toLocaleDateString()} • ${driverForm.delivered ? 'Delivered' : 'Pending'}`
                     }))}
                     value={field.value}
@@ -433,7 +437,7 @@ export function RawMilkIntakeFormDrawer({
             <h3 className="text-xl font-light text-gray-900">Sample Collection</h3>
             <p className="text-sm font-light text-gray-600 mt-2">Add samples collected during raw milk intake</p>
           </div>
-          
+
           <div className="space-y-3">
             {formHook.watch("raw_milk_intake_form_samples")?.map((sample, index) => (
               <div key={index} className="p-4 border border-gray-200 rounded-lg bg-gray-50">
@@ -510,7 +514,7 @@ export function RawMilkIntakeFormDrawer({
                 </div>
               </div>
             ))}
-            
+
             <Button
               type="button"
               variant="outline"
@@ -581,50 +585,50 @@ export function RawMilkIntakeFormDrawer({
 
   return (
     <>
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="tablet-sheet-full p-0 bg-white">
-        <SheetHeader className="p-6 pb-0">
-          <SheetTitle className="text-lg font-light">
-            {mode === "edit" ? "Edit Raw Milk Intake Form" : "Create Raw Milk Intake Form"}
-          </SheetTitle>
-          <SheetDescription className="text-sm font-light">
-            Enter all raw milk intake details including basic information and sample collection
-          </SheetDescription>
-        </SheetHeader>
+      <Sheet open={open} onOpenChange={onOpenChange}>
+        <SheetContent className="tablet-sheet-full p-0 bg-white">
+          <SheetHeader className="p-6 pb-0">
+            <SheetTitle className="text-lg font-light">
+              {mode === "edit" ? "Edit Raw Milk Intake Form" : "Create Raw Milk Intake Form"}
+            </SheetTitle>
+            <SheetDescription className="text-sm font-light">
+              Enter all raw milk intake details including basic information and sample collection
+            </SheetDescription>
+          </SheetHeader>
 
-        <div className="flex-1 overflow-y-auto">
-          <form onSubmit={formHook.handleSubmit(handleSubmit)}>
-            {renderForm()}
-            
-            <div className="flex items-center justify-end p-6 border-t">
-              <Button
-                type="submit"
-                disabled={operationLoading.create || operationLoading.update}
-                className="flex items-center gap-2"
-              >
-                <Save className="h-4 w-4" />
-                {mode === "edit" ? "Update Form" : "Create Form"}
-              </Button>
-            </div>
-          </form>
-        </div>
-      </SheetContent>
-    </Sheet>
+          <div className="flex-1 overflow-y-auto">
+            <form onSubmit={formHook.handleSubmit(handleSubmit)}>
+              {renderForm()}
 
-    <SignatureModal
-      open={signatureOpen}
-      onOpenChange={setSignatureOpen}
-      title="Capture Operator Signature"
-      onSave={(dataUrl) => {
-        formHook.setValue("operator_signature", dataUrl, { shouldValidate: true })
-      }}
-    />
-    <SignatureViewer
-      open={signatureViewOpen}
-      onOpenChange={setSignatureViewOpen}
-      title="Operator Signature"
-      value={formHook.getValues("operator_signature")}
-    />
-  </>
+              <div className="flex items-center justify-end p-6 border-t">
+                <Button
+                  type="submit"
+                  disabled={operationLoading.create || operationLoading.update}
+                  className="flex items-center gap-2"
+                >
+                  <Save className="h-4 w-4" />
+                  {mode === "edit" ? "Update Form" : "Create Form"}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      <SignatureModal
+        open={signatureOpen}
+        onOpenChange={setSignatureOpen}
+        title="Capture Operator Signature"
+        onSave={(dataUrl) => {
+          formHook.setValue("operator_signature", dataUrl, { shouldValidate: true })
+        }}
+      />
+      <SignatureViewer
+        open={signatureViewOpen}
+        onOpenChange={setSignatureViewOpen}
+        title="Operator Signature"
+        value={formHook.getValues("operator_signature")}
+      />
+    </>
   )
 }

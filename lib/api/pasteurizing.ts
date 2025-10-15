@@ -124,6 +124,7 @@ export interface UpdatePasteurizingFormRequest {
   fat?: number
   cream_index?: number
   production_?: {
+    id: string
     process_id: string
     output_target_value: number
     ouput_target_units: string
