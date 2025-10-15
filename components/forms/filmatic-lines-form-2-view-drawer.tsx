@@ -7,7 +7,11 @@ import { Separator } from "@/components/ui/separator"
 import { FilmaticLinesForm2 } from "@/lib/api/filmatic-lines-form-2"
 import { format } from "date-fns"
 import { Button } from "@/components/ui/button"
-import { Beaker, FileText, CheckCircle, User, Package, ArrowRight, Hash, Clock, Sun, Moon, Factory } from "lucide-react"
+import { Beaker, FileText, CheckCircle, Package, ArrowRight, Clock, Sun, Moon, Factory } from "lucide-react"
+import { RootState, useAppSelector } from "@/lib/store"
+import { UserAvatar } from "@/components/ui/user-avatar"
+import { FormIdCopy } from "@/components/ui/form-id-copy"
+import { CopyButton } from "@/components/ui/copy-button"
 
 interface FilmaticLinesForm2ViewDrawerProps {
   open: boolean
@@ -22,6 +26,9 @@ export function FilmaticLinesForm2ViewDrawer({
   form,
   onEdit
 }: FilmaticLinesForm2ViewDrawerProps) {
+  const { items: users } = useAppSelector((state: RootState) => state.users)
+  const { forms: bmtForms } = useAppSelector((state: RootState) => state.bmtControlForms)
+
   if (!form) return null
 
   return (
@@ -99,8 +106,10 @@ export function FilmaticLinesForm2ViewDrawer({
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <span className="text-xs font-light text-gray-500">Form ID</span>
-                  <p className="text-sm font-light">{form.id}</p>
+                  <span className="text-xs font-light text-gray-500">Form</span>
+                  <div className="mt-1">
+                    {form.tag ? <FormIdCopy displayId={form.tag} actualId={form.id} size="sm" /> : <p className="text-sm font-light">{form.id}</p>}
+                  </div>
                 </div>
                 <div>
                   <span className="text-xs font-light text-gray-500">Created At</span>
@@ -150,8 +159,13 @@ export function FilmaticLinesForm2ViewDrawer({
               <CardContent className="space-y-6">
                 <div className="grid grid-cols-1 gap-4">
                   <div>
-                    <span className="text-xs font-light text-gray-500">Manager ID</span>
-                    <p className="text-sm font-light">{form.groups.manager_id?.slice(0, 8) || 'N/A'}</p>
+                    <span className="text-xs font-light text-gray-500">Manager</span>
+                    <div className="mt-1">
+                      {(() => {
+                        const managerUser = users.find((u:any) => u.id === form.groups.manager_id)
+                        return managerUser ? <UserAvatar user={managerUser} size="md" showName={true} showEmail={true} showDropdown={true} /> : <p className="text-sm font-light">{form.groups.manager_id?.slice(0,8) || 'N/A'}</p>
+                      })()}
+                    </div>
                   </div>
                 </div>
 
@@ -163,15 +177,12 @@ export function FilmaticLinesForm2ViewDrawer({
                     <h4 className="text-sm font-medium">Group A</h4>
                     <div className="pl-4">
                       <p className="text-sm font-light"><span className="font-medium">Members:</span> {form.groups.group_a.length}</p>
-                      <div className="mt-2 flex flex-wrap gap-1">
-                        {form.groups.group_a.slice(0, 3).map((member, index) => (
-                          <span key={index} className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                            {member.slice(0, 8)}
-                          </span>
-                        ))}
-                        {form.groups.group_a.length > 3 && (
-                          <span className="text-xs text-gray-500">+{form.groups.group_a.length - 3} more</span>
-                        )}
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {form.groups.group_a.slice(0, 8).map((memberId: string, idx: number) => {
+                          const user = users.find((u:any) => u.id === memberId)
+                          return user ? <div key={idx}><UserAvatar user={user} size="md" showName={true} showEmail={false} showDropdown={true} /></div> : <span key={idx} className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">{memberId.slice(0,8)}</span>
+                        })}
+                        {form.groups.group_a.length > 8 && <span className="text-xs text-gray-500">+{form.groups.group_a.length - 8} more</span>}
                       </div>
                     </div>
                   </div>
@@ -247,7 +258,10 @@ export function FilmaticLinesForm2ViewDrawer({
                       </Badge>
                     </div>
                     <div className="pl-4 space-y-2">
-                      <p className="text-sm font-light"><span className="font-medium">Operator ID:</span> {shift.operator_id?.slice(0, 8) || 'N/A'}</p>
+                      <p className="text-sm font-light"><span className="font-medium">Operator:</span> {(() => {
+                        const op = users.find((u:any) => u.id === shift.operator_id)
+                        return op ? <UserAvatar user={op} size="md" showName={true} showEmail={true} showDropdown={true} /> : (shift.operator_id ? shift.operator_id.slice(0,8) : 'N/A')
+                      })()}</p>
                       <p className="text-sm font-light"><span className="font-medium">Details Count:</span> {shift.filmatic_line_form_2_day_shift_details?.length || 0}</p>
                       
                       {shift.filmatic_line_form_2_day_shift_details && shift.filmatic_line_form_2_day_shift_details.length > 0 && (
@@ -314,7 +328,10 @@ export function FilmaticLinesForm2ViewDrawer({
                       </Badge>
                     </div>
                     <div className="pl-4 space-y-2">
-                      <p className="text-sm font-light"><span className="font-medium">Operator ID:</span> {shift.operator_id?.slice(0, 8) || 'N/A'}</p>
+                      <p className="text-sm font-light"><span className="font-medium">Operator:</span> {(() => {
+                        const op = users.find((u:any) => u.id === shift.operator_id)
+                        return op ? <UserAvatar user={op} size="md" showName={true} showEmail={true} showDropdown={true} /> : (shift.operator_id ? shift.operator_id.slice(0,8) : 'N/A')
+                      })()}</p>
                       <p className="text-sm font-light"><span className="font-medium">Details Count:</span> {shift.filmatic_line_form_2_night_shift_details?.length || 0}</p>
                       
                       {shift.filmatic_line_form_2_night_shift_details && shift.filmatic_line_form_2_night_shift_details.length > 0 && (

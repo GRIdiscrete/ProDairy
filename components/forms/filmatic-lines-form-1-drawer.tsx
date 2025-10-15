@@ -90,13 +90,13 @@ const createBasicInfoSchema = (selectedShift: string) => yup.object({
   holding_tank_bmt: yup.string().required("Holding tank BMT is required"),
   ...(selectedShift === "day_shift" && {
     day_shift_opening_bottles: yup.number().required("Day shift opening bottles is required").min(0, "Must be positive"),
-    day_shift_closing_bottles: yup.number().required("Day shift closing bottles is required").min(0, "Must be positive"),
-    day_shift_waste_bottles: yup.number().required("Day shift waste bottles is required").min(0, "Must be positive"),
+    day_shift_closing_bottles: yup.number().nullable(),
+    day_shift_waste_bottles: yup.number().nullable(),
   }),
   ...(selectedShift === "night_shift" && {
     night_shift_opening_bottles: yup.number().required("Night shift opening bottles is required").min(0, "Must be positive"),
-    night_shift_closing_bottles: yup.number().required("Night shift closing bottles is required").min(0, "Must be positive"),
-    night_shift_waste_bottles: yup.number().required("Night shift waste bottles is required").min(0, "Must be positive"),
+    night_shift_closing_bottles: yup.number().nullable(),
+    night_shift_waste_bottles: yup.number().nullable(),
   }),
 })
 
@@ -685,8 +685,8 @@ export function FilmaticLinesForm1Drawer({
               <SearchableSelect
                 options={bmtForms.map(bmtForm => ({
                   value: bmtForm.id,
-                  label: `BMT Form #${bmtForm.id?.slice(0, 8)}`,
-                  description: `${bmtForm.product} • Volume: ${bmtForm.volume}L • ${bmtForm.flow_meter_start ? new Date(bmtForm.flow_meter_start).toLocaleDateString() : 'No date'}`
+                  label: bmtForm?.tag,
+                  description: `${bmtForm.product} • Volume: ${bmtForm.volume ??0}L • `
                 }))}
                 value={field.value}
                 onValueChange={field.onChange}
@@ -731,7 +731,7 @@ export function FilmaticLinesForm1Drawer({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="day_shift_closing_bottles">Day Shift Closing Bottles *</Label>
+                <Label htmlFor="day_shift_closing_bottles">Day Shift Closing Bottles</Label>
                 <Controller
                   name="day_shift_closing_bottles"
                   control={basicInfoForm.control}
@@ -755,7 +755,7 @@ export function FilmaticLinesForm1Drawer({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="day_shift_waste_bottles">Day Shift Waste Bottles *</Label>
+              <Label htmlFor="day_shift_waste_bottles">Day Shift Waste Bottles</Label>
               <Controller
                 name="day_shift_waste_bottles"
                 control={basicInfoForm.control}
@@ -806,7 +806,7 @@ export function FilmaticLinesForm1Drawer({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="night_shift_closing_bottles">Night Shift Closing Bottles *</Label>
+                <Label htmlFor="night_shift_closing_bottles">Night Shift Closing Bottles</Label>
                 <Controller
                   name="night_shift_closing_bottles"
                   control={basicInfoForm.control}
@@ -830,7 +830,7 @@ export function FilmaticLinesForm1Drawer({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="night_shift_waste_bottles">Night Shift Waste Bottles *</Label>
+              <Label htmlFor="night_shift_waste_bottles">Night Shift Waste Bottles</Label>
               <Controller
                 name="night_shift_waste_bottles"
                 control={basicInfoForm.control}

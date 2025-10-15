@@ -216,28 +216,77 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
     }
   }, [destinationSiloId, silos, setValue, watch])
 
-  // Helper to convert "HH:mm" to ISO string with today's date and UTC timezone
+  // Helper to format a Date to backend string "YYYY-MM-DD HH:mm:ss.SSSSSS+00"
+  const formatDateToBackend = (d: Date) => {
+    // produce ISO then convert: "YYYY-MM-DDTHH:mm:ss.sssZ" -> "YYYY-MM-DD HH:mm:ss.sss000+00"
+    const iso = d.toISOString(); // UTC
+    const [datePart, fracPart] = iso.split(".");
+    // fracPart like "sssZ"
+    const millis = (fracPart || "000Z").replace("Z", "");
+    // append 3 zeros to make microseconds (approx)
+    const micro = `${millis}000`;
+    return `${datePart.replace("T", " ")}.${micro}+00`;
+  };
+
+  // Convert input (HH:mm, ISO, or backend format "YYYY-MM-DD HH:MM:SS...+00") to backend datetime string.
   const toIsoDateTime = (time: string | undefined | null) => {
-    if (!time) return null;
-    // If already ISO, return as is
-    if (time.includes("T")) return time;
-    // Use today's date
-    const today = new Date();
-    const [hh, mm] = time.split(":");
-    today.setHours(Number(hh), Number(mm), 0, 0);
-    // Return as ISO string with Z (UTC)
-    return today.toISOString();
+    if (!time) return "";
+    // If already backend-style with a date part (space between date and time), assume it's acceptable and return as-is
+    // e.g. "2025-08-21 12:58:15.357772+00"
+    if (time.includes(" ") && /\d{4}-\d{2}-\d{2}/.test(time)) {
+      return time;
+    }
+    // If ISO (contains 'T' or ends with Z), parse and convert to backend format
+    if (time.includes("T") || time.endsWith("Z")) {
+      const parsed = new Date(time);
+      if (isNaN(parsed.getTime())) return "";
+      return formatDateToBackend(parsed);
+    }
+    // If "HH:mm" (or "HH:mm:ss"), build today's UTC date with those hours/minutes
+    const hhmmMatch = time.match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/);
+    if (hhmmMatch) {
+      const hh = Number(hhmmMatch[1]);
+      const mm = Number(hhmmMatch[2]);
+      if (Number.isNaN(hh) || Number.isNaN(mm)) return "";
+      const now = new Date();
+      // construct in UTC to avoid timezone issues
+      const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), hh, mm, 0, 0));
+      return formatDateToBackend(d);
+    }
+    // Fallback: return empty string to avoid invalid Date
+    return "";
+  };
+
+  // Extract "HH:mm" from backend/ISO/time inputs for display in time pickers
+  const extractTime = (value: string | undefined | null) => {
+    if (!value) return "";
+    // backend format with space
+    if (value.includes(" ") && /\d{4}-\d{2}-\d{2}/.test(value)) {
+      const timePart = value.split(" ")[1] || "";
+      return timePart.substring(0,5);
+    }
+    // ISO format with T
+    if (value.includes("T")) {
+      const t = value.split("T")[1] || "";
+      return t.substring(0,5);
+    }
+    // already a time like "HH:mm" or "HH:mm:ss"
+    const hhmmMatch = value.match(/^(\d{1,2}:\d{2})/);
+    return hhmmMatch ? hhmmMatch[1] : "";
   };
 
   const onSubmit = async (data: BMTControlFormData) => {
     try {
-      // Convert all time fields to ISO string
+      // Convert all time fields to backend format and omit source_silo_quantity_requested
       const convertSiloDetails = (details: any[]) =>
-        details.map((silo) => ({
-          ...silo,
-          flow_meter_start: toIsoDateTime(silo.flow_meter_start),
-          flow_meter_end: toIsoDateTime(silo.flow_meter_end),
-        }));
+        details.map((silo) => {
+          const { source_silo_quantity_requested, ...rest } = silo; // omit field
+          return {
+            ...rest,
+            flow_meter_start: toIsoDateTime(silo.flow_meter_start),
+            flow_meter_end: toIsoDateTime(silo.flow_meter_end),
+          };
+        });
 
       const payload = {
         ...data,
@@ -245,11 +294,14 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
         movement_end: toIsoDateTime(data.movement_end),
         source_silo_details: convertSiloDetails(data.source_silo_details || []),
         destination_silo_details: data.destination_silo_details
-          ? {
-              ...data.destination_silo_details,
-              flow_meter_start: toIsoDateTime(data.destination_silo_details.flow_meter_start),
-              flow_meter_end: toIsoDateTime(data.destination_silo_details.flow_meter_end),
-            }
+          ? (() => {
+              const { source_silo_quantity_requested, ...rest } = data.destination_silo_details; // omit field
+              return {
+                ...rest,
+                flow_meter_start: toIsoDateTime(data.destination_silo_details.flow_meter_start),
+                flow_meter_end: toIsoDateTime(data.destination_silo_details.flow_meter_end),
+              };
+            })()
           : undefined,
       };
 
@@ -275,35 +327,29 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
       onOpenChange(false);
       reset();
     } catch (error: any) {
-      toast.error(error || (mode === "create" ? 'Failed to create BMT control form' : 'Failed to update BMT control form'));
+      // Ensure only a string is passed to toast.error
+      let errorMessage = mode === "create" ? 'Failed to create BMT control form' : 'Failed to update BMT control form';
+      if (error) {
+        if (typeof error === "string") {
+          errorMessage = error;
+        } else if (typeof error?.message === "string") {
+          errorMessage = error.message;
+        }
+      }
+      toast.error(errorMessage);
     }
   }
 
   useEffect(() => {
     if (open && form && mode === "edit") {
-      // Helper to extract time from datetime strings - handles multiple formats
-      const extractTime = (timeString: string | undefined | null) => {
-        if (!timeString) return ""
-        if (timeString.includes('T')) {
-          return timeString.split('T')[1]?.substring(0, 5) || ""
-        } else if (timeString.includes(' ')) {
-          return timeString.split(' ')[1]?.substring(0, 5) || ""
-        } else if (timeString.match(/^\d{2}:\d{2}:\d{2}/)) {
-          return timeString.substring(0, 5)
-        } else if (timeString.match(/^\d{2}:\d{2}$/)) {
-          return timeString
-        }
-        return ""
-      }
-
-      // Prefill source silos and destination silo from API object
+      // Prefill using ISO strings as received from API
       const sourceSiloDetails = Array.isArray((form as any).bmt_control_form_source_silo)
         ? (form as any).bmt_control_form_source_silo.map((silo: any) => ({
             id: silo.id,
             name: silo.name,
-            flow_meter_start: extractTime(silo.flow_meter_start),
+            flow_meter_start: silo.flow_meter_start || "",
             flow_meter_start_reading: silo.flow_meter_start_reading ?? 0,
-            flow_meter_end: extractTime(silo.flow_meter_end),
+            flow_meter_end: silo.flow_meter_end || "",
             flow_meter_end_reading: silo.flow_meter_end_reading ?? 0,
             source_silo_quantity_requested: silo.source_silo_quantity_requested ?? 0,
             product: silo.product ?? "",
@@ -314,9 +360,9 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
         ? {
             id: (form as any).destination_silo.id,
             name: (form as any).destination_silo.name,
-            flow_meter_start: extractTime((form as any).destination_silo.flow_meter_start),
+            flow_meter_start: (form as any).destination_silo.flow_meter_start || "",
             flow_meter_start_reading: (form as any).destination_silo.flow_meter_start_reading ?? 0,
-            flow_meter_end: extractTime((form as any).destination_silo.flow_meter_end),
+            flow_meter_end: (form as any).destination_silo.flow_meter_end || "",
             flow_meter_end_reading: (form as any).destination_silo.flow_meter_end_reading ?? 0,
             source_silo_quantity_requested: (form as any).destination_silo.source_silo_quantity_requested ?? 0,
             product: (form as any).destination_silo.product ?? "",
@@ -324,14 +370,14 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
         : undefined
 
       reset({
-        flow_meter_start: extractTime(form.flow_meter_start),
+        flow_meter_start: form.flow_meter_start || "",
         flow_meter_start_reading: form.flow_meter_start_reading || undefined,
-        flow_meter_end: extractTime(form.flow_meter_end),
+        flow_meter_end: form.flow_meter_end || "",
         flow_meter_end_reading: form.flow_meter_end_reading || undefined,
         source_silo_id: Array.isArray(form.source_silo_id) ? form.source_silo_id : [],
         destination_silo_id: form.destination_silo_id || "",
-        movement_start: extractTime(form.movement_start),
-        movement_end: extractTime(form.movement_end),
+        movement_start: form.movement_start || "",
+        movement_end: form.movement_end || "",
         volume: form.volume || undefined,
         // Map API fields to form fields
         dispatch_operator_id: (form as any).dispatch_operator_id || form.llm_operator_id || "",
@@ -397,8 +443,8 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
                     render={({ field }) => (
                       <ShadcnTimePicker
                         label="Flow Meter Start"
-                        value={field.value}
-                        onChange={field.onChange}
+                        value={extractTime(field.value)}
+                        onChange={val => field.onChange(toIsoDateTime(val))}
                         placeholder="Select flow meter start time"
                         error={!!errors.flow_meter_start}
                       />
@@ -413,8 +459,8 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
                     render={({ field }) => (
                       <ShadcnTimePicker
                         label="Flow Meter End"
-                        value={field.value}
-                        onChange={field.onChange}
+                        value={extractTime(field.value)}
+                        onChange={val => field.onChange(toIsoDateTime(val))}
                         placeholder="Select flow meter end time"
                         error={!!errors.flow_meter_end}
                       />
@@ -433,8 +479,8 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
                     render={({ field }) => (
                       <ShadcnTimePicker
                         label="Movement Start Time"
-                        value={field.value}
-                        onChange={field.onChange}
+                        value={extractTime(field.value)}
+                        onChange={val => field.onChange(toIsoDateTime(val))}
                         placeholder="Select start time (24h)"
                         error={!!errors.movement_start}
                       />
@@ -450,8 +496,8 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
                     render={({ field }) => (
                       <ShadcnTimePicker
                         label="Movement End Time"
-                        value={field.value}
-                        onChange={field.onChange}
+                        value={extractTime(field.value)}
+                        onChange={val => field.onChange(toIsoDateTime(val))}
                         placeholder="Select end time (24h)"
                         error={!!errors.movement_end}
                       />
@@ -554,8 +600,8 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
                             <Label>Flow Meter Start</Label>
                             <ShadcnTimePicker
                               label=""
-                              value={silo.flow_meter_start}
-                              onChange={val => updateSourceSiloDetail(idx, "flow_meter_start", val)}
+                              value={extractTime(silo.flow_meter_start)}
+                              onChange={val => updateSourceSiloDetail(idx, "flow_meter_start", toIsoDateTime(val))}
                               placeholder="Select start time (24h)"
                               error={false}
                             />
@@ -573,8 +619,8 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
                             <Label>Flow Meter End</Label>
                             <ShadcnTimePicker
                               label=""
-                              value={silo.flow_meter_end}
-                              onChange={val => updateSourceSiloDetail(idx, "flow_meter_end", val)}
+                              value={extractTime(silo.flow_meter_end)}
+                              onChange={val => updateSourceSiloDetail(idx, "flow_meter_end", toIsoDateTime(val))}
                               placeholder="Select end time (24h)"
                               error={false}
                             />
@@ -675,11 +721,11 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
                     <div className="font-semibold mb-2">{field.value.name}</div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <Label>Flow Meter Start</Label>
+                        <Label className="mb-1">Flow Meter Start</Label>
                         <ShadcnTimePicker
                           label=""
-                          value={field.value.flow_meter_start}
-                          onChange={val => updateDestinationSiloDetail("flow_meter_start", val)}
+                          value={extractTime(field.value.flow_meter_start)}
+                          onChange={val => updateDestinationSiloDetail("flow_meter_start", toIsoDateTime(val))}
                           placeholder="Select start time (24h)"
                           error={false}
                         />
@@ -697,8 +743,8 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
                         <Label>Flow Meter End</Label>
                         <ShadcnTimePicker
                           label=""
-                          value={field.value.flow_meter_end}
-                          onChange={val => updateDestinationSiloDetail("flow_meter_end", val)}
+                          value={extractTime(field.value.flow_meter_end)}
+                          onChange={val => updateDestinationSiloDetail("flow_meter_end", toIsoDateTime(val))}
                           placeholder="Select end time (24h)"
                           error={false}
                         />
