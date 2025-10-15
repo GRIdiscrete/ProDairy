@@ -34,7 +34,7 @@ export function UHTQualityCheckViewDrawer({
             Incubation Test Details
           </SheetTitle>
           <SheetDescription className="text-sm font-light">
-            View detailed information about the UHT quality check and its analysis results
+            View detailed information about the Incubation quality  check and its analysis results
           </SheetDescription>
         </SheetHeader>
 

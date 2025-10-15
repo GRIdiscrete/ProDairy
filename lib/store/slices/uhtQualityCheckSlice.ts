@@ -48,7 +48,7 @@ export const fetchUHTQualityChecks = createAsyncThunk(
       const data = await getUHTQualityCheckAfterIncubations()
       return data
     } catch (error: any) {
-      return rejectWithValue(error.message || 'Failed to fetch UHT quality checks')
+      return rejectWithValue(error.message || 'Failed to fetch Incubation quality  checks')
     }
   }
 )
@@ -60,7 +60,7 @@ export const createUHTQualityCheckAction = createAsyncThunk(
       const data = await createUHTQualityCheckAfterIncubation(qualityCheckData)
       return data
     } catch (error: any) {
-      return rejectWithValue(error.message || 'Failed to create UHT quality check')
+      return rejectWithValue(error.message || 'Failed to create Incubation quality  check')
     }
   }
 )
@@ -72,7 +72,7 @@ export const updateUHTQualityCheckAction = createAsyncThunk(
       const data = await updateUHTQualityCheckAfterIncubation(qualityCheckData)
       return data
     } catch (error: any) {
-      return rejectWithValue(error.message || 'Failed to update UHT quality check')
+      return rejectWithValue(error.message || 'Failed to update Incubation quality  check')
     }
   }
 )
@@ -84,7 +84,7 @@ export const deleteUHTQualityCheckAction = createAsyncThunk(
       await deleteUHTQualityCheckAfterIncubation(id)
       return id
     } catch (error: any) {
-      return rejectWithValue(error.message || 'Failed to delete UHT quality check')
+      return rejectWithValue(error.message || 'Failed to delete Incubation quality  check')
     }
   }
 )
@@ -96,7 +96,7 @@ export const createUHTQualityCheckDetailsAction = createAsyncThunk(
       const data = await createUHTQualityCheckAfterIncubationDetails(detailsData)
       return data
     } catch (error: any) {
-      return rejectWithValue(error.message || 'Failed to create UHT quality check details')
+      return rejectWithValue(error.message || 'Failed to create Incubation quality  check details')
     }
   }
 )
@@ -108,7 +108,7 @@ export const updateUHTQualityCheckDetailsAction = createAsyncThunk(
       const data = await updateUHTQualityCheckAfterIncubationDetails(detailsData)
       return data
     } catch (error: any) {
-      return rejectWithValue(error.message || 'Failed to update UHT quality check details')
+      return rejectWithValue(error.message || 'Failed to update Incubation quality  check details')
     }
   }
 )

@@ -37,7 +37,7 @@ export default function UHTQualityCheckPage({ params }: UHTQualityCheckPageProps
   const [tableFilters, setTableFilters] = useState<TableFilters>({})
   const hasFetchedRef = useRef(false)
   
-  // Load UHT quality checks on initial mount
+  // Load Incubation quality  checks on initial mount
   useEffect(() => {
     if (!isInitialized && !hasFetchedRef.current) {
       hasFetchedRef.current = true
@@ -123,7 +123,7 @@ export default function UHTQualityCheckPage({ params }: UHTQualityCheckPageProps
       setDeleteDialogOpen(false)
       setSelectedQualityCheck(null)
     } catch (error: any) {
-      toast.error(error || 'Failed to delete UHT quality check')
+      toast.error(error || 'Failed to delete Incubation quality  check')
     }
   }
 
@@ -346,12 +346,12 @@ export default function UHTQualityCheckPage({ params }: UHTQualityCheckPageProps
   ], [operationLoading.delete])
 
   return (
-    <DataCaptureDashboardLayout title="Incubation Test" subtitle="UHT quality check after incubation process control and monitoring">
+    <DataCaptureDashboardLayout title="Incubation Test" subtitle="Incubation quality  check after incubation process control and monitoring">
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-light text-foreground">Incubation Test</h1>
-            <p className="text-sm font-light text-muted-foreground">Manage UHT quality check forms and process control</p>
+            <p className="text-sm font-light text-muted-foreground">Manage Incubation quality  check forms and process control</p>
             <p className="text-xs text-gray-500 mt-1">Process ID: {params.process_id}</p>
           </div>
           <LoadingButton 
@@ -473,14 +473,14 @@ export default function UHTQualityCheckPage({ params }: UHTQualityCheckPageProps
         {!loading && (
           <div className="border border-gray-200 rounded-lg bg-white">
             <div className="p-6 pb-0">
-              <div className="text-lg font-light">UHT Quality Checks</div>
+              <div className="text-lg font-light">Incubation Tests</div>
             </div>
             <div className="p-6 space-y-4">
             <DataTableFilters
               filters={tableFilters}
               onFiltersChange={setTableFilters}
               onSearch={(searchTerm) => setTableFilters(prev => ({ ...prev, search: searchTerm }))}
-              searchPlaceholder="Search UHT quality checks..."
+              searchPlaceholder="Search Incubation quality  checks..."
               filterFields={filterFields}
             />
             
@@ -518,7 +518,7 @@ export default function UHTQualityCheckPage({ params }: UHTQualityCheckPageProps
           open={deleteDialogOpen}
           onOpenChange={setDeleteDialogOpen}
           title="Delete Incubation Test"
-          description={`Are you sure you want to delete this UHT quality check? This action cannot be undone and may affect production tracking.`}
+          description={`Are you sure you want to delete this Incubation quality  check? This action cannot be undone and may affect production tracking.`}
           onConfirm={confirmDelete}
           loading={operationLoading.delete}
         />
