@@ -8,6 +8,7 @@ import { FilmaticLinesForm1, filmaticLinesForm1Api } from "@/lib/api/filmatic-li
 import { BMTControlForm, bmtControlFormApi } from "@/lib/api/bmt-control-form"
 import { FilmaticLinesGroup, filmaticLinesGroupsApi } from "@/lib/api/filmatic-lines-groups"
 import { useAuth } from "@/hooks/use-auth"
+import { useAppDispatch } from "@/lib/store"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -19,7 +20,9 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Switch } from "@/components/ui/switch"
 import { ArrowRight, Factory, Beaker, FileText, Package, Clock, Sun, Moon, Users, Plus, Trash2, ChevronLeft, ChevronRight } from "lucide-react"
+import { fetchFilmaticLinesForm1s } from "@/lib/store/slices/filmaticLinesForm1Slice"
 
 interface FilmaticLinesForm1DrawerProps {
   open: boolean
@@ -88,6 +91,7 @@ const groupSelectionSchema = yup.object({
 const createBasicInfoSchema = (selectedShift: string) => yup.object({
   date: yup.string().required("Date is required"),
   holding_tank_bmt: yup.string().required("Holding tank BMT is required"),
+  approved: yup.boolean().default(false),
   ...(selectedShift === "day_shift" && {
     day_shift_opening_bottles: yup.number().required("Day shift opening bottles is required").min(0, "Must be positive"),
     day_shift_closing_bottles: yup.number().nullable(),
@@ -103,6 +107,7 @@ const createBasicInfoSchema = (selectedShift: string) => yup.object({
 // Step 4: Shift Details Schema (simplified for debugging)
 const shiftDetailsSchema = yup.object({
   supervisor_approve: yup.boolean(),
+  supervisor_id: yup.string().nullable(),
   operator_id: yup.string(),
   details: yup.array().of(
     yup.object({
@@ -118,6 +123,7 @@ const shiftDetailsSchema = yup.object({
 type BasicInfoFormData = {
   date: string
   holding_tank_bmt: string
+  approved?: boolean
   day_shift_opening_bottles?: number
   day_shift_closing_bottles?: number
   night_shift_opening_bottles?: number
@@ -129,6 +135,7 @@ type ShiftSelectionFormData = yup.InferType<typeof shiftSelectionSchema>
 type GroupSelectionFormData = yup.InferType<typeof groupSelectionSchema>
 type ShiftDetailsFormData = {
   supervisor_approve?: boolean
+  supervisor_id?: string
   operator_id?: string
   details?: Array<{
     time?: string
@@ -148,6 +155,7 @@ export function FilmaticLinesForm1Drawer({
 }: FilmaticLinesForm1DrawerProps) {
   const { user } = useAuth()
   const [loading, setLoading] = useState({ create: false })
+  const dispatch = useAppDispatch()
   
   const [currentStep, setCurrentStep] = useState(1)
   const [bmtForms, setBmtForms] = useState<BMTControlForm[]>([])
@@ -204,6 +212,7 @@ export function FilmaticLinesForm1Drawer({
     defaultValues: {
       date: "",
       holding_tank_bmt: "",
+      approved: false,
       day_shift_opening_bottles: undefined,
       day_shift_closing_bottles: undefined,
       night_shift_opening_bottles: undefined,
@@ -218,6 +227,7 @@ export function FilmaticLinesForm1Drawer({
     resolver: yupResolver(shiftDetailsSchema),
     defaultValues: {
       supervisor_approve: false,
+      supervisor_id: "",
       operator_id: user?.id || "",
       details: [{
         time: "",
@@ -293,796 +303,528 @@ export function FilmaticLinesForm1Drawer({
 
   // Reset forms when drawer opens/closes
   useEffect(() => {
-    if (open) {
-      if (mode === "edit" && form) {
-        // Populate forms with existing data for edit mode
-        console.log("Edit mode - populating form data:", form)
-        
-        // Populate basic info form
-        basicInfoForm.reset({
-          date: form.date || "",
-          holding_tank_bmt: form.holding_tank_bmt || "",
-          day_shift_opening_bottles: undefined,
-          day_shift_closing_bottles: undefined,
-          night_shift_opening_bottles: undefined,
-          night_shift_closing_bottles: undefined,
-          day_shift_waste_bottles: undefined,
-          night_shift_waste_bottles: undefined,
-        })
+		if (open) {
+			if (mode === "edit" && form) {
+				// Populate forms with existing data for edit mode
+				console.log("Edit mode - populating form data:", form)
 
-        // Determine shift type based on existing data
-        let shiftType = ""
-        if (form.filmatic_line_form_1_day_shift && form.filmatic_line_form_1_day_shift.length > 0) {
-          shiftType = "day_shift"
-        } else if (form.filmatic_line_form_1_night_shift && form.filmatic_line_form_1_night_shift.length > 0) {
-          shiftType = "night_shift"
-        }
+				// Populate basic info form
+				basicInfoForm.reset({
+					date: form.date || "",
+					holding_tank_bmt: form.holding_tank_bmt || "",
+					approved: !!form.approved,
+					day_shift_opening_bottles: form.day_shift_opening_bottles ?? undefined,
+					day_shift_closing_bottles: form.day_shift_closing_bottles ?? undefined,
+					day_shift_waste_bottles: form.day_shift_waste_bottles ?? undefined,
+					night_shift_opening_bottles: form.night_shift_opening_bottles ?? undefined,
+					night_shift_closing_bottles: form.night_shift_closing_bottles ?? undefined,
+					night_shift_waste_bottles: form.night_shift_waste_bottles ?? undefined,
+				})
 
-        shiftSelectionForm.reset({
-          shift_type: shiftType,
-        })
+				// Determine shift type based on existing data
+				let shiftType = ""
+				if (form.filmatic_line_form_1_day_shift && form.filmatic_line_form_1_day_shift.length > 0) {
+					shiftType = "day_shift"
+				} else if (form.filmatic_line_form_1_night_shift && form.filmatic_line_form_1_night_shift.length > 0) {
+					shiftType = "night_shift"
+				}
 
-        // Determine group selection based on existing data
-        let selectedGroupType = ""
-        if (form.groups) {
-          if (form.groups.group_a && form.groups.group_a.length > 0) selectedGroupType = "group_a"
-          else if (form.groups.group_b && form.groups.group_b.length > 0) selectedGroupType = "group_b"
-          else if (form.groups.group_c && form.groups.group_c.length > 0) selectedGroupType = "group_c"
-        }
+				shiftSelectionForm.reset({
+					shift_type: shiftType,
+				})
 
-        groupSelectionForm.reset({
-          selected_group: selectedGroupType,
-        })
+				// Determine group selection based on existing data
+				let selectedGroupType = ""
+				if (form.groups) {
+					if (form.groups.group_a && form.groups.group_a.length > 0) selectedGroupType = "group_a"
+					else if (form.groups.group_b && form.groups.group_b.length > 0) selectedGroupType = "group_b"
+					else if (form.groups.group_c && form.groups.group_c.length > 0) selectedGroupType = "group_c"
+				}
 
-        setCurrentStep(1)
-      } else {
-        // Reset all forms to clean defaults
-        basicInfoForm.reset({
-          date: "",
-          holding_tank_bmt: "",
-          day_shift_opening_bottles: undefined,
-          day_shift_closing_bottles: undefined,
-          night_shift_opening_bottles: undefined,
-          night_shift_closing_bottles: undefined,
-          day_shift_waste_bottles: undefined,
-          night_shift_waste_bottles: undefined,
-        })
-        shiftSelectionForm.reset({
-          shift_type: "",
-        })
-        shiftDetailsForm.reset({
-          supervisor_approve: false,
-          operator_id: user?.id || "",
-          details: [{
-            time: "",
-            pallets: undefined,
-            target: undefined,
-            setbacks: "",
-            stoppage_time: {
-              product_1: undefined,
-              product_2: undefined,
-              filler_1: undefined,
-              filler_2: undefined,
-              capper_1: undefined,
-              capper_2: undefined,
-              sleever_1: undefined,
-              sleever_2: undefined,
-              shrink_1: undefined,
-              shrink_2: undefined,
-            }
-          }]
-        })
-        setCurrentStep(1)
-      }
-    }
-  }, [open, mode, form, basicInfoForm, shiftSelectionForm, shiftDetailsForm])
+				groupSelectionForm.reset({
+					selected_group: selectedGroupType,
+				})
 
-  const handleShiftSelectionSubmit = async (data: ShiftSelectionFormData) => {
-    setCurrentStep(2)
+				// Prefill shift details
+				try {
+					const shiftEntry = shiftType === "day_shift"
+						? (Array.isArray(form.filmatic_line_form_1_day_shift) ? form.filmatic_line_form_1_day_shift[0] : undefined)
+						: (Array.isArray(form.filmatic_line_form_1_night_shift) ? form.filmatic_line_form_1_night_shift[0] : undefined)
+
+					if (shiftEntry) {
+						const details = Array.isArray(shiftEntry.filmatic_line_form_1_day_shift_details || shiftEntry.filmatic_line_form_1_night_shift_details)
+							? (shiftEntry.filmatic_line_form_1_day_shift_details || shiftEntry.filmatic_line_form_1_night_shift_details)
+							: []
+
+						const mappedDetails = details.map((d: any) => {
+							// pick the first stoppage object if present
+							const stoppageArr = d.filmatic_line_form_1_day_shift_details_stoppage_time || d.filmatic_line_form_1_night_shift_details_stoppage_time || []
+							const stoppage = Array.isArray(stoppageArr) && stoppageArr.length > 0 ? stoppageArr[0] : {}
+
+							// normalize time to "HH:MM" if "HH:MM:SS"
+							let timeVal = d.time || ""
+							if (typeof timeVal === "string" && timeVal.indexOf(":") !== -1) {
+								const parts = timeVal.split(":")
+								if (parts.length >= 2) timeVal = `${parts[0].padStart(2,"0")}:${parts[1].padStart(2,"0")}`
+							}
+
+							return {
+								time: timeVal,
+								pallets: d.pallets ?? undefined,
+								target: d.target ?? undefined,
+								setbacks: d.setbacks ?? "",
+								stoppage_time: {
+									product_1: stoppage.product_1 ?? stoppage.product1 ?? undefined,
+									product_2: stoppage.product_2 ?? stoppage.product2 ?? undefined,
+									filler_1: stoppage.filler_1 ?? undefined,
+									filler_2: stoppage.filler_2 ?? undefined,
+									capper_1: stoppage.capper_1 ?? undefined,
+									capper_2: stoppage.capper_2 ?? undefined,
+									sleever_1: stoppage.sleever_1 ?? undefined,
+									sleever_2: stoppage.sleever_2 ?? undefined,
+									shrink_1: stoppage.shrink_1 ?? undefined,
+									shrink_2: stoppage.shrink_2 ?? undefined,
+								}
+							}
+						})
+
+						shiftDetailsForm.reset({
+							supervisor_approve: shiftEntry.supervisor_approve ?? false,
+							supervisor_id: shiftEntry.supervisor_id ?? "",
+							operator_id: shiftEntry.operator_id ?? user?.id ?? "",
+							details: mappedDetails.length ? mappedDetails : [{
+								time: "",
+								pallets: undefined,
+								target: undefined,
+								setbacks: "",
+								stoppage_time: {
+									product_1: undefined,
+									product_2: undefined,
+									filler_1: undefined,
+									filler_2: undefined,
+									capper_1: undefined,
+									capper_2: undefined,
+									sleever_1: undefined,
+									sleever_2: undefined,
+									shrink_1: undefined,
+									shrink_2: undefined,
+								}
+							}]
+						})
+					} else {
+						// no shift entry found -> keep defaults
+						shiftDetailsForm.reset({
+							supervisor_approve: false,
+							supervisor_id: "",
+							operator_id: user?.id || "",
+							details: [{
+								time: "",
+								pallets: undefined,
+								target: undefined,
+								setbacks: "",
+								stoppage_time: {
+									product_1: undefined,
+									product_2: undefined,
+									filler_1: undefined,
+									filler_2: undefined,
+									capper_1: undefined,
+									capper_2: undefined,
+									sleever_1: undefined,
+									sleever_2: undefined,
+									shrink_1: undefined,
+									shrink_2: undefined,
+								}
+							}]
+						})
+					}
+				} catch (err) {
+					console.error("Error pre-filling shift details:", err)
+				}
+
+				setCurrentStep(1)
+			} else {
+				// Reset all forms to clean defaults
+				basicInfoForm.reset({
+					date: "",
+					holding_tank_bmt: "",
+					approved: false,
+					day_shift_opening_bottles: undefined,
+					day_shift_closing_bottles: undefined,
+					night_shift_opening_bottles: undefined,
+					night_shift_closing_bottles: undefined,
+					day_shift_waste_bottles: undefined,
+					night_shift_waste_bottles: undefined,
+				})
+				shiftSelectionForm.reset({
+					shift_type: "",
+				})
+				groupSelectionForm.reset({
+					selected_group: "",
+				})
+				shiftDetailsForm.reset({
+					supervisor_approve: false,
+					supervisor_id: "",
+					operator_id: user?.id || "",
+					details: [{
+						time: "",
+						pallets: undefined,
+						target: undefined,
+						setbacks: "",
+						stoppage_time: {
+							product_1: undefined,
+							product_2: undefined,
+							filler_1: undefined,
+							filler_2: undefined,
+							capper_1: undefined,
+							capper_2: undefined,
+							sleever_1: undefined,
+							sleever_2: undefined,
+							shrink_1: undefined,
+							shrink_2: undefined,
+						}
+					}]
+				})
+				setCurrentStep(1)
+			}
+		}
+	}, [open, mode, form, basicInfoForm, shiftSelectionForm, groupSelectionForm, shiftDetailsForm, user?.id])
+
+  // --- Debugging: Log form states on submit ---
+  const onSubmit = async (data: any) => {
+    console.log("Submitting form data:", data)
+    // ...existing submit logic...
   }
-
-  const handleGroupSelectionSubmit = async (data: GroupSelectionFormData) => {
-    setCurrentStep(3)
-  }
-
-  const handleBasicInfoSubmit = async (data: any) => {
-    setCurrentStep(4)
-  }
-
-  const handleShiftDetailsSubmit = async (data: ShiftDetailsFormData) => {
-    console.log("Form submission started...")
-    console.log("Shift details data:", data)
-    
-    setLoading({ create: true })
-    
-    try {
-      const basicInfo = basicInfoForm.getValues()
-      const shiftType = shiftSelectionForm.getValues().shift_type
-      
-      console.log("Basic info:", basicInfo)
-      console.log("Shift type:", shiftType)
-      console.log("Selected group:", selectedGroup)
-      console.log("Selected group data:", selectedGroupData)
-      
-      // Build the form data according to the correct API structure
-      const formData: any = {
-        approved: true,
-        process_id: processId || "",
-        date: basicInfo.date,
-        holding_tank_bmt: basicInfo.holding_tank_bmt,
-        groups: selectedGroupData ? {
-          group_a: selectedGroup === "group_a" ? selectedGroupData.members : [],
-          manager_id: selectedGroupData.manager_id
-        } : undefined
-      }
-
-      // Add shift-specific bottle counts and shift data
-      if (shiftType === "day_shift") {
-        formData.day_shift_opening_bottles = Number(basicInfo.day_shift_opening_bottles) || 0
-        formData.day_shift_closing_bottles = Number(basicInfo.day_shift_closing_bottles) || 0
-        formData.day_shift_waste_bottles = Number(basicInfo.day_shift_waste_bottles) || 0
-        
-        // Add day_shift object (not filmatic_line_form_1_day_shift)
-        formData.day_shift = {
-          supervisor_approve: data.supervisor_approve,
-          operator_id: data.operator_id,
-          details: data.details.map((detail: any) => ({
-            time: detail.time,
-            pallets: detail.pallets,
-            target: detail.target,
-            setbacks: detail.setbacks,
-            stoppage_time: [detail.stoppage_time] // Array of stoppage time objects
-          }))
-        }
-      } else if (shiftType === "night_shift") {
-        formData.night_shift_opening_bottles = Number(basicInfo.night_shift_opening_bottles) || 0
-        formData.night_shift_closing_bottles = Number(basicInfo.night_shift_closing_bottles) || 0
-        formData.night_shift_waste_bottles = Number(basicInfo.night_shift_waste_bottles) || 0
-        
-        // Add night_shift object (not filmatic_line_form_1_night_shift)
-        formData.night_shift = {
-          supervisor_approve: data.supervisor_approve,
-          operator_id: data.operator_id,
-          details: data.details.map((detail: any) => ({
-            time: detail.time,
-            pallets: detail.pallets,
-            target: detail.target,
-            setbacks: detail.setbacks,
-            stoppage_time: [detail.stoppage_time] // Array of stoppage time objects
-          }))
-        }
-      }
-
-      console.log("Submitting form data:", JSON.stringify(formData, null, 2))
-      
-      const response = await filmaticLinesForm1Api.createForm(formData)
-      console.log("Filmatic Lines Form created successfully:", response)
-      
-      // Show success snackbar
-      toast.success("Filmatic Lines Form created successfully!", {
-        description: "Your form has been submitted and saved.",
-        duration: 4000,
-      })
-      
-      onOpenChange(false)
-    } catch (error: any) {
-      console.error("Failed to create Filmatic Lines Form:", error)
-      
-      // Show error snackbar
-      toast.error("Failed to create form", {
-        description: error.message || "An unexpected error occurred. Please try again.",
-        duration: 5000,
-      })
-    } finally {
-      setLoading({ create: false })
-    }
-  }
-
-  const handleBack = () => {
-    if (currentStep > 1) {
-      setCurrentStep(currentStep - 1)
-    }
-  }
-
-  const handleNext = () => {
-    if (currentStep === 1) {
-      shiftSelectionForm.handleSubmit(handleShiftSelectionSubmit)()
-    } else if (currentStep === 2) {
-      groupSelectionForm.handleSubmit(handleGroupSelectionSubmit)()
-    } else if (currentStep === 3) {
-      basicInfoForm.handleSubmit(handleBasicInfoSubmit)()
-    }
-  }
-
-  const handleBmtFormSearch = async (query: string) => {
-    if (!query.trim()) {
-      // Return all BMT forms if no query
-      return bmtForms.map(bmtForm => ({
-        value: bmtForm.id,
-        label: `BMT Form #${bmtForm.id?.slice(0, 8)}`,
-        description: `${bmtForm.product} • Volume: ${bmtForm.volume}L • ${bmtForm.flow_meter_start ? new Date(bmtForm.flow_meter_start).toLocaleDateString() : 'No date'}`
-      }))
-    }
-    
-    try {
-      // Filter loaded BMT forms based on query
-      return bmtForms
-        .filter(bmtForm => 
-          bmtForm.product?.toLowerCase().includes(query.toLowerCase()) ||
-          bmtForm.id?.toLowerCase().includes(query.toLowerCase()) ||
-          bmtForm.volume?.toString().includes(query)
-        )
-        .map(bmtForm => ({
-          value: bmtForm.id,
-          label: `BMT Form #${bmtForm.id?.slice(0, 8)}`,
-          description: `${bmtForm.product} • Volume: ${bmtForm.volume}L • ${bmtForm.flow_meter_start ? new Date(bmtForm.flow_meter_start).toLocaleDateString() : 'No date'}`
-        }))
-    } catch (error) {
-      console.error("Failed to search BMT Control forms:", error)
-      return []
-    }
-  }
-
-  const renderStep1 = () => (
-    <div className="space-y-6 p-6">
-      <ProcessOverview />
-
-      <div className="space-y-4">
-        <div className="text-center mb-6">
-          <h3 className="text-xl font-light text-gray-900">Shift Selection</h3>
-          <p className="text-sm font-light text-gray-600 mt-2">Choose which shift you are creating data for</p>
-        </div>
-
-        <div className="space-y-4">
-          <Controller
-            name="shift_type"
-            control={shiftSelectionForm.control}
-            render={({ field }) => (
-              <RadioGroup
-                value={field.value}
-                onValueChange={field.onChange}
-                className="space-y-4"
-              >
-                <div className="flex items-center space-x-3 p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
-                  <RadioGroupItem value="day_shift" id="day_shift" />
-                  <Label htmlFor="day_shift" className="flex items-center space-x-3 cursor-pointer">
-                    <div className="w-8 h-8 rounded-full bg-yellow-100 flex items-center justify-center">
-                      <Sun className="w-4 h-4 text-yellow-600" />
-                    </div>
-                    <div>
-                      <div className="font-medium">Day Shift</div>
-                      <div className="text-sm text-gray-500">08:00 - 18:00</div>
-                    </div>
-                  </Label>
-                </div>
-
-                <div className="flex items-center space-x-3 p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
-                  <RadioGroupItem value="night_shift" id="night_shift" />
-                  <Label htmlFor="night_shift" className="flex items-center space-x-3 cursor-pointer">
-                    <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
-                      <Moon className="w-4 h-4 text-blue-600" />
-                    </div>
-                    <div>
-                      <div className="font-medium">Night Shift</div>
-                      <div className="text-sm text-gray-500">19:00 - 06:00</div>
-                    </div>
-                  </Label>
-                </div>
-              </RadioGroup>
-            )}
-          />
-          {shiftSelectionForm.formState.errors.shift_type && (
-            <p className="text-sm text-red-500">{shiftSelectionForm.formState.errors.shift_type.message}</p>
-          )}
-        </div>
-      </div>
-    </div>
-  )
-
-  const renderStep2 = () => (
-    <div className="space-y-6 p-6">
-      <ProcessOverview />
-
-      <div className="space-y-4">
-        <div className="text-center mb-6">
-          <h3 className="text-xl font-light text-gray-900">Group Selection</h3>
-          <p className="text-sm font-light text-gray-600 mt-2">Select the group for this shift</p>
-        </div>
-
-        {loadingGroups ? (
-          <div className="text-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="text-sm text-gray-500 mt-2">Loading groups...</p>
-          </div>
-        ) : filmaticGroups.length > 0 ? (
-          <div className="space-y-4">
-            <Controller
-              name="selected_group"
-              control={groupSelectionForm.control}
-              render={({ field }) => (
-                <RadioGroup
-                  value={field.value}
-                  onValueChange={field.onChange}
-                  className="space-y-4"
-                >
-                  {["group_a", "group_b", "group_c"].map((groupKey) => {
-                    const firstGroup = filmaticGroups[0] // Using first group record as specified
-                    const members = firstGroup[groupKey as keyof FilmaticLinesGroup] as string[]
-
-                    return (
-                      <div key={groupKey} className="flex items-center space-x-3 p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
-                        <RadioGroupItem value={groupKey} id={groupKey} />
-                        <Label htmlFor={groupKey} className="flex items-center space-x-3 cursor-pointer w-full">
-                          <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
-                            <Users className="w-4 h-4 text-blue-600" />
-                          </div>
-                          <div className="flex-1">
-                            <div className="font-medium">Group {groupKey.split('_')[1].toUpperCase()}</div>
-                            <div className="text-sm text-gray-500">{members?.length || 0} members</div>
-                          </div>
-                        </Label>
-                      </div>
-                    )
-                  })}
-                </RadioGroup>
-              )}
-            />
-            {groupSelectionForm.formState.errors.selected_group && (
-              <p className="text-sm text-red-500">{groupSelectionForm.formState.errors.selected_group.message}</p>
-            )}
-          </div>
-        ) : (
-          <div className="text-center py-8">
-            <p className="text-sm text-gray-500">No groups available</p>
-          </div>
-        )}
-      </div>
-    </div>
-  )
-
-  const renderStep3 = () => (
-    <div className="space-y-6 p-6">
-      <ProcessOverview />
-
-      <div className="space-y-4">
-        <div className="text-center mb-6">
-          <h3 className="text-xl font-light text-gray-900">Basic Information</h3>
-          <p className="text-sm font-light text-gray-600 mt-2">
-            Enter the basic form information and bottle counts
-            {selectedShift && (
-              <span className="block mt-1 text-blue-600">
-                {selectedShift === "day_shift" ? "Day Shift" : "Night Shift"} - Showing relevant fields
-              </span>
-            )}
-          </p>
-        </div>
-
-        <div className="space-y-2">
-          <Controller
-            name="date"
-            control={basicInfoForm.control}
-            render={({ field }) => (
-              <DatePicker
-                label="Date *"
-                value={field.value}
-                onChange={field.onChange}
-                placeholder="Select date"
-                error={!!basicInfoForm.formState.errors.date}
-              />
-            )}
-          />
-          {basicInfoForm.formState.errors.date && (
-            <p className="text-sm text-red-500">{basicInfoForm.formState.errors.date.message}</p>
-          )}
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="holding_tank_bmt">Holding Tank BMT *</Label>
-          <Controller
-            name="holding_tank_bmt"
-            control={basicInfoForm.control}
-            render={({ field }) => (
-              <SearchableSelect
-                options={bmtForms.map(bmtForm => ({
-                  value: bmtForm.id,
-                  label: bmtForm?.tag,
-                  description: `${bmtForm.product} • Volume: ${bmtForm.volume ??0}L • `
-                }))}
-                value={field.value}
-                onValueChange={field.onChange}
-                onSearch={handleBmtFormSearch}
-                placeholder="Search and select BMT Control form"
-                searchPlaceholder="Search BMT forms..."
-                emptyMessage="No BMT Control forms found"
-                loading={loadingBmtForms}
-              />
-            )}
-          />
-          {basicInfoForm.formState.errors.holding_tank_bmt && (
-            <p className="text-sm text-red-500">{basicInfoForm.formState.errors.holding_tank_bmt.message}</p>
-          )}
-        </div>
-
-        {/* Show shift-specific fields based on selected shift */}
-        {selectedShift === "day_shift" && (
-          <>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="day_shift_opening_bottles">Day Shift Opening Bottles *</Label>
-                <Controller
-                  name="day_shift_opening_bottles"
-                  control={basicInfoForm.control}
-                  render={({ field }) => (
-                    <Input
-                      id="day_shift_opening_bottles"
-                      type="number"
-                      placeholder="Enter opening bottles"
-                      className="rounded-full border-gray-200"
-                      value={String(field.value || "")}
-                      onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
-                      onBlur={field.onBlur}
-                      name={field.name}
-                    />
-                  )}
-                />
-                {basicInfoForm.formState.errors.day_shift_opening_bottles && (
-                  <p className="text-sm text-red-500">{basicInfoForm.formState.errors.day_shift_opening_bottles.message}</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="day_shift_closing_bottles">Day Shift Closing Bottles</Label>
-                <Controller
-                  name="day_shift_closing_bottles"
-                  control={basicInfoForm.control}
-                  render={({ field }) => (
-                    <Input
-                      id="day_shift_closing_bottles"
-                      type="number"
-                      placeholder="Enter closing bottles"
-                      className="rounded-full border-gray-200"
-                      value={String(field.value || "")}
-                      onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
-                      onBlur={field.onBlur}
-                      name={field.name}
-                    />
-                  )}
-                />
-                {basicInfoForm.formState.errors.day_shift_closing_bottles && (
-                  <p className="text-sm text-red-500">{basicInfoForm.formState.errors.day_shift_closing_bottles.message}</p>
-                )}
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="day_shift_waste_bottles">Day Shift Waste Bottles</Label>
-              <Controller
-                name="day_shift_waste_bottles"
-                control={basicInfoForm.control}
-                render={({ field }) => (
-                  <Input
-                    id="day_shift_waste_bottles"
-                    type="number"
-                    placeholder="Enter waste bottles"
-                    className="rounded-full border-gray-200"
-                    value={String(field.value || "")}
-                    onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
-                    onBlur={field.onBlur}
-                    name={field.name}
-                  />
-                )}
-              />
-              {basicInfoForm.formState.errors.day_shift_waste_bottles && (
-                <p className="text-sm text-red-500">{basicInfoForm.formState.errors.day_shift_waste_bottles.message}</p>
-              )}
-            </div>
-          </>
-        )}
-
-        {selectedShift === "night_shift" && (
-          <>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="night_shift_opening_bottles">Night Shift Opening Bottles *</Label>
-                <Controller
-                  name="night_shift_opening_bottles"
-                  control={basicInfoForm.control}
-                  render={({ field }) => (
-                    <Input
-                      id="night_shift_opening_bottles"
-                      type="number"
-                      placeholder="Enter opening bottles"
-                      className="rounded-full border-gray-200"
-                      value={String(field.value || "")}
-                      onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
-                      onBlur={field.onBlur}
-                      name={field.name}
-                    />
-                  )}
-                />
-                {basicInfoForm.formState.errors.night_shift_opening_bottles && (
-                  <p className="text-sm text-red-500">{basicInfoForm.formState.errors.night_shift_opening_bottles.message}</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="night_shift_closing_bottles">Night Shift Closing Bottles</Label>
-                <Controller
-                  name="night_shift_closing_bottles"
-                  control={basicInfoForm.control}
-                  render={({ field }) => (
-                    <Input
-                      id="night_shift_closing_bottles"
-                      type="number"
-                      placeholder="Enter closing bottles"
-                      className="rounded-full border-gray-200"
-                      value={String(field.value || "")}
-                      onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
-                      onBlur={field.onBlur}
-                      name={field.name}
-                    />
-                  )}
-                />
-                {basicInfoForm.formState.errors.night_shift_closing_bottles && (
-                  <p className="text-sm text-red-500">{basicInfoForm.formState.errors.night_shift_closing_bottles.message}</p>
-                )}
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="night_shift_waste_bottles">Night Shift Waste Bottles</Label>
-              <Controller
-                name="night_shift_waste_bottles"
-                control={basicInfoForm.control}
-                render={({ field }) => (
-                  <Input
-                    id="night_shift_waste_bottles"
-                    type="number"
-                    placeholder="Enter waste bottles"
-                    className="rounded-full border-gray-200"
-                    value={String(field.value || "")}
-                    onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
-                    onBlur={field.onBlur}
-                    name={field.name}
-                  />
-                )}
-              />
-              {basicInfoForm.formState.errors.night_shift_waste_bottles && (
-                <p className="text-sm text-red-500">{basicInfoForm.formState.errors.night_shift_waste_bottles.message}</p>
-              )}
-            </div>
-          </>
-        )}
-      </div>
-    </div>
-  )
-
-  const renderStep4 = () => {
-    const timeOptions = selectedShift === "day_shift" ? DAY_SHIFT_TIMES : NIGHT_SHIFT_TIMES
-
-    return (
-      <div className="space-y-6 p-6">
-        <ProcessOverview />
-
-        <div className="space-y-4">
-          <div className="text-center mb-6">
-            <h3 className="text-xl font-light text-gray-900">Shift Details</h3>
-            <p className="text-sm font-light text-gray-600 mt-2">Enter the specific shift details and production information</p>
-          </div>
-
-          <div className="space-y-4">
-            <div className="flex items-center space-x-2">
-              <Controller
-                name="supervisor_approve"
-                control={shiftDetailsForm.control}
-                render={({ field }) => (
-                  <Checkbox
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                  />
-                )}
-              />
-            </div>
-
-
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <Label>Production Details</Label>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => append({
-                    time: "",
-                    pallets: 0,
-                    target: 0,
-                    setbacks: "",
-                    stoppage_time: {
-                      product_1: 0,
-                      product_2: 0,
-                      filler_1: 0,
-                      filler_2: 0,
-                      capper_1: 0,
-                      capper_2: 0,
-                      sleever_1: 0,
-                      sleever_2: 0,
-                      shrink_1: 0,
-                      shrink_2: 0,
-                    }
-                  })}
-                >
-                  <Plus className="h-4 w-4 mr-1" />
-                  Add Entry
-                </Button>
-              </div>
-
-              {fields.map((field, index) => (
-                <div key={field.id} className="p-4 border rounded-lg space-y-4">
-                  <div className="flex justify-between">
-                    <h4 className="font-medium">Entry {index + 1}</h4>
-                    {fields.length > 1 && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => remove(index)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label>Time</Label>
-                      <Controller
-                        name={`details.${index}.time`}
-                        control={shiftDetailsForm.control}
-                        render={({ field }) => (
-                          <Select value={field.value} onValueChange={field.onChange}>
-                            <SelectTrigger className="rounded-full border-gray-200">
-                              <SelectValue placeholder="Select time" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {timeOptions.map(time => (
-                                <SelectItem key={time} value={time}>{time}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        )}
-                      />
-                    </div>
-
-                    <div>
-                      <Label>Pallets</Label>
-                      <Controller
-                        name={`details.${index}.pallets`}
-                        control={shiftDetailsForm.control}
-                        render={({ field }) => (
-                          <Input type="number" {...field} onChange={e => field.onChange(Number(e.target.value))} />
-                        )}
-                      />
-                    </div>
-
-                    <div>
-                      <Label>Target</Label>
-                      <Controller
-                        name={`details.${index}.target`}
-                        control={shiftDetailsForm.control}
-                        render={({ field }) => (
-                          <Input type="number" {...field} onChange={e => field.onChange(Number(e.target.value))} />
-                        )}
-                      />
-                    </div>
-
-                    <div className="col-span-2">
-                      <Label>Setbacks</Label>
-                      <Controller
-                        name={`details.${index}.setbacks`}
-                        control={shiftDetailsForm.control}
-                        render={({ field }) => (
-                          <Textarea {...field} placeholder="Describe any setbacks" />
-                        )}
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <Label className="mb-2 block">Stoppage Time (minutes)</Label>
-                    <div className="grid grid-cols-2 gap-2">
-                      {["product_1", "product_2", "filler_1", "filler_2", "capper_1", "capper_2", "sleever_1", "sleever_2", "shrink_1", "shrink_2"].map(key => (
-                        <div key={key} className="flex items-center gap-2">
-                          <Label className="text-xs w-20">{key.replace('_', ' ')}</Label>
-                          <Controller
-                            name={`details.${index}.stoppage_time.${key}`}
-                            control={shiftDetailsForm.control}
-                            render={({ field }) => (
-                              <Input
-                                type="number"
-                                className="h-8"
-                                {...field}
-                                onChange={e => field.onChange(Number(e.target.value))}
-                              />
-                            )}
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    )
-  }
+  // --- End debugging ---
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="tablet-sheet-full p-0 bg-white">
-        <SheetHeader className="p-6 pb-0 bg-white">
-          <SheetTitle>
-            {mode === "edit" ? "Edit Filmatic Lines Form 1" : "Create Filmatic Lines Form 1"}
+      <SheetContent className="max-w-4xl p-6">
+        <SheetHeader>
+          <SheetTitle className="text-lg font-semibold">
+            Filmatic Lines Form 1
           </SheetTitle>
-          <SheetDescription>
-            {currentStep === 1 
-              ? "Step 1: Shift Selection - Choose which shift you are creating data for"
-              : currentStep === 2
-              ? "Step 2: Group Selection - Select the group for this shift"
-              : currentStep === 3
-              ? "Step 3: Basic Information - Enter the basic form information and bottle counts"
-              : "Step 4: Shift Details - Enter the specific shift details and production information"
-            }
+          <SheetDescription className="text-sm text-gray-500">
+            {mode === "edit" ? "Edit existing record" : "Create new record"}
           </SheetDescription>
         </SheetHeader>
 
-        <div className="flex-1 overflow-y-auto bg-white" key={`form-${open}-${currentStep}`}>
-          {currentStep === 1 ? renderStep1() : 
-           currentStep === 2 ? renderStep2() : 
-           currentStep === 3 ? renderStep3() : 
-           renderStep4()}
+        {/* --- Debugging: Form state dumps --- */}
+        <div className="mb-4 p-4 bg-gray-50 rounded-lg">
+          <h4 className="text-sm font-medium text-gray-700 mb-2">Debug Info</h4>
+          <pre className="text-xs text-gray-500 whitespace-pre-wrap">
+            {JSON.stringify({
+              shiftSelectionForm: shiftSelectionForm.getValues(),
+              groupSelectionForm: groupSelectionForm.getValues(),
+              basicInfoForm: basicInfoForm.getValues(),
+              shiftDetailsForm: shiftDetailsForm.getValues(),
+              currentStep,
+              mode,
+              form,
+            }, null, 2)}
+          </pre>
         </div>
+        {/* --- End debugging ---*/}
 
-        <div className="flex items-center justify-between p-6 pt-0 border-t bg-white">
-          <Button
-            variant="outline"
-            onClick={handleBack}
-            disabled={currentStep === 1}
-            className="flex items-center gap-2"
-          >
-            <ChevronLeft className="h-4 w-4" />
-            Back
-          </Button>
-
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">
-              Step {currentStep} of 4
-            </span>
-          </div>
-
-          {currentStep < 4 ? (
-            <Button
-              onClick={handleNext}
-              disabled={loading.create}
-              className="flex items-center gap-2"
-            >
-              Next
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          ) : (
-            <Button
-              onClick={() => {
-                console.log("Create Form button clicked!")
-                console.log("Form errors:", shiftDetailsForm.formState.errors)
-                console.log("Form values:", shiftDetailsForm.getValues())
-                shiftDetailsForm.handleSubmit(handleShiftDetailsSubmit)()
-              }}
-              disabled={loading.create}
-            >
-              {loading.create ? "Creating..." : (mode === "edit" ? "Update Form" : "Create Form")}
-            </Button>
+        <form onSubmit={shiftDetailsForm.handleSubmit(onSubmit)} className="space-y-6">
+          {/* Step 1: Shift Selection */}
+          {currentStep === 1 && (
+            <div>
+              <h3 className="text-lg font-medium text-gray-800 mb-4">Step 1: Select Shift</h3>
+              <Controller
+                name="shift_type"
+                control={shiftSelectionForm.control}
+                render={({ field }) => (
+                  <RadioGroup {...field} className="space-x-4">
+                    <RadioGroupItem value="day_shift" id="day_shift" />
+                    <RadioGroupItem value="night_shift" id="night_shift" />
+                  </RadioGroup>
+                )}
+              />
+              <div className="flex justify-end mt-4">
+                <Button 
+                  onClick={() => setCurrentStep(2)} 
+                  disabled={!shiftSelectionForm.formState.isValid}
+                  className="w-full sm:w-auto"
+                >
+                  Next: Select Group
+                </Button>
+              </div>
+            </div>
           )}
-        </div>
+
+          {/* Step 2: Group Selection */}
+          {currentStep === 2 && (
+            <div>
+              <h3 className="text-lg font-medium text-gray-800 mb-4">Step 2: Select Group</h3>
+              <Controller
+                name="selected_group"
+                control={groupSelectionForm.control}
+                render={({ field }) => (
+                  <Select {...field} className="w-full">
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a group" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {filmaticGroups.map((group) => (
+                        <SelectItem key={group.id} value={group.id}>
+                          {group.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+              <div className="flex justify-between mt-4">
+                <Button 
+                  onClick={() => setCurrentStep(1)} 
+                  variant="outline"
+                  className="w-full sm:w-auto"
+                >
+                  Back: Select Shift
+                </Button>
+                <Button 
+                  onClick={() => setCurrentStep(3)} 
+                  disabled={!groupSelectionForm.formState.isValid}
+                  className="w-full sm:w-auto"
+                >
+                  Next: Basic Information
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Step 3: Basic Information */}
+          {currentStep === 3 && (
+            <div>
+              <h3 className="text-lg font-medium text-gray-800 mb-4">Step 3: Basic Information</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Controller
+                  name="date"
+                  control={basicInfoForm.control}
+                  render={({ field }) => (
+                    <DatePicker 
+                      {...field} 
+                      label="Date" 
+                      placeholder="Select date"
+                      className="w-full"
+                    />
+                  )}
+                />
+                <Controller
+                  name="holding_tank_bmt"
+                  control={basicInfoForm.control}
+                  render={({ field }) => (
+                    <Select {...field} className="w-full">
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select holding tank BMT" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {bmtForms.map((bmt) => (
+                          <SelectItem key={bmt.id} value={bmt.id}>
+                            {bmt.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+                {selectedShift === "day_shift" && (
+                  <>
+                    <Controller
+                      name="day_shift_opening_bottles"
+                      control={basicInfoForm.control}
+                      render={({ field }) => (
+                        <Input {...field} type="number" placeholder="Opening bottles" label="Day Shift Opening Bottles" />
+                      )}
+                    />
+                    <Controller
+                      name="day_shift_closing_bottles"
+                      control={basicInfoForm.control}
+                      render={({ field }) => (
+                        <Input {...field} type="number" placeholder="Closing bottles" label="Day Shift Closing Bottles" />
+                      )}
+                    />
+                    <Controller
+                      name="day_shift_waste_bottles"
+                      control={basicInfoForm.control}
+                      render={({ field }) => (
+                        <Input {...field} type="number" placeholder="Waste bottles" label="Day Shift Waste Bottles" />
+                      )}
+                    />
+                  </>
+                )}
+                {selectedShift === "night_shift" && (
+                  <>
+                    <Controller
+                      name="night_shift_opening_bottles"
+                      control={basicInfoForm.control}
+                      render={({ field }) => (
+                        <Input {...field} type="number" placeholder="Opening bottles" label="Night Shift Opening Bottles" />
+                      )}
+                    />
+                    <Controller
+                      name="night_shift_closing_bottles"
+                      control={basicInfoForm.control}
+                      render={({ field }) => (
+                        <Input {...field} type="number" placeholder="Closing bottles" label="Night Shift Closing Bottles" />
+                      )}
+                    />
+                    <Controller
+                      name="night_shift_waste_bottles"
+                      control={basicInfoForm.control}
+                      render={({ field }) => (
+                        <Input {...field} type="number" placeholder="Waste bottles" label="Night Shift Waste Bottles" />
+                      )}
+                    />
+                  </>
+                )}
+              </div>
+              <div className="flex justify-between mt-4">
+                <Button 
+                  onClick={() => setCurrentStep(2)} 
+                  variant="outline"
+                  className="w-full sm:w-auto"
+                >
+                  Back: Select Group
+                </Button>
+                <Button 
+                  onClick={() => setCurrentStep(4)} 
+                  disabled={!basicInfoForm.formState.isValid}
+                  className="w-full sm:w-auto"
+                >
+                  Next: Shift Details
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Step 4: Shift Details */}
+          {currentStep === 4 && (
+            <div>
+              <h3 className="text-lg font-medium text-gray-800 mb-4">Step 4: Shift Details</h3>
+              <div className="grid grid-cols-1 gap-4">
+                <Controller
+                  name="supervisor_id"
+                  control={shiftDetailsForm.control}
+                  render={({ field }) => (
+                    <Select {...field} className="w-full">
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a supervisor" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {users.map((user) => (
+                          <SelectItem key={user.id} value={user.id}>
+                            {user.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+                <Controller
+                  name="operator_id"
+                  control={shiftDetailsForm.control}
+                  render={({ field }) => (
+                    <Select {...field} className="w-full">
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select an operator" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {groupOperators.map((user) => (
+                          <SelectItem key={user.id} value={user.id}>
+                            {user.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+              </div>
+              <div className="mt-4">
+                <h4 className="text-sm font-medium text-gray-700 mb-2">Details</h4>
+                {fields.map((field, index) => (
+                  <div key={field.id} className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                    <Controller
+                      name={`details.${index}.time`}
+                      control={shiftDetailsForm.control}
+                      render={({ field }) => (
+                        <Select {...field} className="w-full">
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select time" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {timeOptions.map((time) => (
+                              <SelectItem key={time} value={time}>
+                                {time}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
+                    <Controller
+                      name={`details.${index}.pallets`}
+                      control={shiftDetailsForm.control}
+                      render={({ field }) => (
+                        <Input {...field} type="number" placeholder="Pallets" label="Pallets" />
+                      )}
+                    />
+                    <Controller
+                      name={`details.${index}.target`}
+                      control={shiftDetailsForm.control}
+                      render={({ field }) => (
+                        <Input {...field} type="number" placeholder="Target" label="Target" />
+                      )}
+                    />
+                    <Controller
+                      name={`details.${index}.setbacks`}
+                      control={shiftDetailsForm.control}
+                      render={({ field }) => (
+                        <Textarea {...field} placeholder="Setbacks" label="Setbacks" />
+                      )}
+                    />
+                    <div className="col-span-1 sm:col-span-2">
+                      <Button 
+                        type="button" 
+                        onClick={() => remove(index)} 
+                        variant="outline" 
+                        className="w-full"
+                      >
+                        Remove Detail
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+                <div className="flex justify-end">
+                  <Button 
+                    type="button" 
+                    onClick={() => append({ time: "", pallets: undefined, target: undefined, setbacks: "", stoppage_time: {} })} 
+                    className="w-full sm:w-auto"
+                  >
+                    Add Detail
+                  </Button>
+                </div>
+              </div>
+              <div className="flex justify-between mt-4">
+                <Button 
+                  onClick={() => setCurrentStep(3)} 
+                  variant="outline"
+                  className="w-full sm:w-auto"
+                >
+                  Back: Basic Information
+                </Button>
+                <Button 
+                  type="submit"
+                  className="w-full sm:w-auto"
+                >
+                  Submit
+                </Button>
+              </div>
+            </div>
+          )}
+        </form>
       </SheetContent>
     </Sheet>
   )

@@ -20,6 +20,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Switch } from "@/components/ui/switch"
 import { ArrowRight, Factory, Beaker, FileText, Package, Clock, Sun, Moon, Users, Plus, Trash2, ChevronLeft, ChevronRight } from "lucide-react"
 import { fetchFilmaticLinesForm2s } from "@/lib/store/slices/filmaticLinesForm2Slice"
 
@@ -89,21 +90,19 @@ const groupSelectionSchema = yup.object({
 // Step 3: Basic Information Schema (conditional validation based on shift) - Form 2 has no holding_tank_bmt
 const createBasicInfoSchema = (selectedShift: string) => yup.object({
   date: yup.string().required("Date is required"),
-  ...(selectedShift === "day_shift" && {
-    day_shift_opening_bottles: yup.number().required("Day shift opening bottles is required").min(0, "Must be positive"),
-    day_shift_closing_bottles: yup.number().required("Day shift closing bottles is required").min(0, "Must be positive"),
-    day_shift_waste_bottles: yup.number().required("Day shift waste bottles is required").min(0, "Must be positive"),
-  }),
-  ...(selectedShift === "night_shift" && {
-    night_shift_opening_bottles: yup.number().required("Night shift opening bottles is required").min(0, "Must be positive"),
-    night_shift_closing_bottles: yup.number().required("Night shift closing bottles is required").min(0, "Must be positive"),
-    night_shift_waste_bottles: yup.number().required("Night shift waste bottles is required").min(0, "Must be positive"),
-  }),
+  approved: yup.boolean().default(false),
+  day_shift_opening_bottles: yup.number().required("Day shift opening bottles is required").min(0, "Must be positive"),
+  day_shift_closing_bottles: yup.number().required("Day shift closing bottles is required").min(0, "Must be positive"),
+  day_shift_waste_bottles: yup.number().required("Day shift waste bottles is required").min(0, "Must be positive"),
+  night_shift_opening_bottles: yup.number().required("Night shift opening bottles is required").min(0, "Must be positive"),
+  night_shift_closing_bottles: yup.number().required("Night shift closing bottles is required").min(0, "Must be positive"),
+  night_shift_waste_bottles: yup.number().required("Night shift waste bottles is required").min(0, "Must be positive"),
 })
 
 // Step 4: Shift Details Schema (Form 2 specific - only 6 stoppage fields)
 const shiftDetailsSchema = yup.object({
   supervisor_approve: yup.boolean(),
+  supervisor_id: yup.string().nullable(),
   operator_id: yup.string(),
   details: yup.array().of(
     yup.object({
@@ -118,6 +117,7 @@ const shiftDetailsSchema = yup.object({
 
 type BasicInfoFormData = {
   date: string
+  approved?: boolean
   day_shift_opening_bottles?: number
   day_shift_closing_bottles?: number
   night_shift_opening_bottles?: number
@@ -129,6 +129,7 @@ type ShiftSelectionFormData = yup.InferType<typeof shiftSelectionSchema>
 type GroupSelectionFormData = yup.InferType<typeof groupSelectionSchema>
 type ShiftDetailsFormData = {
   supervisor_approve?: boolean
+  supervisor_id?: string
   operator_id?: string
   details?: Array<{
     time?: string
@@ -204,12 +205,11 @@ export function FilmaticLinesForm2Drawer({
     resolver: yupResolver(basicInfoSchema),
     defaultValues: {
       date: "",
+      approved: false,
       day_shift_opening_bottles: undefined,
       day_shift_closing_bottles: undefined,
       night_shift_opening_bottles: undefined,
       night_shift_closing_bottles: undefined,
-      day_shift_waste_bottles: undefined,
-      night_shift_waste_bottles: undefined,
     },
   })
 
@@ -218,6 +218,7 @@ export function FilmaticLinesForm2Drawer({
     resolver: yupResolver(shiftDetailsSchema),
     defaultValues: {
       supervisor_approve: false,
+      supervisor_id: "",
       operator_id: user?.id || "",
       details: [{
         time: "",
@@ -297,12 +298,11 @@ export function FilmaticLinesForm2Drawer({
         // Populate basic info form
         basicInfoForm.reset({
           date: form.date || "",
+          approved: false,
           day_shift_opening_bottles: undefined,
           day_shift_closing_bottles: undefined,
           night_shift_opening_bottles: undefined,
           night_shift_closing_bottles: undefined,
-          day_shift_waste_bottles: undefined,
-          night_shift_waste_bottles: undefined,
         })
 
         // Determine shift type based on existing data
@@ -334,12 +334,11 @@ export function FilmaticLinesForm2Drawer({
         // Reset all forms to clean defaults
         basicInfoForm.reset({
           date: "",
+          approved: false,
           day_shift_opening_bottles: undefined,
           day_shift_closing_bottles: undefined,
           night_shift_opening_bottles: undefined,
           night_shift_closing_bottles: undefined,
-          day_shift_waste_bottles: undefined,
-          night_shift_waste_bottles: undefined,
         })
         shiftSelectionForm.reset({
           shift_type: "",
@@ -349,6 +348,7 @@ export function FilmaticLinesForm2Drawer({
         })
         shiftDetailsForm.reset({
           supervisor_approve: false,
+          supervisor_id: "",
           operator_id: user?.id || "",
           details: [{
             time: "",
@@ -420,6 +420,7 @@ export function FilmaticLinesForm2Drawer({
       if (shiftType === "day_shift") {
         formData.day_shift = {
           supervisor_approve: data.supervisor_approve || false,
+          supervisor_id: data.supervisor_id || undefined,
           operator_id: data.operator_id || user?.id || "",
           details: data.details?.map(detail => ({
             time: detail.time || "",
@@ -439,6 +440,7 @@ export function FilmaticLinesForm2Drawer({
       } else if (shiftType === "night_shift") {
         formData.night_shift = {
           supervisor_approve: data.supervisor_approve || false,
+          supervisor_id: data.supervisor_id || undefined,
           operator_id: data.operator_id || user?.id || "",
           details: data.details?.map(detail => ({
             time: detail.time || "",
@@ -458,16 +460,21 @@ export function FilmaticLinesForm2Drawer({
       }
 
       console.log("Final form data:", formData)
-      await filmaticLinesForm2Api.createForm(formData)
-      toast.success("Filmatic Lines Form 2 created successfully")
-      
+      if (mode === "edit" && form?.id) {
+        await filmaticLinesForm2Api.updateForm?.(form.id, formData) ?? await filmaticLinesForm2Api.createForm(formData)
+        toast.success("Filmatic Lines Form 2 updated successfully")
+      } else {
+        await filmaticLinesForm2Api.createForm(formData)
+        toast.success("Filmatic Lines Form 2 created successfully")
+      }
+
       // Refresh list so the page updates immediately
       try {
         await dispatch(fetchFilmaticLinesForm2s()).unwrap()
       } catch (e) {
         console.warn("Failed to refresh Filmatic Lines Form 2 list:", e)
       }
-       
+
       onOpenChange(false)
     } catch (error: any) {
       toast.error(error?.message || "Failed to create Filmatic Lines Form 2")
@@ -843,160 +850,144 @@ export function FilmaticLinesForm2Drawer({
                 </div>
 
                 <div className="space-y-4">
-                  <div className="flex items-center space-x-2">
-                    <Controller
-                      name="supervisor_approve"
-                      control={shiftDetailsForm.control}
-                      render={({ field }) => (
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      )}
-                    />
-                    <Label>Supervisor Approval</Label>
+                  <div className="flex justify-between items-center">
+                    <Label>Production Details</Label>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => append({
+                        time: "",
+                        pallets: undefined,
+                        target: undefined,
+                        setbacks: "",
+                        stoppage_time: {
+                          capper_1: undefined,
+                          capper_2: undefined,
+                          sleever_1: undefined,
+                          sleever_2: undefined,
+                          shrink_1: undefined,
+                          shrink_2: undefined,
+                        }
+                      })}
+                    >
+                      <Plus className="h-4 w-4 mr-1" />
+                      Add Entry
+                    </Button>
                   </div>
 
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center">
-                      <Label>Production Details</Label>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => append({
-                          time: "",
-                          pallets: undefined,
-                          target: undefined,
-                          setbacks: "",
-                          stoppage_time: {
-                            capper_1: undefined,
-                            capper_2: undefined,
-                            sleever_1: undefined,
-                            sleever_2: undefined,
-                            shrink_1: undefined,
-                            shrink_2: undefined,
-                          }
-                        })}
-                      >
-                        <Plus className="h-4 w-4 mr-1" />
-                        Add Entry
-                      </Button>
-                    </div>
+                  {fields.map((field, index) => (
+                    <div key={field.id} className="p-4 border rounded-lg space-y-4">
+                      <div className="flex justify-between">
+                        <h4 className="font-medium">Entry {index + 1}</h4>
+                        {fields.length > 1 && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => remove(index)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
 
-                    {fields.map((field, index) => (
-                      <div key={field.id} className="p-4 border rounded-lg space-y-4">
-                        <div className="flex justify-between">
-                          <h4 className="font-medium">Entry {index + 1}</h4>
-                          {fields.length > 1 && (
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => remove(index)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          )}
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <Label>Time</Label>
-                            <Controller
-                              name={`details.${index}.time`}
-                              control={shiftDetailsForm.control}
-                              render={({ field }) => (
-                                <Select value={field.value} onValueChange={field.onChange}>
-                                  <SelectTrigger className="rounded-full border-gray-200">
-                                    <SelectValue placeholder="Select time" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {timeOptions.map(time => (
-                                      <SelectItem key={time} value={time}>{time}</SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              )}
-                            />
-                          </div>
-
-                          <div>
-                            <Label>Pallets</Label>
-                            <Controller
-                              name={`details.${index}.pallets`}
-                              control={shiftDetailsForm.control}
-                              render={({ field }) => (
-                                <Input 
-                                  type="number" 
-                                  placeholder="Enter pallets"
-                                  className="rounded-full border-gray-200"
-                                  value={String(field.value || "")}
-                                  onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
-                                />
-                              )}
-                            />
-                          </div>
-
-                          <div>
-                            <Label>Target</Label>
-                            <Controller
-                              name={`details.${index}.target`}
-                              control={shiftDetailsForm.control}
-                              render={({ field }) => (
-                                <Input 
-                                  type="number" 
-                                  placeholder="Enter target"
-                                  className="rounded-full border-gray-200"
-                                  value={String(field.value || "")}
-                                  onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
-                                />
-                              )}
-                            />
-                          </div>
-
-                          <div className="col-span-2">
-                            <Label>Setbacks</Label>
-                            <Controller
-                              name={`details.${index}.setbacks`}
-                              control={shiftDetailsForm.control}
-                              render={({ field }) => (
-                                <Textarea 
-                                  {...field} 
-                                  placeholder="Describe any setbacks"
-                                  className="border-gray-200"
-                                />
-                              )}
-                            />
-                          </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <Label>Time</Label>
+                          <Controller
+                            name={`details.${index}.time`}
+                            control={shiftDetailsForm.control}
+                            render={({ field }) => (
+                              <Select value={field.value} onValueChange={field.onChange}>
+                                <SelectTrigger className="rounded-full border-gray-200">
+                                  <SelectValue placeholder="Select time" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {timeOptions.map(time => (
+                                    <SelectItem key={time} value={time}>{time}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            )}
+                          />
                         </div>
 
                         <div>
-                          <Label className="mb-2 block">Stoppage Time (minutes)</Label>
-                          <div className="grid grid-cols-2 gap-2">
-                            {["capper_1", "capper_2", "sleever_1", "sleever_2", "shrink_1", "shrink_2"].map(key => (
-                              <div key={key} className="flex items-center gap-2">
-                                <Label className="text-xs w-20">{key.replace('_', ' ')}</Label>
-                                <Controller
-                                  name={`details.${index}.stoppage_time.${key}`}
-                                  control={shiftDetailsForm.control}
-                                  render={({ field }) => (
-                                    <Input
-                                      type="number"
-                                      placeholder="0"
-                                      className="text-xs h-8 rounded-full border-gray-200"
-                                      value={String(field.value || "")}
-                                      onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
-                                    />
-                                  )}
-                                />
-                              </div>
-                            ))}
-                          </div>
+                          <Label>Pallets</Label>
+                          <Controller
+                            name={`details.${index}.pallets`}
+                            control={shiftDetailsForm.control}
+                            render={({ field }) => (
+                              <Input 
+                                type="number" 
+                                placeholder="Enter pallets"
+                                className="rounded-full border-gray-200"
+                                value={String(field.value || "")}
+                                onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+                              />
+                            )}
+                          />
+                        </div>
+
+                        <div>
+                          <Label>Target</Label>
+                          <Controller
+                            name={`details.${index}.target`}
+                            control={shiftDetailsForm.control}
+                            render={({ field }) => (
+                              <Input 
+                                type="number" 
+                                placeholder="Enter target"
+                                className="rounded-full border-gray-200"
+                                value={String(field.value || "")}
+                                onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+                              />
+                            )}
+                          />
+                        </div>
+
+                        <div className="col-span-2">
+                          <Label>Setbacks</Label>
+                          <Controller
+                            name={`details.${index}.setbacks`}
+                            control={shiftDetailsForm.control}
+                            render={({ field }) => (
+                              <Textarea 
+                                {...field} 
+                                placeholder="Describe any setbacks"
+                                className="border-gray-200"
+                              />
+                            )}
+                          />
                         </div>
                       </div>
-                    ))}
-                  </div>
+
+                      <div>
+                        <Label className="mb-2 block">Stoppage Time (minutes)</Label>
+                        <div className="grid grid-cols-2 gap-2">
+                          {["capper_1", "capper_2", "sleever_1", "sleever_2", "shrink_1", "shrink_2"].map(key => (
+                            <div key={key} className="flex items-center gap-2">
+                              <Label className="text-xs w-20">{key.replace('_', ' ')}</Label>
+                              <Controller
+                                name={`details.${index}.stoppage_time.${key}`}
+                                control={shiftDetailsForm.control}
+                                render={({ field }) => (
+                                  <Input
+                                    type="number"
+                                    placeholder="0"
+                                    className="text-xs h-8 rounded-full border-gray-200"
+                                    value={String(field.value || "")}
+                                    onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+                                  />
+                                )}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>

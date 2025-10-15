@@ -413,6 +413,7 @@ export default function FilmaticLines1Page() {
                     </Badge>
                   </div>
                 </div>
+
                 <div className="space-y-2">
                   <div className="flex items-center space-x-2">
                     <Factory className="h-4 w-4 text-blue-500" />
@@ -426,13 +427,13 @@ export default function FilmaticLines1Page() {
                       ) : (
                         <>
                           <span className="text-xs font-light">{latestForm.holding_tank_bmt?.slice(0, 8) || 'N/A'}</span>
-                          {/* fallback copy if ID present */}
                           {latestForm.holding_tank_bmt && <CopyButton text={latestForm.holding_tank_bmt} />}
                         </>
                       )
                     })()}
                   </div>
                 </div>
+
                 <div className="space-y-2">
                   <div className="flex items-center space-x-2">
                     <Clock className="h-4 w-4 text-gray-500" />
@@ -444,13 +445,29 @@ export default function FilmaticLines1Page() {
                     year: 'numeric'
                   }) : 'N/A'}</p>
                 </div>
+
+                {/* NEW: Bottles summary */}
                 <div className="space-y-2">
                   <div className="flex items-center space-x-2">
                     <TrendingUp className="h-4 w-4 text-green-500" />
-                    <p className="text-sm font-light text-gray-600">Process ID</p>
+                    <p className="text-sm font-light text-gray-600">Bottles (Day / Night)</p>
                   </div>
-                  <p className="text-lg font-light text-green-600">{latestForm.process_id?.slice(0, 8) || 'N/A'}</p>
+                  <div className="grid grid-cols-1 gap-2 text-sm text-gray-700">
+                    <div className="flex justify-between">
+                      <span className="font-light">Opening</span>
+                      <span className="font-medium">{latestForm.day_shift_opening_bottles ?? '—'} / {latestForm.night_shift_opening_bottles ?? '—'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-light">Closing</span>
+                      <span className="font-medium">{latestForm.day_shift_closing_bottles ?? '—'} / {latestForm.night_shift_closing_bottles ?? '—'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-light">Waste</span>
+                      <span className="font-medium">{latestForm.day_shift_waste_bottles ?? '—'} / {latestForm.night_shift_waste_bottles ?? '—'}</span>
+                    </div>
+                  </div>
                 </div>
+
               </div>
 
               {/* Process Flow Information */}

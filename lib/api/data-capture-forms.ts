@@ -1235,7 +1235,7 @@ export interface ProductIncubation {
 
 export const getProductIncubations = async () => {
   try {
-    const res = await apiRequest<any>('/product-incubation')
+    const res = await apiRequest<any>('/incubation-tracking-form')
     return Array.isArray(res) ? (res as ProductIncubation[]) : ((res?.data ?? []) as ProductIncubation[])
   } catch (error: any) {
     console.error('Error fetching product incubations:', error)
@@ -1244,11 +1244,11 @@ export const getProductIncubations = async () => {
 }
 
 export const createProductIncubation = (data: Omit<ProductIncubation, 'id' | 'created_at' | 'updated_at'>) => 
-  apiRequest<ProductIncubation>('/product-incubation', { method: 'POST', body: JSON.stringify(data) })
+  apiRequest<ProductIncubation>('/incubation-tracking-form', { method: 'POST', body: JSON.stringify(data) })
 export const updateProductIncubation = (data: ProductIncubation) => 
-  apiRequest<ProductIncubation>('/product-incubation', { method: 'PATCH', body: JSON.stringify(data) })
+  apiRequest<ProductIncubation>('/incubation-tracking-form', { method: 'PATCH', body: JSON.stringify(data) })
 export const deleteProductIncubation = (id: string) => 
-  apiRequest<void>(`/product-incubation/${id}`, { method: 'DELETE' })
+  apiRequest<void>(`/incubation-tracking-form/${id}`, { method: 'DELETE' })
 
 // Incubation Test After Incubation APIs
 export interface UHTQualityCheckAfterIncubation {
@@ -1326,7 +1326,7 @@ export const getUHTQualityCheckAfterIncubations = async () => {
     const res = await apiRequest<any>('/uht-quality-check-after-incubation')
     return Array.isArray(res) ? (res as UHTQualityCheckAfterIncubation[]) : ((res?.data ?? []) as UHTQualityCheckAfterIncubation[])
   } catch (error: any) {
-    console.error('Error fetching UHT quality check after incubations:', error)
+    console.error('Error fetching Incubation quality  check after incubations:', error)
     return []
   }
 }

@@ -14,15 +14,19 @@ import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-di
 import { Skeleton } from "@/components/ui/skeleton"
 import { CopyButton } from "@/components/ui/copy-button"
 import { useAppDispatch, useAppSelector } from "@/lib/store"
+import { RootState } from "@/lib/store"
 import { 
   fetchProductIncubations, 
   deleteProductIncubationAction,
   clearError
 } from "@/lib/store/slices/productIncubationSlice"
+import { fetchProductionPlans } from "@/lib/store/slices/productionPlanSlice"
 import { toast } from "sonner"
 import { TableFilters } from "@/lib/types"
 import { ProductIncubation } from "@/lib/api/data-capture-forms"
 import ContentSkeleton from "@/components/ui/content-skeleton"
+import { UserAvatar } from "@/components/ui/user-avatar"
+import { FormIdCopy } from "@/components/ui/form-id-copy"
 
 interface ProductIncubationPageProps {
   params: {
@@ -33,6 +37,8 @@ interface ProductIncubationPageProps {
 export default function ProductIncubationPage({ params }: ProductIncubationPageProps) {
   const dispatch = useAppDispatch()
   const { incubations, loading, error, operationLoading, isInitialized } = useAppSelector((state) => state.productIncubations)
+  const { items: users } = useAppSelector((state: RootState) => state.users)
+  const productionPlans = useAppSelector((s:any) => s.productionPlan?.productionPlans || [])
   
   const [tableFilters, setTableFilters] = useState<TableFilters>({})
   const hasFetchedRef = useRef(false)
@@ -42,6 +48,8 @@ export default function ProductIncubationPage({ params }: ProductIncubationPageP
     if (!isInitialized && !hasFetchedRef.current) {
       hasFetchedRef.current = true
       dispatch(fetchProductIncubations())
+      // ensure production plans are available for the drawer selector
+      dispatch(fetchProductionPlans())
     }
   }, [dispatch, isInitialized])
   
@@ -127,8 +135,31 @@ export default function ProductIncubationPage({ params }: ProductIncubationPageP
     }
   }
 
-  // Get latest incubation for display
+  // Get latest incubation for display (map batch object/array)
   const latestIncubation = Array.isArray(incubations) && incubations.length > 0 ? incubations[0] : null
+  const latestBatch = latestIncubation ? (Array.isArray(latestIncubation.incubation_tracking_form_batch) ? latestIncubation.incubation_tracking_form_batch[0] : latestIncubation.incubation_tracking_form_batch) : null
+
+  // Helpers to format times/dates coming from batch which may be "HH:mm:ss" or "YYYY-MM-DD" or full ISO
+  const formatTimeValue = (val: string | undefined | null) => {
+    if (!val) return "N/A"
+    // time-only like "HH:mm:ss" or "HH:mm"
+    const timeOnlyMatch = val.match(/^(\d{1,2}:\d{2})(?::\d{2})?$/)
+    if (timeOnlyMatch) return timeOnlyMatch[1]
+    const parsed = new Date(val)
+    if (!isNaN(parsed.getTime())) return parsed.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+    return "N/A"
+  }
+
+  const formatDateValue = (val: string | undefined | null) => {
+    if (!val) return "N/A"
+    // date-only YYYY-MM-DD
+    if (/^\d{4}-\d{2}-\d{2}$/.test(val)) {
+      const d = new Date(val + "T00:00:00Z")
+      return isNaN(d.getTime()) ? "N/A" : d.toLocaleDateString()
+    }
+    const parsed = new Date(val)
+    return isNaN(parsed.getTime()) ? "N/A" : parsed.toLocaleDateString()
+  }
 
   // Table columns with actions
   const columns = useMemo(() => [
@@ -137,6 +168,7 @@ export default function ProductIncubationPage({ params }: ProductIncubationPageP
       header: "Incubation",
       cell: ({ row }: any) => {
         const incubation = row.original
+        const batch = Array.isArray(incubation.incubation_tracking_form_batch) ? incubation.incubation_tracking_form_batch[0] : incubation.incubation_tracking_form_batch
         return (
           <div className="flex items-center space-x-3">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center">
@@ -144,10 +176,11 @@ export default function ProductIncubationPage({ params }: ProductIncubationPageP
             </div>
             <div>
               <div className="flex items-center space-x-2">
-                <Badge className="bg-purple-100 text-purple-800 font-light">Batch #{incubation.bn || 'N/A'}</Badge>
+                <span className="text-xs text-gray-500">Batch</span>
+                <Badge className="bg-purple-100 text-purple-800 font-light">#{batch?.batch_number ?? 'N/A'}</Badge>
               </div>
               <p className="text-sm text-gray-500 mt-1">
-                {incubation.created_at ? new Date(incubation.created_at).toLocaleDateString() : 'N/A'} • {incubation.incubation_days} days
+                {incubation.created_at ? new Date(incubation.created_at).toLocaleDateString() : 'N/A'} • {batch?.days ?? 'N/A'} days
               </p>
             </div>
           </div>
@@ -159,6 +192,7 @@ export default function ProductIncubationPage({ params }: ProductIncubationPageP
       header: "Product",
       cell: ({ row }: any) => {
         const incubation = row.original
+        const batch = Array.isArray(incubation.incubation_tracking_form_batch) ? incubation.incubation_tracking_form_batch[0] : incubation.incubation_tracking_form_batch
         return (
           <div className="space-y-2">
             <div className="flex items-center space-x-2">
@@ -172,13 +206,11 @@ export default function ProductIncubationPage({ params }: ProductIncubationPageP
             <div className="space-y-1">
               <div className="flex items-center justify-between">
                 <span className="text-xs text-gray-500">Description</span>
-                <span className="text-xs font-light">
-                  {incubation.product_description && incubation.product_description.length > 20 ? 'N/A' : (incubation.product_description || 'N/A')}
-                </span>
+                <span className="text-xs font-light">{batch?.basket ? batch.basket : 'N/A'}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-xs text-gray-500">Batch</span>
-                <span className="text-xs font-light">{incubation.bn}</span>
+                <span className="text-xs font-light">{batch?.batch_number ?? 'N/A'}</span>
               </div>
             </div>
           </div>
@@ -190,24 +222,23 @@ export default function ProductIncubationPage({ params }: ProductIncubationPageP
       header: "Dates",
       cell: ({ row }: any) => {
         const incubation = row.original
+        const batch = Array.isArray(incubation.incubation_tracking_form_batch) ? incubation.incubation_tracking_form_batch[0] : incubation.incubation_tracking_form_batch
         return (
           <div className="space-y-2">
             <div className="flex items-center space-x-2">
               <div className="w-5 h-5 rounded-full bg-orange-100 flex items-center justify-center">
                 <Clock className="h-3 w-3 text-orange-600" />
               </div>
-              <p className="text-sm font-light">
-                Incubation Period
-              </p>
+              <p className="text-sm font-light">Incubation Period</p>
             </div>
             <div className="space-y-1">
               <div className="flex items-center justify-between">
-                <span className="text-xs text-gray-500">Date In</span>
-                <span className="text-xs font-light">{new Date(incubation.date_in).toLocaleDateString()}</span>
+                <span className="text-xs text-gray-500">Time In</span>
+                <span className="text-xs font-light">{formatTimeValue(batch?.time_in)}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-xs text-gray-500">Expected Out</span>
-                <span className="text-xs font-light">{new Date(incubation.expected_date_out).toLocaleDateString()}</span>
+                <span className="text-xs font-light">{formatTimeValue(batch?.expected_time_out)}</span>
               </div>
             </div>
           </div>
@@ -219,24 +250,23 @@ export default function ProductIncubationPage({ params }: ProductIncubationPageP
       header: "Manufacturing",
       cell: ({ row }: any) => {
         const incubation = row.original
+        const batch = Array.isArray(incubation.incubation_tracking_form_batch) ? incubation.incubation_tracking_form_batch[0] : incubation.incubation_tracking_form_batch
         return (
           <div className="space-y-2">
             <div className="flex items-center space-x-2">
               <div className="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center">
                 <FileText className="h-3 w-3 text-green-600" />
               </div>
-              <p className="text-sm font-light">
-                Manufacturing
-              </p>
+              <p className="text-sm font-light">Manufacturing</p>
             </div>
             <div className="space-y-1">
               <div className="flex items-center justify-between">
                 <span className="text-xs text-gray-500">MNF</span>
-                <span className="text-xs font-light">{new Date(incubation.mnf).toLocaleDateString()}</span>
+                <span className="text-xs font-light">{formatDateValue(batch?.manufacture_date)}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-xs text-gray-500">BB</span>
-                <span className="text-xs font-light">{new Date(incubation.bb).toLocaleDateString()}</span>
+                <span className="text-xs font-light">{formatDateValue(batch?.best_before_date)}</span>
               </div>
             </div>
           </div>
@@ -248,27 +278,24 @@ export default function ProductIncubationPage({ params }: ProductIncubationPageP
       header: "Approval",
       cell: ({ row }: any) => {
         const incubation = row.original
-        const approver = incubation.product_incubation_approved_by_fkey
+        const batch = Array.isArray(incubation.incubation_tracking_form_batch) ? incubation.incubation_tracking_form_batch[0] : incubation.incubation_tracking_form_batch
+        const approverUser = batch?.approver_id ? users.find((u:any) => u.id === batch.approver_id) : null
+        const scientistUser = batch?.scientist_id ? users.find((u:any) => u.id === batch.scientist_id) : null
         return (
           <div className="space-y-2">
             <div className="flex items-center space-x-2">
               <div className="w-5 h-5 rounded-full bg-purple-100 flex items-center justify-center">
                 <TrendingUp className="h-3 w-3 text-purple-600" />
               </div>
-              <p className="text-sm font-light">
-                Approved By
-              </p>
+              <p className="text-sm font-light">Approved By</p>
             </div>
-            {approver ? (
-              <div className="space-y-1">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-gray-500">Role</span>
-                  <span className="text-xs font-light">{approver.role_name}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-gray-500">Operations</span>
-                  <span className="text-xs font-light">{approver.user_operations?.length || 0}</span>
-                </div>
+            {approverUser ? (
+              <div className="flex items-center space-x-2">
+                <UserAvatar user={approverUser} size="sm" showName={true} showEmail={false} showDropdown={false} />
+              </div>
+            ) : scientistUser ? (
+              <div className="flex items-center space-x-2">
+                <UserAvatar user={scientistUser} size="sm" showName={true} showEmail={false} showDropdown={false} />
               </div>
             ) : (
               <p className="text-xs text-gray-400">No details</p>
@@ -331,7 +358,7 @@ export default function ProductIncubationPage({ params }: ProductIncubationPageP
         )
       },
     },
-  ], [operationLoading.delete])
+  ], [operationLoading.delete, users])
 
   return (
     <DataCaptureDashboardLayout title="Product Incubation" subtitle="Product incubation process control and monitoring">
@@ -380,22 +407,24 @@ export default function ProductIncubationPage({ params }: ProductIncubationPageP
                 <div className="space-y-2">
                   <div className="flex items-center space-x-2">
                     <TestTube className="h-4 w-4 text-purple-500" />
-                    <p className="text-sm font-light text-gray-600">Product</p>
+                    <p className="text-sm font-light text-gray-600">Tag / Plan</p>
                   </div>
-                  <p className="text-lg font-light text-purple-600">
-                    {latestIncubation.product_description && latestIncubation.product_description.length > 20 ? 'N/A' : (latestIncubation.product_description || 'N/A')}
-                  </p>
+                  <div className="text-lg font-light text-purple-600">
+                    {latestIncubation?.tag ? (
+                      <FormIdCopy displayId={latestIncubation.tag} actualId={latestIncubation.id} size="sm" />
+                    ) : latestIncubation?.production_plan_id ? (
+                      <span>{`Plan ${latestIncubation.production_plan_id.slice(0,8)}`}</span>
+                    ) : (
+                      <span>N/A</span>
+                    )}
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center space-x-2">
                     <Clock className="h-4 w-4 text-gray-500" />
                     <p className="text-sm font-light text-gray-600">Date In</p>
                   </div>
-                  <p className="text-lg font-light">{new Date(latestIncubation.date_in).toLocaleDateString('en-GB', { 
-                    day: 'numeric', 
-                    month: 'long', 
-                    year: 'numeric' 
-                  })}</p>
+                  <p className="text-lg font-light">{latestBatch?.time_in ? latestBatch.time_in : (latestIncubation?.created_at ? new Date(latestIncubation.created_at).toLocaleDateString('en-GB') : 'N/A')}</p>
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center space-x-2">
@@ -403,7 +432,7 @@ export default function ProductIncubationPage({ params }: ProductIncubationPageP
                     <p className="text-sm font-light text-gray-600">Batch</p>
                   </div>
                   <p className="text-lg font-light text-green-600">
-                    #{latestIncubation.bn}
+                    #{latestBatch?.batch_number ?? 'N/A'}
                   </p>
                 </div>
                 <div className="space-y-2">
@@ -412,7 +441,7 @@ export default function ProductIncubationPage({ params }: ProductIncubationPageP
                     <p className="text-sm font-light text-gray-600">Days</p>
                   </div>
                   <p className="text-lg font-light text-blue-600">
-                    {latestIncubation.incubation_days} days
+                    {latestBatch?.days ?? 'N/A'} days
                   </p>
                 </div>
               </div>
@@ -483,23 +512,23 @@ export default function ProductIncubationPage({ params }: ProductIncubationPageP
 
         {/* Form Drawer */}
         <ProductIncubationDrawer 
-          open={formDrawerOpen} 
-          onOpenChange={setFormDrawerOpen} 
-          incubation={selectedIncubation}
-          mode={formMode}
-          processId={params.process_id}
-        />
-
-        {/* View Drawer */}
-        <ProductIncubationViewDrawer
-          open={viewDrawerOpen}
-          onOpenChange={setViewDrawerOpen}
-          incubation={selectedIncubation}
-          onEdit={() => {
-            setViewDrawerOpen(false)
-            handleEditIncubation(selectedIncubation!)
-          }}
-        />
+           open={formDrawerOpen} 
+           onOpenChange={setFormDrawerOpen} 
+           incubation={selectedIncubation}
+           mode={formMode}
+           processId={params.process_id}
+         />
+ 
+         {/* View Drawer */}
+         <ProductIncubationViewDrawer
+           open={viewDrawerOpen}
+           onOpenChange={setViewDrawerOpen}
+           incubation={selectedIncubation}
+           onEdit={() => {
+             setViewDrawerOpen(false)
+             handleEditIncubation(selectedIncubation!)
+           }}
+         />
 
         {/* Delete Confirmation Dialog */}
         <DeleteConfirmationDialog

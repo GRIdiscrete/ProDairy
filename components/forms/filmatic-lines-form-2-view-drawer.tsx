@@ -142,6 +142,22 @@ export function FilmaticLinesForm2ViewDrawer({
                   </p>
                 </div>
               </div>
+
+              {/* Bottles Summary */}
+              <div className="mt-2 grid grid-cols-2 gap-4">
+                <div>
+                  <span className="text-xs font-light text-gray-500">Day — Opening / Closing / Waste</span>
+                  <p className="text-sm font-light mt-1">
+                    {form.day_shift_opening_bottles ?? '—'} / {form.day_shift_closing_bottles ?? '—'} / {form.day_shift_waste_bottles ?? '—'}
+                  </p>
+                </div>
+                <div>
+                  <span className="text-xs font-light text-gray-500">Night — Opening / Closing / Waste</span>
+                  <p className="text-sm font-light mt-1">
+                    {form.night_shift_opening_bottles ?? '—'} / {form.night_shift_closing_bottles ?? '—'} / {form.night_shift_waste_bottles ?? '—'}
+                  </p>
+                </div>
+              </div>
             </CardContent>
           </Card>
 
