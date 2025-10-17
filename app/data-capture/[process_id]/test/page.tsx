@@ -352,7 +352,7 @@ export default function UHTQualityCheckPage({ params }: UHTQualityCheckPageProps
           <div>
             <h1 className="text-3xl font-light text-foreground">Incubation Test</h1>
             <p className="text-sm font-light text-muted-foreground">Manage Incubation quality  check forms and process control</p>
-            <p className="text-xs text-gray-500 mt-1">Process ID: {params.process_id}</p>
+            {/* <p className="text-xs text-gray-500 mt-1">Process ID: {params.process_id}</p> */}
           </div>
           <LoadingButton 
             onClick={handleAddQualityCheck}

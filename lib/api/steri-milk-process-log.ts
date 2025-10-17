@@ -6,69 +6,52 @@ export interface ApiEnvelope<T> {
   data: T
 }
 
+// normalized process detail used in "details" objects
 export interface ProcessDetail {
-  time: string
-  temperature: number
-  pressure: number
-}
-
-export interface BatchDetails {
-  batch_number: number
-  filling_start_details: ProcessDetail | null
-  autoclave_start_details: ProcessDetail | null
-  heating_start_details: ProcessDetail | null
-  heating_finish_details: ProcessDetail | null
-  sterilization_start_details: ProcessDetail | null
-  sterilization_after_5_details: ProcessDetail | null
-  sterilization_finish_details: ProcessDetail | null
-  pre_cooling_start_details: ProcessDetail | null
-  pre_cooling_finish_details: ProcessDetail | null
-  cooling_1_start_details: ProcessDetail | null
-  cooling_1_finish_details: ProcessDetail | null
-  cooling_2_start_details: ProcessDetail | null
-  cooling_2_finish_details: ProcessDetail | null
-}
-
-export interface BatchEntry {
-  batch_number: number
-  filling_start: ProcessDetail | null
-  heating_start: ProcessDetail | null
-  heating_finish: ProcessDetail | null
-  autoclave_start: ProcessDetail | null
-  cooling_1_start: ProcessDetail | null
-  cooling_2_start: ProcessDetail | null
-  cooling_1_finish: ProcessDetail | null
-  cooling_2_finish: ProcessDetail | null
-  pre_cooling_start: ProcessDetail | null
-  pre_cooling_finish: ProcessDetail | null
-  sterilization_start: ProcessDetail | null
-  sterilization_finish: ProcessDetail | null
-  sterilization_after_5: ProcessDetail | null
-}
-
-export interface ProcessDetail {
+  id?: string
   time: string | null
-  pressure: number
   temperature: number
+  pressure: number
 }
 
-export interface BatchEntry {
+// Batch object matching new API payload
+export interface Batch {
+  id?: string
+  date?: string | null
   batch_number: number
-  filling_start: ProcessDetail
-  heating_start: ProcessDetail
-  heating_finish: ProcessDetail
-  autoclave_start: ProcessDetail
-  cooling_1_start: ProcessDetail
-  cooling_2_start: ProcessDetail
-  cooling_1_finish: ProcessDetail
-  cooling_2_finish: ProcessDetail
-  pre_cooling_start: ProcessDetail
-  pre_cooling_finish: ProcessDetail
-  sterilization_start: ProcessDetail
-  sterilization_finish: ProcessDetail
-  sterilization_after_5: ProcessDetail
+
+  // // time references (IDs or null)
+  // filling_start?: string | null
+  // autoclave_start?: string | null
+  // heating_start?: string | null
+  // heating_finish?: string | null
+  // sterilization_start?: string | null
+  // sterilization_after_5?: string | null
+  // sterilization_finish?: string | null
+  // pre_cooling_start?: string | null
+  // pre_cooling_finish?: string | null
+  // cooling_1_start?: string | null
+  // cooling_1_finish?: string | null
+  // cooling_2_start?: string | null
+  // cooling_2_finish?: string | null
+
+  // detailed readings
+  filling_start_details?: ProcessDetail | null
+  autoclave_start_details?: ProcessDetail | null
+  heating_start_details?: ProcessDetail | null
+  heating_finish_details?: ProcessDetail | null
+  sterilization_start_details?: ProcessDetail | null
+  sterilization_after_5_details?: ProcessDetail | null
+  sterilization_finish_details?: ProcessDetail | null
+  pre_cooling_start_details?: ProcessDetail | null
+  pre_cooling_finish_details?: ProcessDetail | null
+  cooling_1_start_details?: ProcessDetail | null
+  cooling_1_finish_details?: ProcessDetail | null
+  cooling_2_start_details?: ProcessDetail | null
+  cooling_2_finish_details?: ProcessDetail | null
 }
 
+// API resource shape (returns batch)
 export interface SteriMilkProcessLog {
   id: string
   created_at?: string
@@ -76,14 +59,17 @@ export interface SteriMilkProcessLog {
   approved: boolean
   approver_id: string
   filmatic_form_id: string
-  steri_milk_process_log_batch: BatchEntry[]
+  tag?: string           // <- new field returned by API
+  batch_id?: Batch | null // <- API returns a single batch object or null
 }
 
+// New create request shape (single batch)
 export interface CreateSteriMilkProcessLogRequest {
   approved: boolean
   approver_id: string
   filmatic_form_id: string
-  steri_milk_process_log_batch: BatchEntry[]
+  batch: Batch
+  id?: string
 }
 
 export const steriMilkProcessLogApi = {
@@ -107,17 +93,17 @@ export const steriMilkProcessLogApi = {
   },
 
   async createLog(data: CreateSteriMilkProcessLogRequest): Promise<SteriMilkProcessLog> {
-    const response = await apiRequest<ApiEnvelope<SteriMilkProcessLog>>('/steri-milk-process-log', { 
-      method: 'POST', 
-      body: JSON.stringify(data) 
+    const response = await apiRequest<ApiEnvelope<SteriMilkProcessLog>>('/steri-milk-process-log', {
+      method: 'POST',
+      body: JSON.stringify(data)
     })
     return response.data
   },
 
   async updateLog(id: string, data: Partial<CreateSteriMilkProcessLogRequest>): Promise<SteriMilkProcessLog> {
-    const response = await apiRequest<ApiEnvelope<SteriMilkProcessLog>>(`/steri-milk-process-log/${id}`, { 
-      method: 'PATCH', 
-      body: JSON.stringify(data) 
+    const response = await apiRequest<ApiEnvelope<SteriMilkProcessLog>>(`/steri-milk-process-log`, {
+      method: 'PATCH',
+      body: JSON.stringify(data)
     })
     return response.data
   },

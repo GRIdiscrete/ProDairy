@@ -7,22 +7,28 @@ import { LoadingButton } from "@/components/ui/loading-button"
 import { DataTable } from "@/components/ui/data-table"
 import { DataTableFilters } from "@/components/ui/data-table-filters"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Eye, Edit, Trash2, Package, TrendingUp, FileText, Clock, ArrowRight } from "lucide-react"
+import { Plus, Eye, Edit, Trash2, Package, TrendingUp, FileText, Clock, ArrowRight, Calendar } from "lucide-react"
 import { PalletiserSheetDrawer } from "@/components/forms/palletiser-sheet-drawer"
 import { PalletiserSheetViewDrawer } from "@/components/forms/palletiser-sheet-view-drawer"
 import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-dialog"
 import { Skeleton } from "@/components/ui/skeleton"
 import { CopyButton } from "@/components/ui/copy-button"
 import { useAppDispatch, useAppSelector } from "@/lib/store"
-import { 
-  fetchPalletiserSheets, 
+import {
+  fetchPalletiserSheets,
   deletePalletiserSheetAction,
   clearError
 } from "@/lib/store/slices/palletiserSheetSlice"
+import { fetchUsers } from "@/lib/store/slices/usersSlice"
+import { fetchMachines } from "@/lib/store/slices/machineSlice"
+import { fetchRoles } from "@/lib/store/slices/rolesSlice"
 import { toast } from "sonner"
 import { TableFilters } from "@/lib/types"
 import { PalletiserSheet } from "@/lib/api/data-capture-forms"
 import ContentSkeleton from "@/components/ui/content-skeleton"
+import { FormIdCopy } from "@/components/ui/form-id-copy"
+import { UserAvatar } from "@/components/ui/user-avatar"
+import type { RootState } from "@/lib/store"
 
 interface PalletiserSheetPageProps {
   processId?: string
@@ -31,25 +37,42 @@ interface PalletiserSheetPageProps {
 export default function PalletiserSheetPage({ processId }: PalletiserSheetPageProps = {}) {
   const dispatch = useAppDispatch()
   const { sheets, loading, error, operationLoading, isInitialized } = useAppSelector((state) => state.palletiserSheets)
-  
+
+  // helper to format ISO date (YYYY-MM-DD) -> "25 Oct 2025"
+  const formatDate = (iso?: string | null) => {
+    if (!iso) return "N/A"
+    const d = new Date(iso)
+    if (Number.isNaN(d.getTime())) return iso
+    return d.toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })
+  }
+
+  // resolve reference lists from Redux store (fetched on mount) — destructure like other pages
+  const { items: users } = useAppSelector((state: RootState) => state.users)
+  const { machines } = useAppSelector((state: RootState) => state.machine)
+  const { roles } = useAppSelector((state: RootState) => state.roles)
+
   const [tableFilters, setTableFilters] = useState<TableFilters>({})
   const hasFetchedRef = useRef(false)
-  
+
   // Load palletiser sheets on initial mount
   useEffect(() => {
     if (!isInitialized && !hasFetchedRef.current) {
       hasFetchedRef.current = true
+      // load sheets and related reference data so Machine / Counter / Approver info is available
       dispatch(fetchPalletiserSheets())
+      dispatch(fetchUsers({}))
+      dispatch(fetchMachines({}))
+      dispatch(fetchRoles({}))
     }
   }, [dispatch, isInitialized])
-  
+
   // Handle filter changes
   useEffect(() => {
     if (isInitialized && Object.keys(tableFilters).length > 0) {
       dispatch(fetchPalletiserSheets())
     }
   }, [dispatch, tableFilters, isInitialized])
-  
+
   // Handle errors with toast notifications
   useEffect(() => {
     if (error) {
@@ -57,12 +80,12 @@ export default function PalletiserSheetPage({ processId }: PalletiserSheetPagePr
       dispatch(clearError())
     }
   }, [error, dispatch])
-  
+
   // Drawer states
   const [formDrawerOpen, setFormDrawerOpen] = useState(false)
   const [viewDrawerOpen, setViewDrawerOpen] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
-  
+
   // Selected sheet and mode
   const [selectedSheet, setSelectedSheet] = useState<PalletiserSheet | null>(null)
   const [formMode, setFormMode] = useState<"create" | "edit">("create")
@@ -114,7 +137,7 @@ export default function PalletiserSheetPage({ processId }: PalletiserSheetPagePr
 
   const confirmDelete = async () => {
     if (!selectedSheet) return
-    
+
     try {
       await dispatch(deletePalletiserSheetAction(selectedSheet.id!)).unwrap()
       toast.success('Palletiser Sheet deleted successfully')
@@ -142,10 +165,15 @@ export default function PalletiserSheetPage({ processId }: PalletiserSheetPagePr
             </div>
             <div>
               <div className="flex items-center space-x-2">
-                <Badge className="bg-blue-100 text-blue-800 font-light">{sheet.batch_number || 'N/A'}</Badge>
+                <FormIdCopy
+                  displayId={sheet.tag}
+                  actualId={sheet.id}
+                  size="sm"
+                />
+
               </div>
               <p className="text-sm text-gray-500 mt-1">
-                {sheet.created_at ? new Date(sheet.created_at).toLocaleDateString() : 'N/A'}
+                <Badge className="bg-blue-100 text-blue-800 font-light">{sheet.batch_number || 'N/A'}</Badge>
               </p>
             </div>
           </div>
@@ -157,7 +185,8 @@ export default function PalletiserSheetPage({ processId }: PalletiserSheetPagePr
       header: "Machine",
       cell: ({ row }: any) => {
         const sheet = row.original
-        const machine = sheet.palletiser_sheet_machine_id_fkey
+        // prefer resolving from machines loaded on this page, fallback to embedded relation
+        const machine = machines.find((m: any) => m.id === sheet.machine_id) || sheet.palletiser_sheet_machine_id_fkey
         return (
           <div className="space-y-2">
             <div className="flex items-center space-x-2">
@@ -188,37 +217,6 @@ export default function PalletiserSheetPage({ processId }: PalletiserSheetPagePr
       },
     },
     {
-      accessorKey: "product_info",
-      header: "Product",
-      cell: ({ row }: any) => {
-        const sheet = row.original
-        return (
-          <div className="space-y-2">
-            <div className="flex items-center space-x-2">
-              <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center">
-                <Package className="w-3 h-3 text-blue-600" />
-              </div>
-              <p className="text-sm font-light">
-                Product Details
-              </p>
-            </div>
-            <div className="space-y-1">
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-gray-500">Type</span>
-                <span className="text-xs font-light">
-                  {sheet.product_type && sheet.product_type.length > 20 ? 'N/A' : (sheet.product_type || 'N/A')}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-gray-500">Batch</span>
-                <span className="text-xs font-light">{sheet.batch_number}</span>
-              </div>
-            </div>
-          </div>
-        )
-      },
-    },
-    {
       accessorKey: "dates",
       header: "Dates",
       cell: ({ row }: any) => {
@@ -229,18 +227,16 @@ export default function PalletiserSheetPage({ processId }: PalletiserSheetPagePr
               <div className="w-5 h-5 rounded-full bg-orange-100 flex items-center justify-center">
                 <Clock className="h-3 w-3 text-orange-600" />
               </div>
-              <p className="text-sm font-light">
-                Manufacturing
-              </p>
+              <p className="text-sm font-light">Manufacturing</p>
             </div>
             <div className="space-y-1">
               <div className="flex items-center justify-between">
-                <span className="text-xs text-gray-500">Start</span>
-                <span className="text-xs font-light">{new Date(sheet.manufacturing_date).toLocaleDateString()}</span>
+                <span className="text-xs text-gray-500">Manufacturing Date</span>
+                <span className="text-xs font-light">{formatDate(sheet.manufacturing_date)}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-xs text-gray-500">Expiry</span>
-                <span className="text-xs font-light">{new Date(sheet.expiry_date).toLocaleDateString()}</span>
+                <span className="text-xs text-gray-500">Expiry Date</span>
+                <span className="text-xs font-light">{formatDate(sheet.expiry_date)}</span>
               </div>
             </div>
           </div>
@@ -248,55 +244,20 @@ export default function PalletiserSheetPage({ processId }: PalletiserSheetPagePr
       },
     },
     {
-      accessorKey: "approval",
-      header: "Approval",
+      accessorKey: "approver",
+      header: "Approver",
       cell: ({ row }: any) => {
         const sheet = row.original
-        const approver = sheet.palletiser_sheet_approved_by_fkey
-        return (
-          <div className="space-y-2">
-            <div className="flex items-center space-x-2">
-              <div className="w-5 h-5 rounded-full bg-purple-100 flex items-center justify-center">
-                <TrendingUp className="h-3 w-3 text-purple-600" />
-              </div>
-              <p className="text-sm font-light">
-                Approved By
-              </p>
-            </div>
-            {approver ? (
-              <div className="space-y-1">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-gray-500">Role</span>
-                  <span className="text-xs font-light">{approver.role_name}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-gray-500">Operations</span>
-                  <span className="text-xs font-light">{approver.user_operations?.length || 0}</span>
-                </div>
-              </div>
-            ) : (
-              <p className="text-xs text-gray-400">No details</p>
-            )}
-          </div>
-        )
-      },
-    },
-    {
-      accessorKey: "created_at",
-      header: "Created",
-      cell: ({ row }: any) => {
-        const sheet = row.original
+        // resolve role name from roles loaded in store (use approved_by id only)
+        const roleId = sheet.approved_by
+        const roleObj = roles ? roles.find((r: any) => r.id === roleId) : undefined
         return (
           <div className="space-y-1">
-            <p className="text-sm font-light">
-              {sheet.created_at ? new Date(sheet.created_at).toLocaleDateString() : 'N/A'}
-            </p>
-            <p className="text-xs text-gray-500">
-              {sheet.updated_at ? `Updated: ${new Date(sheet.updated_at).toLocaleDateString()}` : 'Never updated'}
-            </p>
+            <p className="text-sm font-light">{roleObj ? (roleObj.role_name || roleObj.name) : 'Not assigned'}</p>
+            <p className="text-xs text-gray-500">Supervisor</p>
           </div>
         )
-      },
+      }
     },
     {
       id: "actions",
@@ -305,25 +266,25 @@ export default function PalletiserSheetPage({ processId }: PalletiserSheetPagePr
         const sheet = row.original
         return (
           <div className="flex space-x-2">
-            <LoadingButton 
-              variant="outline" 
-              size="sm" 
+            <LoadingButton
+              variant="outline"
+              size="sm"
               onClick={() => handleViewSheet(sheet)}
               className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full"
             >
               <Eye className="w-4 h-4" />
             </LoadingButton>
-            <LoadingButton 
-              variant="outline" 
-              size="sm" 
+            <LoadingButton
+              variant="outline"
+              size="sm"
               onClick={() => handleEditSheet(sheet)}
               className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 rounded-full"
             >
               <Edit className="w-4 h-4" />
             </LoadingButton>
-            <LoadingButton 
-              variant="destructive" 
-              size="sm" 
+            <LoadingButton
+              variant="destructive"
+              size="sm"
               onClick={() => handleDeleteSheet(sheet)}
               loading={operationLoading.delete}
               disabled={operationLoading.delete}
@@ -335,7 +296,7 @@ export default function PalletiserSheetPage({ processId }: PalletiserSheetPagePr
         )
       },
     },
-  ], [operationLoading.delete])
+  ], [operationLoading.delete, machines, roles])
 
   return (
     <DataCaptureDashboardLayout title="Palletiser Sheet" subtitle="Palletising process control and monitoring">
@@ -345,7 +306,7 @@ export default function PalletiserSheetPage({ processId }: PalletiserSheetPagePr
             <h1 className="text-3xl font-light text-foreground">Palletiser Sheet</h1>
             <p className="text-sm font-light text-muted-foreground">Manage palletising forms and process control</p>
           </div>
-          <LoadingButton 
+          <LoadingButton
             onClick={handleAddSheet}
             className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full px-6 py-2 font-light"
           >
@@ -365,11 +326,17 @@ export default function PalletiserSheetPage({ processId }: PalletiserSheetPagePr
                   <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center">
                     <Package className="h-4 w-4 text-white" />
                   </div>
-                  <span>Current Palletising Process</span>
+                  <span>Current Palletising Sheet</span>
+                  {/* show form tag / copy control for latest sheet */}
+                  {latestSheet?.tag && (
+                    <div className="ml-2">
+                      <FormIdCopy displayId={latestSheet.tag} actualId={latestSheet.id} size="sm" />
+                    </div>
+                  )}
                   <Badge className="bg-gradient-to-r from-blue-100 to-cyan-100 text-blue-800 font-light">Latest</Badge>
                 </div>
-                <LoadingButton 
-                  variant="outline" 
+                <LoadingButton
+                  variant="outline"
                   onClick={() => handleViewSheet(latestSheet)}
                   className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full px-4 py-2 font-light text-sm"
                 >
@@ -380,89 +347,77 @@ export default function PalletiserSheetPage({ processId }: PalletiserSheetPagePr
             </div>
             <div className="p-6">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {/* Removed Product column as requested */}
                 <div className="space-y-2">
                   <div className="flex items-center space-x-2">
-                    <Package className="h-4 w-4 text-blue-500" />
-                    <p className="text-sm font-light text-gray-600">Product</p>
+                    <Calendar className="h-4 w-4 text-gray-500" />
+                    <p className="text-sm font-light text-gray-600">Manufacturing Date</p>
                   </div>
-                  <p className="text-lg font-light text-blue-600">
-                    {latestSheet.product_type && latestSheet.product_type.length > 20 ? 'N/A' : (latestSheet.product_type || 'N/A')}
-                  </p>
+                  <div className="flex flex-col">
+                    <div className="text-lg font-light">
+                      {formatDate(latestSheet.manufacturing_date)}
+                    </div>
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center space-x-2">
-                    <Clock className="h-4 w-4 text-gray-500" />
-                    <p className="text-sm font-light text-gray-600">Manufacturing</p>
+                    <Calendar className="h-4 w-4 text-gray-500" />
+                    <p className="text-sm font-light text-gray-600">Expiry Date </p>
                   </div>
-                  <p className="text-lg font-light">{new Date(latestSheet.manufacturing_date).toLocaleDateString('en-GB', { 
-                    day: 'numeric', 
-                    month: 'long', 
-                    year: 'numeric' 
-                  })}</p>
+                  <div className="flex flex-col">
+                    <div className="text-lg font-light">
+                      {formatDate(latestSheet.expiry_date)}
+                    </div>
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center space-x-2">
                     <TrendingUp className="h-4 w-4 text-green-500" />
                     <p className="text-sm font-light text-gray-600">Batch</p>
                   </div>
-                  <p className="text-lg font-light text-green-600">
-                    #{latestSheet.batch_number}
-                  </p>
+                  <p className="text-lg font-light text-green-600">#{latestSheet.batch_number}</p>
                 </div>
               </div>
-              
-              {/* Machine and Approval Details in Row */}
-              <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-4">
-                {/* Machine Details */}
-                {latestSheet.palletiser_sheet_machine_id_fkey && (
-                  <div className="p-4 bg-gray-50 rounded-lg">
-                    <div className="flex items-center space-x-2 mb-3">
-                      <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center">
-                        <Package className="h-4 w-4 text-green-600" />
-                      </div>
-                      <h4 className="text-sm font-light text-gray-900">Machine</h4>
-                    </div>
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-light text-gray-600">Name</span>
-                        <span className="text-xs font-light">{latestSheet.palletiser_sheet_machine_id_fkey.name}</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-light text-gray-600">Category</span>
-                        <span className="text-xs font-light text-green-600">{latestSheet.palletiser_sheet_machine_id_fkey.category}</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-light text-gray-600">Location</span>
-                        <span className="text-xs font-light">{latestSheet.palletiser_sheet_machine_id_fkey.location}</span>
-                      </div>
-                    </div>
-                  </div>
-                )}
 
-                {/* Approval Summary */}
-                {latestSheet.palletiser_sheet_approved_by_fkey && (
-                  <div className="p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg">
-                    <div className="flex items-center space-x-2 mb-3">
-                      <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
-                        <TrendingUp className="h-4 w-4 text-blue-600" />
+              {/* Show palletiser_sheet_details summary and counter avatar */}
+              <div className="mt-6">
+                <h4 className="text-sm font-medium text-gray-700 mb-2">Palletiser Details</h4>
+                {Array.isArray(latestSheet.palletiser_sheet_details) && latestSheet.palletiser_sheet_details.length > 0 ? (
+                  latestSheet.palletiser_sheet_details.map((d: any, idx: number) => {
+                    const counterUser = users?.find((u: any) => u.id === d.counter_id)
+                    return (
+                      <div key={idx} className="p-4 bg-gray-50 rounded-lg mb-3">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <div>
+                            <div className="text-xs text-gray-500">Cases Packed</div>
+                            <div className="text-sm font-light">{d.cases_packed ?? 'N/A'}</div>
+                          </div>
+                          <div>
+                            <div className="text-xs text-gray-500">Serial Number</div>
+                            <div className="text-sm font-light">{d.serial_number ?? 'N/A'}</div>
+                          </div>
+                          <div>
+                            <div className="text-xs text-gray-500">Counter</div>
+                            <div className="mt-1">
+                              {counterUser ? (
+                                <UserAvatar
+                                  user={counterUser}
+                                  size="md"
+                                  showName={true}
+                                  showEmail={true}
+                                  showDropdown={true}
+                                />
+                              ) : (
+                                <div className="text-xs text-gray-500">No counter assigned</div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                      <h4 className="text-sm font-light text-gray-900">Approval</h4>
-                    </div>
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-light text-gray-600">Approved By</span>
-                        <span className="text-xs font-light text-blue-600">{latestSheet.palletiser_sheet_approved_by_fkey.role_name}</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-light text-gray-600">User Operations</span>
-                        <span className="text-xs font-light text-blue-600">{latestSheet.palletiser_sheet_approved_by_fkey.user_operations?.length || 0}</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-light text-gray-600">Process Operations</span>
-                        <span className="text-xs font-light text-blue-600">{latestSheet.palletiser_sheet_approved_by_fkey.process_operations?.length || 0}</span>
-                      </div>
-                    </div>
-                  </div>
+                    )
+                  })
+                ) : (
+                  <div className="text-xs text-gray-500">No details available</div>
                 )}
               </div>
             </div>
@@ -476,27 +431,27 @@ export default function PalletiserSheetPage({ processId }: PalletiserSheetPagePr
               <div className="text-lg font-light">Palletiser Sheets</div>
             </div>
             <div className="p-6 space-y-4">
-            <DataTableFilters
-              filters={tableFilters}
-              onFiltersChange={setTableFilters}
-              onSearch={(searchTerm) => setTableFilters(prev => ({ ...prev, search: searchTerm }))}
-              searchPlaceholder="Search palletiser sheets..."
-              filterFields={filterFields}
-            />
-            
-            {loading ? (
-              <ContentSkeleton sections={1} cardsPerSection={4} />
-            ) : (
-              <DataTable columns={columns} data={sheets} showSearch={false} />
-            )}
+              <DataTableFilters
+                filters={tableFilters}
+                onFiltersChange={setTableFilters}
+                onSearch={(searchTerm) => setTableFilters(prev => ({ ...prev, search: searchTerm }))}
+                searchPlaceholder="Search palletiser sheets..."
+                filterFields={filterFields}
+              />
+
+              {loading ? (
+                <ContentSkeleton sections={1} cardsPerSection={4} />
+              ) : (
+                <DataTable columns={columns} data={sheets} showSearch={false} />
+              )}
             </div>
           </div>
         )}
 
         {/* Form Drawer */}
-        <PalletiserSheetDrawer 
-          open={formDrawerOpen} 
-          onOpenChange={setFormDrawerOpen} 
+        <PalletiserSheetDrawer
+          open={formDrawerOpen}
+          onOpenChange={setFormDrawerOpen}
           sheet={selectedSheet}
           mode={formMode}
           productType={processId}

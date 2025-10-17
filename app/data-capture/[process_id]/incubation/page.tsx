@@ -15,8 +15,8 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { CopyButton } from "@/components/ui/copy-button"
 import { useAppDispatch, useAppSelector } from "@/lib/store"
 import { RootState } from "@/lib/store"
-import { 
-  fetchProductIncubations, 
+import {
+  fetchProductIncubations,
   deleteProductIncubationAction,
   clearError
 } from "@/lib/store/slices/productIncubationSlice"
@@ -27,6 +27,7 @@ import { ProductIncubation } from "@/lib/api/data-capture-forms"
 import ContentSkeleton from "@/components/ui/content-skeleton"
 import { UserAvatar } from "@/components/ui/user-avatar"
 import { FormIdCopy } from "@/components/ui/form-id-copy"
+import { fetchUsers } from "@/lib/store/slices/usersSlice"
 
 interface ProductIncubationPageProps {
   params: {
@@ -38,11 +39,11 @@ export default function ProductIncubationPage({ params }: ProductIncubationPageP
   const dispatch = useAppDispatch()
   const { incubations, loading, error, operationLoading, isInitialized } = useAppSelector((state) => state.productIncubations)
   const { items: users } = useAppSelector((state: RootState) => state.users)
-  const productionPlans = useAppSelector((s:any) => s.productionPlan?.productionPlans || [])
-  
+  const productionPlans = useAppSelector((s: any) => s.productionPlan?.productionPlans || [])
+
   const [tableFilters, setTableFilters] = useState<TableFilters>({})
   const hasFetchedRef = useRef(false)
-  
+
   // Load product incubations on initial mount
   useEffect(() => {
     if (!isInitialized && !hasFetchedRef.current) {
@@ -50,16 +51,18 @@ export default function ProductIncubationPage({ params }: ProductIncubationPageP
       dispatch(fetchProductIncubations())
       // ensure production plans are available for the drawer selector
       dispatch(fetchProductionPlans())
+      //fetch users
+      dispatch(fetchUsers({}))
     }
   }, [dispatch, isInitialized])
-  
+
   // Handle filter changes
   useEffect(() => {
     if (isInitialized && Object.keys(tableFilters).length > 0) {
       dispatch(fetchProductIncubations())
     }
   }, [dispatch, tableFilters, isInitialized])
-  
+
   // Handle errors with toast notifications
   useEffect(() => {
     if (error) {
@@ -67,12 +70,12 @@ export default function ProductIncubationPage({ params }: ProductIncubationPageP
       dispatch(clearError())
     }
   }, [error, dispatch])
-  
+
   // Drawer states
   const [formDrawerOpen, setFormDrawerOpen] = useState(false)
   const [viewDrawerOpen, setViewDrawerOpen] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
-  
+
   // Selected incubation and mode
   const [selectedIncubation, setSelectedIncubation] = useState<ProductIncubation | null>(null)
   const [formMode, setFormMode] = useState<"create" | "edit">("create")
@@ -124,7 +127,7 @@ export default function ProductIncubationPage({ params }: ProductIncubationPageP
 
   const confirmDelete = async () => {
     if (!selectedIncubation) return
-    
+
     try {
       await dispatch(deleteProductIncubationAction(selectedIncubation.id!)).unwrap()
       toast.success('Product Incubation deleted successfully')
@@ -135,9 +138,9 @@ export default function ProductIncubationPage({ params }: ProductIncubationPageP
     }
   }
 
-  // Get latest incubation for display (map batch object/array)
+  // Get latest incubation for display (batch is now a single object)
   const latestIncubation = Array.isArray(incubations) && incubations.length > 0 ? incubations[0] : null
-  const latestBatch = latestIncubation ? (Array.isArray(latestIncubation.incubation_tracking_form_batch) ? latestIncubation.incubation_tracking_form_batch[0] : latestIncubation.incubation_tracking_form_batch) : null
+  const latestBatch = latestIncubation ? latestIncubation.batch : null
 
   // Helpers to format times/dates coming from batch which may be "HH:mm:ss" or "YYYY-MM-DD" or full ISO
   const formatTimeValue = (val: string | undefined | null) => {
@@ -168,7 +171,7 @@ export default function ProductIncubationPage({ params }: ProductIncubationPageP
       header: "Incubation",
       cell: ({ row }: any) => {
         const incubation = row.original
-        const batch = Array.isArray(incubation.incubation_tracking_form_batch) ? incubation.incubation_tracking_form_batch[0] : incubation.incubation_tracking_form_batch
+        const batch = incubation.batch // new single-object shape
         return (
           <div className="flex items-center space-x-3">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center">
@@ -182,35 +185,10 @@ export default function ProductIncubationPage({ params }: ProductIncubationPageP
               <p className="text-sm text-gray-500 mt-1">
                 {incubation.created_at ? new Date(incubation.created_at).toLocaleDateString() : 'N/A'} • {batch?.days ?? 'N/A'} days
               </p>
-            </div>
-          </div>
-        )
-      },
-    },
-    {
-      accessorKey: "product_info",
-      header: "Product",
-      cell: ({ row }: any) => {
-        const incubation = row.original
-        const batch = Array.isArray(incubation.incubation_tracking_form_batch) ? incubation.incubation_tracking_form_batch[0] : incubation.incubation_tracking_form_batch
-        return (
-          <div className="space-y-2">
-            <div className="flex items-center space-x-2">
-              <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center">
-                <TestTube className="w-3 h-3 text-blue-600" />
-              </div>
-              <p className="text-sm font-light">
-                Product Details
-              </p>
-            </div>
-            <div className="space-y-1">
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-gray-500">Description</span>
-                <span className="text-xs font-light">{batch?.basket ? batch.basket : 'N/A'}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-gray-500">Batch</span>
-                <span className="text-xs font-light">{batch?.batch_number ?? 'N/A'}</span>
+
+              {/* show tag/id copy control in each row */}
+              <div className="mt-2">
+                <FormIdCopy displayId={incubation.tag} actualId={incubation.id} size="sm" />
               </div>
             </div>
           </div>
@@ -222,7 +200,7 @@ export default function ProductIncubationPage({ params }: ProductIncubationPageP
       header: "Dates",
       cell: ({ row }: any) => {
         const incubation = row.original
-        const batch = Array.isArray(incubation.incubation_tracking_form_batch) ? incubation.incubation_tracking_form_batch[0] : incubation.incubation_tracking_form_batch
+        const batch = incubation.batch
         return (
           <div className="space-y-2">
             <div className="flex items-center space-x-2">
@@ -250,7 +228,7 @@ export default function ProductIncubationPage({ params }: ProductIncubationPageP
       header: "Manufacturing",
       cell: ({ row }: any) => {
         const incubation = row.original
-        const batch = Array.isArray(incubation.incubation_tracking_form_batch) ? incubation.incubation_tracking_form_batch[0] : incubation.incubation_tracking_form_batch
+        const batch = incubation.batch
         return (
           <div className="space-y-2">
             <div className="flex items-center space-x-2">
@@ -275,27 +253,23 @@ export default function ProductIncubationPage({ params }: ProductIncubationPageP
     },
     {
       accessorKey: "approval",
-      header: "Approval",
+      header: "Approved By",
       cell: ({ row }: any) => {
         const incubation = row.original
-        const batch = Array.isArray(incubation.incubation_tracking_form_batch) ? incubation.incubation_tracking_form_batch[0] : incubation.incubation_tracking_form_batch
-        const approverUser = batch?.approver_id ? users.find((u:any) => u.id === batch.approver_id) : null
-        const scientistUser = batch?.scientist_id ? users.find((u:any) => u.id === batch.scientist_id) : null
+        const batch = incubation.batch
+        // look up users by approver_id / scientist_id on the batch object
+        const approverUser = batch?.approver_id ? users.find((u: any) => u.id === batch.approver_id) : null
+        const scientistUser = batch?.scientist_id ? users.find((u: any) => u.id === batch.scientist_id) : null
         return (
           <div className="space-y-2">
-            <div className="flex items-center space-x-2">
-              <div className="w-5 h-5 rounded-full bg-purple-100 flex items-center justify-center">
-                <TrendingUp className="h-3 w-3 text-purple-600" />
-              </div>
-              <p className="text-sm font-light">Approved By</p>
-            </div>
+            
             {approverUser ? (
               <div className="flex items-center space-x-2">
-                <UserAvatar user={approverUser} size="sm" showName={true} showEmail={false} showDropdown={false} />
+                <UserAvatar user={approverUser} size="sm" showName={true} showEmail={false} showDropdown={true} />
               </div>
             ) : scientistUser ? (
               <div className="flex items-center space-x-2">
-                <UserAvatar user={scientistUser} size="sm" showName={true} showEmail={false} showDropdown={false} />
+                <UserAvatar user={scientistUser} size="sm" showName={true} showEmail={true} showDropdown={true} />
               </div>
             ) : (
               <p className="text-xs text-gray-400">No details</p>
@@ -328,25 +302,25 @@ export default function ProductIncubationPage({ params }: ProductIncubationPageP
         const incubation = row.original
         return (
           <div className="flex space-x-2">
-            <LoadingButton 
-              variant="outline" 
-              size="sm" 
+            <LoadingButton
+              variant="outline"
+              size="sm"
               onClick={() => handleViewIncubation(incubation)}
               className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full"
             >
               <Eye className="w-4 h-4" />
             </LoadingButton>
-            <LoadingButton 
-              variant="outline" 
-              size="sm" 
+            <LoadingButton
+              variant="outline"
+              size="sm"
               onClick={() => handleEditIncubation(incubation)}
               className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 rounded-full"
             >
               <Edit className="w-4 h-4" />
             </LoadingButton>
-            <LoadingButton 
-              variant="destructive" 
-              size="sm" 
+            <LoadingButton
+              variant="destructive"
+              size="sm"
               onClick={() => handleDeleteIncubation(incubation)}
               loading={operationLoading.delete}
               disabled={operationLoading.delete}
@@ -367,9 +341,9 @@ export default function ProductIncubationPage({ params }: ProductIncubationPageP
           <div>
             <h1 className="text-3xl font-light text-foreground">Product Incubation</h1>
             <p className="text-sm font-light text-muted-foreground">Manage product incubation forms and process control</p>
-            <p className="text-xs text-gray-500 mt-1">Process ID: {params.process_id}</p>
+
           </div>
-          <LoadingButton 
+          <LoadingButton
             onClick={handleAddIncubation}
             className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white border-0 rounded-full px-6 py-2 font-light"
           >
@@ -392,8 +366,8 @@ export default function ProductIncubationPage({ params }: ProductIncubationPageP
                   <span>Current Incubation Process</span>
                   <Badge className="bg-gradient-to-r from-purple-100 to-pink-100 text-purple-800 font-light">Latest</Badge>
                 </div>
-                <LoadingButton 
-                  variant="outline" 
+                <LoadingButton
+                  variant="outline"
                   onClick={() => handleViewIncubation(latestIncubation)}
                   className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white border-0 rounded-full px-4 py-2 font-light text-sm"
                 >
@@ -413,7 +387,7 @@ export default function ProductIncubationPage({ params }: ProductIncubationPageP
                     {latestIncubation?.tag ? (
                       <FormIdCopy displayId={latestIncubation.tag} actualId={latestIncubation.id} size="sm" />
                     ) : latestIncubation?.production_plan_id ? (
-                      <span>{`Plan ${latestIncubation.production_plan_id.slice(0,8)}`}</span>
+                      <span>{`Plan ${latestIncubation.production_plan_id.slice(0, 8)}`}</span>
                     ) : (
                       <span>N/A</span>
                     )}
@@ -445,43 +419,8 @@ export default function ProductIncubationPage({ params }: ProductIncubationPageP
                   </p>
                 </div>
               </div>
-              
-              {/* Process Overview */}
-              <div className="mt-6 p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg">
-                <div className="flex items-center space-x-2 mb-3">
-                  <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center">
-                    <TestTube className="h-4 w-4 text-purple-600" />
-                  </div>
-                  <h4 className="text-sm font-light text-gray-900">Process Overview</h4>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
-                      <FileText className="h-4 w-4 text-blue-600" />
-                    </div>
-                    <span className="text-sm font-light">Palletizer</span>
-                  </div>
-                  <ArrowRight className="w-4 h-4 text-gray-400" />
-                  <div className="flex items-center space-x-2">
-                    <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center">
-                      <TestTube className="h-4 w-4 text-purple-600" />
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <span className="text-sm font-medium text-purple-600">Incubation</span>
-                      <div className="bg-gradient-to-r from-purple-500 to-pink-600 text-white px-2 py-1 rounded-full text-xs font-medium shadow-lg">
-                        Current Step
-                      </div>
-                    </div>
-                  </div>
-                  <ArrowRight className="w-4 h-4 text-gray-400" />
-                  <div className="flex items-center space-x-2">
-                    <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center">
-                      <TestTube className="h-4 w-4 text-gray-400" />
-                    </div>
-                    <span className="text-sm font-light text-gray-400">Test</span>
-                  </div>
-                </div>
-              </div>
+
+
             </div>
           </div>
         ) : null}
@@ -493,42 +432,42 @@ export default function ProductIncubationPage({ params }: ProductIncubationPageP
               <div className="text-lg font-light">Product Incubations</div>
             </div>
             <div className="p-6 space-y-4">
-            <DataTableFilters
-              filters={tableFilters}
-              onFiltersChange={setTableFilters}
-              onSearch={(searchTerm) => setTableFilters(prev => ({ ...prev, search: searchTerm }))}
-              searchPlaceholder="Search product incubations..."
-              filterFields={filterFields}
-            />
-            
-            {loading ? (
-              <ContentSkeleton sections={1} cardsPerSection={4} />
-            ) : (
-              <DataTable columns={columns} data={incubations} showSearch={false} />
-            )}
+              <DataTableFilters
+                filters={tableFilters}
+                onFiltersChange={setTableFilters}
+                onSearch={(searchTerm) => setTableFilters(prev => ({ ...prev, search: searchTerm }))}
+                searchPlaceholder="Search product incubations..."
+                filterFields={filterFields}
+              />
+
+              {loading ? (
+                <ContentSkeleton sections={1} cardsPerSection={4} />
+              ) : (
+                <DataTable columns={columns} data={incubations} showSearch={false} />
+              )}
             </div>
           </div>
         )}
 
         {/* Form Drawer */}
-        <ProductIncubationDrawer 
-           open={formDrawerOpen} 
-           onOpenChange={setFormDrawerOpen} 
-           incubation={selectedIncubation}
-           mode={formMode}
-           processId={params.process_id}
-         />
- 
-         {/* View Drawer */}
-         <ProductIncubationViewDrawer
-           open={viewDrawerOpen}
-           onOpenChange={setViewDrawerOpen}
-           incubation={selectedIncubation}
-           onEdit={() => {
-             setViewDrawerOpen(false)
-             handleEditIncubation(selectedIncubation!)
-           }}
-         />
+        <ProductIncubationDrawer
+          open={formDrawerOpen}
+          onOpenChange={setFormDrawerOpen}
+          incubation={selectedIncubation}
+          mode={formMode}
+          processId={params.process_id}
+        />
+
+        {/* View Drawer */}
+        <ProductIncubationViewDrawer
+          open={viewDrawerOpen}
+          onOpenChange={setViewDrawerOpen}
+          incubation={selectedIncubation}
+          onEdit={() => {
+            setViewDrawerOpen(false)
+            handleEditIncubation(selectedIncubation!)
+          }}
+        />
 
         {/* Delete Confirmation Dialog */}
         <DeleteConfirmationDialog

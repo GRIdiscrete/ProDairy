@@ -430,6 +430,26 @@ export default function FilmaticLines2Page() {
                     {latestForm.approved ? 'Approved' : 'Pending'}
                   </Badge>
                 </div>
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <TrendingUp className="h-4 w-4 text-green-500" />
+                    <p className="text-sm font-light text-gray-600">Bottles (Day / Night)</p>
+                  </div>
+                  <div className="grid grid-cols-1 gap-2 text-sm text-gray-700">
+                    <div className="flex justify-between">
+                      <span className="font-light">Opening</span>
+                      <span className="font-medium">{latestForm.day_shift_opening_bottles ?? '—'} / {latestForm.night_shift_opening_bottles ?? '—'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-light">Closing</span>
+                      <span className="font-medium">{latestForm.day_shift_closing_bottles ?? '—'} / {latestForm.night_shift_closing_bottles ?? '—'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-light">Waste</span>
+                      <span className="font-medium">{latestForm.day_shift_waste_bottles ?? '—'} / {latestForm.night_shift_waste_bottles ?? '—'}</span>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               {/* Process Flow Information */}

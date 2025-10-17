@@ -12,8 +12,8 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "
 import { SearchableSelect } from "@/components/ui/searchable-select"
 import { DatePicker } from "@/components/ui/date-picker"
 import { useAppDispatch, useAppSelector } from "@/lib/store"
-import { 
-  createUHTQualityCheckAction, 
+import {
+  createUHTQualityCheckAction,
   updateUHTQualityCheckAction,
   createUHTQualityCheckDetailsAction,
   updateUHTQualityCheckDetailsAction,
@@ -91,18 +91,19 @@ const qualityCheckDetailsSchema = yup.object({
 type QualityCheckFormData = yup.InferType<typeof qualityCheckSchema>
 type QualityCheckDetailsFormData = yup.InferType<typeof qualityCheckDetailsSchema>
 
-export function UHTQualityCheckDrawer({ 
-  open, 
-  onOpenChange, 
-  qualityCheck, 
+export function UHTQualityCheckDrawer({
+  open,
+  onOpenChange,
+  qualityCheck,
   mode = "create",
   processId
 }: UHTQualityCheckDrawerProps) {
   const dispatch = useAppDispatch()
   const { operationLoading } = useAppSelector((state) => state.uhtQualityChecks)
-  
+
   const [currentStep, setCurrentStep] = useState(1)
   const [createdQualityCheck, setCreatedQualityCheck] = useState<UHTQualityCheckAfterIncubation | null>(null)
+  const [step1Data, setStep1Data] = useState<QualityCheckFormData | null>(null) // store step1 until final submit
   const [users, setUsers] = useState<any[]>([])
   const [roles, setRoles] = useState<any[]>([])
   const [loadingUsers, setLoadingUsers] = useState(false)
@@ -145,7 +146,7 @@ export function UHTQualityCheckDrawer({
         // Load users
         const usersResponse = await usersApi.getUsers()
         setUsers(usersResponse.data || [])
-        
+
         // Load roles
         const rolesResponse = await rolesApi.getRoles()
         setRoles(rolesResponse.data || [])
@@ -166,9 +167,8 @@ export function UHTQualityCheckDrawer({
   // Reset forms when drawer opens/closes
   useEffect(() => {
     if (open) {
-      console.log("Form opening, mode:", mode, "qualityCheck:", qualityCheck)
-      
       if (mode === "edit" && qualityCheck) {
+        // populate step1 with qualityCheck top-level fields
         qualityCheckForm.reset({
           date_of_production: qualityCheck.date_of_production || "",
           date_analysed: qualityCheck.date_analysed || "",
@@ -177,9 +177,9 @@ export function UHTQualityCheckDrawer({
           checked_by: qualityCheck.checked_by || "",
           ph_0_days: qualityCheck.ph_0_days || 0,
         })
-        
-        // Populate quality check details form with existing data if available
-        const details = qualityCheck.uht_qa_check_after_incubation_details_fkey
+
+        // populate details from incubation_details if present, otherwise from old details_fkey
+        const details = qualityCheck.incubation_details ?? qualityCheck.uht_qa_check_after_incubation_details_fkey
         if (details) {
           qualityCheckDetailsForm.reset({
             time: details.time || "",
@@ -191,7 +191,6 @@ export function UHTQualityCheckDrawer({
             verified_by: details.verified_by || "",
           })
         } else {
-          // Reset quality check details form with clean defaults if no details exist
           qualityCheckDetailsForm.reset({
             time: "",
             ph_30_degrees: 0,
@@ -202,11 +201,19 @@ export function UHTQualityCheckDrawer({
             verified_by: "",
           })
         }
-        
+
+        setStep1Data({
+          date_of_production: qualityCheck.date_of_production || "",
+          date_analysed: qualityCheck.date_analysed || "",
+          batch_number: qualityCheck.batch_number || "",
+          product: qualityCheck.product || "",
+          checked_by: qualityCheck.checked_by || "",
+          ph_0_days: qualityCheck.ph_0_days || 0,
+        })
         setCreatedQualityCheck(qualityCheck)
-        setCurrentStep(1) // Start from first step for edit mode
+        setCurrentStep(1)
       } else {
-        // Reset both forms to clean defaults
+        // Reset both forms to clean defaults for create
         qualityCheckForm.reset({
           date_of_production: "",
           date_analysed: "",
@@ -224,81 +231,87 @@ export function UHTQualityCheckDrawer({
           analyst: "",
           verified_by: "",
         })
+        setStep1Data(null)
         setCreatedQualityCheck(null)
         setCurrentStep(1)
       }
     }
   }, [open, mode, qualityCheck, qualityCheckForm, qualityCheckDetailsForm, processId])
 
+  // When user clicks Next on step 1, validate and store step1 data locally (no API call)
   const handleQualityCheckSubmit = async (data: QualityCheckFormData) => {
     try {
-      const qualityCheckData = {
+      // persist step1 data locally
+      setStep1Data({
         ...data,
-        product: processId || data.product, // Use processId if available
-      }
-      
+        product: processId || data.product,
+      })
+      setCurrentStep(2)
+    } catch (error: any) {
+      toast.error(error || "Failed to validate quality check")
+    }
+  }
+
+  // Final submit: combine step1 + step2 into single object and dispatch create/update
+  const handleQualityCheckDetailsSubmit = async (data: QualityCheckDetailsFormData) => {
+    const s1 = step1Data ?? qualityCheckForm.getValues()
+    if (!s1) {
+      toast.error("Please complete the quality check information first")
+      setCurrentStep(1)
+      return
+    }
+
+    const payload = {
+      date_of_production: s1.date_of_production,
+      date_analysed: s1.date_analysed,
+      batch_number: s1.batch_number,
+      product: processId || s1.product,
+      checked_by: s1.checked_by,
+      ph_0_days: s1.ph_0_days,
+      incubation_details: {
+        time: data.time,
+        ph_30_degrees: data.ph_30_degrees,
+        ph_55_degrees: data.ph_55_degrees,
+        defects: data.defects,
+        event: data.event,
+        analyst: data.analyst,
+        verified_by: data.verified_by,
+      },
+    }
+
+    try {
       if (mode === "edit" && qualityCheck) {
-        // For edit mode, only update the quality check data (not details)
+        // include id for update
+        console.log("Updating Quality Check:", qualityCheck?.uht_qa_check_after_incubation_details_fkey?.id)
+        //add details id
         await dispatch(updateUHTQualityCheckAction({
+          ...payload,
           id: qualityCheck.id,
-          date_of_production: qualityCheckData.date_of_production,
-          date_analysed: qualityCheckData.date_analysed,
-          batch_number: qualityCheckData.batch_number,
-          product: qualityCheckData.product,
-          checked_by: qualityCheckData.checked_by,
-          ph_0_days: qualityCheckData.ph_0_days,
+          incubation_details: {
+            ...payload.incubation_details,
+            id: qualityCheck?.uht_qa_check_after_incubation_details_fkey?.id
+          }
         })).unwrap()
         toast.success("Quality Check updated successfully")
-        setCreatedQualityCheck({ ...qualityCheck, ...qualityCheckData })
       } else {
-        const result = await dispatch(createUHTQualityCheckAction(qualityCheckData)).unwrap()
+        const result = await dispatch(createUHTQualityCheckAction(payload as any)).unwrap()
         toast.success("Quality Check created successfully")
         setCreatedQualityCheck(result)
       }
-      setCurrentStep(2)
+
+      // Refresh list & close
+      setTimeout(() => {
+        dispatch(fetchUHTQualityChecks())
+      }, 500)
+
+      onOpenChange(false)
     } catch (error: any) {
       toast.error(error || "Failed to save quality check")
     }
   }
 
-  const handleQualityCheckDetailsSubmit = async (data: QualityCheckDetailsFormData) => {
-    if (!createdQualityCheck) {
-      toast.error("No quality check found")
-      return
-    }
-
-    try {
-      const detailsData = {
-        ...data,
-        uht_qa_check_after_incubation_id: createdQualityCheck.id!,
-      }
-
-      if (mode === "edit" && qualityCheck) {
-        // For edit mode, we need to handle quality check details separately
-        // This would typically involve a separate API call for quality check details
-        // For now, we'll just show success and refresh
-        toast.success("Quality check details updated successfully")
-      } else {
-        // For create mode, create the quality check details
-        await dispatch(createUHTQualityCheckDetailsAction(detailsData)).unwrap()
-        toast.success("Quality check created successfully")
-      }
-
-      // Refresh the quality checks list
-      setTimeout(() => {
-        dispatch(fetchUHTQualityChecks())
-      }, 1000)
-
-      onOpenChange(false)
-    } catch (error: any) {
-      toast.error(error || "Failed to save quality check details")
-    }
-  }
-
   const handleBack = () => {
-    if (currentStep > 1) {
-      setCurrentStep(currentStep - 1)
-    }
+    if (currentStep > 1) setCurrentStep(currentStep - 1)
   }
 
   const handleNext = () => {
@@ -309,7 +322,7 @@ export function UHTQualityCheckDrawer({
 
   const handleUserSearch = async (query: string) => {
     if (!query.trim()) return []
-    
+
     try {
       const usersResponse = await usersApi.getUsers({
         filters: { search: query }
@@ -328,7 +341,7 @@ export function UHTQualityCheckDrawer({
 
   const handleRoleSearch = async (query: string) => {
     if (!query.trim()) return []
-    
+
     try {
       const rolesResponse = await rolesApi.getRoles({
         filters: { search: query }
@@ -348,13 +361,13 @@ export function UHTQualityCheckDrawer({
   const renderStep1 = () => (
     <div className="space-y-6 p-6">
       <ProcessOverview />
-      
+
       <div className="space-y-4">
         <div className="text-center mb-6">
           <h3 className="text-xl font-light text-gray-900">Quality Check Information</h3>
           <p className="text-sm font-light text-gray-600 mt-2">Enter the basic quality check details and analysis information</p>
         </div>
-        
+
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
             <Controller
@@ -469,13 +482,13 @@ export function UHTQualityCheckDrawer({
   const renderStep2 = () => (
     <div className="space-y-6 p-6">
       <ProcessOverview />
-      
+
       <div className="space-y-4">
         <div className="text-center mb-6">
           <h3 className="text-xl font-light text-gray-900">Test Details</h3>
           <p className="text-sm font-light text-gray-600 mt-2">Enter the specific test details and analysis results</p>
         </div>
-        
+
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
             <Controller
@@ -648,7 +661,7 @@ export function UHTQualityCheckDrawer({
             {mode === "edit" ? "Edit Incubation Test" : "Create Incubation Test"}
           </SheetTitle>
           <SheetDescription>
-            {currentStep === 1 
+            {currentStep === 1
               ? "Quality Check Information: Enter basic quality check details and analysis information"
               : "Test Details: Enter specific test details and analysis results"
             }
@@ -679,7 +692,7 @@ export function UHTQualityCheckDrawer({
           {currentStep === 1 ? (
             <Button
               onClick={handleNext}
-              disabled={operationLoading.create}
+              disabled={operationLoading?.create}
               className="flex items-center gap-2"
             >
               Next
@@ -688,7 +701,7 @@ export function UHTQualityCheckDrawer({
           ) : (
             <Button
               onClick={qualityCheckDetailsForm.handleSubmit(handleQualityCheckDetailsSubmit)}
-              disabled={operationLoading.createDetails}
+              disabled={operationLoading?.create || operationLoading?.update}
             >
               {mode === "edit" ? "Update Quality Check" : "Create Quality Check"}
             </Button>

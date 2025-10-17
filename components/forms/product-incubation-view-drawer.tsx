@@ -10,7 +10,7 @@ import { TestTube, FileText, Clock, TrendingUp, ArrowRight, Package } from "luci
 import { RootState, useAppSelector, useAppDispatch } from "@/lib/store"
 import { FormIdCopy } from "@/components/ui/form-id-copy"
 import { UserAvatar } from "@/components/ui/user-avatar"
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { fetchUsers } from "@/lib/store/slices/usersSlice"
 
 interface ProductIncubationViewDrawerProps {
@@ -35,15 +35,16 @@ export function ProductIncubationViewDrawer({
     }
   }, [open, dispatch])
   
-  // batch may be an object or array
-  const batch = Array.isArray(incubation.incubation_tracking_form_batch)
-    ? (incubation.incubation_tracking_form_batch[0] || null)
-    : (incubation.incubation_tracking_form_batch || null)
+  // batch is now a single object on incubation.batch
+  const batch = incubation.batch || null
   const { items: users } = useAppSelector((state: RootState) => state.users)
   const productionPlans = useAppSelector((s:any) => s.productionPlan?.productionPlans || [])
   const approverUser = batch?.approver_id ? users.find((u:any) => u.id === batch.approver_id) : null
   const scientistUser = batch?.scientist_id ? users.find((u:any) => u.id === batch.scientist_id) : null
   const productionPlan = incubation.production_plan_id ? productionPlans.find((p:any) => p.id === incubation.production_plan_id) : null
+
+  // toggle for showing more production plan info
+  const [planOpen, setPlanOpen] = useState(false)
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -221,22 +222,55 @@ export function ProductIncubationViewDrawer({
             </CardContent>
           </Card>
 
-          {/* Production Plan Info */}
+          {/* Production Plan Info - custom toggle to show more details */}
           {productionPlan && (
             <Card className="shadow-none border border-gray-200 rounded-lg">
-              <CardHeader className="pb-4">
+              <CardHeader className="pb-4 flex items-center justify-between">
                 <div className="flex items-center space-x-2">
                   <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center">
                     <Package className="h-4 w-4 text-gray-600" />
                   </div>
                   <CardTitle className="text-base font-light">Production Plan</CardTitle>
                 </div>
+                <Button size="sm" variant="outline" onClick={() => setPlanOpen(p => !p)}>
+                  {planOpen ? "Hide Plan" : "View Plan"}
+                </Button>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
                   <span className="text-xs font-light text-gray-500">Plan</span>
                   <p className="text-sm font-light">{productionPlan.tag || productionPlan.name || productionPlan.id}</p>
                 </div>
+
+                {planOpen && (
+                  <div className="mt-4 space-y-2 bg-gray-50 p-4 rounded-md">
+                    <div>
+                      <span className="text-xs text-gray-500">Description</span>
+                      <p className="text-sm">{productionPlan.description ?? "No description available"}</p>
+                    </div>
+                    {productionPlan.start_date && (
+                      <div>
+                        <span className="text-xs text-gray-500">Start</span>
+                        <p className="text-sm">{format(new Date(productionPlan.start_date), "PPP")}</p>
+                      </div>
+                    )}
+                    {productionPlan.end_date && (
+                      <div>
+                        <span className="text-xs text-gray-500">End</span>
+                        <p className="text-sm">{format(new Date(productionPlan.end_date), "PPP")}</p>
+                      </div>
+                    )}
+                    {/* render any additional plan metadata if present */}
+                    {productionPlan.items && Array.isArray(productionPlan.items) && (
+                      <div>
+                        <span className="text-xs text-gray-500">Items</span>
+                        <ul className="text-sm list-disc ml-5">
+                          {productionPlan.items.slice(0,5).map((it:any, idx:number) => <li key={idx}>{it.name ?? it.id ?? JSON.stringify(it)}</li>)}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                )}
               </CardContent>
             </Card>
           )}
