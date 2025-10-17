@@ -156,10 +156,10 @@ export function QACorrectiveActionDrawer({
         await dispatch(updateQACorrectiveActionAction({
           ...payload,
           id: action.id,
-          details: {
-            ...payload.details,
-            id: action?.qa_corrective_action_details?.id
-          }
+          details: [{
+            ...payload.details[0],
+            id: action?.qa_corrective_action_details[0]?.id
+          }]
         })).unwrap()
         toast.success("QA Corrective Action updated successfully")
       } else {

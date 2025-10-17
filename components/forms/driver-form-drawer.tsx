@@ -64,6 +64,8 @@ type DriverFormFormData = {
   drivers_form_collected_products: DriverFormCollectedProduct[]
 }
 
+
+
 interface DriverFormDrawerProps {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -273,6 +275,8 @@ export function DriverFormDrawer({
 
       // console.log('Submitting driver form:', submitData)
 
+      //remove drivers_form_collected_products from submit data
+      delete submitData.drivers_form_collected_products
 
       if (isOnline) {
         // Online mode - submit to API
