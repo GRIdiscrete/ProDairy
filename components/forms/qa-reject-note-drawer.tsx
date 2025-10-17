@@ -192,11 +192,11 @@ export function QaRejectNoteDrawer({ open, onOpenChange, note, mode = "create", 
                                 const d = field.value || {}
                                 return (
                                     <div className="grid grid-cols-2 gap-4">
-                                        <div>
+                                        {/* <div>
                                             <Label className="mb-2">Product</Label>
                                             <input type="hidden" value={d.product || ""} />
                                             <div className="text-sm font-light">{d.product || processId || "N/A"}</div>
-                                        </div>
+                                        </div> */}
 
                                         <div>
                                             <Label className="mb-2">Batch No</Label>
