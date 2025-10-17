@@ -19,6 +19,9 @@ import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-di
 import { SteriMilkProcessLogDrawer } from "@/components/forms/steri-milk-process-log-drawer"
 import { SteriMilkProcessLogViewDrawer } from "@/components/forms/steri-milk-process-log-view-drawer"
 import ContentSkeleton from "@/components/ui/content-skeleton"
+import { FormIdCopy } from "@/components/ui/form-id-copy"
+import { rolesApi } from "@/lib/api/roles"
+import { filmaticLinesForm1Api } from "@/lib/api/filmatic-lines-form-1"
 
 export default function ProcessLogPage() {
   const dispatch = useAppDispatch()
@@ -54,32 +57,76 @@ export default function ProcessLogPage() {
   const [selectedLog, setSelectedLog] = useState<SteriMilkProcessLog | null>(null)
   const [formMode, setFormMode] = useState<"create" | "edit">("create")
 
+  const [rolesMap, setRolesMap] = useState<Record<string, string>>({})
+  const [formMap, setFormMap] = useState<Record<string, { tag?: string }>>({})
+
+  // load roles once
+  useEffect(() => {
+    let mounted = true
+    const loadRoles = async () => {
+      try {
+        const res = await rolesApi.getRoles()
+        if (!mounted) return
+        const map: Record<string, string> = {}
+          ; (res.data || []).forEach((r: any) => {
+            map[r.id] = r.role_name
+          })
+        setRolesMap(map)
+      } catch (err) {
+        // ignore, fallbacks will display ids
+      }
+    }
+    loadRoles()
+    return () => { mounted = false }
+  }, [])
+
+  // Load all Filmatic Lines Form 1 once and cache tags (use filmatic list state)
+  useEffect(() => {
+    let mounted = true
+    const loadAllForms = async () => {
+      try {
+        const list = await filmaticLinesForm1Api.getForms()
+        if (!mounted) return
+        const map: Record<string, { tag?: string }> = {}
+          ; (list || []).forEach((f: any) => {
+            map[f.id] = { tag: f.tag || f.name || "" }
+          })
+        // prefer newly-loaded form tags but keep any existing entries
+        setFormMap(prev => ({ ...prev, ...map }))
+      } catch (err) {
+        // ignore - fallback will show ids
+      }
+    }
+    loadAllForms()
+    return () => { mounted = false }
+  }, [])
+
   const filterFields = useMemo(() => [
     { key: "created_at", label: "Date", type: "date" as const, placeholder: "Filter by date" },
     { key: "approver_id", label: "Approver", type: "text" as const, placeholder: "Filter by approver" },
     { key: "filmatic_form_id", label: "Filmatic Form", type: "text" as const, placeholder: "Filter by form" },
   ], [])
 
-  const handleAdd = () => { 
+  const handleAdd = () => {
     setSelectedLog(null)
     setFormMode("create")
-    setFormDrawerOpen(true) 
+    setFormDrawerOpen(true)
   }
-  
-  const handleEdit = (log: SteriMilkProcessLog) => { 
+
+  const handleEdit = (log: SteriMilkProcessLog) => {
     setSelectedLog(log)
     setFormMode("edit")
-    setFormDrawerOpen(true) 
+    setFormDrawerOpen(true)
   }
-  
-  const handleView = (log: SteriMilkProcessLog) => { 
+
+  const handleView = (log: SteriMilkProcessLog) => {
     setSelectedLog(log)
-    setViewDrawerOpen(true) 
+    setViewDrawerOpen(true)
   }
-  
-  const handleDelete = (log: SteriMilkProcessLog) => { 
+
+  const handleDelete = (log: SteriMilkProcessLog) => {
     setSelectedLog(log)
-    setDeleteDialogOpen(true) 
+    setDeleteDialogOpen(true)
   }
 
   const confirmDelete = async () => {
@@ -94,8 +141,6 @@ export default function ProcessLogPage() {
     }
   }
 
-  const latest = Array.isArray(logs) && logs.length > 0 ? logs[0] : null
-
   const columns = useMemo(() => [
     {
       accessorKey: "log",
@@ -109,7 +154,11 @@ export default function ProcessLogPage() {
             </div>
             <div>
               <div className="flex items-center space-x-2">
-                <span className="font-light">#{log.id?.slice(0, 8) || 'N/A'}</span>
+                <FormIdCopy
+                  displayId={log?.tag}
+                  actualId={log?.id}
+                  size="sm"
+                />
                 <Badge className={`${log.approved ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'} font-light`}>
                   {log.approved ? 'Approved' : 'Pending'}
                 </Badge>
@@ -127,12 +176,13 @@ export default function ProcessLogPage() {
       header: "Batch",
       cell: ({ row }: any) => {
         const log = row.original
-        const batches = log.steri_milk_process_log_batch || []
+        // map single batch object (batch_id) to array for UI logic compatibility
+        const batches = log.batch_id ? [log.batch_id] : []
         const totalBatches = batches.length
-        const completedBatches = batches.filter((batch: any) => 
+        const completedBatches = batches.filter((batch: any) =>
           batch.filling_start && batch.sterilization_finish
         ).length
-        
+
         return (
           <div className="space-y-1">
             <p className="text-sm font-light">
@@ -150,10 +200,16 @@ export default function ProcessLogPage() {
       header: "Filmatic Form",
       cell: ({ row }: any) => {
         const log = row.original
+        const form = log.filmatic_form_id ? formMap[log.filmatic_form_id] : null
         return (
           <div className="space-y-1">
-            <p className="text-sm font-light">{log.filmatic_form_id ? `Form #${log.filmatic_form_id.slice(0, 8)}` : "Not linked"}</p>
-            <p className="text-xs text-gray-500">Required</p>
+            <p className="text-sm font-light">
+              <FormIdCopy
+                displayId={form?.tag ?? undefined}
+                actualId={log?.filmatic_form_id}
+                size="sm"
+              />
+            </p>
           </div>
         )
       }
@@ -163,23 +219,11 @@ export default function ProcessLogPage() {
       header: "Approver",
       cell: ({ row }: any) => {
         const log = row.original
+        const roleName = log.approver_id ? rolesMap[log.approver_id] : undefined
         return (
           <div className="space-y-1">
-            <p className="text-sm font-light">{log.approver_id ? `Approver #${log.approver_id.slice(0, 8)}` : "Not assigned"}</p>
+            <p className="text-sm font-light">{roleName ? roleName : (log.approver_id ? `Approver #${String(log.approver_id).slice(0, 8)}` : "Not assigned")}</p>
             <p className="text-xs text-gray-500">Supervisor</p>
-          </div>
-        )
-      }
-    },
-    {
-      accessorKey: "created_at",
-      header: "Created",
-      cell: ({ row }: any) => {
-        const log = row.original
-        return (
-          <div className="space-y-1">
-            <p className="text-sm font-light">{log.created_at ? new Date(log.created_at).toLocaleDateString() : 'N/A'}</p>
-            <p className="text-xs text-gray-500">{log.updated_at ? `Updated: ${new Date(log.updated_at).toLocaleDateString()}` : 'Never updated'}</p>
           </div>
         )
       }
@@ -221,7 +265,9 @@ export default function ProcessLogPage() {
         )
       }
     }
-  ], [loading.delete])
+  ], [loading.delete, rolesMap, formMap])
+
+  const latest = Array.isArray(logs) && logs.length > 0 ? logs[0] : null
 
   return (
     <DataCaptureDashboardLayout title="Process Log" subtitle="Steri milk process control and monitoring">
@@ -231,8 +277,8 @@ export default function ProcessLogPage() {
             <h1 className="text-3xl font-light text-foreground">Process Log</h1>
             <p className="text-sm font-light text-muted-foreground">Manage steri milk process logs</p>
           </div>
-          <LoadingButton 
-            onClick={handleAdd} 
+          <LoadingButton
+            onClick={handleAdd}
             className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full px-6 py-2 font-light"
           >
             Add Process Log
@@ -252,8 +298,8 @@ export default function ProcessLogPage() {
                   <span>Current Steri Milk Process Log</span>
                   <Badge className="bg-gradient-to-r from-blue-100 to-cyan-100 text-blue-800 font-light">Latest</Badge>
                 </div>
-                <LoadingButton 
-                  variant="outline" 
+                <LoadingButton
+                  variant="outline"
                   onClick={() => handleView(latest)}
                   className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full px-4 py-2 font-light text-sm"
                 >
@@ -267,52 +313,60 @@ export default function ProcessLogPage() {
                 <div className="space-y-2">
                   <div className="flex items-center space-x-2">
                     <FileText className="h-4 w-4 text-gray-500" />
-                    <p className="text-sm font-light text-gray-600">Log ID</p>
+                    <p className="text-sm font-light">Log ID</p>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <p className="text-lg font-light">#{latest.id?.slice(0, 8) || 'N/A'}</p>
-                    {latest.id && <CopyButton text={latest.id} />}
+                    <FormIdCopy
+                      displayId={latest?.tag}
+                      actualId={latest?.id}
+                      size="sm"
+                    />
                   </div>
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center space-x-2">
                     <Beaker className="h-4 w-4 text-blue-500" />
-                    <p className="text-sm font-light text-gray-600">Created</p>
+                    <p className="text-sm font-light">Created</p>
                   </div>
-                  <p className="text-lg font-light">{latest.created_at ? new Date(latest.created_at).toLocaleDateString('en-GB', { 
-                    day: 'numeric', 
-                    month: 'long', 
-                    year: 'numeric' 
+                  <p className="text-lg font-light">{latest.created_at ? new Date(latest.created_at).toLocaleDateString('en-GB', {
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric'
                   }) : 'N/A'}</p>
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center space-x-2">
                     <TrendingUp className="h-4 w-4 text-green-500" />
-                    <p className="text-sm font-light text-gray-600">Updated</p>
+                    <p className="text-sm font-light">Updated</p>
                   </div>
-                  <p className="text-lg font-light">{latest.updated_at ? new Date(latest.updated_at).toLocaleDateString('en-GB', { 
-                    day: 'numeric', 
-                    month: 'long', 
-                    year: 'numeric' 
+                  <p className="text-lg font-light">{latest.updated_at ? new Date(latest.updated_at).toLocaleDateString('en-GB', {
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric'
                   }) : 'Never'}</p>
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center space-x-2">
                     <User className="h-4 w-4 text-purple-500" />
-                    <p className="text-sm font-light text-gray-600">Approver</p>
+                    <p className="text-sm font-light">Approver</p>
                   </div>
-                  <p className="text-lg font-light text-blue-600">{latest.approver_id ? `Approver #${latest.approver_id.slice(0, 8)}` : '—'}</p>
+                  <p className="text-lg font-light text-blue-600">
+                    {latest?.approver_id ? (rolesMap[latest.approver_id] || `Approver #${String(latest.approver_id).slice(0, 8)}`) : '—'}
+                  </p>
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center space-x-2">
                     <FileText className="h-4 w-4 text-green-500" />
-                    <p className="text-sm font-light text-gray-600">Filmatic Form</p>
+                    <p className="text-sm font-light">Filmatic Form</p>
                   </div>
-                  <p className="text-lg font-light text-green-600">{latest.filmatic_form_id ? `Form #${latest.filmatic_form_id.slice(0, 8)}` : 'Not linked'}</p>
+                  <p className="text-lg font-light text-green-600">
+                    {latest?.filmatic_form_id ? (formMap[latest.filmatic_form_id]?.tag ? `Form ${formMap[latest.filmatic_form_id].tag}` : `Form #${String(latest.filmatic_form_id).slice(0, 8)}`) : 'Not linked'}
+                  </p>
                 </div>
               </div>
 
-              {latest.steri_milk_process_log_batch && latest.steri_milk_process_log_batch.length > 0 && (
+              {/* Batch cards from batch_id */}
+              {latest.batch_id && (
                 <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-4">
                   <div className="p-4 bg-gray-50 rounded-lg">
                     <div className="flex items-center space-x-2 mb-3">
@@ -324,11 +378,11 @@ export default function ProcessLogPage() {
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-light text-gray-600">Total Batches</span>
-                        <span className="text-xs font-light">{latest.steri_milk_process_log_batch.length}</span>
+                        <span className="text-xs font-light">1</span>
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-light text-gray-600">Latest Batch</span>
-                        <span className="text-xs font-light">#{latest.steri_milk_process_log_batch[0]?.batch_number || 'N/A'}</span>
+                        <span className="text-xs font-light">#{latest.batch_id.batch_number || 'N/A'}</span>
                       </div>
                     </div>
                   </div>
@@ -343,11 +397,11 @@ export default function ProcessLogPage() {
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-light text-gray-600">Filling Start</span>
-                        <span className="text-xs font-light">{latest.steri_milk_process_log_batch[0]?.filling_start ? 'Completed' : 'Pending'}</span>
+                        <span className="text-xs font-light">{latest.batch_id.filling_start ? 'Completed' : 'Pending'}</span>
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-light text-gray-600">Sterilization</span>
-                        <span className="text-xs font-light">{latest.steri_milk_process_log_batch[0]?.sterilization_start ? 'Completed' : 'Pending'}</span>
+                        <span className="text-xs font-light">{latest.batch_id.sterilization_start ? 'Completed' : 'Pending'}</span>
                       </div>
                     </div>
                   </div>
@@ -379,29 +433,30 @@ export default function ProcessLogPage() {
           </div>
         )}
 
-        <SteriMilkProcessLogDrawer 
-          open={formDrawerOpen} 
-          onOpenChange={setFormDrawerOpen} 
-          log={selectedLog} 
+        <SteriMilkProcessLogDrawer
+          open={formDrawerOpen}
+          onOpenChange={setFormDrawerOpen}
+          log={selectedLog}
           mode={formMode}
           processId="default-process-id"
         />
-        <SteriMilkProcessLogViewDrawer 
-          open={viewDrawerOpen} 
-          onOpenChange={setViewDrawerOpen} 
-          log={selectedLog} 
-          onEdit={() => { 
+        <SteriMilkProcessLogViewDrawer
+          open={viewDrawerOpen}
+          onOpenChange={setViewDrawerOpen}
+          log={selectedLog}
+          formMap={formMap}
+          onEdit={() => {
             setViewDrawerOpen(false)
-            handleEdit(selectedLog!) 
-          }} 
+            handleEdit(selectedLog!)
+          }}
         />
-        <DeleteConfirmationDialog 
-          open={deleteDialogOpen} 
-          onOpenChange={setDeleteDialogOpen} 
-          title="Delete Process Log" 
-          description={`Are you sure you want to delete this process log? This action cannot be undone.`} 
-          onConfirm={confirmDelete} 
-          loading={loading.delete} 
+        <DeleteConfirmationDialog
+          open={deleteDialogOpen}
+          onOpenChange={setDeleteDialogOpen}
+          title="Delete Process Log"
+          description={`Are you sure you want to delete this process log? This action cannot be undone.`}
+          onConfirm={confirmDelete}
+          loading={loading.delete}
         />
       </div>
     </DataCaptureDashboardLayout>

@@ -60,7 +60,7 @@ export const createProductIncubationAction = createAsyncThunk(
 
 export const updateProductIncubationAction = createAsyncThunk(
   'productIncubations/updateProductIncubation',
-  async (incubationData: ProductIncubation, { rejectWithValue }) => {
+  async (incubationData: any, { rejectWithValue }) => {
     try {
       const data = await updateProductIncubation(incubationData)
       return data

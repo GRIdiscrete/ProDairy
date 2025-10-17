@@ -11,8 +11,8 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "
 import { SearchableSelect } from "@/components/ui/searchable-select"
 import { DatePicker } from "@/components/ui/date-picker"
 import { useAppDispatch, useAppSelector } from "@/lib/store"
-import { 
-  createProductIncubationAction, 
+import {
+  createProductIncubationAction,
   updateProductIncubationAction,
   fetchProductIncubations
 } from "@/lib/store/slices/productIncubationSlice"
@@ -87,19 +87,19 @@ const incubationSchema = yup.object({
 
 type IncubationFormData = yup.InferType<typeof incubationSchema>
 
-export function ProductIncubationDrawer({ 
-  open, 
-  onOpenChange, 
-  incubation, 
+export function ProductIncubationDrawer({
+  open,
+  onOpenChange,
+  incubation,
   mode = "create",
   processId
 }: ProductIncubationDrawerProps) {
   const dispatch = useAppDispatch()
   const { operationLoading } = useAppSelector((state) => state.productIncubations)
-  
-  const productionPlans = useAppSelector((s:any) => s.productionPlan?.productionPlans || [])
-  const productionPlanLoading = useAppSelector((s:any) => s.productionPlan?.operationLoading || {})
-  const usersList = useAppSelector((s:any) => s.users?.items || [])
+
+  const productionPlans = useAppSelector((s: any) => s.productionPlan?.productionPlans || [])
+  const productionPlanLoading = useAppSelector((s: any) => s.productionPlan?.operationLoading || {})
+  const usersList = useAppSelector((s: any) => s.users?.items || [])
   const [users, setUsers] = useState<any[]>([])
   const [roles, setRoles] = useState<any[]>([])
   const [loadingUsers, setLoadingUsers] = useState(false)
@@ -135,7 +135,7 @@ export function ProductIncubationDrawer({
         // Load users
         const usersResponse = await usersApi.getUsers()
         setUsers(usersResponse.data || [])
-        
+
         // Load roles
         const rolesResponse = await rolesApi.getRoles()
         setRoles(rolesResponse.data || [])
@@ -159,27 +159,28 @@ export function ProductIncubationDrawer({
   useEffect(() => {
     if (open) {
       if (mode === "edit" && incubation) {
-        // Map new API payload to form defaults. batch info may be object or array.
-        const batch = Array.isArray(incubation.incubation_tracking_form_batch)
-          ? (incubation.incubation_tracking_form_batch[0] || {})
-          : (incubation.incubation_tracking_form_batch || {})
+        // Prefer new API shape (incubation.batch). Fall back to legacy incubation_tracking_form_batch (array/object).
+        const batch = (incubation as any).batch
+          ?? (Array.isArray((incubation as any).incubation_tracking_form_batch)
+            ? ((incubation as any).incubation_tracking_form_batch[0] || {})
+            : ((incubation as any).incubation_tracking_form_batch || {}))
 
         // extract short "HH:mm" for time pickers
         form.reset({
           production_plan_id: incubation.production_plan_id || processId || "",
           status: incubation.status || "In Progress",
-          batch_number: batch.batch_number ?? undefined,
-          basket: batch.basket || "",
-          time_in: extractTime(batch.time_in),
-          expected_time_out: extractTime(batch.expected_time_out),
-          actual_time_out: extractTime(batch.actual_time_out),
-          manufacture_date: batch.manufacture_date || "",
-          best_before_date: batch.best_before_date || "",
-          days: batch.days ?? undefined,
-          event: batch.event || "",
-          defects: batch.defects || "",
-          scientist_id: batch.scientist_id || "",
-          approver_id: batch.approver_id || "",
+          batch_number: batch?.batch_number ?? undefined,
+          basket: batch?.basket || "",
+          time_in: extractTime(batch?.time_in),
+          expected_time_out: extractTime(batch?.expected_time_out),
+          actual_time_out: extractTime(batch?.actual_time_out),
+          manufacture_date: batch?.manufacture_date || "",
+          best_before_date: batch?.best_before_date || "",
+          days: batch?.days ?? undefined,
+          event: batch?.event || "",
+          defects: batch?.defects || "",
+          scientist_id: batch?.scientist_id || "",
+          approver_id: batch?.approver_id || "",
         })
       } else {
         form.reset({
@@ -208,27 +209,31 @@ export function ProductIncubationDrawer({
       const payload: any = {
         production_plan_id: data.production_plan_id,
         status: data.status,
-        incubation_tracking_form_batch: [
-          {
-            batch_number: data.batch_number,
-            basket: data.basket,
-            // normalize HH:mm -> HH:mm:ss to match API expectation
-            time_in: normalizeTimeForSubmit(data.time_in),
-            expected_time_out: normalizeTimeForSubmit(data.expected_time_out),
-            actual_time_out: normalizeTimeForSubmit(data.actual_time_out),
-            manufacture_date: data.manufacture_date,
-            best_before_date: data.best_before_date,
-            days: data.days,
-            event: data.event,
-            defects: data.defects,
-            scientist_id: data.scientist_id,
-            approver_id: data.approver_id,
-          }
-        ]
+        incubation_tracking_form_batch: {
+          batch_number: data.batch_number,
+          basket: data.basket,
+          // normalize HH:mm -> HH:mm:ss to match API expectation
+          time_in: normalizeTimeForSubmit(data.time_in),
+          expected_time_out: normalizeTimeForSubmit(data.expected_time_out),
+          actual_time_out: normalizeTimeForSubmit(data.actual_time_out),
+          manufacture_date: data.manufacture_date,
+          best_before_date: data.best_before_date,
+          days: data.days,
+          event: data.event,
+          defects: data.defects,
+          scientist_id: data.scientist_id,
+          approver_id: data.approver_id,
+        }
       }
 
       if (mode === "edit" && incubation?.id) {
-        await dispatch(updateProductIncubationAction({ id: incubation.id, ...payload })).unwrap()
+        console.log("Updating product incubation:", incubation.batch.id)
+        await dispatch(updateProductIncubationAction({
+          ...payload,
+          id: incubation.id,
+          incubation_tracking_form_batch: {...payload.incubation_tracking_form_batch, id: incubation.batch.id, },
+          
+        })).unwrap()
         toast.success("Product Incubation updated successfully")
       } else {
         await dispatch(createProductIncubationAction(payload)).unwrap()
@@ -238,14 +243,55 @@ export function ProductIncubationDrawer({
       // Refresh list immediately
       await dispatch(fetchProductIncubations()).unwrap()
       onOpenChange(false)
-    } catch (error: any) {
-      toast.error(error || "Failed to save product incubation")
+    } catch (err: any) {
+      // Normalize error into a safe string to avoid passing objects to React as children
+      let msg = "Failed to save product incubation"
+
+      if (typeof err === "string") {
+        msg = err
+      } else if (err?.message) {
+        msg = err.message
+      } else if (err?.data) {
+        // err.data might be an object with message/detail or other structure
+        if (typeof err.data === "string") {
+          msg = err.data
+        } else if (err.data.message) {
+          msg = err.data.message
+        } else if (err.data.detail) {
+          msg = err.data.detail
+        } else {
+          try {
+            msg = JSON.stringify(err.data)
+          } catch {
+            /* leave default */
+          }
+        }
+      } else if (err?.error) {
+        if (typeof err.error === "string") {
+          msg = err.error
+        } else if (err.error.message) {
+          msg = err.error.message
+        } else {
+          try {
+            msg = String(err.error)
+          } catch { /* leave default */ }
+        }
+      } else {
+        try {
+          const s = JSON.stringify(err)
+          if (s && s !== "{}") msg = s
+        } catch { /* leave default */ }
+      }
+
+      // ensure toast receives a string
+      toast.error(String(msg))
+      console.error("Product incubation save error:", err)
     }
   }
 
   const handleUserSearch = async (query: string) => {
     if (!query.trim()) return []
-    
+
     try {
       const usersResponse = await usersApi.getUsers({
         filters: { search: query }
@@ -264,7 +310,7 @@ export function ProductIncubationDrawer({
 
   const handleRoleSearch = async (query: string) => {
     if (!query.trim()) return []
-    
+
     try {
       const rolesResponse = await rolesApi.getRoles({
         filters: { search: query }
@@ -295,14 +341,14 @@ export function ProductIncubationDrawer({
 
         <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-white">
           <ProcessOverview />
-          
+
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
             <div className="space-y-4">
               <div className="text-center mb-6">
                 <h3 className="text-xl font-light text-gray-900">Incubation Information</h3>
                 <p className="text-sm font-light text-gray-600 mt-2">Enter the product incubation details and process information</p>
               </div>
-              
+
               <div className="grid grid-cols-1 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="production_plan_id">Production Plan *</Label>
@@ -318,9 +364,9 @@ export function ProductIncubationDrawer({
                           <SelectContent>
                             {productionPlans.length === 0 ? (
                               <SelectItem value="">{productionPlanLoading.fetch ? "Loading..." : "No plans available"}</SelectItem>
-                            ) : productionPlans.map((p:any) => (
+                            ) : productionPlans.map((p: any) => (
                               <SelectItem key={p.id} value={p.id}>
-                                {p.tag || p.name || p.id.slice(0,8)}
+                                {p.tag || p.name || p.id.slice(0, 8)}
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -552,28 +598,28 @@ export function ProductIncubationDrawer({
             </div>
           </form>
         </div>
- 
-    <div className="flex items-center justify-end p-6 pt-0 border-t bg-white">
-       <div className="flex items-center gap-2">
-         <Button
-           type="button"
-           variant="outline"
-           onClick={() => onOpenChange(false)}
-           className="flex items-center gap-2"
-         >
-           Cancel
-         </Button>
-         <Button
-           onClick={form.handleSubmit(handleSubmit)}
-           disabled={operationLoading.create || operationLoading.update}
-           className="flex items-center gap-2"
-         >
-           {mode === "edit" ? "Update Incubation" : "Create Incubation"}
-         </Button>
-       </div>
-     </div>
-   </SheetContent>
- </Sheet>
+
+        <div className="flex items-center justify-end p-6 pt-0 border-t bg-white">
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              className="flex items-center gap-2"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={form.handleSubmit(handleSubmit)}
+              disabled={operationLoading.create || operationLoading.update}
+              className="flex items-center gap-2"
+            >
+              {mode === "edit" ? "Update Incubation" : "Create Incubation"}
+            </Button>
+          </div>
+        </div>
+      </SheetContent>
+    </Sheet>
   )
 }
 
@@ -586,11 +632,11 @@ const extractTime = (value: string | undefined | null) => {
   // backend datetime "YYYY-MM-DDTHH:mm:ss..." or "YYYY-MM-DD HH:mm:ss..."
   if (value.includes("T")) {
     const t = value.split("T")[1] || ""
-    return t.substring(0,5)
+    return t.substring(0, 5)
   }
   if (value.includes(" ") && /\d{4}-\d{2}-\d{2}/.test(value)) {
     const timePart = value.split(" ")[1] || ""
-    return timePart.substring(0,5)
+    return timePart.substring(0, 5)
   }
   return ""
 }

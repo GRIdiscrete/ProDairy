@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { SearchableSelect } from "@/components/ui/searchable-select"
 import { DatePicker } from "@/components/ui/date-picker"
+import { ShadcnTimePicker } from "@/components/ui/shadcn-time-picker"
 import { useAppDispatch, useAppSelector } from "@/lib/store"
 import { 
   createPalletiserSheetAction, 
@@ -20,7 +21,7 @@ import { usersApi } from "@/lib/api/users"
 import { machineApi } from "@/lib/api/machine"
 import { rolesApi } from "@/lib/api/roles"
 import { toast } from "sonner"
-import { PalletiserSheet, PalletiserSheetDetails } from "@/lib/api/data-capture-forms"
+import { PalletiserSheet } from "@/lib/api/data-capture-forms"
 import { ChevronLeft, ChevronRight, ArrowRight, Package, Beaker, FileText } from "lucide-react"
 import { SignatureModal } from "@/components/ui/signature-modal"
 import { SignatureViewer } from "@/components/ui/signature-viewer"
@@ -31,58 +32,22 @@ interface PalletiserSheetDrawerProps {
   onOpenChange: (open: boolean) => void
   sheet?: PalletiserSheet | null
   mode?: "create" | "edit"
-  productType?: string // Auto-filled from route parameter
+  productType?: string
 }
 
-// Process Overview Component
-const ProcessOverview = () => (
-  <div className="mb-8 p-6 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg">
-    <h3 className="text-lg font-light text-gray-900 mb-4">Process Overview</h3>
-    <div className="flex items-center justify-between mb-4">
-      <div className="flex items-center space-x-2">
-        <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center">
-          <Beaker className="w-4 h-4 text-orange-600" />
-        </div>
-        <span className="text-sm font-light">Filmatic Lines</span>
-      </div>
-      <ArrowRight className="w-4 h-4 text-gray-400" />
-      <div className="flex items-center space-x-2">
-        <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
-          <Package className="w-4 h-4 text-blue-600" />
-        </div>
-        <div className="flex items-center space-x-2">
-          <span className="text-sm font-medium text-blue-600">Palletizing</span>
-          <div className="bg-gradient-to-r from-blue-500 to-cyan-600 text-white px-2 py-1 rounded-full text-xs font-medium shadow-lg">
-            Current Step
-          </div>
-        </div>
-      </div>
-      <ArrowRight className="w-4 h-4 text-gray-400" />
-      <div className="flex items-center space-x-2">
-        <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
-          <FileText className="w-4 h-4 text-gray-400" />
-        </div>
-        <span className="text-sm font-light text-gray-400">Process Log</span>
-      </div>
-    </div>
-  </div>
-)
-
-// Step 1: Sheet Form Schema
 const sheetSchema = yup.object({
   machine_id: yup.string().required("Machine is required"),
   manufacturing_date: yup.string().required("Manufacturing date is required"),
   expiry_date: yup.string().required("Expiry date is required"),
-  batch_number: yup.number().required("Batch number is required").min(1, "Must be positive"),
+  batch_number: yup.number().required("Batch number is required").min(1),
   approved_by: yup.string().required("Approved by is required"),
 })
 
-// Step 2: Sheet Details Form Schema
 const sheetDetailsSchema = yup.object({
-  pallet_number: yup.number().required("Pallet number is required").min(1, "Must be positive"),
+  pallet_number: yup.number().required("Pallet number is required").min(1),
   start_time: yup.string().required("Start time is required"),
   end_time: yup.string().required("End time is required"),
-  cases_packed: yup.number().required("Cases packed is required").min(0, "Must be positive"),
+  cases_packed: yup.number().required("Cases packed is required").min(0),
   serial_number: yup.string().required("Serial number is required"),
   counter_id: yup.string().required("Counter is required"),
   counter_signature: yup.string().required("Counter signature is required"),
@@ -91,21 +56,19 @@ const sheetDetailsSchema = yup.object({
 type SheetFormData = yup.InferType<typeof sheetSchema>
 type SheetDetailsFormData = yup.InferType<typeof sheetDetailsSchema>
 
-export function PalletiserSheetDrawer({ 
-  open, 
-  onOpenChange, 
-  sheet, 
+export function PalletiserSheetDrawer({
+  open,
+  onOpenChange,
+  sheet,
   mode = "create",
   productType
 }: PalletiserSheetDrawerProps) {
   const dispatch = useAppDispatch()
-  const palletiserSheetState = useAppSelector((state) => state.palletiserSheets)
-  const { operationLoading } = palletiserSheetState || { 
-    operationLoading: { create: false, update: false, delete: false, fetch: false }
-  }
-  
+  const palletiserSheetState = useAppSelector((s) => s.palletiserSheets)
+  const { operationLoading } = palletiserSheetState || { operationLoading: { create: false, update: false } }
+
   const [currentStep, setCurrentStep] = useState(1)
-  const [createdSheet, setCreatedSheet] = useState<PalletiserSheet | null>(null)
+  const [tempSheetData, setTempSheetData] = useState<any | null>(null)
   const [users, setUsers] = useState<any[]>([])
   const [machines, setMachines] = useState<any[]>([])
   const [roles, setRoles] = useState<any[]>([])
@@ -115,7 +78,6 @@ export function PalletiserSheetDrawer({
   const [counterSignatureOpen, setCounterSignatureOpen] = useState(false)
   const [counterSignatureViewOpen, setCounterSignatureViewOpen] = useState(false)
 
-  // Sheet form
   const sheetForm = useForm<SheetFormData>({
     resolver: yupResolver(sheetSchema),
     defaultValues: {
@@ -124,10 +86,9 @@ export function PalletiserSheetDrawer({
       expiry_date: "",
       batch_number: undefined,
       approved_by: "",
-    },
+    }
   })
 
-  // Sheet details form
   const sheetDetailsForm = useForm<SheetDetailsFormData>({
     resolver: yupResolver(sheetDetailsSchema),
     defaultValues: {
@@ -142,349 +103,267 @@ export function PalletiserSheetDrawer({
     mode: "onChange"
   })
 
-  // Load users, machines, and roles on component mount
   useEffect(() => {
-    const loadData = async () => {
-      setLoadingUsers(true)
-      setLoadingMachines(true)
-      setLoadingRoles(true)
+    const load = async () => {
+      setLoadingUsers(true); setLoadingMachines(true); setLoadingRoles(true)
       try {
-        // Load users
-        const usersResponse = await usersApi.getUsers()
-        setUsers(usersResponse.data || [])
-        
-        // Load machines
-        const machinesResponse = await machineApi.getMachines()
-        setMachines(machinesResponse.data || [])
-        
-        // Load roles
-        const rolesResponse = await rolesApi.getRoles()
-        setRoles(rolesResponse.data || [])
-      } catch (error) {
-        console.error("Failed to load data:", error)
-        toast.error("Failed to load form data")
+        const [uRes, mRes, rRes] = await Promise.allSettled([
+          usersApi.getUsers(),
+          machineApi.getMachines(),
+          rolesApi.getRoles()
+        ])
+        if (uRes.status === "fulfilled") setUsers(uRes.value.data || [])
+        else setUsers([])
+
+        if (mRes.status === "fulfilled") setMachines(mRes.value.data || [])
+        else setMachines([])
+
+        if (rRes.status === "fulfilled") setRoles(rRes.value.data || [])
+        else setRoles([])
+      } catch (e) {
+        console.error(e)
       } finally {
-        setLoadingUsers(false)
-        setLoadingMachines(false)
-        setLoadingRoles(false)
+        setLoadingUsers(false); setLoadingMachines(false); setLoadingRoles(false)
       }
     }
-
-    if (open) {
-      loadData()
-    }
+    if (open) load()
   }, [open])
 
-  // Reset forms when drawer opens/closes
+  // Prefill forms for edit mode or reset for create
   useEffect(() => {
-    if (open) {
-      console.log("Form opening, mode:", mode, "sheet:", sheet)
-      
-      if (mode === "edit" && sheet) {
-        sheetForm.reset({
-          machine_id: sheet.machine_id || "",
-          manufacturing_date: sheet.manufacturing_date || "",
-          expiry_date: sheet.expiry_date || "",
-          batch_number: sheet.batch_number ?? undefined,
-          approved_by: sheet.approved_by || "",
-        })
-        
-        // For edit mode, reset sheet details form with clean defaults
-        // In a real implementation, you would fetch the sheet details separately
-        sheetDetailsForm.reset({
-          pallet_number: undefined,
-          start_time: "",
-          end_time: "",
-          cases_packed: undefined,
-          serial_number: "",
-          counter_id: "",
-          counter_signature: "",
-        })
-        
-        setCreatedSheet(sheet)
-        setCurrentStep(1) // Start from first step for edit mode
-      } else {
-        // Reset both forms to clean defaults
-        sheetForm.reset({
-          machine_id: "",
-          manufacturing_date: "",
-          expiry_date: "",
-          batch_number: undefined,
-          approved_by: "",
-        })
-        sheetDetailsForm.reset({
-          pallet_number: undefined,
-          start_time: "",
-          end_time: "",
-          cases_packed: undefined,
-          serial_number: "",
-          counter_id: "",
-          counter_signature: "",
-        })
-        setCreatedSheet(null)
-        setCurrentStep(1)
-      }
+    if (!open) return
+    if (mode === "edit" && sheet) {
+      sheetForm.reset({
+        machine_id: sheet.machine_id || "",
+        manufacturing_date: sheet.manufacturing_date || "",
+        expiry_date: sheet.expiry_date || "",
+        batch_number: sheet.batch_number ?? undefined,
+        approved_by: sheet.approved_by || ""
+      })
+      // take first details entry if exists
+      const first = Array.isArray(sheet.palletiser_sheet_details) && sheet.palletiser_sheet_details.length > 0
+        ? sheet.palletiser_sheet_details[0]
+        : null
+      sheetDetailsForm.reset({
+        pallet_number: first?.pallet_number ?? undefined,
+        // normalize stored "HH:MM:SS" to "HH:MM" for the time picker
+        start_time: normalizeTimeForPicker(first?.start_time ?? "") ?? "",
+        end_time: normalizeTimeForPicker(first?.end_time ?? "") ?? "",
+        cases_packed: first?.cases_packed ?? undefined,
+        serial_number: first?.serial_number ?? "",
+        counter_id: first?.counter_id ?? "",
+        counter_signature: first?.counter_signature ?? ""
+      })
+      setTempSheetData({
+        machine_id: sheet.machine_id,
+        manufacturing_date: sheet.manufacturing_date,
+        expiry_date: sheet.expiry_date,
+        batch_number: sheet.batch_number,
+        product_type: sheet.product_type || productType,
+        approved_by: sheet.approved_by
+      })
+      setCurrentStep(1)
+    } else {
+      sheetForm.reset()
+      sheetDetailsForm.reset()
+      setTempSheetData(null)
+      setCurrentStep(1)
     }
-  }, [open, mode, sheet, sheetForm, sheetDetailsForm])
+  }, [open, mode, sheet, productType, sheetForm, sheetDetailsForm])
 
-  const handleSheetSubmit = async (data: SheetFormData) => {
-    try {
-      const sheetData = {
-        ...data,
-        product_type: productType || "UHT Milk 1L", // Auto-filled from route parameter (process ID)
-      }
-      
-      if (mode === "edit" && sheet) {
-        // For edit mode, only update the sheet data (not details)
-        await dispatch(updatePalletiserSheetAction({
-          id: sheet.id,
-          machine_id: sheetData.machine_id,
-          manufacturing_date: sheetData.manufacturing_date,
-          expiry_date: sheetData.expiry_date,
-          batch_number: sheetData.batch_number,
-          product_type: sheetData.product_type,
-          approved_by: sheetData.approved_by,
-        })).unwrap()
-        toast.success("Sheet updated successfully")
-        setCreatedSheet({ ...sheet, ...sheetData })
-      } else {
-        const result = await dispatch(createPalletiserSheetAction(sheetData)).unwrap()
-        toast.success("Sheet created successfully")
-        setCreatedSheet(result)
-      }
-      setCurrentStep(2)
-    } catch (error: any) {
-      toast.error(error || "Failed to save sheet")
-    }
+  const handleSheetSubmit = (data: SheetFormData) => {
+    setTempSheetData({
+      ...data,
+      product_type: productType || (data as any).product_type || null
+    })
+    setCurrentStep(2)
   }
 
-  const handleSheetDetailsSubmit = async (data: SheetDetailsFormData) => {
-    if (!createdSheet) {
-      toast.error("No sheet found")
+  // helpers: convert "HH:MM:SS" -> "HH:MM" for time picker, and back to "HH:MM:00" for backend
+  const normalizeTimeForPicker = (t?: string | null) => {
+    if (!t) return ""
+    // if t like "00:00:00" or "00:00", return "HH:MM"
+    const parts = t.split(":")
+    if (parts.length >= 2) return `${parts[0].padStart(2,"0")}:${parts[1].padStart(2,"0")}`
+    return t
+  }
+
+  const normalizeTimeForBackend = (t?: string | null) => {
+    if (!t) return null
+    // if already has seconds (HH:MM:SS) return as-is
+    if (t.split(":").length === 3) return t
+    // if "HH:MM" -> append :00
+    if (t.split(":").length === 2) return `${t}:00`
+    return t
+  }
+
+  // helper: build full timestamp "YYYY-MM-DD HH:MM:SS+00"
+  const buildFullTimestamp = (date?: string | null, time?: string | null) => {
+    if (!time) return null
+    // ensure time is HH:MM:SS
+    const t = normalizeTimeForBackend(time) || ""
+    const d = date || tempSheetData?.manufacturing_date || sheet?.manufacturing_date
+    if (!d) return t // fallback
+    // if t already includes seconds and possibly timezone, keep as-is if contains space
+    if (t.includes(" ")) return t
+    return `${d} ${t}+00`
+  }
+
+  const handleFinalSubmit = async (details: SheetDetailsFormData) => {
+    if (!tempSheetData && mode !== "edit") {
+      toast.error("Missing sheet information")
       return
     }
 
+    const payload: any = {
+      // include id for update payload
+      ...(mode === "edit" && sheet?.id ? { id: sheet.id } : {}),
+       machine_id: tempSheetData?.machine_id ?? sheet?.machine_id,
+       manufacturing_date: tempSheetData?.manufacturing_date ?? sheet?.manufacturing_date,
+       expiry_date: tempSheetData?.expiry_date ?? sheet?.expiry_date,
+       batch_number: tempSheetData?.batch_number ?? sheet?.batch_number,
+       product_type: tempSheetData?.product_type ?? sheet?.product_type ?? productType,
+       approved_by: tempSheetData?.approved_by ?? sheet?.approved_by,
+      palletiser_sheet_details: [
+        (() => {
+          const detailPayload: any = {
+            pallet_number: details.pallet_number,
+            // build full timestamp using sheet date
+            start_time: buildFullTimestamp(tempSheetData?.manufacturing_date ?? sheet?.manufacturing_date, details.start_time),
+            end_time: buildFullTimestamp(tempSheetData?.manufacturing_date ?? sheet?.manufacturing_date, details.end_time),
+            cases_packed: details.cases_packed ?? null,
+            serial_number: details.serial_number || null,
+            counter_id: details.counter_id || null,
+            counter_signature: normalizeDataUrlToBase64(details.counter_signature || "")
+          }
+          // if editing, include detail id and palletiser_sheet_id if available
+          if (mode === "edit") {
+            const first = Array.isArray(sheet?.palletiser_sheet_details) && sheet!.palletiser_sheet_details.length > 0 ? sheet!.palletiser_sheet_details[0] : null
+            if (first?.id) detailPayload.id = first.id
+            if (sheet?.id) detailPayload.palletiser_sheet_id = sheet.id
+          }
+          return detailPayload
+        })()
+      ]
+     }
+
     try {
-      const sheetDetailsData = {
-        ...data,
-        palletiser_sheet_id: createdSheet.id!,
-        counter_signature: normalizeDataUrlToBase64(data.counter_signature),
-      }
-
-      if (mode === "edit" && sheet) {
-        // For edit mode, we need to handle sheet details separately
-        // This would typically involve a separate API call for sheet details
-        // For now, we'll just show success and refresh
-        toast.success("Sheet details updated successfully")
+      if (mode === "edit" && sheet?.id) {
+        // update thunk expects { id, data } shape handled in slice
+        await dispatch(updatePalletiserSheetAction({ id: sheet.id, data: payload })).unwrap()
+        toast.success("Palletiser sheet updated")
       } else {
-        // For create mode, the sheet was already created above
-        toast.success("Sheet created successfully")
+        await dispatch(createPalletiserSheetAction(payload)).unwrap()
+        toast.success("Palletiser sheet created")
       }
-
-      // Refresh the sheets list
-      setTimeout(() => {
-        dispatch(fetchPalletiserSheets())
-      }, 1000)
-
+      setTimeout(() => dispatch(fetchPalletiserSheets()), 1000)
       onOpenChange(false)
-    } catch (error: any) {
-      toast.error(error || "Failed to save sheet details")
+    } catch (err: any) {
+      const msg = typeof err === "string" ? err : (err?.message || "Failed to save palletiser sheet")
+      toast.error(msg)
+      console.error(err)
     }
   }
 
   const handleBack = () => {
-    if (currentStep > 1) {
-      setCurrentStep(currentStep - 1)
-    }
+    if (currentStep > 1) setCurrentStep(currentStep - 1)
   }
 
-  const handleNext = () => {
-    if (currentStep === 1) {
-      sheetForm.handleSubmit(handleSheetSubmit)()
-    }
-  }
-
-  const handleUserSearch = async (query: string) => {
-    if (!query.trim()) return []
-    
+  const handleUserSearch = async (q: string) => {
+    if (!q.trim()) return []
     try {
-      const usersResponse = await usersApi.getUsers({
-        filters: { search: query }
-      })
-      return (usersResponse.data || [])
-        .map(user => ({
-          value: user.id,
-          label: `${user.first_name} ${user.last_name}`.trim() || user.email,
-          description: `${user.department} • ${user.email}`
-        }))
-    } catch (error) {
-      console.error("Failed to search users:", error)
+      const resp = await usersApi.getUsers({ filters: { search: q } })
+      return (resp.data || []).map((u: any) => ({ value: u.id, label: `${u.first_name} ${u.last_name}`.trim() || u.email, description: u.email }))
+    } catch {
       return []
     }
   }
 
-  const handleMachineSearch = async (query: string) => {
-    if (!query.trim()) return []
-    
+  const handleMachineSearch = async (q: string) => {
+    if (!q.trim()) return []
     try {
-      const machinesResponse = await machineApi.getMachines({
-        filters: { search: query }
-      })
-      return (machinesResponse.data || [])
-        .map(machine => ({
-          value: machine.id,
-          label: machine.name,
-          description: `${machine.category} • ${machine.location}`
-        }))
-    } catch (error) {
-      console.error("Failed to search machines:", error)
+      const resp = await machineApi.getMachines({ filters: { search: q } })
+      return (resp.data || []).map((m: any) => ({ value: m.id, label: m.name, description: `${m.category} • ${m.location}` }))
+    } catch {
       return []
     }
   }
 
-  const handleRoleSearch = async (query: string) => {
-    if (!query.trim()) return []
-    
+  const handleRoleSearch = async (q: string) => {
+    if (!q.trim()) return []
     try {
-      const rolesResponse = await rolesApi.getRoles({
-        filters: { search: query }
-      })
-      return (rolesResponse.data || [])
-        .map(role => ({
-          value: role.id,
-          label: role.role_name,
-          description: `${role.views?.length || 0} views • ${role.user_operations?.length || 0} user operations`
-        }))
-    } catch (error) {
-      console.error("Failed to search roles:", error)
+      const resp = await rolesApi.getRoles({ filters: { search: q } })
+      return (resp.data || []).map((r: any) => ({ value: r.id, label: r.role_name, description: r.description || "Role" }))
+    } catch {
       return []
     }
   }
 
   const renderStep1 = () => (
     <div className="space-y-6 p-6">
-      <ProcessOverview />
-      
+      <div className="mb-6">
+        <h3 className="text-xl font-light">Basic Information</h3>
+        <p className="text-sm text-gray-600 mt-1">Enter sheet information</p>
+      </div>
+
       <div className="space-y-4">
-        <div className="text-center mb-6">
-          <h3 className="text-xl font-light text-gray-900">Basic Information</h3>
-          <p className="text-sm font-light text-gray-600 mt-2">Enter the basic palletiser sheet details and machine information</p>
-        </div>
-        
-        <div className="space-y-2">
-          <Label htmlFor="machine_id">Machine *</Label>
+        <div>
+          <Label className="mb-2">Machine</Label>
           <Controller
             name="machine_id"
             control={sheetForm.control}
             render={({ field }) => (
               <SearchableSelect
-                options={machines.map(machine => ({
-                  value: machine.id,
-                  label: machine.name,
-                  description: `${machine.category} • ${machine.location}`
-                }))}
+                options={machines.map(m => ({ value: m.id, label: m.name, description: `${m.category} • ${m.location}` }))}
                 value={field.value}
                 onValueChange={field.onChange}
                 onSearch={handleMachineSearch}
-                placeholder="Search and select machine"
-                searchPlaceholder="Search machines..."
-                emptyMessage="No machines found"
+                placeholder="Select machine"
                 loading={loadingMachines}
               />
             )}
           />
-          {sheetForm.formState.errors.machine_id && (
-            <p className="text-sm text-red-500">{sheetForm.formState.errors.machine_id.message}</p>
-          )}
+          {sheetForm.formState.errors.machine_id && <p className="text-xs text-red-500">{sheetForm.formState.errors.machine_id.message}</p>}
         </div>
 
         <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Controller
-              name="manufacturing_date"
-              control={sheetForm.control}
-              render={({ field }) => (
-                <DatePicker
-                  label="Manufacturing Date *"
-                  value={field.value}
-                  onChange={field.onChange}
-                  placeholder="Select manufacturing date"
-                  error={!!sheetForm.formState.errors.manufacturing_date}
-                />
-              )}
-            />
-            {sheetForm.formState.errors.manufacturing_date && (
-              <p className="text-sm text-red-500">{sheetForm.formState.errors.manufacturing_date.message}</p>
-            )}
+          <div>
+            <Label className="mb-2">Manufacturing Date</Label>
+            <Controller name="manufacturing_date" control={sheetForm.control} render={({ field }) => (
+              <DatePicker value={field.value ? new Date(field.value) : undefined} onChange={(v:any)=> field.onChange(v ? new Date(v).toISOString().slice(0,10) : "")} />
+            )} />
+            {sheetForm.formState.errors.manufacturing_date && <p className="text-xs text-red-500">{sheetForm.formState.errors.manufacturing_date.message}</p>}
           </div>
-
-          <div className="space-y-2">
-            <Controller
-              name="expiry_date"
-              control={sheetForm.control}
-              render={({ field }) => (
-                <DatePicker
-                  label="Expiry Date *"
-                  value={field.value}
-                  onChange={field.onChange}
-                  placeholder="Select expiry date"
-                  error={!!sheetForm.formState.errors.expiry_date}
-                />
-              )}
-            />
-            {sheetForm.formState.errors.expiry_date && (
-              <p className="text-sm text-red-500">{sheetForm.formState.errors.expiry_date.message}</p>
-            )}
+          <div>
+            <Label className="mb-2">Expiry Date</Label>
+            <Controller name="expiry_date" control={sheetForm.control} render={({ field }) => (
+              <DatePicker value={field.value ? new Date(field.value) : undefined} onChange={(v:any)=> field.onChange(v ? new Date(v).toISOString().slice(0,10) : "")} />
+            )} />
+            {sheetForm.formState.errors.expiry_date && <p className="text-xs text-red-500">{sheetForm.formState.errors.expiry_date.message}</p>}
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="batch_number">Batch Number *</Label>
-            <Controller
-              name="batch_number"
-              control={sheetForm.control}
-              render={({ field }) => (
-                <Input
-                  id="batch_number"
-                  type="number"
-                  placeholder="Enter batch number"
-                  {...field}
-                  value={field.value || ""}
-                  onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
-                />
-              )}
-            />
-            {sheetForm.formState.errors.batch_number && (
-              <p className="text-sm text-red-500">{sheetForm.formState.errors.batch_number.message}</p>
-            )}
+          <div>
+            <Label className="mb-2">Batch Number</Label>
+            <Controller name="batch_number" control={sheetForm.control} render={({ field }) => (
+              <Input type="number" {...field} value={field.value ?? ""} onChange={(e)=> field.onChange(e.target.value ? Number(e.target.value) : undefined)} />
+            )} />
+            {sheetForm.formState.errors.batch_number && <p className="text-xs text-red-500">{sheetForm.formState.errors.batch_number.message}</p>}
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="approved_by">Approved By (Role) *</Label>
-            <Controller
-              name="approved_by"
-              control={sheetForm.control}
-              render={({ field }) => (
-                <SearchableSelect
-                  options={roles.map(role => ({
-                    value: role.id,
-                    label: role.role_name,
-                    description: `${role.views?.length || 0} views • ${role.user_operations?.length || 0} user operations`
-                  }))}
-                  value={field.value}
-                  onValueChange={field.onChange}
-                  onSearch={handleRoleSearch}
-                  placeholder="Search and select role"
-                  searchPlaceholder="Search roles..."
-                  emptyMessage="No roles found"
-                  loading={loadingRoles}
-                />
-              )}
-            />
-            {sheetForm.formState.errors.approved_by && (
-              <p className="text-sm text-red-500">{sheetForm.formState.errors.approved_by.message}</p>
-            )}
+          <div>
+            <Label className="mb-2">Approved By (Role)</Label>
+            <Controller name="approved_by" control={sheetForm.control} render={({ field }) => (
+              <SearchableSelect
+                options={roles.map(r => ({ value: r.id, label: r.role_name, description: r.description }))}
+                value={field.value}
+                onValueChange={field.onChange}
+                onSearch={handleRoleSearch}
+                loading={loadingRoles}
+              />
+            )} />
+            {sheetForm.formState.errors.approved_by && <p className="text-xs text-red-500">{sheetForm.formState.errors.approved_by.message}</p>}
           </div>
         </div>
       </div>
@@ -493,288 +372,128 @@ export function PalletiserSheetDrawer({
 
   const renderStep2 = () => (
     <div className="space-y-6 p-6">
-      <ProcessOverview />
-      
-      <div className="space-y-4">
-        <div className="text-center mb-6">
-          <h3 className="text-xl font-light text-gray-900">Details</h3>
-          <p className="text-sm font-light text-gray-600 mt-2">Enter the specific pallet details and counter information</p>
-        </div>
-        
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="pallet_number">Pallet Number *</Label>
-            <Controller
-              name="pallet_number"
-              control={sheetDetailsForm.control}
-              render={({ field }) => {
-                return (
-                  <Input
-                    id="pallet_number"
-                    type="number"
-                    placeholder="Enter pallet number"
-                    value={field.value || ""}
-                    onChange={(e) => {
-                      const value = e.target.value
-                      const numValue = value === "" ? undefined : parseInt(value, 10) || undefined
-                      field.onChange(numValue)
-                    }}
-                  />
-                )
-              }}
-            />
-            {sheetDetailsForm.formState.errors.pallet_number && (
-              <p className="text-sm text-red-500">{sheetDetailsForm.formState.errors.pallet_number.message}</p>
-            )}
-          </div>
+      <div className="mb-6">
+        <h3 className="text-xl font-light">Details</h3>
+        <p className="text-sm text-gray-600 mt-1">Enter pallet details and counter information</p>
+      </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="cases_packed">Cases Packed *</Label>
-            <Controller
-              name="cases_packed"
-              control={sheetDetailsForm.control}
-              render={({ field }) => {
-                return (
-                  <Input
-                    id="cases_packed"
-                    type="number"
-                    placeholder="Enter cases packed"
-                    value={field.value || ""}
-                    onChange={(e) => {
-                      const value = e.target.value
-                      const numValue = value === "" ? undefined : parseInt(value, 10) || undefined
-                      field.onChange(numValue)
-                    }}
-                  />
-                )
-              }}
-            />
-            {sheetDetailsForm.formState.errors.cases_packed && (
-              <p className="text-sm text-red-500">{sheetDetailsForm.formState.errors.cases_packed.message}</p>
-            )}
-          </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label className="mb-2">Pallet Number</Label>
+          <Controller name="pallet_number" control={sheetDetailsForm.control} render={({ field }) => (
+            <Input type="number" {...field} value={field.value ?? ""} onChange={(e)=> field.onChange(e.target.value ? Number(e.target.value) : undefined)} />
+          )} />
+          {sheetDetailsForm.formState.errors.pallet_number && <p className="text-xs text-red-500">{sheetDetailsForm.formState.errors.pallet_number.message}</p>}
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Controller
-              name="start_time"
-              control={sheetDetailsForm.control}
-              render={({ field }) => {
-                const safeValue = typeof field.value === 'string' && field.value !== 'UTC' ? field.value : ""
-                return (
-                  <DatePicker
-                    label="Start Time *"
-                    value={safeValue}
-                    onChange={(value) => {
-                      field.onChange(value || "")
-                    }}
-                    placeholder="Select start time"
-                    showTime={true}
-                    error={!!sheetDetailsForm.formState.errors.start_time}
-                  />
-                )
-              }}
-            />
-            {sheetDetailsForm.formState.errors.start_time && (
-              <p className="text-sm text-red-500">{sheetDetailsForm.formState.errors.start_time.message}</p>
-            )}
-          </div>
+        <div>
+          <Label className="mb-2">Cases Packed</Label>
+          <Controller name="cases_packed" control={sheetDetailsForm.control} render={({ field }) => (
+            <Input type="number" {...field} value={field.value ?? ""} onChange={(e)=> field.onChange(e.target.value ? Number(e.target.value) : undefined)} />
+          )} />
+          {sheetDetailsForm.formState.errors.cases_packed && <p className="text-xs text-red-500">{sheetDetailsForm.formState.errors.cases_packed.message}</p>}
+        </div>
+      </div>
 
-          <div className="space-y-2">
-            <Controller
-              name="end_time"
-              control={sheetDetailsForm.control}
-              render={({ field }) => {
-                const safeValue = typeof field.value === 'string' && field.value !== 'UTC' ? field.value : ""
-                return (
-                  <DatePicker
-                    label="End Time *"
-                    value={safeValue}
-                    onChange={(value) => {
-                      field.onChange(value || "")
-                    }}
-                    placeholder="Select end time"
-                    showTime={true}
-                    error={!!sheetDetailsForm.formState.errors.end_time}
-                  />
-                )
-              }}
-            />
-            {sheetDetailsForm.formState.errors.end_time && (
-              <p className="text-sm text-red-500">{sheetDetailsForm.formState.errors.end_time.message}</p>
-            )}
-          </div>
+      <div className="grid grid-cols-2 gap-4 mt-4">
+        <div>
+          <Label className="mb-2">Start Time</Label>
+          <Controller name="start_time" control={sheetDetailsForm.control} render={({ field }) => (
+            <ShadcnTimePicker value={field.value} onChange={field.onChange} />
+          )} />
+          {sheetDetailsForm.formState.errors.start_time && <p className="text-xs text-red-500">{sheetDetailsForm.formState.errors.start_time.message}</p>}
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="serial_number">Serial Number *</Label>
-            <Controller
-              name="serial_number"
-              control={sheetDetailsForm.control}
-              render={({ field }) => {
-                const safeValue = typeof field.value === 'string' ? field.value : ""
-                return (
-                  <Input
-                    id="serial_number"
-                    placeholder="Enter serial number (e.g., PAL-20250821-001)"
-                    value={safeValue}
-                    onChange={(e) => {
-                      field.onChange(e.target.value)
-                    }}
-                  />
-                )
-              }}
-            />
-            {sheetDetailsForm.formState.errors.serial_number && (
-              <p className="text-sm text-red-500">{sheetDetailsForm.formState.errors.serial_number.message}</p>
-            )}
-          </div>
+        <div>
+          <Label className="mb-2">End Time</Label>
+          <Controller name="end_time" control={sheetDetailsForm.control} render={({ field }) => (
+            <ShadcnTimePicker value={field.value} onChange={field.onChange} />
+          )} />
+          {sheetDetailsForm.formState.errors.end_time && <p className="text-xs text-red-500">{sheetDetailsForm.formState.errors.end_time.message}</p>}
+        </div>
+      </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="counter_id">Counter *</Label>
-            <Controller
-              name="counter_id"
-              control={sheetDetailsForm.control}
-              render={({ field }) => {
-                const safeValue = typeof field.value === 'string' ? field.value : ""
-                return (
-                  <SearchableSelect
-                    options={users.map(user => ({
-                      value: user.id,
-                      label: `${user.first_name} ${user.last_name}`.trim() || user.email,
-                      description: `${user.department} • ${user.email}`
-                    }))}
-                    value={safeValue}
-                    onValueChange={(value) => {
-                      field.onChange(value || "")
-                    }}
-                    onSearch={handleUserSearch}
-                    placeholder="Search and select counter"
-                    loading={loadingUsers}
-                  />
-                )
-              }}
-            />
-            {sheetDetailsForm.formState.errors.counter_id && (
-              <p className="text-sm text-red-500">{sheetDetailsForm.formState.errors.counter_id.message}</p>
-            )}
-          </div>
+      <div className="grid grid-cols-2 gap-4 mt-4">
+        <div>
+          <Label className="mb-2">Serial Number</Label>
+          <Controller name="serial_number" control={sheetDetailsForm.control} render={({ field }) => (
+            <Input {...field} value={field.value ?? ""} onChange={(e) => field.onChange(e.target.value)} />
+          )} />
+          {sheetDetailsForm.formState.errors.serial_number && <p className="text-xs text-red-500">{sheetDetailsForm.formState.errors.serial_number.message}</p>}
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="counter_signature">Counter Signature *</Label>
-          <Controller
-            name="counter_signature"
-            control={sheetDetailsForm.control}
-            render={({ field }) => {
-              const safeValue = typeof field.value === 'string' ? field.value : ""
-              return (
-                <div className="space-y-2">
-                  {safeValue ? (
-                    <img src={base64ToPngDataUrl(safeValue)} alt="Counter signature" className="h-24 border border-gray-200 rounded-md bg-white" />
-                  ) : (
-                    <div className="h-24 flex items-center justify-center border border-dashed border-gray-300 rounded-md text-xs text-gray-500 bg-white">
-                      No signature captured
-                    </div>
-                  )}
-                  <div className="flex items-center gap-2">
-                    <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={() => setCounterSignatureOpen(true)}>
-                      Add Signature
-                    </Button>
-                    {safeValue && (
-                      <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={() => setCounterSignatureViewOpen(true)}>
-                        View Signature
-                      </Button>
-                    )}
-                    {safeValue && (
-                      <Button type="button" variant="ghost" size="sm" className="rounded-full text-red-600" onClick={() => field.onChange("")}>Clear</Button>
-                    )}
-                  </div>
-                </div>
-              )
-            }}
-          />
-          {sheetDetailsForm.formState.errors.counter_signature && (
-            <p className="text-sm text-red-500">{sheetDetailsForm.formState.errors.counter_signature.message}</p>
-          )}
+        <div>
+          <Label className="mb-2">Counter</Label>
+          <Controller name="counter_id" control={sheetDetailsForm.control} render={({ field }) => (
+            <SearchableSelect
+              options={users.map(u => ({ value: u.id, label: `${u.first_name} ${u.last_name}`.trim() || u.email, description: u.email }))}
+              value={field.value}
+              onValueChange={field.onChange}
+              onSearch={handleUserSearch}
+              loading={loadingUsers}
+            />
+          )} />
+          {sheetDetailsForm.formState.errors.counter_id && <p className="text-xs text-red-500">{sheetDetailsForm.formState.errors.counter_id.message}</p>}
         </div>
+      </div>
+
+      <div className="mt-4">
+        <Label className="mb-2">Counter Signature</Label>
+        <Controller name="counter_signature" control={sheetDetailsForm.control} render={({ field }) => {
+          const val = typeof field.value === "string" ? field.value : ""
+          return (
+            <div className="space-y-2">
+              {val ? (
+                <img src={base64ToPngDataUrl(val)} alt="signature" className="h-24 border rounded-md" />
+              ) : (
+                <div className="h-24 border-dashed border rounded-md flex items-center justify-center text-xs text-gray-500">No signature</div>
+              )}
+              <div className="flex gap-2">
+                <Button type="button" variant="outline" onClick={() => setCounterSignatureOpen(true)}>Add</Button>
+                {val && <Button type="button" variant="outline" onClick={() => setCounterSignatureViewOpen(true)}>View</Button>}
+                {val && <Button type="button" variant="ghost" onClick={() => field.onChange("")}>Clear</Button>}
+              </div>
+            </div>
+          )
+        }} />
+        {sheetDetailsForm.formState.errors.counter_signature && <p className="text-xs text-red-500">{sheetDetailsForm.formState.errors.counter_signature.message}</p>}
       </div>
     </div>
   )
 
   return (
-    <>
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="tablet-sheet-full p-0 bg-white">
         <SheetHeader className="p-6 pb-0 bg-white">
-          <SheetTitle>
-            {mode === "edit" ? "Edit Palletiser Sheet" : "Create Palletiser Sheet"}
-          </SheetTitle>
-          <SheetDescription>
-            {currentStep === 1 
-              ? "Basic Information: Enter sheet information and machine details"
-              : "Details: Enter pallet details and counter information"
-            }
-          </SheetDescription>
+          <SheetTitle>{mode === "edit" ? "Edit Palletiser Sheet" : "Create Palletiser Sheet"}</SheetTitle>
+          <SheetDescription>{currentStep === 1 ? "Basic Information" : "Details"}</SheetDescription>
         </SheetHeader>
 
         <div className="flex-1 overflow-y-auto bg-white" key={`form-${open}-${currentStep}`}>
           {currentStep === 1 ? renderStep1() : renderStep2()}
         </div>
 
-        <div className="flex items-center justify-between p-6 pt-0 border-t bg-white">
-          <Button
-            variant="outline"
-            onClick={handleBack}
-            disabled={currentStep === 1}
-            className="flex items-center gap-2"
-          >
-            <ChevronLeft className="h-4 w-4" />
-            Back
+        <div className="flex items-center justify-between p-6 border-t bg-white">
+          <Button variant="outline" onClick={handleBack} disabled={currentStep === 1} className="flex items-center gap-2">
+            <ChevronLeft className="h-4 w-4" /> Back
           </Button>
 
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">
-              {currentStep === 1 ? "Basic Information" : "Details"} • Step {currentStep} of 2
-            </span>
-          </div>
+          <div className="text-sm text-muted-foreground">{currentStep === 1 ? "Basic Information" : "Details"} • Step {currentStep} of 2</div>
 
           {currentStep === 1 ? (
-            <Button
-              onClick={handleNext}
-              disabled={operationLoading.create}
-              className="flex items-center gap-2"
-            >
-              Next
-              <ChevronRight className="h-4 w-4" />
+            <Button onClick={sheetForm.handleSubmit(handleSheetSubmit)} className="flex items-center gap-2" disabled={operationLoading.create}>
+              Next <ChevronRight className="h-4 w-4" />
             </Button>
           ) : (
-            <Button
-              onClick={sheetDetailsForm.handleSubmit(handleSheetDetailsSubmit)}
-              disabled={operationLoading.create}
-            >
+            <Button onClick={sheetDetailsForm.handleSubmit(handleFinalSubmit)} disabled={operationLoading.create}>
               {mode === "edit" ? "Update Sheet" : "Create Sheet"}
             </Button>
           )}
         </div>
       </SheetContent>
+
+      <SignatureModal open={counterSignatureOpen} onOpenChange={setCounterSignatureOpen} title="Capture Counter Signature" onSave={(dataUrl) => sheetDetailsForm.setValue("counter_signature", dataUrl, { shouldValidate: true })} />
+      <SignatureViewer open={counterSignatureViewOpen} onOpenChange={setCounterSignatureViewOpen} title="Counter Signature" value={sheetDetailsForm.getValues("counter_signature")} />
     </Sheet>
-    <SignatureModal
-      open={counterSignatureOpen}
-      onOpenChange={setCounterSignatureOpen}
-      title="Capture Counter Signature"
-      onSave={(dataUrl) => {
-        sheetDetailsForm.setValue("counter_signature", dataUrl, { shouldValidate: true })
-      }}
-    />
-    <SignatureViewer
-      open={counterSignatureViewOpen}
-      onOpenChange={setCounterSignatureViewOpen}
-      title="Counter Signature"
-      value={sheetDetailsForm.getValues("counter_signature")}
-    />
-    </>
   )
 }
