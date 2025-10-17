@@ -1395,7 +1395,8 @@ export interface QACorrectiveAction {
   qa_decision: string
   details?: string
   // Relationship data
-  qa_corrective_action_details_fkey?: QACorrectiveActionDetails
+  qa_corrective_action_details?: QACorrectiveActionDetails
+
 }
 
 export interface QACorrectiveActionDetails {

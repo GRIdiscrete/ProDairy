@@ -49,7 +49,6 @@ function exportDriverFormsToCSV(
     "Driver Email",
     "Collection Start",
     "Collection End",
-    "Products Count",
     "Status",
     "Created At",
     // Product-specific columns
@@ -80,7 +79,6 @@ function exportDriverFormsToCSV(
         driverEmail,
         form.start_date || "",
         form.end_date || "",
-        0,
         status,
         form.created_at || "",
         "", // Product Name
@@ -108,7 +106,7 @@ function exportDriverFormsToCSV(
         const rawMatName = rawMat ? (rawMat.name || rawMat.raw_material_name || "") : ""
 
         const supplier = suppliers.find((s: any) => String(s.id) === String(p.supplier_id || p.supplier))
-        const supplierName = supplier ? (supplier.name || supplier.company_name || "") : ""
+        const supplierName = supplier ? (supplier?.first_name + " " + supplier?.last_name || "") : ""
         const supplierEmail = supplier ? (supplier.email || supplier.contact_email || "") : (p.supplier_email || "")
 
         rows.push([
@@ -117,7 +115,6 @@ function exportDriverFormsToCSV(
           driverEmail,
           form.start_date || "",
           form.end_date || "",
-          products.length,
           status,
           form.created_at || "",
           productName,

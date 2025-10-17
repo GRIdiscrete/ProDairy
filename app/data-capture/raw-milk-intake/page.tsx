@@ -306,7 +306,7 @@ export default function RawMilkIntakePage() {
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-gray-500">Current</span>
-                  <span className="text-xs font-light text-green-600">{silo.milk_volume.toLocaleString()}L</span>
+                  <span className="text-xs font-light text-green-600">{silo?.milk_volume?.toLocaleString()}L</span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-1.5">
                   <div

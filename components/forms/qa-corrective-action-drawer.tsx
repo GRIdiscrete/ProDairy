@@ -102,7 +102,7 @@ export function QACorrectiveActionDrawer({
   useEffect(() => {
     if (!open) return
     if (mode === "edit" && action) {
-      const details = (action.details && Array.isArray(action.details) && action.details.length > 0) ? action.details[0] : (action.qa_corrective_action_details_fkey || {})
+      const details = (action.details && Array.isArray(action.details) && action.details.length > 0) ? action.details[0] : (action.qa_corrective_action_details || {})
       form.reset({
         date_of_production: action.date_of_production || "",
         date_analysed: action.date_analysed || "",
@@ -152,7 +152,15 @@ export function QACorrectiveActionDrawer({
       }
 
       if (mode === "edit" && action?.id) {
-        await dispatch(updateQACorrectiveActionAction({ id: action.id, ...payload })).unwrap()
+        console.log('Yes Yes' + action?.qa_corrective_action_details?.id)
+        await dispatch(updateQACorrectiveActionAction({
+          ...payload,
+          id: action.id,
+          details: {
+            ...payload.details,
+            id: action?.qa_corrective_action_details?.id
+          }
+        })).unwrap()
         toast.success("QA Corrective Action updated successfully")
       } else {
         await dispatch(createQACorrectiveActionAction(payload)).unwrap()
@@ -205,11 +213,11 @@ export function QACorrectiveActionDrawer({
                 {form.formState.errors.batch_number && <p className="text-sm text-red-600">{form.formState.errors.batch_number.message}</p>}
               </div>
 
-              <div className="space-y-2">
+              {/* <div className="space-y-2">
                 <Label>Product *</Label>
                 <Controller name="product" control={form.control} render={({ field }) => <Input {...field} />} />
                 {form.formState.errors.product && <p className="text-sm text-red-600">{form.formState.errors.product.message}</p>}
-              </div>
+              </div> */}
 
               <div className="space-y-2">
                 <Label>Checked By *</Label>
@@ -259,7 +267,7 @@ export function QACorrectiveActionDrawer({
                     const val = (field.value && field.value[0] && field.value[0].ph_after_7_days_at_30_degrees) ?? ""
                     return <Input type="number" step="0.1" value={val} onChange={(e) => {
                       const v = e.target.value ? Number(e.target.value) : undefined
-                      const newDetails = [ { ...(field.value?.[0] || {}), ph_after_7_days_at_30_degrees: v } ]
+                      const newDetails = [{ ...(field.value?.[0] || {}), ph_after_7_days_at_30_degrees: v }]
                       field.onChange(newDetails)
                     }} />
                   }} />
@@ -270,7 +278,7 @@ export function QACorrectiveActionDrawer({
                   <Controller name="details" control={form.control} render={({ field }) => {
                     const val = (field.value && field.value[0] && field.value[0].packaging_integrity) || ""
                     return <Input value={val} onChange={(e) => {
-                      const newDetails = [ { ...(field.value?.[0] || {}), packaging_integrity: e.target.value } ]
+                      const newDetails = [{ ...(field.value?.[0] || {}), packaging_integrity: e.target.value }]
                       field.onChange(newDetails)
                     }} />
                   }} />
@@ -281,7 +289,7 @@ export function QACorrectiveActionDrawer({
                   <Controller name="details" control={form.control} render={({ field }) => {
                     const val = (field.value && field.value[0] && field.value[0].defects) || ""
                     return <Input value={val} onChange={(e) => {
-                      const newDetails = [ { ...(field.value?.[0] || {}), defects: e.target.value } ]
+                      const newDetails = [{ ...(field.value?.[0] || {}), defects: e.target.value }]
                       field.onChange(newDetails)
                     }} />
                   }} />
