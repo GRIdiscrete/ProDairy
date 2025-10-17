@@ -6,6 +6,7 @@ import {
   deleteQACorrectiveAction,
   QACorrectiveAction
 } from '@/lib/api/data-capture-forms'
+import { apiRequest } from '@/lib/utils/api-request'
 
 interface QACorrectiveActionState {
   actions: QACorrectiveAction[]
@@ -50,8 +51,8 @@ export const fetchQACorrectiveActions = createAsyncThunk(
         return state.qaCorrectiveActions.actions
       }
       
-      const actions = await getQACorrectiveActions()
-      return actions
+      const res = await apiRequest<any>('/qa-corrective-action', { method: 'GET' })
+      return res.data || []
     } catch (error: any) {
       const errorMessage = error?.response?.data?.message || error.message || 'Failed to fetch QA corrective actions'
       return rejectWithValue(errorMessage)

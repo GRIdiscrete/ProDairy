@@ -1419,20 +1419,18 @@ export const getQACorrectiveActions = async () => {
   }
 }
 
-export const createQACorrectiveAction = (data: Omit<QACorrectiveAction, 'id' | 'created_at' | 'updated_at' | 'details'>) =>
-  apiRequest<QACorrectiveAction>('/qa-corrective-action', { method: 'POST', body: JSON.stringify(data) })
+export const createQACorrectiveAction = async (payload: Partial<QACorrectiveAction>) => {
+  const res = await apiRequest<{ statusCode:number; message:string; data: QACorrectiveAction }>(`/qa-corrective-action`, {
+    method: "POST",
+    body: JSON.stringify(payload)
+  })
+  return res.data
+}
 
-export const updateQACorrectiveAction = (data: QACorrectiveAction) =>
-  apiRequest<QACorrectiveAction>('/qa-corrective-action', { method: 'PATCH', body: JSON.stringify(data) })
-
-export const deleteQACorrectiveAction = (id: string) =>
-  apiRequest<void>(`/qa-corrective-action/${id}`, { method: 'DELETE' })
-
-export const createQACorrectiveActionDetails = (data: Omit<QACorrectiveActionDetails, 'id' | 'created_at' | 'updated_at'>) =>
-  apiRequest<QACorrectiveActionDetails>('/qa-corrective-action-details', { method: 'POST', body: JSON.stringify(data) })
-
-export const updateQACorrectiveActionDetails = (data: QACorrectiveActionDetails) =>
-  apiRequest<QACorrectiveActionDetails>('/qa-corrective-action-details', { method: 'PATCH', body: JSON.stringify(data) })
-
-export const deleteQACorrectiveActionDetails = (id: string) =>
-  apiRequest<void>(`/qa-corrective-action-details/${id}`, { method: 'DELETE' })
+export const updateQACorrectiveAction = async (payload: Partial<QACorrectiveAction>) => {
+  const res = await apiRequest<{ statusCode:number; message:string; data: QACorrectiveAction }>(`/qa-corrective-action`, {
+    method: "PATCH",
+    body: JSON.stringify(payload)
+  })
+  return res.data
+}

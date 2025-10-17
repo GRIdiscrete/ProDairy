@@ -299,7 +299,7 @@ export function DataCaptureSidebar({
                     { key: 'incubation', label: 'Incubation', Icon: Beaker, enabled: true },
                     { key: 'test', label: 'Test', Icon: TestTube, enabled: true },
                     { key: 'qa-corrective-measures', label: 'QA Corrective Measures', Icon: AlertTriangle, enabled: true },
-                    { href: 'dispatch', label: 'Dispatch', Icon: Package, enabled: true },
+                    { key: 'dispatch', label: 'Dispatch', Icon: Package, enabled: true },
                   ].map((s, idx) => {
                     const href = s.enabled
                       ? (s.key === 'filmatic-lines-2'
