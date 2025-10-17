@@ -82,8 +82,7 @@ const rawMilkSchema = yup.object({
   quantity: yup.number().required("Quantity is required").min(0.1, "Quantity must be greater than 0"),
   fat: yup.number().required("Fat content is required").min(0, "Fat content must be 0 or greater"),
   source_silo_id: yup.string().required("Source silo is required"),
-  unit_of_measure: yup.string().required("Unit of measure is required"),
-  raw_milk_form_id: yup.string().optional(), // moved inside raw_milk
+  unit_of_measure: yup.string().required("Unit of measure is required")
 })
 
 const skimMilkSchema = yup.object({
@@ -151,7 +150,7 @@ export function SkimmingFormDrawer({
         fat: 0,
         source_silo_id: "",
         unit_of_measure: "liters",
-        raw_milk_form_id: "", // moved into raw_milk default
+        // raw_milk_form_id: "", // moved into raw_milk default
       },
       skim_milk: {
         quantity: 0,
@@ -236,24 +235,24 @@ export function SkimmingFormDrawer({
             fat: form.standardizing_form_raw_milk[0].fat,
             source_silo_id: form.standardizing_form_raw_milk[0].source_silo_id,
             unit_of_measure: form.standardizing_form_raw_milk[0].unit_of_measure,
-            raw_milk_form_id: (form.standardizing_form_raw_milk?.[0] as any)?.raw_milk_form_id ?? (form as any).raw_milk_form_id ?? "",
+            // raw_milk_form_id: (form.standardizing_form_raw_milk?.[0] as any)?.raw_milk_form_id ?? (form as any).raw_milk_form_id ?? "",
           } : {
             quantity: 0,
             fat: 0,
             source_silo_id: "",
             unit_of_measure: "liters",
-            raw_milk_form_id: "",
+            // raw_milk_form_id: "",
           },
           skim_milk: form.standardizing_form_skim_milk?.[0] ? {
             quantity: form.standardizing_form_skim_milk[0].quantity,
             fat: form.standardizing_form_skim_milk[0].fat,
             destination_silo_id: form.standardizing_form_skim_milk[0].destination_silo_id,
-            filmatic_form_id: (form.standardizing_form_skim_milk?.[0] as any)?.filmatic_form_id ?? "",
+            // filmatic_form_id: (form.standardizing_form_skim_milk?.[0] as any)?.filmatic_form_id ?? "",
           } : {
             quantity: 0,
             fat: 0,
             destination_silo_id: "",
-            filmatic_form_id: "",
+            // filmatic_form_id: "",
           },
           cream: form.standardizing_form_cream?.[0] ? {
             quantity: form.standardizing_form_cream[0].quantity,
@@ -272,13 +271,13 @@ export function SkimmingFormDrawer({
             fat: 0,
             source_silo_id: "",
             unit_of_measure: "liters",
-            raw_milk_form_id: "",
+            // raw_milk_form_id: "",
           },
           skim_milk: {
             quantity: 0,
             fat: 0,
             destination_silo_id: "",
-            filmatic_form_id: "",
+            // filmatic_form_id: "",
           },
           cream: {
             quantity: 0,
@@ -305,13 +304,13 @@ export function SkimmingFormDrawer({
           ...data.raw_milk,
           unit_of_measure: data.raw_milk.unit_of_measure ?? "liters",
           // include relation to selected raw milk intake form if provided (nested under raw_milk)
-          ...(data.raw_milk as any).raw_milk_form_id ? { raw_milk_form_id: (data.raw_milk as any).raw_milk_form_id } : {},
+          // ...(data.raw_milk as any).raw_milk_form_id ? { raw_milk_form_id: (data.raw_milk as any).raw_milk_form_id } : {},
         },
         skim_milk: {
           quantity: data.skim_milk.quantity,
           fat: data.skim_milk.fat,
           destination_silo_id: data.skim_milk.destination_silo_id,
-          ...(data.skim_milk as any).filmatic_form_id ? { filmatic_form_id: (data.skim_milk as any).filmatic_form_id } : {},
+          // ...(data.skim_milk as any).filmatic_form_id ? { filmatic_form_id: (data.skim_milk as any).filmatic_form_id } : {},
         },
         cream: {
           quantity: data.cream.quantity,
@@ -321,7 +320,25 @@ export function SkimmingFormDrawer({
 
       if (mode === "edit" && form) {
         // include id for update if backend expects it
-        const updatePayload = { id: form.id, ...formData }
+        const updatePayload = {
+          ...formData,
+
+          id: form.id,
+          raw_milk: {
+            ...formData.raw_milk,
+            id: form?.standardizing_form_raw_milk[0]?.id,
+          },
+          skim_milk: {
+            ...formData.skim_milk,
+            id: form?.standardizing_form_skim_milk[0]?.id,
+
+          },
+          cream: {
+            ...formData.cream,
+            id: form?.standardizing_form_cream[0]?.id,
+
+          }
+        }
         await dispatch(updateSkimmingForm(updatePayload as any)).unwrap()
         // refresh skimming list after update
         await dispatch(fetchSkimmingForms()).unwrap()
@@ -523,7 +540,7 @@ export function SkimmingFormDrawer({
                       )}
                     </div>
 
-                    <div className="space-y-2 col-span-2">
+                    {/* <div className="space-y-2 col-span-2">
                       <Label htmlFor="raw_milk_form_id">Raw Milk Intake Form (optional)</Label>
                       <Controller
                         name="raw_milk.raw_milk_form_id"
@@ -548,7 +565,7 @@ export function SkimmingFormDrawer({
                           {formHook.formState.errors.raw_milk_form_id?.message}
                         </p>
                       )}
-                    </div>
+                    </div> */}
                   </div>
                 </div>
               </div>
@@ -632,7 +649,7 @@ export function SkimmingFormDrawer({
                       )}
                     </div>
 
-                    <div className="space-y-2">
+                    {/* <div className="space-y-2">
                       <Label htmlFor="filmatic_form_id">Filmatic Form ID</Label>
                       <Controller
                         name="skim_milk.filmatic_form_id"
@@ -651,7 +668,7 @@ export function SkimmingFormDrawer({
                           {formHook.formState.errors.skim_milk.filmatic_form_id?.message}
                         </p>
                       )}
-                    </div>
+                    </div> */}
                   </div>
                 </div>
               </div>

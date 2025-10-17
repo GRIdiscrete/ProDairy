@@ -34,6 +34,7 @@ const navPermissionMap: Record<string, string> = {
   "/admin/devices": "devices_tab",
   "/admin/materials": "settings", // or another relevant permission
   "/admin/tankers": "driver_ui",
+  "/admin/suppliers": "supplier_tab",
   "/admin/processes": "process_tab",
   "/admin/filmatic-lines-groups": "bmt", // or another relevant permission
   "/admin/production-plan": "production_dashboard",
@@ -100,6 +101,12 @@ const adminNavigation = [
   {
     name: "Production Plan",
     href: "/admin/production-plan",
+    icon: FileText,
+    current: false,
+  },
+  {
+    name: "Suppliers",
+    href: "/admin/suppliers",
     icon: FileText,
     current: false,
   },

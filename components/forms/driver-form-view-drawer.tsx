@@ -13,6 +13,8 @@ import { useAppDispatch, useAppSelector } from "@/lib/store"
 import { deleteDriverForm, fetchDriverForms } from "@/lib/store/slices/driverFormSlice"
 import { fetchDriverFormLabTests, deleteDriverFormLabTest } from "@/lib/store/slices/driverFormLabTestSlice"
 import { fetchUsers, selectUserById } from "@/lib/store/slices/usersSlice"
+import { fetchRawMaterials } from "@/lib/store/slices/rawMaterialSlice"
+import { fetchSuppliers } from "@/lib/store/slices/supplierSlice"
 import { LoadingButton } from "@/components/ui/loading-button"
 import { base64ToPngDataUrl } from "@/lib/utils/signature"
 import { generateDriverFormId } from "@/lib/utils/form-id-generator"
@@ -80,6 +82,7 @@ export function DriverFormViewDrawer({
   const [labDrawerOpen, setLabDrawerOpen] = useState(false)
   const [labMode, setLabMode] = useState<"create" | "edit">("create")
   const [labExistingId, setLabExistingId] = useState<string | undefined>(undefined)
+
   const dispatch = useAppDispatch()
   const isMobile = useIsMobile()
   const isTablet = typeof window !== 'undefined' && window.innerWidth >= 768 && window.innerWidth < 1024
@@ -87,6 +90,9 @@ export function DriverFormViewDrawer({
   const { operationLoading } = useAppSelector((state) => state.driverForm)
   const { tests, isInitialized, operationLoading: labOperationLoading } = useAppSelector((s) => (s as any).driverFormLabTests)
   const { items: users, loading: usersLoading } = useAppSelector((state) => state.users)
+  // select raw materials and suppliers (use same store shape as other pages)
+  const rawMaterials = useAppSelector((s) => (s as any).rawMaterial?.rawMaterials ?? (s as any).rawMaterial?.items ?? [])
+  const suppliers = useAppSelector((s) => (s as any).supplier?.suppliers ?? (s as any).supplier?.items ?? [])
   useEffect(() => {
     if (open && !isInitialized) {
       dispatch(fetchDriverFormLabTests())
@@ -96,11 +102,28 @@ export function DriverFormViewDrawer({
     if (open && users.length === 0) {
       dispatch(fetchUsers({}))
     }
+    // Load raw materials & suppliers when opening (same pattern)
+    if (open && (!rawMaterials || rawMaterials.length === 0)) {
+      dispatch(fetchRawMaterials({}))
+    }
+    if (open && (!suppliers || suppliers.length === 0)) {
+      dispatch(fetchSuppliers({}))
+    }
   }, [open, isInitialized, dispatch, users.length])
 
+  // NEW: track selected product/test for the lab drawer
+  const [selectedProductForLab, setSelectedProductForLab] = useState<any | null>(null)
+  const [selectedTestForLab, setSelectedTestForLab] = useState<any | null>(null)
+
+  // Replace the old single-currentLabTest lookup with one that prefers drivers_form_id
   const currentLabTest = useMemo(() => {
     if (!driverForm) return null
-    return (tests || []).find((t: any) => t.drivers_form_id === driverForm.id) || null
+    // try to find a test attached to the whole form first
+    const formTest = (tests || []).find((t: any) => t.drivers_form_id === driverForm.id)
+    if (formTest) return formTest
+    // otherwise find the first test that belongs to any collected product on this form
+    const productIds = ((driverForm as any).drivers_form_collected_products || []).map((p: any) => String(p.id))
+    return (tests || []).find((t: any) => productIds.includes(String(t.collected_product_id))) || null
   }, [tests, driverForm])
 
   const handleDelete = async () => {
@@ -164,18 +187,7 @@ export function DriverFormViewDrawer({
                     Edit
                   </Button>
                 )}
-                <LoadingButton
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    if (currentLabTest) { setLabMode("edit"); setLabExistingId(currentLabTest.id) } else { setLabMode("create"); setLabExistingId(undefined) }
-                    setLabDrawerOpen(true)
-                  }}
-                  className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full"
-                >
-                  <Beaker className="w-4 h-4 mr-2" />
-                  {currentLabTest ? "Update Milk Test" : "Create Milk Test"}
-                </LoadingButton>
+
                 <LoadingButton
                   variant="destructive"
                   size="sm"
@@ -393,8 +405,11 @@ export function DriverFormViewDrawer({
                                 const supplierSignature = isNewFormat ? product.e_sign_supplier : product["e-sign-supplier"]
                                 const driverSignature = isNewFormat ? product.e_sign_driver : product["e-sign-driver"]
 
+                                // NEW: tests that belong to this collected product
+                                const productTests = (tests || []).filter((t: any) => String(t.collected_product_id) === String(product.id))
+
                                 return (
-                                  <div key={index} className="p-4 border border-gray-200 rounded-lg space-y-3">
+                                  <div key={index} className="p-4 border border-gray-200 rounded-lg space-y-3 relative">
                                     <div className="flex items-start justify-between">
                                       <div className="flex items-center space-x-3">
                                         <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center">
@@ -435,6 +450,95 @@ export function DriverFormViewDrawer({
                                         title="Driver Signature"
                                         type="driver"
                                       />
+                                    </div>
+
+                                    {/* Raw material & supplier info */}
+                                    {(() => {
+                                      const rawMat = rawMaterials.find((r: any) => String(r.id) === String(product.raw_material_id || product.rawMaterialId || product.raw_material))
+                                      const rawMatName = rawMat ? (rawMat.name || rawMat.raw_material_name || "") : (product.raw_material_name || "")
+
+                                      const supplierObj = suppliers.find((s: any) => String(s.id) === String(product.supplier_id || product.supplier))
+                                      const supplierName = supplierObj ? (supplierObj.name || supplierObj.company_name || "") : (product.supplier_name || "")
+                                      const supplierEmail = supplierObj ? (supplierObj.email || supplierObj.contact_email || "") : (product.supplier_email || "")
+
+                                      return (
+                                        <div className="grid grid-cols-2 gap-4 text-sm mt-2">
+                                          <div className="space-y-1">
+                                            <div className="text-xs text-gray-500">Raw Material</div>
+                                            <div className="font-light">{rawMatName || "N/A"}</div>
+                                          </div>
+                                          <div className="space-y-1">
+                                            <div className="text-xs text-gray-500">Supplier</div>
+                                            <div className="font-light">{supplierName || "N/A"}{supplierEmail ? ` — ${supplierEmail}` : ""}</div>
+                                          </div>
+                                        </div>
+                                      )
+                                    })()}
+
+                                    {/* Product tests accordion */}
+                                    <div className="mt-2">
+                                      <details className="bg-gray-50 border border-gray-100 rounded p-2">
+                                        <summary className="cursor-pointer text-sm font-medium">
+                                          Product Tests ({productTests.length})
+                                        </summary>
+                                        <div className="mt-2 space-y-2">
+                                          {productTests.length === 0 ? (
+                                            <div className="text-sm text-gray-500">No tests for this product yet.</div>
+                                          ) : (
+                                            productTests.map((pt: any) => (
+                                              <div key={pt.id} className="flex items-center justify-between bg-white p-2 rounded border">
+                                                <div>
+                                                  <div className="text-sm font-light mb-2">{pt.date || pt.created_at || 'N/A'}</div>
+                                                  <div className="text-xs text-gray-500 mb-1">Organoleptic: {pt.organol_eptic || 'N/A'}</div>
+                                                  <div className="text-xs text-gray-500 mb-1">Alcohol: {pt.alcohol || 'N/A'}</div>
+                                                  <div className="text-xs text-gray-500 mb-1">Cob: {pt.cob == true ? 'Yes' : 'No'}</div>
+                                                  <div className="text-xs text-gray-500 mb-1">Remarks: {pt.remarks}</div>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                  <Badge className={"text-xs " + (pt.accepted ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800')}>
+                                                    {pt.accepted ? 'Accepted' : 'Rejected'}
+                                                  </Badge>
+                                                  <LoadingButton size="sm" variant="outline" className="rounded-full"
+                                                    onClick={() => {
+                                                      setLabMode("edit")
+                                                      setLabExistingId(pt.id)
+                                                      setSelectedTestForLab(pt)
+                                                      setSelectedProductForLab(product)
+                                                      setLabDrawerOpen(true)
+                                                    }}>
+                                                    Edit
+                                                  </LoadingButton>
+                                                  <LoadingButton size="sm" variant="destructive" className="rounded-full"
+                                                    loading={labOperationLoading.delete}
+                                                    onClick={() => dispatch(deleteDriverFormLabTest(pt.id))}
+                                                  >
+                                                    Delete
+                                                  </LoadingButton>
+                                                </div>
+                                              </div>
+                                            ))
+                                          )}
+                                        </div>
+                                      </details>
+                                    </div>
+
+                                    {/* Create test button (bottom-right of product card) */}
+                                    <div className="flex justify-end">
+                                      <LoadingButton
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => {
+                                          setLabMode("create")
+                                          setLabExistingId(undefined)
+                                          setSelectedTestForLab(null)
+                                          setSelectedProductForLab(product)
+                                          setLabDrawerOpen(true)
+                                        }}
+                                        className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full"
+                                      >
+                                        <Beaker className="w-4 h-4 mr-2" />
+                                        Create Milk Test
+                                      </LoadingButton>
                                     </div>
                                   </div>
                                 )
@@ -497,25 +601,37 @@ export function DriverFormViewDrawer({
                           <h3 className="text-lg font-light">Milk Test</h3>
                           <Badge className="text-xs bg-yellow-100 text-yellow-800">No Result</Badge>
                         </div>
-                        <p className="text-sm text-gray-600 mb-3">No Milk Test found for this driver form.</p>
-                        <LoadingButton className="rounded-full" onClick={() => { setLabMode("create"); setLabExistingId(undefined); setLabDrawerOpen(true) }}>Create Milk Test</LoadingButton>
+                        <p className="text-sm text-gray-600 mb-3">No Milk Test found for this driver form. Use the product cards to create tests for each collected product.</p>
+                        {/* removed the global create button here */}
                       </div>
                     )}
                   </div>
                 </TabsContent>
+
               </Tabs>
             </div>
           </div>
         </div>
 
-
+        {/* SINGLE lab drawer instance; pass selected product/test and driversFormId */}
         <DriverFormLabTestDrawer
           open={labDrawerOpen}
-          onOpenChange={setLabDrawerOpen}
-          driversFormId={driverForm?.id || ""}
+          onOpenChange={(v: boolean) => {
+            if (!v) {
+              // clear selection on close
+              setSelectedProductForLab(null)
+              setSelectedTestForLab(null)
+              setLabExistingId(undefined)
+            }
+            setLabDrawerOpen(v)
+          }}
+          // driversFormId={driverForm?.id || ""}
+          collectedProductId={selectedProductForLab?.id || ""}
+          collectedProduct={selectedProductForLab}
+          productName={selectedProductForLab?.raw_material_name || selectedProductForLab?.unit_of_measure || selectedProductForLab?.name || ""}
           mode={labMode}
           existingId={labExistingId}
-          existingData={currentLabTest}
+          existingData={selectedTestForLab}
         />
       </SheetContent>
     </Sheet>
