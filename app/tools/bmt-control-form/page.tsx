@@ -6,7 +6,7 @@ import { LoadingButton } from "@/components/ui/loading-button"
 import { DataTable } from "@/components/ui/data-table"
 import { DataTableFilters } from "@/components/ui/data-table-filters"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Eye, Edit, Trash2, Beaker, TrendingUp, FileText, Clock, Package, Truck, User } from "lucide-react"
+import { Plus, Eye, Edit, Trash2, Beaker, TrendingUp, FileText, Clock, Package, Truck, User, Download } from "lucide-react"
 import { CopyButton } from "@/components/ui/copy-button"
 import { BMTControlFormDrawer } from "@/components/forms/bmt-control-form-drawer"
 import { BMTControlFormViewDrawer } from "@/components/forms/bmt-control-form-view-drawer"
@@ -71,22 +71,19 @@ export default function BMTControlFormPage() {
     return users.find((user: any) => user.id === userId)
   }
 
-  // Helper function to generate BMT form ID
-  const generateBMTFormId = (createdAt: string) => {
-    if (!createdAt) return 'bmt-000-00-00-0000'
-    
-    try {
-      const date = new Date(createdAt)
-      const dayNumber = Math.floor(Math.random() * 999) + 1 // Generate random number between 1-999
-      const month = (date.getMonth() + 1).toString().padStart(2, '0')
-      const day = date.getDate().toString().padStart(2, '0')
-      const year = date.getFullYear()
-      
-      return `bmt-${dayNumber.toString().padStart(3, '0')}-${month}-${day}-${year}`
-    } catch (error) {
-      return 'bmt-000-00-00-0000'
-    }
+  // Helper to get user name by ID
+  const getUserNameById = (userId: string) => {
+    const user = getUserById(userId)
+    return user ? user.name || user.email || user.id : userId || ""
   }
+
+  // Helper to get silo name by ID
+  const getSiloNameById = (siloId: string) => {
+    const silo = silos.find((s: any) => s.id === siloId)
+    return silo ? silo.name : siloId || ""
+  }
+
+
 
   // Load BMT control forms on initial mount
   useEffect(() => {
@@ -233,6 +230,91 @@ export default function BMTControlFormPage() {
     }
   }
 
+  // CSV Export Handler
+  const handleExportCSV = () => {
+    if (!forms || forms.length === 0) {
+      toast.error("No forms to export")
+      return
+    }
+
+    // CSV headers (removed Form ID column)
+    const headers = [
+      "Tag",
+      "Product",
+      "Volume (L)",
+      "Movement Start",
+      "Movement End",
+      "Status",
+      "Dispatch Operator",
+      "Receiver Operator",
+      "Source Silos",
+      "Destination Silo",
+      "Created At",
+      "Updated At"
+    ]
+
+    // Build CSV rows
+    const rows = forms.map((form: any) => {
+      // Source silos: names, comma separated
+      let sourceSilos = ""
+      if (Array.isArray(form.bmt_control_form_source_silo) && form.bmt_control_form_source_silo.length > 0) {
+        sourceSilos = form.bmt_control_form_source_silo.map((silo: any) => silo.name || silo.id).join(", ")
+      } else if (form.source_silo_id) {
+        sourceSilos = getSiloNameById(form.source_silo_id)
+      }
+
+      // Destination silo: name
+      let destinationSilo = ""
+      if (form.destination_silo && form.destination_silo.name) {
+        destinationSilo = form.destination_silo.name
+      } else if (form.destination_silo_id) {
+        destinationSilo = getSiloNameById(form.destination_silo_id)
+      }
+
+      // Operator names
+      const dispatchOperator = getUserNameById(form.dispatch_operator_id || form.llm_operator_id)
+      const receiverOperator = getUserNameById(form.receiver_operator_id || form.dpp_operator_id)
+
+      // Format dates
+      const movementStart = form.movement_start ? new Date(form.movement_start).toLocaleString() : ""
+      const movementEnd = form.movement_end ? new Date(form.movement_end).toLocaleString() : ""
+      const createdAt = form.created_at ? new Date(form.created_at).toLocaleString() : ""
+      const updatedAt = form.updated_at ? new Date(form.updated_at).toLocaleString() : ""
+
+      return [
+        form.tag,
+        form.product,
+        form.volume ?? "",
+        movementStart,
+        movementEnd,
+        form.status,
+        dispatchOperator,
+        receiverOperator,
+        sourceSilos,
+        destinationSilo,
+        createdAt,
+        updatedAt
+      ]
+    })
+
+    // CSV string
+    const csvContent = [
+      headers.join(","),
+      ...rows.map(row => row.map(val => `"${String(val).replace(/"/g, '""')}"`).join(","))
+    ].join("\r\n")
+
+    // Download CSV
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement("a")
+    link.href = url
+    link.setAttribute("download", "bmt_control_forms.csv")
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+  }
+
   // Table columns with actions
   const columns = [
     {
@@ -268,18 +350,14 @@ export default function BMTControlFormPage() {
     },
     {
       accessorKey: "flow_readings",
-      header: "Flow Readings",
+      header: "Volume",
       cell: ({ row }: any) => {
         const form = row.original
-        const difference = (form.flow_meter_end_reading || 0) - (form.flow_meter_start_reading || 0)
         return (
           <div className="space-y-1">
             <p className="text-sm font-light">
-              {form.flow_meter_start_reading} → {form.flow_meter_end_reading}
+              {form.volume != null ? `${form.volume} L` : "N/A"}
             </p>
-            <Badge variant={difference > 0 ? "default" : "secondary"} className="text-xs">
-              Δ {difference}
-            </Badge>
           </div>
         )
       },
@@ -353,13 +431,22 @@ export default function BMTControlFormPage() {
             <h1 className="text-3xl font-light text-foreground">BMT Control Forms</h1>
             <p className="text-sm font-light text-muted-foreground">Manage bulk milk transfer control forms</p>
           </div>
-          <LoadingButton 
-            onClick={handleAddForm}
-            className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full px-6 py-2 font-light"
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Add BMT Form
-          </LoadingButton>
+          <div className="flex gap-2">
+            <LoadingButton 
+              onClick={handleExportCSV}
+              className="bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 text-white border-0 rounded-full px-6 py-2 font-light"
+            >
+              <Download className="mr-2 h-4 w-4" />
+              Export CSV
+            </LoadingButton>
+            <LoadingButton 
+              onClick={handleAddForm}
+              className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full px-6 py-2 font-light"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Add BMT Form
+            </LoadingButton>
+          </div>
         </div>
 
         {/* Current Form Details */}

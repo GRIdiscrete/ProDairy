@@ -40,9 +40,9 @@ const combinedSchema = yup.object({
   analyst: yup.string().required("Analyst is required"),
   qa_decision: yup.string().required("QA decision is required"),
   details: yup.array().of(yup.object({
-    ph_after_7_days_at_30_degrees: yup.number().required("pH level is required"),
-    packaging_integrity: yup.string().required("Packaging integrity is required"),
-    defects: yup.string().required("Defects description is required")
+    ph_after_7_days_at_30_degrees: yup.number().nullable("pH level is required"),
+    packaging_integrity: yup.string().nullable(),
+    defects: yup.string().nullable()
   })).min(1)
 })
 
@@ -102,7 +102,7 @@ export function QACorrectiveActionDrawer({
   useEffect(() => {
     if (!open) return
     if (mode === "edit" && action) {
-      const details = (action.details && Array.isArray(action.details) && action.details.length > 0) ? action.details[0] : (action.qa_corrective_action_details || {})
+      const details = (action?.qa_corrective_action_details) ? action.qa_corrective_action_details[0] : {}
       form.reset({
         date_of_production: action.date_of_production || "",
         date_analysed: action.date_analysed || "",
@@ -113,9 +113,9 @@ export function QACorrectiveActionDrawer({
         analyst: action.analyst || "",
         qa_decision: action.qa_decision || "",
         details: [{
-          ph_after_7_days_at_30_degrees: details.ph_after_7_days_at_30_degrees ?? undefined,
-          packaging_integrity: details.packaging_integrity || "",
-          defects: details.defects || ""
+          ph_after_7_days_at_30_degrees: details?.ph_after_7_days_at_30_degrees ?? undefined,
+          packaging_integrity: details?.packaging_integrity || "",
+          defects: details?.defects || ""
         }]
       })
     } else {
@@ -152,13 +152,18 @@ export function QACorrectiveActionDrawer({
       }
 
       if (mode === "edit" && action?.id) {
-        console.log('Yes Yes' + action?.qa_corrective_action_details?.id)
+        // console.log('Panno' +  )
+
+        const actualDetails = {
+          ...payload.details[0],
+          id: action.qa_corrective_action_details[0]?.id,
+
+        }
         await dispatch(updateQACorrectiveActionAction({
           ...payload,
           id: action.id,
           details: [{
-            ...payload.details[0],
-            id: action?.qa_corrective_action_details[0]?.id
+            ...actualDetails
           }]
         })).unwrap()
         toast.success("QA Corrective Action updated successfully")

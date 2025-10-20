@@ -50,12 +50,7 @@ export function QACorrectiveActionViewDrawer({
         const usersData = await usersApi.getUsers()
         setUsers(Array.isArray(usersData) ? usersData : [])
 
-        // Mock products - in real app, this would come from an API
-        setProducts([
-          { id: "a4de97cc-e132-431e-a0a7-5c5e85e53d11", name: "UHT Milk 1L" },
-          { id: "b5ef98dd-f243-542f-b1b8-6d6f96f64e22", name: "UHT Milk 500ml" },
-          { id: "c6fg99ee-g354-653g-c2c9-7e7g07g75f33", name: "UHT Milk 250ml" },
-        ])
+       
       } catch (error) {
         console.error("Error loading data:", error)
         setUsers([])
