@@ -31,6 +31,7 @@ import type { DriverForm } from "@/lib/types"
 import type { OfflineDriverForm } from "@/lib/offline/database"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { Download as DownloadIcon } from "lucide-react"
+import { useRouter, useSearchParams } from "next/navigation"
 
 // Unified form type for display
 type UnifiedForm = DriverForm | OfflineDriverForm
@@ -168,6 +169,7 @@ export default function DriverFormsPage() {
   const [isLoadingData, setIsLoadingData] = useState(false)
   const itemsPerPage = 10
   const isMobile = useIsMobile()
+  const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
 
   // Helper function to get driver info from form
   const getDriverInfo = (form: any) => {
@@ -541,6 +543,22 @@ export default function DriverFormsPage() {
     setCsvUrl(exportDriverFormsToCSV(filteredForms, displayUsers, displayRawMaterials, displaySuppliers, generateDriverFormId))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filteredForms, displayUsers, displayRawMaterials, displaySuppliers])
+
+  // --- Helper: open view drawer if form_id query param is present ---
+  useEffect(() => {
+    // Wait for forms to load and check for form_id param
+    if (typeof window === "undefined") return;
+    const formId = searchParams?.get("form_id");
+    if (formId && displayDriverForms && displayDriverForms.length > 0) {
+      const foundForm = displayDriverForms.find((form: UnifiedForm) => String(form.id) === String(formId));
+      if (foundForm) {
+        setViewingForm(foundForm);
+        setIsViewDrawerOpen(true);
+      }
+    }
+    // Only run once after forms load
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [displayDriverForms]);
 
   return (
     <DriversDashboardLayout title="Driver Forms" subtitle="Manage driver collection forms and deliveries">

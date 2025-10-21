@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef, useMemo } from "react"
-import { useParams } from "next/navigation"
+import { useParams, useRouter, useSearchParams } from "next/navigation"
 import { DataCaptureDashboardLayout } from "@/components/layout/data-capture-dashboard-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { LoadingButton } from "@/components/ui/loading-button"
@@ -141,6 +141,23 @@ export default function FilmaticLines2Page() {
   // selectors for users and BMT forms
   const { items: users } = useAppSelector((state: RootState) => state.users)
   const { forms: bmtForms } = useAppSelector((state: RootState) => state.bmtControlForms)
+
+  // --- Query param handling ---
+  const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+
+  // --- Helper: open view drawer if form_id query param is present ---
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const formId = searchParams?.get("form_id");
+    if (formId && forms && forms.length > 0) {
+      const foundForm = forms.find((form: any) => String(form.id) === String(formId));
+      if (foundForm) {
+        setSelectedForm(foundForm);
+        setViewDrawerOpen(true);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [forms]);
 
   if (loading.fetch) {
     return (

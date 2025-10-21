@@ -18,6 +18,7 @@ import {
   clearError
 } from "@/lib/store/slices/bmtControlFormSlice"
 import { fetchUsers } from "@/lib/store/slices/usersSlice"
+import { useRouter, useSearchParams } from "next/navigation"
 
 import { toast } from "sonner"
 import { TableFilters } from "@/lib/types"
@@ -423,6 +424,23 @@ export default function BMTControlFormPage() {
   // Get latest form for display
   const latestForm = Array.isArray(forms) && forms.length > 0 ? forms[0] : null
 
+  // --- Query param handling ---
+  const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+
+  // --- Helper: open view drawer if form_id query param is present ---
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const formId = searchParams?.get("form_id");
+    if (formId && forms && forms.length > 0) {
+      const foundForm = forms.find((form: any) => String(form.id) === String(formId));
+      if (foundForm) {
+        setSelectedForm(foundForm);
+        setViewDrawerOpen(true);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [forms]);
+
   return (
     <ToolsDashboardLayout title="BMT Control Forms" subtitle="Bulk Milk Transfer control and monitoring">
       <div className="space-y-6">
@@ -475,7 +493,7 @@ export default function BMTControlFormPage() {
                 <LoadingButton 
                   variant="outline" 
                   onClick={() => handleViewForm(latestForm)}
-                  className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full px-4 py-2 font-light text-sm"
+                  className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full px-4 py-2 font-light"
                 >
                   <Eye className="mr-2 h-4 w-4" />
                   View Details

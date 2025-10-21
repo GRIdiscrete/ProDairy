@@ -25,6 +25,7 @@ import { TableFilters } from "@/lib/types"
 import { GeneralLabTestDrawer } from "@/components/forms/general-lab-test-drawer"
 import { GeneralLabTestViewDrawer } from "@/components/forms/general-lab-test-view-drawer"
 import { fetchUsers } from "@/lib/store/slices/usersSlice"
+import { useRouter, useSearchParams } from "next/navigation"
 
 export default function GeneralLabTestPage() {
   const dispatch = useAppDispatch()
@@ -35,6 +36,7 @@ export default function GeneralLabTestPage() {
   const hasFetchedRef = useRef(false)
   const [silos, setSilos] = useState<any[]>([])
   const [loadingSilos, setLoadingSilos] = useState(false)
+  const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
 
   // Load initial data
   const loadInitialData = async () => {
@@ -73,6 +75,21 @@ export default function GeneralLabTestPage() {
       return 'lab-000-00-00-0000'
     }
   }
+
+  // --- Helper: open view drawer if form_id query param is present ---
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!isInitialized || !tests || tests.length === 0) return;
+    const formId = searchParams?.get("form_id");
+    if (formId) {
+      const foundTest = tests.find((test: any) => String(test.id) === String(formId));
+      if (foundTest) {
+        setSelectedTest(foundTest);
+        setViewDrawerOpen(true);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isInitialized, tests]);
 
   useEffect(() => {
     if (!isInitialized && !hasFetchedRef.current) {

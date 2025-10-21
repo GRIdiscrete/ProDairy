@@ -22,6 +22,7 @@ import ContentSkeleton from "@/components/ui/content-skeleton"
 import { FormIdCopy } from "@/components/ui/form-id-copy"
 import { rolesApi } from "@/lib/api/roles"
 import { filmaticLinesForm1Api } from "@/lib/api/filmatic-lines-form-1"
+import { useRouter, useSearchParams } from "next/navigation"
 
 export default function ProcessLogPage() {
   const dispatch = useAppDispatch()
@@ -268,6 +269,23 @@ export default function ProcessLogPage() {
   ], [loading.delete, rolesMap, formMap])
 
   const latest = Array.isArray(logs) && logs.length > 0 ? logs[0] : null
+
+  const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+
+  // --- Helper: open view drawer if form_id query param is present ---
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!isInitialized || !logs || logs.length === 0) return;
+    const formId = searchParams?.get("form_id");
+    if (formId) {
+      const foundLog = logs.find((log: any) => String(log.id) === String(formId));
+      if (foundLog) {
+        setSelectedLog(foundLog);
+        setViewDrawerOpen(true);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isInitialized, logs]);
 
   return (
     <DataCaptureDashboardLayout title="Process Log" subtitle="Steri milk process control and monitoring">

@@ -31,6 +31,7 @@ import { generateSkimmingFormId } from "@/lib/utils/form-id-generator"
 import { SkimmingFormDrawer } from "@/components/forms/skimming-form-drawer"
 import { SkimmingFormViewDrawer } from "@/components/forms/skimming-form-view-drawer"
 import { fetchSkimmingForms } from "@/lib/store/slices/skimmingSlice"
+import { useRouter, useSearchParams } from "next/navigation"
 
 export default function StandardizingPage() {
   const dispatch = useAppDispatch()
@@ -42,6 +43,7 @@ export default function StandardizingPage() {
 
   const [tableFilters, setTableFilters] = useState<TableFilters>({})
   const hasFetchedRef = useRef(false)
+  const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
 
   // Helper function to get user by ID
   const getUserById = (userId: string) => {
@@ -601,6 +603,31 @@ export default function StandardizingPage() {
       },
     },
   ]
+
+  // --- Helper: open view drawer if form_id query param is present ---
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const formId = searchParams?.get("form_id");
+    if (formId) {
+      // Search in standardizing forms
+      const foundStandard = forms.find((form: any) => String(form.id) === String(formId));
+      if (foundStandard) {
+        setSelectedForm(foundStandard);
+        setViewDrawerOpen(true);
+        setActiveTab("standardizing");
+        return;
+      }
+      // Search in skimming forms
+      const foundSkimming = skimmingForms.find((form: any) => String(form.id) === String(formId));
+      if (foundSkimming) {
+        setSelectedSkimmingForm(foundSkimming);
+        setSkimmingViewDrawerOpen(true);
+        setActiveTab("skimming");
+        return;
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [forms, skimmingForms]);
 
   return (
     <DataCaptureDashboardLayout title="Standardizing Forms" subtitle="Forms for standardizing milk fat content">
