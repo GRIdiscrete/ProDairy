@@ -14,8 +14,8 @@ import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-di
 import { Skeleton } from "@/components/ui/skeleton"
 import { CopyButton } from "@/components/ui/copy-button"
 import { useAppDispatch, useAppSelector } from "@/lib/store"
-import { 
-  fetchFilmaticLinesProductionSheets, 
+import {
+  fetchFilmaticLinesProductionSheets,
   deleteFilmaticLinesProductionSheet,
   clearError
 } from "@/lib/store/slices/filmaticLinesProductionSheetSlice"
@@ -24,14 +24,16 @@ import { toast } from "sonner"
 import { TableFilters } from "@/lib/types"
 import { FilmaticLinesProductionSheet } from "@/lib/api/filmatic-lines"
 import ContentSkeleton from "@/components/ui/content-skeleton"
+import { useRouter, useSearchParams } from "next/navigation"
 
 export default function FilmaticLinesPage() {
   const dispatch = useAppDispatch()
   const { sheets, loading, error, isInitialized } = useAppSelector((state) => state.filmaticLinesProductionSheets)
-  
+
   const [tableFilters, setTableFilters] = useState<TableFilters>({})
   const hasFetchedRef = useRef(false)
-  
+  const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+
   // Load Filmatic lines sheets and standardizing forms on initial mount
   useEffect(() => {
     if (!isInitialized && !hasFetchedRef.current) {
@@ -40,14 +42,14 @@ export default function FilmaticLinesPage() {
       dispatch(fetchStandardizingForms()) // Load standardizing forms for the form drawer
     }
   }, [dispatch, isInitialized])
-  
+
   // Handle filter changes
   useEffect(() => {
     if (isInitialized && Object.keys(tableFilters).length > 0) {
       dispatch(fetchFilmaticLinesProductionSheets())
     }
   }, [dispatch, tableFilters, isInitialized])
-  
+
   // Handle errors with toast notifications
   useEffect(() => {
     if (error) {
@@ -55,12 +57,12 @@ export default function FilmaticLinesPage() {
       dispatch(clearError())
     }
   }, [error, dispatch])
-  
+
   // Drawer states
   const [formDrawerOpen, setFormDrawerOpen] = useState(false)
   const [viewDrawerOpen, setViewDrawerOpen] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
-  
+
   // Selected sheet and mode
   const [selectedSheet, setSelectedSheet] = useState<FilmaticLinesProductionSheet | null>(null)
   const [formMode, setFormMode] = useState<"create" | "edit">("create")
@@ -112,7 +114,7 @@ export default function FilmaticLinesPage() {
 
   const confirmDelete = async () => {
     if (!selectedSheet) return
-    
+
     try {
       await dispatch(deleteFilmaticLinesProductionSheet(selectedSheet.id)).unwrap()
       toast.success('Filmatic Lines Production Sheet deleted successfully')
@@ -264,25 +266,25 @@ export default function FilmaticLinesPage() {
         const sheet = row.original
         return (
           <div className="flex space-x-2">
-            <LoadingButton 
-              variant="outline" 
-              size="sm" 
+            <LoadingButton
+              variant="outline"
+              size="sm"
               onClick={() => handleViewSheet(sheet)}
               className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full"
             >
               <Eye className="w-4 h-4" />
             </LoadingButton>
-            <LoadingButton 
-              variant="outline" 
-              size="sm" 
+            <LoadingButton
+              variant="outline"
+              size="sm"
               onClick={() => handleEditSheet(sheet)}
               className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 rounded-full"
             >
               <Edit className="w-4 h-4" />
             </LoadingButton>
-            <LoadingButton 
-              variant="destructive" 
-              size="sm" 
+            <LoadingButton
+              variant="destructive"
+              size="sm"
               onClick={() => handleDeleteSheet(sheet)}
               loading={loading.delete}
               disabled={loading.delete}
@@ -296,6 +298,41 @@ export default function FilmaticLinesPage() {
     },
   ]
 
+  // --- Helper: open view drawer if form_id query param is present ---
+  // useEffect(() => {
+  //   if (typeof window === "undefined") return;
+  //   if (!isInitialized || !sheets || sheets.length === 0) return;
+  //   const formId = searchParams?.get("form_id");
+  //   if (formId) {
+  //     const foundSheet = sheets.find((sheet: any) => String(sheet.id) === String(formId));
+
+  //     console.log("Found sheet:", foundSheet);
+  //     if (foundSheet) {
+  //       setSelectedSheet(foundSheet);
+  //       setViewDrawerOpen(true);
+  //     }
+  //   }
+  //   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, [isInitialized, sheets]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!isInitialized || !sheets || sheets.length === 0) return;
+    const formId = searchParams?.get("form_id");
+    // Debug logs to verify effect is reached
+    console.log("FilmaticLines useEffect reached");
+    console.log("formId:", formId);
+    if (formId) {
+      const foundSheet = sheets.find((sheet: any) => String(sheet.id) === String(formId));
+      console.log("foundSheet:", foundSheet);
+      if (foundSheet) {
+        setSelectedSheet(foundSheet);
+        setViewDrawerOpen(true);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isInitialized, sheets]);
+
   return (
     <DataCaptureDashboardLayout title="Filmatic Lines" subtitle="Filmatic lines production control and monitoring">
       <div className="space-y-6">
@@ -304,7 +341,7 @@ export default function FilmaticLinesPage() {
             <h1 className="text-3xl font-light text-foreground">Filmatic Lines</h1>
             <p className="text-sm font-light text-muted-foreground">Manage Filmatic lines production sheets and process control</p>
           </div>
-          <LoadingButton 
+          <LoadingButton
             onClick={handleAddSheet}
             className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full px-6 py-2 font-light"
           >
@@ -352,8 +389,8 @@ export default function FilmaticLinesPage() {
                   <span>Current Filmatic Lines Process</span>
                   <Badge className="bg-gradient-to-r from-blue-100 to-cyan-100 text-blue-800 font-light">Latest</Badge>
                 </div>
-                <LoadingButton 
-                  variant="outline" 
+                <LoadingButton
+                  variant="outline"
                   onClick={() => handleViewSheet(latestSheet)}
                   className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full px-4 py-2 font-light text-sm"
                 >
@@ -386,10 +423,10 @@ export default function FilmaticLinesPage() {
                     <Clock className="h-4 w-4 text-gray-500" />
                     <p className="text-sm font-light text-gray-600">Created</p>
                   </div>
-                  <p className="text-lg font-light">{new Date(latestSheet.created_at).toLocaleDateString('en-GB', { 
-                    day: 'numeric', 
-                    month: 'long', 
-                    year: 'numeric' 
+                  <p className="text-lg font-light">{new Date(latestSheet.created_at).toLocaleDateString('en-GB', {
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric'
                   })}</p>
                 </div>
                 <div className="space-y-2">
@@ -400,7 +437,7 @@ export default function FilmaticLinesPage() {
                   <p className="text-lg font-light text-green-600">{latestSheet.shift}</p>
                 </div>
               </div>
-              
+
               {/* Process Flow Information */}
               <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {/* Process Summary */}
@@ -462,29 +499,29 @@ export default function FilmaticLinesPage() {
               <div className="text-lg font-light">Filmatic Lines Production Sheets</div>
             </div>
             <div className="p-6 space-y-4">
-            <DataTableFilters
-              filters={tableFilters}
-              onFiltersChange={setTableFilters}
-              onSearch={(searchTerm) => setTableFilters(prev => ({ ...prev, search: searchTerm }))}
-              searchPlaceholder="Search Filmatic lines sheets..."
-              filterFields={filterFields}
-            />
-            
-            {loading.fetch ? (
-              <ContentSkeleton sections={1} cardsPerSection={4} />
-            ) : (
-              <DataTable columns={columns} data={sheets} showSearch={false} />
-            )}
+              <DataTableFilters
+                filters={tableFilters}
+                onFiltersChange={setTableFilters}
+                onSearch={(searchTerm) => setTableFilters(prev => ({ ...prev, search: searchTerm }))}
+                searchPlaceholder="Search Filmatic lines sheets..."
+                filterFields={filterFields}
+              />
+
+              {loading.fetch ? (
+                <ContentSkeleton sections={1} cardsPerSection={4} />
+              ) : (
+                <DataTable columns={columns} data={sheets} showSearch={false} />
+              )}
             </div>
           </div>
         )}
 
         {/* Form Drawer */}
-        <FilmaticLinesProductionSheetDrawer 
-          open={formDrawerOpen} 
-          onOpenChange={setFormDrawerOpen} 
+        <FilmaticLinesProductionSheetDrawer
+          open={formDrawerOpen}
+          onOpenChange={setFormDrawerOpen}
           sheet={selectedSheet}
-          mode={formMode} 
+          mode={formMode}
         />
 
         {/* View Drawer */}

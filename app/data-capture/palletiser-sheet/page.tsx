@@ -29,6 +29,7 @@ import ContentSkeleton from "@/components/ui/content-skeleton"
 import { FormIdCopy } from "@/components/ui/form-id-copy"
 import { UserAvatar } from "@/components/ui/user-avatar"
 import type { RootState } from "@/lib/store"
+import { useRouter, useSearchParams } from "next/navigation"
 
 interface PalletiserSheetPageProps {
   processId?: string
@@ -53,6 +54,7 @@ export default function PalletiserSheetPage({ processId }: PalletiserSheetPagePr
 
   const [tableFilters, setTableFilters] = useState<TableFilters>({})
   const hasFetchedRef = useRef(false)
+  const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
 
   // Load palletiser sheets on initial mount
   useEffect(() => {
@@ -297,6 +299,20 @@ export default function PalletiserSheetPage({ processId }: PalletiserSheetPagePr
       },
     },
   ], [operationLoading.delete, machines, roles])
+
+  // --- Helper: open view drawer if form_id query param is present ---
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const formId = searchParams?.get("form_id");
+    if (formId && sheets && sheets.length > 0) {
+      const foundForm = sheets.find((form: any) => String(form.id) === String(formId));
+      if (foundForm) {
+        setSelectedSheet(foundForm);
+        setViewDrawerOpen(true);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sheets]);
 
   return (
     <DataCaptureDashboardLayout title="Palletiser Sheet" subtitle="Palletising process control and monitoring">

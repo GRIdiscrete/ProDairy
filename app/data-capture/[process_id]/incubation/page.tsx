@@ -28,6 +28,7 @@ import ContentSkeleton from "@/components/ui/content-skeleton"
 import { UserAvatar } from "@/components/ui/user-avatar"
 import { FormIdCopy } from "@/components/ui/form-id-copy"
 import { fetchUsers } from "@/lib/store/slices/usersSlice"
+import { useRouter, useSearchParams } from "next/navigation"
 
 interface ProductIncubationPageProps {
   params: {
@@ -43,6 +44,7 @@ export default function ProductIncubationPage({ params }: ProductIncubationPageP
 
   const [tableFilters, setTableFilters] = useState<TableFilters>({})
   const hasFetchedRef = useRef(false)
+  const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
 
   // Load product incubations on initial mount
   useEffect(() => {
@@ -333,6 +335,21 @@ export default function ProductIncubationPage({ params }: ProductIncubationPageP
       },
     },
   ], [operationLoading.delete, users])
+
+  // --- Helper: open view drawer if form_id query param is present ---
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!isInitialized || !incubations || incubations.length === 0) return;
+    const formId = searchParams?.get("form_id");
+    if (formId) {
+      const foundIncubation = incubations.find((inc: any) => String(inc.id) === String(formId));
+      if (foundIncubation) {
+        setSelectedIncubation(foundIncubation);
+        setViewDrawerOpen(true);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isInitialized, incubations]);
 
   return (
     <DataCaptureDashboardLayout title="Product Incubation" subtitle="Product incubation process control and monitoring">

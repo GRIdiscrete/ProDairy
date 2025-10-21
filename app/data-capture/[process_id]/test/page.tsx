@@ -23,6 +23,7 @@ import { toast } from "sonner"
 import { TableFilters } from "@/lib/types"
 import { UHTQualityCheckAfterIncubation } from "@/lib/api/data-capture-forms"
 import ContentSkeleton from "@/components/ui/content-skeleton"
+import { useRouter, useSearchParams } from "next/navigation"
 
 interface UHTQualityCheckPageProps {
   params: {
@@ -33,7 +34,8 @@ interface UHTQualityCheckPageProps {
 export default function UHTQualityCheckPage({ params }: UHTQualityCheckPageProps) {
   const dispatch = useAppDispatch()
   const { qualityChecks, loading, error, operationLoading, isInitialized } = useAppSelector((state) => state.uhtQualityChecks)
-  
+  const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+
   const [tableFilters, setTableFilters] = useState<TableFilters>({})
   const hasFetchedRef = useRef(false)
   
@@ -344,6 +346,21 @@ export default function UHTQualityCheckPage({ params }: UHTQualityCheckPageProps
       },
     },
   ], [operationLoading.delete])
+
+  // --- Helper: open view drawer if form_id query param is present ---
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!isInitialized || !qualityChecks || qualityChecks.length === 0) return;
+    const formId = searchParams?.get("form_id");
+    if (formId) {
+      const foundQualityCheck = qualityChecks.find((qc: any) => String(qc.id) === String(formId));
+      if (foundQualityCheck) {
+        setSelectedQualityCheck(foundQualityCheck);
+        setViewDrawerOpen(true);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isInitialized, qualityChecks]);
 
   return (
     <DataCaptureDashboardLayout title="Incubation Test" subtitle="Incubation quality  check after incubation process control and monitoring">

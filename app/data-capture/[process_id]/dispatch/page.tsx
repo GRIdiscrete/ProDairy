@@ -19,11 +19,13 @@ import { toast } from "sonner"
 import ContentSkeleton from "@/components/ui/content-skeleton"
 import { FormIdCopy } from "@/components/ui/form-id-copy"
 import { rolesApi } from "@/lib/api/roles"
+import { useRouter, useSearchParams } from "next/navigation"
 
 interface Props { params: { process_id: string } }
 
 export default function DispatchPage({ params }: Props) {
     const dispatch = useAppDispatch()
+    const router = useRouter()
 
     const { items: releaseNotes, loading: releaseLoading, operationLoading: releaseOp, error: releaseError, isInitialized: releaseInit } = useAppSelector((s: any) => s.qaReleaseNotes)
     const { items: rejectNotes, loading: rejectLoading, operationLoading: rejectOp, error: rejectError, isInitialized: rejectInit } = useAppSelector((s: any) => s.qaRejectNotes)
@@ -268,6 +270,33 @@ export default function DispatchPage({ params }: Props) {
             }
         }
     ], [operationLoading, rolesMap, rolesList])
+
+    const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+
+    // --- Helper: open view drawer if form_id query param is present ---
+    useEffect(() => {
+        if (typeof window === "undefined") return;
+        const formId = searchParams?.get("form_id");
+        if (formId) {
+            // Search in release notes
+            const foundRelease = releaseNotes.find((form: any) => String(form.id) === String(formId));
+            if (foundRelease) {
+                setSelected(foundRelease);
+                setViewOpen(true);
+                setActiveTab("release");
+                return;
+            }
+            // Search in reject notes
+            const foundReject = rejectNotes.find((form: any) => String(form.id) === String(formId));
+            if (foundReject) {
+                setSelected(foundReject);
+                setViewOpen(true);
+                setActiveTab("reject");
+                return;
+            }
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [releaseNotes, rejectNotes]);
 
     return (
         <DataCaptureDashboardLayout title="Dispatch / QA Notes" subtitle="Manage QA release & reject notes">

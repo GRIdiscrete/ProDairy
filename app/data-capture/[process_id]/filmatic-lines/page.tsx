@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef, useMemo } from "react"
-import { useParams } from "next/navigation"
+import { useParams, useRouter, useSearchParams } from "next/navigation"
 import { DataCaptureDashboardLayout } from "@/components/layout/data-capture-dashboard-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { LoadingButton } from "@/components/ui/loading-button"
@@ -38,6 +38,7 @@ export default function FilmaticLines1Page() {
 
   const [tableFilters, setTableFilters] = useState<TableFilters>({})
   const hasFetchedRef = useRef(false)
+  const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
 
   // Load Filmatic lines form 1 data on initial mount
   useEffect(() => {
@@ -142,14 +143,6 @@ export default function FilmaticLines1Page() {
   // Select users and BMT forms for lookups
   const { items: users } = useAppSelector((state: RootState) => state.users)
   const { forms: bmtForms } = useAppSelector((state: RootState) => state.bmtControlForms)
-
-  if (loading.fetch) {
-    return (
-      <DataCaptureDashboardLayout title="Filmatic Lines Form 1" subtitle="Filmatic lines form 1 production control and monitoring">
-        <ContentSkeleton sections={1} cardsPerSection={4} />
-      </DataCaptureDashboardLayout>
-    )
-  }
 
   // Table columns with actions
   const columns = [
@@ -326,6 +319,21 @@ export default function FilmaticLines1Page() {
     },
   ]
 
+  // --- Helper: open view drawer if form_id query param is present ---
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!isInitialized || !forms || forms.length === 0) return;
+    const formId = searchParams?.get("form_id");
+    if (formId) {
+      const foundForm = forms.find((form: any) => String(form.id) === String(formId));
+      if (foundForm) {
+        setSelectedForm(foundForm);
+        setViewDrawerOpen(true);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isInitialized, forms]);
+
   return (
     <DataCaptureDashboardLayout title="Filmatic Lines Form 1" subtitle="Filmatic lines form 1 production control and monitoring">
       <div className="space-y-6">
@@ -345,32 +353,7 @@ export default function FilmaticLines1Page() {
 
         {/* Current Form Details */}
         {loading.fetch ? (
-          <div className="border border-gray-200 rounded-lg bg-white border-l-4 border-l-blue-500">
-            <div className="p-6 pb-0">
-              <div className="flex items-center space-x-2">
-                <Skeleton className="h-5 w-5 rounded" />
-                <Skeleton className="h-6 w-48" />
-                <Skeleton className="h-6 w-16 rounded-full" />
-              </div>
-            </div>
-            <div className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                {Array.from({ length: 4 }).map((_, i) => (
-                  <div key={i} className="space-y-2">
-                    <Skeleton className="h-4 w-24" />
-                    <Skeleton className="h-6 w-20" />
-                  </div>
-                ))}
-              </div>
-              <div className="mt-4 space-y-2">
-                <Skeleton className="h-4 w-48" />
-                <Skeleton className="h-4 w-56" />
-              </div>
-              <div className="mt-4 flex justify-end">
-                <Skeleton className="h-9 w-32" />
-              </div>
-            </div>
-          </div>
+          <ContentSkeleton sections={1} cardsPerSection={4} />
         ) : latestForm ? (
           <div className="border border-gray-200 rounded-lg bg-white border-l-4 border-l-blue-500">
             <div className="p-6 pb-0">
