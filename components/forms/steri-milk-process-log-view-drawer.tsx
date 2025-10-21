@@ -170,7 +170,7 @@ export function SteriMilkProcessLogViewDrawer({
                       className={`border-0 rounded-full ${hasTest ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white" : "bg-gradient-to-r from-blue-500 to-cyan-500 text-white"}`}
                     >
                       <Beaker className="h-4 w-4 mr-1" />
-                      {hasTest ? "Edit Test Report" : "Create Test Report"}
+                      {hasTest ? "Edit Test Report" : "Mixing & Pasteurizing Test"}
                     </Button>
                     <Button
                       onClick={() => setShowPostTestForm(true)}
@@ -179,7 +179,7 @@ export function SteriMilkProcessLogViewDrawer({
                       className={`border-0 rounded-full ${hasPost ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white" : "bg-gradient-to-r from-purple-500 to-pink-500 text-white"}`}
                     >
                       <Beaker className="h-4 w-4 mr-1" />
-                      {hasPost ? "Edit Post Test" : "Create Post Test"}
+                      {hasPost ? "Edit Post Test" : "Post Autoclave Test"}
                     </Button>
                   </>
                 )
@@ -416,7 +416,7 @@ export function SteriMilkProcessLogViewDrawer({
                       variant={hasTest ? 'outline' : undefined as any}
                     >
                       {hasTest ? <Edit className="h-4 w-4 mr-1" /> : <Plus className="h-4 w-4 mr-1" />}
-                      {hasTest ? 'Edit Test Report' : 'Create Test Report'}
+                      {hasTest ? 'Edit Test Report' : 'Mixing & Pasteurizing Test'}
                     </Button>
                   )
                 })()}

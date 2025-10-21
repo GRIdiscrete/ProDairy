@@ -1363,7 +1363,7 @@ export function SteriMilkTestReportFormDrawer({
                 className="flex items-center gap-2"
               >
                 <CheckCircle className="w-4 h-4" />
-                Create Test Report
+                Mixing & Pasteurizing Test
               </LoadingButton>
             )}
           </div>
