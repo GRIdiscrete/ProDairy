@@ -88,9 +88,12 @@ export const createPalletiserSheetAction = createAsyncThunk(
 
 export const updatePalletiserSheetAction = createAsyncThunk(
   'palletiserSheets/update',
-  async (data: PalletiserSheet, { rejectWithValue }) => {
+  async (args: { id: string; data: any }, { rejectWithValue }) => {
     try {
-      const sheet = await updatePalletiserSheet(data)
+      const { id, data } = args
+      // merge id into payload expected by API
+      const payload = { id, ...data }
+      const sheet = await updatePalletiserSheet(payload as PalletiserSheet)
       return sheet
     } catch (error: any) {
       const errorMessage = error?.response?.data?.message || error.message || 'Failed to update palletiser sheet'

@@ -19,7 +19,7 @@ export interface DriverFormLabTest {
 
 export interface CreateDriverFormLabTestRequest {
   scientist_id: string
-  drivers_form_id: string
+  collected_product_id: string
   date: string
   organol_eptic: string
   no_water?: string
@@ -47,14 +47,14 @@ export interface DriverFormLabTestsResponse {
 
 export const driverFormLabTestApi = {
   async getAll() {
-    return await apiRequest<DriverFormLabTestsResponse>("/raw-milk-intake-lab-test", { 
+    return await apiRequest<DriverFormLabTestsResponse>("/driver-lab-test", { 
       method: "GET",
       headers: { accept: "application/json" },
     })
   },
 
   async create(payload: CreateDriverFormLabTestRequest) {
-    return await apiRequest<DriverFormLabTestResponse>("/raw-milk-intake-lab-test", {
+    return await apiRequest<DriverFormLabTestResponse>("/driver-lab-test", {
       method: "POST",
       headers: { 
         accept: "application/json",
@@ -65,7 +65,7 @@ export const driverFormLabTestApi = {
   },
 
   async update(payload: UpdateDriverFormLabTestRequest) {
-    return await apiRequest<DriverFormLabTestResponse>("/raw-milk-intake-lab-test", {
+    return await apiRequest<DriverFormLabTestResponse>("/driver-lab-test", {
       method: "PATCH",
       headers: { 
         accept: "application/json",
@@ -76,7 +76,7 @@ export const driverFormLabTestApi = {
   },
 
   async delete(id: string) {
-    return await apiRequest(`/raw-milk-intake-lab-test/${id}`, { 
+    return await apiRequest(`/driver-lab-test/${id}`, { 
       method: "DELETE",
       headers: { accept: "application/json" },
     })

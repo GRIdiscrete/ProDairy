@@ -161,7 +161,7 @@ export const filmaticLinesForm2Api = {
 
   // Update form
   updateForm: async (id: string, data: Partial<CreateFilmaticLinesForm2Request>) => {
-    return apiRequest<FilmaticLinesForm2>(`/filmatic-lines-form-2/${id}`, {
+    return apiRequest<FilmaticLinesForm2>(`/filmatic-lines-form-2`, {
       method: 'PATCH',
       body: JSON.stringify(data),
     })

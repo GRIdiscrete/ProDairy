@@ -80,7 +80,7 @@ export const rawMilkIntakeApi = {
   // Get all raw milk intake forms
   getAll: async (): Promise<RawMilkIntakeForm[]> => {
     try {
-      const response = await apiRequest<RawMilkIntakeFormsResponse>("/raw-milk-intake", {
+      const response = await apiRequest<RawMilkIntakeFormsResponse>("/raw-milk-intake-form", {
         method: "GET",
         headers: {
           accept: "application/json",
@@ -96,7 +96,7 @@ export const rawMilkIntakeApi = {
   // Get single raw milk intake form by ID
   getById: async (id: string): Promise<RawMilkIntakeForm> => {
     try {
-      const response = await apiRequest<RawMilkIntakeFormResponse>(`/raw-milk-intake/${id}`, {
+      const response = await apiRequest<RawMilkIntakeFormResponse>(`/raw-milk-intake-form/${id}`, {
         method: "GET",
         headers: {
           accept: "application/json",
@@ -112,7 +112,7 @@ export const rawMilkIntakeApi = {
   // Create new raw milk intake form
   create: async (formData: CreateRawMilkIntakeFormRequest): Promise<RawMilkIntakeFormResponse> => {
     try {
-      const response = await apiRequest<RawMilkIntakeFormResponse>("/raw-milk-intake", {
+      const response = await apiRequest<RawMilkIntakeFormResponse>("/raw-milk-intake-form", {
         method: "POST",
         headers: {
           accept: "application/json",
@@ -141,7 +141,7 @@ export const rawMilkIntakeApi = {
       //   operator_id: formData.operator_id
       // }
 
-      const response = await apiRequest<RawMilkIntakeFormResponse>("/raw-milk-intake", {
+      const response = await apiRequest<RawMilkIntakeFormResponse>("/raw-milk-intake-form", {
         method: "PATCH",
         headers: {
           accept: "application/json",
@@ -159,7 +159,7 @@ export const rawMilkIntakeApi = {
   // Delete raw milk intake form
   delete: async (id: string): Promise<void> => {
     try {
-      await apiRequest(`/raw-milk-intake/${id}`, {
+      await apiRequest(`/raw-milk-intake-form/${id}`, {
         method: "DELETE",
         headers: {
           accept: "application/json",

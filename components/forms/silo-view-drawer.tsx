@@ -94,7 +94,7 @@ export function SiloViewDrawer({ open, onClose, silo, onEdit }: SiloViewDrawerPr
                 </div>
                 <div className="p-3 border rounded-lg">
                   <div className="text-xs text-gray-500">Current Volume</div>
-                  <div className="text-2xl font-light text-purple-600">{silo.milk_volume.toLocaleString()}L</div>
+                  <div className="text-2xl font-light text-purple-600">{silo?.milk_volume?.toLocaleString()}L</div>
                 </div>
               </div>
               

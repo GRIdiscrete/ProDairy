@@ -112,7 +112,7 @@ export function DataCaptureSidebar({
 
   const handleSelectProcess = (id: string) => {
     setSelectedProcess(id)
-    try { if (typeof window !== 'undefined') localStorage.setItem('dc_selected_process', id) } catch {}
+    try { if (typeof window !== 'undefined') localStorage.setItem('dc_selected_process', id) } catch { }
   }
 
   // Layout widths
@@ -193,7 +193,7 @@ export function DataCaptureSidebar({
                   ProDairy DMS
                 </span>
                 <span className="block text-[11px] font-light tracking-wider text-zinc-500">
-                 Production Processes
+                  Production Processes
                 </span>
               </motion.div>
             )}
@@ -221,7 +221,7 @@ export function DataCaptureSidebar({
         <ul className="space-y-1">
           {/* Production Flow selector */}
           {/* Place the switcher below Standardizing */}
-         
+
           {dataCaptureNavigation.map((item) => {
             const isActive =
               pathname === item.href || pathname.startsWith(item.href + "/");
@@ -275,7 +275,7 @@ export function DataCaptureSidebar({
                   </SelectTrigger>
                   <SelectContent>
                     {(processes || []).map((p) => (
-                      <SelectItem key={p.id} value={p.id}>{p.name || `Process #${String(p.id).slice(0,8)}`}</SelectItem>
+                      <SelectItem key={p.id} value={p.id}>{p.name || `Process #${String(p.id).slice(0, 8)}`}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -299,12 +299,12 @@ export function DataCaptureSidebar({
                     { key: 'incubation', label: 'Incubation', Icon: Beaker, enabled: true },
                     { key: 'test', label: 'Test', Icon: TestTube, enabled: true },
                     { key: 'qa-corrective-measures', label: 'QA Corrective Measures', Icon: AlertTriangle, enabled: true },
-                    { href: '#', label: 'Dispatch', Icon: Package, enabled: false },
+                    { key: 'dispatch', label: 'Dispatch', Icon: Package, enabled: true },
                   ].map((s, idx) => {
                     const href = s.enabled
                       ? (s.key === 'filmatic-lines-2'
-                          ? (selectedProcess ? `/data-capture/${selectedProcess}/filmatic-lines-2` : '#')
-                          : (selectedProcess ? `/data-capture/${selectedProcess}/${s.key}` : '#'))
+                        ? (selectedProcess ? `/data-capture/${selectedProcess}/filmatic-lines-2` : '#')
+                        : (selectedProcess ? `/data-capture/${selectedProcess}/${s.key}` : '#'))
                       : '#'
                     const isActive = s.enabled && (pathname === href || pathname.startsWith(href + '/'))
                     const content = (
@@ -312,7 +312,7 @@ export function DataCaptureSidebar({
                         isActive ? "bg-gradient-to-r from-blue-50 to-lime-50 text-zinc-900 ring-1 ring-inset ring-blue-200/50" : s.enabled ? "text-zinc-700 hover:bg-zinc-50" : "text-zinc-400")}
                       >
                         <div className="relative mr-2">
-                          <div className={cn("flex h-5 w-5 items-center justify-center rounded-full border", isActive ? "border-blue-500 text-blue-600" : "border-zinc-300 text-zinc-500")}>{idx+1}</div>
+                          <div className={cn("flex h-5 w-5 items-center justify-center rounded-full border", isActive ? "border-blue-500 text-blue-600" : "border-zinc-300 text-zinc-500")}>{idx + 1}</div>
                         </div>
                         <s.Icon className={cn("h-5 w-5 flex-shrink-0", isActive ? "text-blue-600" : s.enabled ? "text-zinc-500 group-hover:text-zinc-700" : "text-zinc-400")} />
                         <span className="ml-3 font-light tracking-wide">{s.label}</span>
@@ -362,11 +362,11 @@ export function DataCaptureSidebar({
                 className="min-w-0"
               >
                 <p className="truncate text-sm font-light text-zinc-900">
-                  {profile?.first_name && profile?.last_name 
-                    ? `${profile.first_name} ${profile.last_name}` 
-                    : user?.first_name && user?.last_name 
-                    ? `${user.first_name} ${user.last_name}` 
-                    : 'User'
+                  {profile?.first_name && profile?.last_name
+                    ? `${profile.first_name} ${profile.last_name}`
+                    : user?.first_name && user?.last_name
+                      ? `${user.first_name} ${user.last_name}`
+                      : 'User'
                   }
                 </p>
                 <p className="truncate text-xs font-extralight tracking-wide text-zinc-500">

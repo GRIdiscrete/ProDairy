@@ -22,6 +22,7 @@ import { TableFilters } from "@/lib/types"
 import { CIPControlForm } from "@/lib/api/data-capture-forms"
 import ContentSkeleton from "@/components/ui/content-skeleton"
 import { ToolsDashboardLayout } from "@/components/layout/tools-dashboard-layout"
+import { useRouter, useSearchParams } from "next/navigation"
 
 export default function CIPControlFormPage() {
   const dispatch = useAppDispatch()
@@ -29,7 +30,8 @@ export default function CIPControlFormPage() {
   
   const [tableFilters, setTableFilters] = useState<TableFilters>({})
   const hasFetchedRef = useRef(false)
-  
+  const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+
   // Load CIP control forms on initial mount
   useEffect(() => {
     if (!isInitialized && !hasFetchedRef.current) {
@@ -249,6 +251,20 @@ export default function CIPControlFormPage() {
 
   // Get latest form for display
   const latestForm = Array.isArray(forms) && forms.length > 0 ? forms[0] : null
+
+  // --- Helper: open view drawer if form_id query param is present ---
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const formId = searchParams?.get("form_id");
+    if (formId && forms && forms.length > 0) {
+      const foundForm = forms.find((form: any) => String(form.id) === String(formId));
+      if (foundForm) {
+        setSelectedForm(foundForm);
+        setViewDrawerOpen(true);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [forms]);
 
   return (
     <ToolsDashboardLayout title="CIP Control Forms" subtitle="Cleaning in Place control and monitoring">

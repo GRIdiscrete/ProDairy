@@ -29,6 +29,7 @@ import ContentSkeleton from "@/components/ui/content-skeleton"
 import { FormIdCopy } from "@/components/ui/form-id-copy"
 import { fetchUsers } from "@/lib/store/slices/usersSlice"
 import { UserAvatar } from "@/components/ui/user-avatar"
+import { useRouter, useSearchParams } from "next/navigation"
 
 export default function PasteurizingPage() {
   const dispatch = useAppDispatch()
@@ -36,6 +37,7 @@ export default function PasteurizingPage() {
   const { machines } = useAppSelector((state) => state.machine)
   const { forms: bmtForms } = useAppSelector((state) => state.bmtControlForms)
   const { items: users } = useAppSelector((state: RootState) => state.users)
+  const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
 
   const [tableFilters, setTableFilters] = useState<TableFilters>({})
   const hasFetchedRef = useRef(false)
@@ -412,6 +414,20 @@ export default function PasteurizingPage() {
       },
     },
   ]
+
+  // --- Helper: open view drawer if form_id query param is present ---
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const formId = searchParams?.get("form_id");
+    if (formId && forms && forms.length > 0) {
+      const foundForm = forms.find((form: any) => String(form.id) === String(formId));
+      if (foundForm) {
+        setSelectedForm(foundForm);
+        setViewDrawerOpen(true);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [forms]);
 
   return (
     <DataCaptureDashboardLayout title="Pasteurizing" subtitle="Milk pasteurizing process control and monitoring">

@@ -57,6 +57,36 @@ export function Header({ title = "Dashboard", subtitle = "Welcome back!", onOpen
   const [notifications, setNotifications] = useState<NotificationItem[]>([])
   const [notifOpen, setNotifOpen] = useState(false)
 
+  // Weather/location state
+  const [weather, setWeather] = useState<{ temp: string; city: string } | null>({ temp: "--", city: "Harare" })
+
+  // Example using city-timezones and Open-Meteo (no API key required)
+  // Uncomment and install 'city-timezones' and 'axios' for this to work
+  /*
+  useEffect(() => {
+    if (typeof window !== "undefined" && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(async (pos) => {
+        const { latitude, longitude } = pos.coords
+        try {
+          // Get city using city-timezones
+          const cityLookup = cityTimezones.lookupViaLatLon(latitude, longitude)
+          const city = cityLookup?.[0]?.city || "Unknown"
+
+          // Get weather using Open-Meteo
+          const weatherRes = await axios.get(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true`)
+          const temp = weatherRes.data.current_weather?.temperature
+          setWeather({
+            temp: temp !== undefined ? `${Math.round(temp)}°C` : "--",
+            city,
+          })
+        } catch {
+          setWeather(null)
+        }
+      }, () => setWeather(null))
+    }
+  }, [])
+  */
+
   useEffect(() => {
     // prefetch notifications on mount
     getRecentNotifications(8).then(setNotifications).catch(() => setNotifications([]))
@@ -237,6 +267,56 @@ export function Header({ title = "Dashboard", subtitle = "Welcome back!", onOpen
     setSearchQuery("")
   }
 
+  // --- Add moduleToRoute mapping helper ---
+  function moduleToRoute(module: string, formId?: string): string | null {
+    // Hardcoded formId for routes that require it
+    const hardcodedId = "a4de97cc-e132-431e-a0a7-5c5e85e53d11";
+    const map: Record<string, (id?: string) => string> = {
+      // Drivers
+      "drivers_form": (id) => `/drivers/forms${id ? `?form_id=${formId}` : ""}`,
+
+      // Tools
+      "bmt_control_form": (id) => `/tools/bmt-control-form${id ? `?form_id=${formId}` : ""}`,
+      "cip_control_form": (id) => `/tools/cip-control-form${id ? `?form_id=${formId}` : ""}`,
+      "ist_control_form": (id) => `/tools/ist-control-form${id ? `?form_id=${formId}` : ""}`,
+      "general_lab_test": (id) => `/tools/general-lab-test${id ? `?form_id=${formId}` : ""}`,
+
+      // Admin
+      "production_plan": (id) => `/admin/production-plan${id ? `?form_id=${formId}` : ""}`,
+      "process": (id) => `/admin/processes${id ? `?form_id=${formId}` : ""}`,
+      "filmatic_line_groups_2": (id) => `/admin/filmatic-lines-groups${id ? `?form_id=${formId}` : ""}`,
+      "silo": (id) => `/admin/silos${id ? `?form_id=${formId}` : ""}`,
+
+      // Data Capture - no formId in URL, now append formId as query param
+      "raw-milk-intake": (id) => `/data-capture/raw-milk-intake${id ? `?form_id=${formId}` : ""}`,
+      "raw_milk_intake_lab_test": (id) => `/data-capture/raw-milk-intake${id ? `?form_id=${formId}` : ""}`,
+      "raw_milk_intake_form": (id) => `/data-capture/raw-milk-intake${id ? `?form_id=${formId}` : ""}`,
+      "raw_milk_result_slip": (id) => `/data-capture/raw-milk-intake${id ? `?form_id=${formId}` : ""}`,
+      "standardizing_form": (id) => `/data-capture/standardizing${id ? `?form_id=${formId}` : ""}`,
+      "standardizing_form_no_skim": (id) => `/data-capture/standardizing${id ? `?form_id=${formId}` : ""}`,
+
+      // Data Capture - with formId in URL (use formId from notification, fallback to hardcodedId)
+      "steri_milk_pasteurizing_form": (id) => `/data-capture/${id || hardcodedId}/pasteurizing`,
+      "lab_test_mixing_and_pasteurizing": (id) => `/data-capture/${id || hardcodedId}/pasteurizing`,
+      "filmatic_line_form_1": (id) => `/data-capture/${id || hardcodedId}/filmatic-lines${id ? `?form_id=${formId}` : ""}`,
+      "steri_milk_process_log": (id) => `/data-capture/${id || hardcodedId}/process-log${id ? `?form_id=${formId}` : ""}`,
+      "lab_test_post_process": (id) => `/data-capture/${id || hardcodedId}/process-log${id ? `?form_id=${formId}` : ""}`,
+      "steri_milk_test_report": (id) => `/data-capture/${id || hardcodedId}/process-log${id ? `?form_id=${formId}` : ""}`,
+      "filmatic_line_form_2": (id) => `/data-capture/${id || hardcodedId}/filmatic-lines-2${id ? `?form_id=${formId}` : ""}`,
+      "palletiser_sheet": (id) => `/data-capture/${id || hardcodedId}/palletiser-sheet${id ? `?form_id=${formId}` : ""}`,
+      "incubation_tracking_form": (id) => `/data-capture/${id || hardcodedId}/incubation${id ? `?form_id=${formId}` : ""}`,
+      "uht_quality_check_after_incubation": (id) => `/data-capture/${id || hardcodedId}/test${id ? `?form_id=${formId}` : ""}`,
+      "qa_corrective_action": (id) => `/data-capture/${id || hardcodedId}/qa-corrective-measures${id ? `?form_id=${formId}` : ""}`,
+      "qa_release_note": (id) => `/data-capture/${id || hardcodedId}/dispatch${id ? `?form_id=${formId}` : ""}`,
+      "qa_reject_note": (id) => `/data-capture/${id || hardcodedId}/dispatch${id ? `?form_id=${formId}` : ""}`,
+    }
+
+    if (map[module]) {
+      return map[module](formId)
+    }
+    return null
+  }
+
   return (
     <header className="sticky top-0 z-40 border-b border-zinc-200 bg-white/80 backdrop-blur-xl">
       {/* subtle sheen */}
@@ -384,9 +464,9 @@ export function Header({ title = "Dashboard", subtitle = "Welcome back!", onOpen
           {/* Location chip */}
           <div className="hidden items-center gap-2 rounded-full border border-zinc-200 bg-white/70 px-3 py-1 text-xs font-light text-zinc-600 md:flex">
             <MapPin className="h-3.5 w-3.5 text-blue-600" />
-            <span className="tabular-nums">42°C</span>
+            <span className="tabular-nums">{weather?.temp ?? "--"}</span>
             <span className="text-zinc-400">•</span>
-            <span>Harare</span>
+            <span>{weather?.city ?? "Detecting..."}</span>
           </div>
 
           {/* Notifications */}

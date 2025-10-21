@@ -209,7 +209,7 @@ export default function SilosPage() {
                 {fillPercentage.toFixed(1)}%
               </Badge>
             </div>
-            <p className="text-xs text-gray-500">Current: {silo.milk_volume.toLocaleString()}L</p>
+            <p className="text-xs text-gray-500">Current: {silo?.milk_volume?.toLocaleString()}L</p>
           </div>
         )
       },

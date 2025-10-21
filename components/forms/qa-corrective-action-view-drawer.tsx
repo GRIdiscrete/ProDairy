@@ -7,13 +7,13 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { QACorrectiveAction } from "@/lib/api/data-capture-forms"
-import { 
-  AlertTriangle, 
-  Calendar, 
-  User, 
-  FileText, 
-  TestTube, 
-  Package, 
+import {
+  AlertTriangle,
+  Calendar,
+  User,
+  FileText,
+  TestTube,
+  Package,
   TrendingUp,
   Clock,
   Beaker,
@@ -33,9 +33,9 @@ interface QACorrectiveActionViewDrawerProps {
   onEdit?: () => void
 }
 
-export function QACorrectiveActionViewDrawer({ 
-  open, 
-  onOpenChange, 
+export function QACorrectiveActionViewDrawer({
+  open,
+  onOpenChange,
   action,
   onEdit
 }: QACorrectiveActionViewDrawerProps) {
@@ -49,19 +49,14 @@ export function QACorrectiveActionViewDrawer({
         const { usersApi } = await import("@/lib/api/users")
         const usersData = await usersApi.getUsers()
         setUsers(Array.isArray(usersData) ? usersData : [])
-        
-        // Mock products - in real app, this would come from an API
-        setProducts([
-          { id: "a4de97cc-e132-431e-a0a7-5c5e85e53d11", name: "UHT Milk 1L" },
-          { id: "b5ef98dd-f243-542f-b1b8-6d6f96f64e22", name: "UHT Milk 500ml" },
-          { id: "c6fg99ee-g354-653g-c2c9-7e7g07g75f33", name: "UHT Milk 250ml" },
-        ])
+
+       
       } catch (error) {
         console.error("Error loading data:", error)
         setUsers([])
       }
     }
-    
+
     if (open && action) {
       loadData()
     }
@@ -79,7 +74,7 @@ export function QACorrectiveActionViewDrawer({
     return product ? product.name : 'Unknown Product'
   }
 
-  const details = action.qa_corrective_action_details_fkey
+  const details = action.qa_corrective_action_details
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -165,10 +160,10 @@ export function QACorrectiveActionViewDrawer({
                     <span className="text-sm font-light text-gray-600">Production Date</span>
                   </div>
                   <p className="text-sm font-light">
-                    {new Date(action.date_of_production).toLocaleDateString('en-GB', { 
-                      day: 'numeric', 
-                      month: 'long', 
-                      year: 'numeric' 
+                    {new Date(action.date_of_production).toLocaleDateString('en-GB', {
+                      day: 'numeric',
+                      month: 'long',
+                      year: 'numeric'
                     })}
                   </p>
                 </div>
@@ -178,10 +173,10 @@ export function QACorrectiveActionViewDrawer({
                     <span className="text-sm font-light text-gray-600">Analysis Date</span>
                   </div>
                   <p className="text-sm font-light">
-                    {new Date(action.date_analysed).toLocaleDateString('en-GB', { 
-                      day: 'numeric', 
-                      month: 'long', 
-                      year: 'numeric' 
+                    {new Date(action.date_analysed).toLocaleDateString('en-GB', {
+                      day: 'numeric',
+                      month: 'long',
+                      year: 'numeric'
                     })}
                   </p>
                 </div>

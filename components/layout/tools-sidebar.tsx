@@ -88,7 +88,7 @@ export function ToolsSidebar({ collapsed = false, onToggle }: ToolsSidebarProps)
         <Button variant="ghost" size="sm" onClick={onToggle} className="h-8 w-8 p-0 text-zinc-700 hover:bg-zinc-100" aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}>
           <ChevronLeft className={cn("h-4 w-4 transition-transform", collapsed && "rotate-180")} />
         </Button>
-      </div>Add New Driver Form
+      </div>
 
       <nav className="flex-1 overflow-y-auto px-3 py-3">
         <ul className="space-y-1">

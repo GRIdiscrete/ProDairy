@@ -42,6 +42,8 @@ import productIncubationReducer from "./slices/productIncubationSlice"
 import uhtQualityCheckReducer from "./slices/uhtQualityCheckSlice"
 import qaCorrectiveActionReducer from "./slices/qaCorrectiveActionSlice"
 import generalLabTestSlice from "./slices/generalLabTestSlice"
+import qaReleaseNoteSlice from "./slices/qaReleaseNoteSlice"
+import qaRejectNoteSlice from "./slices/qaRejectNoteSlice"
 export const store = configureStore({
   reducer: {
     dashboard: dashboardReducer,
@@ -53,6 +55,8 @@ export const store = configureStore({
     roles: rolesReducer,
     users: usersReducer,
     silo: siloReducer,
+    qaReleaseNotes: qaReleaseNoteSlice,
+    qaRejectNotes: qaRejectNoteSlice,
     generalLabTests: generalLabTestSlice,
     rawMaterial: rawMaterialReducer,
     process: processReducer,

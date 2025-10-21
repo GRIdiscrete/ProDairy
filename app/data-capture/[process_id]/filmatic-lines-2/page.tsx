@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef, useMemo } from "react"
-import { useParams } from "next/navigation"
+import { useParams, useRouter, useSearchParams } from "next/navigation"
 import { DataCaptureDashboardLayout } from "@/components/layout/data-capture-dashboard-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { LoadingButton } from "@/components/ui/loading-button"
@@ -141,6 +141,23 @@ export default function FilmaticLines2Page() {
   // selectors for users and BMT forms
   const { items: users } = useAppSelector((state: RootState) => state.users)
   const { forms: bmtForms } = useAppSelector((state: RootState) => state.bmtControlForms)
+
+  // --- Query param handling ---
+  const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+
+  // --- Helper: open view drawer if form_id query param is present ---
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const formId = searchParams?.get("form_id");
+    if (formId && forms && forms.length > 0) {
+      const foundForm = forms.find((form: any) => String(form.id) === String(formId));
+      if (foundForm) {
+        setSelectedForm(foundForm);
+        setViewDrawerOpen(true);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [forms]);
 
   if (loading.fetch) {
     return (
@@ -429,6 +446,26 @@ export default function FilmaticLines2Page() {
                   <Badge className={`${latestForm.approved ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'} font-light`}>
                     {latestForm.approved ? 'Approved' : 'Pending'}
                   </Badge>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <TrendingUp className="h-4 w-4 text-green-500" />
+                    <p className="text-sm font-light text-gray-600">Bottles (Day / Night)</p>
+                  </div>
+                  <div className="grid grid-cols-1 gap-2 text-sm text-gray-700">
+                    <div className="flex justify-between">
+                      <span className="font-light">Opening</span>
+                      <span className="font-medium">{latestForm.day_shift_opening_bottles ?? '—'} / {latestForm.night_shift_opening_bottles ?? '—'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-light">Closing</span>
+                      <span className="font-medium">{latestForm.day_shift_closing_bottles ?? '—'} / {latestForm.night_shift_closing_bottles ?? '—'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-light">Waste</span>
+                      <span className="font-medium">{latestForm.day_shift_waste_bottles ?? '—'} / {latestForm.night_shift_waste_bottles ?? '—'}</span>
+                    </div>
+                  </div>
                 </div>
               </div>
 

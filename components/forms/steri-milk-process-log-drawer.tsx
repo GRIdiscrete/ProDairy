@@ -12,8 +12,9 @@ import { SearchableSelect } from "@/components/ui/searchable-select"
 import { DatePicker } from "@/components/ui/date-picker"
 import { ShadcnTimePicker } from "@/components/ui/shadcn-time-picker"
 import { useAppDispatch, useAppSelector } from "@/lib/store"
-import { 
+import {
   createSteriMilkProcessLog,
+  updateSteriMilkProcessLog,
   fetchSteriMilkProcessLogs
 } from "@/lib/store/slices/steriMilkProcessLogSlice"
 import { usersApi } from "@/lib/api/users"
@@ -23,6 +24,7 @@ import { toast } from "sonner"
 import { SteriMilkProcessLog, CreateSteriMilkProcessLogRequest } from "@/lib/api/steri-milk-process-log"
 import { ChevronLeft, ChevronRight, ArrowRight, Factory, Beaker, FileText, Package, Clock, Thermometer, Gauge } from "lucide-react"
 import { Switch } from "@/components/ui/switch"
+import { id } from "date-fns/locale"
 
 interface SteriMilkProcessLogDrawerProps {
   open: boolean
@@ -72,6 +74,7 @@ const basicInfoSchema = yup.object({
   approver_id: yup.string().optional(),
   filmatic_form_id: yup.string().optional(),
   batch_number: yup.number().optional(),
+  date: yup.string().optional(), // added batch date
 })
 
 // Step 2: Process Times Schema
@@ -164,16 +167,16 @@ type BasicInfoFormData = yup.InferType<typeof basicInfoSchema>
 type ProcessTimesFormData = yup.InferType<typeof processTimesSchema>
 type ProcessDetailsFormData = yup.InferType<typeof processDetailsSchema>
 
-export function SteriMilkProcessLogDrawer({ 
-  open, 
-  onOpenChange, 
-  log, 
+export function SteriMilkProcessLogDrawer({
+  open,
+  onOpenChange,
+  log,
   mode = "create",
   processId
 }: SteriMilkProcessLogDrawerProps) {
   const dispatch = useAppDispatch()
   const { loading } = useAppSelector((state) => state.steriMilkProcessLog)
-  
+
   const [currentStep, setCurrentStep] = useState(1)
   const [users, setUsers] = useState<any[]>([])
   const [userRoles, setUserRoles] = useState<any[]>([])
@@ -189,6 +192,7 @@ export function SteriMilkProcessLogDrawer({
       approver_id: "",
       filmatic_form_id: "",
       batch_number: 1,
+      date: "" // added batch date (YYYY-MM-DD will be derived from DatePicker)
     },
   })
 
@@ -236,61 +240,39 @@ export function SteriMilkProcessLogDrawer({
       setLoadingUsers(true)
       setLoadingUserRoles(true)
       setLoadingFilmaticForms(true)
-      
+
       try {
         // Load users
         try {
           const usersResponse = await usersApi.getUsers()
           setUsers(usersResponse.data || [])
         } catch (userError) {
-          setUsers([
-            {
-              id: "fallback-user-1",
-              first_name: "John",
-              last_name: "Doe",
-              email: "john.doe@example.com",
-              department: "Production",
-              role_id: "supervisor"
-            }
-          ])
+
         }
-        
+
         // Load user roles
         try {
           const rolesResponse = await rolesApi.getRoles()
           setUserRoles(rolesResponse.data || [])
         } catch (roleError) {
-          setUserRoles([
-            {
-              id: "fallback-role-1",
-              role_name: "Supervisor",
-              description: "Production Supervisor"
-            }
-          ])
+
         }
-        
+
         // Load Filmatic forms (Form 1 only)
         try {
           const form1Response = await filmaticLinesForm1Api.getForms()
-          
+
           console.log('Form1 Response:', form1Response)
-          
+
           const allForms = [
             ...(form1Response || []).map((form: any) => ({ ...form, type: 'Form 1' }))
           ]
-          
+
           console.log('All Forms:', allForms)
           setFilmaticForms(allForms)
         } catch (formError) {
           console.error('Error loading Filmatic forms:', formError)
-          setFilmaticForms([
-            {
-              id: "fallback-form-1",
-              type: "Form 1",
-              date: "2025-01-01",
-              holding_tank_bmt: "Tank-001"
-            }
-          ])
+
         }
       } catch (error) {
         console.warn("Form will work with fallback data")
@@ -306,17 +288,199 @@ export function SteriMilkProcessLogDrawer({
     }
   }, [open])
 
-  // Reset forms when drawer opens/closes
+  // Reset forms when drawer opens/closes and prefill when editing
   useEffect(() => {
-    if (open) {
-      if (mode === "edit" && log) {
+    if (!open) return
+
+    if (mode === "edit" && log) {
+      try {
+        // pick single batch object from new API shape (batch_id)
+        const batch = (log as any).batch_id || null
+
+        // prefills
+        basicInfoForm.reset({
+          approved: !!log.approved,
+          approver_id: log.approver_id || "",
+          filmatic_form_id: log.filmatic_form_id || "",
+          batch_number: batch?.batch_number ?? 1,
+          // prefer explicit batch date, fallback to created_at (YYYY-MM-DD)
+          date: batch?.date ?? (log.created_at ? String(log.created_at).slice(0, 10) : "")
+        })
+
+        // Helper: normalize various time representations to "HH:mm" or empty string
+        const normalizeTime = (val: any): string => {
+          if (!val && val !== 0) return ""
+          // If it's an object with .time or .timestamp
+          if (typeof val === "object") {
+            if (val.time) return normalizeTime(val.time)
+            if (val.timestamp) return normalizeTime(val.timestamp)
+            // if object looks like a Date
+            if (val instanceof Date) return isNaN(val.getTime()) ? "" : val.toTimeString().slice(0, 5)
+            // fallback to JSON/string
+            try { return normalizeTime(String(val)) } catch { return "" }
+          }
+          // If it's a Date-like (has toISOString/toDate)
+          if (val?.toDate && typeof val.toDate === "function") {
+            const d = val.toDate()
+            return isNaN(d.getTime()) ? "" : d.toTimeString().slice(0, 5)
+          }
+          // string handling: capture first occurrence of HH:MM
+          if (typeof val === "string") {
+            // look for HH:MM pattern
+            const m = val.match(/(\d{1,2}:\d{2})/)
+            if (m) {
+              // ensure leading zero for hour if needed
+              const parts = m[1].split(":")
+              const hh = parts[0].padStart(2, "0")
+              const mm = parts[1]
+              return `${hh}:${mm}`
+            }
+            // fallback parse as Date
+            const parsed = new Date(val)
+            if (!isNaN(parsed.getTime())) return parsed.toTimeString().slice(0, 5)
+            return ""
+          }
+          // number or other primitive: convert to string
+          return String(val)
+        }
+
+        // Helper to prefer detail.time, then legacy time object/string on batch, otherwise ""
+        const timeFrom = (detailObj: any, legacyField?: any) => {
+          // prefer explicit detail object time if present
+          if (detailObj) {
+            // detailObj may be object with .time or a string
+            const t = detailObj.time ?? detailObj
+            const normalized = normalizeTime(t)
+            if (normalized) return normalized
+          }
+          // legacyField may be object or string
+          if (legacyField) {
+            const normalizedLegacy = normalizeTime(legacyField)
+            if (normalizedLegacy) return normalizedLegacy
+          }
+          return ""
+        }
+
+        // map time fields: prefer batch.*_details.time -> batch.* (object/string) -> ""
+        processTimesForm.reset({
+          filling_start: timeFrom(batch?.filling_start_details, batch?.filling_start),
+          autoclave_start: timeFrom(batch?.autoclave_start_details, batch?.autoclave_start),
+          heating_start: timeFrom(batch?.heating_start_details, batch?.heating_start),
+          heating_finish: timeFrom(batch?.heating_finish_details, batch?.heating_finish),
+          sterilization_start: timeFrom(batch?.sterilization_start_details, batch?.sterilization_start),
+          sterilization_after_5: timeFrom(batch?.sterilization_after_5_details, batch?.sterilization_after_5),
+          sterilization_finish: timeFrom(batch?.sterilization_finish_details, batch?.sterilization_finish),
+          pre_cooling_start: timeFrom(batch?.pre_cooling_start_details, batch?.pre_cooling_start),
+          pre_cooling_finish: timeFrom(batch?.pre_cooling_finish_details, batch?.pre_cooling_finish),
+          cooling_1_start: timeFrom(batch?.cooling_1_start_details, batch?.cooling_1_start),
+          cooling_1_finish: timeFrom(batch?.cooling_1_finish_details, batch?.cooling_1_finish),
+          cooling_2_start: timeFrom(batch?.cooling_2_start_details, batch?.cooling_2_start),
+          cooling_2_finish: timeFrom(batch?.cooling_2_finish_details, batch?.cooling_2_finish),
+        })
+
+        // map details (time, temperature, pressure) from *_details objects
+        const detailsPrefill = {
+          filling_start_details: {
+            time: normalizeTime(batch?.filling_start_details?.time ?? batch?.filling_start),
+            temperature: batch?.filling_start_details?.temperature ?? 0,
+            pressure: batch?.filling_start_details?.pressure ?? 0
+          },
+          autoclave_start_details: {
+            time: normalizeTime(batch?.autoclave_start_details?.time ?? batch?.autoclave_start),
+            temperature: batch?.autoclave_start_details?.temperature ?? 0,
+            pressure: batch?.autoclave_start_details?.pressure ?? 0
+          },
+          heating_start_details: {
+            time: normalizeTime(batch?.heating_start_details?.time ?? batch?.heating_start),
+            temperature: batch?.heating_start_details?.temperature ?? 0,
+            pressure: batch?.heating_start_details?.pressure ?? 0
+          },
+          heating_finish_details: {
+            time: normalizeTime(batch?.heating_finish_details?.time ?? batch?.heating_finish),
+            temperature: batch?.heating_finish_details?.temperature ?? 0,
+            pressure: batch?.heating_finish_details?.pressure ?? 0
+          },
+          sterilization_start_details: {
+            time: normalizeTime(batch?.sterilization_start_details?.time ?? batch?.sterilization_start),
+            temperature: batch?.sterilization_start_details?.temperature ?? 0,
+            pressure: batch?.sterilization_start_details?.pressure ?? 0
+          },
+          sterilization_after_5_details: {
+            time: normalizeTime(batch?.sterilization_after_5_details?.time ?? batch?.sterilization_after_5),
+            temperature: batch?.sterilization_after_5_details?.temperature ?? 0,
+            pressure: batch?.sterilization_after_5_details?.pressure ?? 0
+          },
+          sterilization_finish_details: {
+            time: normalizeTime(batch?.sterilization_finish_details?.time ?? batch?.sterilization_finish),
+            temperature: batch?.sterilization_finish_details?.temperature ?? 0,
+            pressure: batch?.sterilization_finish_details?.pressure ?? 0
+          },
+          pre_cooling_start_details: {
+            time: normalizeTime(batch?.pre_cooling_start_details?.time ?? batch?.pre_cooling_start),
+            temperature: batch?.pre_cooling_start_details?.temperature ?? 0,
+            pressure: batch?.pre_cooling_start_details?.pressure ?? 0
+          },
+          pre_cooling_finish_details: {
+            time: normalizeTime(batch?.pre_cooling_finish_details?.time ?? batch?.pre_cooling_finish),
+            temperature: batch?.pre_cooling_finish_details?.temperature ?? 0,
+            pressure: batch?.pre_cooling_finish_details?.pressure ?? 0
+          },
+          cooling_1_start_details: {
+            time: normalizeTime(batch?.cooling_1_start_details?.time ?? batch?.cooling_1_start),
+            temperature: batch?.cooling_1_start_details?.temperature ?? 0,
+            pressure: batch?.cooling_1_start_details?.pressure ?? 0
+          },
+          cooling_1_finish_details: {
+            time: normalizeTime(batch?.cooling_1_finish_details?.time ?? batch?.cooling_1_finish),
+            temperature: batch?.cooling_1_finish_details?.temperature ?? 0,
+            pressure: batch?.cooling_1_finish_details?.pressure ?? 0
+          },
+          cooling_2_start_details: {
+            time: normalizeTime(batch?.cooling_2_start_details?.time ?? batch?.cooling_2_start),
+            temperature: batch?.cooling_2_start_details?.temperature ?? 0,
+            pressure: batch?.cooling_2_start_details?.pressure ?? 0
+          },
+          cooling_2_finish_details: {
+            time: normalizeTime(batch?.cooling_2_finish_details?.time ?? batch?.cooling_2_finish),
+            temperature: batch?.cooling_2_finish_details?.temperature ?? 0,
+            pressure: batch?.cooling_2_finish_details?.pressure ?? 0
+          }
+        }
+        processDetailsForm.reset(detailsPrefill)
+
+        // derive the simple process times from the details' time fields to avoid duplicate entry
+        processTimesForm.reset({
+          filling_start: detailsPrefill.filling_start_details?.time ?? "",
+          autoclave_start: detailsPrefill.autoclave_start_details?.time ?? "",
+          heating_start: detailsPrefill.heating_start_details?.time ?? "",
+          heating_finish: detailsPrefill.heating_finish_details?.time ?? "",
+          sterilization_start: detailsPrefill.sterilization_start_details?.time ?? "",
+          sterilization_after_5: detailsPrefill.sterilization_after_5_details?.time ?? "",
+          sterilization_finish: detailsPrefill.sterilization_finish_details?.time ?? "",
+          pre_cooling_start: detailsPrefill.pre_cooling_start_details?.time ?? "",
+          pre_cooling_finish: detailsPrefill.pre_cooling_finish_details?.time ?? "",
+          cooling_1_start: detailsPrefill.cooling_1_start_details?.time ?? "",
+          cooling_1_finish: detailsPrefill.cooling_1_finish_details?.time ?? "",
+          cooling_2_start: detailsPrefill.cooling_2_start_details?.time ?? "",
+          cooling_2_finish: detailsPrefill.cooling_2_finish_details?.time ?? "",
+        })
+
+        // set UI to first step
         setCurrentStep(1)
-      } else {
+      } catch (err) {
+        console.error("Error populating edit form:", err)
+        // fallback to defaults if anything goes wrong
         basicInfoForm.reset()
         processTimesForm.reset()
         processDetailsForm.reset()
         setCurrentStep(1)
       }
+    } else {
+      // create mode -> clear forms
+      basicInfoForm.reset()
+      processTimesForm.reset()
+      processDetailsForm.reset()
+      setCurrentStep(1)
     }
   }, [open, mode, log, basicInfoForm, processTimesForm, processDetailsForm])
 
@@ -331,100 +495,171 @@ export function SteriMilkProcessLogDrawer({
   const handleProcessDetailsSubmit = async (data: any) => {
     try {
       const basicInfo = basicInfoForm.getValues()
-      const processTimes = processTimesForm.getValues()
-      
-      // Helper function to convert empty string to null
-      const emptyToNull = (value: any) => value === "" || value === null || value === undefined ? null : value
-      
-      const formData: CreateSteriMilkProcessLogRequest = {
+      // removed usage of processTimesForm - backend doesn't need simple process times
+
+      // Helper: convert various time inputs into backend format "HH:mm:SS+ZZ" (e.g. "10:30:00+00")
+      const convertTimeToBackend = (val: any): string | null => {
+        if (val === "" || val === null || val === undefined) return null
+
+        // unwrap objects with .time or .timestamp
+        if (typeof val === "object") {
+          if (val.time) return convertTimeToBackend(val.time)
+          if (val.timestamp) return convertTimeToBackend(val.timestamp)
+          if (val instanceof Date) {
+            if (isNaN(val.getTime())) return null
+            const hh = String(val.getHours()).padStart(2, "0")
+            const mm = String(val.getMinutes()).padStart(2, "0")
+            return `${hh}:${mm}:00+00`
+          }
+          try { val = String(val) } catch { return null }
+        }
+
+        if (val?.toDate && typeof val.toDate === "function") {
+          const d = val.toDate()
+          if (isNaN(d.getTime())) return null
+          const hh = String(d.getHours()).padStart(2, "0")
+          const mm = String(d.getMinutes()).padStart(2, "0")
+          return `${hh}:${mm}:00+00`
+        }
+
+        if (typeof val === "string") {
+          const tzMatch = val.match(/([+-]\d{2}(?::?\d{2})?|Z)$/)
+          let tz = "+00"
+          if (tzMatch) {
+            tz = tzMatch[1] === "Z" ? "+00" : tzMatch[1].replace(":", "")
+            if (/^[+-]\d{4}$/.test(tz)) tz = tz.slice(0,3)
+          }
+          const timeMatch = val.match(/(\d{1,2}):(\d{2})(?::(\d{2}))?/)
+          if (timeMatch) {
+            const hh = timeMatch[1].padStart(2, "0")
+            const mm = timeMatch[2]
+            const ss = timeMatch[3] ?? "00"
+            return `${hh}:${mm}:${ss}${tz}`
+          }
+          const parsed = new Date(val)
+          if (!isNaN(parsed.getTime())) {
+            const hh = String(parsed.getHours()).padStart(2, "0")
+            const mm = String(parsed.getMinutes()).padStart(2, "0")
+            return `${hh}:${mm}:00+00`
+          }
+          return null
+        }
+
+        try {
+          const s = String(val)
+          const m = s.match(/(\d{1,2}):(\d{2})/)
+          if (m) return `${m[1].padStart(2,"0")}:${m[2]}:00+00`
+        } catch { /* fallthrough */ }
+        return null
+      }
+
+      // Build payload that matches your API examples: no simple process times, only details
+      const formData: any = {
         approved: basicInfo.approved || false,
         approver_id: basicInfo.approver_id || "",
         filmatic_form_id: basicInfo.filmatic_form_id || "",
-        steri_milk_process_log_batch: [{
+        batch: {
+          // date should be YYYY-MM-DD or null
+          date: basicInfo.date ? basicInfo.date : null,
           batch_number: basicInfo.batch_number || 1,
-          filling_start: {
-            time: emptyToNull(processTimes.filling_start),
-            pressure: data.filling_start_details?.pressure || 0,
-            temperature: data.filling_start_details?.temperature || 0
+          // only include *_details objects (formatted times)
+          filling_start_details: {
+            time: convertTimeToBackend(data.filling_start_details?.time),
+            temperature: data.filling_start_details?.temperature ?? 0,
+            pressure: data.filling_start_details?.pressure ?? 0
           },
-          filling_start: {
-            time: emptyToNull(processTimes.filling_start),
-            pressure: data.filling_start_details?.pressure || 0,
-            temperature: data.filling_start_details?.temperature || 0
+          autoclave_start_details: {
+            time: convertTimeToBackend(data.autoclave_start_details?.time),
+            temperature: data.autoclave_start_details?.temperature ?? 0,
+            pressure: data.autoclave_start_details?.pressure ?? 0
           },
-          heating_start: {
-            time: emptyToNull(processTimes.heating_start),
-            pressure: data.heating_start_details?.pressure || 0,
-            temperature: data.heating_start_details?.temperature || 0
+          heating_start_details: {
+            time: convertTimeToBackend(data.heating_start_details?.time),
+            temperature: data.heating_start_details?.temperature ?? 0,
+            pressure: data.heating_start_details?.pressure ?? 0
           },
-          heating_finish: {
-            time: emptyToNull(processTimes.heating_finish),
-            pressure: data.heating_finish_details?.pressure || 0,
-            temperature: data.heating_finish_details?.temperature || 0
+          heating_finish_details: {
+            time: convertTimeToBackend(data.heating_finish_details?.time),
+            temperature: data.heating_finish_details?.temperature ?? 0,
+            pressure: data.heating_finish_details?.pressure ?? 0
           },
-          autoclave_start: {
-            time: emptyToNull(processTimes.autoclave_start),
-            pressure: data.autoclave_start_details?.pressure || 0,
-            temperature: data.autoclave_start_details?.temperature || 0
+          sterilization_start_details: {
+            time: convertTimeToBackend(data.sterilization_start_details?.time),
+            temperature: data.sterilization_start_details?.temperature ?? 0,
+            pressure: data.sterilization_start_details?.pressure ?? 0
           },
-          sterilization_start: {
-            time: emptyToNull(processTimes.sterilization_start),
-            pressure: data.sterilization_start_details?.pressure || 0,
-            temperature: data.sterilization_start_details?.temperature || 0
+          sterilization_after_5_details: {
+            time: convertTimeToBackend(data.sterilization_after_5_details?.time),
+            temperature: data.sterilization_after_5_details?.temperature ?? 0,
+            pressure: data.sterilization_after_5_details?.pressure ?? 0
           },
-          sterilization_after_5: {
-            time: emptyToNull(processTimes.sterilization_after_5),
-            pressure: data.sterilization_after_5_details?.pressure || 0,
-            temperature: data.sterilization_after_5_details?.temperature || 0
+          sterilization_finish_details: {
+            time: convertTimeToBackend(data.sterilization_finish_details?.time),
+            temperature: data.sterilization_finish_details?.temperature ?? 0,
+            pressure: data.sterilization_finish_details?.pressure ?? 0
           },
-          sterilization_finish: {
-            time: emptyToNull(processTimes.sterilization_finish),
-            pressure: data.sterilization_finish_details?.pressure || 0,
-            temperature: data.sterilization_finish_details?.temperature || 0
+          pre_cooling_start_details: {
+            time: convertTimeToBackend(data.pre_cooling_start_details?.time),
+            temperature: data.pre_cooling_start_details?.temperature ?? 0,
+            pressure: data.pre_cooling_start_details?.pressure ?? 0
           },
-          pre_cooling_start: {
-            time: emptyToNull(processTimes.pre_cooling_start),
-            pressure: data.pre_cooling_start_details?.pressure || 0,
-            temperature: data.pre_cooling_start_details?.temperature || 0
+          pre_cooling_finish_details: {
+            time: convertTimeToBackend(data.pre_cooling_finish_details?.time),
+            temperature: data.pre_cooling_finish_details?.temperature ?? 0,
+            pressure: data.pre_cooling_finish_details?.pressure ?? 0
           },
-          pre_cooling_finish: {
-            time: emptyToNull(processTimes.pre_cooling_finish),
-            pressure: data.pre_cooling_finish_details?.pressure || 0,
-            temperature: data.pre_cooling_finish_details?.temperature || 0
+          cooling_1_start_details: {
+            time: convertTimeToBackend(data.cooling_1_start_details?.time),
+            temperature: data.cooling_1_start_details?.temperature ?? 0,
+            pressure: data.cooling_1_start_details?.pressure ?? 0
           },
-          cooling_1_start: {
-            time: emptyToNull(processTimes.cooling_1_start),
-            pressure: data.cooling_1_start_details?.pressure || 0,
-            temperature: data.cooling_1_start_details?.temperature || 0
+          cooling_1_finish_details: {
+            time: convertTimeToBackend(data.cooling_1_finish_details?.time),
+            temperature: data.cooling_1_finish_details?.temperature ?? 0,
+            pressure: data.cooling_1_finish_details?.pressure ?? 0
           },
-          cooling_1_finish: {
-            time: emptyToNull(processTimes.cooling_1_finish),
-            pressure: data.cooling_1_finish_details?.pressure || 0,
-            temperature: data.cooling_1_finish_details?.temperature || 0
+          cooling_2_start_details: {
+            time: convertTimeToBackend(data.cooling_2_start_details?.time),
+            temperature: data.cooling_2_start_details?.temperature ?? 0,
+            pressure: data.cooling_2_start_details?.pressure ?? 0
           },
-          cooling_2_start: {
-            time: emptyToNull(processTimes.cooling_2_start),
-            pressure: data.cooling_2_start_details?.pressure || 0,
-            temperature: data.cooling_2_start_details?.temperature || 0
-          },
-          cooling_2_finish: {
-            time: emptyToNull(processTimes.cooling_2_finish),
-            pressure: data.cooling_2_finish_details?.pressure || 0,
-            temperature: data.cooling_2_finish_details?.temperature || 0
+          cooling_2_finish_details: {
+            time: convertTimeToBackend(data.cooling_2_finish_details?.time),
+            temperature: data.cooling_2_finish_details?.temperature ?? 0,
+            pressure: data.cooling_2_finish_details?.pressure ?? 0
           }
-        }]
+        }
       }
 
-      await dispatch(createSteriMilkProcessLog(formData)).unwrap()
-      toast.success("Steri Milk Process Log created successfully")
-      
+      if (mode === "edit" && log?.id) {
+        // update payload must include top-level id and batch.id per your example
+        const batchId = log?.batch_id?.id || ""
+        await dispatch(updateSteriMilkProcessLog({
+          id: log.id,
+          data: {
+            id: log.id,
+            approved: formData.approved,
+            approver_id: formData.approver_id,
+            filmatic_form_id: formData.filmatic_form_id,
+            batch: { id: batchId, ...formData.batch }
+          }
+        })).unwrap()
+        toast.success("Steri Milk Process Log updated successfully")
+      } else {
+        // create payload matches the curl you provided (no top-level id)
+        await dispatch(createSteriMilkProcessLog(formData)).unwrap()
+        toast.success("Steri Milk Process Log created successfully")
+      }
+
       setTimeout(() => {
         dispatch(fetchSteriMilkProcessLogs({ filters: {} }))
       }, 1000)
 
       onOpenChange(false)
-    } catch (error: any) {
-      toast.error(error || "Failed to create Steri Milk Process Log")
+    } catch (err: any) {
+      const msg = typeof err === "string" ? err : (err?.message || JSON.stringify(err) || "Failed to save Steri Milk Process Log")
+      toast.error(msg)
+      console.error(err)
     }
   }
 
@@ -435,16 +670,15 @@ export function SteriMilkProcessLogDrawer({
   }
 
   const handleNext = () => {
+    // Only need to advance from Basic Information to Process Details
     if (currentStep === 1) {
       basicInfoForm.handleSubmit(handleBasicInfoSubmit)()
-    } else if (currentStep === 2) {
-      processTimesForm.handleSubmit(handleProcessTimesSubmit)()
     }
   }
 
   const handleUserSearch = async (query: string) => {
     if (!query.trim()) return []
-    
+
     try {
       const usersResponse = await usersApi.getUsers({
         filters: { search: query }
@@ -462,7 +696,7 @@ export function SteriMilkProcessLogDrawer({
 
   const handleUserRoleSearch = async (query: string) => {
     if (!query.trim()) return []
-    
+
     try {
       const rolesResponse = await rolesApi.getRoles({
         filters: { search: query }
@@ -480,16 +714,16 @@ export function SteriMilkProcessLogDrawer({
 
   const handleFilmaticFormSearch = async (query: string) => {
     if (!query.trim()) return []
-    
+
     try {
       const form1Response = await filmaticLinesForm1Api.getForms()
-      
+
       const allForms = [
         ...(form1Response || []).map((form: any) => ({ ...form, type: 'Form 1' }))
       ]
-      
+
       return allForms
-        .filter(form => 
+        .filter(form =>
           form.id?.toLowerCase().includes(query.toLowerCase()) ||
           form.date?.toLowerCase().includes(query.toLowerCase()) ||
           form.holding_tank_bmt?.toLowerCase().includes(query.toLowerCase())
@@ -507,13 +741,13 @@ export function SteriMilkProcessLogDrawer({
   const renderStep1 = () => (
     <div className="space-y-6 p-6">
       <ProcessOverview />
-      
+
       <div className="space-y-4">
         <div className="text-center mb-6">
           <h3 className="text-xl font-light text-gray-900">Basic Information</h3>
           <p className="text-sm font-light text-gray-600 mt-2">Enter the basic log information and batch details</p>
         </div>
-        
+
         <div className="space-y-2">
           <Label htmlFor="batch_number">Batch Number</Label>
           <Controller
@@ -532,6 +766,78 @@ export function SteriMilkProcessLogDrawer({
           />
           {basicInfoForm.formState.errors.batch_number && (
             <p className="text-sm text-red-500">{basicInfoForm.formState.errors.batch_number.message}</p>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="date">Batch Date</Label>
+          <Controller
+            name="date"
+            control={basicInfoForm.control}
+            render={({ field }) => {
+              const parseToDate = (v: any): Date | undefined => {
+                if (!v) return undefined
+                if (v instanceof Date) return isNaN(v.getTime()) ? undefined : v
+                // Dayjs-like
+                if (v?.toDate && typeof v.toDate === "function") {
+                  const d = v.toDate()
+                  return isNaN(d.getTime()) ? undefined : d
+                }
+                // object with toISOString (e.g. some libs)
+                if (v?.toISOString && typeof v.toISOString === "function") {
+                  try {
+                    const d = new Date(v.toISOString())
+                    return isNaN(d.getTime()) ? undefined : d
+                  } catch {
+                    /* fallthrough */
+                  }
+                }
+                // string fallback
+                if (typeof v === "string") {
+                  const d = new Date(v)
+                  return isNaN(d.getTime()) ? undefined : d
+                }
+                // last resort
+                const d = new Date(v as any)
+                return isNaN(d.getTime()) ? undefined : d
+              }
+
+              const formatToIsoDate = (d: any): string => {
+                if (!d) return ""
+                // Dayjs-like
+                if (d?.toDate && typeof d.toDate === "function") d = d.toDate()
+                if (d instanceof Date) return isNaN(d.getTime()) ? "" : d.toISOString().slice(0, 10)
+                if (typeof d === "string") {
+                  // if string starts with YYYY-MM-DD
+                  const m = d.match(/^(\d{4}-\d{2}-\d{2})/)
+                  if (m) return m[1]
+                  const parsed = new Date(d)
+                  return isNaN(parsed.getTime()) ? "" : parsed.toISOString().slice(0, 10)
+                }
+                if (d?.toISOString && typeof d.toISOString === "function") {
+                  try { return d.toISOString().slice(0, 10) } catch { }
+                }
+                const parsed = new Date(d as any)
+                return isNaN(parsed.getTime()) ? "" : parsed.toISOString().slice(0, 10)
+              }
+
+              return (
+                <DatePicker
+                  // pass Date or undefined to avoid invalid Date or empty string UI issues
+                  value={parseToDate(field.value)}
+                  selected={parseToDate(field.value)}
+                  defaultValue={parseToDate(field.value)}
+                  // wire common callbacks used by various date pickers
+                  onChange={(val: any) => field.onChange(formatToIsoDate(val))}
+                  onSelect={(val: any) => field.onChange(formatToIsoDate(val))}
+                  onValueChange={(val: any) => field.onChange(formatToIsoDate(val))}
+                  placeholder="Select batch date"
+                />
+              )
+            }}
+          />
+          {basicInfoForm.formState.errors.date && (
+            <p className="text-sm text-red-500">{basicInfoForm.formState.errors.date.message}</p>
           )}
         </div>
 
@@ -590,8 +896,8 @@ export function SteriMilkProcessLogDrawer({
               <SearchableSelect
                 options={filmaticForms.map(form => ({
                   value: form.id,
-                  label: `${form.type} - ${form.date || 'N/A'} - ${form.holding_tank_bmt || 'N/A'}`,
-                  description: `ID: ${form.id?.slice(0, 8) || 'N/A'}...`
+                  label: `${form?.tag}`,
+                  //de ``
                 }))}
                 value={field.value}
                 onValueChange={field.onChange}
@@ -611,265 +917,16 @@ export function SteriMilkProcessLogDrawer({
     </div>
   )
 
-  const renderStep2 = () => (
-    <div className="space-y-6 p-6">
-      <ProcessOverview />
-      
-      <div className="space-y-4">
-        <div className="text-center mb-6">
-          <h3 className="text-xl font-light text-gray-900">Process Times</h3>
-          <p className="text-sm font-light text-gray-600 mt-2">Enter the process timing information</p>
-        </div>
-        
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Controller
-              name="filling_start"
-              control={processTimesForm.control}
-              render={({ field }) => (
-                <ShadcnTimePicker
-                  label="Filling Start"
-                  value={field.value}
-                  onChange={field.onChange}
-                  placeholder="Select filling start time"
-                />
-              )}
-            />
-            {processTimesForm.formState.errors.filling_start && (
-              <p className="text-sm text-red-500">{processTimesForm.formState.errors.filling_start.message}</p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Controller
-              name="autoclave_start"
-              control={processTimesForm.control}
-              render={({ field }) => (
-                <ShadcnTimePicker
-                  label="Autoclave Start"
-                  value={field.value}
-                  onChange={field.onChange}
-                  placeholder="Select autoclave start time"
-                />
-              )}
-            />
-            {processTimesForm.formState.errors.autoclave_start && (
-              <p className="text-sm text-red-500">{processTimesForm.formState.errors.autoclave_start.message}</p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Controller
-              name="heating_start"
-              control={processTimesForm.control}
-              render={({ field }) => (
-                <ShadcnTimePicker
-                  label="Heating Start"
-                  value={field.value}
-                  onChange={field.onChange}
-                  placeholder="Select heating start time"
-                />
-              )}
-            />
-            {processTimesForm.formState.errors.heating_start && (
-              <p className="text-sm text-red-500">{processTimesForm.formState.errors.heating_start.message}</p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Controller
-              name="heating_finish"
-              control={processTimesForm.control}
-              render={({ field }) => (
-                <ShadcnTimePicker
-                  label="Heating Finish"
-                  value={field.value}
-                  onChange={field.onChange}
-                  placeholder="Select heating finish time"
-                />
-              )}
-            />
-            {processTimesForm.formState.errors.heating_finish && (
-              <p className="text-sm text-red-500">{processTimesForm.formState.errors.heating_finish.message}</p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Controller
-              name="sterilization_start"
-              control={processTimesForm.control}
-              render={({ field }) => (
-                <ShadcnTimePicker
-                  label="Sterilization Start"
-                  value={field.value}
-                  onChange={field.onChange}
-                  placeholder="Select sterilization start time"
-                />
-              )}
-            />
-            {processTimesForm.formState.errors.sterilization_start && (
-              <p className="text-sm text-red-500">{processTimesForm.formState.errors.sterilization_start.message}</p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Controller
-              name="sterilization_after_5"
-              control={processTimesForm.control}
-              render={({ field }) => (
-                <ShadcnTimePicker
-                  label="Sterilization After 5"
-                  value={field.value}
-                  onChange={field.onChange}
-                  placeholder="Select sterilization after 5 time"
-                />
-              )}
-            />
-            {processTimesForm.formState.errors.sterilization_after_5 && (
-              <p className="text-sm text-red-500">{processTimesForm.formState.errors.sterilization_after_5.message}</p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Controller
-              name="sterilization_finish"
-              control={processTimesForm.control}
-              render={({ field }) => (
-                <ShadcnTimePicker
-                  label="Sterilization Finish"
-                  value={field.value}
-                  onChange={field.onChange}
-                  placeholder="Select sterilization finish time"
-                />
-              )}
-            />
-            {processTimesForm.formState.errors.sterilization_finish && (
-              <p className="text-sm text-red-500">{processTimesForm.formState.errors.sterilization_finish.message}</p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Controller
-              name="pre_cooling_start"
-              control={processTimesForm.control}
-              render={({ field }) => (
-                <ShadcnTimePicker
-                  label="Pre Cooling Start"
-                  value={field.value}
-                  onChange={field.onChange}
-                  placeholder="Select pre cooling start time"
-                />
-              )}
-            />
-            {processTimesForm.formState.errors.pre_cooling_start && (
-              <p className="text-sm text-red-500">{processTimesForm.formState.errors.pre_cooling_start.message}</p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Controller
-              name="pre_cooling_finish"
-              control={processTimesForm.control}
-              render={({ field }) => (
-                <ShadcnTimePicker
-                  label="Pre Cooling Finish"
-                  value={field.value}
-                  onChange={field.onChange}
-                  placeholder="Select pre cooling finish time"
-                />
-              )}
-            />
-            {processTimesForm.formState.errors.pre_cooling_finish && (
-              <p className="text-sm text-red-500">{processTimesForm.formState.errors.pre_cooling_finish.message}</p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Controller
-              name="cooling_1_start"
-              control={processTimesForm.control}
-              render={({ field }) => (
-                <ShadcnTimePicker
-                  label="Cooling 1 Start"
-                  value={field.value}
-                  onChange={field.onChange}
-                  placeholder="Select cooling 1 start time"
-                />
-              )}
-            />
-            {processTimesForm.formState.errors.cooling_1_start && (
-              <p className="text-sm text-red-500">{processTimesForm.formState.errors.cooling_1_start.message}</p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Controller
-              name="cooling_1_finish"
-              control={processTimesForm.control}
-              render={({ field }) => (
-                <ShadcnTimePicker
-                  label="Cooling 1 Finish"
-                  value={field.value}
-                  onChange={field.onChange}
-                  placeholder="Select cooling 1 finish time"
-                />
-              )}
-            />
-            {processTimesForm.formState.errors.cooling_1_finish && (
-              <p className="text-sm text-red-500">{processTimesForm.formState.errors.cooling_1_finish.message}</p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Controller
-              name="cooling_2_start"
-              control={processTimesForm.control}
-              render={({ field }) => (
-                <ShadcnTimePicker
-                  label="Cooling 2 Start"
-                  value={field.value}
-                  onChange={field.onChange}
-                  placeholder="Select cooling 2 start time"
-                />
-              )}
-            />
-            {processTimesForm.formState.errors.cooling_2_start && (
-              <p className="text-sm text-red-500">{processTimesForm.formState.errors.cooling_2_start.message}</p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Controller
-              name="cooling_2_finish"
-              control={processTimesForm.control}
-              render={({ field }) => (
-                <ShadcnTimePicker
-                  label="Cooling 2 Finish"
-                  value={field.value}
-                  onChange={field.onChange}
-                  placeholder="Select cooling 2 finish time"
-                />
-              )}
-            />
-            {processTimesForm.formState.errors.cooling_2_finish && (
-              <p className="text-sm text-red-500">{processTimesForm.formState.errors.cooling_2_finish.message}</p>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-
   const renderStep3 = () => (
     <div className="space-y-6 p-6">
       <ProcessOverview />
-      
+
       <div className="space-y-4">
         <div className="text-center mb-6">
           <h3 className="text-xl font-light text-gray-900">Process Details</h3>
           <p className="text-sm font-light text-gray-600 mt-2">Enter the detailed process information with temperature and pressure readings</p>
         </div>
-        
+
         <div className="space-y-6">
           {/* Filling Start Details */}
           <div className="border border-gray-200 rounded-lg p-4">
@@ -1232,10 +1289,11 @@ export function SteriMilkProcessLogDrawer({
                   name="sterilization_finish_details.time"
                   control={processDetailsForm.control}
                   render={({ field }) => (
-                    <Input
-                      id="sterilization_finish_details_time"
-                      placeholder="10:30:00+00"
-                      {...field}
+                    <ShadcnTimePicker
+                      label="Time"
+                      value={field.value}
+                      onChange={field.onChange}
+                      placeholder="Select time"
                     />
                   )}
                 />
@@ -1290,10 +1348,11 @@ export function SteriMilkProcessLogDrawer({
                   name="pre_cooling_start_details.time"
                   control={processDetailsForm.control}
                   render={({ field }) => (
-                    <Input
-                      id="pre_cooling_start_details_time"
-                      placeholder="10:30:00+00"
-                      {...field}
+                    <ShadcnTimePicker
+                      label="Time"
+                      value={field.value}
+                      onChange={field.onChange}
+                      placeholder="Select time"
                     />
                   )}
                 />
@@ -1348,10 +1407,11 @@ export function SteriMilkProcessLogDrawer({
                   name="pre_cooling_finish_details.time"
                   control={processDetailsForm.control}
                   render={({ field }) => (
-                    <Input
-                      id="pre_cooling_finish_details_time"
-                      placeholder="10:30:00+00"
-                      {...field}
+                    <ShadcnTimePicker
+                      label="Time"
+                      value={field.value}
+                      onChange={field.onChange}
+                      placeholder="Select time"
                     />
                   )}
                 />
@@ -1406,10 +1466,11 @@ export function SteriMilkProcessLogDrawer({
                   name="cooling_1_start_details.time"
                   control={processDetailsForm.control}
                   render={({ field }) => (
-                    <Input
-                      id="cooling_1_start_details_time"
-                      placeholder="10:30:00+00"
-                      {...field}
+                    <ShadcnTimePicker
+                      label="Time"
+                      value={field.value}
+                      onChange={field.onChange}
+                      placeholder="Select time"
                     />
                   )}
                 />
@@ -1464,10 +1525,11 @@ export function SteriMilkProcessLogDrawer({
                   name="cooling_1_finish_details.time"
                   control={processDetailsForm.control}
                   render={({ field }) => (
-                    <Input
-                      id="cooling_1_finish_details_time"
-                      placeholder="10:30:00+00"
-                      {...field}
+                    <ShadcnTimePicker
+                      label="Time"
+                      value={field.value}
+                      onChange={field.onChange}
+                      placeholder="Select time"
                     />
                   )}
                 />
@@ -1518,7 +1580,7 @@ export function SteriMilkProcessLogDrawer({
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Controller
-                  name="cooling_1_start_details.time"
+                  name="cooling_2_start_details.time"
                   control={processDetailsForm.control}
                   render={({ field }) => (
                     <ShadcnTimePicker
@@ -1580,10 +1642,11 @@ export function SteriMilkProcessLogDrawer({
                   name="cooling_2_finish_details.time"
                   control={processDetailsForm.control}
                   render={({ field }) => (
-                    <Input
-                      id="cooling_2_finish_details_time"
-                      placeholder="10:30:00+00"
-                      {...field}
+                    <ShadcnTimePicker
+                      label="Time"
+                      value={field.value}
+                      onChange={field.onChange}
+                      placeholder="Select time"
                     />
                   )}
                 />
@@ -1637,17 +1700,15 @@ export function SteriMilkProcessLogDrawer({
             {mode === "edit" ? "Edit Steri Milk Process Log" : "Create Steri Milk Process Log"}
           </SheetTitle>
           <SheetDescription>
-            {currentStep === 1 
+            {currentStep === 1
               ? "Basic Information: Enter the basic log information and batch details"
-              : currentStep === 2
-              ? "Process Times: Enter the process timing information"
               : "Process Details: Enter the detailed process information with temperature and pressure readings"
             }
           </SheetDescription>
         </SheetHeader>
 
         <div className="flex-1 overflow-y-auto bg-white" key={`form-${open}-${currentStep}`}>
-          {currentStep === 1 ? renderStep1() : currentStep === 2 ? renderStep2() : renderStep3()}
+          {currentStep === 1 ? renderStep1() : renderStep3()}
         </div>
 
         <div className="flex items-center justify-between p-6 pt-0 border-t bg-white">
@@ -1663,11 +1724,11 @@ export function SteriMilkProcessLogDrawer({
 
           <div className="flex items-center gap-2">
             <span className="text-sm text-muted-foreground">
-              {currentStep === 1 ? "Basic Information" : currentStep === 2 ? "Process Times" : "Process Details"} • Step {currentStep} of 3
+              {currentStep === 1 ? "Basic Information" : "Process Details"} • Step {currentStep} of 2
             </span>
           </div>
 
-          {currentStep < 3 ? (
+          {currentStep < 2 ? (
             <Button
               onClick={handleNext}
               disabled={loading.create}

@@ -1,5 +1,6 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -7,6 +8,8 @@ import { Button } from "@/components/ui/button"
 import { UHTQualityCheckAfterIncubation } from "@/lib/api/data-capture-forms"
 import { format } from "date-fns"
 import { TestTube, FileText, Clock, TrendingUp, ArrowRight, Beaker } from "lucide-react"
+import { usersApi } from "@/lib/api/users"
+import { UserAvatar } from "@/components/users/user-avatar"
 
 interface UHTQualityCheckViewDrawerProps {
   open: boolean
@@ -23,8 +26,41 @@ export function UHTQualityCheckViewDrawer({
 }: UHTQualityCheckViewDrawerProps) {
   if (!qualityCheck) return null
 
-  const details = qualityCheck.uht_qa_check_after_incubation_details_fkey
-  const checkedBy = qualityCheck.uht_qa_check_after_incubation_checked_by_fkey
+  // Support both new nested incubation_details and old details fkey
+  const details = (qualityCheck as any).incubation_details ?? qualityCheck.uht_qa_check_after_incubation_details_fkey
+
+  // Local users state loaded when drawer opens
+  const [users, setUsers] = useState<any[]>([])
+  const [loadingUsers, setLoadingUsers] = useState(false)
+
+  useEffect(() => {
+    const loadUsers = async () => {
+      setLoadingUsers(true)
+      try {
+        const res = await usersApi.getUsers()
+        setUsers(res.data || res || [])
+      } catch (err) {
+        console.error("Failed to load users for view drawer:", err)
+      } finally {
+        setLoadingUsers(false)
+      }
+    }
+
+    if (open) loadUsers()
+  }, [open])
+
+  // Resolve checkedBy user object (prefer loaded users by id, fallback to relational fkey)
+  const checkedByUser =
+    users.find(u => u.id === (qualityCheck as any).checked_by) ||
+    qualityCheck.uht_qa_check_after_incubation_checked_by_fkey ||
+    null
+
+  // Resolve analyst / verified user objects from details (ids) or fallback to raw strings
+  const analystId = details?.analyst
+  const verifiedById = details?.verified_by
+
+  const analystUser = analystId ? users.find(u => u.id === analystId) : null
+  const verifiedUser = verifiedById ? users.find(u => u.id === verifiedById) : null
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -34,7 +70,7 @@ export function UHTQualityCheckViewDrawer({
             Incubation Test Details
           </SheetTitle>
           <SheetDescription className="text-sm font-light">
-            View detailed information about the UHT quality check and its analysis results
+            View detailed information about the Incubation quality  check and its analysis results
           </SheetDescription>
         </SheetHeader>
 
@@ -200,26 +236,47 @@ export function UHTQualityCheckViewDrawer({
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              {checkedBy && (
-                <div className="space-y-2">
-                  <h4 className="text-sm font-medium">Checked By</h4>
-                  <div className="pl-4 space-y-1">
-                    <p className="text-sm font-light"><span className="font-medium">Name:</span> {`${checkedBy.first_name} ${checkedBy.last_name}`.trim() || 'N/A'}</p>
-                    <p className="text-sm font-light"><span className="font-medium">Email:</span> {checkedBy.email}</p>
-                    <p className="text-sm font-light"><span className="font-medium">Department:</span> {checkedBy.department}</p>
-                  </div>
+              {/* Checked By (top-level) */}
+              <div className="space-y-2">
+                <h4 className="text-sm font-medium">Checked By</h4>
+                <div className="pl-4">
+                  {checkedByUser ? (
+                    // Use relational object if we don't have loaded user, otherwise show loaded user via avatar
+                    <UserAvatar user={checkedByUser} size="md" showName={true} showEmail={true} showDropdown={true} />
+                  ) : (
+                    <p className="text-sm font-light">N/A</p>
+                  )}
                 </div>
-              )}
+              </div>
 
-              {details && (
-                <div className="space-y-2">
-                  <h4 className="text-sm font-medium">Test Personnel</h4>
-                  <div className="pl-4 space-y-1">
-                    <p className="text-sm font-light"><span className="font-medium">Analyst:</span> {details.analyst}</p>
-                    <p className="text-sm font-light"><span className="font-medium">Verified By:</span> {details.verified_by}</p>
+              {/* Test Personnel (Analyst + Verified By) */}
+              <div className="space-y-2">
+                <h4 className="text-sm font-medium">Test Personnel</h4>
+                <div className="pl-4 grid grid-cols-2 gap-4">
+                  <div>
+                    <div className="text-xs text-gray-500 mb-2">Analyst</div>
+                    {analystUser ? (
+                      <UserAvatar user={analystUser} size="md" showName={true} showEmail={true} showDropdown={true} />
+                    ) : analystId ? (
+                      // fallback: show minimal avatar for unknown but present id
+                      <UserAvatar user={{ id: analystId, first_name: "", last_name: "", email: "" }} size="md" showName={false} showEmail={false} showDropdown={true} />
+                    ) : (
+                      <p className="text-sm font-light">N/A</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <div className="text-xs text-gray-500 mb-2">Verified By</div>
+                    {verifiedUser ? (
+                      <UserAvatar user={verifiedUser} size="md" showName={true} showEmail={true} showDropdown={true} />
+                    ) : verifiedById ? (
+                      <UserAvatar user={{ id: verifiedById, first_name: "", last_name: "", email: "" }} size="md" showName={false} showEmail={false} showDropdown={true} />
+                    ) : (
+                      <p className="text-sm font-light">N/A</p>
+                    )}
                   </div>
                 </div>
-              )}
+              </div>
             </CardContent>
           </Card>
 

@@ -9,6 +9,9 @@ import { format } from "date-fns"
 import { base64ToPngDataUrl } from "@/lib/utils/signature"
 import { Button } from "@/components/ui/button"
 import { Beaker, FileText, CheckCircle, User, Package, ArrowRight, Hash, Clock } from "lucide-react"
+import { useEffect, useState } from "react"
+import { filmaticLinesForm1Api } from "@/lib/api/filmatic-lines-form-1"
+import { FormIdCopy } from "@/components/ui/form-id-copy"
 
 interface SterilisedMilkProcessViewDrawerProps {
   open: boolean
@@ -16,6 +19,7 @@ interface SterilisedMilkProcessViewDrawerProps {
   process: SterilisedMilkProcess | null
   processDetails?: SterilisedMilkProcessDetails[]
   onEdit?: () => void
+  formMap?: Record<string, { tag?: string }>
 }
 
 export function SterilisedMilkProcessViewDrawer({ 
@@ -23,12 +27,22 @@ export function SterilisedMilkProcessViewDrawer({
   onOpenChange, 
   process,
   processDetails,
-  onEdit
+  onEdit,
+  formMap
 }: SterilisedMilkProcessViewDrawerProps) {
   if (!process) return null
 
-  // Get process details from the process relationship
-  const processDetailsData = process.sterilised_milk_process_details_fkey ? [process.sterilised_milk_process_details_fkey] : (processDetails || [])
+  // --- Normalize processDetails: accept array, single object or prop fallback ---
+  const processDetailsData: SterilisedMilkProcessDetails[] = (() => {
+    const pd = (process as any).sterilised_milk_process_details_fkey
+    if (Array.isArray(pd)) return pd
+    if (pd && typeof pd === "object") return [pd]
+    if (Array.isArray(processDetails)) return processDetails
+    return processDetails ? processDetails : []
+  })()
+
+  // --- batch (API may provide single batch object under batch_id) ---
+  const batch: any = (process as any).batch_id || null
 
   const getPersonName = (person: any) => {
     if (!person) return "Unknown"
@@ -48,6 +62,30 @@ export function SterilisedMilkProcessViewDrawer({
   const approvedBy = getPersonDetails(process.sterilised_milk_process_approved_by_fkey)
   const operator = getPersonDetails(process.sterilised_milk_process_operator_id_fkey)
   const supervisor = getPersonDetails(process.sterilised_milk_process_supervisor_id_fkey)
+
+  // --- derive filmatic form tag from passed formMap first, then fallback to fetch if needed ---
+  const [formTag, setFormTag] = useState<string | undefined>(() => {
+    if (formMap && process.filmatic_form_id) return formMap[process.filmatic_form_id]?.tag
+    return undefined
+  })
+  useEffect(() => {
+    let mounted = true
+    const load = async () => {
+      if (formTag || !process.filmatic_form_id) return
+      try {
+        const list = await filmaticLinesForm1Api.getForms()
+        if (!mounted) return
+        const found = (list || []).find((f: any) => f.id === process.filmatic_form_id)
+        if (found) {
+          setFormTag(found.tag || found.name || undefined)
+        }
+      } catch (err) {
+        // ignore
+      }
+    }
+    load()
+    return () => { mounted = false }
+  }, [process.filmatic_form_id, formTag, formMap])
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -145,10 +183,66 @@ export function SterilisedMilkProcessViewDrawer({
                 <div>
                   <span className="text-xs font-light text-gray-500">Filmatic Form</span>
                   <p className="text-sm font-light">
-                    {process.filmatic_form_id ? `Form #${process.filmatic_form_id.slice(0, 8)}` : "Not linked"}
+                    {process.filmatic_form_id ? (
+                      <span className="inline-flex items-center space-x-2">
+                        <FormIdCopy displayId={formTag} actualId={process.filmatic_form_id} size="sm" />
+                      </span>
+                    ) : "Not linked"}
                   </p>
                 </div>
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Batch Data (grouped label / value) */}
+          <Card className="shadow-none border border-gray-200 rounded-lg">
+            <CardHeader className="pb-4">
+              <div className="flex items-center space-x-2">
+                <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center">
+                  <Hash className="h-4 w-4 text-gray-600" />
+                </div>
+                <CardTitle className="text-base font-light">Batch Data</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {process ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <span className="text-xs text-gray-500">Batch ID</span>
+                    <p className="text-sm">{batch.id || "—"}</p>
+                  </div>
+                  <div>
+                    <span className="text-xs text-gray-500">Batch Number</span>
+                    <p className="text-sm">#{batch.batch_number ?? "—"}</p>
+                  </div>
+                  <div>
+                    <span className="text-xs text-gray-500">Date</span>
+                    <p className="text-sm">{batch.date || "—"}</p>
+                  </div>
+                  <div>
+                    <span className="text-xs text-gray-500">Filling Start (time)</span>
+                    <p className="text-sm">{batch.filling_start_details?.time ?? batch.filling_start ?? "—"}</p>
+                  </div>
+                  <div>
+                    <span className="text-xs text-gray-500">Filling Temp (°C)</span>
+                    <p className="text-sm">{batch.filling_start_details?.temperature ?? "—"}</p>
+                  </div>
+                  <div>
+                    <span className="text-xs text-gray-500">Sterilization Start (time)</span>
+                    <p className="text-sm">{batch.sterilization_start_details?.time ?? batch.sterilization_start ?? "—"}</p>
+                  </div>
+                  <div>
+                    <span className="text-xs text-gray-500">Sterilization Finish (time)</span>
+                    <p className="text-sm">{batch.sterilization_finish_details?.time ?? batch.sterilization_finish ?? "—"}</p>
+                  </div>
+                  <div>
+                    <span className="text-xs text-gray-500">Sterilization Finish Temp (°C)</span>
+                    <p className="text-sm">{batch.sterilization_finish_details?.temperature ?? "—"}</p>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-muted-foreground">No batch data available for this process.</p>
+              )}
             </CardContent>
           </Card>
 
@@ -217,8 +311,39 @@ export function SterilisedMilkProcessViewDrawer({
             </CardContent>
           </Card>
 
-          {/* Process Details */}
-          {processDetailsData && processDetailsData.length > 0 && (
+          {/* Batch Information (single batch) */}
+          <Card className="shadow-none border border-gray-200 rounded-lg">
+            <CardHeader className="pb-4">
+              <div className="flex items-center space-x-2">
+                <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
+                  <Beaker className="h-4 w-4 text-blue-600" />
+                </div>
+                <CardTitle className="text-base font-light">Batch Information</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {batch ? (
+                <div className="space-y-2">
+                  <p className="text-sm font-light"><span className="font-medium">Batch number:</span> #{batch.batch_number}</p>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm font-light"><span className="font-medium">Filling Start:</span> {batch.filling_start?.time || 'N/A'}</p>
+                      <p className="text-sm font-light"><span className="font-medium">Temperature:</span> {batch.filling_start?.temperature ?? 'N/A'}°C</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-light"><span className="font-medium">Sterilization Start:</span> {batch.sterilization_start?.time || 'N/A'}</p>
+                      <p className="text-sm font-light"><span className="font-medium">Sterilization Finish:</span> {batch.sterilization_finish?.time || 'N/A'}</p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-muted-foreground">No batch information available for this process.</p>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Process Details (use normalized processDetailsData) */}
+          {processDetailsData && processDetailsData.length > 0 ? (
             <Card className="shadow-none border border-gray-200 rounded-lg">
               <CardHeader className="pb-4">
                 <div className="flex items-center space-x-2">
@@ -228,138 +353,102 @@ export function SterilisedMilkProcessViewDrawer({
                   <CardTitle className="text-base font-light">Process Parameters</CardTitle>
                 </div>
               </CardHeader>
+
               <CardContent className="space-y-6">
-                {processDetailsData.map((detail, index) => (
-                  <div key={detail.id || index} className="space-y-4">
-                    {index > 0 && <Separator />}
-                    
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <h4 className="text-sm font-medium">{detail.parameter_name}</h4>
-                        <div className="flex items-center space-x-2">
-                          <Badge className="bg-blue-100 text-blue-800 font-light">Process Details</Badge>
-                          <Badge className="bg-green-100 text-green-800 font-medium">Latest</Badge>
-                        </div>
-                      </div>
+                {processDetailsData.map((detail, index) => {
+                  // support multiple possible field namings: prefer detail.*_details.* -> legacy names -> fallback
+                  const getValue = (primaryKey: string, altKey?: string) => {
+                    // primaryKey examples: 'filling_start' -> check detail.filling_start_reading, detail.filling_start_details?.temperature etc
+                    // explicit checks for common shapes:
+                    const pkReading = (detail as any)[`${primaryKey}_reading`]
+                    const pkDetails = (detail as any)[`${primaryKey}_details`]
+                    if (pkReading !== undefined && pkReading !== null) return pkReading
+                    if (pkDetails && typeof pkDetails === "object" && (pkDetails.temperature !== undefined || pkDetails.time !== undefined)) {
+                      // expose temperature where appropriate (if available)
+                      return pkDetails.temperature ?? pkDetails.time ?? pkDetails.value ?? "N/A"
+                    }
+                    if (altKey) {
+                      const alt = (detail as any)[altKey]
+                      if (alt !== undefined) return alt
+                    }
+                    return "N/A"
+                  }
 
-                      {/* Filling Readings */}
-                      <div className="space-y-2">
-                        <h5 className="text-sm font-medium text-muted-foreground">Filling Readings</h5>
-                        <div className="grid grid-cols-2 gap-4 pl-4">
-                          <div>
-                            <p className="text-sm font-light"><span className="font-medium">Start:</span> {detail.filling_start_reading}°C</p>
-                          </div>
-                        </div>
-                      </div>
+                  return (
+                    <div key={detail.id || index} className="space-y-4">
+                      {index > 0 && <Separator />}
 
-                      {/* Autoclave Readings */}
-                      <div className="space-y-2">
-                        <h5 className="text-sm font-medium text-muted-foreground">Autoclave Readings</h5>
-                        <div className="grid grid-cols-2 gap-4 pl-4">
-                          <div>
-                            <p className="text-sm font-light"><span className="font-medium">Start:</span> {detail.autoclave_start_reading}°C</p>
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <h4 className="text-sm font-medium">{(detail as any).parameter_name || `Parameter ${index + 1}`}</h4>
+                          <div className="flex items-center space-x-2">
+                            <Badge className="bg-blue-100 text-blue-800 font-light">Process Details</Badge>
+                            <Badge className="bg-green-100 text-green-800 font-medium">Latest</Badge>
                           </div>
                         </div>
-                      </div>
 
-                      {/* Heating Readings */}
-                      <div className="space-y-2">
-                        <h5 className="text-sm font-medium text-muted-foreground">Heating Readings</h5>
-                        <div className="grid grid-cols-2 gap-4 pl-4">
-                          <div>
-                            <p className="text-sm font-light"><span className="font-medium">Start:</span> {detail.heating_start_reading}°C</p>
-                          </div>
-                          <div>
-                            <p className="text-sm font-light"><span className="font-medium">Finish:</span> {detail.heating_finish_reading}°C</p>
+                        {/* Filling Readings */}
+                        <div className="space-y-2">
+                          <h5 className="text-sm font-medium text-muted-foreground">Filling Readings</h5>
+                          <div className="grid grid-cols-2 gap-4 pl-4">
+                            <div>
+                              <p className="text-sm font-light"><span className="font-medium">Start:</span> {String(getValue('filling_start'))}</p>
+                            </div>
                           </div>
                         </div>
-                      </div>
 
-                      {/* Sterilization Readings */}
-                      <div className="space-y-2">
-                        <h5 className="text-sm font-medium text-muted-foreground">Sterilization Readings</h5>
-                        <div className="grid grid-cols-2 gap-4 pl-4">
-                          <div>
-                            <p className="text-sm font-light"><span className="font-medium">Start:</span> {detail.sterilization_start_reading}°C</p>
-                          </div>
-                          <div>
-                            <p className="text-sm font-light"><span className="font-medium">After 5-6 min:</span> {detail.sterilisation_after_five_six_minutes_reading}°C</p>
-                          </div>
-                          <div className="col-span-2">
-                            <p className="text-sm font-light"><span className="font-medium">Finish:</span> {detail.sterilisation_finish_reading}°C</p>
+                        {/* Autoclave Readings */}
+                        <div className="space-y-2">
+                          <h5 className="text-sm font-medium text-muted-foreground">Autoclave Readings</h5>
+                          <div className="grid grid-cols-2 gap-4 pl-4">
+                            <div>
+                              <p className="text-sm font-light"><span className="font-medium">Start:</span> {String(getValue('autoclave_start'))}</p>
+                            </div>
                           </div>
                         </div>
-                      </div>
 
-                      {/* Precooling Readings */}
-                      <div className="space-y-2">
-                        <h5 className="text-sm font-medium text-muted-foreground">Precooling Readings</h5>
-                        <div className="grid grid-cols-2 gap-4 pl-4">
-                          <div>
-                            <p className="text-sm font-light"><span className="font-medium">Start:</span> {detail.precooling_start_reading}°C</p>
-                          </div>
-                          <div>
-                            <p className="text-sm font-light"><span className="font-medium">Finish:</span> {detail.precooling_finish_reading}°C</p>
+                        {/* Heating Readings */}
+                        <div className="space-y-2">
+                          <h5 className="text-sm font-medium text-muted-foreground">Heating Readings</h5>
+                          <div className="grid grid-cols-2 gap-4 pl-4">
+                            <div>
+                              <p className="text-sm font-light"><span className="font-medium">Start:</span> {String(getValue('heating_start'))}</p>
+                            </div>
+                            <div>
+                              <p className="text-sm font-light"><span className="font-medium">Finish:</span> {String(getValue('heating_finish'))}</p>
+                            </div>
                           </div>
                         </div>
-                      </div>
 
-                      {/* Cooling One Readings */}
-                      <div className="space-y-2">
-                        <h5 className="text-sm font-medium text-muted-foreground">Cooling One Readings</h5>
-                        <div className="grid grid-cols-2 gap-4 pl-4">
-                          <div>
-                            <p className="text-sm font-light"><span className="font-medium">Start:</span> {detail.cooling_one_start_reading}°C</p>
+                        {/* Sterilization Readings */}
+                        <div className="space-y-2">
+                          <h5 className="text-sm font-medium text-muted-foreground">Sterilization Readings</h5>
+                          <div className="grid grid-cols-2 gap-4 pl-4">
+                            <div>
+                              <p className="text-sm font-light"><span className="font-medium">Start:</span> {String(getValue('sterilization_start'))}</p>
+                            </div>
+                            <div>
+                              <p className="text-sm font-light"><span className="font-medium">After 5-6 min:</span> {String(getValue('sterilization_after_five_six_minutes') || getValue('sterilization_after_5'))}</p>
+                            </div>
+                            <div className="col-span-2">
+                              <p className="text-sm font-light"><span className="font-medium">Finish:</span> {String(getValue('sterilization_finish'))}</p>
+                            </div>
                           </div>
-                          <div>
-                            <p className="text-sm font-light"><span className="font-medium">Finish:</span> {detail.cooling_one_finish_reading}°C</p>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Cooling Two Readings */}
-                      <div className="space-y-2">
-                        <h5 className="text-sm font-medium text-muted-foreground">Cooling Two Readings</h5>
-                        <div className="grid grid-cols-2 gap-4 pl-4">
-                          <div>
-                            <p className="text-sm font-light"><span className="font-medium">Start:</span> {detail.cooling_two_start_reading}°C</p>
-                          </div>
-                          <div>
-                            <p className="text-sm font-light"><span className="font-medium">Finish:</span> {detail.cooling_two_finish_reading}°C</p>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Detail Metadata */}
-                      <div className="pt-2 border-t">
-                        <div className="grid grid-cols-2 gap-4 text-xs text-muted-foreground">
-                          <div>
-                            <p><span className="font-medium">Created:</span> {detail.created_at ? format(new Date(detail.created_at), "PPP 'at' p") : "N/A"}</p>
-                          </div>
-                          <div>
-                            <p><span className="font-medium">Updated:</span> {detail.updated_at ? format(new Date(detail.updated_at), "PPP 'at' p") : "N/A"}</p>
-                          </div>
-                        </div>
-                        <div className="mt-2 flex items-center space-x-2">
-                          <Clock className="h-3 w-3 text-green-600" />
-                          <span className="text-xs text-green-600 font-medium">Latest Process Parameters</span>
                         </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  )
+                })}
               </CardContent>
             </Card>
-          )}
-
-          {/* No Process Details */}
-          {(!processDetailsData || processDetailsData.length === 0) && (
+          ) : (
             <Card className="shadow-none border border-gray-200 rounded-lg">
               <CardContent className="py-8 text-center">
                 <p className="text-muted-foreground">No process details available for this process.</p>
               </CardContent>
             </Card>
           )}
+
         </div>
       </SheetContent>
     </Sheet>

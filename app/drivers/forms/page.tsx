@@ -31,41 +31,108 @@ import type { DriverForm } from "@/lib/types"
 import type { OfflineDriverForm } from "@/lib/offline/database"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { Download as DownloadIcon } from "lucide-react"
+import { useRouter, useSearchParams } from "next/navigation"
 
 // Unified form type for display
 type UnifiedForm = DriverForm | OfflineDriverForm
 
-function exportDriverFormsToCSV(forms: UnifiedForm[], users: any[], generateDriverFormId: (date: string) => string) {
+function exportDriverFormsToCSV(
+  forms: UnifiedForm[],
+  users: any[],
+  rawMaterials: any[],
+  suppliers: any[],
+  generateDriverFormId: (date: string) => string
+) {
+  // CSV headers include product-specific columns. Each product becomes its own row.
   const headers = [
     "Form ID",
     "Driver Name",
     "Driver Email",
     "Collection Start",
     "Collection End",
-    "Products Count",
     "Status",
-    "Created At"
+    "Created At",
+    // Product-specific columns
+    "Product Name",
+    "Product Qty",
+    "Unit of Measure",
+    "Collected Amount",
+    "Raw Material Name",
+    "Supplier Name",
+    "Supplier Email"
   ]
-  const rows = forms.map(form => {
+
+  const rows: any[] = []
+
+  forms.forEach(form => {
     const driverId = form.driver_id || form.driver
-    const driverUser = users.find((u: any) => u.id === driverId)
+    const driverUser = users.find((u: any) => String(u.id) === String(driverId))
     const driverName = driverUser ? `${driverUser.first_name} ${driverUser.last_name}` : "Unknown"
     const driverEmail = driverUser ? driverUser.email : ""
     const status = form.delivered ? "Delivered" : form.rejected ? "Rejected" : "Pending"
-    return [
-      form.tag || "", // <-- Use tag field for Form ID in CSV
-      driverName,
-      driverEmail,
-      form.start_date,
-      form.end_date,
-      form.drivers_form_collected_products?.length ?? 0,
-      status,
-      form.created_at
-    ]
+    const products = form.drivers_form_collected_products || []
+
+    if (products.length === 0) {
+      // Emit a single row with empty product columns
+      rows.push([
+        form.tag || generateDriverFormId(form.created_at) || "",
+        driverName,
+        driverEmail,
+        form.start_date || "",
+        form.end_date || "",
+        status,
+        form.created_at || "",
+        "", // Product Name
+        "", // Product Qty
+        "", // Unit of Measure
+        "", // Collected Amount
+        "", // Raw Material Name
+        "", // Supplier Name
+        ""  // Supplier Email
+      ])
+    } else {
+      // Emit one row per collected product
+      products.forEach((p: any) => {
+        // Product name resolution: prefer explicit name, fallback to raw material lookup
+        const productName = p.name || p.product_name || (() => {
+          const rm = rawMaterials.find((r: any) => String(r.id) === String(p.raw_material_id || p.rawMaterialId || p.raw_material))
+          return rm ? (rm.name || rm.raw_material_name || "") : (p.raw_material_name || "")
+        })()
+
+        const qty = p.quantity ?? p.qty ?? ""
+        const unitOfMeasure = p.unit_of_measure ?? p.uom ?? p.unit ?? ""
+        const collectedAmount = p.collected_amount ?? p.collectedAmount ?? p.collected ?? ""
+
+        const rawMat = rawMaterials.find((r: any) => String(r.id) === String(p.raw_material_id || p.rawMaterialId || p.raw_material))
+        const rawMatName = rawMat ? (rawMat.name || rawMat.raw_material_name || "") : ""
+
+        const supplier = suppliers.find((s: any) => String(s.id) === String(p.supplier_id || p.supplier))
+        const supplierName = supplier ? (supplier?.first_name + " " + supplier?.last_name || "") : ""
+        const supplierEmail = supplier ? (supplier.email || supplier.contact_email || "") : (p.supplier_email || "")
+
+        rows.push([
+          form.tag || generateDriverFormId(form.created_at) || "",
+          driverName,
+          driverEmail,
+          form.start_date || "",
+          form.end_date || "",
+          status,
+          form.created_at || "",
+          productName,
+          qty,
+          unitOfMeasure,
+          collectedAmount,
+          rawMatName,
+          supplierName,
+          supplierEmail
+        ])
+      })
+    }
   })
+
   const csv =
     [headers, ...rows]
-      .map(row => row.map(field => `"${String(field).replace(/"/g, '""')}"`).join(","))
+      .map(row => row.map(field => `"${String(field ?? "").replace(/"/g, '""')}"`).join(","))
       .join("\r\n")
   const blob = new Blob([csv], { type: "text/csv" })
   return URL.createObjectURL(blob)
@@ -102,6 +169,7 @@ export default function DriverFormsPage() {
   const [isLoadingData, setIsLoadingData] = useState(false)
   const itemsPerPage = 10
   const isMobile = useIsMobile()
+  const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
 
   // Helper function to get driver info from form
   const getDriverInfo = (form: any) => {
@@ -472,9 +540,25 @@ export default function DriverFormsPage() {
   // Add this effect to update CSV when filteredForms changes
   useEffect(() => {
     if (csvUrl) URL.revokeObjectURL(csvUrl)
-    setCsvUrl(exportDriverFormsToCSV(filteredForms, displayUsers, generateDriverFormId))
+    setCsvUrl(exportDriverFormsToCSV(filteredForms, displayUsers, displayRawMaterials, displaySuppliers, generateDriverFormId))
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filteredForms, displayUsers])
+  }, [filteredForms, displayUsers, displayRawMaterials, displaySuppliers])
+
+  // --- Helper: open view drawer if form_id query param is present ---
+  useEffect(() => {
+    // Wait for forms to load and check for form_id param
+    if (typeof window === "undefined") return;
+    const formId = searchParams?.get("form_id");
+    if (formId && displayDriverForms && displayDriverForms.length > 0) {
+      const foundForm = displayDriverForms.find((form: UnifiedForm) => String(form.id) === String(formId));
+      if (foundForm) {
+        setViewingForm(foundForm);
+        setIsViewDrawerOpen(true);
+      }
+    }
+    // Only run once after forms load
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [displayDriverForms]);
 
   return (
     <DriversDashboardLayout title="Driver Forms" subtitle="Manage driver collection forms and deliveries">

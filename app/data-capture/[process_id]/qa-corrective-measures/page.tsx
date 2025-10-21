@@ -23,6 +23,7 @@ import { toast } from "sonner"
 import { TableFilters } from "@/lib/types"
 import { QACorrectiveAction } from "@/lib/api/data-capture-forms"
 import ContentSkeleton from "@/components/ui/content-skeleton"
+import { useRouter, useSearchParams } from "next/navigation"
 
 interface QACorrectiveMeasuresPageProps {
   params: {
@@ -62,12 +63,29 @@ export default function QACorrectiveMeasuresPage({ params }: QACorrectiveMeasure
   
   // Drawer states
   const [formDrawerOpen, setFormDrawerOpen] = useState(false)
-  const [viewDrawerOpen, setViewDrawerOpen] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   
   // Selected action and mode
   const [selectedAction, setSelectedAction] = useState<QACorrectiveAction | null>(null)
   const [formMode, setFormMode] = useState<"create" | "edit">("create")
+  const [forms, setForms] = useState<any[]>([])
+  const [viewDrawerOpen, setViewDrawerOpen] = useState(false)
+  const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+
+  // --- Helper: open view drawer if form_id query param is present ---
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!isInitialized || !actions || actions.length === 0) return;
+    const formId = searchParams?.get("form_id");
+    if (formId) {
+      const foundAction = actions.find((action: any) => String(action.id) === String(formId));
+      if (foundAction) {
+        setSelectedAction(foundAction);
+        setViewDrawerOpen(true);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isInitialized, actions]);
 
   // Filter fields configuration for QA Corrective Actions
   const filterFields = useMemo(() => [

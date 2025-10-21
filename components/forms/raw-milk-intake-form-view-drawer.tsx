@@ -426,7 +426,7 @@ export function RawMilkIntakeFormViewDrawer({
                               </div>
                               <div className="flex items-center justify-between">
                                 <span className="text-sm font-light text-gray-600">Current Volume</span>
-                                <span className="text-sm font-light text-blue-600">{silo.milk_volume.toLocaleString()}L</span>
+                                <span className="text-sm font-light text-blue-600">{silo?.milk_volume?.toLocaleString()}L</span>
                               </div>
                               <div className="flex items-center justify-between">
                                 <span className="text-sm font-light text-gray-600">Expected New</span>

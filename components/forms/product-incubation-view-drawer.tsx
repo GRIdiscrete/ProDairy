@@ -7,6 +7,11 @@ import { Button } from "@/components/ui/button"
 import { ProductIncubation } from "@/lib/api/data-capture-forms"
 import { format } from "date-fns"
 import { TestTube, FileText, Clock, TrendingUp, ArrowRight, Package } from "lucide-react"
+import { RootState, useAppSelector, useAppDispatch } from "@/lib/store"
+import { FormIdCopy } from "@/components/ui/form-id-copy"
+import { UserAvatar } from "@/components/ui/user-avatar"
+import { useEffect, useState } from "react"
+import { fetchUsers } from "@/lib/store/slices/usersSlice"
 
 interface ProductIncubationViewDrawerProps {
   open: boolean
@@ -23,7 +28,23 @@ export function ProductIncubationViewDrawer({
 }: ProductIncubationViewDrawerProps) {
   if (!incubation) return null
 
-  const approver = incubation.product_incubation_approved_by_fkey
+  const dispatch = useAppDispatch()
+  useEffect(() => {
+    if (open) {
+      dispatch(fetchUsers({}))
+    }
+  }, [open, dispatch])
+  
+  // batch is now a single object on incubation.batch
+  const batch = incubation.batch || null
+  const { items: users } = useAppSelector((state: RootState) => state.users)
+  const productionPlans = useAppSelector((s:any) => s.productionPlan?.productionPlans || [])
+  const approverUser = batch?.approver_id ? users.find((u:any) => u.id === batch.approver_id) : null
+  const scientistUser = batch?.scientist_id ? users.find((u:any) => u.id === batch.scientist_id) : null
+  const productionPlan = incubation.production_plan_id ? productionPlans.find((p:any) => p.id === incubation.production_plan_id) : null
+
+  // toggle for showing more production plan info
+  const [planOpen, setPlanOpen] = useState(false)
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -83,21 +104,21 @@ export function ProductIncubationViewDrawer({
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <span className="text-xs font-light text-gray-500">Product Description</span>
-                  <p className="text-sm font-light">
-                    {incubation.product_description && incubation.product_description.length > 20 ? 'N/A' : (incubation.product_description || 'N/A')}
-                  </p>
+                  <span className="text-xs font-light text-gray-500">Tag / Form</span>
+                  <div className="mt-1">
+                    {incubation.tag ? <FormIdCopy displayId={incubation.tag} actualId={incubation.id} size="sm" /> : <p className="text-sm font-light">{incubation.id}</p>}
+                  </div>
                 </div>
                 <div>
                   <span className="text-xs font-light text-gray-500">Batch Number</span>
-                  <p className="text-sm font-light">{incubation.bn}</p>
+                  <p className="text-sm font-light">{batch?.batch_number ?? 'N/A'}</p>
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <span className="text-xs font-light text-gray-500">Incubation Days</span>
-                  <p className="text-sm font-light">{incubation.incubation_days} days</p>
+                  <p className="text-sm font-light">{batch?.days ?? 'N/A'} days</p>
                 </div>
                 <div>
                   <span className="text-xs font-light text-gray-500">Created At</span>
@@ -122,15 +143,15 @@ export function ProductIncubationViewDrawer({
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <span className="text-xs font-light text-gray-500">Manufacturing Date (MNF)</span>
+                  <span className="text-xs font-light text-gray-500">Manufacturing Date</span>
                   <p className="text-sm font-light">
-                    {incubation.mnf ? format(new Date(incubation.mnf), "PPP") : "N/A"}
+                    {batch?.manufacture_date ? format(new Date(batch.manufacture_date), "PPP") : "N/A"}
                   </p>
                 </div>
                 <div>
-                  <span className="text-xs font-light text-gray-500">Best Before (BB)</span>
+                  <span className="text-xs font-light text-gray-500">Best Before</span>
                   <p className="text-sm font-light">
-                    {incubation.bb ? format(new Date(incubation.bb), "PPP") : "N/A"}
+                    {batch?.best_before_date ? format(new Date(batch.best_before_date), "PPP") : "N/A"}
                   </p>
                 </div>
               </div>
@@ -150,22 +171,16 @@ export function ProductIncubationViewDrawer({
             <CardContent className="space-y-4">
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <span className="text-xs font-light text-gray-500">Date In</span>
-                  <p className="text-sm font-light">
-                    {incubation.date_in ? format(new Date(incubation.date_in), "PPP") : "N/A"}
-                  </p>
+                  <span className="text-xs font-light text-gray-500">Time In</span>
+                  <p className="text-sm font-light">{batch?.time_in ? (batch.time_in.match(/^(\d{1,2}:\d{2})(?::\d{2})?$/) ? batch.time_in.substring(0,5) : batch.time_in) : 'N/A'}</p>
                 </div>
                 <div>
-                  <span className="text-xs font-light text-gray-500">Expected Date Out</span>
-                  <p className="text-sm font-light">
-                    {incubation.expected_date_out ? format(new Date(incubation.expected_date_out), "PPP") : "N/A"}
-                  </p>
+                  <span className="text-xs font-light text-gray-500">Expected Time Out</span>
+                  <p className="text-sm font-light">{batch?.expected_time_out ? (batch.expected_time_out.match(/^(\d{1,2}:\d{2})(?::\d{2})?$/) ? batch.expected_time_out.substring(0,5) : batch.expected_time_out) : 'N/A'}</p>
                 </div>
                 <div>
-                  <span className="text-xs font-light text-gray-500">Actual Date Out</span>
-                  <p className="text-sm font-light">
-                    {incubation.actual_date_out ? format(new Date(incubation.actual_date_out), "PPP") : "N/A"}
-                  </p>
+                  <span className="text-xs font-light text-gray-500">Actual Time Out</span>
+                  <p className="text-sm font-light">{batch?.actual_time_out ? (batch.actual_time_out.match(/^(\d{1,2}:\d{2})(?::\d{2})?$/) ? batch.actual_time_out.substring(0,5) : batch.actual_time_out) : 'N/A'}</p>
                 </div>
               </div>
             </CardContent>
@@ -182,54 +197,83 @@ export function ProductIncubationViewDrawer({
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              {approver ? (
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-light text-gray-500">Role</span>
-                    <span className="text-xs font-light">{approver.role_name}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-light text-gray-500">User Operations</span>
-                    <span className="text-xs font-light">{approver.user_operations?.length || 0}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-light text-gray-500">Process Operations</span>
-                    <span className="text-xs font-light">{approver.process_operations?.length || 0}</span>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-light text-gray-500">Scientist</span>
+                  <div>
+                    {scientistUser ? (
+                      <UserAvatar user={scientistUser} size="md" showName={true} showEmail={true} showDropdown={true} />
+                    ) : (
+                      <span className="text-xs font-light">{batch?.scientist_id ? batch.scientist_id.slice(0,8) : 'N/A'}</span>
+                    )}
                   </div>
                 </div>
-              ) : (
-                <p className="text-sm text-gray-400">No approval details available</p>
-              )}
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-light text-gray-500">Approver</span>
+                  <div>
+                    {approverUser ? (
+                      <UserAvatar user={approverUser} size="md" showName={true} showEmail={true} showDropdown={true} />
+                    ) : (
+                      <span className="text-xs font-light">{batch?.approver_id ? batch.approver_id.slice(0,8) : 'N/A'}</span>
+                    )}
+                  </div>
+                </div>
+              </div>
             </CardContent>
           </Card>
 
-          {/* Metadata */}
-          <Card className="shadow-none border border-gray-200 rounded-lg">
-            <CardHeader className="pb-4">
-              <div className="flex items-center space-x-2">
-                <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center">
-                  <FileText className="h-4 w-4 text-gray-600" />
+          {/* Production Plan Info - custom toggle to show more details */}
+          {productionPlan && (
+            <Card className="shadow-none border border-gray-200 rounded-lg">
+              <CardHeader className="pb-4 flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center">
+                    <Package className="h-4 w-4 text-gray-600" />
+                  </div>
+                  <CardTitle className="text-base font-light">Production Plan</CardTitle>
                 </div>
-                <CardTitle className="text-base font-light">Record Information</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+                <Button size="sm" variant="outline" onClick={() => setPlanOpen(p => !p)}>
+                  {planOpen ? "Hide Plan" : "View Plan"}
+                </Button>
+              </CardHeader>
+              <CardContent className="space-y-4">
                 <div>
-                  <span className="text-xs font-light text-gray-500">Created</span>
-                  <p className="text-sm font-light">
-                    {incubation.created_at ? format(new Date(incubation.created_at), "PPP 'at' p") : "N/A"}
-                  </p>
+                  <span className="text-xs font-light text-gray-500">Plan</span>
+                  <p className="text-sm font-light">{productionPlan.tag || productionPlan.name || productionPlan.id}</p>
                 </div>
-                <div>
-                  <span className="text-xs font-light text-gray-500">Updated</span>
-                  <p className="text-sm font-light">
-                    {incubation.updated_at ? format(new Date(incubation.updated_at), "PPP 'at' p") : "Never updated"}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+
+                {planOpen && (
+                  <div className="mt-4 space-y-2 bg-gray-50 p-4 rounded-md">
+                    <div>
+                      <span className="text-xs text-gray-500">Description</span>
+                      <p className="text-sm">{productionPlan.description ?? "No description available"}</p>
+                    </div>
+                    {productionPlan.start_date && (
+                      <div>
+                        <span className="text-xs text-gray-500">Start</span>
+                        <p className="text-sm">{format(new Date(productionPlan.start_date), "PPP")}</p>
+                      </div>
+                    )}
+                    {productionPlan.end_date && (
+                      <div>
+                        <span className="text-xs text-gray-500">End</span>
+                        <p className="text-sm">{format(new Date(productionPlan.end_date), "PPP")}</p>
+                      </div>
+                    )}
+                    {/* render any additional plan metadata if present */}
+                    {productionPlan.items && Array.isArray(productionPlan.items) && (
+                      <div>
+                        <span className="text-xs text-gray-500">Items</span>
+                        <ul className="text-sm list-disc ml-5">
+                          {productionPlan.items.slice(0,5).map((it:any, idx:number) => <li key={idx}>{it.name ?? it.id ?? JSON.stringify(it)}</li>)}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
         </div>
 
         <div className="flex items-center justify-between p-6 pt-0 border-t bg-white">

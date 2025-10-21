@@ -29,13 +29,14 @@ export type DriverFormLabTestFormData = yup.InferType<typeof schema>
 interface Props {
   open: boolean
   onOpenChange: (open: boolean) => void
-  driversFormId: string
+  collectedProductId: string
+  collectedProduct?: any,
   mode: "create" | "edit"
   existingId?: string
   existingData?: any
 }
 
-export function DriverFormLabTestDrawer({ open, onOpenChange, driversFormId, mode, existingId, existingData }: Props) {
+export function DriverFormLabTestDrawer({ open, onOpenChange, collectedProductId, mode, existingId, existingData, collectedProduct }: Props) {
   const dispatch = useAppDispatch()
   const { operationLoading } = useAppSelector((s) => (s as any).driverFormLabTests)
 
@@ -82,16 +83,16 @@ export function DriverFormLabTestDrawer({ open, onOpenChange, driversFormId, mod
   const onSubmit = async (data: DriverFormLabTestFormData) => {
     try {
       if (mode === "edit" && existingId) {
-        await dispatch(updateDriverFormLabTest({ 
-          id: existingId, 
-          drivers_form_id: driversFormId, 
-          ...data 
+        await dispatch(updateDriverFormLabTest({
+          id: existingId,
+          collected_product_id: collectedProductId,
+          ...data
         })).unwrap()
         toast.success("Milk Test updated")
       } else {
-        await dispatch(createDriverFormLabTest({ 
-          drivers_form_id: driversFormId, 
-          ...data 
+        await dispatch(createDriverFormLabTest({
+          collected_product_id: collectedProductId,
+          ...data
         })).unwrap()
         toast.success("Milk Test created")
       }
@@ -129,12 +130,12 @@ export function DriverFormLabTestDrawer({ open, onOpenChange, driversFormId, mod
           <div className="space-y-2">
             <Label>Alcohol</Label>
             <Controller name="alcohol" control={form.control} render={({ field }) => (
-              <Input 
-                type="number" 
-                step="0.01" 
-                placeholder="e.g., 22" 
-                {...field} 
-                value={field.value || ""} 
+              <Input
+                type="number"
+                step="0.01"
+                placeholder="e.g., 22"
+                {...field}
+                value={field.value || ""}
                 onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : null)}
               />
             )} />
