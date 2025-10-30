@@ -36,7 +36,11 @@ import { useRouter, useSearchParams } from "next/navigation"
 
 export default function RawMilkIntakePage() {
   const dispatch = useAppDispatch()
-  const { forms, loading, error, operationLoading, isInitialized } = useAppSelector((state) => state.rawMilkIntake)
+  const { 
+    rawMilkIntakeForms, 
+    operationLoading,
+    error 
+  } = useAppSelector((state) => state.rawMilkIntake)
   const { items: users } = useAppSelector((state: RootState) => state.users)
   const { silos } = useAppSelector((state: RootState) => state.silo)
   const { driverForms } = useAppSelector((state: RootState) => state.driverForm)
@@ -82,7 +86,7 @@ export default function RawMilkIntakePage() {
 
   // Load raw milk intake forms and related data on initial mount
   useEffect(() => {
-    if (!isInitialized && !hasFetchedRef.current) {
+    if (!hasFetchedRef.current) {
       hasFetchedRef.current = true
       dispatch(fetchRawMilkIntakeForms())
       dispatch(fetchUsers({})) // Load users for operator information
@@ -90,22 +94,14 @@ export default function RawMilkIntakePage() {
       dispatch(fetchDriverForms({})) // Load driver forms for reference
       dispatch(fetchSuppliers({})) // Load suppliers for sample information
     }
-  }, [dispatch, isInitialized])
+  }, [dispatch])
 
   // Handle filter changes
   useEffect(() => {
-    if (isInitialized && Object.keys(tableFilters).length > 0) {
+    if (Object.keys(tableFilters).length > 0) {
       dispatch(fetchRawMilkIntakeForms())
     }
-  }, [dispatch, tableFilters, isInitialized])
-
-  // Handle errors with toast notifications
-  useEffect(() => {
-    if (error) {
-      toast.error(error)
-      dispatch(clearError())
-    }
-  }, [error, dispatch])
+  }, [dispatch, tableFilters])
 
   // Drawer states
   const [formDrawerOpen, setFormDrawerOpen] = useState(false)
@@ -181,7 +177,7 @@ export default function RawMilkIntakePage() {
   }
 
   // Get latest form for display
-  const latestForm = Array.isArray(forms) && forms.length > 0 ? forms[0] : null
+  const latestForm = Array.isArray(rawMilkIntakeForms) && rawMilkIntakeForms.length > 0 ? rawMilkIntakeForms[0] : null
 
   // Table columns with actions
   const columns = [
@@ -209,9 +205,7 @@ export default function RawMilkIntakePage() {
                     ? Number(form.quantity_received).toFixed(4)
                     : "0.0000"}L
                 </Badge>
-                <span className="text-xs text-gray-500">
-                  {(form as any).raw_milk_intake_form_samples?.length || 0} samples
-                </span>
+               
               </div>
             </div>
           </div>
@@ -386,15 +380,15 @@ export default function RawMilkIntakePage() {
   useEffect(() => {
     if (typeof window === "undefined") return;
     const formId = searchParams?.get("form_id");
-    if (formId && forms && forms.length > 0) {
-      const foundForm = forms.find((form: any) => String(form.id) === String(formId));
+    if (formId && rawMilkIntakeForms && rawMilkIntakeForms.length > 0) {
+      const foundForm = rawMilkIntakeForms.find((form: any) => String(form.id) === String(formId));
       if (foundForm) {
         setSelectedForm(foundForm);
         setViewDrawerOpen(true);
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [forms]);
+  }, [rawMilkIntakeForms]);
 
   return (
     <DataCaptureDashboardLayout title="Raw Milk Intake" subtitle="Raw milk intake control and monitoring">
@@ -414,7 +408,7 @@ export default function RawMilkIntakePage() {
         </div>
 
         {/* Current Form Details */}
-        {loading ? (
+        {operationLoading.fetch ? (
           <ContentSkeleton sections={1} cardsPerSection={4} />
         ) : latestForm ? (
           <div className="border border-gray-200 rounded-lg bg-white border-l-4 border-l-blue-500">
@@ -472,13 +466,7 @@ export default function RawMilkIntakePage() {
                     year: 'numeric'
                   })}</p>
                 </div>
-                <div className="space-y-2">
-                  <div className="flex items-center space-x-2">
-                    <TrendingUp className="h-4 w-4 text-green-500" />
-                    <p className="text-sm font-light text-gray-600">Samples</p>
-                  </div>
-                  <p className="text-lg font-light text-green-600">{(latestForm as any).raw_milk_intake_form_samples?.length || 0} samples</p>
-                </div>
+              
               </div>
 
               {/* Driver Form, Operator, and Silo Details */}
@@ -611,7 +599,7 @@ export default function RawMilkIntakePage() {
 
 
         {/* Data Table */}
-        {!loading && (
+        {!operationLoading.fetch && (
           <div className="border border-gray-200 rounded-lg bg-white">
             <div className="p-6 pb-0">
               <div className="text-lg font-light">Raw Milk Intake Forms</div>
@@ -625,10 +613,19 @@ export default function RawMilkIntakePage() {
                 filterFields={filterFields}
               />
 
-              {loading ? (
+              {operationLoading.fetch ? (
                 <ContentSkeleton sections={1} cardsPerSection={4} />
               ) : (
-                <DataTable columns={columns} data={forms} showSearch={false} />
+                <DataTable 
+                  columns={columns} 
+                  data={rawMilkIntakeForms} 
+                  loading={operationLoading.fetch}
+                  error={error}
+                  onRowClick={(row) => {
+                    setSelectedForm(row)
+                    setOpen(true)
+                  }}
+                />
               )}
             </div>
           </div>

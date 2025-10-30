@@ -150,7 +150,7 @@ export interface PasteurizingFormsResponse {
   data: PasteurizingForm[]
 }
 
-const BASE_URL = "https://ckwkcg0o80cckkg0oog8okk8.greatssystems.co.zw"
+const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://assc4gos404g88scso8go4oc.102.218.14.210.sslip.io"
 
 export const pasteurizingApi = {
   // Get all pasteurizing forms

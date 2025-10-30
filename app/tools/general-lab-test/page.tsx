@@ -6,7 +6,7 @@ import { LoadingButton } from "@/components/ui/loading-button"
 import { DataTable } from "@/components/ui/data-table"
 import { DataTableFilters } from "@/components/ui/data-table-filters"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Eye, Edit, Trash2, Beaker, TrendingUp, FileText, Clock, Package, User } from "lucide-react"
+import { Plus, Eye, Edit, Trash2, Beaker, TrendingUp, FileText, Clock, Package, User, Download } from "lucide-react"
 import { CopyButton } from "@/components/ui/copy-button"
 
 import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-dialog"
@@ -26,6 +26,9 @@ import { GeneralLabTestDrawer } from "@/components/forms/general-lab-test-drawer
 import { GeneralLabTestViewDrawer } from "@/components/forms/general-lab-test-view-drawer"
 import { fetchUsers } from "@/lib/store/slices/usersSlice"
 import { useRouter, useSearchParams } from "next/navigation"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Button } from "@/components/ui/button"
+import { MoreHorizontal } from "lucide-react"
 
 export default function GeneralLabTestPage() {
   const dispatch = useAppDispatch()
@@ -172,6 +175,54 @@ export default function GeneralLabTestPage() {
     } catch (error: any) {}
   }
 
+  const handleExportCSV = () => {
+    if (!tests.length) return
+
+    const formatDate = (date: string) => {
+      return new Date(date).toLocaleString('en-GB', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      }).replace(/[/,:]/g, '-')
+    }
+
+    const formatData = tests.map(test => ({
+      "Test ID": generateLabTestId(test.created_at),
+      "Source Silo": getSiloById(test.source_silo)?.name || test.source_silo,
+      "Analyst": getUserById(test.analyst)?.first_name || test.analyst,
+      "Temperature (°C)": test.temperature || '',
+      "Fat (%)": test.fat || '',
+      "Protein (%)": test.protein || '',
+      "SNF (%)": test.snf || '',
+      "Total Solids (%)": test.ts || '',
+      "Density (g/ml)": test.density || '',
+      "pH": test.ph || '',
+      "Acidity": test.ta || '',
+      "Created Date": test.created_at ? new Date(test.created_at).toLocaleString() : '',
+    }))
+
+    const headers = Object.keys(formatData[0])
+    const csvContent = [
+      headers.join(','),
+      ...formatData.map(row => headers.map(header => `"${row[header]}"`).join(','))
+    ].join('\n')
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const link = document.createElement('a')
+    const url = URL.createObjectURL(blob)
+    const currentDateTime = formatDate(new Date().toISOString())
+    
+    link.setAttribute('href', url)
+    link.setAttribute('download', `lab-tests-export-${currentDateTime}.csv`)
+    link.style.visibility = 'hidden'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+
   const columns = [
     {
       accessorKey: "id",
@@ -194,7 +245,10 @@ export default function GeneralLabTestPage() {
         const test = row.original
         const silo = getSiloById(test.source_silo)
         return (
-          <span className="text-sm font-light">{silo?.name || test.source_silo || "N/A"}</span>
+          <div className="flex flex-col">
+            <span className="text-sm font-medium">{silo?.name || test.source_silo || "N/A"}</span>
+            <span className="text-xs text-gray-500">{silo?.location || ""}</span>
+          </div>
         )
       },
     },
@@ -205,7 +259,7 @@ export default function GeneralLabTestPage() {
         const test = row.original
         const analyst = getUserById(test.analyst)
         return analyst ? (
-          <UserAvatar user={analyst} size="sm" showName={true} showEmail={false} />
+          <UserAvatar user={analyst} size="sm" showName={true} showEmail={true} showDropdown={true} />
         ) : (
           <span className="text-sm font-light">{test.analyst || "N/A"}</span>
         )
@@ -217,9 +271,14 @@ export default function GeneralLabTestPage() {
       cell: ({ row }: any) => {
         const test = row.original
         return (
-          <span className="text-sm font-light">
-            {test.created_at ? new Date(test.created_at).toLocaleDateString() : 'N/A'}
-          </span>
+          <div className="flex flex-col">
+            <span className="text-sm font-medium">
+              {test.created_at ? new Date(test.created_at).toLocaleDateString() : 'N/A'}
+            </span>
+            <span className="text-xs text-gray-500">
+              {test.created_at ? new Date(test.created_at).toLocaleTimeString() : ''}
+            </span>
+          </div>
         )
       },
     },
@@ -272,13 +331,24 @@ export default function GeneralLabTestPage() {
             <h1 className="text-3xl font-light text-foreground">General Lab Tests</h1>
             <p className="text-sm font-light text-muted-foreground">Manage general milk lab test records</p>
           </div>
-          <LoadingButton 
-            onClick={handleAddTest}
-            className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full px-6 py-2 font-light"
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Add Lab Test
-          </LoadingButton>
+          <div className="flex items-center gap-2">
+            <LoadingButton 
+              variant="outline"
+              onClick={handleExportCSV}
+              disabled={!tests.length}
+              className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 rounded-full px-6 py-2 font-light"
+            >
+              <Download className="mr-2 h-4 w-4" />
+              Export CSV
+            </LoadingButton>
+            <LoadingButton 
+              onClick={handleAddTest}
+              className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full px-6 py-2 font-light"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Add Lab Test
+            </LoadingButton>
+          </div>
         </div>
 
         {/* Current Test Details */}
@@ -311,31 +381,65 @@ export default function GeneralLabTestPage() {
               </div>
             </div>
             <div className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="space-y-2">
-                  <div className="flex items-center space-x-2">
-                    <Beaker className="h-4 w-4 text-blue-500" />
-                    <p className="text-sm font-light text-gray-600">Source Silo</p>
+              <div className="grid grid-cols-1 gap-6">
+                {/* Test Overview */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <Beaker className="h-4 w-4 text-blue-500" />
+                      <p className="text-sm font-light text-gray-600">Source Silo</p>
+                    </div>
+                    <p className="text-lg font-light text-blue-600">{getSiloById(latestTest.source_silo)?.name || latestTest.source_silo || "N/A"}</p>
                   </div>
-                  <p className="text-lg font-light text-blue-600">{getSiloById(latestTest.source_silo)?.name || latestTest.source_silo || "N/A"}</p>
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <TrendingUp className="h-4 w-4 text-green-500" />
+                      <p className="text-sm font-light text-gray-600">Analyst</p>
+                    </div>
+                    <p className="text-lg font-light text-green-600">{getUserById(latestTest.analyst)?.first_name || "N/A"}</p>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <Clock className="h-4 w-4 text-gray-500" />
+                      <p className="text-sm font-light text-gray-600">Created</p>
+                    </div>
+                    <p className="text-lg font-light">{latestTest.created_at ? new Date(latestTest.created_at).toLocaleDateString('en-GB', { 
+                      day: 'numeric', 
+                      month: 'long', 
+                      year: 'numeric' 
+                    }) : 'N/A'}</p>
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <div className="flex items-center space-x-2">
-                    <TrendingUp className="h-4 w-4 text-green-500" />
-                    <p className="text-sm font-light text-gray-600">Analyst</p>
+
+                {/* Basic Parameters */}
+                <div className="border-t pt-4">
+                  <h3 className="text-sm font-medium text-gray-600 mb-4">Basic Parameters</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
+                    <div className="bg-gray-50 p-3 rounded-lg">
+                      <p className="text-sm text-gray-600 mb-1">Temperature</p>
+                      <p className="text-lg font-medium">{latestTest.temperature || '0'} °C</p>
+                    </div>
+                    <div className="bg-gray-50 p-3 rounded-lg">
+                      <p className="text-sm text-gray-600 mb-1">Fat</p>
+                      <p className="text-lg font-medium">{latestTest.fat || '0'} %</p>
+                    </div>
+                    <div className="bg-gray-50 p-3 rounded-lg">
+                      <p className="text-sm text-gray-600 mb-1">Protein</p>
+                      <p className="text-lg font-medium">{latestTest.protein || '0'} %</p>
+                    </div>
+                    <div className="bg-gray-50 p-3 rounded-lg">
+                      <p className="text-sm text-gray-600 mb-1">SNF</p>
+                      <p className="text-lg font-medium">{latestTest.snf || '0'} %</p>
+                    </div>
+                    <div className="bg-gray-50 p-3 rounded-lg">
+                      <p className="text-sm text-gray-600 mb-1">Total Solids</p>
+                      <p className="text-lg font-medium">{latestTest.ts || '0'} %</p>
+                    </div>
+                    <div className="bg-gray-50 p-3 rounded-lg">
+                      <p className="text-sm text-gray-600 mb-1">Density</p>
+                      <p className="text-lg font-medium">{latestTest.density || '0'} g/ml</p>
+                    </div>
                   </div>
-                  <p className="text-lg font-light text-green-600">{getUserById(latestTest.analyst)?.first_name || "N/A"}</p>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-center space-x-2">
-                    <Clock className="h-4 w-4 text-gray-500" />
-                    <p className="text-sm font-light text-gray-600">Created</p>
-                  </div>
-                  <p className="text-lg font-light">{latestTest.created_at ? new Date(latestTest.created_at).toLocaleDateString('en-GB', { 
-                    day: 'numeric', 
-                    month: 'long', 
-                    year: 'numeric' 
-                  }) : 'N/A'}</p>
                 </div>
               </div>
             </div>

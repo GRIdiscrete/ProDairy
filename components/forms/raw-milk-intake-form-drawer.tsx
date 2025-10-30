@@ -33,7 +33,8 @@ import {
 import { useAppDispatch, useAppSelector } from "@/lib/store"
 import {
   createRawMilkIntakeForm,
-  updateRawMilkIntakeForm
+  updateRawMilkIntakeForm,
+  fetchRawMilkIntakeForms
 } from "@/lib/store/slices/rawMilkIntakeSlice"
 import {
   fetchDriverForms
@@ -96,14 +97,8 @@ const rawMilkIntakeFormSchema = yup.object({
   destination_silo_name: yup.string().required("Destination silo name is required"),
   operator_id: yup.string().required("Operator ID is required"),
   operator_signature: yup.string().required("Operator signature is required"),
-  status: yup.string().oneOf(["draft", "pending", "final"]).required("Status is required"),
-  raw_milk_intake_form_samples: yup.array().of(
-    yup.object({
-      supplier_id: yup.string().required("Supplier is required"),
-      unit_of_measure: yup.string().required("Unit of measure is required"),
-      amount_collected: yup.number().required("Amount is required").min(0.1, "Amount must be greater than 0"),
-    })
-  ).optional().default([]),
+  status: yup.string().oneOf(["Draft", "Pending", "Final"]).required("Status is required"),
+  quantity_received: yup.number().required("Quantity is required").min(0.1, "Quantity must be greater than 0"),
 })
 
 type RawMilkIntakeFormData = yup.InferType<typeof rawMilkIntakeFormSchema>
@@ -143,8 +138,8 @@ export function RawMilkIntakeFormDrawer({
       destination_silo_name: "",
       operator_id: user?.id || "",
       operator_signature: "",
-      status: "draft",
-      raw_milk_intake_form_samples: [],
+      status: "Draft",
+      quantity_received: undefined, // Remove default 0
     },
   })
 
@@ -236,8 +231,8 @@ export function RawMilkIntakeFormDrawer({
           destination_silo_name: form.destination_silo_name || "",
           operator_id: form.operator_id || user?.id || "",
           operator_signature: form.operator_signature,
-          status: form.status || "draft",
-          raw_milk_intake_form_samples: (form as any).raw_milk_intake_form_samples || [],
+          status: form.status || "Draft",
+          quantity_received: form.quantity_received || undefined, // Update this line
         })
       } else {
         formHook.reset({
@@ -246,8 +241,8 @@ export function RawMilkIntakeFormDrawer({
           destination_silo_name: "",
           operator_id: user?.id || "",
           operator_signature: "",
-          status: "draft",
-          raw_milk_intake_form_samples: [],
+          status: "Draft",
+          quantity_received: undefined, // Update this line
         })
       }
     }
@@ -257,57 +252,38 @@ export function RawMilkIntakeFormDrawer({
     try {
       const normalizedSignature = normalizeDataUrlToBase64(data.operator_signature)
 
-      let samplesWithAllFields = (data.raw_milk_intake_form_samples || []);
-      if (mode === "edit" && form && Array.isArray((form as any).raw_milk_intake_form_samples)) {
-        samplesWithAllFields = samplesWithAllFields.map((sample, idx) => {
-          const existing = (form as any).raw_milk_intake_form_samples[idx];
-          return {
-            // ...sample,
-            id: sample.id,
-            supplier_id: sample.supplier_id,
-            unit_of_measure: sample.unit_of_measure,
-            amount_collected: sample.amount_collected,
-            raw_milk_intake_form_id: form.id,
-            // lab_test_id: existing?.lab_test_id || sample.lab_test_id,
-          };
-        });
+      const formData = {
+        operator_id: data.operator_id,
+        operator_signature: normalizedSignature,
+        date: data.date,
+        quantity_received: Number(data.quantity_received),
+        drivers_form_id: data.drivers_form_id,
+        destination_silo_name: data.destination_silo_name,
+        status: data.status,
       }
 
-      const formData = mode === "edit" && form ? {
-        id: form.id,
-        operator_id: data.operator_id,
-        operator_signature: normalizedSignature,
-        date: data.date,
-        destination_silo_name: data.destination_silo_name,
-        drivers_form_id: data.drivers_form_id,
-        status: data.status,
-        raw_milk_intake_form_samples: Array.isArray(samplesWithAllFields) ? samplesWithAllFields : [],
-      } : {
-        operator_id: data.operator_id,
-        operator_signature: normalizedSignature,
-        date: data.date,
-        drivers_form_id: data.drivers_form_id,
-        destination_silo_name: data.destination_silo_name,
-        status: data.status,
-        raw_milk_intake_form_samples: samplesWithAllFields,
-      };
-
-      console.log("Form Data:", formData);
+      console.log('Submitting form data:', formData)
 
       if (mode === "edit" && form) {
-        await dispatch(updateRawMilkIntakeForm({
-          id: form.id,
-          formData
+        const result = await dispatch(updateRawMilkIntakeForm({
+          ...formData,
+          id: form.id
         })).unwrap()
+        console.log('Update response:', result)
         toast.success("Form updated successfully")
       } else {
-        await dispatch(createRawMilkIntakeForm(formData)).unwrap()
+        const result = await dispatch(createRawMilkIntakeForm(formData)).unwrap()
+        console.log('Create response:', result)
         toast.success("Form created successfully")
       }
 
+      // Fetch updated forms list
+      await dispatch(fetchRawMilkIntakeForms())
+      
       onOpenChange(false)
     } catch (error: any) {
-      toast.error(error || "Failed to save form")
+      console.error("Form submission error:", error)
+      toast.error(error?.message || "Failed to save form")
     }
   }
 
@@ -354,9 +330,9 @@ export function RawMilkIntakeFormDrawer({
                       <SelectValue placeholder="Select status" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="draft">Draft</SelectItem>
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="final">Final</SelectItem>
+                      <SelectItem value="Draft">Draft</SelectItem>
+                      <SelectItem value="Pending">Pending</SelectItem>
+                      <SelectItem value="Final">Final</SelectItem>
                     </SelectContent>
                   </Select>
                 )}
@@ -430,106 +406,31 @@ export function RawMilkIntakeFormDrawer({
           />
         </div>
 
-
-        {/* Samples Section */}
+        {/* Quantity Section */}
         <div className="space-y-4">
           <div className="text-center mb-6">
-            <h3 className="text-xl font-light text-gray-900">Sample Collection</h3>
-            <p className="text-sm font-light text-gray-600 mt-2">Add samples collected during raw milk intake</p>
+            <h3 className="text-xl font-light text-gray-900">Quantity Information</h3>
+            <p className="text-sm font-light text-gray-600 mt-2">Enter the total quantity of raw milk received</p>
           </div>
 
-          <div className="space-y-3">
-            {formHook.watch("raw_milk_intake_form_samples")?.map((sample, index) => (
-              <div key={index} className="p-4 border border-gray-200 rounded-lg bg-gray-50">
-                <div className="grid grid-cols-3 gap-3">
-                  <div className="space-y-2">
-                    <Label>Supplier *</Label>
-                    <Controller
-                      name={`raw_milk_intake_form_samples.${index}.supplier_id`}
-                      control={formHook.control}
-                      render={({ field }) => (
-                        <SearchableSelect
-                          options={suppliers.map(supplier => ({
-                            value: supplier.id,
-                            label: `${supplier.first_name} ${supplier.last_name}`,
-                            description: `${supplier.email} • ${supplier.raw_product}`
-                          }))}
-                          value={field.value}
-                          onValueChange={field.onChange}
-                          placeholder="Select supplier"
-                          searchPlaceholder="Search suppliers..."
-                          emptyMessage="No suppliers found"
-                        />
-                      )}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Unit of Measure *</Label>
-                    <Controller
-                      name={`raw_milk_intake_form_samples.${index}.unit_of_measure`}
-                      control={formHook.control}
-                      render={({ field }) => (
-                        <Select value={field.value} onValueChange={field.onChange}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select unit" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="liters">Liters</SelectItem>
-                            <SelectItem value="milliliters">Milliliters</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      )}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Amount *</Label>
-                    <div className="flex gap-2">
-                      <Controller
-                        name={`raw_milk_intake_form_samples.${index}.amount_collected`}
-                        control={formHook.control}
-                        render={({ field }) => (
-                          <Input
-                            type="number"
-                            step="0.1"
-                            placeholder="0.0"
-                            {...field}
-                            onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : 0)}
-                          />
-                        )}
-                      />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          const samples = formHook.getValues("raw_milk_intake_form_samples") || []
-                          formHook.setValue("raw_milk_intake_form_samples", samples.filter((_, i) => i !== index))
-                        }}
-                        className="text-red-600 hover:text-red-700"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => {
-                const samples = formHook.getValues("raw_milk_intake_form_samples") || []
-                formHook.setValue("raw_milk_intake_form_samples", [
-                  ...samples,
-                  { supplier_id: "", unit_of_measure: "liters", amount_collected: 0 }
-                ])
-              }}
-              className="w-full border-dashed"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Add Sample
-            </Button>
+          <div className="space-y-2">
+            <Label>Quantity Received (L) *</Label>
+            <Controller
+              name="quantity_received"
+              control={formHook.control}
+              render={({ field: { onChange, value } }) => (
+                <Input
+                  type="number"
+                  step="0.1"
+                  placeholder="Enter quantity"
+                  value={value || ''} // Use empty string when value is undefined
+                  onChange={(e) => onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
+                />
+              )}
+            />
+            {formHook.formState.errors.quantity_received && (
+              <p className="text-sm text-red-500">{formHook.formState.errors.quantity_received.message}</p>
+            )}
           </div>
         </div>
 

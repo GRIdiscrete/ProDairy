@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { LoadingButton } from "@/components/ui/loading-button"
 import { CopyButton } from "@/components/ui/copy-button"
-import { Droplets, Truck, User, Package, Clock, Calendar, FileText, Beaker, Edit, Trash2, ArrowRight, Play, RotateCcw, TrendingUp, Building2 } from "lucide-react"
+import { Droplets, Truck, User, Package, Clock, Calendar, FileText, Beaker, Edit, Trash2, ArrowRight, Play, RotateCcw, TrendingUp, Building2, Download } from "lucide-react"
 import { format } from "date-fns"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useAppDispatch, useAppSelector } from "@/lib/store"
@@ -116,6 +116,62 @@ export function RawMilkIntakeFormViewDrawer({
   const resetAnimation = () => {
     setIsAnimating(false)
     setAnimationProgress(0)
+  }
+
+  const handleExportLabTestCSV = () => {
+    if (!currentResultSlip) return
+
+    const formatDate = (date: string) => {
+      return new Date(date).toLocaleString('en-GB', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      }).replace(/[/,:]/g, '-')
+    }
+
+    const formatTestData = currentResultSlip.raw_milk_result_slip_details.map((detail: any, index: number) => ({
+      "Test No.": index + 1,
+      "Temperature (°C)": detail.temperature || '',
+      "Time": detail.time || '',
+      "OT": detail.ot || '',
+      "COB": detail.cob ? 'Yes' : 'No',
+      "Alcohol": detail.alcohol || '',
+      "Acidity": detail.titrable_acidity || '',
+      "pH": detail.ph || '',
+      "Resazurin": detail.resazurin || '',
+      "Fat (%)": detail.fat || '',
+      "Protein (%)": detail.protein || '',
+      "LR SNF": detail.lr_snf || '',
+      "Total Solids (%)": detail.total_solids || '',
+      "FPD": detail.fpd || '',
+      "SCC": detail.scc || '',
+      "Density (g/ml)": detail.density || '',
+      "Antibiotics": detail.antibiotics ? 'Yes' : 'No',
+      "Starch": detail.starch ? 'Yes' : 'No',
+      "Silo": getSiloById(detail.silo)?.name || detail.silo || '',
+      "Remark": detail.remark || ''
+    }))
+
+    const headers = Object.keys(formatTestData[0])
+    const csvContent = [
+      headers.join(','),
+      ...formatTestData.map(row => headers.map(header => `"${row[header]}"`).join(','))
+    ].join('\n')
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const link = document.createElement('a')
+    const url = URL.createObjectURL(blob)
+    const currentDateTime = formatDate(new Date().toISOString())
+    
+    link.setAttribute('href', url)
+    link.setAttribute('download', `raw-milk-intake-test-${form?.tag || ''}-${currentDateTime}.csv`)
+    link.style.visibility = 'hidden'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
   }
 
   return (
@@ -468,93 +524,6 @@ export function RawMilkIntakeFormViewDrawer({
                   </div>
                 )}
 
-                {/* Samples Information */}
-                <div className="p-6 bg-white border border-gray-200 rounded-lg lg:col-span-2">
-                  <div className="flex items-center space-x-2 mb-4">
-                    <div className="w-6 h-6 rounded-full bg-orange-100 flex items-center justify-center">
-                      <Beaker className="w-4 h-4 text-orange-600" />
-                    </div>
-                    <h3 className="text-lg font-light">Samples Information</h3>
-                  </div>
-                  <div className="space-y-3">
-                    {(() => {
-                      // Use only raw_milk_intake_form_samples
-                      const rawMilkSamples = (form as any).raw_milk_intake_form_samples || []
-
-                      if (rawMilkSamples.length > 0) {
-                        return (
-                          <div className="space-y-3">
-                            <div className="text-sm font-light text-gray-600 mb-3">
-                              Total Samples: {rawMilkSamples.length}
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                              {rawMilkSamples.map((sample: any, index: number) => (
-                                <div key={index} className="p-3 bg-gray-50 rounded-lg">
-                                  <div className="space-y-3">
-                                    <div className="flex items-center justify-between">
-                                      <span className="text-xs text-gray-600">Serial No.</span>
-                                      <span className="text-xs font-light">{sample.serial_no || 'N/A'}</span>
-                                    </div>
-                                    <div className="flex items-center justify-between">
-                                      <span className="text-xs text-gray-600">Amount</span>
-                                      <span className="text-xs font-light">
-                                        {sample.amount_collected || sample.amount || 0} {sample.unit_of_measure || 'L'}
-                                      </span>
-                                    </div>
-                                    {sample.supplier_id && (
-                                      <div className="space-y-2">
-                                        <span className="text-xs text-gray-600">Supplier</span>
-                                        {(() => {
-                                          const supplier = getSupplierById(sample.supplier_id)
-
-                                          if (supplier) {
-                                            return (
-                                              <SupplierAvatar
-                                                supplier={supplier}
-                                                size="sm"
-                                                showName={true}
-                                                showEmail={false}
-                                                showDropdown={true}
-                                              />
-                                            )
-                                          } else {
-                                            return (
-                                              <div className="flex items-center space-x-2">
-                                                <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center">
-                                                  <Building2 className="w-3 h-3 text-gray-500" />
-                                                </div>
-                                                <div>
-                                                  <div className="text-xs font-light text-gray-400">Unknown Supplier</div>
-                                                  <div className="text-xs text-gray-500">#{sample.supplier_id.slice(0, 8)}</div>
-                                                </div>
-                                              </div>
-                                            )
-                                          }
-                                        })()}
-                                      </div>
-                                    )}
-                                    <div className="flex items-center justify-between">
-                                      <span className="text-xs text-gray-600">Source</span>
-                                      <span className="text-xs font-light text-blue-600">
-                                        Form Sample
-                                      </span>
-                                    </div>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )
-                      } else {
-                        return (
-                          <div className="text-sm text-gray-500 text-center py-4">
-                            No samples collected for this intake form
-                          </div>
-                        )
-                      }
-                    })()}
-                  </div>
-                </div>
 
               </div>
 
@@ -588,15 +557,27 @@ export function RawMilkIntakeFormViewDrawer({
                         <Badge className="text-xs bg-blue-100 text-blue-800">
                           Completed
                         </Badge>
-                        <LoadingButton size="sm" variant="outline" className="rounded-full"
-                          onClick={() => { setResultSlipMode("edit"); setResultSlipExistingId(currentResultSlip.id); setResultSlipDrawerOpen(true) }}>
-                          Edit
-                        </LoadingButton>
-                        <LoadingButton size="sm" variant="destructive" className="rounded-full"
-                          loading={operationLoading.delete}
-                          onClick={() => dispatch(deleteRawMilkResultSlip(currentResultSlip.id))}
+                        <LoadingButton 
+                          size="sm" 
+                          variant="outline" 
+                          className="rounded-full"
+                          onClick={handleExportLabTestCSV}
                         >
-                          Delete
+                          <Download className="w-4 h-4 mr-2" />
+                          Export CSV
+                        </LoadingButton>
+                        <LoadingButton 
+                          size="sm" 
+                          variant="outline" 
+                          className="rounded-full"
+                          onClick={() => { 
+                            setResultSlipMode("edit"); 
+                            setResultSlipExistingId(currentResultSlip.id); 
+                            setResultSlipDrawerOpen(true) 
+                          }}
+                        >
+                          <Edit className="w-4 h-4 mr-2" />
+                          Edit
                         </LoadingButton>
                       </div>
                     </div>
@@ -621,6 +602,7 @@ export function RawMilkIntakeFormViewDrawer({
                               <div className="flex items-center justify-between"><span className="text-gray-600">Resazurin</span><span className="font-light">{detail.resazurin}</span></div>
                               <div className="flex items-center justify-between"><span className="text-gray-600">Total Solids</span><span className="font-light">{detail.total_solids}</span></div>
                               <div className="flex items-center justify-between"><span className="text-gray-600">Density</span><span className="font-light">{detail.density}</span></div>
+                              <div className="flex items-center justify-between"><span className="text-gray-600">Starch</span><span className="font-light">{detail.starch ? "Yes" : "No"}</span></div>
                             </div>
                             {detail.remark && (
                               <div className="mt-2 pt-2 border-t border-gray-200">
