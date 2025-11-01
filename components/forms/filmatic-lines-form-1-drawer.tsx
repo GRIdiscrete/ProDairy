@@ -92,12 +92,22 @@ const createBasicInfoSchema = (selectedShift: string) => yup.object({
   date: yup.string().required("Date is required"),
   holding_tank_bmt: yup.string().nullable(),
   approved: yup.boolean().default(false),
+  status: yup.string().default("Ongoing"),
+  transferrable_milk: yup.number().nullable(),
+  // Day shift fields
   day_shift_opening_bottles: yup.number().min(0, "Must be positive").nullable(),
   day_shift_closing_bottles: yup.number().min(0, "Must be positive").nullable(),
   day_shift_waste_bottles: yup.number().min(0, "Must be positive").nullable(),
+  day_shift_received_bottles: yup.number().min(0, "Must be positive").nullable(),
+  day_shift_damaged_bottles: yup.number().min(0, "Must be positive").nullable(),
+  day_shift_foiled_bottles: yup.number().min(0, "Must be positive").nullable(),
+  // Night shift fields
   night_shift_opening_bottles: yup.number().min(0, "Must be positive").nullable(),
   night_shift_closing_bottles: yup.number().min(0, "Must be positive").nullable(),
   night_shift_waste_bottles: yup.number().min(0, "Must be positive").nullable(),
+  night_shift_received_bottles: yup.number().min(0, "Must be positive").nullable(),
+  night_shift_damaged_bottles: yup.number().min(0, "Must be positive").nullable(),
+  night_shift_foiled_bottles: yup.number().min(0, "Must be positive").nullable(),
 })
 
 // Step 4: Shift Details Schema (Form 1 stoppage_time is extensive)
@@ -118,9 +128,11 @@ const shiftDetailsSchema = yup.object({
 type ShiftSelectionFormData = yup.InferType<typeof shiftSelectionSchema>
 type GroupSelectionFormData = yup.InferType<typeof groupSelectionSchema>
 type ShiftDetailsFormData = {
+  id?: string
   supervisor_approve?: boolean
   operator_id?: string
   details?: Array<{
+    id?: string
     time?: string
     pallets?: number
     target?: number
@@ -169,12 +181,22 @@ export function FilmaticLinesForm1Drawer({
       date: "",
       holding_tank_bmt: undefined,
       approved: false,
+      status: "Ongoing",
+      transferrable_milk: undefined,
+      // Day shift
       day_shift_opening_bottles: undefined,
       day_shift_closing_bottles: undefined,
       day_shift_waste_bottles: undefined,
+      day_shift_received_bottles: undefined,
+      day_shift_damaged_bottles: undefined,
+      day_shift_foiled_bottles: undefined,
+      // Night shift  
       night_shift_opening_bottles: undefined,
       night_shift_closing_bottles: undefined,
       night_shift_waste_bottles: undefined,
+      night_shift_received_bottles: undefined,
+      night_shift_damaged_bottles: undefined,
+      night_shift_foiled_bottles: undefined,
     }
   })
 
@@ -272,12 +294,22 @@ export function FilmaticLinesForm1Drawer({
         date: form.date || "",
         holding_tank_bmt: (form as any).holding_tank_bmt || undefined,
         approved: !!(form as any).approved,
+        status: "Ongoing",
+        transferrable_milk: undefined,
+        // Day shift
         day_shift_opening_bottles: (form as any).day_shift_opening_bottles ?? undefined,
         day_shift_closing_bottles: (form as any).day_shift_closing_bottles ?? undefined,
         day_shift_waste_bottles: (form as any).day_shift_waste_bottles ?? undefined,
+        day_shift_received_bottles: (form as any).day_shift_received_bottles ?? undefined,
+        day_shift_damaged_bottles: (form as any).day_shift_damaged_bottles ?? undefined,
+        day_shift_foiled_bottles: (form as any).day_shift_foiled_bottles ?? undefined,
+        // Night shift  
         night_shift_opening_bottles: (form as any).night_shift_opening_bottles ?? undefined,
         night_shift_closing_bottles: (form as any).night_shift_closing_bottles ?? undefined,
         night_shift_waste_bottles: (form as any).night_shift_waste_bottles ?? undefined,
+        night_shift_received_bottles: (form as any).night_shift_received_bottles ?? undefined,
+        night_shift_damaged_bottles: (form as any).night_shift_damaged_bottles ?? undefined,
+        night_shift_foiled_bottles: (form as any).night_shift_foiled_bottles ?? undefined,
       })
 
       // detect shift type from either the legacy objects or the API arrays
@@ -307,78 +339,86 @@ export function FilmaticLinesForm1Drawer({
         let shiftEntry: any = null
 
         if (shiftType === "day_shift") {
-          if (hasDayArray) shiftEntry = (form as any).filmatic_line_form_1_day_shift[0] || null
-          else shiftEntry = (form as any).day_shift || null
-        } else if (shiftType === "night_shift") {
-          if (hasNightArray) shiftEntry = (form as any).filmatic_line_form_1_night_shift[0] || null
-          else shiftEntry = (form as any).night_shift || null
-        }
-
-        if (shiftEntry) {
-          // details array keys differ between shapes:
-          // - API day: filamtic_line_form_1_day_shift_details
-          // - legacy: details
-          const rawDetails = shiftEntry.filmatic_line_form_1_day_shift_details
-            || shiftEntry.filmatic_line_form_1_night_shift_details
-            || shiftEntry.details
-            || []
-
-          const mapped = (rawDetails || []).map((d: any) => {
-            // stoppage time array may be named differently:
-            const stoppageArray =
-              d.filmatic_line_form_1_day_shift_details_stoppage_time ||
-              d.filmatic_line_form_1_night_shift_details_stoppage_time ||
-              d.filmatic_line_form_1_day_shift_details_stoppage_time || // fallback
-              d.stoppage_time ||
-              []
-
-            const stoppage = Array.isArray(stoppageArray) ? (stoppageArray[0] || {}) : (stoppageArray || {})
-
-            // normalize time to HH:MM
-            let timeVal = d.time || ""
-            if (typeof timeVal === "string" && timeVal.indexOf(":") !== -1) {
-              const parts = timeVal.split(":")
-              if (parts.length >= 2) timeVal = `${parts[0].padStart(2, "0")}:${parts[1].padStart(2, "0")}`
-            }
-
-            return {
-              time: timeVal,
-              pallets: d.pallets ?? d.Pallets ?? undefined,
-              target: d.target ?? d.Target ?? undefined,
-              setbacks: d.setbacks ?? d.Setbacks ?? "",
-              stoppage_time: {
-                // try to populate both *_hours and plain fields from whatever the API returned
-                product_1_hours: stoppage.product_1_hours ?? stoppage.product_1 ?? stoppage.product1_hours ?? stoppage.product1 ?? undefined,
-                product_2_hours: stoppage.product_2_hours ?? stoppage.product_2 ?? stoppage.product2_hours ?? stoppage.product2 ?? undefined,
-                filler_1_hours: stoppage.filler_1_hours ?? stoppage.filler_1 ?? stoppage.filler1_hours ?? stoppage.filler1 ?? undefined,
-                filler_2_hours: stoppage.filler_2_hours ?? stoppage.filler_2 ?? stoppage.filler2_hours ?? stoppage.filler2 ?? undefined,
-                // also keep non-hours fields if present
-                product_1: stoppage.product_1 ?? stoppage.product1 ?? undefined,
-                product_2: stoppage.product_2 ?? stoppage.product2 ?? undefined,
-                filler_1: stoppage.filler_1 ?? stoppage.filler1 ?? undefined,
-                filler_2: stoppage.filler_2 ?? stoppage.filler2 ?? undefined,
-                capper_1: stoppage.capper_1 ?? stoppage.capper1 ?? undefined,
-                capper_2: stoppage.capper_2 ?? stoppage.capper2 ?? undefined,
-                sleever_1: stoppage.sleever_1 ?? stoppage.sleever1 ?? undefined,
-                sleever_2: stoppage.sleever_2 ?? stoppage.sleever2 ?? undefined,
-                shrink_1: stoppage.shrink_1 ?? stoppage.shrink1 ?? undefined,
-                shrink_2: stoppage.shrink_2 ?? stoppage.shrink2 ?? undefined,
+          if (hasDayArray) {
+            shiftEntry = (form as any).filmatic_line_form_1_day_shift[0] || null
+            const details = shiftEntry?.filmatic_line_form_1_day_shift_details || []
+            const mapped = details.map((d: any) => {
+              const stoppageArray = d.filmatic_line_form_1_day_shift_details_stoppage_time || []
+              const stoppage = stoppageArray[0] || {}
+              
+              // Keep track of IDs
+              return {
+                id: d.id, // Preserve detail ID
+                time: d.time?.split(' ')[1]?.slice(0, 5) || '',
+                pallets: d.pallets ?? undefined,
+                target: d.target ?? undefined,
+                setbacks: d.setbacks || '',
+                stoppage_time: {
+                  id: stoppage.id, // Preserve stoppage time ID
+                  product_1_hours: stoppage.product_1_hours ?? stoppage.product_1 ?? undefined,
+                  product_2_hours: stoppage.product_2_hours ?? stoppage.product_2 ?? undefined,
+                  filler_1_hours: stoppage.filler_1_hours ?? stoppage.filler_1 ?? undefined,
+                  filler_2_hours: stoppage.filler_2_hours ?? stoppage.filler_2 ?? undefined,
+                  product_1: stoppage.product_1 ?? undefined,
+                  product_2: stoppage.product_2 ?? undefined,
+                  filler_1: stoppage.filler_1 ?? undefined,
+                  filler_2: stoppage.filler_2 ?? undefined,
+                  capper_1: stoppage.capper_1 ?? undefined,
+                  capper_2: stoppage.capper_2 ?? undefined,
+                  sleever_1: stoppage.sleever_1 ?? undefined,
+                  sleever_2: stoppage.sleever_2 ?? undefined,
+                  shrink_1: stoppage.shrink_1 ?? undefined,
+                  shrink_2: stoppage.shrink_2 ?? undefined,
+                }
               }
-            }
-          })
+            })
 
-          shiftDetailsForm.reset({
-            supervisor_approve: shiftEntry.supervisor_approve ?? false,
-            operator_id: shiftEntry.operator_id ?? user?.id ?? "",
-            details: mapped.length ? mapped : shiftDetailsForm.getValues().details
-          })
-        } else {
-          // no shift entry found; keep defaults
-          shiftDetailsForm.reset({
-            supervisor_approve: false,
-            operator_id: user?.id || "",
-            details: shiftDetailsForm.getValues().details
-          })
+            shiftDetailsForm.reset({
+              supervisor_approve: shiftEntry?.supervisor_approve ?? false,
+              operator_id: shiftEntry?.operator_id ?? user?.id ?? '',
+              details: mapped.length ? mapped : shiftDetailsForm.getValues().details
+            })
+          }
+        } else if (shiftType === "night_shift") {
+          if (hasNightArray) {
+            shiftEntry = (form as any).filmatic_line_form_1_night_shift[0] || null
+            const details = shiftEntry?.filmatic_line_form_1_night_shift_details || []
+            const mapped = details.map((d: any) => {
+              const stoppageArray = d.filmatic_line_form_1_night_shift_details_stoppage_time || []
+              const stoppage = stoppageArray[0] || {}
+
+              return {
+                id: d.id, // Preserve detail ID
+                time: d.time?.split(' ')[1]?.slice(0, 5) || '',
+                pallets: d.pallets ?? undefined,
+                target: d.target ?? undefined,
+                setbacks: d.setbacks || '',
+                stoppage_time: {
+                  id: stoppage.id, // Preserve stoppage time ID
+                  product_1_hours: stoppage.product_1_hours ?? stoppage.product_1 ?? undefined,
+                  product_2_hours: stoppage.product_2_hours ?? stoppage.product_2 ?? undefined,
+                  filler_1_hours: stoppage.filler_1_hours ?? stoppage.filler_1 ?? undefined,
+                  filler_2_hours: stoppage.filler_2_hours ?? stoppage.filler_2 ?? undefined,
+                  product_1: stoppage.product_1 ?? undefined,
+                  product_2: stoppage.product_2 ?? undefined,
+                  filler_1: stoppage.filler_1 ?? undefined,
+                  filler_2: stoppage.filler_2 ?? undefined,
+                  capper_1: stoppage.capper_1 ?? undefined,
+                  capper_2: stoppage.capper_2 ?? undefined,
+                  sleever_1: stoppage.sleever_1 ?? undefined,
+                  sleever_2: stoppage.sleever_2 ?? undefined,
+                  shrink_1: stoppage.shrink_1 ?? undefined,
+                  shrink_2: stoppage.shrink_2 ?? undefined,
+                }
+              }
+            })
+
+            shiftDetailsForm.reset({
+              supervisor_approve: shiftEntry?.supervisor_approve ?? false,
+              operator_id: shiftEntry?.operator_id ?? user?.id ?? '',
+              details: mapped.length ? mapped : shiftDetailsForm.getValues().details
+            })
+          }
         }
       } catch (err) {
         console.error("Error pre-filling shift details:", err)
@@ -391,12 +431,22 @@ export function FilmaticLinesForm1Drawer({
         date: "",
         holding_tank_bmt: undefined,
         approved: false,
+        status: "Ongoing",
+        transferrable_milk: undefined,
+        // Day shift
         day_shift_opening_bottles: undefined,
         day_shift_closing_bottles: undefined,
         day_shift_waste_bottles: undefined,
+        day_shift_received_bottles: undefined,
+        day_shift_damaged_bottles: undefined,
+        day_shift_foiled_bottles: undefined,
+        // Night shift  
         night_shift_opening_bottles: undefined,
         night_shift_closing_bottles: undefined,
         night_shift_waste_bottles: undefined,
+        night_shift_received_bottles: undefined,
+        night_shift_damaged_bottles: undefined,
+        night_shift_foiled_bottles: undefined,
       })
       shiftSelectionForm.reset({ shift_type: "" })
       groupSelectionForm.reset({ selected_group: "" })
@@ -459,86 +509,139 @@ export function FilmaticLinesForm1Drawer({
 
       const basicInfo = basicInfoForm.getValues()
       const shiftType = shiftSelectionForm.getValues().shift_type
-      const groupData = groupSelectionForm.getValues()
-
-      // start with minimal payload
+      
+      // Start with common fields
       const payload: any = {
         process_id: processId || "",
         date: basicInfo.date || null,
         holding_tank_bmt: basicInfo.holding_tank_bmt || null,
         approved: !!basicInfo.approved,
+        status: "Ongoing",
+        transferrable_milk: basicInfo.transferrable_milk || null,
       }
 
-      // add groups only if selected
-      if (selectedGroup) {
-        // Find a group entry that contains members for the chosen key (group_a/group_b/group_c)
+      // Add ID if editing
+      if (mode === "edit" && form?.id) {
+        payload.id = form.id
+      }
+
+      // Add groups if selected
+      if (selectedGroup && filmaticGroups.length > 0) {
         const matchedGroup = filmaticGroups.find(g =>
           Array.isArray((g as any)[selectedGroup]) && (g as any)[selectedGroup].length > 0
-        ) || filmaticGroups[0] // fallback
+        ) || filmaticGroups[0]
 
         if (matchedGroup) {
-          // include only the selected group's list, plus id and manager_id
           payload.groups = {
             id: matchedGroup.id,
             [selectedGroup]: (matchedGroup as any)[selectedGroup],
             manager_id: matchedGroup.manager_id
           }
-        } else {
-          // fallback minimal info when no detailed group object available
-          payload.groups = { selected_group: selectedGroup }
         }
       }
 
-      // helper to map details
-      const mapDetails = (details: any[]) => (details || []).map(d => ({
-        time: d.time || null,
-        pallets: d.pallets ?? null,
-        target: d.target ?? null,
-        setbacks: d.setbacks || null,
-        stoppage_time: [{
-          product_1_hours: d.stoppage_time?.product_1_hours ?? null,
-          product_2_hours: d.stoppage_time?.product_2_hours ?? null,
-          filler_1_hours: d.stoppage_time?.filler_1_hours ?? null,
-          filler_2_hours: d.stoppage_time?.filler_2_hours ?? null,
-          product_1: d.stoppage_time?.product_1 ?? null,
-          product_2: d.stoppage_time?.product_2 ?? null,
-          filler_1: d.stoppage_time?.filler_1 ?? null,
-          filler_2: d.stoppage_time?.filler_2 ?? null,
-          capper_1: d.stoppage_time?.capper_1 ?? null,
-          capper_2: d.stoppage_time?.capper_2 ?? null,
-          sleever_1: d.stoppage_time?.sleever_1 ?? null,
-          sleever_2: d.stoppage_time?.sleever_2 ?? null,
-          shrink_1: d.stoppage_time?.shrink_1 ?? null,
-          shrink_2: d.stoppage_time?.shrink_2 ?? null,
-        }]
-      }))
-
-      // include only the selected shift and its bottle fields
+      // Add shift-specific data with IDs
       if (shiftType === "day_shift") {
+        // Day shift bottles
+        payload.day_shift_opening_bottles = basicInfo.day_shift_opening_bottles || null
+        payload.day_shift_closing_bottles = basicInfo.day_shift_closing_bottles || null
+        payload.day_shift_waste_bottles = basicInfo.day_shift_waste_bottles || null
+        payload.day_shift_received_bottles = basicInfo.day_shift_received_bottles || null
+        payload.day_shift_damaged_bottles = basicInfo.day_shift_damaged_bottles || null
+        payload.day_shift_foiled_bottles = basicInfo.day_shift_foiled_bottles || null
+
+        // Day shift object with details and IDs if updating
         payload.day_shift = {
+          ...(mode === "edit" && form?.filmatic_line_form_1_day_shift[0]?.id ? { id: form.filmatic_line_form_1_day_shift[0]?.id } : {}),
           supervisor_approve: !!data.supervisor_approve,
           operator_id: data.operator_id || null,
-          details: mapDetails(data.details || [])
+          details: (data.details || []).map(d => ({
+            id: (d as any).id, // Preserve detail ID if exists
+            time: d.time || null,
+            pallets: d.pallets ?? null,
+            target: d.target ?? null,
+            setbacks: d.setbacks || null,
+            stoppage_time: [{
+              id: (d.stoppage_time as any)?.id, // Preserve stoppage time ID if exists
+              product_1_hours: d.stoppage_time?.product_1_hours ?? null,
+              product_2_hours: d.stoppage_time?.product_2_hours ?? null,
+              filler_1_hours: d.stoppage_time?.filler_1_hours ?? null,
+              filler_2_hours: d.stoppage_time?.filler_2_hours ?? null,
+              product_1: d.stoppage_time?.product_1 ?? null,
+              product_2: d.stoppage_time?.product_2 ?? null,
+              filler_1: d.stoppage_time?.filler_1 ?? null,
+              filler_2: d.stoppage_time?.filler_2 ?? null,
+              capper_1: d.stoppage_time?.capper_1 ?? null,
+              capper_2: d.stoppage_time?.capper_2 ?? null,
+              sleever_1: d.stoppage_time?.sleever_1 ?? null,
+              sleever_2: d.stoppage_time?.sleever_2 ?? null,
+              shrink_1: d.stoppage_time?.shrink_1 ?? null,
+              shrink_2: d.stoppage_time?.shrink_2 ?? null,
+            }]
+          }))
         }
-        // add day bottle fields only when provided (avoid adding nulls for night)
-        if (basicInfo.day_shift_opening_bottles != null) payload.day_shift_opening_bottles = basicInfo.day_shift_opening_bottles
-        if (basicInfo.day_shift_closing_bottles != null) payload.day_shift_closing_bottles = basicInfo.day_shift_closing_bottles
-        if (basicInfo.day_shift_waste_bottles != null) payload.day_shift_waste_bottles = basicInfo.day_shift_waste_bottles
-      } else if (shiftType === "night_shift") {
+
+        // Ensure night shift fields are null
+        payload.night_shift_opening_bottles = null
+        payload.night_shift_closing_bottles = null
+        payload.night_shift_waste_bottles = null
+        payload.night_shift_received_bottles = null
+        payload.night_shift_damaged_bottles = null
+        payload.night_shift_foiled_bottles = null
+        payload.night_shift = null
+
+      } else {
+        // Night shift bottles
+        payload.night_shift_opening_bottles = basicInfo.night_shift_opening_bottles || null
+        payload.night_shift_closing_bottles = basicInfo.night_shift_closing_bottles || null
+        payload.night_shift_waste_bottles = basicInfo.night_shift_waste_bottles || null
+        payload.night_shift_received_bottles = basicInfo.night_shift_received_bottles || null
+        payload.night_shift_damaged_bottles = basicInfo.night_shift_damaged_bottles || null
+        payload.night_shift_foiled_bottles = basicInfo.night_shift_foiled_bottles || null
+
+        // Night shift object with details and IDs if updating
         payload.night_shift = {
+          ...(mode === "edit" && form?.night_shift?.id ? { id: form.night_shift.id } : {}),
           supervisor_approve: !!data.supervisor_approve,
           operator_id: data.operator_id || null,
-          details: mapDetails(data.details || [])
+          details: (data.details || []).map(d => ({
+            id: (d as any).id, // Preserve detail ID if exists
+            time: d.time || null,
+            pallets: d.pallets ?? null,
+            target: d.target ?? null,
+            setbacks: d.setbacks || null,
+            stoppage_time: [{
+              id: (d.stoppage_time as any)?.id, // Preserve stoppage time ID if exists
+              product_1_hours: d.stoppage_time?.product_1_hours ?? null,
+              product_2_hours: d.stoppage_time?.product_2_hours ?? null,
+              filler_1_hours: d.stoppage_time?.filler_1_hours ?? null,
+              filler_2_hours: d.stoppage_time?.filler_2_hours ?? null,
+              product_1: d.stoppage_time?.product_1 ?? null,
+              product_2: d.stoppage_time?.product_2 ?? null,
+              filler_1: d.stoppage_time?.filler_1 ?? null,
+              filler_2: d.stoppage_time?.filler_2 ?? null,
+              capper_1: d.stoppage_time?.capper_1 ?? null,
+              capper_2: d.stoppage_time?.capper_2 ?? null,
+              sleever_1: d.stoppage_time?.sleever_1 ?? null,
+              sleever_2: d.stoppage_time?.sleever_2 ?? null,
+              shrink_1: d.stoppage_time?.shrink_1 ?? null,
+              shrink_2: d.stoppage_time?.shrink_2 ?? null,
+            }]
+          }))
         }
-        // add night bottle fields only when provided (avoid adding nulls for day)
-        if (basicInfo.night_shift_opening_bottles != null) payload.night_shift_opening_bottles = basicInfo.night_shift_opening_bottles
-        if (basicInfo.night_shift_closing_bottles != null) payload.night_shift_closing_bottles = basicInfo.night_shift_closing_bottles
-        if (basicInfo.night_shift_waste_bottles != null) payload.night_shift_waste_bottles = basicInfo.night_shift_waste_bottles
+
+        // Ensure day shift fields are null
+        payload.day_shift_opening_bottles = null
+        payload.day_shift_closing_bottles = null
+        payload.day_shift_waste_bottles = null
+        payload.day_shift_received_bottles = null
+        payload.day_shift_damaged_bottles = null
+        payload.day_shift_foiled_bottles = null
+        payload.day_shift = null
       }
 
       if (mode === "edit" && form?.id) {
-        //add form id in payload
-        await filmaticLinesForm1Api.updateForm(form.id, {id: form.id, ...payload})
+        await filmaticLinesForm1Api.updateForm(form.id, payload)
         toast.success("Filmatic Lines Form 1 updated")
       } else {
         await filmaticLinesForm1Api.createForm(payload)
@@ -547,438 +650,522 @@ export function FilmaticLinesForm1Drawer({
 
       try { await dispatch(fetchFilmaticLinesForm1s()).unwrap() } catch (e) { /* ignore */ }
       onOpenChange(false)
+
     } catch (err: any) {
-      console.error("Failed to submit Filmatic Lines Form 1:", err)
+      console.error("Failed to submit:", err)
       toast.error(err?.message || "Failed to submit form")
     } finally {
       setLoading(prev => ({ ...prev, create: false }))
     }
   }
 
-  const handleShiftSelectionSubmit = () => setCurrentStep(2)
-  const handleGroupSelectionSubmit = () => setCurrentStep(3)
-  const handleBasicInfoSubmit = () => setCurrentStep(4)
-  const handleBack = () => setCurrentStep(prev => Math.max(1, prev - 1))
-  const handleNext = () => {
-    if (currentStep === 1) shiftSelectionForm.handleSubmit(handleShiftSelectionSubmit)()
-    else if (currentStep === 2) groupSelectionForm.handleSubmit(handleGroupSelectionSubmit)()
-    else if (currentStep === 3) basicInfoForm.handleSubmit(handleBasicInfoSubmit)()
-  }
+    const handleShiftSelectionSubmit = () => setCurrentStep(2)
+    const handleGroupSelectionSubmit = () => setCurrentStep(3)
+    const handleBasicInfoSubmit = () => setCurrentStep(4)
+    const handleBack = () => setCurrentStep(prev => Math.max(1, prev - 1))
+    const handleNext = () => {
+      if (currentStep === 1) shiftSelectionForm.handleSubmit(handleShiftSelectionSubmit)()
+      else if (currentStep === 2) groupSelectionForm.handleSubmit(handleGroupSelectionSubmit)()
+      else if (currentStep === 3) basicInfoForm.handleSubmit(handleBasicInfoSubmit)()
+    }
 
-  return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-full sm:max-w-4xl overflow-y-auto bg-white">
-        <SheetHeader>
-          <SheetTitle className="text-2xl font-light">
-            {mode === "edit" ? "Edit" : "Create"} Filmatic Lines Form 1
-          </SheetTitle>
-          <SheetDescription className="text-base font-light">
-            Step {currentStep} of 4: {
-              currentStep === 1 ? "Shift Selection" :
-                currentStep === 2 ? "Group Selection" :
-                  currentStep === 3 ? "Basic Information" :
-                    "Shift Details"
-            }
-          </SheetDescription>
-        </SheetHeader>
+    return (
+      <Sheet open={open} onOpenChange={onOpenChange}>
+        <SheetContent className="w-full sm:max-w-4xl overflow-y-auto bg-white">
+          <SheetHeader>
+            <SheetTitle className="text-2xl font-light">
+              {mode === "edit" ? "Edit" : "Create"} Filmatic Lines Form 1
+            </SheetTitle>
+            <SheetDescription className="text-base font-light">
+              Step {currentStep} of 4: {
+                currentStep === 1 ? "Shift Selection" :
+                  currentStep === 2 ? "Group Selection" :
+                    currentStep === 3 ? "Basic Information" :
+                      "Shift Details"
+              }
+            </SheetDescription>
+          </SheetHeader>
 
-        <div className="mt-6">
-          <ProcessOverview />
+          <div className="mt-6">
+            <ProcessOverview />
 
-          {/* Step 1 */}
-          {currentStep === 1 && (
-            <div className="space-y-6 p-6">
-              <div className="text-center mb-6">
-                <h3 className="text-xl font-light text-gray-900">Shift Selection</h3>
-                <p className="text-sm font-light text-gray-600 mt-2">Choose shift for this record</p>
-              </div>
-              <div className="space-y-4">
-                <Controller
-                  name="shift_type"
-                  control={shiftSelectionForm.control}
-                  render={({ field }) => (
-                    <RadioGroup value={field.value} onValueChange={field.onChange} className="space-y-4">
-                      <div className="flex items-center space-x-3 p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
-                        <RadioGroupItem value="day_shift" id="day_shift" />
-                        <Label htmlFor="day_shift" className="flex items-center space-x-3 cursor-pointer">
-                          <div className="w-8 h-8 rounded-full bg-yellow-100 flex items-center justify-center">
-                            <Sun className="w-4 h-4 text-yellow-600" />
-                          </div>
-                          <div>
-                            <div className="font-medium">Day Shift</div>
-                            <div className="text-sm text-gray-500">Create data for day shift operations</div>
-                          </div>
-                        </Label>
-                      </div>
+            {/* Step 1 */}
+            {currentStep === 1 && (
+              <div className="space-y-6 p-6">
+                <div className="text-center mb-6">
+                  <h3 className="text-xl font-light text-gray-900">Shift Selection</h3>
+                  <p className="text-sm font-light text-gray-600 mt-2">Choose shift for this record</p>
+                </div>
+                <div className="space-y-4">
+                  <Controller
+                    name="shift_type"
+                    control={shiftSelectionForm.control}
+                    render={({ field }) => (
+                      <RadioGroup value={field.value} onValueChange={field.onChange} className="space-y-4">
+                        <div className="flex items-center space-x-3 p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
+                          <RadioGroupItem value="day_shift" id="day_shift" />
+                          <Label htmlFor="day_shift" className="flex items-center space-x-3 cursor-pointer">
+                            <div className="w-8 h-8 rounded-full bg-yellow-100 flex items-center justify-center">
+                              <Sun className="w-4 h-4 text-yellow-600" />
+                            </div>
+                            <div>
+                              <div className="font-medium">Day Shift</div>
+                              <div className="text-sm text-gray-500">Create data for day shift operations</div>
+                            </div>
+                          </Label>
+                        </div>
 
-                      <div className="flex items-center space-x-3 p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
-                        <RadioGroupItem value="night_shift" id="night_shift" />
-                        <Label htmlFor="night_shift" className="flex items-center space-x-3 cursor-pointer">
-                          <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
-                            <Moon className="w-4 h-4 text-blue-600" />
-                          </div>
-                          <div>
-                            <div className="font-medium">Night Shift</div>
-                            <div className="text-sm text-gray-500">Create data for night shift operations</div>
-                          </div>
-                        </Label>
-                      </div>
-                    </RadioGroup>
+                        <div className="flex items-center space-x-3 p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
+                          <RadioGroupItem value="night_shift" id="night_shift" />
+                          <Label htmlFor="night_shift" className="flex items-center space-x-3 cursor-pointer">
+                            <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+                              <Moon className="w-4 h-4 text-blue-600" />
+                            </div>
+                            <div>
+                              <div className="font-medium">Night Shift</div>
+                              <div className="text-sm text-gray-500">Create data for night shift operations</div>
+                            </div>
+                          </Label>
+                        </div>
+                      </RadioGroup>
+                    )}
+                  />
+                  {shiftSelectionForm.formState.errors.shift_type && (
+                    <p className="text-sm text-red-500">{shiftSelectionForm.formState.errors.shift_type.message}</p>
                   )}
-                />
-                {shiftSelectionForm.formState.errors.shift_type && (
-                  <p className="text-sm text-red-500">{shiftSelectionForm.formState.errors.shift_type.message}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Step 2 */}
+            {currentStep === 2 && (
+              <div className="space-y-6 p-6">
+                <div className="text-center mb-6">
+                  <h3 className="text-xl font-light text-gray-900">Group Selection</h3>
+                  <p className="text-sm font-light text-gray-600 mt-2">Select the group for this shift</p>
+                </div>
+
+                {filmaticGroups.length > 0 ? (
+                  <Controller
+                    name="selected_group"
+                    control={groupSelectionForm.control}
+                    render={({ field }) => (
+                      <RadioGroup value={field.value} onValueChange={field.onChange} className="space-y-4">
+                        {["group_a", "group_b", "group_c"].map((groupKey) => {
+                          const firstGroup = filmaticGroups[0]
+                          const members = firstGroup ? (firstGroup as any)[groupKey] as string[] : []
+                          return (
+                            <div key={groupKey} className="flex items-center space-x-3 p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
+                              <RadioGroupItem value={groupKey} id={groupKey} />
+                              <Label htmlFor={groupKey} className="flex items-center space-x-3 cursor-pointer w-full">
+                                <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+                                  <Users className="w-4 h-4 text-blue-600" />
+                                </div>
+                                <div className="flex-1">
+                                  <div className="font-medium">Group {groupKey.split('_')[1].toUpperCase()}</div>
+                                  <div className="text-sm text-gray-500">{members?.length || 0} members</div>
+                                </div>
+                              </Label>
+                            </div>
+                          )
+                        })}
+                      </RadioGroup>
+                    )}
+                  />
+                ) : (
+                  <div className="text-center py-8"><p className="text-sm text-gray-500">No groups available</p></div>
                 )}
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Step 2 */}
-          {currentStep === 2 && (
-            <div className="space-y-6 p-6">
-              <div className="text-center mb-6">
-                <h3 className="text-xl font-light text-gray-900">Group Selection</h3>
-                <p className="text-sm font-light text-gray-600 mt-2">Select the group for this shift</p>
-              </div>
+            {/* Step 3: Basic Info */}
+            {currentStep === 3 && (
+              <div className="space-y-6 p-6">
+                <div className="text-center mb-6">
+                  <h3 className="text-xl font-light text-gray-900">Basic Information</h3>
+                  <p className="text-sm font-light text-gray-600 mt-2">
+                    Enter date, holding tank BMT and bottle counts
+                  </p>
+                </div>
 
-              {filmaticGroups.length > 0 ? (
-                <Controller
-                  name="selected_group"
-                  control={groupSelectionForm.control}
-                  render={({ field }) => (
-                    <RadioGroup value={field.value} onValueChange={field.onChange} className="space-y-4">
-                      {["group_a", "group_b", "group_c"].map((groupKey) => {
-                        const firstGroup = filmaticGroups[0]
-                        const members = firstGroup ? (firstGroup as any)[groupKey] as string[] : []
-                        return (
-                          <div key={groupKey} className="flex items-center space-x-3 p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
-                            <RadioGroupItem value={groupKey} id={groupKey} />
-                            <Label htmlFor={groupKey} className="flex items-center space-x-3 cursor-pointer w-full">
-                              <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
-                                <Users className="w-4 h-4 text-blue-600" />
-                              </div>
-                              <div className="flex-1">
-                                <div className="font-medium">Group {groupKey.split('_')[1].toUpperCase()}</div>
-                                <div className="text-sm text-gray-500">{members?.length || 0} members</div>
-                              </div>
-                            </Label>
-                          </div>
-                        )
-                      })}
-                    </RadioGroup>
-                  )}
-                />
-              ) : (
-                <div className="text-center py-8"><p className="text-sm text-gray-500">No groups available</p></div>
-              )}
-            </div>
-          )}
-
-          {/* Step 3: Basic Info */}
-          {currentStep === 3 && (
-            <div className="space-y-6 p-6">
-              <div className="text-center mb-6">
-                <h3 className="text-xl font-light text-gray-900">Basic Information</h3>
-                <p className="text-sm font-light text-gray-600 mt-2">
-                  Enter date, holding tank BMT and bottle counts
-                </p>
-              </div>
-
-              <div className="space-y-4">
-                <Controller
-                  name="date"
-                  control={basicInfoForm.control}
-                  render={({ field }) => (
-                    <DatePicker
-                      label="Date *"
-                      value={field.value}
-                      onChange={field.onChange}
-                      placeholder="Select date"
-                      error={!!basicInfoForm.formState.errors.date}
-                    />
-                  )}
-                />
-                <Controller
-                  name="holding_tank_bmt"
-                  control={basicInfoForm.control}
-                  render={({ field }) => (
-                    <div>
-                      {/* ensure label is visible and spaced */}
-                      <Label className="mb-2">Holding Tank BMT</Label>
-
-                      <SearchableSelect
-                        label="Holding Tank BMT"
+                <div className="space-y-4">
+                  <Controller
+                    name="date"
+                    control={basicInfoForm.control}
+                    render={({ field }) => (
+                      <DatePicker
+                        label="Date *"
                         value={field.value}
-                        options={bmtOptions}
-                        onSearch={handleBmtFormSearch}
-                        onValueChange={(v) => field.onChange(v)}
-                        placeholder="Search BMT forms..."
+                        onChange={field.onChange}
+                        placeholder="Select date"
+                        error={!!basicInfoForm.formState.errors.date}
                       />
-                    </div>
-                  )}
-                />
+                    )}
+                  />
+                  <Controller
+                    name="holding_tank_bmt"
+                    control={basicInfoForm.control}
+                    render={({ field }) => (
+                      <div>
+                        {/* ensure label is visible and spaced */}
+                        <Label className="mb-2">Holding Tank BMT</Label>
 
-                {/* shift-specific fields */}
-                {selectedShift === "day_shift" && (
-                  <>
-                    <div className="grid grid-cols-2 gap-4">
+                        <SearchableSelect
+                          label="Holding Tank BMT"
+                          value={field.value}
+                          options={bmtOptions}
+                          onSearch={handleBmtFormSearch}
+                          onValueChange={(v) => field.onChange(v)}
+                          placeholder="Search BMT forms..."
+                        />
+                      </div>
+                    )}
+                  />
+
+                  {/* shift-specific fields */}
+                  {selectedShift === "day_shift" && (
+                    <>
+                      <div className="grid grid-cols-3 gap-4">
+                        <div>
+                          <Label className="mb-2">Opening Bottles</Label>
+                          <Controller
+                            name="day_shift_opening_bottles"
+                            control={basicInfoForm.control}
+                            render={({ field }) => (
+                              <Input type="number" {...field} value={field.value ?? ''} 
+                                onChange={e => field.onChange(e.target.value ? Number(e.target.value) : undefined)} />
+                            )}
+                          />
+                        </div>
+                        <div>
+                          <Label className="mb-2">Closing Bottles</Label>
+                          <Controller
+                            name="day_shift_closing_bottles"
+                            control={basicInfoForm.control}
+                            render={({ field }) => (
+                              <Input type="number" {...field} value={field.value ?? ''} 
+                                onChange={e => field.onChange(e.target.value ? Number(e.target.value) : undefined)} />
+                            )}
+                          />
+                        </div>
+                        <div>
+                          <Label className="mb-2">Waste Bottles</Label>
+                          <Controller
+                            name="day_shift_waste_bottles"
+                            control={basicInfoForm.control}
+                            render={({ field }) => (
+                              <Input type="number" {...field} value={field.value ?? ''} 
+                                onChange={e => field.onChange(e.target.value ? Number(e.target.value) : undefined)} />
+                            )}
+                          />
+                        </div>
+                        <div>
+                          <Label className="mb-2">Received Bottles</Label>
+                          <Controller
+                            name="day_shift_received_bottles"
+                            control={basicInfoForm.control}
+                            render={({ field }) => (
+                              <Input type="number" {...field} value={field.value ?? ''} 
+                                onChange={e => field.onChange(e.target.value ? Number(e.target.value) : undefined)} />
+                            )}
+                          />
+                        </div>
+                        <div>
+                          <Label className="mb-2">Damaged Bottles</Label>
+                          <Controller
+                            name="day_shift_damaged_bottles"
+                            control={basicInfoForm.control}
+                            render={({ field }) => (
+                              <Input type="number" {...field} value={field.value ?? ''} 
+                                onChange={e => field.onChange(e.target.value ? Number(e.target.value) : undefined)} />
+                            )}
+                          />
+                        </div>
+                        <div>
+                          <Label className="mb-2">Foiled Bottles</Label>
+                          <Controller
+                            name="day_shift_foiled_bottles"
+                            control={basicInfoForm.control}
+                            render={({ field }) => (
+                              <Input type="number" {...field} value={field.value ?? ''} 
+                                onChange={e => field.onChange(e.target.value ? Number(e.target.value) : undefined)} />
+                            )}
+                          />
+                        </div>
+                      </div>
                       <div>
-                        <Label className="mb-2">Day Shift Opening Bottles</Label>
+                        <Label className="mb-2">Transferrable Milk (L)</Label>
                         <Controller
-                          name="day_shift_opening_bottles"
+                          name="transferrable_milk"
                           control={basicInfoForm.control}
                           render={({ field }) => (
-                            <Input type="number" value={String(field.value ?? "")} onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)} />
+                            <Input type="number" {...field} value={field.value ?? ''} 
+                              onChange={e => field.onChange(e.target.value ? Number(e.target.value) : undefined)} />
                           )}
                         />
                       </div>
-                      <div>
-                        <Label className="mb-2">Day Shift Closing Bottles</Label>
-                        <Controller
-                          name="day_shift_closing_bottles"
-                          control={basicInfoForm.control}
-                          render={({ field }) => (
-                            <Input type="number" value={String(field.value ?? "")} onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)} />
-                          )}
-                        />
+                    </>
+                  )}
+
+                  {selectedShift === "night_shift" && (
+                    <>
+                      <div className="grid grid-cols-3 gap-4">
+                        <div>
+                          <Label className="mb-2">Opening Bottles</Label>
+                          <Controller
+                            name="night_shift_opening_bottles"
+                            control={basicInfoForm.control}
+                            render={({ field }) => (
+                              <Input type="number" {...field} value={field.value ?? ''} 
+                                onChange={e => field.onChange(e.target.value ? Number(e.target.value) : undefined)} />
+                            )}
+                          />
+                        </div>
+                        <div>
+                          <Label className="mb-2">Closing Bottles</Label>
+                          <Controller
+                            name="night_shift_closing_bottles"
+                            control={basicInfoForm.control}
+                            render={({ field }) => (
+                              <Input type="number" {...field} value={field.value ?? ''} 
+                                onChange={e => field.onChange(e.target.value ? Number(e.target.value) : undefined)} />
+                            )}
+                          />
+                        </div>
+                        <div>
+                          <Label className="mb-2">Waste Bottles</Label>
+                          <Controller
+                            name="night_shift_waste_bottles"
+                            control={basicInfoForm.control}
+                            render={({ field }) => (
+                              <Input type="number" {...field} value={field.value ?? ''} 
+                                onChange={e => field.onChange(e.target.value ? Number(e.target.value) : undefined)} />
+                            )}
+                          />
+                        </div>
+                        <div>
+                          <Label className="mb-2">Received Bottles</Label>
+                          <Controller
+                            name="night_shift_received_bottles"
+                            control={basicInfoForm.control}
+                            render={({ field }) => (
+                              <Input type="number" {...field} value={field.value ?? ''} 
+                                onChange={e => field.onChange(e.target.value ? Number(e.target.value) : undefined)} />
+                            )}
+                          />
+                        </div>
+                        <div>
+                          <Label className="mb-2">Damaged Bottles</Label>
+                          <Controller
+                            name="night_shift_damaged_bottles"
+                            control={basicInfoForm.control}
+                            render={({ field }) => (
+                              <Input type="number" {...field} value={field.value ?? ''} 
+                                onChange={e => field.onChange(e.target.value ? Number(e.target.value) : undefined)} />
+                            )}
+                          />
+                        </div>
+                        <div>
+                          <Label className="mb-2">Foiled Bottles</Label>
+                          <Controller
+                            name="night_shift_foiled_bottles"
+                            control={basicInfoForm.control}
+                            render={({ field }) => (
+                              <Input type="number" {...field} value={field.value ?? ''} 
+                                onChange={e => field.onChange(e.target.value ? Number(e.target.value) : undefined)} />
+                            )}
+                          />
+                        </div>
                       </div>
-                    </div>
-                    <div>
-                      <Label className="mb-2">Day Shift Waste Bottles</Label>
+                    </>
+                  )}
+
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="approved">Approved</Label>
                       <Controller
-                        name="day_shift_waste_bottles"
+                        name="approved"
                         control={basicInfoForm.control}
                         render={({ field }) => (
-                          <Input type="number" value={String(field.value ?? "")} onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)} />
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
                         )}
                       />
                     </div>
-                  </>
-                )}
+                    {basicInfoForm.formState.errors.approved && (
+                      <p className="text-sm text-red-500">{basicInfoForm.formState.errors.approved.message}</p>
+                    )}
+                  </div>
 
-                {selectedShift === "night_shift" && (
-                  <>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label className="mb-2">Night Shift Opening Bottles</Label>
-                        <Controller
-                          name="night_shift_opening_bottles"
-                          control={basicInfoForm.control}
-                          render={({ field }) => (
-                            <Input type="number" value={String(field.value ?? "")} onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)} />
-                          )}
-                        />
-                      </div>
-                      <div>
-                        <Label className="mb-2">Night Shift Closing Bottles</Label>
-                        <Controller
-                          name="night_shift_closing_bottles"
-                          control={basicInfoForm.control}
-                          render={({ field }) => (
-                            <Input type="number" value={String(field.value ?? "")} onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)} />
-                          )}
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <Label className="mb-2">Night Shift Waste Bottles</Label>
-                      <Controller
-                        name="night_shift_waste_bottles"
-                        control={basicInfoForm.control}
-                        render={({ field }) => (
-                          <Input type="number" value={String(field.value ?? "")} onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)} />
+                </div>
+              </div>
+            )}
+
+            {/* Step 4: Shift Details */}
+            {currentStep === 4 && (
+              <div className="space-y-6 p-6">
+                <div className="text-center mb-6">
+                  <h3 className="text-xl font-light text-gray-900">Shift Details</h3>
+                  <p className="text-sm font-light text-gray-600 mt-2">Enter production details and stoppage times</p>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <Label>Production Details</Label>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => append({
+                        time: "",
+                        pallets: undefined,
+                        target: undefined,
+                        setbacks: "",
+                        stoppage_time: {
+                          product_1_hours: undefined,
+                          product_2_hours: undefined,
+                          filler_1_hours: undefined,
+                          filler_2_hours: undefined,
+                          product_1: undefined,
+                          product_2: undefined,
+                          filler_1: undefined,
+                          filler_2: undefined,
+                          capper_1: undefined,
+                          capper_2: undefined,
+                          sleever_1: undefined,
+                          sleever_2: undefined,
+                          shrink_1: undefined,
+                          shrink_2: undefined,
+                        }
+                      })}
+                    >
+                      <Plus className="h-4 w-4 mr-1" /> Add Entry
+                    </Button>
+                  </div>
+
+                  {fields.map((field, index) => (
+                    <div key={field.id} className="p-4 border rounded-lg space-y-4">
+                      <div className="flex justify-between">
+                        <h4 className="font-medium">Entry {index + 1}</h4>
+                        {fields.length > 1 && (
+                          <Button type="button" variant="ghost" size="sm" onClick={() => remove(index)}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         )}
-                      />
-                    </div>
-                  </>
-                )}
+                      </div>
 
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="approved">Approved</Label>
-                    <Controller
-                      name="approved"
-                      control={basicInfoForm.control}
-                      render={({ field }) => (
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      )}
-                    />
-                  </div>
-                  {basicInfoForm.formState.errors.approved && (
-                    <p className="text-sm text-red-500">{basicInfoForm.formState.errors.approved.message}</p>
-                  )}
+                      <div className="grid grid-cols-2 gap-4">
+                        {/* <div>
+                          <Label htmlFor="approved" className="mb-3">Approved</Label>
+                          <Controller
+                            name={`details.${index}.supervisor_approve`}
+                            control={shiftDetailsForm.control}
+                            render={({ field }) => (
+                              <Switch
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                            )}
+                          />
+                        </div> */}
+                        <div>
+                          <Label className="mb-3">Time</Label>
+                          <Controller
+                            name={`details.${index}.time`}
+                            control={shiftDetailsForm.control}
+                            render={({ field }) => (
+                              <Select value={field.value} onValueChange={field.onChange}>
+                                <SelectTrigger className="rounded-full w-full p-6 border-gray-200"><SelectValue placeholder="Select time" /></SelectTrigger>
+                                <SelectContent>
+                                  {timeOptions.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                                </SelectContent>
+                              </Select>
+                            )}
+                          />
+                        </div>
+
+                        <div>
+                          <Label className="mb-3">Pallets</Label>
+                          <Controller
+                            name={`details.${index}.pallets`}
+                            control={shiftDetailsForm.control}
+                            render={({ field }) => (
+                              <Input type="number" value={String(field.value ?? "")} onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)} />
+                            )}
+                          />
+                        </div>
+
+                        <div>
+                          <Label className="mb-3">Target</Label>
+                          <Controller
+                            name={`details.${index}.target`}
+                            control={shiftDetailsForm.control}
+                            render={({ field }) => (
+                              <Input type="number" value={String(field.value ?? "")} onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)} />
+                            )}
+                          />
+                        </div>
+
+                        <div className="col-span-2">
+                          <Label className="mb-3">Setbacks</Label>
+                          <Controller
+                            name={`details.${index}.setbacks`}
+                            control={shiftDetailsForm.control}
+                            render={({ field }) => <Textarea {...field} placeholder="Describe any setbacks" />}
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <Label className="mb-2 block">Stoppage Time (minutes / hours)</Label>
+                        <div className="grid grid-cols-2 gap-2">
+                          {["product_1_hours", "product_2_hours", "filler_1_hours", "filler_2_hours", "product_1", "product_2", "filler_1", "filler_2", "capper_1", "capper_2", "sleever_1", "sleever_2", "shrink_1", "shrink_2"].map(key => (
+                            <div key={key} className="flex items-center gap-2">
+                              <Label className="text-xs w-28">{key.replace(/_/g, ' ')}</Label>
+                              <Controller
+                                name={`details.${index}.stoppage_time.${key}`}
+                                control={shiftDetailsForm.control}
+                                render={({ field }) => (
+                                  <Input type="number" className="text-xs h-8 rounded-full border-gray-200" value={String(field.value ?? "")} onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)} />
+                                )}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Step 4: Shift Details */}
-          {currentStep === 4 && (
-            <div className="space-y-6 p-6">
-              <div className="text-center mb-6">
-                <h3 className="text-xl font-light text-gray-900">Shift Details</h3>
-                <p className="text-sm font-light text-gray-600 mt-2">Enter production details and stoppage times</p>
-              </div>
 
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <Label>Production Details</Label>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => append({
-                      time: "",
-                      pallets: undefined,
-                      target: undefined,
-                      setbacks: "",
-                      stoppage_time: {
-                        product_1_hours: undefined,
-                        product_2_hours: undefined,
-                        filler_1_hours: undefined,
-                        filler_2_hours: undefined,
-                        product_1: undefined,
-                        product_2: undefined,
-                        filler_1: undefined,
-                        filler_2: undefined,
-                        capper_1: undefined,
-                        capper_2: undefined,
-                        sleever_1: undefined,
-                        sleever_2: undefined,
-                        shrink_1: undefined,
-                        shrink_2: undefined,
-                      }
-                    })}
-                  >
-                    <Plus className="h-4 w-4 mr-1" /> Add Entry
-                  </Button>
-                </div>
+            {/* Navigation */}
+            <div className="flex justify-between items-center p-6 border-t">
+              <Button type="button" variant="outline" onClick={handleBack} disabled={currentStep === 1} className="flex items-center space-x-2">
+                <ChevronLeft className="w-4 h-4" /><span>Back</span>
+              </Button>
 
-                {fields.map((field, index) => (
-                  <div key={field.id} className="p-4 border rounded-lg space-y-4">
-                    <div className="flex justify-between">
-                      <h4 className="font-medium">Entry {index + 1}</h4>
-                      {fields.length > 1 && (
-                        <Button type="button" variant="ghost" size="sm" onClick={() => remove(index)}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      {/* <div>
-                        <Label htmlFor="approved" className="mb-3">Approved</Label>
-                        <Controller
-                          name={`details.${index}.supervisor_approve`}
-                          control={shiftDetailsForm.control}
-                          render={({ field }) => (
-                            <Switch
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                            />
-                          )}
-                        />
-                      </div> */}
-                      <div>
-                        <Label className="mb-3">Time</Label>
-                        <Controller
-                          name={`details.${index}.time`}
-                          control={shiftDetailsForm.control}
-                          render={({ field }) => (
-                            <Select value={field.value} onValueChange={field.onChange}>
-                              <SelectTrigger className="rounded-full w-full p-6 border-gray-200"><SelectValue placeholder="Select time" /></SelectTrigger>
-                              <SelectContent>
-                                {timeOptions.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
-                              </SelectContent>
-                            </Select>
-                          )}
-                        />
-                      </div>
-
-                      <div>
-                        <Label className="mb-3">Pallets</Label>
-                        <Controller
-                          name={`details.${index}.pallets`}
-                          control={shiftDetailsForm.control}
-                          render={({ field }) => (
-                            <Input type="number" value={String(field.value ?? "")} onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)} />
-                          )}
-                        />
-                      </div>
-
-                      <div>
-                        <Label className="mb-3">Target</Label>
-                        <Controller
-                          name={`details.${index}.target`}
-                          control={shiftDetailsForm.control}
-                          render={({ field }) => (
-                            <Input type="number" value={String(field.value ?? "")} onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)} />
-                          )}
-                        />
-                      </div>
-
-                      <div className="col-span-2">
-                        <Label className="mb-3">Setbacks</Label>
-                        <Controller
-                          name={`details.${index}.setbacks`}
-                          control={shiftDetailsForm.control}
-                          render={({ field }) => <Textarea {...field} placeholder="Describe any setbacks" />}
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <Label className="mb-2 block">Stoppage Time (minutes / hours)</Label>
-                      <div className="grid grid-cols-2 gap-2">
-                        {["product_1_hours", "product_2_hours", "filler_1_hours", "filler_2_hours", "product_1", "product_2", "filler_1", "filler_2", "capper_1", "capper_2", "sleever_1", "sleever_2", "shrink_1", "shrink_2"].map(key => (
-                          <div key={key} className="flex items-center gap-2">
-                            <Label className="text-xs w-28">{key.replace(/_/g, ' ')}</Label>
-                            <Controller
-                              name={`details.${index}.stoppage_time.${key}`}
-                              control={shiftDetailsForm.control}
-                              render={({ field }) => (
-                                <Input type="number" className="text-xs h-8 rounded-full border-gray-200" value={String(field.value ?? "")} onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)} />
-                              )}
-                            />
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
+              <div className="flex items-center space-x-2">
+                {[1, 2, 3, 4].map(step => (
+                  <div key={step} className={`w-3 h-3 rounded-full ${step === currentStep ? "bg-blue-500" : step < currentStep ? "bg-green-500" : "bg-gray-300"}`} />
                 ))}
               </div>
+
+              {currentStep < 4 ? (
+                <Button type="button" onClick={handleNext} className="flex items-center space-x-2 bg-gradient-to-r from-blue-500 to-cyan-500">
+                  <span>Next</span><ChevronRight className="w-4 h-4" />
+                </Button>
+              ) : (
+                <Button type="button" onClick={shiftDetailsForm.handleSubmit(handleFinalSubmit)} disabled={loading.create} className="flex items-center space-x-2 bg-gradient-to-r from-green-500 to-emerald-500">
+                  {loading.create ? "Saving..." : (mode === "edit" ? "Update Form" : "Create Form")}
+                </Button>
+              )}
             </div>
-          )}
-
-
-          {/* Navigation */}
-          <div className="flex justify-between items-center p-6 border-t">
-            <Button type="button" variant="outline" onClick={handleBack} disabled={currentStep === 1} className="flex items-center space-x-2">
-              <ChevronLeft className="w-4 h-4" /><span>Back</span>
-            </Button>
-
-            <div className="flex items-center space-x-2">
-              {[1, 2, 3, 4].map(step => (
-                <div key={step} className={`w-3 h-3 rounded-full ${step === currentStep ? "bg-blue-500" : step < currentStep ? "bg-green-500" : "bg-gray-300"}`} />
-              ))}
-            </div>
-
-            {currentStep < 4 ? (
-              <Button type="button" onClick={handleNext} className="flex items-center space-x-2 bg-gradient-to-r from-blue-500 to-cyan-500">
-                <span>Next</span><ChevronRight className="w-4 h-4" />
-              </Button>
-            ) : (
-              <Button type="button" onClick={shiftDetailsForm.handleSubmit(handleFinalSubmit)} disabled={loading.create} className="flex items-center space-x-2 bg-gradient-to-r from-green-500 to-emerald-500">
-                {loading.create ? "Saving..." : (mode === "edit" ? "Update Form" : "Create Form")}
-              </Button>
-            )}
           </div>
-        </div>
-      </SheetContent>
-    </Sheet>
-  )
-}
+        </SheetContent>
+      </Sheet>
+    )
+  }

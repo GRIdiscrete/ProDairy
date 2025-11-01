@@ -24,6 +24,19 @@ export function GeneralLabTestViewDrawer({ open, onClose, test, onEdit }: { open
   const silo = silos.find((s: any) => s.id === test.source_silo)
   const analyst = users.find((u: any) => u.id === test.analyst)
 
+  const renderValue = (value: any) => {
+    if (value === undefined || value === null) return "-"
+    if (typeof value === "boolean") return value ? "Yes" : "No"
+    return value.toString()
+  }
+
+  const renderParameter = (label: string, value: any, unit?: string) => (
+    <div className="flex justify-between items-center py-1 border-b border-gray-100">
+      <span className="text-gray-600">{label}</span>
+      <span className="font-medium">{renderValue(value)} {unit}</span>
+    </div>
+  )
+
   return (
     <Sheet open={open} onOpenChange={onClose}>
       <SheetContent className="tablet-sheet-full p-0 bg-white">
@@ -49,67 +62,57 @@ export function GeneralLabTestViewDrawer({ open, onClose, test, onEdit }: { open
               <Badge className="bg-gray-100 text-gray-800 font-light">{test.time}</Badge>
             </div>
           </div>
-          {/* Display all test fields in groups */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <h4 className="font-semibold mb-2">Physical/Chemical</h4>
-              <div className="space-y-1 text-sm">
-                <div>Temperature: {test.temperature}</div>
-                <div>Fat: {test.fat}</div>
-                <div>Protein: {test.protein}</div>
-                <div>Lactometer: {test.lactometer_reading}</div>
-                <div>SNF: {test.snf}</div>
-                <div>TS: {test.ts}</div>
-                <div>pH: {test.ph}</div>
-                <div>Alcohol: {test.alcohol}</div>
-                <div>TA: {test.ta}</div>
-                <div>OT: {test.ot}</div>
-                <div>Density: {test.density}</div>
-                <div>Antibiotics: {test.antibiotics}</div>
-                <div>SCC: {test.scc}</div>
-                <div>Resazurin: {test.resazurin}</div>
-                <div>Sedimentation Index: {test.sedimentation_index}</div>
-                <div>Creaming Index: {test.creaming_index}</div>
-                <div>Phosphate: {test.phosphate}</div>
-                <div>Clot on Boil: {test.clot_on_boil}</div>
-                <div>Coffee: {test.coffee}</div>
-                <div>Hydrogen Peroxide: {test.hydrogen_peroxide}</div>
-                <div>Turbidity: {test.turbidity}</div>
-                <div>Brix: {test.brix}</div>
-                <div>Viscosity: {test.viscosity}</div>
-                <div>Moisture: {test.moisture}</div>
-                <div>Salt: {test.salt}</div>
-                <div>Curd: {test.curd}</div>
-                <div>Appearance/Body: {test.appearance_body}</div>
-                <div>Consistency: {test.consistency}</div>
-                <div>Color: {test.color}</div>
-                <div>Taste: {test.taste}</div>
-                <div>Retention Sample: {test.retention_sample_taken ? "Yes" : "No"}</div>
-                <div>Percent Raw Milk: {test.percent_raw_milk}</div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* Basic Parameters */}
+            <div className="space-y-4">
+              <h4 className="font-medium text-lg text-gray-900 mb-4">Basic Parameters</h4>
+              <div className="bg-gray-50 p-4 rounded-lg space-y-2">
+                {renderParameter("Temperature", test.temperature, "°C")}
+                {renderParameter("Fat", test.fat, "%")}
+                {renderParameter("Protein", test.protein, "%")}
+                {renderParameter("SNF", test.snf, "%")}
+                {renderParameter("Total Solids", test.ts, "%")}
+                {renderParameter("Density", test.density, "g/ml")}
               </div>
             </div>
-            <div>
-              <h4 className="font-semibold mb-2">Microbiological & Other</h4>
-              <div className="space-y-1 text-sm">
-                <div>Coliforms: {test.coliforms}</div>
-                <div>TBC: {test.tbc}</div>
-                <div>Y/M: {test.y_m}</div>
-                <div>E. coli: {test.e_coli}</div>
-                <div>S. aureus: {test.s_aureus}</div>
-                <div>Salmonella: {test.salmonella}</div>
-                <div>TS Duplicate: {test.ts_duplicate}</div>
-                <div>TTS: {test.tts}</div>
-                <div>TMS: {test.tms}</div>
-                <div>Psychrotrophs: {test.psychrotrophs}</div>
-                <div>ATP: {test.atp}</div>
-                <div>TDS: {test.tds}</div>
-                <div>Hardness: {test.hardness}</div>
-                <div>Chlorine: {test.chlorine}</div>
-                <div>P-Alkalinity: {test.p_alkalinity}</div>
-                <div>OH-Alkalinity: {test.oh_alkalinity}</div>
-                <div>Chlorides: {test.chlorides}</div>
-                <div>Sulphites: {test.sulphites}</div>
-                <div>Calcium Hardness: {test.calcium_hardness}</div>
+
+            {/* Chemical Analysis */}
+            <div className="space-y-4">
+              <h4 className="font-medium text-lg text-gray-900 mb-4">Chemical Analysis</h4>
+              <div className="bg-gray-50 p-4 rounded-lg space-y-2">
+                {renderParameter("pH", test.ph)}
+                {renderParameter("Acidity", test.ta)}
+                {renderParameter("Alcohol Test", test.alcohol)}
+                {renderParameter("Antibiotics", test.antibiotics)}
+                {renderParameter("Phosphate", test.phosphate)}
+                {renderParameter("Hydrogen Peroxide", test.hydrogen_peroxide)}
+              </div>
+            </div>
+
+            {/* Physical Properties */}
+            <div className="space-y-4">
+              <h4 className="font-medium text-lg text-gray-900 mb-4">Physical Properties</h4>
+              <div className="bg-gray-50 p-4 rounded-lg space-y-2">
+                {renderParameter("Viscosity", test.viscosity)}
+                {renderParameter("Turbidity", test.turbidity)}
+                {renderParameter("Brix", test.brix)}
+                {renderParameter("Moisture", test.moisture, "%")}
+                {renderParameter("Appearance", test.appearance_body)}
+                {renderParameter("Color", test.color)}
+              </div>
+            </div>
+
+            {/* Microbiological Tests */}
+            <div className="space-y-4">
+              <h4 className="font-medium text-lg text-gray-900 mb-4">Microbiological Tests</h4>
+              <div className="bg-gray-50 p-4 rounded-lg space-y-2">
+                {renderParameter("TBC", test.tbc)}
+                {renderParameter("Coliforms", test.coliforms)}
+                {renderParameter("E. coli", test.e_coli)}
+                {renderParameter("S. aureus", test.s_aureus)}
+                {renderParameter("Salmonella", test.salmonella)}
+                {renderParameter("Psychrotrophs", test.psychrotrophs)}
               </div>
             </div>
           </div>

@@ -23,7 +23,7 @@ export type QaReleaseNote = {
   qa_release_note_details?: QaReleaseNoteDetail[]
 }
 
-const BASE = "https://ckwkcg0o80cckkg0oog8okk8.greatssystems.co.zw/qa-release-note"
+const BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://assc4gos404g88scso8go4oc.102.218.14.210.sslip.io/qa-release-note"
 
 const handleResp = async (res: Response) => {
   const json = await res.json().catch(() => ({}))

@@ -23,6 +23,15 @@ import { Plus, Trash2 } from "lucide-react"
 import { SignatureModal } from "@/components/ui/signature-modal"
 import { SignatureViewer } from "@/components/ui/signature-viewer"
 import { base64ToPngDataUrl, normalizeDataUrlToBase64 } from "@/lib/utils/signature"
+import { CircleColorSelector } from "@/components/ui/circle-color-selector"
+
+const RESAZURIN_OPTIONS = [
+  { value: "blue", label: "Blue", color: "bg-blue-500" },
+  { value: "light_blue", label: "Light Blue", color: "bg-blue-300" },
+  { value: "purple", label: "Purple", color: "bg-purple-500" },
+  { value: "pink", label: "Pink", color: "bg-pink-400" },
+  { value: "white", label: "White", color: "bg-white border border-gray-200" },
+]
 
 const detailSchema = yup.object({
   temperature: yup.number().nullable(),
@@ -43,6 +52,7 @@ const detailSchema = yup.object({
   antibiotics: yup.boolean().required(),
   silo: yup.string().required("Silo is required"),
   remark: yup.string().required("Remark is required"),
+  starch: yup.boolean().required(),
 })
 
 const schema = yup.object({
@@ -66,9 +76,18 @@ interface Props {
   mode: "create" | "edit"
   existingId?: string
   existingData?: any
+  onSuccess?: () => void // Add this prop
 }
 
-export function RawMilkResultSlipDrawer({ open, onOpenChange, rawMilkIntakeFormId, mode, existingId, existingData }: Props) {
+export function RawMilkResultSlipDrawer({ 
+  open, 
+  onOpenChange, 
+  rawMilkIntakeFormId, 
+  mode, 
+  existingId, 
+  existingData,
+  onSuccess 
+}: Props) {
   const dispatch = useAppDispatch()
   const { operationLoading } = useAppSelector((s) => (s as any).rawMilkResultSlips)
   const [users, setUsers] = useState<SearchableSelectOption[]>([])
@@ -227,19 +246,23 @@ export function RawMilkResultSlipDrawer({ open, onOpenChange, rawMilkIntakeFormI
       const payload = {
         ...data,
         raw_milk_intake_id: rawMilkIntakeFormId,
-        details: data.details || [], // Ensure details is always an array
+        details: data.details || [],
         approver_signature: normalizeDataUrlToBase64(data.approver_signature),
       }
 
       if (mode === "edit" && existingId) {
-        await dispatch(updateRawMilkResultSlip({ 
+        const result = await dispatch(updateRawMilkResultSlip({ 
           id: existingId, 
           ...payload 
         })).unwrap()
         toast.success("Result slip updated")
+        // Call onSuccess to trigger refetch
+        onSuccess?.()
       } else {
-        await dispatch(createRawMilkResultSlip(payload)).unwrap()
+        const result = await dispatch(createRawMilkResultSlip(payload)).unwrap()
         toast.success("Result slip created")
+        // Call onSuccess to trigger refetch
+        onSuccess?.()
       }
       onOpenChange(false)
     } catch (e: any) {
@@ -249,6 +272,7 @@ export function RawMilkResultSlipDrawer({ open, onOpenChange, rawMilkIntakeFormI
 
   const addDetail = () => {
     append({
+      id: undefined, // Only used for updates
       temperature: undefined,
       time: "",
       ot: "",
@@ -265,6 +289,7 @@ export function RawMilkResultSlipDrawer({ open, onOpenChange, rawMilkIntakeFormI
       scc: undefined,
       density: undefined,
       antibiotics: false,
+      starch: false,
       silo: "",
       remark: ""
     })
@@ -377,141 +402,187 @@ export function RawMilkResultSlipDrawer({ open, onOpenChange, rawMilkIntakeFormI
               <div key={field.id} className="p-4 bg-gray-50 rounded-md border">
                 <div className="flex items-center justify-between mb-4">
                   <h4 className="text-md font-medium">Detail {index + 1}</h4>
-                  <Button type="button" variant="ghost" onClick={() => remove(index)}>
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
+                  {fields.length > 1 && (
+                    <Button type="button" variant="ghost" onClick={() => remove(index)}>
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  )}
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <div className="space-y-2">
-                    <Label>Temperature</Label>
-                    <Controller name={`details.${index}.temperature`} control={form.control} render={({ field }) => (
-                      <Input type="number" step="0.1" placeholder="72.5" {...field} />
+                {/* Basic Measurements */}
+                <div className="space-y-4">
+                  <h5 className="text-sm font-semibold text-gray-700">Basic Measurements</h5>
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <Controller name={`details.${index}.id`} control={form.control} render={({ field }) => (
+                      <input type="hidden" {...field} />
                     )} />
+                    <div className="space-y-2">
+                      <Label>Temperature (°C)</Label>
+                      <Controller name={`details.${index}.temperature`} control={form.control} render={({ field }) => (
+                        <Input type="number" step="0.1" placeholder="72.5" {...field} />
+                      )} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Time</Label>
+                      <Controller name={`details.${index}.time`} control={form.control} render={({ field }) => (
+                        <ShadcnTimePicker value={field.value} onChange={field.onChange} placeholder="Select time" />
+                      )} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>OT</Label>
+                      <Controller name={`details.${index}.ot`} control={form.control} render={({ field }) => (
+                        <Input placeholder="OK" {...field} />
+                      )} />
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label>Time</Label>
-                    <Controller name={`details.${index}.time`} control={form.control} render={({ field }) => (
-                      <ShadcnTimePicker
-                        value={field.value}
-                        onChange={field.onChange}
-                        placeholder="Select time"
+                </div>
+
+                {/* Test Results */}
+                <div className="space-y-4 mt-6">
+                  <h5 className="text-sm font-semibold text-gray-700">Chemical Tests</h5>
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="space-y-2">
+                      <Label>Alcohol (%)</Label>
+                      <Controller name={`details.${index}.alcohol`} control={form.control} render={({ field }) => (
+                        <Input type="number" step="0.1" placeholder="0.1" {...field} />
+                      )} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Titrable Acidity</Label>
+                      <Controller name={`details.${index}.titrable_acidity`} control={form.control} render={({ field }) => (
+                        <Input type="number" step="0.1" placeholder="0.1" {...field} />
+                      )} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>pH Level</Label>
+                      <Controller name={`details.${index}.ph`} control={form.control} render={({ field }) => (
+                        <Input type="number" step="0.1" placeholder="6.8" {...field} />
+                      )} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="mb-2">Resazurin</Label>
+                      <Controller 
+                        name={`details.${index}.resazurin`} 
+                        control={form.control} 
+                        render={({ field }) => (
+                          <CircleColorSelector
+                            value={field.value}
+                            onValueChange={field.onChange}
+                            options={RESAZURIN_OPTIONS}
+                            placeholder="Select color"
+                          />
+                        )} 
                       />
-                    )} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>OT</Label>
-                    <Controller name={`details.${index}.ot`} control={form.control} render={({ field }) => (
-                      <Input placeholder="OK" {...field} />
-                    )} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>COB</Label>
-                    <Controller name={`details.${index}.cob`} control={form.control} render={({ field }) => (
-                      <div className="flex items-center space-x-2">
-                        <Switch checked={field.value || false} onCheckedChange={field.onChange} />
-                        <Label>COB Detected</Label>
-                      </div>
-                    )} />
+                    </div>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <div className="space-y-2">
-                    <Label>Alcohol</Label>
-                    <Controller name={`details.${index}.alcohol`} control={form.control} render={({ field }) => (
-                      <Input type="number" step="0.1" placeholder="0.1" {...field} />
-                    )} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Titrable Acidity</Label>
-                    <Controller name={`details.${index}.titrable_acidity`} control={form.control} render={({ field }) => (
-                      <Input type="number" step="0.1" placeholder="0.1" {...field} />
-                    )} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>pH</Label>
-                    <Controller name={`details.${index}.ph`} control={form.control} render={({ field }) => (
-                      <Input type="number" step="0.1" placeholder="6.8" {...field} />
-                    )} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Resazurin</Label>
-                    <Controller name={`details.${index}.resazurin`} control={form.control} render={({ field }) => (
-                      <Input placeholder="LB" {...field} />
-                    )} />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <div className="space-y-2">
-                    <Label>Fat</Label>
-                    <Controller name={`details.${index}.fat`} control={form.control} render={({ field }) => (
-                      <Input type="number" step="0.1" placeholder="3.5" {...field} />
-                    )} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Protein</Label>
-                    <Controller name={`details.${index}.protein`} control={form.control} render={({ field }) => (
-                      <Input type="number" step="0.1" placeholder="3.5" {...field} />
-                    )} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>LR SNF</Label>
-                    <Controller name={`details.${index}.lr_snf`} control={form.control} render={({ field }) => (
-                      <Input placeholder="30/8.95" {...field} />
-                    )} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Total Solids</Label>
-                    <Controller name={`details.${index}.total_solids`} control={form.control} render={({ field }) => (
-                      <Input type="number" step="0.01" placeholder="12.55" {...field} />
-                    )} />
+                {/* Composition Analysis */}
+                <div className="space-y-4 mt-6">
+                  <h5 className="text-sm font-semibold text-gray-700">Composition Analysis</h5>
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="space-y-2">
+                      <Label>Fat (%)</Label>
+                      <Controller name={`details.${index}.fat`} control={form.control} render={({ field }) => (
+                        <Input type="number" step="0.1" placeholder="3.5" {...field} />
+                      )} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Protein (%)</Label>
+                      <Controller name={`details.${index}.protein`} control={form.control} render={({ field }) => (
+                        <Input type="number" step="0.1" placeholder="3.5" {...field} />
+                      )} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Total Solids (%)</Label>
+                      <Controller name={`details.${index}.total_solids`} control={form.control} render={({ field }) => (
+                        <Input type="number" step="0.01" placeholder="12.55" {...field} />
+                      )} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>LR SNF</Label>
+                      <Controller name={`details.${index}.lr_snf`} control={form.control} render={({ field }) => (
+                        <Input placeholder="30/8.95" {...field} />
+                      )} />
+                    </div>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <div className="space-y-2">
-                    <Label>FPD</Label>
-                    <Controller name={`details.${index}.fpd`} control={form.control} render={({ field }) => (
-                      <Input type="number" step="0.01" placeholder="12.55" {...field} />
-                    )} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>SCC</Label>
-                    <Controller name={`details.${index}.scc`} control={form.control} render={({ field }) => (
-                      <Input type="number" step="0.01" placeholder="12.55" {...field} />
-                    )} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Density</Label>
-                    <Controller name={`details.${index}.density`} control={form.control} render={({ field }) => (
-                      <Input type="number" step="0.01" placeholder="12.55" {...field} />
-                    )} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Antibiotics</Label>
-                    <Controller name={`details.${index}.antibiotics`} control={form.control} render={({ field }) => (
-                      <div className="flex items-center space-x-2">
-                        <Switch checked={field.value || false} onCheckedChange={field.onChange} />
-                        <Label>Antibiotics Detected</Label>
-                      </div>
-                    )} />
+                {/* Additional Parameters */}
+                <div className="space-y-4 mt-6">
+                  <h5 className="text-sm font-semibold text-gray-700">Additional Parameters</h5>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label>FPD</Label>
+                      <Controller name={`details.${index}.fpd`} control={form.control} render={({ field }) => (
+                        <Input type="number" step="0.01" placeholder="12.55" {...field} />
+                      )} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>SCC</Label>
+                      <Controller name={`details.${index}.scc`} control={form.control} render={({ field }) => (
+                        <Input type="number" step="0.01" placeholder="12.55" {...field} />
+                      )} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Density</Label>
+                      <Controller name={`details.${index}.density`} control={form.control} render={({ field }) => (
+                        <Input type="number" step="0.01" placeholder="12.55" {...field} />
+                      )} />
+                    </div>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Silo</Label>
-                    <Controller name={`details.${index}.silo`} control={form.control} render={({ field }) => (
-                      <SearchableSelect options={silos} value={field.value} onValueChange={field.onChange} placeholder="Select silo" loading={loadingSilos} />
-                    )} />
+                {/* Quality Indicators */}
+                <div className="space-y-4 mt-6">
+                  <h5 className="text-sm font-semibold text-gray-700">Quality Indicators</h5>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label>COB</Label>
+                      <Controller name={`details.${index}.cob`} control={form.control} render={({ field }) => (
+                        <div className="flex items-center space-x-2">
+                          <Switch checked={field.value || false} onCheckedChange={field.onChange} />
+                          <Label>COB Detected</Label>
+                        </div>
+                      )} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Antibiotics</Label>
+                      <Controller name={`details.${index}.antibiotics`} control={form.control} render={({ field }) => (
+                        <div className="flex items-center space-x-2">
+                          <Switch checked={field.value || false} onCheckedChange={field.onChange} />
+                          <Label>Antibiotics Detected</Label>
+                        </div>
+                      )} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Starch</Label>
+                      <Controller name={`details.${index}.starch`} control={form.control} render={({ field }) => (
+                        <div className="flex items-center space-x-2">
+                          <Switch checked={field.value || false} onCheckedChange={field.onChange} />
+                          <Label>Starch Detected</Label>
+                        </div>
+                      )} />
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label>Remark</Label>
-                    <Controller name={`details.${index}.remark`} control={form.control} render={({ field }) => (
-                      <Textarea rows={2} placeholder="Test completed successfully" {...field} />
-                    )} />
+                </div>
+
+                {/* Final Details */}
+                <div className="space-y-4 mt-6">
+                  <h5 className="text-sm font-semibold text-gray-700">Final Details</h5>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Silo</Label>
+                      <Controller name={`details.${index}.silo`} control={form.control} render={({ field }) => (
+                        <SearchableSelect options={silos} value={field.value} onValueChange={field.onChange} placeholder="Select silo" loading={loadingSilos} />
+                      )} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Remark</Label>
+                      <Controller name={`details.${index}.remark`} control={form.control} render={({ field }) => (
+                        <Textarea rows={2} placeholder="Test completed successfully" {...field} />
+                      )} />
+                    </div>
                   </div>
                 </div>
               </div>

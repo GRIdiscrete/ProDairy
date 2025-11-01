@@ -23,18 +23,21 @@ export interface FilmaticLinesForm1 {
 }
 
 export interface FilmaticLinesForm1DayShift {
+  id?: string
   supervisor_approve: boolean | null
   operator_id: string
   filmatic_line_form_1_day_shift_details: FilmaticLinesForm1DayShiftDetail[]
 }
 
 export interface FilmaticLinesForm1NightShift {
+  id?: string
   supervisor_approve: boolean | null
   operator_id: string
   filmatic_line_form_1_night_shift_details: FilmaticLinesForm1NightShiftDetail[]
 }
 
 export interface FilmaticLinesForm1DayShiftDetail {
+  id?: string
   time: string
   pallets: number
   target: number
@@ -43,6 +46,7 @@ export interface FilmaticLinesForm1DayShiftDetail {
 }
 
 export interface FilmaticLinesForm1NightShiftDetail {
+  id?: string
   time: string
   pallets: number
   target: number
@@ -51,6 +55,7 @@ export interface FilmaticLinesForm1NightShiftDetail {
 }
 
 export interface FilmaticLinesForm1StoppageTime {
+  id?: string
   product_1?: number
   product_2?: number
   filler_1?: number

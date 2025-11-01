@@ -92,7 +92,7 @@ export const generalLabTestApi = {
     })
   },
   update: async (id: string, payload: GeneralLabTest): Promise<GeneralLabTestSingleResponse> => {
-    return apiRequest<GeneralLabTestSingleResponse>(`/lab-test-main/${id}`, {
+    return apiRequest<GeneralLabTestSingleResponse>(`/lab-test-main`, {
       method: "PATCH",
       headers: {
         accept: "application/json",

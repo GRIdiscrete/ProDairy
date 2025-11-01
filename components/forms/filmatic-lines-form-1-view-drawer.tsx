@@ -502,6 +502,84 @@ export function FilmaticLinesForm1ViewDrawer({
               </div>
             </CardContent>
           </Card>
+
+          {/* Bottle Statistics */}
+          <div className="space-y-4 mt-6">
+            <h4 className="font-medium text-lg">Bottle Statistics</h4>
+            
+            {/* Day Shift Stats */}
+            {form.day_shift && (
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <h5 className="font-medium mb-3">Day Shift</h5>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  <div>
+                    <p className="text-sm text-gray-600">Opening Bottles</p>
+                    <p className="text-lg font-medium">{form.day_shift_opening_bottles || 0}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Closing Bottles</p>
+                    <p className="text-lg font-medium">{form.day_shift_closing_bottles || 0}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Waste Bottles</p>
+                    <p className="text-lg font-medium">{form.day_shift_waste_bottles || 0}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Received Bottles</p>
+                    <p className="text-lg font-medium">{form.day_shift_received_bottles || 0}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Damaged Bottles</p>
+                    <p className="text-lg font-medium">{form.day_shift_damaged_bottles || 0}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Foiled Bottles</p>
+                    <p className="text-lg font-medium">{form.day_shift_foiled_bottles || 0}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Night Shift Stats */}
+            {form.night_shift && (
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <h5 className="font-medium mb-3">Night Shift</h5>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  <div>
+                    <p className="text-sm text-gray-600">Opening Bottles</p>
+                    <p className="text-lg font-medium">{form.night_shift_opening_bottles || 0}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Closing Bottles</p>
+                    <p className="text-lg font-medium">{form.night_shift_closing_bottles || 0}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Waste Bottles</p>
+                    <p className="text-lg font-medium">{form.night_shift_waste_bottles || 0}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Received Bottles</p>
+                    <p className="text-lg font-medium">{form.night_shift_received_bottles || 0}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Damaged Bottles</p>
+                    <p className="text-lg font-medium">{form.night_shift_damaged_bottles || 0}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Foiled Bottles</p>
+                    <p className="text-lg font-medium">{form.night_shift_foiled_bottles || 0}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {form.transferrable_milk != null && (
+              <div className="mt-4">
+                <p className="text-sm text-gray-600">Transferrable Milk</p>
+                <p className="text-lg font-medium">{form.transferrable_milk}L</p>
+              </div>
+            )}
+          </div>
         </div>
       </SheetContent>
     </Sheet>

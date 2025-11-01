@@ -44,10 +44,7 @@ export interface BMTControlForm {
 }
 
 export interface CreateBMTControlFormRequest {
-  flow_meter_start: string
-  flow_meter_start_reading: number
-  flow_meter_end: string
-  flow_meter_end_reading: number
+
   source_silo_id: string[]
   movement_start: string
   movement_end: string

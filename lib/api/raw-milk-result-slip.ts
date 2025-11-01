@@ -73,14 +73,14 @@ export interface RawMilkResultSlipsResponse {
 
 export const rawMilkResultSlipApi = {
   async getAll() {
-    return await apiRequest<RawMilkResultSlipsResponse>("/raw-milk-result-slip", { 
+    return await apiRequest<RawMilkResultSlipsResponse>("/raw-milk-lab-test", { 
       method: "GET",
       headers: { accept: "application/json" },
     })
   },
 
   async create(payload: CreateRawMilkResultSlipRequest) {
-    return await apiRequest<RawMilkResultSlipResponse>("/raw-milk-result-slip", {
+    return await apiRequest<RawMilkResultSlipResponse>("/raw-milk-lab-test", {
       method: "POST",
       headers: { 
         accept: "application/json",
@@ -91,7 +91,7 @@ export const rawMilkResultSlipApi = {
   },
 
   async update(payload: UpdateRawMilkResultSlipRequest) {
-    return await apiRequest<RawMilkResultSlipResponse>("/raw-milk-result-slip", {
+    return await apiRequest<RawMilkResultSlipResponse>("/raw-milk-lab-test", {
       method: "PATCH",
       headers: { 
         accept: "application/json",
@@ -102,7 +102,7 @@ export const rawMilkResultSlipApi = {
   },
 
   async delete(id: string) {
-    return await apiRequest(`/raw-milk-result-slip/${id}`, { 
+    return await apiRequest(`/raw-milk-lab-test/${id}`, { 
       method: "DELETE",
       headers: { accept: "application/json" },
     })
