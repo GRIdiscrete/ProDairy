@@ -11,7 +11,7 @@ export const apiRequest = async <T>(
   // Get authentication state directly from cookies instead of Redux store
   const cookies = CookieManager.getAuthCookies()
   const { accessToken } = cookies
-  
+  //
   console.log('API Request Debug:', {
     url,
     endpoint,
