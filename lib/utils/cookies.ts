@@ -26,11 +26,11 @@ export class CookieManager {
 
   private static readonly COOKIE_OPTIONS = {
     httpOnly: false, // Must be false for client-side
-    secure: process.env.NODE_ENV === 'production',
+    secure: false, // ✅ Only secure if running on https
     sameSite: 'lax' as const,
     path: '/',
     maxAge: 60 * 60 * 24 * 7, // 7 days
-  }
+  };
 
   static setCookie(name: string, value: string, options?: any) {
     if (typeof document !== 'undefined') {
@@ -39,21 +39,21 @@ export class CookieManager {
         ...this.COOKIE_OPTIONS,
         ...options,
       }
-      
+
       let cookieString = `${name}=${encodeURIComponent(value)}`
-      
+
       if (cookieOptions.maxAge) {
         const expires = new Date(Date.now() + cookieOptions.maxAge * 1000)
         cookieString += `; expires=${expires.toUTCString()}`
       }
-      
+
       if (cookieOptions.path) cookieString += `; path=${cookieOptions.path}`
       if (cookieOptions.sameSite) cookieString += `; samesite=${cookieOptions.sameSite}`
       if (cookieOptions.secure) cookieString += '; secure'
-      
+
       console.log(`Setting cookie: ${name}`, cookieString)
       document.cookie = cookieString
-      
+
       // Verify cookie was set
       const setCookie = this.getCookie(name)
       console.log(`Cookie verification: ${name} = ${setCookie ? 'set' : 'not set'}`)
@@ -86,12 +86,12 @@ export class CookieManager {
       userData: userData ? 'present' : 'missing',
       profileData: profileData ? 'present' : 'missing'
     })
-    
+
     this.setCookie(this.COOKIE_NAMES.ACCESS_TOKEN, accessToken)
     this.setCookie(this.COOKIE_NAMES.REFRESH_TOKEN, refreshToken)
     this.setCookie(this.COOKIE_NAMES.USER_DATA, JSON.stringify(userData))
     this.setCookie(this.COOKIE_NAMES.PROFILE_DATA, JSON.stringify(profileData))
-    
+
     console.log('Cookies set successfully')
   }
 
@@ -102,14 +102,14 @@ export class CookieManager {
       user: this.getCookie(this.COOKIE_NAMES.USER_DATA),
       profile: this.getCookie(this.COOKIE_NAMES.PROFILE_DATA),
     }
-    
+
     console.log('Retrieved cookies:', {
       accessToken: cookies.accessToken ? 'present' : 'missing',
       refreshToken: cookies.refreshToken ? 'present' : 'missing',
       user: cookies.user ? 'present' : 'missing',
       profile: cookies.profile ? 'present' : 'missing'
     })
-    
+
     return cookies
   }
 
@@ -155,7 +155,7 @@ export class CookieManager {
       console.log('=== Cookie Debug Info ===')
       console.log('All cookies:', document.cookie)
       console.log('Auth cookies:', this.getAuthCookies())
-      
+
       // Check each cookie individually
       Object.entries(this.COOKIE_NAMES).forEach(([key, name]) => {
         const value = this.getCookie(name)
@@ -169,15 +169,15 @@ export class CookieManager {
 // Make debug function available globally for console debugging
 if (typeof window !== 'undefined') {
   (window as any).debugCookies = () => CookieManager.debugCookies()
-  ;(window as any).checkAuthToken = () => {
-    const cookies = CookieManager.getAuthCookies()
-    return cookies
-  }
-  
-  ;(window as any).setTestToken = (token: string) => {
-    CookieManager.setCookie('access_token', token)
-    console.log('Test token set:', token.substring(0, 50) + '...')
-    return CookieManager.getAuthCookies()
-  }
+    ; (window as any).checkAuthToken = () => {
+      const cookies = CookieManager.getAuthCookies()
+      return cookies
+    }
+
+    ; (window as any).setTestToken = (token: string) => {
+      CookieManager.setCookie('access_token', token)
+      console.log('Test token set:', token.substring(0, 50) + '...')
+      return CookieManager.getAuthCookies()
+    }
 }
 
