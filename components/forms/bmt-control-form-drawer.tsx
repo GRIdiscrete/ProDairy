@@ -472,8 +472,7 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
       } else if (form) {
         const updatePayload = {
           ...basePayload,
-          id: form.id,
-
+          id: form.id
         };
 
         await dispatch(updateBMTControlFormAction({ id: form.id, formData: updatePayload as any })).unwrap();
