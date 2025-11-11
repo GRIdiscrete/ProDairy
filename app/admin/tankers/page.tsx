@@ -106,6 +106,7 @@ export default function AdminTankersPage() {
               <span className="text-sm font-light">{t.mileage.toLocaleString()} km</span>
             </div>
             <p className="text-xs text-gray-500">Age: {t.age} yrs • Condition: {t.condition}</p>
+            <p className="text-xs text-gray-500">Compartments: {t.compartments || 'N/A'}</p>
           </div>
         )
       }

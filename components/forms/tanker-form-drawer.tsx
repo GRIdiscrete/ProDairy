@@ -21,6 +21,7 @@ const schema = yup.object({
   condition: yup.string().required("Condition is required"),
   age: yup.number().typeError("Age must be a number").required("Age is required"),
   mileage: yup.number().typeError("Mileage must be a number").required("Mileage is required"),
+  compartments: yup.number().typeError("Compartments must be a number").required("Compartments is required"),
 })
 
 type FormData = yup.InferType<typeof schema>
@@ -38,7 +39,7 @@ export function TankerFormDrawer({ open, onOpenChange, tanker, mode }: Props) {
 
   const { control, handleSubmit, reset, formState: { errors } } = useForm<FormData>({
     resolver: yupResolver(schema),
-    defaultValues: { driver_id: "", reg_number: "", capacity: undefined, condition: "", age: undefined, mileage: undefined }
+    defaultValues: { driver_id: "", reg_number: "", capacity: undefined, condition: "", age: undefined, mileage: undefined, compartments: undefined }
   })
 
   const [loadingUsers, setLoadingUsers] = useState(false)
@@ -65,9 +66,10 @@ export function TankerFormDrawer({ open, onOpenChange, tanker, mode }: Props) {
           condition: tanker.condition,
           age: tanker.age,
           mileage: tanker.mileage,
+          compartments: tanker.compartments,
         })
       } else {
-        reset({ driver_id: "", reg_number: "", capacity: undefined, condition: "", age: undefined, mileage: undefined })
+        reset({ driver_id: "", reg_number: "", capacity: undefined, condition: "", age: undefined, mileage: undefined, compartments: undefined })
       }
     }
   }, [open, mode, tanker, reset])
@@ -139,6 +141,13 @@ export function TankerFormDrawer({ open, onOpenChange, tanker, mode }: Props) {
                   <Input type="number" step="0.1" {...field} value={field.value || ""} onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)} />
                 )} />
                 {errors.mileage && <p className="text-sm text-red-500">{errors.mileage.message}</p>}
+              </div>
+              <div className="space-y-2">
+                <Label>Compartments *</Label>
+                <Controller name="compartments" control={control} render={({ field }) => (
+                  <Input type="number" step="1" {...field} value={field.value || ""} onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)} />
+                )} />
+                {errors.compartments && <p className="text-sm text-red-500">{errors.compartments.message}</p>}
               </div>
               <div className="space-y-2">
                 <Label>Driver *</Label>

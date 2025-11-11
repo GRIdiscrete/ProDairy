@@ -1,5 +1,28 @@
 import { apiRequest } from "@/lib/utils/api-request"
 
+export interface CompartmentTest {
+  id?: string
+  temperature: number
+  time: string
+  ot: string
+  cob: boolean
+  alcohol: number
+  titrable_acidity: number
+  ph: number
+  resazurin: string
+  fat: number
+  protein: number
+  lr_snf: string
+  total_solids: number
+  fpd: number
+  scc: number
+  density: number
+  antibiotics: boolean
+  starch: boolean
+  silo: string
+  remark: string
+}
+
 export interface RawMilkResultSlipDetail {
   id?: string
   created_at?: string
@@ -21,8 +44,10 @@ export interface RawMilkResultSlipDetail {
   scc: number
   density: number
   antibiotics: boolean
+  starch: boolean
   silo: string
   remark: string
+  compartment_test: CompartmentTest[]
 }
 
 export interface RawMilkResultSlip {

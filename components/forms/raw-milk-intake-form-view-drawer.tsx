@@ -637,6 +637,7 @@ export function RawMilkIntakeFormViewDrawer({
           mode={resultSlipMode}
           existingId={resultSlipExistingId}
           existingData={currentResultSlip}
+          driverFormId={form.drivers_form_id}
         />
       </SheetContent>
     </Sheet>
