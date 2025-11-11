@@ -19,7 +19,8 @@ export interface TankerCreateRequest {
   capacity: number
   condition: string
   age: number
-  mileage: number
+  mileage: number,
+  compartments:number
 }
 
 export interface TankerResponse {

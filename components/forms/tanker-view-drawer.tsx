@@ -57,6 +57,10 @@ export function TankerViewDrawer({ open, onOpenChange, tanker, onEdit }: Props) 
                 <div className="text-sm font-light">{tanker.age} years</div>
               </div>
               <div className="space-y-1">
+                <div className="text-xs text-gray-500 flex items-center gap-1"><FileText className="h-3 w-3" />Compartments</div>
+                <div className="text-sm font-light">{tanker.compartments || 'N/A'}</div>
+              </div>
+              <div className="space-y-1">
                 <div className="text-xs text-gray-500 flex items-center gap-1"><UserIcon className="h-3 w-3" />Driver</div>
                 <div className="text-sm font-light">{driver ? `${driver.first_name} ${driver.last_name}` : 'Unassigned'}</div>
               </div>

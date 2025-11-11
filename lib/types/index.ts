@@ -127,6 +127,40 @@ export interface ProductionPlan {
   }
 }
 
+// New Tanker Interface
+export interface Tanker {
+  id: string
+  age: number
+  mileage: number
+  capacity: number
+  condition: string
+  driver_id: string
+  created_at: string
+  reg_number: string
+  updated_at: string | null
+  compartments: number
+}
+
+// New Raw Milk Intake Lab Test Interface
+export interface RawMilkIntakeLabTest {
+  id: string
+  cob: boolean | null
+  tag: string | null
+  date: string
+  alcohol: number | null
+  remarks: string | null
+  accepted: boolean
+  no_water: string | null
+  no_starch: string | null
+  created_at: string
+  updated_at: string | null
+  bacteria_load: string | null
+  organol_eptic: string
+  milk_freshness: string | null
+  drivers_form_id: string | null
+  collected_product_id: string
+}
+
 // New Driver Form Types
 export interface DriverFormCollectedProduct {
   id?: string
@@ -139,6 +173,7 @@ export interface DriverFormCollectedProduct {
   unit_of_measure: string
   e_sign_supplier: string
   e_sign_driver: string
+  raw_milk_intake_lab_test: RawMilkIntakeLabTest[]
 }
 
 export interface DriverForm {
@@ -147,14 +182,14 @@ export interface DriverForm {
   driver: string
   start_date: string
   end_date: string
-  tanker:string
-  tag:string
+  tanker: Tanker
+  tag: string
   collected_products?: any[] | null
   collected_products_?: string | null
   drivers_form_collected_products: DriverFormCollectedProduct[]
   delivered: boolean
   rejected: boolean
-  updated_at: string
+  updated_at: string | null
   drivers_driver_fkey?: UserEntity
 }
 
