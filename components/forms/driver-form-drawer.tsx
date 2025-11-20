@@ -113,18 +113,29 @@ export function DriverFormDrawer({
 
 
 
-  // Get offline data from localStorage
-  const [offlineData, setOfflineData] = useState({
-    drivers: LocalStorageService.getDrivers(),
-    rawMaterials: LocalStorageService.getRawMaterials(),
-    suppliers: LocalStorageService.getSuppliers()
+  // Get offline data from localStorage - initialize safely
+  const [offlineData, setOfflineData] = useState(() => {
+    if (typeof window === 'undefined') {
+      return {
+        drivers: [],
+        rawMaterials: [],
+        suppliers: [],
+        tankers: []
+      }
+    }
+    return {
+      drivers: LocalStorageService.getDrivers() || [],
+      rawMaterials: LocalStorageService.getRawMaterials() || [],
+      suppliers: LocalStorageService.getSuppliers() || [],
+      tankers: LocalStorageService.getTankers() || []
+    }
   })
 
-  // Use offline data when offline, online data when online
-  const drivers = isOnline ? users : offlineData.drivers
-  const rawMaterialsData = isOnline ? rawMaterials : offlineData.rawMaterials
-  const suppliersData = isOnline ? suppliers : offlineData.suppliers
-  const tankersData = isOnline ? tankers : []
+  // Use fallback approach: prefer online data, fallback to offline if empty
+  const drivers = users.length > 0 ? users : offlineData.drivers
+  const rawMaterialsData = rawMaterials.length > 0 ? rawMaterials : offlineData.rawMaterials
+  const suppliersData = suppliers.length > 0 ? suppliers : offlineData.suppliers
+  const tankersData = tankers.length > 0 ? tankers : offlineData.tankers
 
   // Fix loading states - handle different loading state structures
   const dataLoading = isOnline ? (
@@ -177,64 +188,78 @@ export function DriverFormDrawer({
     name: "drivers_form_collected_products",
   })
 
-  // Load required data on component mount
+  // Load required data on component mount - always try API first, fallback to localStorage
   useEffect(() => {
-    console.log('Driver Form useEffect triggered:', { open, isOnline })
-    if (open && isOnline) {
-      console.log('Fetching online data...')
-      dispatch(fetchRawMaterials({}))
-      dispatch(fetchUsers({}))
-      dispatch(fetchSuppliers({}))
-      dispatch(fetchTankers({}))
-    } else if (open && !isOnline) {
-      console.log('Loading offline data...')
-      // Refresh offline data from localStorage
+    console.log('Driver Form useEffect triggered:', { open })
+    if (open) {
+      // Try API first
+      dispatch(fetchRawMaterials({})).catch((error) => {
+        console.log('API fetch failed, using localStorage', error)
+      })
+      dispatch(fetchUsers({})).catch((error) => {
+        console.log('API fetch failed, using localStorage', error)
+      })
+      dispatch(fetchSuppliers({})).catch((error) => {
+        console.log('API fetch failed, using localStorage', error)
+      })
+      dispatch(fetchTankers({})).catch((error) => {
+        console.log('API fetch failed, using localStorage', error)
+      })
+      
+      // Also load localStorage data as backup
       setOfflineData({
         drivers: LocalStorageService.getDrivers(),
         rawMaterials: LocalStorageService.getRawMaterials(),
         suppliers: LocalStorageService.getSuppliers(),
-
+        tankers: LocalStorageService.getTankers(),
       })
     }
-  }, [dispatch, open, isOnline])
+  }, [dispatch, open])
 
   // Also load data when component mounts, regardless of drawer state
   useEffect(() => {
-    if (isOnline) {
-      dispatch(fetchRawMaterials({}))
-      dispatch(fetchUsers({}))
-      dispatch(fetchSuppliers({}))
-      dispatch(fetchTankers({}))
-    } else {
-      setOfflineData({
-        drivers: LocalStorageService.getDrivers(),
-        rawMaterials: LocalStorageService.getRawMaterials(),
-        suppliers: LocalStorageService.getSuppliers()
-      })
-    }
-  }, [dispatch, isOnline])
+    // Try API first
+    dispatch(fetchRawMaterials({})).catch(() => {})
+    dispatch(fetchUsers({})).catch(() => {})
+    dispatch(fetchSuppliers({})).catch(() => {})
+    dispatch(fetchTankers({})).catch(() => {})
+    
+    // Load localStorage as backup
+    setOfflineData({
+      drivers: LocalStorageService.getDrivers(),
+      rawMaterials: LocalStorageService.getRawMaterials(),
+      suppliers: LocalStorageService.getSuppliers(),
+      tankers: LocalStorageService.getTankers()
+    })
+  }, [dispatch])
 
   // Force data load when drawer opens if no data is available
   useEffect(() => {
-    if (open && isOnline && (users.length === 0 || rawMaterials.length === 0 || suppliers.length === 0 || tankers.length === 0)) {
+    if (open && (users.length === 0 || rawMaterials.length === 0 || suppliers.length === 0 || tankers.length === 0)) {
 
       dispatch(fetchRawMaterials({}))
       dispatch(fetchUsers({}))
       dispatch(fetchSuppliers({}))
       dispatch(fetchTankers({}))
     }
-  }, [open, isOnline, users.length, rawMaterials.length, suppliers.length, tankers.length, dispatch])
+  }, [open, users.length, rawMaterials.length, suppliers.length, tankers.length, dispatch])
 
-  // Update offline data when online status changes
+  // Refresh offline data when drawer opens (as a backup)
   useEffect(() => {
-    if (!isOnline) {
+    if (open && typeof window !== 'undefined') {
+      const offlineDrivers = LocalStorageService.getDrivers()
+      const offlineMaterials = LocalStorageService.getRawMaterials()
+      const offlineSuppliers = LocalStorageService.getSuppliers()
+      const offlineTankers = LocalStorageService.getTankers()
+      
       setOfflineData({
-        drivers: LocalStorageService.getDrivers(),
-        rawMaterials: LocalStorageService.getRawMaterials(),
-        suppliers: LocalStorageService.getSuppliers()
+        drivers: offlineDrivers,
+        rawMaterials: offlineMaterials,
+        suppliers: offlineSuppliers,
+        tankers: offlineTankers
       })
     }
-  }, [isOnline])
+  }, [open])
 
   // Reset form when driver form changes or mode changes
   useEffect(() => {
@@ -272,14 +297,10 @@ export function DriverFormDrawer({
         end_date: new Date(data.end_date).toISOString(),
       }
 
+      console.log('Submitting driver form:', submitData)
 
-      // console.log('Submitting driver form:', submitData)
-
-      //remove drivers_form_collected_products from submit data
-      delete submitData.drivers_form_collected_products
-
-      if (isOnline) {
-        // Online mode - submit to API
+      // Try online submission first, fallback to offline if it fails
+      try {
         if (mode === "create") {
           await dispatch(createDriverForm(submitData)).unwrap()
           toast.success("Driver form created successfully")
@@ -294,8 +315,10 @@ export function DriverFormDrawer({
 
         // Refresh the driver forms list
         dispatch(fetchDriverForms({}))
-      } else {
-        // Offline mode - save to localStorage
+      } catch (apiError: any) {
+        console.error('API submission failed, saving offline:', apiError)
+        
+        // Fallback to offline storage
         if (mode === "create") {
           const offlineFormData = {
             driver_id: submitData.driver,
@@ -307,7 +330,7 @@ export function DriverFormDrawer({
             drivers_form_collected_products: submitData.drivers_form_collected_products
           }
           LocalStorageService.saveDriverForm(offlineFormData)
-          toast.success("Driver form saved offline. It will be synced when you're back online.")
+          toast.success("Saved offline - will sync when connection is restored")
         } else if (driverForm) {
           const offlineFormData = {
             ...driverForm,
@@ -320,8 +343,7 @@ export function DriverFormDrawer({
             drivers_form_collected_products: submitData.drivers_form_collected_products
           }
           LocalStorageService.updateDriverForm(offlineFormData)
-          toast.success("Driver form updated offline. It will be synced when you're back online.")
-          toast.info("Offline editing not yet implemented")
+          toast.success("Updated offline - will sync when connection is restored")
         }
       }
 
@@ -374,34 +396,69 @@ export function DriverFormDrawer({
                 </div>
               </div>
               <div className="flex items-center space-x-2 mt-3">
-                {isOnline ? (
-                  <div className="flex items-center space-x-1 text-green-600">
-                    <Wifi className="h-4 w-4" />
-                    <span className="text-xs font-light">Online</span>
-                  </div>
-                ) : (
+                {/* Data source indicator - show if using cached data */}
+                {users.length === 0 && offlineData.drivers.length > 0 ? (
                   <div className="flex items-center space-x-1 text-orange-600">
                     <WifiOff className="h-4 w-4" />
-                    <span className="text-xs font-light">Offline</span>
+                    <span className="text-xs font-light">Cached Data</span>
+                  </div>
+                ) : users.length > 0 ? (
+                  <div className="flex items-center space-x-1 text-green-600">
+                    <Wifi className="h-4 w-4" />
+                    <span className="text-xs font-light">Live Data</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center space-x-1 text-gray-600">
+                    <WifiOff className="h-4 w-4" />
+                    <span className="text-xs font-light">No Data</span>
+                  </div>
+                )}
+                {users.length === 0 && offlineData.drivers.length > 0 && (
+                  <div className="text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded">
+                    {drivers.length} drivers, {rawMaterialsData.length} materials, {suppliersData.length} suppliers, {tankersData.length} tankers
                   </div>
                 )}
                 <Button
                   type="button"
                   size="sm"
                   variant="outline"
-                  onClick={() => {
+                  onClick={async () => {
                     console.log('Manual data refresh triggered')
-                    if (isOnline) {
-                      dispatch(fetchRawMaterials({}))
-                      dispatch(fetchUsers({}))
-                      dispatch(fetchSuppliers({}))
-                      dispatch(fetchTankers({}))
-                    } else {
-                      setOfflineData({
-                        drivers: LocalStorageService.getDrivers(),
-                        rawMaterials: LocalStorageService.getRawMaterials(),
-                        suppliers: LocalStorageService.getSuppliers()
+                    
+                    // Try API first
+                    try {
+                      console.log('Attempting to fetch from API...')
+                      await Promise.all([
+                        dispatch(fetchRawMaterials({})),
+                        dispatch(fetchUsers({})),
+                        dispatch(fetchSuppliers({})),
+                        dispatch(fetchTankers({}))
+                      ])
+                      toast.success('Data refreshed from server')
+                    } catch (error) {
+                      console.log('API fetch failed, loading from localStorage...', error)
+                      
+                      // Fallback to localStorage
+                      const offlineDrivers = LocalStorageService.getDrivers()
+                      const offlineMaterials = LocalStorageService.getRawMaterials()
+                      const offlineSuppliers = LocalStorageService.getSuppliers()
+                      const offlineTankers = LocalStorageService.getTankers()
+                      
+                      console.log('Loaded offline data:', {
+                        driversCount: offlineDrivers.length,
+                        materialsCount: offlineMaterials.length,
+                        suppliersCount: offlineSuppliers.length,
+                        tankersCount: offlineTankers.length
                       })
+                      
+                      setOfflineData({
+                        drivers: offlineDrivers,
+                        rawMaterials: offlineMaterials,
+                        suppliers: offlineSuppliers,
+                        tankers: offlineTankers
+                      })
+                      
+                      toast.info('Using cached data - connection unavailable')
                     }
                   }}
                   className="text-xs"

@@ -7,6 +7,7 @@ import { fetchDriverForms } from "@/lib/store/slices/driverFormSlice"
 import { fetchUsers } from "@/lib/store/slices/usersSlice"
 import { fetchRawMaterials } from "@/lib/store/slices/rawMaterialSlice"
 import { fetchSuppliers } from "@/lib/store/slices/supplierSlice"
+import { fetchTankers } from "@/lib/store/slices/tankerSlice"
 import { generateDriverFormId } from "@/lib/utils/form-id-generator"
 import { UserAvatar } from "@/components/ui/user-avatar"
 import { FormIdCopy } from "@/components/ui/form-id-copy"
@@ -23,15 +24,18 @@ import { RawMilkIntakeLabTestDrawer } from "@/components/forms/raw-milk-intake-l
 import { fetchRawMilkIntakeLabTests } from "@/lib/store/slices/rawMilkIntakeLabTestSlice"
 import { LoadingButton } from "@/components/ui/loading-button"
 import { useOfflineData } from "@/hooks/use-offline-data"
+import { useNetworkStatus } from "@/hooks/use-network-status"
 import { DataSyncService } from "@/lib/offline/data-sync"
 import { OfflineDataService } from "@/lib/offline/database"
 import { LocalStorageService } from "@/lib/offline/local-storage-service"
 import { toast } from "sonner"
+import { SyncService } from "@/lib/offline/sync-service"
 import type { DriverForm } from "@/lib/types"
 import type { OfflineDriverForm } from "@/lib/offline/database"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { Download as DownloadIcon } from "lucide-react"
 import { useRouter, useSearchParams } from "next/navigation"
+import { NetworkDebugPanel } from "@/components/debug/network-debug-panel"
 
 // Unified form type for display
 type UnifiedForm = DriverForm | OfflineDriverForm
@@ -145,9 +149,11 @@ export default function DriverFormsPage() {
   const { rawMaterials } = useSelector((state: RootState) => state.rawMaterial)
   const { suppliers } = useSelector((state: RootState) => state.supplier)
 
+  // Network status hook for reliable online/offline detection
+  const { isOnline, checkNetworkConnectivity, networkState } = useNetworkStatus()
+  
   // Offline data hook
   const {
-    isOnline,
     drivers: offlineDrivers,
     rawMaterials: offlineRawMaterials,
     suppliers: offlineSuppliers,
@@ -167,6 +173,7 @@ export default function DriverFormsPage() {
   const [statusFilter, setStatusFilter] = useState("all")
   const [currentPage, setCurrentPage] = useState(1)
   const [isLoadingData, setIsLoadingData] = useState(false)
+  const [syncingPending, setSyncingPending] = useState(false)
   const itemsPerPage = 10
   const isMobile = useIsMobile()
   const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
@@ -212,59 +219,157 @@ export default function DriverFormsPage() {
   }
 
   // Get offline data from localStorage (SSR-safe)
-  const [offlineData, setOfflineData] = useState({
-    drivers: typeof window !== 'undefined' ? LocalStorageService.getDrivers() : [],
-    rawMaterials: typeof window !== 'undefined' ? LocalStorageService.getRawMaterials() : [],
-    suppliers: typeof window !== 'undefined' ? LocalStorageService.getSuppliers() : [],
-    driverForms: typeof window !== 'undefined' ? LocalStorageService.getDriverForms() : []
+  const [offlineData, setOfflineData] = useState(() => {
+    if (typeof window === 'undefined') {
+      return {
+        drivers: [],
+        rawMaterials: [],
+        suppliers: [],
+        tankers: [],
+        driverForms: []
+      }
+    }
+    return {
+      drivers: LocalStorageService.getDrivers() || [],
+      rawMaterials: LocalStorageService.getRawMaterials() || [],
+      suppliers: LocalStorageService.getSuppliers() || [],
+      tankers: LocalStorageService.getTankers() || [],
+      driverForms: LocalStorageService.getDriverForms() || []
+    }
   })
 
   // Use offline data when offline, online data when online
-  const displayDriverForms = isOnline ? driverForms : offlineData.driverForms
-  const displayUsers = isOnline ? users : offlineData.drivers
-  const displayRawMaterials = isOnline ? rawMaterials : offlineData.rawMaterials
-  const displaySuppliers = isOnline ? suppliers : offlineData.suppliers
+  // FALLBACK: If online data is empty or failed, use offline data
+  const displayDriverForms = (isOnline && driverForms && driverForms.length > 0) 
+    ? driverForms 
+    : offlineData.driverForms
+  const displayUsers = (isOnline && users && users.length > 0) 
+    ? users 
+    : offlineData.drivers
+  const displayRawMaterials = (isOnline && rawMaterials && rawMaterials.length > 0) 
+    ? rawMaterials 
+    : offlineData.rawMaterials
+  const displaySuppliers = (isOnline && suppliers && suppliers.length > 0) 
+    ? suppliers 
+    : offlineData.suppliers
 
+  // Log what data source we're using
   useEffect(() => {
+    console.log('📊 Data Source Status:', {
+      isOnline,
+      usingOnlineForms: driverForms && driverForms.length > 0,
+      onlineFormsCount: driverForms?.length || 0,
+      offlineFormsCount: offlineData.driverForms?.length || 0,
+      displayFormsCount: displayDriverForms?.length || 0,
+      dataSource: (isOnline && driverForms && driverForms.length > 0) ? 'ONLINE' : 'OFFLINE (localStorage)'
+    })
+  }, [isOnline, driverForms, offlineData.driverForms, displayDriverForms])
+
+  // Load online data when online, refresh offline data when offline
+  useEffect(() => {
+    console.log('Network status changed on forms page:', { isOnline })
+    
+    // ALWAYS load offline data first as fallback
+    if (typeof window !== 'undefined') {
+      const offlineDrivers = LocalStorageService.getDrivers()
+      const offlineMaterials = LocalStorageService.getRawMaterials()
+      const offlineSuppliers = LocalStorageService.getSuppliers()
+      const offlineTankers = LocalStorageService.getTankers()
+      const offlineForms = LocalStorageService.getDriverForms()
+      
+      console.log('📦 Loaded localStorage data:', {
+        driversCount: offlineDrivers.length,
+        materialsCount: offlineMaterials.length,
+        suppliersCount: offlineSuppliers.length,
+        tankersCount: offlineTankers.length,
+        formsCount: offlineForms.length
+      })
+      
+      setOfflineData({
+        drivers: offlineDrivers,
+        rawMaterials: offlineMaterials,
+        suppliers: offlineSuppliers,
+        tankers: offlineTankers,
+        driverForms: offlineForms
+      })
+    }
+    
+    // Then try to fetch online data if online
     if (isOnline) {
+      console.log('🌐 Attempting to fetch online data...')
       dispatch(fetchDriverForms({}))
-      dispatch(fetchUsers({})) // Load users for driver information
-    } else {
-      // When going offline, refresh offline data from localStorage (SSR-safe)
-      if (typeof window !== 'undefined') {
-        setOfflineData({
-          drivers: LocalStorageService.getDrivers(),
-          rawMaterials: LocalStorageService.getRawMaterials(),
-          suppliers: LocalStorageService.getSuppliers(),
-          driverForms: LocalStorageService.getDriverForms()
+        .catch(err => {
+          console.error('❌ Failed to fetch driver forms:', err)
+          toast.info('Using cached data - could not reach server')
         })
-      }
+      dispatch(fetchUsers({}))
+        .catch(err => console.error('❌ Failed to fetch users:', err))
+      dispatch(fetchRawMaterials({}))
+        .catch(err => console.error('❌ Failed to fetch materials:', err))
+      dispatch(fetchSuppliers({}))
+        .catch(err => console.error('❌ Failed to fetch suppliers:', err))
+      dispatch(fetchTankers({}))
+        .catch(err => console.error('❌ Failed to fetch tankers:', err))
     }
   }, [dispatch, isOnline])
 
   // Load all data for offline use
   const handleLoadData = async () => {
-    if (!isOnline) {
-      toast.error("You need to be online to load data")
-      return
-    }
-
     setIsLoadingData(true)
     try {
-      // Fetch all data from API
-      const [usersResult, materialsResult, suppliersResult, formsResult] = await Promise.all([
-        dispatch(fetchUsers({})),
-        dispatch(fetchRawMaterials({})),
-        dispatch(fetchSuppliers({})),
-        dispatch(fetchDriverForms({}))
+      console.log('🔄 Attempting to load data from server...')
+      
+      // Try to fetch all data from API
+      const [usersResult, materialsResult, suppliersResult, tankersResult, formsResult] = await Promise.all([
+        dispatch(fetchUsers({})).catch(err => {
+          console.error('Failed to fetch users:', err)
+          return { payload: [] }
+        }),
+        dispatch(fetchRawMaterials({})).catch(err => {
+          console.error('Failed to fetch materials:', err)
+          return { payload: [] }
+        }),
+        dispatch(fetchSuppliers({})).catch(err => {
+          console.error('Failed to fetch suppliers:', err)
+          return { payload: [] }
+        }),
+        dispatch(fetchTankers({})).catch(err => {
+          console.error('Failed to fetch tankers:', err)
+          return { payload: [] }
+        }),
+        dispatch(fetchDriverForms({})).catch(err => {
+          console.error('Failed to fetch forms:', err)
+          return { payload: [] }
+        })
       ])
+
+      // Check if we got any data
+      const hasOnlineData = 
+        (Array.isArray(usersResult.payload) && usersResult.payload.length > 0) ||
+        (Array.isArray(materialsResult.payload) && materialsResult.payload.length > 0) ||
+        (Array.isArray(suppliersResult.payload) && suppliersResult.payload.length > 0) ||
+        (Array.isArray(tankersResult.payload) && tankersResult.payload.length > 0) ||
+        (Array.isArray(formsResult.payload) && formsResult.payload.length > 0)
+
+      if (!hasOnlineData) {
+        throw new Error('No data received from server')
+      }
 
       // Save data to localStorage (SSR-safe)
       if (typeof window !== 'undefined') {
         LocalStorageService.saveDrivers(Array.isArray(usersResult.payload) ? usersResult.payload : [])
         LocalStorageService.saveRawMaterials(Array.isArray(materialsResult.payload) ? materialsResult.payload : [])
         LocalStorageService.saveSuppliers(Array.isArray(suppliersResult.payload) ? suppliersResult.payload : [])
+        LocalStorageService.saveTankers(Array.isArray(tankersResult.payload) ? tankersResult.payload : [])
         LocalStorageService.saveDriverForms(Array.isArray(formsResult.payload) ? formsResult.payload : [])
+        
+        console.log('✅ Saved to localStorage:', {
+          users: usersResult.payload?.length || 0,
+          materials: materialsResult.payload?.length || 0,
+          suppliers: suppliersResult.payload?.length || 0,
+          tankers: tankersResult.payload?.length || 0,
+          forms: formsResult.payload?.length || 0
+        })
       }
 
       // Update local state (SSR-safe)
@@ -273,16 +378,83 @@ export default function DriverFormsPage() {
           drivers: LocalStorageService.getDrivers(),
           rawMaterials: LocalStorageService.getRawMaterials(),
           suppliers: LocalStorageService.getSuppliers(),
+          tankers: LocalStorageService.getTankers(),
           driverForms: LocalStorageService.getDriverForms()
         })
       }
 
-      toast.success("All data loaded and stored offline successfully!")
+      toast.success("✅ All data loaded and cached successfully!")
     } catch (error) {
-      console.error('Error loading data:', error)
-      toast.error("Failed to load data. Please try again.")
+      console.error('❌ Error loading data:', error)
+      toast.error("⚠️ Could not load data from server. Using cached data if available.")
+      
+      // Even on error, refresh from localStorage
+      if (typeof window !== 'undefined') {
+        setOfflineData({
+          drivers: LocalStorageService.getDrivers(),
+          rawMaterials: LocalStorageService.getRawMaterials(),
+          suppliers: LocalStorageService.getSuppliers(),
+          tankers: LocalStorageService.getTankers(),
+          driverForms: LocalStorageService.getDriverForms()
+        })
+      }
     } finally {
       setIsLoadingData(false)
+    }
+  }
+
+  // Sync pending forms handler
+  const handleSyncPending = async () => {
+    // Double-check we're actually online
+    const actuallyOnline = await checkNetworkConnectivity()
+    if (!actuallyOnline) {
+      toast.error("You must be online to sync pending forms")
+      return
+    }
+    
+    try {
+      setSyncingPending(true)
+      
+      // Get pending forms count before sync
+      const pendingForms = LocalStorageService.getPendingDriverForms()
+      console.log(`Starting sync of ${pendingForms.length} pending forms...`)
+      
+      const result = await SyncService.syncAllPendingForms(dispatch)
+      
+      // Show detailed result
+      if (result.success > 0 && result.failed === 0) {
+        toast.success(`✅ Successfully synced ${result.success} form(s)`)
+      } else if (result.success > 0 && result.failed > 0) {
+        toast.warning(`⚠️ Synced ${result.success} form(s), ${result.failed} failed`)
+      } else if (result.failed > 0) {
+        toast.error(`❌ Failed to sync ${result.failed} form(s)`)
+      } else {
+        toast.info("No pending forms to sync")
+      }
+      
+      // refresh offline/local data views
+      await refreshData()
+      
+      // also refresh local offline snapshot (used when offline)
+      if (typeof window !== "undefined") {
+        setOfflineData({
+          drivers: LocalStorageService.getDrivers(),
+          rawMaterials: LocalStorageService.getRawMaterials(),
+          suppliers: LocalStorageService.getSuppliers(),
+          tankers: LocalStorageService.getTankers(),
+          driverForms: LocalStorageService.getDriverForms()
+        })
+      }
+      
+      // refresh server-side driver forms list
+      if (result.success > 0) {
+        dispatch(fetchDriverForms({}))
+      }
+    } catch (e) {
+      console.error("Sync pending error:", e)
+      toast.error("Failed to sync pending forms")
+    } finally {
+      setSyncingPending(false)
     }
   }
 
@@ -319,6 +491,20 @@ export default function DriverFormsPage() {
   }
 
   const getStatusBadge = (form: UnifiedForm) => {
+    // Check if form is pending sync
+    const isPending = 'sync_status' in form && form.sync_status === 'pending'
+    
+    if (isPending) {
+      return (
+        <Badge className="bg-orange-100 text-orange-800 border-orange-200">
+          <div className="flex items-center gap-1">
+            <WifiOff className="w-3 h-3" />
+            Pending Sync
+          </div>
+        </Badge>
+      )
+    }
+    
     if (form.delivered) {
       return (
         <Badge className="bg-green-100 text-green-800 border-green-200">
@@ -599,37 +785,80 @@ export default function DriverFormsPage() {
               <div></div>
 
               <div className="flex flex-col sm:flex-row gap-3">
-                {/* Online/Offline Status */}
+                {/* Data Source Indicator */}
                 <div className="flex items-center gap-2 px-3 py-2 rounded-full border border-gray-200 bg-white">
-                  {isOnline ? (
+                  {driverForms && driverForms.length > 0 ? (
                     <>
                       <Wifi className="h-4 w-4 text-green-600" />
-                      <span className="text-sm font-light text-green-600">Online</span>
+                      <span className="text-sm font-light text-green-600">Using Live Data</span>
+                      <span className="text-xs text-gray-500 ml-1">({driverForms.length} forms)</span>
+                    </>
+                  ) : offlineData.driverForms && offlineData.driverForms.length > 0 ? (
+                    <>
+                      <WifiOff className="h-4 w-4 text-orange-600" />
+                      <span className="text-sm font-light text-orange-600">Using Cached Data</span>
+                      <span className="text-xs text-gray-500 ml-1">({offlineData.driverForms.length} forms)</span>
                     </>
                   ) : (
                     <>
-                      <WifiOff className="h-4 w-4 text-orange-600" />
-                      <span className="text-sm font-light text-orange-600">Offline</span>
+                      <XCircle className="h-4 w-4 text-red-600" />
+                      <span className="text-sm font-light text-red-600">No Data Available</span>
+                      <span className="text-xs text-gray-500 ml-1">(Load data first)</span>
                     </>
                   )}
                 </div>
 
-                {/* Debug Info - Remove in production */}
-                {!isOnline && (
-                  <div className="text-xs text-gray-500">
-                    Offline Data: {offlineData.drivers.length} drivers, {offlineData.rawMaterials.length} materials, {offlineData.suppliers.length} suppliers, {offlineData.driverForms.length} forms
-                  </div>
-                )}
+              
 
                 {/* Load Data Button */}
                 <LoadingButton
                   onClick={handleLoadData}
                   loading={isLoadingData}
-                  disabled={!isOnline}
-                  className="bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-600 hover:to-blue-800 text-white border-0 rounded-full px-6 py-2 font-light disabled:opacity-50"
+                  className="bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-600 hover:to-blue-800 text-white border-0 rounded-full px-6 py-2 font-light"
                 >
                   <Download className="mr-2 h-4 w-4" />
-                  Load Data
+                  {driverForms && driverForms.length > 0 ? 'Refresh Data' : 'Load Data'}
+                </LoadingButton>
+                
+                {/* Manual Network Check Button */}
+                {/* <LoadingButton
+                  onClick={async () => {
+                    console.log('🔍 Manual network check triggered')
+                    console.log('Browser navigator.onLine:', navigator.onLine)
+                    console.log('react-use networkState:', networkState)
+                    
+                    // First check browser state
+                    if (!navigator.onLine) {
+                      toast.error("❌ Browser reports offline (airplane mode or disconnected)")
+                      return
+                    }
+                    
+                    // Then do actual connectivity test
+                    const online = await checkNetworkConnectivity()
+                    if (online) {
+                      toast.success("✅ Network connection is active and reachable")
+                    } else {
+                      toast.error("❌ No network connection detected (cannot reach server)")
+                    }
+                  }}
+                  className="bg-gradient-to-r from-gray-400 to-gray-600 hover:from-gray-500 hover:to-gray-700 text-white border-0 rounded-full px-6 py-2 font-light"
+                >
+                  <Wifi className="mr-2 h-4 w-4" />
+                  Check Network
+                </LoadingButton> */}
+                
+                {/* Sync Pending Forms Button */}
+                <LoadingButton
+                  onClick={handleSyncPending}
+                  loading={syncingPending}
+                  disabled={!isOnline}
+                  className="bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white border-0 rounded-full px-6 py-2 font-light disabled:opacity-50"
+                >
+                  <Wifi className="mr-2 h-4 w-4" />
+                  Sync Pending ({(() => {
+                    const pendingCount = offlineData.driverForms.filter((f: any) => f.sync_status === 'pending').length
+                    return pendingCount
+                  })()})
                 </LoadingButton>
                 <div className="flex justify-end mb-2">
                   {csvUrl && (

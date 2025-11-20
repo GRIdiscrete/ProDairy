@@ -8,14 +8,17 @@ import { useAppDispatch, useAppSelector } from '@/lib/store'
 import { fetchUsers } from '@/lib/store/slices/usersSlice'
 import { fetchRawMaterials } from '@/lib/store/slices/rawMaterialSlice'
 import { fetchSuppliers } from '@/lib/store/slices/supplierSlice'
+import { useNetworkStatus } from './use-network-status'
 
 export function useOfflineData() {
   const [drivers, setDrivers] = useState<OfflineDriver[]>([])
   const [rawMaterials, setRawMaterials] = useState<OfflineRawMaterial[]>([])
   const [suppliers, setSuppliers] = useState<OfflineSupplier[]>([])
   const [driverForms, setDriverForms] = useState<OfflineDriverForm[]>([])
-  const [isOnline, setIsOnline] = useState(true)
   const [loading, setLoading] = useState(false)
+  
+  // Use our custom network status hook
+  const { isOnline, checkNetworkConnectivity } = useNetworkStatus()
   
   const dispatch = useAppDispatch()
   const { items: onlineUsers } = useAppSelector((state) => state.users)
@@ -23,25 +26,23 @@ export function useOfflineData() {
   const { suppliers: onlineSuppliers } = useAppSelector((state) => state.supplier)
 
   useEffect(() => {
-    // Check online status
-    setIsOnline(navigator.onLine)
+    // Load offline data immediately
+    loadOfflineData()
 
-    const handleOnline = () => {
-      setIsOnline(true)
-      // Sync data when coming back online
-      syncDataWhenOnline()
+    // Set up online/offline event handlers
+    const handleOnline = async () => {
+      // Double-check we're actually online
+      const actuallyOnline = await checkNetworkConnectivity()
+      if (actuallyOnline) {
+        // Sync data when coming back online
+        syncDataWhenOnline()
+      }
     }
-    const handleOffline = () => setIsOnline(false)
 
     window.addEventListener('online', handleOnline)
-    window.addEventListener('offline', handleOffline)
-
-    // Load offline data
-    loadOfflineData()
 
     return () => {
       window.removeEventListener('online', handleOnline)
-      window.removeEventListener('offline', handleOffline)
     }
   }, [])
 

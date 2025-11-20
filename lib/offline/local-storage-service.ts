@@ -4,6 +4,7 @@ export class LocalStorageService {
     DRIVERS: 'offline_drivers',
     RAW_MATERIALS: 'offline_raw_materials',
     SUPPLIERS: 'offline_suppliers',
+    TANKERS: 'offline_tankers',
     DRIVER_FORMS: 'offline_driver_forms',
     IS_OFFLINE: 'is_offline_mode'
   }
@@ -24,6 +25,12 @@ export class LocalStorageService {
   static saveSuppliers(suppliers: any[]) {
     if (typeof window !== 'undefined') {
       localStorage.setItem(this.KEYS.SUPPLIERS, JSON.stringify(suppliers))
+    }
+  }
+
+  static saveTankers(tankers: any[]) {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(this.KEYS.TANKERS, JSON.stringify(tankers))
     }
   }
 
@@ -52,6 +59,12 @@ export class LocalStorageService {
     return data ? JSON.parse(data) : []
   }
 
+  static getTankers(): any[] {
+    if (typeof window === 'undefined') return []
+    const data = localStorage.getItem(this.KEYS.TANKERS)
+    return data ? JSON.parse(data) : []
+  }
+
   static getDriverForms(): any[] {
     if (typeof window === 'undefined') return []
     const data = localStorage.getItem(this.KEYS.DRIVER_FORMS)
@@ -63,21 +76,80 @@ export class LocalStorageService {
     const forms = this.getDriverForms()
     const newForm = {
       ...form,
-      id: `offline_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      created_at: new Date().toISOString(),
+      id: form.id || `offline_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      created_at: form.created_at || new Date().toISOString(),
       updated_at: new Date().toISOString(),
-      sync_status: 'pending'
+      sync_status: form.sync_status || 'pending'
     }
     forms.push(newForm)
     this.saveDriverForms(forms)
     return newForm
   }
 
+  // Update an existing offline driver form (merge by id)
+  static updateDriverForm(updated: any) {
+    const forms = this.getDriverForms()
+    const idx = forms.findIndex((f: any) => f.id === updated.id)
+    if (idx === -1) {
+      // if not found, add as new
+      const toSave = {
+        ...updated,
+        id: updated.id || `offline_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        created_at: updated.created_at || new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        sync_status: updated.sync_status || 'pending'
+      }
+      forms.push(toSave)
+    } else {
+      forms[idx] = {
+        ...forms[idx],
+        ...updated,
+        updated_at: new Date().toISOString()
+      }
+    }
+    this.saveDriverForms(forms)
+  }
+
+  // Return pending driver forms
+  static getPendingDriverForms(): any[] {
+    return this.getDriverForms().filter((f: any) => f.sync_status === 'pending')
+  }
+
+  // Mark offline form as synced (set server id if returned)
+  static markFormAsSynced(id: string, serverId?: string) {
+    const forms = this.getDriverForms()
+    const idx = forms.findIndex((f: any) => f.id === id)
+    if (idx !== -1) {
+      forms[idx] = {
+        ...forms[idx],
+        sync_status: 'synced',
+        server_id: serverId || forms[idx].server_id,
+        updated_at: new Date().toISOString()
+      }
+      this.saveDriverForms(forms)
+    }
+  }
+
+  // Mark offline form as failed
+  static markFormAsFailed(id: string) {
+    const forms = this.getDriverForms()
+    const idx = forms.findIndex((f: any) => f.id === id)
+    if (idx !== -1) {
+      forms[idx] = {
+        ...forms[idx],
+        sync_status: 'failed',
+        updated_at: new Date().toISOString()
+      }
+      this.saveDriverForms(forms)
+    }
+  }
+
   // Check if we have offline data
   static hasOfflineData(): boolean {
     return this.getDrivers().length > 0 || 
            this.getRawMaterials().length > 0 || 
-           this.getSuppliers().length > 0
+           this.getSuppliers().length > 0 ||
+           this.getTankers().length > 0
   }
 
   // Clear all offline data (SSR-safe)
@@ -86,6 +158,7 @@ export class LocalStorageService {
       localStorage.removeItem(this.KEYS.DRIVERS)
       localStorage.removeItem(this.KEYS.RAW_MATERIALS)
       localStorage.removeItem(this.KEYS.SUPPLIERS)
+      localStorage.removeItem(this.KEYS.TANKERS)
       localStorage.removeItem(this.KEYS.DRIVER_FORMS)
     }
   }

@@ -60,6 +60,7 @@
     "react-is": "^19.1.1",
     "react-redux": "latest",
     "react-resizable-panels": "^2.1.7",
+    "react-use": "^17.6.0",
     "recharts": "latest",
     "redux": "latest",
     "sonner": "^1.7.4",
