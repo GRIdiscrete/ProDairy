@@ -118,5 +118,12 @@ export const steriMilkTestReportApi = {
   
   getTestReport: async (id: string): Promise<ApiEnvelope<SteriMilkTestReport>> => {
     return apiRequest<ApiEnvelope<SteriMilkTestReport>>(`${API_CONFIG.ENDPOINTS.STERI_MILK_TEST_REPORT}/${id}`)
+  },
+
+  updateTestReport: async (id: string, payload: any): Promise<ApiEnvelope<SteriMilkTestReport>> => {
+    return apiRequest<ApiEnvelope<SteriMilkTestReport>>(`${API_CONFIG.ENDPOINTS.STERI_MILK_TEST_REPORT}/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    })
   }
 }

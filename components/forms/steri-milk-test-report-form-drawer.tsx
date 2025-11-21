@@ -1,218 +1,140 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useForm, SubmitHandler, Controller } from "react-hook-form"
-import { yupResolver } from "@hookform/resolvers/yup"
-import * as yup from "yup"
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
+import { useForm } from "react-hook-form"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { SearchableSelect } from "@/components/ui/searchable-select"
-import { DatePicker } from "@/components/ui/date-picker"
-import { Beaker, ChevronLeft, ChevronRight, CheckCircle, Clock } from "lucide-react"
-import { steriMilkTestReportApi, type CreateSteriMilkTestReportRequest } from "@/lib/api/steri-milk-test-report"
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { usersApi, type UserEntity } from "@/lib/api/users"
+import { tankerApi, type Tanker } from "@/lib/api/tanker"
 import { steriMilkProcessLogApi, type SteriMilkProcessLog } from "@/lib/api/steri-milk-process-log"
-import { tankerApi } from "@/lib/api/tanker"
-import { Tanker } from "@/lib/api/tanker"
-import { SignatureModal } from "@/components/ui/signature-modal"
-import { SignatureViewer } from "@/components/ui/signature-viewer"
-import { normalizeDataUrlToBase64, base64ToPngDataUrl } from "@/lib/utils/signature"
+import { steriMilkTestReportApi } from "@/lib/api/steri-milk-test-report"
 import { toast } from "sonner"
-import { LoadingButton } from "@/components/ui/loading-button"
-
-const testReportSchema = yup.object({
-  issue_date: yup.string().required("Issue date is required"),
-  approved_by: yup.string().required("Approved by is required"),
-  approver_signature: yup.string().required("Approver signature is required"),
-  date_of_production: yup.string().required("Date of production is required"),
-  batch_number: yup.number().required("Batch number is required"),
-  variety: yup.string().required("Variety is required"),
-})
-
-type TestReportFormData = {
-  issue_date: string
-  approved_by: string
-  approver_signature: string
-  date_of_production: string
-  batch_number: number
-  variety: string
-  raw_milk_silos: {
-    tank: string
-    time: string
-    temperature: number
-    alcohol: number
-    res: number
-    cob: number
-    ph: number
-    fat: number
-    lr_snf: string
-    acidity: number
-    remarks: string
-  }
-  other_tests: {
-    sample_details: string
-    ph: number
-    caustic: number
-    acid: number
-    chlorine: number
-    hd: number
-    tds: number
-    hydrogen_peroxide: number
-    remarks: string
-  }
-  standardisation_and_pasteurisation: {
-    tank: string
-    batch: number
-    time: string
-    temperature: number
-    ot: string
-    alcohol: number
-    phosphatase: string
-    ph: number
-    cob: boolean
-    fat: number
-    ci_si: string
-    lr_snf: string
-    acidity: number
-    analyst: string
-    remarks: string
-  }
-  uht_steri_milk: {
-    time: string
-    batch: string
-    temperature: number
-    ot: string
-    alc: number
-    res: number
-    cob: boolean
-    ph: number
-    fat: number
-    lr_snf: string
-    ci_si: string
-    total_solids: number
-    acidity: number
-    coffee: boolean
-    coffee_remarks: string
-    hydrogen_peroxide_or_turbidity: string
-    analyst: string
-    remarks: string
-  }
-}
+import { ChevronLeft, ChevronRight } from "lucide-react"
+import { normalizeDataUrlToBase64 } from "@/lib/utils/signature"
+// import { BasicInfoStep } from "./steri-milk-test-report/basic-info-step"
+// import { RawMilkSilosStep } from "./steri-milk-test-report/raw-milk-silos-step"
+// import { OtherTestsStep } from "./steri-milk-test-report/other-tests-step"
+// import { StandardisationStep } from "./steri-milk-test-report/standardisation-step"
+// import { UhtSteriMilkStep } from "./steri-milk-test-report/uht-steri-milk-step"
+// import type {
+//   BasicInfoFormData,
+//   RawMilkSilosFormData,
+//   OtherTestsFormData,
+//   StandardisationFormData,
+//   UhtSteriMilkFormData
+// } from "./steri-milk-test-report/types"
+import { BasicInfoStep } from "./steri-milk-test-report/basic-info-step"
+import { RawMilkSilosStep } from "./steri-milk-test-report/raw-milk-silos-step"
+import { OtherTestsStep } from "./steri-milk-test-report/other-tests-step"
+import { StandardisationStep } from "./steri-milk-test-report/standardisation-step"
+import { UhtSteriMilkStep } from "./steri-milk-test-report/uht-steri-milk-step"
+import { BasicInfoFormData, OtherTestsFormData, RawMilkSilosFormData, StandardisationFormData, UhtSteriMilkFormData } from "./steri-milk-test-report/types"
 
 interface SteriMilkTestReportFormDrawerProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   processLogId?: string
+  reportData?: any
+  mode?: "create" | "edit"
   onSuccess?: () => void
 }
 
-const steps = [
-  { id: 1, title: "Basic Information", description: "Enter basic test report details" },
-  { id: 2, title: "Raw Milk Silos", description: "Raw milk silo test parameters" },
-  { id: 3, title: "Other Tests", description: "Additional test parameters" },
-  { id: 4, title: "Standardisation & Pasteurisation", description: "Pasteurisation process data" },
-  { id: 5, title: "UHT Steri Milk", description: "UHT processing parameters" },
-  { id: 6, title: "Review & Submit", description: "Review all data and submit" }
-]
-
-export function SteriMilkTestReportFormDrawer({ 
-  open, 
-  onOpenChange, 
+export function SteriMilkTestReportFormDrawer({
+  open,
+  onOpenChange,
   processLogId,
-  onSuccess 
+  reportData,
+  mode = "create",
+  onSuccess
 }: SteriMilkTestReportFormDrawerProps) {
   const [currentStep, setCurrentStep] = useState(1)
   const [loading, setLoading] = useState(false)
   const [users, setUsers] = useState<UserEntity[]>([])
   const [tankers, setTankers] = useState<Tanker[]>([])
   const [loadingTankers, setLoadingTankers] = useState(false)
-  const [processLog, setProcessLog] = useState<SteriMilkProcessLog | null>(null)
-  const [loadingData, setLoadingData] = useState(false)
   const [loadingUsers, setLoadingUsers] = useState(false)
-  const [signatureOpen, setSignatureOpen] = useState(false)
-  const [signatureViewOpen, setSignatureViewOpen] = useState(false)
+  const [loadingData, setLoadingData] = useState(false)
 
-  const {
-    control,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-    watch,
-    setValue,
-    reset
-  } = useForm<TestReportFormData>({
-    resolver: yupResolver(testReportSchema) as any,
+  const basicInfoForm = useForm<BasicInfoFormData>({
     defaultValues: {
       issue_date: new Date().toISOString().split('T')[0],
       approved_by: "",
       approver_signature: "",
       date_of_production: new Date().toISOString().split('T')[0],
-      batch_number: undefined,
-      variety: "Steri milk",
-      raw_milk_silos: {
-        tank: "",
-        time: "",
-        temperature: undefined,
-        alcohol: undefined,
-        res: undefined,
-        cob: undefined,
-        ph: undefined,
-        fat: undefined,
-        lr_snf: "",
-        acidity: undefined,
-        remarks: ""
-      },
-      other_tests: {
-        sample_details: "",
-        ph: undefined,
-        caustic: undefined,
-        acid: undefined,
-        chlorine: undefined,
-        hd: undefined,
-        tds: undefined,
-        hydrogen_peroxide: undefined,
-        remarks: ""
-      },
-      standardisation_and_pasteurisation: {
-        tank: "",
-        batch: 1,
-        time: "",
-        temperature: undefined,
-        ot: "",
-        alcohol: undefined,
-        phosphatase: "",
-        ph: undefined,
-        cob: false,
-        fat: undefined,
-        ci_si: "",
-        lr_snf: "",
-        acidity: undefined,
-        analyst: "",
-        remarks: ""
-      },
-      uht_steri_milk: {
-        time: "",
-        batch: "",
-        temperature: undefined,
-        ot: "",
-        alc: undefined,
-        res: undefined,
-        cob: false,
-        ph: undefined,
-        fat: undefined,
-        lr_snf: "",
-        ci_si: "",
-        total_solids: undefined,
-        acidity: undefined,
-        coffee: false,
-        coffee_remarks: "",
-        hydrogen_peroxide_or_turbidity: "",
-        analyst: "",
-        remarks: ""
-      }
+      batch_number: "",
+      variety: "Steri milk"
+    }
+  })
+
+  const rawMilkSilosForm = useForm<RawMilkSilosFormData>({
+    defaultValues: {
+      tank: "",
+      time: "",
+      temperature: "",
+      alcohol: "",
+      res: "",
+      cob: false,
+      ph: "",
+      fat: "",
+      lr_snf: "",
+      acidity: "",
+      remarks: ""
+    }
+  })
+
+  const otherTestsForm = useForm<OtherTestsFormData>({
+    defaultValues: {
+      sample_details: "",
+      ph: "",
+      caustic: "",
+      acid: "",
+      chlorine: "",
+      hd: "",
+      tds: "",
+      hydrogen_peroxide: "",
+      remarks: ""
+    }
+  })
+
+  const standardisationForm = useForm<StandardisationFormData>({
+    defaultValues: {
+      tank: "",
+      batch: "",
+      time: "",
+      temperature: "",
+      ot: "",
+      alcohol: "",
+      phosphatase: "",
+      ph: "",
+      cob: false,
+      fat: "",
+      ci_si: "",
+      lr_snf: "",
+      acidity: "",
+      analyst: "",
+      remarks: ""
+    }
+  })
+
+  const uhtSteriMilkForm = useForm<UhtSteriMilkFormData>({
+    defaultValues: {
+      time: "",
+      batch: "",
+      temperature: "",
+      ot: "",
+      alc: "",
+      res: "",
+      cob: false,
+      ph: "",
+      fat: "",
+      lr_snf: "",
+      ci_si: "",
+      total_solids: "",
+      acidity: "",
+      coffee: "",
+      hydrogen_peroxide_or_turbidity: "",
+      analyst: "",
+      remarks: ""
     }
   })
 
@@ -237,31 +159,7 @@ export function SteriMilkTestReportFormDrawer({
         setTankers(tankersResponse.data || [])
       } catch (tankerError) {
         console.error('Failed to fetch tankers:', tankerError)
-        // Set fallback tankers if API fails
-        setTankers([
-          {
-            id: "fallback-tanker-1",
-            reg_number: "TNK-001",
-            capacity: 1000,
-            condition: "Good",
-            age: 2,
-            mileage: 50000,
-            driver_id: "driver-1",
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          },
-          {
-            id: "fallback-tanker-2", 
-            reg_number: "TNK-002",
-            capacity: 1500,
-            condition: "Excellent",
-            age: 1,
-            mileage: 25000,
-            driver_id: "driver-2",
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          }
-        ])
+        setTankers([])
       } finally {
         setLoadingTankers(false)
       }
@@ -276,15 +174,15 @@ export function SteriMilkTestReportFormDrawer({
       setLoadingData(true)
       try {
         const processLogResponse = await steriMilkProcessLogApi.getLog(processLogId)
-        setProcessLog(processLogResponse.data)
-        if (processLogResponse.data) {
-          const batchNumber = (processLogResponse.data as any).batch_id?.batch_number || 1001
-          setValue('batch_number', batchNumber)
-            setValue('date_of_production', (processLogResponse.data as any).batch_id?.created_at ? 
-              new Date((processLogResponse.data as any).batch_id.created_at).toISOString().split('T')[0] : 
+
+        if (processLogResponse) {
+          const batchNumber = (processLogResponse as any).batch_id?.batch_number || 1001
+          basicInfoForm.setValue('batch_number', String(batchNumber))
+          basicInfoForm.setValue('date_of_production', (processLogResponse as any).batch_id?.created_at ?
+            new Date((processLogResponse as any).batch_id.created_at).toISOString().split('T')[0] :
             new Date().toISOString().split('T')[0])
-          setValue('standardisation_and_pasteurisation.batch', batchNumber)
-          setValue('uht_steri_milk.batch', batchNumber)
+          standardisationForm.setValue('batch', String(batchNumber))
+          uhtSteriMilkForm.setValue('batch', String(batchNumber))
         }
       } catch (error) {
         console.error('Failed to fetch process log:', error)
@@ -294,1097 +192,392 @@ export function SteriMilkTestReportFormDrawer({
       }
     }
     loadProcessLog()
-  }, [open, processLogId, setValue])
+  }, [open, processLogId])
 
-  const handleUserSearch = async (query: string) => {
-    if (!query.trim()) return []
-    
-    try {
-      const usersResponse = await usersApi.getUsers({
-        filters: { search: query }
-      })
-      return (usersResponse.data || [])
-        .map(user => ({
-          value: user.id,
-          label: `${user.first_name} ${user.last_name}`.trim() || user.email,
-          description: `${user.department} • ${user.email}`
-        }))
-    } catch (error) {
-      return []
+  // Prefill form data when editing
+  useEffect(() => {
+    if (!open) return
+
+    if (mode === "edit" && reportData) {
+      try {
+        // Basic info
+        basicInfoForm.reset({
+          issue_date: reportData.issue_date || new Date().toISOString().split('T')[0],
+          approved_by: reportData.approved_by || "",
+          approver_signature: reportData.approver_signature || "",
+          date_of_production: reportData.date_of_production || new Date().toISOString().split('T')[0],
+          batch_number: String(reportData.batch_number || ""),
+          variety: reportData.variety || "Steri milk"
+        })
+
+        // Raw milk silos
+        if (reportData.raw_milk_silos && reportData.raw_milk_silos[0]) {
+          const rms = reportData.raw_milk_silos[0]
+          rawMilkSilosForm.reset({
+            tank: rms.tank || "",
+            time: rms.time || "",
+            temperature: String(rms.temperature || ""),
+            alcohol: String(rms.alcohol || ""),
+            res: String(rms.res || ""),
+            cob: !!rms.cob,
+            ph: String(rms.ph || ""),
+            fat: String(rms.fat || ""),
+            lr_snf: rms.lr_snf || "",
+            acidity: String(rms.acidity || ""),
+            remarks: rms.remarks || ""
+          })
+        }
+
+        // Other tests
+        if (reportData.other_tests && reportData.other_tests[0]) {
+          const ot = reportData.other_tests[0]
+          otherTestsForm.reset({
+            sample_details: ot.sample_details || "",
+            ph: String(ot.ph || ""),
+            caustic: String(ot.caustic || ""),
+            acid: String(ot.acid || ""),
+            chlorine: String(ot.chlorine || ""),
+            hd: String(ot.hd || ""),
+            tds: String(ot.tds || ""),
+            hydrogen_peroxide: String(ot.hydrogen_peroxide || ""),
+            remarks: ot.remarks || ""
+          })
+        }
+
+        // Standardisation
+        if (reportData.standardisation_and_pasteurisation && reportData.standardisation_and_pasteurisation[0]) {
+          const sap = reportData.standardisation_and_pasteurisation[0]
+          standardisationForm.reset({
+            tank: sap.tank || "",
+            batch: String(sap.batch || ""),
+            time: sap.time || "",
+            temperature: String(sap.temperature || ""),
+            ot: sap.ot || "",
+            alcohol: String(sap.alcohol || ""),
+            phosphatase: sap.phosphatase || "",
+            ph: String(sap.ph || ""),
+            cob: !!sap.cob,
+            fat: String(sap.fat || ""),
+            ci_si: sap.ci_si || "",
+            lr_snf: sap.lr_snf || "",
+            acidity: String(sap.acidity || ""),
+            analyst: sap.analyst || "",
+            remarks: sap.remarks || ""
+          })
+        }
+
+        // UHT steri milk
+        if (reportData.uht_steri_milk && reportData.uht_steri_milk[0]) {
+          const uht = reportData.uht_steri_milk[0]
+          uhtSteriMilkForm.reset({
+            time: uht.time || "",
+            batch: uht.batch || "",
+            temperature: String(uht.temperature || ""),
+            ot: uht.ot || "",
+            alc: String(uht.alc || ""),
+            res: String(uht.res || ""),
+            cob: !!uht.cob,
+            ph: String(uht.ph || ""),
+            fat: String(uht.fat || ""),
+            lr_snf: uht.lr_snf || "",
+            ci_si: uht.ci_si || "",
+            total_solids: String(uht.total_solids || ""),
+            acidity: String(uht.acidity || ""),
+            coffee: String(uht.coffee || ""),
+            hydrogen_peroxide_or_turbidity: uht.hydrogen_peroxide_or_turbidity || "",
+            analyst: uht.analyst || "",
+            remarks: uht.remarks || ""
+          })
+        }
+
+        setCurrentStep(1)
+      } catch (err) {
+        console.error("Error populating edit form:", err)
+        toast.error("Failed to load report data")
+      }
+    } else {
+      // Create mode -> clear forms
+      basicInfoForm.reset()
+      rawMilkSilosForm.reset()
+      otherTestsForm.reset()
+      standardisationForm.reset()
+      uhtSteriMilkForm.reset()
+      setCurrentStep(1)
     }
-  }
+  }, [open, mode, reportData])
 
-  const handleTankerSearch = async (query: string) => {
-    if (!query.trim()) return []
-    
-    try {
-      const tankersResponse = await tankerApi.getAll()
-      return (tankersResponse.data || [])
-        .filter(tanker => 
-          tanker.reg_number.toLowerCase().includes(query.toLowerCase()) ||
-          tanker.condition.toLowerCase().includes(query.toLowerCase())
-        )
-        .map(tanker => ({
-          value: tanker.id,
-          label: `${tanker.reg_number} (${tanker.condition})`,
-          description: `${tanker.capacity}L capacity • ${tanker.age} years old`
-        }))
-    } catch (error) {
-      return []
-    }
-  }
-
-  const nextStep = () => {
-    if (currentStep < steps.length) {
-      setCurrentStep(currentStep + 1)
-    }
-  }
-
-  const prevStep = () => {
+  const handleBack = () => {
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1)
     }
   }
 
-  const onSubmit: SubmitHandler<TestReportFormData> = async (data) => {
+  const handleNext = () => {
+    if (currentStep < 5) {
+      setCurrentStep(currentStep + 1)
+    }
+  }
+
+  const handleSubmit = async () => {
     try {
       setLoading(true)
-      
-      const normalizedSignature = normalizeDataUrlToBase64(data.approver_signature)
-      
-      const payload: CreateSteriMilkTestReportRequest = {
-        issue_date: data.issue_date,
-        approved_by: data.approved_by,
-        approver_signature: normalizedSignature,
-        date_of_production: data.date_of_production,
-        batch_number: data.batch_number,
-        variety: data.variety,
-        raw_milk_silos: data.raw_milk_silos,
-        other_tests: data.other_tests,
-        standardisation_and_pasteurisation: data.standardisation_and_pasteurisation,
-        uht_steri_milk: data.uht_steri_milk
+
+      const basicInfo = basicInfoForm.getValues()
+      const rawMilkSilos = rawMilkSilosForm.getValues()
+      const otherTests = otherTestsForm.getValues()
+      const standardisation = standardisationForm.getValues()
+      const uhtSteriMilk = uhtSteriMilkForm.getValues()
+
+      // Helper to convert time to backend format
+      const convertTimeToBackend = (val: string): string | null => {
+        if (!val) return null
+        
+        // If it's an ISO datetime string (e.g., "2025-11-07T10:54:00+00" or "2025-11-07T10:54:00.000Z")
+        if (val.includes('T')) {
+          const date = new Date(val)
+          const year = date.getFullYear()
+          const month = String(date.getMonth() + 1).padStart(2, '0')
+          const day = String(date.getDate()).padStart(2, '0')
+          const hours = String(date.getHours()).padStart(2, '0')
+          const minutes = String(date.getMinutes()).padStart(2, '0')
+          const seconds = String(date.getSeconds()).padStart(2, '0')
+          return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}+00`
+        }
+        
+        // If already in correct format "YYYY-MM-DD HH:mm:ss+00"
+        if (val.match(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\+\d{2}$/)) {
+          return val
+        }
+        
+        // If it's just HH:mm format, convert to full datetime with today's date
+        if (val.match(/^\d{2}:\d{2}$/) || val.match(/^\d{2}:\d{2}:\d{2}$/)) {
+          const today = new Date().toISOString().split('T')[0]
+          const time = val.length === 5 ? `${val}:00` : val
+          return `${today} ${time}+00`
+        }
+        
+        // Otherwise, return as is
+        return val
       }
-      
-      await steriMilkTestReportApi.createTestReport(payload)
-      toast.success('Steri Milk Test Report created successfully')
-      
+
+      // Helper to parse number or return undefined
+      const parseNumber = (val: string): number | undefined => {
+        if (val === "" || val === null || val === undefined) return undefined
+        const parsed = parseFloat(val)
+        return isNaN(parsed) ? undefined : parsed
+      }
+
+      const payload: any = {
+        issue_date: basicInfo.issue_date,
+        approved_by: basicInfo.approved_by,
+        approver_signature: normalizeDataUrlToBase64(basicInfo.approver_signature) || undefined,
+        date_of_production: basicInfo.date_of_production,
+        batch_number: parseInt(basicInfo.batch_number) || 1,
+        variety: basicInfo.variety,
+        raw_milk_silos: [
+          {
+            tank: rawMilkSilos.tank || undefined,
+            time: convertTimeToBackend(rawMilkSilos.time),
+            temperature: parseNumber(rawMilkSilos.temperature),
+            alcohol: parseNumber(rawMilkSilos.alcohol),
+            res: parseNumber(rawMilkSilos.res),
+            cob: rawMilkSilos.cob,
+            ph: parseNumber(rawMilkSilos.ph),
+            fat: parseNumber(rawMilkSilos.fat),
+            lr_snf: rawMilkSilos.lr_snf || undefined,
+            acidity: parseNumber(rawMilkSilos.acidity),
+            remarks: rawMilkSilos.remarks || undefined
+          }
+        ],
+        other_tests: [
+          {
+            sample_details: otherTests.sample_details || undefined,
+            ph: parseNumber(otherTests.ph),
+            caustic: parseNumber(otherTests.caustic),
+            acid: parseNumber(otherTests.acid),
+            chlorine: parseNumber(otherTests.chlorine),
+            hd: parseNumber(otherTests.hd),
+            tds: parseNumber(otherTests.tds),
+            hydrogen_peroxide: parseNumber(otherTests.hydrogen_peroxide),
+            remarks: otherTests.remarks || undefined
+          }
+        ],
+        standardisation_and_pasteurisation: [
+          {
+            tank: standardisation.tank || undefined,
+            batch: parseInt(standardisation.batch) || undefined,
+            time: convertTimeToBackend(standardisation.time),
+            temperature: parseNumber(standardisation.temperature),
+            ot: standardisation.ot || undefined,
+            alcohol: parseNumber(standardisation.alcohol),
+            phosphatase: standardisation.phosphatase || undefined,
+            ph: parseNumber(standardisation.ph),
+            cob: standardisation.cob,
+            fat: parseNumber(standardisation.fat),
+            ci_si: standardisation.ci_si || undefined,
+            lr_snf: standardisation.lr_snf || undefined,
+            acidity: parseNumber(standardisation.acidity),
+            analyst: standardisation.analyst || undefined,
+            remarks: standardisation.remarks || undefined
+          }
+        ],
+        uht_steri_milk: [
+          {
+            time: convertTimeToBackend(uhtSteriMilk.time),
+            batch: uhtSteriMilk.batch || undefined,
+            temperature: parseNumber(uhtSteriMilk.temperature),
+            ot: uhtSteriMilk.ot || undefined,
+            alc: parseNumber(uhtSteriMilk.alc),
+            res: parseNumber(uhtSteriMilk.res),
+            cob: uhtSteriMilk.cob,
+            ph: parseNumber(uhtSteriMilk.ph),
+            fat: parseNumber(uhtSteriMilk.fat),
+            lr_snf: uhtSteriMilk.lr_snf || undefined,
+            ci_si: uhtSteriMilk.ci_si || undefined,
+            total_solids: parseNumber(uhtSteriMilk.total_solids),
+            acidity: parseNumber(uhtSteriMilk.acidity),
+            coffee: parseNumber(uhtSteriMilk.coffee),
+            hydrogen_peroxide_or_turbidity: uhtSteriMilk.hydrogen_peroxide_or_turbidity || undefined,
+            analyst: uhtSteriMilk.analyst || undefined,
+            remarks: uhtSteriMilk.remarks || undefined
+          }
+        ]
+      }
+
+      if (mode === "edit" && reportData?.id) {
+        // Include IDs for update
+        payload.id = reportData.id
+        if (reportData.raw_milk_silos?.[0]?.id) {
+          payload.raw_milk_silos[0].id = reportData.raw_milk_silos[0].id
+        }
+        if (reportData.other_tests?.[0]?.id) {
+          payload.other_tests[0].id = reportData.other_tests[0].id
+        }
+        if (reportData.standardisation_and_pasteurisation?.[0]?.id) {
+          payload.standardisation_and_pasteurisation[0].id = reportData.standardisation_and_pasteurisation[0].id
+        }
+        if (reportData.uht_steri_milk?.[0]?.id) {
+          payload.uht_steri_milk[0].id = reportData.uht_steri_milk[0].id
+        }
+
+        await steriMilkTestReportApi.updateTestReport(reportData.id, payload)
+        toast.success("Steri Milk Test Report updated successfully")
+      } else {
+        await steriMilkTestReportApi.createTestReport(payload)
+        toast.success("Steri Milk Test Report created successfully")
+      }
+
       onOpenChange(false)
       if (onSuccess) {
         onSuccess()
       }
-    } catch (error: any) {
-      console.error('Error creating test report:', error)
-      toast.error('Failed to create test report')
+    } catch (err: any) {
+      const msg = typeof err === "string" ? err : (err?.message || JSON.stringify(err) || "Failed to save Steri Milk Test Report")
+      toast.error(msg)
+      console.error(err)
     } finally {
       setLoading(false)
     }
   }
 
-  const renderStepContent = () => {
-    switch (currentStep) {
-      case 1:
-        return (
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="issue_date">Issue Date</Label>
-                <Controller
-                  name="issue_date"
-                  control={control}
-                  render={({ field }) => (
-                    <DatePicker
-                      value={field.value}
-                      onChange={field.onChange}
-                      placeholder="Select issue date"
-                    />
-                  )}
-                />
-                {errors.issue_date && (
-                  <p className="text-red-500 text-sm mt-1">{errors.issue_date.message}</p>
-                )}
-              </div>
-              <div>
-                <Label htmlFor="date_of_production">Date of Production</Label>
-                <Controller
-                  name="date_of_production"
-                  control={control}
-                  render={({ field }) => (
-                    <Input
-                      {...field}
-                      type="date"
-                      className="mt-1 bg-gray-50"
-                      disabled
-                    />
-                  )}
-                />
-                {errors.date_of_production && (
-                  <p className="text-red-500 text-sm mt-1">{errors.date_of_production.message}</p>
-                )}
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="batch_number">Batch Number</Label>
-                <Controller
-                  name="batch_number"
-                  control={control}
-                  render={({ field }) => (
-                    <Input
-                      {...field}
-                      type="number"
-                      className="mt-1 bg-gray-50"
-                      onChange={(e) => field.onChange(parseInt(e.target.value))}
-                      disabled
-                    />
-                  )}
-                />
-                {errors.batch_number && (
-                  <p className="text-red-500 text-sm mt-1">{errors.batch_number.message}</p>
-                )}
-              </div>
-              <div>
-                <Label htmlFor="variety">Variety</Label>
-                <Controller
-                  name="variety"
-                  control={control}
-                  render={({ field }) => (
-                    <Input
-                      {...field}
-                      className="mt-1"
-                    />
-                  )}
-                />
-                {errors.variety && (
-                  <p className="text-red-500 text-sm mt-1">{errors.variety.message}</p>
-                )}
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="approved_by">Approved By</Label>
-                <Controller
-                  name="approved_by"
-                  control={control}
-                  render={({ field }) => (
-                    <SearchableSelect
-                      options={users.map(user => ({
-                        value: user.id,
-                        label: `${user.first_name} ${user.last_name}`.trim() || user.email,
-                        description: `${user.department} • ${user.email}`
-                      }))}
-                      value={field.value}
-                      onValueChange={field.onChange}
-                      onSearch={handleUserSearch}
-                      placeholder="Search and select approver"
-                      searchPlaceholder="Search users..."
-                      emptyMessage="No users found"
-                      loading={loadingUsers}
-                    />
-                  )}
-                />
-                {errors.approved_by && (
-                  <p className="text-red-500 text-sm mt-1">{errors.approved_by.message}</p>
-                )}
-              </div>
-              <div>
-                <Label htmlFor="approver_signature">Approver Signature</Label>
-                <Controller
-                  name="approver_signature"
-                  control={control}
-                  render={({ field }) => (
-                    <div className="space-y-2">
-                      {field.value ? (
-                        <img src={base64ToPngDataUrl(field.value)} alt="Approver signature" className="h-24 border border-gray-200 rounded-md bg-white" />
-                      ) : (
-                        <div className="h-24 flex items-center justify-center border border-dashed border-gray-300 rounded-md text-xs text-gray-500 bg-white">
-                          No signature captured
-                        </div>
-                      )}
-                      <div className="flex items-center gap-2">
-                        <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={() => setSignatureOpen(true)}>
-                          Add Signature
-                        </Button>
-                        {field.value && (
-                          <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={() => setSignatureViewOpen(true)}>
-                            View Signature
-                          </Button>
-                        )}
-                        {field.value && (
-                          <Button type="button" variant="ghost" size="sm" className="rounded-full text-red-600" onClick={() => field.onChange("")}>Clear</Button>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                />
-                {errors.approver_signature && (
-                  <p className="text-red-500 text-sm mt-1">{errors.approver_signature.message}</p>
-                )}
-              </div>
-            </div>
-          </div>
-        )
-      
-      case 2:
-        return (
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium">Raw Milk Silos Test Parameters</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="raw_milk_silos.tank">Tank</Label>
-                <Controller
-                  name="raw_milk_silos.tank"
-                  control={control}
-                  render={({ field }) => (
-                    <SearchableSelect
-                      options={tankers.map(tanker => ({
-                        value: tanker.id,
-                        label: `${tanker.reg_number} (${tanker.condition})`,
-                        description: `${tanker.capacity}L capacity • ${tanker.age} years old`
-                      }))}
-                      value={field.value}
-                      onValueChange={field.onChange}
-                      onSearch={handleTankerSearch}
-                      placeholder={loadingTankers ? "Loading tankers..." : "Search and select tanker"}
-                      searchPlaceholder="Search tankers..."
-                      emptyMessage={loadingTankers ? "Loading tankers..." : "No tankers found"}
-                      loading={loadingTankers}
-                    />
-                  )}
-                />
-              </div>
-              <div>
-                <Controller
-                  name="raw_milk_silos.time"
-                  control={control}
-                  render={({ field }) => (
-                    <DatePicker
-                      value={field.value}
-                      onChange={field.onChange}
-                      label="Time"
-                      showTime={true}
-                      placeholder="Select date and time"
-                    />
-                  )}
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-3 gap-4">
-              <div>
-                <Label htmlFor="raw_milk_silos.temperature">Temperature (°C)</Label>
-                <Controller
-                  name="raw_milk_silos.temperature"
-                  control={control}
-                  render={({ field }) => (
-                    <Input {...field} type="number" step="0.1" className="mt-1" value={field.value || ""} onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)} />
-                  )}
-                />
-              </div>
-              <div>
-                <Label htmlFor="raw_milk_silos.alcohol">Alcohol (%)</Label>
-                <Controller
-                  name="raw_milk_silos.alcohol"
-                  control={control}
-                  render={({ field }) => (
-                    <Input {...field} type="number" step="0.1" className="mt-1" value={field.value || ""} onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)} />
-                  )}
-                />
-              </div>
-              <div>
-                <Label htmlFor="raw_milk_silos.res">RES</Label>
-                <Controller
-                  name="raw_milk_silos.res"
-                  control={control}
-                  render={({ field }) => (
-                    <Input {...field} type="number" step="0.1" className="mt-1" value={field.value || ""} onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)} />
-                  )}
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-3 gap-4">
-              <div>
-                <Label htmlFor="raw_milk_silos.cob">COB</Label>
-                <Controller
-                  name="raw_milk_silos.cob"
-                  control={control}
-                  render={({ field }) => (
-                    <Input {...field} type="number" step="0.1" className="mt-1" value={field.value || ""} onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)} />
-                  )}
-                />
-              </div>
-              <div>
-                <Label htmlFor="raw_milk_silos.ph">pH</Label>
-                <Controller
-                  name="raw_milk_silos.ph"
-                  control={control}
-                  render={({ field }) => (
-                    <Input {...field} type="number" step="0.1" className="mt-1" value={field.value || ""} onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)} />
-                  )}
-                />
-              </div>
-              <div>
-                <Label htmlFor="raw_milk_silos.fat">Fat (%)</Label>
-                <Controller
-                  name="raw_milk_silos.fat"
-                  control={control}
-                  render={({ field }) => (
-                    <Input {...field} type="number" step="0.1" className="mt-1" value={field.value || ""} onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)} />
-                  )}
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="raw_milk_silos.lr_snf">LR/SNF</Label>
-                <Controller
-                  name="raw_milk_silos.lr_snf"
-                  control={control}
-                  render={({ field }) => (
-                    <Input {...field} className="mt-1" />
-                  )}
-                />
-              </div>
-              <div>
-                <Label htmlFor="raw_milk_silos.acidity">Acidity</Label>
-                <Controller
-                  name="raw_milk_silos.acidity"
-                  control={control}
-                  render={({ field }) => (
-                    <Input {...field} type="number" step="0.01" className="mt-1" value={field.value || ""} onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)} />
-                  )}
-                />
-              </div>
-            </div>
-            <div>
-              <Label htmlFor="raw_milk_silos.remarks">Remarks</Label>
-              <Controller
-                name="raw_milk_silos.remarks"
-                control={control}
-                render={({ field }) => (
-                  <Input {...field} className="mt-1" />
-                )}
-              />
-            </div>
-          </div>
-        )
-      
-      case 3:
-        return (
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium">Other Tests Parameters</h3>
-            <div>
-              <Label htmlFor="other_tests.sample_details">Sample Details</Label>
-              <Controller
-                name="other_tests.sample_details"
-                control={control}
-                render={({ field }) => (
-                  <Input {...field} className="mt-1" />
-                )}
-              />
-            </div>
-            <div className="grid grid-cols-3 gap-4">
-              <div>
-                <Label htmlFor="other_tests.ph">pH</Label>
-                <Controller
-                  name="other_tests.ph"
-                  control={control}
-                  render={({ field }) => (
-                    <Input {...field} type="number" step="0.1" className="mt-1" value={field.value || ""} onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)} />
-                  )}
-                />
-              </div>
-              <div>
-                <Label htmlFor="other_tests.caustic">Caustic</Label>
-                <Controller
-                  name="other_tests.caustic"
-                  control={control}
-                  render={({ field }) => (
-                    <Input {...field} type="number" step="0.1" className="mt-1" value={field.value || ""} onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)} />
-                  )}
-                />
-              </div>
-              <div>
-                <Label htmlFor="other_tests.acid">Acid</Label>
-                <Controller
-                  name="other_tests.acid"
-                  control={control}
-                  render={({ field }) => (
-                    <Input {...field} type="number" step="0.1" className="mt-1" value={field.value || ""} onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)} />
-                  )}
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-3 gap-4">
-              <div>
-                <Label htmlFor="other_tests.chlorine">Chlorine</Label>
-                <Controller
-                  name="other_tests.chlorine"
-                  control={control}
-                  render={({ field }) => (
-                    <Input {...field} type="number" step="0.1" className="mt-1" value={field.value || ""} onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)} />
-                  )}
-                />
-              </div>
-              <div>
-                <Label htmlFor="other_tests.hd">HD</Label>
-                <Controller
-                  name="other_tests.hd"
-                  control={control}
-                  render={({ field }) => (
-                    <Input {...field} type="number" step="0.1" className="mt-1" value={field.value || ""} onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)} />
-                  )}
-                />
-              </div>
-              <div>
-                <Label htmlFor="other_tests.tds">TDS</Label>
-                <Controller
-                  name="other_tests.tds"
-                  control={control}
-                  render={({ field }) => (
-                    <Input {...field} type="number" step="0.01" className="mt-1" value={field.value || ""} onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)} />
-                  )}
-                />
-              </div>
-            </div>
-            <div>
-              <Label htmlFor="other_tests.hydrogen_peroxide">Hydrogen Peroxide</Label>
-              <Controller
-                name="other_tests.hydrogen_peroxide"
-                control={control}
-                render={({ field }) => (
-                  <Input {...field} type="number" step="0.01" className="mt-1" />
-                )}
-              />
-            </div>
-            <div>
-              <Label htmlFor="other_tests.remarks">Remarks</Label>
-              <Controller
-                name="other_tests.remarks"
-                control={control}
-                render={({ field }) => (
-                  <Input {...field} className="mt-1" />
-                )}
-              />
-            </div>
-          </div>
-        )
-      
-      case 4:
-        return (
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium">Standardisation & Pasteurisation</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="standardisation_and_pasteurisation.tank">Tank</Label>
-                <Controller
-                  name="standardisation_and_pasteurisation.tank"
-                  control={control}
-                  render={({ field }) => (
-                    <SearchableSelect
-                      options={tankers.map(tanker => ({
-                        value: tanker.id,
-                        label: `${tanker.reg_number} (${tanker.condition})`,
-                        description: `${tanker.capacity}L capacity • ${tanker.age} years old`
-                      }))}
-                      value={field.value}
-                      onValueChange={field.onChange}
-                      onSearch={handleTankerSearch}
-                      placeholder={loadingTankers ? "Loading tankers..." : "Search and select tanker"}
-                      searchPlaceholder="Search tankers..."
-                      emptyMessage={loadingTankers ? "Loading tankers..." : "No tankers found"}
-                      loading={loadingTankers}
-                    />
-                  )}
-                />
-              </div>
-              <div>
-                <Label htmlFor="standardisation_and_pasteurisation.batch">Batch</Label>
-                <Controller
-                  name="standardisation_and_pasteurisation.batch"
-                  control={control}
-                  render={({ field }) => (
-                    <Input {...field} disabled className="mt-1 bg-gray-50" />
-                  )}
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Controller
-                  name="standardisation_and_pasteurisation.time"
-                  control={control}
-                  render={({ field }) => (
-                    <DatePicker
-                      value={field.value}
-                      onChange={field.onChange}
-                      label="Time"
-                      showTime={true}
-                      placeholder="Select date and time"
-                    />
-                  )}
-                />
-              </div>
-              <div>
-                <Label htmlFor="standardisation_and_pasteurisation.temperature">Temperature (°C)</Label>
-                <Controller
-                  name="standardisation_and_pasteurisation.temperature"
-                  control={control}
-                  render={({ field }) => (
-                    <Input {...field} type="number" step="0.1" className="mt-1" value={field.value || ""} onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)} />
-                  )}
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-3 gap-4">
-              <div>
-                <Label htmlFor="standardisation_and_pasteurisation.ot">OT</Label>
-                <Controller
-                  name="standardisation_and_pasteurisation.ot"
-                  control={control}
-                  render={({ field }) => (
-                    <Input {...field} className="mt-1" />
-                  )}
-                />
-              </div>
-              <div>
-                <Label htmlFor="standardisation_and_pasteurisation.alcohol">Alcohol (%)</Label>
-                <Controller
-                  name="standardisation_and_pasteurisation.alcohol"
-                  control={control}
-                  render={({ field }) => (
-                    <Input {...field} type="number" step="0.1" className="mt-1" value={field.value || ""} onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)} />
-                  )}
-                />
-              </div>
-              <div>
-                <Label htmlFor="standardisation_and_pasteurisation.phosphatase">Phosphatase</Label>
-                <Controller
-                  name="standardisation_and_pasteurisation.phosphatase"
-                  control={control}
-                  render={({ field }) => (
-                    <Input {...field} className="mt-1" />
-                  )}
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-3 gap-4">
-              <div>
-                <Label htmlFor="standardisation_and_pasteurisation.ph">pH</Label>
-                <Controller
-                  name="standardisation_and_pasteurisation.ph"
-                  control={control}
-                  render={({ field }) => (
-                    <Input {...field} type="number" step="0.1" className="mt-1" value={field.value || ""} onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)} />
-                  )}
-                />
-              </div>
-              <div>
-                <Label htmlFor="standardisation_and_pasteurisation.cob">COB</Label>
-                <Controller
-                  name="standardisation_and_pasteurisation.cob"
-                  control={control}
-                  render={({ field }) => (
-                    <div className="mt-1">
-                      <input
-                        type="checkbox"
-                        checked={field.value}
-                        onChange={field.onChange}
-                        className="mr-2"
-                      />
-                      <span className="text-sm">COB Present</span>
-                    </div>
-                  )}
-                />
-              </div>
-              <div>
-                <Label htmlFor="standardisation_and_pasteurisation.fat">Fat (%)</Label>
-                <Controller
-                  name="standardisation_and_pasteurisation.fat"
-                  control={control}
-                  render={({ field }) => (
-                    <Input {...field} type="number" step="0.1" className="mt-1" value={field.value || ""} onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)} />
-                  )}
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="standardisation_and_pasteurisation.ci_si">CI/SI</Label>
-                <Controller
-                  name="standardisation_and_pasteurisation.ci_si"
-                  control={control}
-                  render={({ field }) => (
-                    <Input {...field} className="mt-1" />
-                  )}
-                />
-              </div>
-              <div>
-                <Label htmlFor="standardisation_and_pasteurisation.lr_snf">LR/SNF</Label>
-                <Controller
-                  name="standardisation_and_pasteurisation.lr_snf"
-                  control={control}
-                  render={({ field }) => (
-                    <Input {...field} className="mt-1" />
-                  )}
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="standardisation_and_pasteurisation.acidity">Acidity</Label>
-                <Controller
-                  name="standardisation_and_pasteurisation.acidity"
-                  control={control}
-                  render={({ field }) => (
-                    <Input {...field} type="number" step="0.01" className="mt-1" value={field.value || ""} onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)} />
-                  )}
-                />
-              </div>
-              <div>
-                <Controller
-                  name="standardisation_and_pasteurisation.analyst"
-                  control={control}
-                  render={({ field }) => (
-                    <SearchableSelect
-                      options={users.map(user => ({
-                        value: user.id,
-                        label: `${user.first_name} ${user.last_name}`.trim() || user.email,
-                        description: `${user.department} • ${user.email}`
-                      }))}
-                      value={field.value}
-                      onValueChange={field.onChange}
-                      onSearch={handleUserSearch}
-                      placeholder="Search and select analyst"
-                      searchPlaceholder="Search users..."
-                      emptyMessage="No users found"
-                      loading={loadingUsers}
-                    />
-                  )}
-                />
-              </div>
-            </div>
-            <div>
-              <Label htmlFor="standardisation_and_pasteurisation.remarks">Remarks</Label>
-              <Controller
-                name="standardisation_and_pasteurisation.remarks"
-                control={control}
-                render={({ field }) => (
-                  <Input {...field} className="mt-1" />
-                )}
-              />
-            </div>
-          </div>
-        )
-      
-      case 5:
-        return (
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium">UHT Steri Milk Parameters</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Controller
-                  name="uht_steri_milk.time"
-                  control={control}
-                  render={({ field }) => (
-                    <DatePicker
-                      value={field.value}
-                      onChange={field.onChange}
-                      label="Time"
-                      showTime={true}
-                      placeholder="Select date and time"
-                    />
-                  )}
-                />
-              </div>
-              <div>
-                <Label htmlFor="uht_steri_milk.batch">Batch</Label>
-                <Controller
-                  name="uht_steri_milk.batch"
-                  control={control}
-                  render={({ field }) => (
-                    <Input {...field} disabled className="mt-1 bg-gray-50" />
-                  )}
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="uht_steri_milk.temperature">Temperature (°C)</Label>
-                <Controller
-                  name="uht_steri_milk.temperature"
-                  control={control}
-                  render={({ field }) => (
-                    <Input {...field} type="number" step="0.1" className="mt-1" value={field.value || ""} onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)} />
-                  )}
-                />
-              </div>
-              <div>
-                <Label htmlFor="uht_steri_milk.ot">OT</Label>
-                <Controller
-                  name="uht_steri_milk.ot"
-                  control={control}
-                  render={({ field }) => (
-                    <Input {...field} className="mt-1" />
-                  )}
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-3 gap-4">
-              <div>
-                <Label htmlFor="uht_steri_milk.alc">ALC</Label>
-                <Controller
-                  name="uht_steri_milk.alc"
-                  control={control}
-                  render={({ field }) => (
-                    <Input {...field} type="number" step="0.1" className="mt-1" value={field.value || ""} onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)} />
-                  )}
-                />
-              </div>
-              <div>
-                <Label htmlFor="uht_steri_milk.res">RES</Label>
-                <Controller
-                  name="uht_steri_milk.res"
-                  control={control}
-                  render={({ field }) => (
-                    <Input {...field} type="number" step="0.1" className="mt-1" value={field.value || ""} onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)} />
-                  )}
-                />
-              </div>
-              <div>
-                <Label htmlFor="uht_steri_milk.cob">COB</Label>
-                <Controller
-                  name="uht_steri_milk.cob"
-                  control={control}
-                  render={({ field }) => (
-                    <div className="mt-1">
-                      <input
-                        type="checkbox"
-                        checked={field.value}
-                        onChange={field.onChange}
-                        className="mr-2"
-                      />
-                      <span className="text-sm">COB Present</span>
-                    </div>
-                  )}
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-3 gap-4">
-              <div>
-                <Label htmlFor="uht_steri_milk.ph">pH</Label>
-                <Controller
-                  name="uht_steri_milk.ph"
-                  control={control}
-                  render={({ field }) => (
-                    <Input {...field} type="number" step="0.1" className="mt-1" value={field.value || ""} onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)} />
-                  )}
-                />
-              </div>
-              <div>
-                <Label htmlFor="uht_steri_milk.fat">Fat (%)</Label>
-                <Controller
-                  name="uht_steri_milk.fat"
-                  control={control}
-                  render={({ field }) => (
-                    <Input {...field} type="number" step="0.1" className="mt-1" value={field.value || ""} onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)} />
-                  )}
-                />
-              </div>
-              <div>
-                <Label htmlFor="uht_steri_milk.lr_snf">LR/SNF</Label>
-                <Controller
-                  name="uht_steri_milk.lr_snf"
-                  control={control}
-                  render={({ field }) => (
-                    <Input {...field} className="mt-1" />
-                  )}
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-3 gap-4">
-              <div>
-                <Label htmlFor="uht_steri_milk.ci_si">CI/SI</Label>
-                <Controller
-                  name="uht_steri_milk.ci_si"
-                  control={control}
-                  render={({ field }) => (
-                    <Input {...field} className="mt-1" />
-                  )}
-                />
-              </div>
-              <div>
-                <Label htmlFor="uht_steri_milk.total_solids">Total Solids</Label>
-                <Controller
-                  name="uht_steri_milk.total_solids"
-                  control={control}
-                  render={({ field }) => (
-                    <Input {...field} type="number" step="0.1" className="mt-1" value={field.value || ""} onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)} />
-                  )}
-                />
-              </div>
-              <div>
-                <Label htmlFor="uht_steri_milk.acidity">Acidity</Label>
-                <Controller
-                  name="uht_steri_milk.acidity"
-                  control={control}
-                  render={({ field }) => (
-                    <Input {...field} type="number" step="0.01" className="mt-1" value={field.value || ""} onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)} />
-                  )}
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="uht_steri_milk.coffee">Coffee</Label>
-                <Controller
-                  name="uht_steri_milk.coffee"
-                  control={control}
-                  render={({ field }) => (
-                    <div className="mt-1">
-                      <input
-                        type="checkbox"
-                        checked={field.value}
-                        onChange={field.onChange}
-                        className="mr-2"
-                      />
-                      <span className="text-sm">Coffee Present</span>
-                    </div>
-                  )}
-                />
-              </div>
-              <div>
-                <Label htmlFor="uht_steri_milk.hydrogen_peroxide_or_turbidity">Hydrogen Peroxide/Turbidity</Label>
-                <Controller
-                  name="uht_steri_milk.hydrogen_peroxide_or_turbidity"
-                  control={control}
-                  render={({ field }) => (
-                    <Input {...field} className="mt-1" />
-                  )}
-                />
-              </div>
-            </div>
-            <div>
-              <Label htmlFor="uht_steri_milk.coffee_remarks">Coffee Remarks</Label>
-              <Controller
-                name="uht_steri_milk.coffee_remarks"
-                control={control}
-                render={({ field }) => (
-                  <Input {...field} className="mt-1" />
-                )}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Controller
-                  name="uht_steri_milk.analyst"
-                  control={control}
-                  render={({ field }) => (
-                    <SearchableSelect
-                      options={users.map(user => ({
-                        value: user.id,
-                        label: `${user.first_name} ${user.last_name}`.trim() || user.email,
-                        description: `${user.department} • ${user.email}`
-                      }))}
-                      value={field.value}
-                      onValueChange={field.onChange}
-                      onSearch={handleUserSearch}
-                      placeholder="Search and select analyst"
-                      searchPlaceholder="Search users..."
-                      emptyMessage="No users found"
-                      loading={loadingUsers}
-                    />
-                  )}
-                />
-              </div>
-            </div>
-            <div>
-              <Label htmlFor="uht_steri_milk.remarks">Remarks</Label>
-              <Controller
-                name="uht_steri_milk.remarks"
-                control={control}
-                render={({ field }) => (
-                  <Input {...field} className="mt-1" />
-                )}
-              />
-            </div>
-          </div>
-        )
-      
-      case 6:
-        return (
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium">Review & Submit</h3>
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <h4 className="font-medium mb-2">Basic Information</h4>
-              <p><strong>Issue Date:</strong> {watch('issue_date')}</p>
-              <p><strong>Date of Production:</strong> {watch('date_of_production')}</p>
-              <p><strong>Batch Number:</strong> {watch('batch_number')}</p>
-              <p><strong>Variety:</strong> {watch('variety')}</p>
-              <p><strong>Approved By:</strong> {
-                users.find(user => user.id === watch('approved_by'))?.first_name + ' ' + 
-                users.find(user => user.id === watch('approved_by'))?.last_name || 
-                watch('approved_by')
-              }</p>
-              <p><strong>Approver Signature:</strong> {watch('approver_signature')}</p>
-            </div>
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <h4 className="font-medium mb-2">Raw Milk Silos</h4>
-                <p><strong>Tanker:</strong> {
-                  tankers.find(tanker => tanker.id === watch('raw_milk_silos.tank'))?.reg_number || 
-                  watch('raw_milk_silos.tank')
-                }</p>
-              <p><strong>Time:</strong> {watch('raw_milk_silos.time')}</p>
-              <p><strong>Temperature:</strong> {watch('raw_milk_silos.temperature')}°C</p>
-              <p><strong>pH:</strong> {watch('raw_milk_silos.ph')}</p>
-              <p><strong>Fat:</strong> {watch('raw_milk_silos.fat')}%</p>
-            </div>
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <h4 className="font-medium mb-2">Other Tests</h4>
-              <p><strong>Sample Details:</strong> {watch('other_tests.sample_details')}</p>
-              <p><strong>pH:</strong> {watch('other_tests.ph')}</p>
-              <p><strong>TDS:</strong> {watch('other_tests.tds')}</p>
-            </div>
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <h4 className="font-medium mb-2">Standardisation & Pasteurisation</h4>
-              <p><strong>Tanker:</strong> {
-                tankers.find(tanker => tanker.id === watch('standardisation_and_pasteurisation.tank'))?.reg_number || 
-                watch('standardisation_and_pasteurisation.tank')
-              }</p>
-              <p><strong>Batch:</strong> {watch('standardisation_and_pasteurisation.batch')}</p>
-              <p><strong>Time:</strong> {watch('standardisation_and_pasteurisation.time')}</p>
-              <p><strong>Temperature:</strong> {watch('standardisation_and_pasteurisation.temperature')}°C</p>
-              <p><strong>Phosphatase:</strong> {watch('standardisation_and_pasteurisation.phosphatase')}</p>
-              <p><strong>Analyst:</strong> {
-                users.find(user => user.id === watch('standardisation_and_pasteurisation.analyst'))?.first_name + ' ' + 
-                users.find(user => user.id === watch('standardisation_and_pasteurisation.analyst'))?.last_name || 
-                watch('standardisation_and_pasteurisation.analyst')
-              }</p>
-            </div>
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <h4 className="font-medium mb-2">UHT Steri Milk</h4>
-              <p><strong>Time:</strong> {watch('uht_steri_milk.time')}</p>
-              <p><strong>Batch:</strong> {watch('uht_steri_milk.batch')}</p>
-              <p><strong>Temperature:</strong> {watch('uht_steri_milk.temperature')}°C</p>
-              <p><strong>Total Solids:</strong> {watch('uht_steri_milk.total_solids')}</p>
-              <p><strong>Analyst:</strong> {
-                users.find(user => user.id === watch('uht_steri_milk.analyst'))?.first_name + ' ' + 
-                users.find(user => user.id === watch('uht_steri_milk.analyst'))?.last_name || 
-                watch('uht_steri_milk.analyst')
-              }</p>
-            </div>
-          </div>
-        )
-      
-      default:
-        return null
-    }
-  }
-
   return (
-    <>
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="tablet-sheet-full overflow-y-auto p-6 bg-white">
-        <SheetHeader className="mb-6">
-          <SheetTitle className="flex items-center gap-2">
-            <Beaker className="w-5 h-5" />
-            Create Steri Milk Test Report
+      <SheetContent className="tablet-sheet-full p-0 bg-white">
+        <SheetHeader className="p-6 pb-0 bg-white">
+          <SheetTitle>
+            {mode === "edit" ? "Edit Steri Milk Test Report" : "Create Steri Milk Test Report"}
           </SheetTitle>
           <SheetDescription>
-            Complete the test report with all required parameters
+            {currentStep === 1 && "Basic Information: Enter the basic report information"}
+            {currentStep === 2 && "Raw Milk Silos: Enter raw milk silo test parameters"}
+            {currentStep === 3 && "Other Tests: Enter additional test parameters"}
+            {currentStep === 4 && "Standardisation & Pasteurisation: Enter pasteurisation data"}
+            {currentStep === 5 && "UHT Steri Milk: Enter UHT processing parameters"}
           </SheetDescription>
         </SheetHeader>
 
-        {/* Progress Steps */}
-        <div className="mb-6">
-          <div className="flex items-center justify-between">
-            {steps.map((step, index) => (
-              <div key={step.id} className="flex items-center">
-                <div className={`flex items-center justify-center w-8 h-8 rounded-full ${
-                  currentStep >= step.id 
-                    ? 'bg-blue-500 text-white' 
-                    : 'bg-gray-200 text-gray-600'
-                }`}>
-                  {currentStep > step.id ? (
-                    <CheckCircle className="w-4 h-4" />
-                  ) : (
-                    <span className="text-sm font-medium">{step.id}</span>
-                  )}
-                </div>
-                {index < steps.length - 1 && (
-                  <div className={`w-16 h-0.5 mx-2 ${
-                    currentStep > step.id ? 'bg-blue-500' : 'bg-gray-200'
-                  }`} />
-                )}
-              </div>
-            ))}
-          </div>
-          <div className="mt-2">
-            <h3 className="text-sm font-medium">{steps[currentStep - 1].title}</h3>
-            <p className="text-xs text-gray-500">{steps[currentStep - 1].description}</p>
-          </div>
-        </div>
-
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <div className="flex-1 overflow-y-auto bg-white" key={`form-${open}-${currentStep}`}>
           {loadingData ? (
             <div className="flex items-center justify-center h-64">
               <div className="text-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500 mx-auto mb-4"></div>
-                <p className="text-sm text-gray-500">Loading form data...</p>
+                <p className="text-sm text-muted-foreground">Loading process data...</p>
               </div>
             </div>
           ) : (
-            renderStepContent()
+            <>
+              {currentStep === 1 && (
+                <BasicInfoStep
+                  form={basicInfoForm}
+                  users={users}
+                  loadingUsers={loadingUsers}
+                />
+              )}
+              {currentStep === 2 && (
+                <RawMilkSilosStep
+                  form={rawMilkSilosForm}
+                  tankers={tankers}
+                  loadingTankers={loadingTankers}
+                />
+              )}
+              {currentStep === 3 && (
+                <OtherTestsStep form={otherTestsForm} />
+              )}
+              {currentStep === 4 && (
+                <StandardisationStep
+                  form={standardisationForm}
+                  tankers={tankers}
+                  loadingTankers={loadingTankers}
+                  users={users}
+                  loadingUsers={loadingUsers}
+                />
+              )}
+              {currentStep === 5 && (
+                <UhtSteriMilkStep
+                  form={uhtSteriMilkForm}
+                  users={users}
+                  loadingUsers={loadingUsers}
+                />
+              )}
+            </>
           )}
+        </div>
 
-          <div className="flex justify-between pt-6 border-t">
+        <div className="flex items-center justify-between p-6 pt-0 border-t bg-white">
+          <Button
+            variant="outline"
+            onClick={handleBack}
+            disabled={currentStep === 1 || loading}
+            className="flex items-center gap-2"
+          >
+            <ChevronLeft className="h-4 w-4" />
+            Back
+          </Button>
+
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">
+              Step {currentStep} of 5
+            </span>
+          </div>
+
+          {currentStep < 5 ? (
             <Button
-              type="button"
-              variant="outline"
-              onClick={prevStep}
-              disabled={currentStep === 1}
+              onClick={handleNext}
+              disabled={loading}
               className="flex items-center gap-2"
             >
-              <ChevronLeft className="w-4 h-4" />
-              Previous
+              Next
+              <ChevronRight className="h-4 w-4" />
             </Button>
-            
-            {currentStep < steps.length ? (
-              <Button
-                type="button"
-                onClick={nextStep}
-                className="flex items-center gap-2"
-              >
-                Next
-                <ChevronRight className="w-4 h-4" />
-              </Button>
-            ) : (
-              <LoadingButton
-                type="submit"
-                loading={loading}
-                className="flex items-center gap-2"
-              >
-                <CheckCircle className="w-4 h-4" />
-                Mixing & Pasteurizing Test
-              </LoadingButton>
-            )}
-          </div>
-        </form>
-        </SheetContent>
-      </Sheet>
-
-      <SignatureModal
-        open={signatureOpen}
-        onOpenChange={setSignatureOpen}
-        title="Capture Approver Signature"
-        onSave={(dataUrl) => {
-          setValue("approver_signature", dataUrl, { shouldValidate: true })
-        }}
-      />
-      <SignatureViewer
-        open={signatureViewOpen}
-        onOpenChange={setSignatureViewOpen}
-        title="Approver Signature"
-        value={watch("approver_signature")}
-      />
-    </>
-    )
-  }
+          ) : (
+            <Button
+              onClick={handleSubmit}
+              disabled={loading}
+            >
+              {mode === "edit" ? "Update Report" : "Create Report"}
+            </Button>
+          )}
+        </div>
+      </SheetContent>
+    </Sheet>
+  )
+}

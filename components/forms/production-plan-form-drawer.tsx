@@ -54,7 +54,7 @@ type ProductionPlanFormData = {
   status: "planned" | "ongoing" | "completed" | "cancelled"
   process_id: string
   output: {
-    value: number | null
+    value: number
     unit_of_measure: string
   }
   raw_products: ProductionPlanRawProduct[]
@@ -68,12 +68,12 @@ interface ProductionPlanFormDrawerProps {
   onSuccess?: () => void
 }
 
-export function ProductionPlanFormDrawer({ 
-  open, 
-  onOpenChange, 
-  productionPlan, 
-  mode, 
-  onSuccess 
+export function ProductionPlanFormDrawer({
+  open,
+  onOpenChange,
+  productionPlan,
+  mode,
+  onSuccess
 }: ProductionPlanFormDrawerProps): JSX.Element {
   const [loading, setLoading] = useState(false)
   const dispatch = useAppDispatch()
@@ -101,7 +101,7 @@ export function ProductionPlanFormDrawer({
       status: "planned",
       process_id: "",
       output: {
-        value: null,
+        value: 0,
         unit_of_measure: "litres",
       },
       raw_products: [],
@@ -133,8 +133,17 @@ export function ProductionPlanFormDrawer({
         setValue("supervisor", productionPlan.supervisor)
         setValue("status", productionPlan.status)
         setValue("process_id", productionPlan.process_id || "")
-        setValue("output", productionPlan.output || { value: null, unit_of_measure: "litres" })
-        setValue("raw_products", productionPlan.raw_products)
+        setValue("output", productionPlan.output || { value: 0, unit_of_measure: "litres" })
+
+        // Ensure raw_material_name is populated for each raw product
+        const rawProductsWithNames = productionPlan.raw_products.map(product => {
+          const material = rawMaterials.find(m => m.id === product.raw_material_id)
+          return {
+            ...product,
+            raw_material_name: product.raw_material_name || material?.name || ""
+          }
+        })
+        setValue("raw_products", rawProductsWithNames)
       } else {
         reset({
           name: "",
@@ -145,19 +154,23 @@ export function ProductionPlanFormDrawer({
           status: "planned",
           process_id: "",
           output: {
-            value: null,
+            value: 0,
             unit_of_measure: "litres",
           },
           raw_products: [],
         })
       }
     }
-  }, [open, mode, productionPlan, setValue, reset])
+  }, [open, mode, productionPlan, rawMaterials, setValue, reset])
 
   const onSubmit: SubmitHandler<ProductionPlanFormData> = async (data) => {
     try {
       setLoading(true)
-      
+
+      console.log('Production Plan Form Submit - Mode:', mode)
+      console.log('Production Plan Form Submit - Data:', data)
+      console.log('Production Plan Form Submit - Existing Plan:', productionPlan)
+
       // Transform data for API request
       const baseData = {
         name: data.name,
@@ -182,6 +195,7 @@ export function ProductionPlanFormDrawer({
           ...baseData,
           raw_products_object: rawProductsData
         }
+        console.log('Creating production plan with data:', createData)
         await dispatch(createProductionPlan(createData)).unwrap()
         toast.success("Production plan created successfully")
       } else if (productionPlan) {
@@ -189,8 +203,10 @@ export function ProductionPlanFormDrawer({
           ...baseData,
           id: productionPlan.id,
           created_at: productionPlan.created_at,
+          updated_at: new Date().toISOString(),
           raw_products: rawProductsData
         }
+        console.log('Updating production plan with data:', updateData)
         await dispatch(updateProductionPlan(updateData)).unwrap()
         toast.success("Production plan updated successfully")
       }
@@ -200,7 +216,8 @@ export function ProductionPlanFormDrawer({
       onOpenChange(false)
       onSuccess?.()
     } catch (error: any) {
-      const message = error?.message || "An error occurred"
+      console.error('Production Plan Submit Error:', error)
+      const message = error?.message || error || "An error occurred"
       toast.error(message)
     } finally {
       setLoading(false)
@@ -228,7 +245,7 @@ export function ProductionPlanFormDrawer({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-[50vw] sm:max-w-[50vw] p-0 bg-white">
+      <SheetContent className="tablet-sheet-full p-0 bg-white">
         <SheetHeader className="p-6 pb-0 bg-white">
           <SheetTitle className="text-lg font-light">
             {mode === "create" ? "Add New Production Plan" : "Edit Production Plan"}
@@ -240,6 +257,9 @@ export function ProductionPlanFormDrawer({
         <div className="flex-1 overflow-y-auto bg-white p-6">
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            {/* Debug: Show validation errors */}
+
+
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label>Plan Name *</Label>
@@ -412,9 +432,10 @@ export function ProductionPlanFormDrawer({
                         {...field}
                         type="number"
                         step="0.01"
-                        placeholder=""
+                        placeholder="Enter output value"
                         disabled={isSubmitting}
-                        onChange={(e) => field.onChange(parseFloat(e.target.value))}
+                        value={field.value || ""}
+                        onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : 0)}
                       />
                     )}
                   />
@@ -496,8 +517,8 @@ export function ProductionPlanFormDrawer({
                             name={`raw_products.${index}.raw_material_id`}
                             control={control}
                             render={({ field }) => (
-                              <Select 
-                                value={field.value} 
+                              <Select
+                                value={field.value}
                                 onValueChange={(value) => handleRawMaterialSelect(index, value)}
                                 disabled={isSubmitting}
                               >

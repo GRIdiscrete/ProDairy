@@ -110,17 +110,17 @@ const adminNavigation = [
     icon: FileText,
     current: false,
   },
-  {
-    name: "Audit Trail",
-    href: "/admin/audit",
-    icon: History,
-    current: false,
-    children: [
-      { name: "Users", href: "/admin/audit/users" },
-      { name: "Processes", href: "/admin/audit/processes" },
-      { name: "System-wide", href: "/admin/audit/system" },
-    ],
-  },
+  // {
+  //   name: "Audit Trail",
+  //   href: "/admin/audit",
+  //   icon: History,
+  //   current: false,
+  //   children: [
+  //     { name: "Users", href: "/admin/audit/users" },
+  //     { name: "Processes", href: "/admin/audit/processes" },
+  //     { name: "System-wide", href: "/admin/audit/system" },
+  //   ],
+  // },
   {
     name: "Profile",
     href: "/profile",

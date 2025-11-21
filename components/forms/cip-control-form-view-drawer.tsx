@@ -152,6 +152,44 @@ export function CIPControlFormViewDrawer({ open, onClose, form, onEdit }: CIPCon
             </div>
           </div>
 
+          {/* CIP Stages */}
+          {form.cip_control_form_stages && form.cip_control_form_stages.length > 0 && (
+            <div className="p-6 bg-white border border-gray-200 rounded-lg mb-6">
+              <div className="flex items-center space-x-2 mb-4">
+                <div className="w-6 h-6 rounded-full bg-cyan-100 flex items-center justify-center">
+                  <Clock className="w-4 h-4 text-cyan-600" />
+                </div>
+                <h3 className="text-lg font-light">CIP Stages</h3>
+              </div>
+              <div className="space-y-3">
+                {form.cip_control_form_stages.map((stage, index) => (
+                  <div key={stage.id} className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="text-sm font-medium text-gray-900">Stage {index + 1}: {stage.stage}</h4>
+                      <span className="text-xs text-gray-500">
+                        {stage.created_at ? new Date(stage.created_at).toLocaleDateString() : 'N/A'}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3 mt-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-light text-gray-600">Start Time</span>
+                        <span className="text-xs font-light text-blue-600">
+                          {stage.start_time ? new Date(stage.start_time).toLocaleString() : 'N/A'}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-light text-gray-600">Stop Time</span>
+                        <span className="text-xs font-light text-red-600">
+                          {stage.stop_time ? new Date(stage.stop_time).toLocaleString() : 'N/A'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Record Information */}
           <div className="p-6 bg-white border border-gray-200 rounded-lg">
             <h3 className="text-lg font-light mb-4">Record Information</h3>

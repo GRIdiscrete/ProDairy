@@ -83,7 +83,10 @@ export interface CIPControlForm {
   rinse_water_test: string
   checked_by: string
   updated_at?: string
+  stage?: string | null
+  tag?: string
   // Relationship data
+  cip_control_form_stages?: CIPControlFormStages[]
   cip_control_form_machine_id_fkey?: {
     id: string
     name: string
@@ -147,16 +150,11 @@ export interface CIPControlForm {
 export interface CIPControlFormStages {
   id?: string
   created_at?: string
-  cip_control_form_id: string
-  stage_name: string
+  cip_control_form_id?: string
+  stage: string
   start_time: string
-  end_time: string
-  temperature: number
-  pressure: number
-  flow_rate: number
-  concentration: number
-  notes?: string
-  updated_at?: string
+  stop_time: string
+  updated_at?: string | null
 }
 
 // Drivers Form Types

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useForm, Controller } from "react-hook-form"
+import { useForm, Controller, useFieldArray } from "react-hook-form"
 import { yupResolver } from "@hookform/resolvers/yup"
 import * as yup from "yup"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
@@ -11,13 +11,16 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { SearchableSelect, SearchableSelectOption } from "@/components/ui/searchable-select"
 import { DatePicker } from "@/components/ui/date-picker"
+import { TimePicker } from "@/components/ui/time-picker"
+import { Button } from "@/components/ui/button"
+import { Plus, Trash2, Clock } from "lucide-react"
 import { useAppDispatch, useAppSelector } from "@/lib/store"
 import { createCIPControlFormAction, updateCIPControlFormAction, fetchCIPControlForms } from "@/lib/store/slices/cipControlFormSlice"
 import { machineApi } from "@/lib/api/machine"
 import { usersApi } from "@/lib/api/users"
 import { rolesApi } from "@/lib/api/roles"
 import { toast } from "sonner"
-import type { CIPControlForm } from "@/lib/api/data-capture-forms"
+import type { CIPControlForm, CIPControlFormStages } from "@/lib/api/data-capture-forms"
 
 const cipControlFormSchema = yup.object({
   status: yup.string().required("Status is required"),
@@ -30,6 +33,14 @@ const cipControlFormSchema = yup.object({
   approver: yup.string().required("Approver is required"),
   analyzer: yup.string().required("Analyzer is required"),
   checked_by: yup.string().required("Checked by is required"),
+  stages: yup.array().of(
+    yup.object({
+      id: yup.string().optional(),
+      stage: yup.string().required("Stage name is required"),
+      start_time: yup.string().required("Start time is required"),
+      stop_time: yup.string().required("Stop time is required"),
+    })
+  ).optional().default([]),
 })
 
 type CIPControlFormData = yup.InferType<typeof cipControlFormSchema>
@@ -162,13 +173,19 @@ export function CIPControlFormDrawer({ open, onOpenChange, form, mode }: CIPCont
       machine_id: "",
       operator_id: "",
       date: "",
-      caustic_solution_strength: 0,
-      acid_solution_strength: 0,
+      caustic_solution_strength: undefined,
+      acid_solution_strength: undefined,
       rinse_water_test: "",
       approver: "",
       analyzer: "",
       checked_by: "",
+      stages: [],
     },
+  })
+
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: "stages",
   })
 
   const onSubmit = async (data: CIPControlFormData) => {
@@ -177,8 +194,19 @@ export function CIPControlFormDrawer({ open, onOpenChange, form, mode }: CIPCont
       console.log('Form object:', form)
       console.log('Mode:', mode)
 
+      const payload = {
+        ...data,
+        stages: data.stages?.map((stage) => ({
+          ...(mode === "edit" && stage.id ? { id: stage.id } : {}),
+          ...(mode === "edit" && form?.id ? { cip_control_form_id: form.id } : {}),
+          stage: stage.stage,
+          start_time: stage.start_time,
+          stop_time: stage.stop_time,
+        })) || [],
+      }
+
       if (mode === "create") {
-        await dispatch(createCIPControlFormAction(data)).unwrap()
+        await dispatch(createCIPControlFormAction(payload)).unwrap()
         toast.success('CIP Control Form created successfully')
         // Refresh the data to get complete relationship information
         setTimeout(() => {
@@ -186,7 +214,7 @@ export function CIPControlFormDrawer({ open, onOpenChange, form, mode }: CIPCont
         }, 100)
       } else if (form && form.id) {
         const updatePayload = {
-          ...data,
+          ...payload,
           id: form.id,
           created_at: form.created_at,
           updated_at: form.updated_at,
@@ -217,12 +245,18 @@ export function CIPControlFormDrawer({ open, onOpenChange, form, mode }: CIPCont
         machine_id: form.machine_id || "",
         operator_id: form.operator_id || "",
         date: form.date || "",
-        caustic_solution_strength: form.caustic_solution_strength || 0,
-        acid_solution_strength: form.acid_solution_strength || 0,
+        caustic_solution_strength: form.caustic_solution_strength || undefined,
+        acid_solution_strength: form.acid_solution_strength || undefined,
         rinse_water_test: form.rinse_water_test || "",
         approver: form.approver || "",
         analyzer: form.analyzer || "",
         checked_by: form.checked_by || "",
+        stages: form.cip_control_form_stages?.map((stage) => ({
+          id: stage.id,
+          stage: stage.stage,
+          start_time: stage.start_time,
+          stop_time: stage.stop_time,
+        })) || [],
       })
     } else if (open && mode === "create") {
       reset({
@@ -230,12 +264,13 @@ export function CIPControlFormDrawer({ open, onOpenChange, form, mode }: CIPCont
         machine_id: "",
         operator_id: "",
         date: "",
-        caustic_solution_strength: 0,
-        acid_solution_strength: 0,
+        caustic_solution_strength: undefined,
+        acid_solution_strength: undefined,
         rinse_water_test: "",
         approver: "",
         analyzer: "",
         checked_by: "",
+        stages: [],
       })
     }
   }, [open, form, mode, reset])
@@ -249,16 +284,18 @@ export function CIPControlFormDrawer({ open, onOpenChange, form, mode }: CIPCont
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="tablet-sheet-full p-0 bg-white">
-        <div className="p-6 bg-white">
+      <SheetContent className="tablet-sheet-full p-0 bg-white overflow-hidden flex flex-col">
+        <div className="flex-shrink-0 p-6 bg-white border-b">
           <SheetHeader>
             <SheetTitle>{mode === "create" ? "Add New CIP Control Form" : "Edit CIP Control Form"}</SheetTitle>
             <SheetDescription>
               {mode === "create" ? "Create a new cleaning in place control form" : "Update cleaning in place control form"}
             </SheetDescription>
           </SheetHeader>
+        </div>
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 mt-6">
+        <div className="flex-1 overflow-y-auto">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 p-6">
             {/* Basic Information */}
             <div className="space-y-4">
               <h3 className="text-lg font-light text-gray-900 border-b pb-2">Basic Information</h3>
@@ -478,7 +515,109 @@ export function CIPControlFormDrawer({ open, onOpenChange, form, mode }: CIPCont
               </div>
             </div>
 
-            <div className="flex justify-end space-x-2 pt-4">
+            {/* CIP Stages */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between border-b pb-2">
+                <h3 className="text-lg font-light text-gray-900">CIP Stages</h3>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => append({ stage: "", start_time: "", stop_time: "" })}
+                  className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Stage
+                </Button>
+              </div>
+              
+              {fields.length === 0 ? (
+                <div className="text-center py-8 bg-gray-50 rounded-lg">
+                  <Clock className="w-12 h-12 mx-auto text-gray-400 mb-2" />
+                  <p className="text-sm text-gray-500">No stages added yet</p>
+                  <p className="text-xs text-gray-400 mt-1">Click "Add Stage" to add a CIP stage</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {fields.map((field, index) => (
+                    <div key={field.id} className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                      <div className="flex items-center justify-between mb-3">
+                        <h4 className="text-sm font-light text-gray-700">Stage {index + 1}</h4>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => remove(index)}
+                          className="text-red-500 hover:text-red-700 hover:bg-red-50 rounded-full"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                      <div className="space-y-3">
+                        <div className="space-y-2">
+                          <Label htmlFor={`stages.${index}.stage`}>Stage Name *</Label>
+                          <Controller
+                            name={`stages.${index}.stage`}
+                            control={control}
+                            render={({ field }) => (
+                              <Input
+                                id={`stages.${index}.stage`}
+                                placeholder="e.g., cold water rinse"
+                                className="rounded-full border-gray-200"
+                                {...field}
+                              />
+                            )}
+                          />
+                          {errors.stages?.[index]?.stage && (
+                            <p className="text-sm text-red-500">{errors.stages[index]?.stage?.message}</p>
+                          )}
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="space-y-2">
+                            <Controller
+                              name={`stages.${index}.start_time`}
+                              control={control}
+                              render={({ field }) => (
+                                <TimePicker
+                                  label="Start Time *"
+                                  value={field.value}
+                                  onChange={field.onChange}
+                                  placeholder="Select start time"
+                                  error={!!errors.stages?.[index]?.start_time}
+                                />
+                              )}
+                            />
+                            {errors.stages?.[index]?.start_time && (
+                              <p className="text-sm text-red-500">{errors.stages[index]?.start_time?.message}</p>
+                            )}
+                          </div>
+                          <div className="space-y-2">
+                            <Controller
+                              name={`stages.${index}.stop_time`}
+                              control={control}
+                              render={({ field }) => (
+                                <TimePicker
+                                  label="Stop Time *"
+                                  value={field.value}
+                                  onChange={field.onChange}
+                                  placeholder="Select stop time"
+                                  error={!!errors.stages?.[index]?.stop_time}
+                                />
+                              )}
+                            />
+                            {errors.stages?.[index]?.stop_time && (
+                              <p className="text-sm text-red-500">{errors.stages[index]?.stop_time?.message}</p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-end space-x-2 pt-4 border-t bg-white sticky bottom-0 pb-6">
               <LoadingButton type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Cancel
               </LoadingButton>

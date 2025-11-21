@@ -1,10 +1,10 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit"
-import { qaReleaseNoteApi, QaReleaseNote } from "@/lib/api/qaReleaseNote"
+import { qaReleaseNoteApi, QaReleaseNote } from "@/lib/api/qa-release-note"
 
 export const fetchQaReleaseNotes = createAsyncThunk("qaReleaseNotes/fetchAll", async (_, thunkAPI) => {
   try {
     const res = await qaReleaseNoteApi.getAll()
-    return res.data || []
+    return res || []
   } catch (err: any) {
     return thunkAPI.rejectWithValue(err?.message || String(err))
   }
@@ -13,7 +13,7 @@ export const fetchQaReleaseNotes = createAsyncThunk("qaReleaseNotes/fetchAll", a
 export const createQaReleaseNoteAction = createAsyncThunk("qaReleaseNotes/create", async (payload: any, thunkAPI) => {
   try {
     const res = await qaReleaseNoteApi.create(payload)
-    return res.data
+    return res
   } catch (err: any) {
     return thunkAPI.rejectWithValue(err?.message || String(err))
   }
@@ -22,7 +22,7 @@ export const createQaReleaseNoteAction = createAsyncThunk("qaReleaseNotes/create
 export const updateQaReleaseNoteAction = createAsyncThunk("qaReleaseNotes/update", async (payload: any, thunkAPI) => {
   try {
     const res = await qaReleaseNoteApi.update(payload)
-    return res.data
+    return res
   } catch (err: any) {
     return thunkAPI.rejectWithValue(err?.message || String(err))
   }
@@ -30,7 +30,7 @@ export const updateQaReleaseNoteAction = createAsyncThunk("qaReleaseNotes/update
 
 export const deleteQaReleaseNoteAction = createAsyncThunk("qaReleaseNotes/delete", async (id: string, thunkAPI) => {
   try {
-    await qaReleaseNoteApi.remove(id)
+    await qaReleaseNoteApi.delete(id)
     return id
   } catch (err: any) {
     return thunkAPI.rejectWithValue(err?.message || String(err))
