@@ -10,15 +10,14 @@ import { SignatureModal } from "@/components/ui/signature-modal"
 import { SignatureViewer } from "@/components/ui/signature-viewer"
 import { useState } from "react"
 import type { BasicInfoFormData } from "./types"
-import type { UserEntity } from "@/lib/api/users"
 
 interface BasicInfoStepProps {
   form: UseFormReturn<BasicInfoFormData>
-  users: UserEntity[]
-  loadingUsers: boolean
+  userRoles: any[]
+  loadingUserRoles: boolean
 }
 
-export function BasicInfoStep({ form, users, loadingUsers }: BasicInfoStepProps) {
+export function BasicInfoStep({ form, userRoles, loadingUserRoles }: BasicInfoStepProps) {
   const [signatureOpen, setSignatureOpen] = useState(false)
   const [signatureViewOpen, setSignatureViewOpen] = useState(false)
 
@@ -100,17 +99,17 @@ export function BasicInfoStep({ form, users, loadingUsers }: BasicInfoStepProps)
             control={form.control}
             render={({ field }) => (
               <SearchableSelect
-                options={users.map(user => ({
-                  value: user.id,
-                  label: `${user.first_name} ${user.last_name}`.trim() || user.email,
-                  description: `${user.department} • ${user.email}`
+                options={userRoles.map(role => ({
+                  value: role.id,
+                  label: role.role_name,
+                  description: role.description || 'User Role'
                 }))}
                 value={field.value}
                 onValueChange={field.onChange}
-                placeholder="Search and select approver"
-                searchPlaceholder="Search users..."
-                emptyMessage="No users found"
-                loading={loadingUsers}
+                placeholder="Search and select approver role"
+                searchPlaceholder="Search roles..."
+                emptyMessage="No roles found"
+                loading={loadingUserRoles}
               />
             )}
           />

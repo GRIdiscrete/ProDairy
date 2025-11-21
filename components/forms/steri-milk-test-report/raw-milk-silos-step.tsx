@@ -7,15 +7,22 @@ import { SearchableSelect } from "@/components/ui/searchable-select"
 import { DatePicker } from "@/components/ui/date-picker"
 import { Checkbox } from "@/components/ui/checkbox"
 import type { RawMilkSilosFormData } from "./types"
-import type { Tanker } from "@/lib/api/tanker"
+
+interface Silo {
+  id: string
+  name: string
+  location: string
+  category: string
+  capacity: number
+}
 
 interface RawMilkSilosStepProps {
   form: UseFormReturn<RawMilkSilosFormData>
-  tankers: Tanker[]
-  loadingTankers: boolean
+  silos: Silo[]
+  loadingSilos: boolean
 }
 
-export function RawMilkSilosStep({ form, tankers, loadingTankers }: RawMilkSilosStepProps) {
+export function RawMilkSilosStep({ form, silos, loadingSilos }: RawMilkSilosStepProps) {
   return (
     <div className="p-6 space-y-6">
       <h3 className="text-lg font-medium">Raw Milk Silos Test Parameters</h3>
@@ -28,17 +35,17 @@ export function RawMilkSilosStep({ form, tankers, loadingTankers }: RawMilkSilos
             control={form.control}
             render={({ field }) => (
               <SearchableSelect
-                options={tankers.map(tanker => ({
-                  value: tanker.id,
-                  label: `${tanker.reg_number} (${tanker.condition})`,
-                  description: `${tanker.capacity}L capacity • ${tanker.age} years old`
+                options={silos.map(silo => ({
+                  value: silo.id,
+                  label: silo.name,
+                  description: `${silo.location} • ${silo.category} • ${silo.capacity}L capacity`
                 }))}
                 value={field.value}
                 onValueChange={field.onChange}
-                placeholder={loadingTankers ? "Loading tankers..." : "Select tank"}
-                searchPlaceholder="Search tankers..."
-                emptyMessage="No tankers found"
-                loading={loadingTankers}
+                placeholder={loadingSilos ? "Loading silos..." : "Select tank"}
+                searchPlaceholder="Search silos..."
+                emptyMessage="No silos found"
+                loading={loadingSilos}
               />
             )}
           />

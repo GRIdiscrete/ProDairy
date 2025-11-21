@@ -5,7 +5,8 @@ import { useForm } from "react-hook-form"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { usersApi, type UserEntity } from "@/lib/api/users"
-import { tankerApi, type Tanker } from "@/lib/api/tanker"
+import { rolesApi } from "@/lib/api/roles"
+import { siloApi } from "@/lib/api/silo"
 import { steriMilkProcessLogApi, type SteriMilkProcessLog } from "@/lib/api/steri-milk-process-log"
 import { steriMilkTestReportApi } from "@/lib/api/steri-milk-test-report"
 import { toast } from "sonner"
@@ -50,9 +51,11 @@ export function SteriMilkTestReportFormDrawer({
   const [currentStep, setCurrentStep] = useState(1)
   const [loading, setLoading] = useState(false)
   const [users, setUsers] = useState<UserEntity[]>([])
-  const [tankers, setTankers] = useState<Tanker[]>([])
-  const [loadingTankers, setLoadingTankers] = useState(false)
+  const [userRoles, setUserRoles] = useState<any[]>([])
+  const [silos, setSilos] = useState<any[]>([])
+  const [loadingSilos, setLoadingSilos] = useState(false)
   const [loadingUsers, setLoadingUsers] = useState(false)
+  const [loadingUserRoles, setLoadingUserRoles] = useState(false)
   const [loadingData, setLoadingData] = useState(false)
 
   const basicInfoForm = useForm<BasicInfoFormData>({
@@ -138,10 +141,23 @@ export function SteriMilkTestReportFormDrawer({
     }
   })
 
-  // Always fetch approvers (users) and tankers when the drawer opens
+  // Always fetch approvers (user roles), analysts (users), and silos when the drawer opens
   useEffect(() => {
     if (!open) return
     const loadUsersAndTankers = async () => {
+      // Load user roles for approvers
+      setLoadingUserRoles(true)
+      try {
+        const rolesResponse = await rolesApi.getRoles()
+        setUserRoles(rolesResponse.data || [])
+      } catch (err) {
+        console.error('Failed to fetch user roles:', err)
+        setUserRoles([])
+      } finally {
+        setLoadingUserRoles(false)
+      }
+
+      // Load users for analysts
       try {
         setLoadingUsers(true)
         const usersResponse = await usersApi.getUsers()
@@ -153,15 +169,16 @@ export function SteriMilkTestReportFormDrawer({
         setLoadingUsers(false)
       }
 
-      setLoadingTankers(true)
+      // Load silos for both Raw Milk Silos and Standardisation steps
+      setLoadingSilos(true)
       try {
-        const tankersResponse = await tankerApi.getAll()
-        setTankers(tankersResponse.data || [])
-      } catch (tankerError) {
-        console.error('Failed to fetch tankers:', tankerError)
-        setTankers([])
+        const silosResponse = await siloApi.getSilos()
+        setSilos(silosResponse.data || [])
+      } catch (siloError) {
+        console.error('Failed to fetch silos:', siloError)
+        setSilos([])
       } finally {
-        setLoadingTankers(false)
+        setLoadingSilos(false)
       }
     }
     loadUsersAndTankers()
@@ -508,15 +525,15 @@ export function SteriMilkTestReportFormDrawer({
               {currentStep === 1 && (
                 <BasicInfoStep
                   form={basicInfoForm}
-                  users={users}
-                  loadingUsers={loadingUsers}
+                  userRoles={userRoles}
+                  loadingUserRoles={loadingUserRoles}
                 />
               )}
               {currentStep === 2 && (
                 <RawMilkSilosStep
                   form={rawMilkSilosForm}
-                  tankers={tankers}
-                  loadingTankers={loadingTankers}
+                  silos={silos}
+                  loadingSilos={loadingSilos}
                 />
               )}
               {currentStep === 3 && (
@@ -525,8 +542,8 @@ export function SteriMilkTestReportFormDrawer({
               {currentStep === 4 && (
                 <StandardisationStep
                   form={standardisationForm}
-                  tankers={tankers}
-                  loadingTankers={loadingTankers}
+                  silos={silos}
+                  loadingSilos={loadingSilos}
                   users={users}
                   loadingUsers={loadingUsers}
                 />

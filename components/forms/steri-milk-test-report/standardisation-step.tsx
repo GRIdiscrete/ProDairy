@@ -7,18 +7,25 @@ import { SearchableSelect } from "@/components/ui/searchable-select"
 import { DatePicker } from "@/components/ui/date-picker"
 import { Checkbox } from "@/components/ui/checkbox"
 import type { StandardisationFormData } from "./types"
-import type { Tanker } from "@/lib/api/tanker"
 import type { UserEntity } from "@/lib/api/users"
+
+interface Silo {
+  id: string
+  name: string
+  location: string
+  category: string
+  capacity: number
+}
 
 interface StandardisationStepProps {
   form: UseFormReturn<StandardisationFormData>
-  tankers: Tanker[]
-  loadingTankers: boolean
+  silos: Silo[]
+  loadingSilos: boolean
   users: UserEntity[]
   loadingUsers: boolean
 }
 
-export function StandardisationStep({ form, tankers, loadingTankers, users, loadingUsers }: StandardisationStepProps) {
+export function StandardisationStep({ form, silos, loadingSilos, users, loadingUsers }: StandardisationStepProps) {
   return (
     <div className="p-6 space-y-6">
       <h3 className="text-lg font-medium">Standardisation & Pasteurisation</h3>
@@ -31,17 +38,17 @@ export function StandardisationStep({ form, tankers, loadingTankers, users, load
             control={form.control}
             render={({ field }) => (
               <SearchableSelect
-                options={tankers.map(tanker => ({
-                  value: tanker.id,
-                  label: `${tanker.reg_number} (${tanker.condition})`,
-                  description: `${tanker.capacity}L capacity • ${tanker.age} years old`
+                options={silos.map(silo => ({
+                  value: silo.id,
+                  label: silo.name,
+                  description: `${silo.location} • ${silo.category} • ${silo.capacity}L capacity`
                 }))}
                 value={field.value}
                 onValueChange={field.onChange}
-                placeholder={loadingTankers ? "Loading tankers..." : "Select tank"}
-                searchPlaceholder="Search tankers..."
-                emptyMessage="No tankers found"
-                loading={loadingTankers}
+                placeholder={loadingSilos ? "Loading silos..." : "Select tank"}
+                searchPlaceholder="Search silos..."
+                emptyMessage="No silos found"
+                loading={loadingSilos}
               />
             )}
           />
