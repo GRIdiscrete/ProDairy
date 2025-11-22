@@ -383,18 +383,18 @@ export default function LoginPage() {
               <div className="relative rounded-[1.5rem] border border-zinc-200/70 bg-white/80 p-8 shadow-xl backdrop-blur-xl">
                 <div className="mb-6 text-center">
                   <h3 className="text-xl font-semibold tracking-tight">Sign in</h3>
-                  <p className="text-sm text-zinc-500">Use fingerprint or your company email</p>
+                  <p className="text-sm text-zinc-500">Use  your company email</p>
                 </div>
 
                 {/* Fingerprint */}
-                <button
+                {/* <button
                   onClick={handleFingerprintLogin}
                   disabled={isUsingFingerprint || submitting}
                   className="group mb-6 flex w-full items-center justify-center gap-3 rounded-xl bg-gradient-to-r from-blue-600 to-lime-600 px-4 py-3 font-medium text-white shadow-lg transition-all hover:brightness-110 disabled:opacity-50"
                 >
                   <Fingerprint className={`h-5 w-5 ${isUsingFingerprint ? "animate-pulse" : ""}`} />
                   {isUsingFingerprint ? "Authenticating…" : "Sign in with Fingerprint"}
-                </button>
+                </button> */}
 
                 {/* Divider */}
                 <div className="mb-6 flex items-center gap-4">
