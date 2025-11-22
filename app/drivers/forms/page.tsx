@@ -704,14 +704,6 @@ export default function DriverFormsPage() {
             >
               <Settings className="w-4 h-4" />
             </LoadingButton>
-            <LoadingButton
-              variant="outline"
-              size="sm"
-              onClick={() => handleCreateLabTest(form)}
-              className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white border-0 rounded-full"
-            >
-              <Plus className="w-4 h-4" />
-            </LoadingButton>
           </div>
         )
       },

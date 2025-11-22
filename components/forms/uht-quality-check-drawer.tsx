@@ -74,14 +74,23 @@ const qualityCheckSchema = yup.object({
   batch_number: yup.string().required("Batch number is required"),
   product: yup.string().required("Product is required"),
   checked_by: yup.string().required("Checked by is required"),
-  ph_0_days: yup.number().required("pH 0 days is required").min(0, "Must be positive"),
+  ph_0_days: yup.number()
+    .transform((value, originalValue) => originalValue === "" ? undefined : value)
+    .required("pH 0 days is required")
+    .min(0, "Must be positive"),
 })
 
 // Step 2: Quality Check Details Form Schema
 const qualityCheckDetailsSchema = yup.object({
   time: yup.string().required("Time is required"),
-  ph_30_degrees: yup.number().required("pH 30 degrees is required").min(0, "Must be positive"),
-  ph_55_degrees: yup.number().required("pH 55 degrees is required").min(0, "Must be positive"),
+  ph_30_degrees: yup.number()
+    .transform((value, originalValue) => originalValue === "" ? undefined : value)
+    .required("pH 30 degrees is required")
+    .min(0, "Must be positive"),
+  ph_55_degrees: yup.number()
+    .transform((value, originalValue) => originalValue === "" ? undefined : value)
+    .required("pH 55 degrees is required")
+    .min(0, "Must be positive"),
   defects: yup.string().required("Defects is required"),
   event: yup.string().required("Event is required"),
   analyst: yup.string().required("Analyst is required"),
@@ -118,7 +127,7 @@ export function UHTQualityCheckDrawer({
       batch_number: "",
       product: "",
       checked_by: "",
-      ph_0_days: 0,
+      ph_0_days: "" as any,
     },
   })
 
@@ -127,8 +136,8 @@ export function UHTQualityCheckDrawer({
     resolver: yupResolver(qualityCheckDetailsSchema),
     defaultValues: {
       time: "",
-      ph_30_degrees: 0,
-      ph_55_degrees: 0,
+      ph_30_degrees: "" as any,
+      ph_55_degrees: "" as any,
       defects: "",
       event: "",
       analyst: "",
@@ -173,42 +182,40 @@ export function UHTQualityCheckDrawer({
           date_of_production: qualityCheck.date_of_production || "",
           date_analysed: qualityCheck.date_analysed || "",
           batch_number: qualityCheck.batch_number || "",
-          product: qualityCheck.product || "",
+          product: typeof qualityCheck.product === 'object' ? qualityCheck.product.id : (qualityCheck.product || ""),
           checked_by: qualityCheck.checked_by || "",
-          ph_0_days: qualityCheck.ph_0_days || 0,
+          ph_0_days: qualityCheck.ph_0_days ?? "" as any,
         })
 
         // populate details from incubation_details if present, otherwise from old details_fkey
         const details = qualityCheck.incubation_details ?? qualityCheck.uht_qa_check_after_incubation_details_fkey
         if (details) {
-          qualityCheckDetailsForm.reset({
-            time: details.time || "",
-            ph_30_degrees: details.ph_30_degrees || 0,
-            ph_55_degrees: details.ph_55_degrees || 0,
-            defects: details.defects || "",
-            event: details.event || "",
-            analyst: details.analyst || "",
-            verified_by: details.verified_by || "",
-          })
-        } else {
-          qualityCheckDetailsForm.reset({
-            time: "",
-            ph_30_degrees: 0,
-            ph_55_degrees: 0,
-            defects: "",
-            event: "",
-            analyst: "",
-            verified_by: "",
-          })
-        }
-
-        setStep1Data({
+        qualityCheckDetailsForm.reset({
+          time: details.time || "",
+          ph_30_degrees: details.ph_30_degrees ?? "" as any,
+          ph_55_degrees: details.ph_55_degrees ?? "" as any,
+          defects: details.defects || "",
+          event: details.event || "",
+          analyst: details.analyst || "",
+          verified_by: details.verified_by || "",
+        })
+      } else {
+        qualityCheckDetailsForm.reset({
+          time: "",
+          ph_30_degrees: "" as any,
+          ph_55_degrees: "" as any,
+          defects: "",
+          event: "",
+          analyst: "",
+          verified_by: "",
+        })
+      }        setStep1Data({
           date_of_production: qualityCheck.date_of_production || "",
           date_analysed: qualityCheck.date_analysed || "",
           batch_number: qualityCheck.batch_number || "",
-          product: qualityCheck.product || "",
+          product: typeof qualityCheck.product === 'object' ? qualityCheck.product.id : (qualityCheck.product || ""),
           checked_by: qualityCheck.checked_by || "",
-          ph_0_days: qualityCheck.ph_0_days || 0,
+          ph_0_days: qualityCheck.ph_0_days ?? 0,
         })
         setCreatedQualityCheck(qualityCheck)
         setCurrentStep(1)
@@ -220,12 +227,12 @@ export function UHTQualityCheckDrawer({
           batch_number: "",
           product: processId || "",
           checked_by: "",
-          ph_0_days: 0,
+          ph_0_days: "" as any,
         })
         qualityCheckDetailsForm.reset({
           time: "",
-          ph_30_degrees: 0,
-          ph_55_degrees: 0,
+          ph_30_degrees: "" as any,
+          ph_55_degrees: "" as any,
           defects: "",
           event: "",
           analyst: "",
@@ -290,8 +297,8 @@ export function UHTQualityCheckDrawer({
           incubation_details: {
             ...payload.incubation_details,
             id: qualityCheck?.uht_qa_check_after_incubation_details_fkey?.id
-          }
-        })).unwrap()
+          } as any
+        } as any)).unwrap()
         toast.success("Quality Check updated successfully")
       } else {
         const result = await dispatch(createUHTQualityCheckAction(payload as any)).unwrap()
@@ -438,8 +445,8 @@ export function UHTQualityCheckDrawer({
                   type="number"
                   step="0.1"
                   placeholder="Enter pH value"
-                  {...field}
-                  onChange={(e) => field.onChange(Number(e.target.value))}
+                  value={field.value === 0 ? "" : field.value}
+                  onChange={(e) => field.onChange(e.target.value === "" ? "" : Number(e.target.value))}
                 />
               )}
             />
@@ -526,8 +533,8 @@ export function UHTQualityCheckDrawer({
                   type="number"
                   step="0.1"
                   placeholder="Enter pH value"
-                  {...field}
-                  onChange={(e) => field.onChange(Number(e.target.value))}
+                  value={field.value === 0 ? "" : field.value}
+                  onChange={(e) => field.onChange(e.target.value === "" ? "" : Number(e.target.value))}
                 />
               )}
             />
@@ -549,8 +556,8 @@ export function UHTQualityCheckDrawer({
                   type="number"
                   step="0.1"
                   placeholder="Enter pH value"
-                  {...field}
-                  onChange={(e) => field.onChange(Number(e.target.value))}
+                  value={field.value === 0 ? "" : field.value}
+                  onChange={(e) => field.onChange(e.target.value === "" ? "" : Number(e.target.value))}
                 />
               )}
             />

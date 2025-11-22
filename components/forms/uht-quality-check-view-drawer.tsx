@@ -122,7 +122,9 @@ export function UHTQualityCheckViewDrawer({
                 <div>
                   <span className="text-xs font-light text-gray-500">Product</span>
                   <p className="text-sm font-light">
-                    {qualityCheck.product && qualityCheck.product.length > 20 ? 'N/A' : (qualityCheck.product || 'N/A')}
+                    {typeof qualityCheck.product === 'object' && qualityCheck.product?.name 
+                      ? qualityCheck.product.name 
+                      : (typeof qualityCheck.product === 'string' ? qualityCheck.product : 'N/A')}
                   </p>
                 </div>
                 <div>

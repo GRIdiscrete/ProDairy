@@ -1289,10 +1289,11 @@ export interface UHTQualityCheckAfterIncubation {
   date_of_production: string
   date_analysed: string
   batch_number: string
-  product: string
+  product: string | { id: string; tag?: string | null; name: string; created_at?: string; updated_at?: string; raw_material_ids?: string[] }
   checked_by: string
   ph_0_days: number
   details?: string | null
+  tag?: string | null
   // NEW: nested incubation_details payload accepted by backend
   incubation_details?: UHTQualityCheckAfterIncubationDetails | null
   // Relationship data

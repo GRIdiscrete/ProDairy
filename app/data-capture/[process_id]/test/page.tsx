@@ -161,6 +161,10 @@ export default function UHTQualityCheckPage({ params }: UHTQualityCheckPageProps
       header: "Product",
       cell: ({ row }: any) => {
         const qualityCheck = row.original
+        const productName = typeof qualityCheck.product === 'object' && qualityCheck.product?.name 
+          ? qualityCheck.product.name 
+          : (typeof qualityCheck.product === 'string' ? qualityCheck.product : 'N/A')
+        
         return (
           <div className="space-y-2">
             <div className="flex items-center space-x-2">
@@ -175,7 +179,7 @@ export default function UHTQualityCheckPage({ params }: UHTQualityCheckPageProps
               <div className="flex items-center justify-between">
                 <span className="text-xs text-gray-500">Product</span>
                 <span className="text-xs font-light">
-                  {qualityCheck.product && qualityCheck.product.length > 20 ? 'N/A' : (qualityCheck.product || 'N/A')}
+                  {productName}
                 </span>
               </div>
               <div className="flex items-center justify-between">
@@ -412,7 +416,9 @@ export default function UHTQualityCheckPage({ params }: UHTQualityCheckPageProps
                     <p className="text-sm font-light text-gray-600">Product</p>
                   </div>
                   <p className="text-lg font-light text-green-600">
-                    {latestQualityCheck.product && latestQualityCheck.product.length > 20 ? 'N/A' : (latestQualityCheck.product || 'N/A')}
+                    {typeof latestQualityCheck.product === 'object' && latestQualityCheck.product?.name 
+                      ? latestQualityCheck.product.name 
+                      : (typeof latestQualityCheck.product === 'string' ? latestQualityCheck.product : 'N/A')}
                   </p>
                 </div>
                 <div className="space-y-2">
