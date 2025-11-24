@@ -226,6 +226,12 @@ export function FilmaticLinesForm2Drawer({
         target: undefined,
         setbacks: "",
         stoppage_time: {
+          capper_1_hours: undefined,
+          capper_2_hours: undefined,
+          sleever_1_hours: undefined,
+          sleever_2_hours: undefined,
+          shrink_1_hours: undefined,
+          shrink_2_hours: undefined,
           capper_1: undefined,
           capper_2: undefined,
           sleever_1: undefined,
@@ -407,6 +413,12 @@ export function FilmaticLinesForm2Drawer({
             target: undefined,
             setbacks: "",
             stoppage_time: {
+              capper_1_hours: undefined,
+              capper_2_hours: undefined,
+              sleever_1_hours: undefined,
+              sleever_2_hours: undefined,
+              shrink_1_hours: undefined,
+              shrink_2_hours: undefined,
               capper_1: undefined,
               capper_2: undefined,
               sleever_1: undefined,
@@ -952,6 +964,12 @@ export function FilmaticLinesForm2Drawer({
                         target: undefined,
                         setbacks: "",
                         stoppage_time: {
+                          capper_1_hours: undefined,
+                          capper_2_hours: undefined,
+                          sleever_1_hours: undefined,
+                          sleever_2_hours: undefined,
+                          shrink_1_hours: undefined,
+                          shrink_2_hours: undefined,
                           capper_1: undefined,
                           capper_2: undefined,
                           sleever_1: undefined,
@@ -1054,9 +1072,9 @@ export function FilmaticLinesForm2Drawer({
                       </div>
 
                       <div>
-                        <Label className="mb-2 block">Stoppage Time (minutes)</Label>
+                        <Label className="mb-2 block">Stoppage Time (hours / minutes)</Label>
                         <div className="grid grid-cols-2 gap-2">
-                          {["capper_1", "capper_2", "sleever_1", "sleever_2", "shrink_1", "shrink_2"].map(key => (
+                          {["capper_1_hours", "capper_2_hours", "sleever_1_hours", "sleever_2_hours", "shrink_1_hours", "shrink_2_hours", "capper_1", "capper_2", "sleever_1", "sleever_2", "shrink_1", "shrink_2"].map(key => (
                             <div key={key} className="flex items-center gap-2">
                               <Label className="text-xs w-20">{key.replace('_', ' ')}</Label>
                               <Controller

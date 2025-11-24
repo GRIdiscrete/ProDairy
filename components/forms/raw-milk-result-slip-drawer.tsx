@@ -35,6 +35,7 @@ const RESAZURIN_OPTIONS = [
 ]
 
 const compartmentTestSchema = yup.object({
+  compartment: yup.number().nullable(),
   temperature: yup.number().nullable(),
   time: yup.string().nullable(),
   ot: yup.string().nullable(),
@@ -173,7 +174,8 @@ export function RawMilkResultSlipDrawer({
     return driverForm?.tanker?.compartments || 1
   }
 
-  const createEmptyCompartmentTest = () => ({
+  const createEmptyCompartmentTest = (compartmentNumber: number = 1) => ({
+    compartment: compartmentNumber,
     temperature: undefined,
     time: "",
     ot: "",
@@ -217,7 +219,7 @@ export function RawMilkResultSlipDrawer({
       silo: "",
       remark: "",
       starch: false,
-      compartment_test: Array.from({ length: compartmentCount }, () => createEmptyCompartmentTest())
+      compartment_test: Array.from({ length: compartmentCount }, (_, index) => createEmptyCompartmentTest(index + 1))
     }
   }
 
@@ -255,7 +257,8 @@ export function RawMilkResultSlipDrawer({
             silo: detail.silo ?? "",
             remark: detail.remark ?? "",
             starch: detail.starch ?? false,
-            compartment_test: detail.compartment_test?.map((ct: any) => ({
+            compartment_test: detail.compartment_test?.map((ct: any, idx: number) => ({
+              compartment: ct.compartment ?? idx + 1,
               temperature: ct.temperature ?? undefined,
               time: ct.time ? ct.time.split('+')[0].substring(0, 5) : "",
               ot: ct.ot ?? "",
@@ -383,6 +386,7 @@ export function RawMilkResultSlipDrawer({
           silo: detail.silo == "" || detail.silo == null ? data.source : detail.silo,
           remark: detail.remark,
           compartment_test: detail.compartment_test?.map(ct => ({
+            compartment: ct.compartment ? Number(ct.compartment) : null,
             temperature: ct.temperature ? Number(ct.temperature) : null,
             time: formatTime(ct.time),
             ot: ct.ot,
@@ -790,6 +794,11 @@ export function RawMilkResultSlipDrawer({
                     {form.watch(`details.${index}.compartment_test`)?.map((_, compartmentIndex) => (
                       <div key={compartmentIndex} className="p-4 bg-white rounded-md border">
                         <h6 className="text-sm font-medium mb-4">Compartment {compartmentIndex + 1}</h6>
+
+                        {/* Hidden compartment number field */}
+                        <Controller name={`details.${index}.compartment_test.${compartmentIndex}.compartment`} control={form.control} render={({ field }) => (
+                          <input type="hidden" {...field} value={compartmentIndex + 1} />
+                        )} />
 
                         {/* Basic Measurements */}
                         <div className="space-y-4">

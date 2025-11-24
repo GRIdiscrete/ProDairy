@@ -202,7 +202,7 @@ export function FilmaticLinesForm1Drawer({
 
   // Detailed shift form (stoppage_time fields expanded)
   const shiftDetailsForm = useForm<ShiftDetailsFormData>({
-    resolver: yupResolver(shiftDetailsSchema),
+    resolver: yupResolver(shiftDetailsSchema) as any,
     defaultValues: {
       supervisor_approve: false,
       operator_id: user?.id || "",
@@ -220,12 +220,6 @@ export function FilmaticLinesForm1Drawer({
           product_2: undefined,
           filler_1: undefined,
           filler_2: undefined,
-          capper_1: undefined,
-          capper_2: undefined,
-          sleever_1: undefined,
-          sleever_2: undefined,
-          shrink_1: undefined,
-          shrink_2: undefined,
         }
       }]
     }
@@ -467,12 +461,6 @@ export function FilmaticLinesForm1Drawer({
             product_2: undefined,
             filler_1: undefined,
             filler_2: undefined,
-            capper_1: undefined,
-            capper_2: undefined,
-            sleever_1: undefined,
-            sleever_2: undefined,
-            shrink_1: undefined,
-            shrink_2: undefined,
           }
         }]
       })
@@ -614,12 +602,6 @@ export function FilmaticLinesForm1Drawer({
               product_2: d.stoppage_time?.product_2 ?? null,
               filler_1: d.stoppage_time?.filler_1 ?? null,
               filler_2: d.stoppage_time?.filler_2 ?? null,
-              capper_1: d.stoppage_time?.capper_1 ?? null,
-              capper_2: d.stoppage_time?.capper_2 ?? null,
-              sleever_1: d.stoppage_time?.sleever_1 ?? null,
-              sleever_2: d.stoppage_time?.sleever_2 ?? null,
-              shrink_1: d.stoppage_time?.shrink_1 ?? null,
-              shrink_2: d.stoppage_time?.shrink_2 ?? null,
             }]
           }))
         }
@@ -805,8 +787,7 @@ export function FilmaticLinesForm1Drawer({
                         <Label className="mb-2">Holding Tank BMT</Label>
 
                         <SearchableSelect
-                          label="Holding Tank BMT"
-                          value={field.value}
+                          value={field.value || ''}
                           options={bmtOptions}
                           onSearch={handleBmtFormSearch}
                           onValueChange={(v) => field.onChange(v)}
@@ -1026,12 +1007,6 @@ export function FilmaticLinesForm1Drawer({
                           product_2: undefined,
                           filler_1: undefined,
                           filler_2: undefined,
-                          capper_1: undefined,
-                          capper_2: undefined,
-                          sleever_1: undefined,
-                          sleever_2: undefined,
-                          shrink_1: undefined,
-                          shrink_2: undefined,
                         }
                       })}
                     >
@@ -1070,7 +1045,7 @@ export function FilmaticLinesForm1Drawer({
                             name={`details.${index}.time`}
                             control={shiftDetailsForm.control}
                             render={({ field }) => (
-                              <Select value={field.value} onValueChange={field.onChange}>
+                              <Select value={field.value || ''} onValueChange={field.onChange}>
                                 <SelectTrigger className="rounded-full w-full p-6 border-gray-200"><SelectValue placeholder="Select time" /></SelectTrigger>
                                 <SelectContent>
                                   {timeOptions.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
@@ -1115,10 +1090,7 @@ export function FilmaticLinesForm1Drawer({
                       <div>
                         <Label className="mb-2 block">Stoppage Time (minutes / hours)</Label>
                         <div className="grid grid-cols-2 gap-2">
-                          {(selectedShift === "day_shift" 
-                            ? ["product_1_hours", "product_2_hours", "filler_1_hours", "filler_2_hours", "product_1", "product_2", "filler_1", "filler_2"]
-                            : ["product_1_hours", "product_2_hours", "filler_1_hours", "filler_2_hours", "product_1", "product_2", "filler_1", "filler_2", "capper_1", "capper_2", "sleever_1", "sleever_2", "shrink_1", "shrink_2"]
-                          ).map(key => (
+                          {["product_1_hours", "product_2_hours", "filler_1_hours", "filler_2_hours", "product_1", "product_2", "filler_1", "filler_2"].map(key => (
                             <div key={key} className="flex items-center gap-2">
                               <Label className="text-xs w-28">{key.replace(/_/g, ' ')}</Label>
                               <Controller
