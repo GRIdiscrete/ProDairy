@@ -17,6 +17,8 @@ import { steriMilkTestReportApi, type SteriMilkTestReport } from "@/lib/api/ster
 import { rolesApi } from "@/lib/api/roles"
 import { filmaticLinesForm1Api } from "@/lib/api/filmatic-lines-form-1"
 import { FormIdCopy } from "@/components/ui/form-id-copy"
+import { UserAvatar } from "@/components/ui/user-avatar"
+import { usersApi } from "@/lib/api/users"
 
 interface SteriMilkProcessLogViewDrawerProps {
   open: boolean
@@ -40,6 +42,8 @@ export function SteriMilkProcessLogViewDrawer({
   const [postTests, setPostTests] = useState<LabTestPostProcessEntity[]>([])
   const [loadingPostTests, setLoadingPostTests] = useState(false)
   const [approverRoleName, setApproverRoleName] = useState<string | null>(null)
+  const [users, setUsers] = useState<any[]>([])
+  const [loadingUsers, setLoadingUsers] = useState(false)
 
   // prefer tag from formMap if provided
   const [filmaticFormTag, setFilmaticFormTag] = useState<string | null>(() => {
@@ -74,7 +78,19 @@ export function SteriMilkProcessLogViewDrawer({
         setLoadingPostTests(false)
       }
     }
+    const loadUsers = async () => {
+      try {
+        setLoadingUsers(true)
+        const resp = await usersApi.getUsers()
+        setUsers(resp.data || [])
+      } catch (e) {
+        setUsers([])
+      } finally {
+        setLoadingUsers(false)
+      }
+    }
     loadPost()
+    loadUsers()
   }, [open, log, loadTestReports])
 
   // load approver role and filmatic tag (if not provided by formMap)
@@ -790,106 +806,210 @@ export function SteriMilkProcessLogViewDrawer({
                 
                 return filteredTests.length > 0 ? (
                   <div className="space-y-6">
-                    {filteredTests.map((test: any) => (
-                      <div key={test.id}>
-                      {/* Test Header */}
-                      <Card className="shadow-none border border-gray-200 rounded-lg">
-                        <CardHeader>
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <CardTitle className="text-lg font-medium">Post Autoclave Test</CardTitle>
-                              <p className="text-sm text-gray-500 mt-1">Created: {format(new Date(test.created_at), "PPP 'at' p")}</p>
-                            </div>
-                            <Button
-                              onClick={() => setShowPostTestForm(true)}
-                              size="sm"
-                              variant="outline"
-                              className="rounded-full"
-                            >
-                              <Edit className="h-4 w-4 mr-1" />
-                              Edit Test
-                            </Button>
-                          </div>
-                        </CardHeader>
-                      </Card>
+                    {filteredTests.map((test: any) => {
+                      // Find the scientist user
+                      const scientist = users.find(u => u.id === test.scientist_id)
+                      
+                      return (
+                        <div key={test.id}>
+                          {/* Test Header */}
+                          <Card className="shadow-none border border-gray-200 rounded-lg">
+                            <CardHeader>
+                              <div className="flex items-center justify-between">
+                                <div className="flex-1">
+                                  <div className="flex items-center space-x-3">
+                                    <CardTitle className="text-lg font-medium">Post Autoclave Test</CardTitle>
+                                    {test.tag && (
+                                      <Badge variant="outline" className="font-mono text-xs">
+                                        {test.tag}
+                                      </Badge>
+                                    )}
+                                  </div>
+                                  <div className="flex items-center space-x-4 mt-2">
+                                    <p className="text-sm text-gray-500">
+                                      <Clock className="inline h-3 w-3 mr-1" />
+                                      Created: {format(new Date(test.created_at), "PPP 'at' p")}
+                                    </p>
+                                    {test.updated_at && (
+                                      <p className="text-sm text-gray-500">
+                                        Updated: {format(new Date(test.updated_at), "PPP 'at' p")}
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
+                                <Button
+                                  onClick={() => setShowPostTestForm(true)}
+                                  size="sm"
+                                  variant="outline"
+                                  className="rounded-full"
+                                >
+                                  <Edit className="h-4 w-4 mr-1" />
+                                  Edit Test
+                                </Button>
+                              </div>
+                            </CardHeader>
+                          </Card>
 
-                      {/* Test Details */}
-                      <Card className="shadow-none border border-gray-200 rounded-lg mt-4">
-                        <CardHeader className="pb-4">
-                          <CardTitle className="text-base font-light">Test Information</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                            <div>
-                              <span className="text-xs font-light text-gray-500">Batch Number</span>
-                              <p className="text-sm font-light">#{test.batch_number || 'N/A'}</p>
-                            </div>
-                            <div>
-                              <span className="text-xs font-light text-gray-500">Analyst</span>
-                              <p className="text-sm font-light">{test.analyst_id ? `#${String(test.analyst_id).slice(0, 8)}` : 'N/A'}</p>
-                            </div>
-                            <div>
-                              <span className="text-xs font-light text-gray-500">Date</span>
-                              <p className="text-sm font-light">{test.date || 'N/A'}</p>
-                            </div>
-                          </div>
+                          {/* Basic Information */}
+                          <Card className="shadow-none border border-gray-200 rounded-lg mt-4">
+                            <CardHeader className="pb-4">
+                              <div className="flex items-center space-x-2">
+                                <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
+                                  <FileText className="h-4 w-4 text-blue-600" />
+                                </div>
+                                <CardTitle className="text-base font-light">Basic Information</CardTitle>
+                              </div>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                <div>
+                                  <span className="text-xs font-light text-gray-500">Test ID</span>
+                                  <div className="mt-1">
+                                    <FormIdCopy displayId={test.tag || 'N/A'} actualId={test.id} size="sm" />
+                                  </div>
+                                </div>
+                                <div>
+                                  <span className="text-xs font-light text-gray-500">Batch Number</span>
+                                  <p className="text-sm font-light">#{test.batch_number || 'N/A'}</p>
+                                </div>
+                                <div>
+                                  <span className="text-xs font-light text-gray-500">Time</span>
+                                  <p className="text-sm font-light">
+                                    {test.time ? format(new Date(test.time), "PPP 'at' p") : 'N/A'}
+                                  </p>
+                                </div>
+                                <div>
+                                  <span className="text-xs font-light text-gray-500">Temperature</span>
+                                  <p className="text-sm font-light flex items-center">
+                                    <Thermometer className="h-4 w-4 mr-1 text-orange-500" />
+                                    {test.temperature != null ? `${test.temperature}°C` : 'N/A'}
+                                  </p>
+                                </div>
+                              </div>
 
-                          <Separator />
-
-                          <div>
-                            <h4 className="text-sm font-medium mb-3">Test Parameters</h4>
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                              <div>
-                                <span className="text-xs font-light text-gray-500">Alcohol</span>
-                                <p className="text-sm font-light">{test.alcohol || 'N/A'}</p>
-                              </div>
-                              <div>
-                                <span className="text-xs font-light text-gray-500">Acidity</span>
-                                <p className="text-sm font-light">{test.acidity || 'N/A'}</p>
-                              </div>
-                              <div>
-                                <span className="text-xs font-light text-gray-500">Fat</span>
-                                <p className="text-sm font-light">{test.fat ? `${test.fat}%` : 'N/A'}</p>
-                              </div>
-                              <div>
-                                <span className="text-xs font-light text-gray-500">SNF</span>
-                                <p className="text-sm font-light">{test.snf || 'N/A'}</p>
-                              </div>
-                              <div>
-                                <span className="text-xs font-light text-gray-500">COB</span>
-                                <p className="text-sm font-light">{test.cob ? 'Yes' : 'No'}</p>
-                              </div>
-                              <div>
-                                <span className="text-xs font-light text-gray-500">Sediment</span>
-                                <p className="text-sm font-light">{test.sediment || 'N/A'}</p>
-                              </div>
-                              <div>
-                                <span className="text-xs font-light text-gray-500">Appearance</span>
-                                <p className="text-sm font-light">{test.appearance || 'N/A'}</p>
-                              </div>
-                              <div>
-                                <span className="text-xs font-light text-gray-500">Flavour</span>
-                                <p className="text-sm font-light">{test.flavour || 'N/A'}</p>
-                              </div>
-                            </div>
-                          </div>
-
-                          {test.remarks && (
-                            <>
                               <Separator />
+
+                              {/* Scientist Information */}
                               <div>
-                                <span className="text-xs font-light text-gray-500">Remarks</span>
-                                <p className="text-sm font-light mt-1">{test.remarks}</p>
+                                <span className="text-xs font-light text-gray-500 block mb-2">Scientist</span>
+                                {scientist ? (
+                                  <UserAvatar 
+                                    user={{
+                                      id: scientist.id,
+                                      first_name: scientist.first_name,
+                                      last_name: scientist.last_name,
+                                      email: scientist.email,
+                                      phone: scientist.phone,
+                                      role: scientist.role_name,
+                                      department: scientist.department,
+                                      created_at: scientist.created_at
+                                    }}
+                                    size="sm"
+                                    showName={true}
+                                    showEmail={true}
+                                    showDropdown={true}
+                                  />
+                                ) : (
+                                  <p className="text-sm font-light text-gray-400">
+                                    {test.scientist_id ? `Scientist #${String(test.scientist_id).slice(0, 8)}` : 'Not assigned'}
+                                  </p>
+                                )}
                               </div>
-                            </>
-                          )}
-                        </CardContent>
-                      </Card>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-12 text-gray-500">
+                            </CardContent>
+                          </Card>
+
+                          {/* Test Parameters - Chemical Analysis */}
+                          <Card className="shadow-none border border-gray-200 rounded-lg mt-4">
+                            <CardHeader className="pb-4">
+                              <div className="flex items-center space-x-2">
+                                <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center">
+                                  <Beaker className="h-4 w-4 text-purple-600" />
+                                </div>
+                                <CardTitle className="text-base font-light">Chemical Analysis</CardTitle>
+                              </div>
+                            </CardHeader>
+                            <CardContent>
+                              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                                <div className="bg-gray-50 p-3 rounded-lg">
+                                  <span className="text-xs font-medium text-gray-500 block mb-1">Alcohol</span>
+                                  <p className="text-sm font-medium">{test.alcohol != null ? test.alcohol : 'N/A'}</p>
+                                </div>
+                                <div className="bg-gray-50 p-3 rounded-lg">
+                                  <span className="text-xs font-medium text-gray-500 block mb-1">Phosphatase</span>
+                                  <p className="text-sm font-medium">{test.phosphatase || 'N/A'}</p>
+                                </div>
+                                <div className="bg-gray-50 p-3 rounded-lg">
+                                  <span className="text-xs font-medium text-gray-500 block mb-1">Res</span>
+                                  <p className="text-sm font-medium">{test.res != null ? test.res : 'N/A'}</p>
+                                </div>
+                                <div className="bg-gray-50 p-3 rounded-lg">
+                                  <span className="text-xs font-medium text-gray-500 block mb-1">COB</span>
+                                  <div className="flex items-center space-x-1">
+                                    <div className={`w-2 h-2 rounded-full ${test.cob ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                                    <p className="text-sm font-medium">{test.cob ? 'Positive' : 'Negative'}</p>
+                                  </div>
+                                </div>
+                                <div className="bg-gray-50 p-3 rounded-lg">
+                                  <span className="text-xs font-medium text-gray-500 block mb-1">pH</span>
+                                  <p className="text-sm font-medium">{test.ph != null ? test.ph : 'N/A'}</p>
+                                </div>
+                                <div className="bg-gray-50 p-3 rounded-lg">
+                                  <span className="text-xs font-medium text-gray-500 block mb-1">CI/SI</span>
+                                  <p className="text-sm font-medium">{test.ci_si || 'N/A'}</p>
+                                </div>
+                                <div className="bg-gray-50 p-3 rounded-lg">
+                                  <span className="text-xs font-medium text-gray-500 block mb-1">LR/SNF</span>
+                                  <p className="text-sm font-medium">{test.lr_snf || 'N/A'}</p>
+                                </div>
+                                <div className="bg-gray-50 p-3 rounded-lg">
+                                  <span className="text-xs font-medium text-gray-500 block mb-1">Acidity</span>
+                                  <p className="text-sm font-medium">{test.acidity != null ? test.acidity : 'N/A'}</p>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+
+                          {/* Test Parameters - Additional Tests */}
+                          <Card className="shadow-none border border-gray-200 rounded-lg mt-4">
+                            <CardHeader className="pb-4">
+                              <div className="flex items-center space-x-2">
+                                <div className="w-6 h-6 rounded-full bg-pink-100 flex items-center justify-center">
+                                  <Gauge className="h-4 w-4 text-pink-600" />
+                                </div>
+                                <CardTitle className="text-base font-light">Additional Tests</CardTitle>
+                              </div>
+                            </CardHeader>
+                            <CardContent>
+                              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                <div className="bg-gray-50 p-3 rounded-lg">
+                                  <span className="text-xs font-medium text-gray-500 block mb-1">Coffee</span>
+                                  <p className="text-sm font-medium">{test.coffee || 'N/A'}</p>
+                                </div>
+                                <div className="bg-gray-50 p-3 rounded-lg">
+                                  <span className="text-xs font-medium text-gray-500 block mb-1">Turbidity</span>
+                                  <p className="text-sm font-medium">{test.turbidity || 'N/A'}</p>
+                                </div>
+                              </div>
+
+                              {test.remarks && (
+                                <>
+                                  <Separator className="my-4" />
+                                  <div>
+                                    <span className="text-xs font-medium text-gray-500 block mb-2">Remarks</span>
+                                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                                      <p className="text-sm font-light">{test.remarks}</p>
+                                    </div>
+                                  </div>
+                                </>
+                              )}
+                            </CardContent>
+                          </Card>
+                        </div>
+                      )
+                    })}
+                  </div>
+                ) : (
+                  <div className="text-center py-12 text-gray-500">
                     <Beaker className="h-12 w-12 mx-auto mb-4 text-gray-300" />
                     <p className="text-base font-medium">No Post Test Created</p>
                     <p className="text-sm text-gray-400 mt-2">Create a post autoclave test to view details here</p>

@@ -23,6 +23,8 @@ interface DatePickerProps {
   disabled?: boolean
   className?: string
   error?: boolean
+  fromDate?: Date
+  toDate?: Date
 }
 
 export function DatePicker({
@@ -34,6 +36,8 @@ export function DatePicker({
   disabled = false,
   className,
   error = false,
+  fromDate,
+  toDate,
 }: DatePickerProps) {
   const [open, setOpen] = React.useState(false)
   const [timeValue, setTimeValue] = React.useState("")
@@ -125,6 +129,10 @@ export function DatePicker({
                 handleDateSelect(date)
                 setOpen(false)
               }}
+              fromDate={fromDate}
+              toDate={toDate}
+              fromYear={fromDate?.getFullYear() ?? 1900}
+              toYear={toDate?.getFullYear() ?? 2099}
               initialFocus
             />
           </PopoverContent>

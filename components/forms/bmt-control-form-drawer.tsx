@@ -37,7 +37,7 @@ const sourceSiloDetailSchema = yup.object({
 })
 
 const bmtControlFormSchema = yup.object({
-  source_silo_details: yup.array().of(sourceSiloDetailSchema).min(1, "At least one source silo is required"),
+  source_silo_details: yup.array().of(sourceSiloDetailSchema).min(1, "At least one source silo is required").required("Source silo details are required"),
   movement_start: yup.string().required("Movement start is required"),
   movement_end: yup.string().required("Movement end is required"),
   destination_silo_id: yup.string().required("Destination silo is required"),
@@ -48,6 +48,7 @@ const bmtControlFormSchema = yup.object({
   receiver_operator_signature: yup.string().required("Receiver operator signature is required"),
   product: yup.string().required("Product selection is required"),
   status: yup.string().oneOf(["Draft", "Pending", "Final"]).required("Status is required"),
+  volume: yup.number().optional(),
   id: yup.string().optional(),
 })
 
@@ -154,7 +155,7 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
     setValue,
     watch,
   } = useForm<BMTControlFormData>({
-    resolver: yupResolver(bmtControlFormSchema),
+    resolver: yupResolver(bmtControlFormSchema) as any,
     defaultValues: {
       source_silo_details: [],
       movement_start: "",
@@ -230,7 +231,6 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
         : undefined
 
       reset({
-        source_silo_id: Array.isArray(form.source_silo_id) ? form.source_silo_id : [],
         destination_silo_id: form.destination_silo_id || "",
         movement_start: form.movement_start || "",
         movement_end: form.movement_end || "",
@@ -245,7 +245,6 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
         id: form.id || "",
         source_silo_details: sourceSiloDetails,
         destination_silo_details: destinationSilo,
-        destination_silo_id: destinationSilo ? destinationSilo.id : "",
       })
     } else if (open && mode === "create") {
       reset({
@@ -277,14 +276,14 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
     if (open && form && mode === "edit" && silos.length > 0) {
       // Map source silo ids (array or null) to selector values
       let sourceSiloIds: string[] = []
-      if (Array.isArray(form.source_silo_details)) {
-        sourceSiloIds = form.source_silo_details.map((s: any) => s.id)
+      if (Array.isArray((form as any).bmt_control_form_source_silo)) {
+        sourceSiloIds = (form as any).bmt_control_form_source_silo.map((s: any) => s.id)
       }
 
       // If no details but ids exist, populate details from silos list
-      let sourceSiloDetails = []
+      let sourceSiloDetails: SourceSiloDetail[] = []
       if (
-        (!form.bmt_control_form_source_silo || form.bmt_control_form_source_silo.length === 0) &&
+        (!(form as any).bmt_control_form_source_silo || (form as any).bmt_control_form_source_silo.length === 0) &&
         sourceSiloIds.length > 0
       ) {
         sourceSiloDetails = sourceSiloIds.map(id => {
@@ -300,8 +299,8 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
             product: "",
           }
         })
-      } else if (Array.isArray(form.bmt_control_form_source_silo)) {
-        sourceSiloDetails = form.bmt_control_form_source_silo.map((silo: any) => ({
+      } else if (Array.isArray((form as any).bmt_control_form_source_silo)) {
+        sourceSiloDetails = (form as any).bmt_control_form_source_silo.map((silo: any) => ({
           id: silo.id,
           name: silo.name,
           flow_meter_start: silo.flow_meter_start || "",
@@ -317,13 +316,13 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
       let destinationSiloId = ""
       if (form.destination_silo_id) {
         destinationSiloId = form.destination_silo_id
-      } else if (form.destination_silo && form.destination_silo.id) {
-        destinationSiloId = form.destination_silo.id
+      } else if ((form as any).destination_silo && (form as any).destination_silo.id) {
+        destinationSiloId = (form as any).destination_silo.id
       }
 
       // Destination silo details
-      let destinationSiloDetails = undefined
-      if (!form.destination_silo && destinationSiloId) {
+      let destinationSiloDetails: SourceSiloDetail | undefined = undefined
+      if (!(form as any).destination_silo && destinationSiloId) {
         const silo = silos.find(s => s.value === destinationSiloId)
         if (silo) {
           destinationSiloDetails = {
@@ -337,25 +336,20 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
             product: "",
           }
         }
-      } else if (form.destination_silo) {
+      } else if ((form as any).destination_silo) {
         destinationSiloDetails = {
-          id: form.destination_silo.id,
-          name: form.destination_silo.name,
-          flow_meter_start: form.destination_silo.flow_meter_start || "",
-          flow_meter_start_reading: form.destination_silo.flow_meter_start_reading ?? 0,
-          flow_meter_end: form.destination_silo.flow_meter_end || "",
-          flow_meter_end_reading: form.destination_silo.flow_meter_end_reading ?? 0,
-          source_silo_quantity_requested: form.destination_silo.source_silo_quantity_requested ?? 0,
-          product: form.destination_silo.product ?? "",
+          id: (form as any).destination_silo.id,
+          name: (form as any).destination_silo.name,
+          flow_meter_start: (form as any).destination_silo.flow_meter_start || "",
+          flow_meter_start_reading: (form as any).destination_silo.flow_meter_start_reading ?? 0,
+          flow_meter_end: (form as any).destination_silo.flow_meter_end || "",
+          flow_meter_end_reading: (form as any).destination_silo.flow_meter_end_reading ?? 0,
+          source_silo_quantity_requested: (form as any).destination_silo.source_silo_quantity_requested ?? 0,
+          product: (form as any).destination_silo.product ?? "",
         }
       }
 
       reset({
-        flow_meter_start: form.flow_meter_start || "",
-        flow_meter_start_reading: form.flow_meter_start_reading || undefined,
-        flow_meter_end: form.flow_meter_end || "",
-        flow_meter_end_reading: form.flow_meter_end_reading || undefined,
-        source_silo_id: sourceSiloIds,
         destination_silo_id: destinationSiloId,
         movement_start: form.movement_start || "",
         movement_end: form.movement_end || "",
@@ -370,8 +364,7 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
         id: form.id || "",
         source_silo_details: sourceSiloDetails,
         destination_silo_details: destinationSiloDetails,
-        destination_silo_id: destinationSiloId,
-      })
+      } as any)
     }
   }, [open, form, mode, silos, reset])
 
@@ -426,32 +419,32 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
   const onSubmit = async (data: BMTControlFormData) => {
     try {
       const convertSiloDetails = (details: any[]) =>
-        details.map((silo) => {
-          const { source_silo_quantity_requested, ...rest } = silo;
-          return {
-            ...rest,
-            flow_meter_start: toIsoDateTime(silo.flow_meter_start || null),
-            flow_meter_end: toIsoDateTime(silo.flow_meter_end || null),
-            flow_meter_start_reading: Number(silo.flow_meter_start_reading || 0),
-            flow_meter_end_reading: Number(silo.flow_meter_end_reading || 0),
-          };
-        });
+        details.map((silo) => ({
+          ...(silo.id ? { id: silo.id } : {}),
+          name: silo.name,
+          flow_meter_start: toIsoDateTime(silo.flow_meter_start || null),
+          flow_meter_end: toIsoDateTime(silo.flow_meter_end || null),
+          flow_meter_start_reading: Number(silo.flow_meter_start_reading || 0),
+          flow_meter_end_reading: Number(silo.flow_meter_end_reading || 0),
+          source_silo_quantity_requested: Number(silo.source_silo_quantity_requested || 0),
+          product: silo.product,
+        }));
 
       const basePayload = {
         movement_start: toIsoDateTime(data.movement_start),
         movement_end: toIsoDateTime(data.movement_end),
         source_silo_details: convertSiloDetails(data.source_silo_details || []),
         destination_silo_details: data.destination_silo_details
-          ? (() => {
-            const { source_silo_quantity_requested, ...rest } = data.destination_silo_details;
-            return {
-              ...rest,
+          ? {
+              ...(data.destination_silo_details.id ? { id: data.destination_silo_details.id } : {}),
+              name: data.destination_silo_details.name,
               flow_meter_start: toIsoDateTime(data.destination_silo_details.flow_meter_start || null),
               flow_meter_end: toIsoDateTime(data.destination_silo_details.flow_meter_end || null),
               flow_meter_start_reading: Number(data.destination_silo_details.flow_meter_start_reading || 0),
               flow_meter_end_reading: Number(data.destination_silo_details.flow_meter_end_reading || 0),
-            };
-          })()
+              source_silo_quantity_requested: Number(data.destination_silo_details.source_silo_quantity_requested || 0),
+              product: data.destination_silo_details.product,
+            }
           : undefined,
         product: data.product,
         status: data.status,
@@ -466,7 +459,8 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
       if (mode === "create") {
         await dispatch(createBMTControlFormAction(basePayload as any)).unwrap();
         toast.success('BMT Control Form created successfully');
-        dispatch(fetchBMTControlForms());
+        // Silently refetch to get complete updated data from backend
+        dispatch(fetchBMTControlForms()).catch(() => {/* Silent fail */});
         onOpenChange(false);
         reset();
       } else if (form) {
@@ -477,7 +471,8 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
 
         await dispatch(updateBMTControlFormAction({ id: form.id, formData: updatePayload as any })).unwrap();
         toast.success('BMT Control Form updated successfully');
-        dispatch(fetchBMTControlForms());
+        // Silently refetch to get complete updated data from backend
+        dispatch(fetchBMTControlForms()).catch(() => {/* Silent fail */});
         onOpenChange(false);
         reset();
       }
@@ -500,10 +495,10 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
     id,
     name,
     flow_meter_start: "",
-    flow_meter_start_reading: "",
+    flow_meter_start_reading: 0,
     flow_meter_end: "",
-    flow_meter_end_reading: "",
-    source_silo_quantity_requested: "",
+    flow_meter_end_reading: 0,
+    source_silo_quantity_requested: 0,
     product: "",
   });
 
@@ -517,15 +512,15 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
         id: silo.value,
         name: silo.label,
         flow_meter_start: "",
-        flow_meter_start_reading: "",
+        flow_meter_start_reading: 0,
         flow_meter_end: "",
-        flow_meter_end_reading: "",
-        source_silo_quantity_requested: "",
+        flow_meter_end_reading: 0,
+        source_silo_quantity_requested: 0,
         product: "",
-      });
+      } as any);
     } else {
-      setValue("destination_silo_id", undefined);
-      setValue("destination_silo_details", undefined);
+      setValue("destination_silo_id", "");
+      setValue("destination_silo_details", {} as any);
     }
   };
 
@@ -660,6 +655,7 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
                         loading={loadingSilos}
                         className="w-full"
                       />
+                      {getErrorMsg(errors.source_silo_details)}
                       {/* Render silo details */}
                       {showSourceSiloDetails && selectedSourceSiloIds.length > 0 &&
                         Array.isArray(field.value) && field.value.map((silo: SourceSiloDetail, idx: number) => (

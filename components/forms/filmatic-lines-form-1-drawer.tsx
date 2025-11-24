@@ -624,7 +624,8 @@ export function FilmaticLinesForm1Drawer({
         toast.success("Filmatic Lines Form 1 created")
       }
 
-      try { await dispatch(fetchFilmaticLinesForm1s()).unwrap() } catch (e) { /* ignore */ }
+      // Silently refetch to get complete updated data from backend
+      dispatch(fetchFilmaticLinesForm1s()).catch(() => {/* Silent fail */})
       onOpenChange(false)
 
     } catch (err: any) {

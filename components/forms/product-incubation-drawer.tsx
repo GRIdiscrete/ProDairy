@@ -460,6 +460,7 @@ export function ProductIncubationDrawer({
                           onChange={field.onChange}
                           placeholder="Select best before date"
                           error={!!form.formState.errors.best_before_date}
+                          toDate={new Date(2099, 11, 31)} // Allow dates up to year 2099
                         />
                       )}
                     />
