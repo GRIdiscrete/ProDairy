@@ -191,7 +191,7 @@ export default function GeneralLabTestPage() {
 
     const formatData = tests.map(test => ({
       "Test ID": generateLabTestId(test.created_at),
-      "Source Silo": getSiloById(test.source_silo)?.name || test.source_silo,
+      "Source Silo": test.source_silo?.name || 'N/A',
       "Analyst": getUserById(test.analyst)?.first_name || test.analyst,
       "Temperature (°C)": test.temperature || '',
       "Fat (%)": test.fat || '',
@@ -207,7 +207,7 @@ export default function GeneralLabTestPage() {
     const headers = Object.keys(formatData[0])
     const csvContent = [
       headers.join(','),
-      ...formatData.map(row => headers.map(header => `"${row[header]}"`).join(','))
+      ...formatData.map(row => headers.map(header => `"${(row as any)[header]}"`).join(','))
     ].join('\n')
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
@@ -243,10 +243,10 @@ export default function GeneralLabTestPage() {
       header: "Source Silo",
       cell: ({ row }: any) => {
         const test = row.original
-        const silo = getSiloById(test.source_silo)
+        const silo = test.source_silo
         return (
           <div className="flex flex-col">
-            <span className="text-sm font-medium">{silo?.name || test.source_silo || "N/A"}</span>
+            <span className="text-sm font-medium">{silo?.name || "N/A"}</span>
             <span className="text-xs text-gray-500">{silo?.location || ""}</span>
           </div>
         )
@@ -389,7 +389,7 @@ export default function GeneralLabTestPage() {
                       <Beaker className="h-4 w-4 text-blue-500" />
                       <p className="text-sm font-light text-gray-600">Source Silo</p>
                     </div>
-                    <p className="text-lg font-light text-blue-600">{getSiloById(latestTest.source_silo)?.name || latestTest.source_silo || "N/A"}</p>
+                    <p className="text-lg font-light text-blue-600">{latestTest.source_silo?.name || "N/A"}</p>
                   </div>
                   <div className="space-y-2">
                     <div className="flex items-center space-x-2">

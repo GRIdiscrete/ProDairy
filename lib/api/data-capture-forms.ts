@@ -73,7 +73,19 @@ export interface CIPControlForm {
   id?: string
   created_at?: string
   status: string
-  machine_id: string
+  machine_id: {
+    id: string
+    tag?: string | null
+    name: string
+    status: string
+    category: string
+    location: string
+    counter_id?: string | null
+    created_at: string
+    updated_at: string
+    cases_packed?: number | null
+    serial_number: string
+  }
   operator_id: string
   date: string
   approver: string

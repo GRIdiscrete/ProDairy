@@ -9,7 +9,19 @@ export interface GeneralLabTest {
   id?: string
   created_at?: string
   updated_at?: string | null
-  source_silo: string
+  source_silo: {
+    id: string
+    name: string
+    status?: string | null
+    capacity: number
+    category: string
+    location: string
+    created_at: string
+    updated_at: string
+    composition: string[]
+    milk_volume?: number | null
+    serial_number: string
+  }
   time: string
   temperature: number
   fat: number
@@ -63,6 +75,7 @@ export interface GeneralLabTest {
   sulphites: string
   calcium_hardness: number
   analyst: string
+  tag?: string | null
 }
 
 export interface GeneralLabTestListResponse {

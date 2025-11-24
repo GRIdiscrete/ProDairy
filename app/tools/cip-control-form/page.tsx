@@ -17,6 +17,8 @@ import {
   deleteCIPControlFormAction,
   clearError
 } from "@/lib/store/slices/cipControlFormSlice"
+import { fetchUsers } from "@/lib/store/slices/usersSlice"
+import { fetchRoles } from "@/lib/store/slices/rolesSlice"
 import { toast } from "sonner"
 import { TableFilters } from "@/lib/types"
 import { CIPControlForm } from "@/lib/api/data-capture-forms"
@@ -27,10 +29,24 @@ import { useRouter, useSearchParams } from "next/navigation"
 export default function CIPControlFormPage() {
   const dispatch = useAppDispatch()
   const { forms, loading, error, operationLoading, isInitialized } = useAppSelector((state) => state.cipControlForms)
+  const { items: users, isInitialized: usersInitialized } = useAppSelector((state) => state.users)
+  const { roles, isInitialized: rolesInitialized } = useAppSelector((state) => state.roles)
   
   const [tableFilters, setTableFilters] = useState<TableFilters>({})
   const hasFetchedRef = useRef(false)
+  const hasUsersFetchedRef = useRef(false)
+  const hasRolesFetchedRef = useRef(false)
   const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+
+  // Helper function to get user by ID
+  const getUserById = (userId: string) => {
+    return users.find((user: any) => user.id === userId)
+  }
+
+  // Helper function to get role by ID
+  const getRoleById = (roleId: string) => {
+    return roles.find((role: any) => role.id === roleId)
+  }
 
   // Load CIP control forms on initial mount
   useEffect(() => {
@@ -39,6 +55,22 @@ export default function CIPControlFormPage() {
       dispatch(fetchCIPControlForms())
     }
   }, [dispatch, isInitialized])
+  
+  // Load users
+  useEffect(() => {
+    if (!usersInitialized && !hasUsersFetchedRef.current) {
+      hasUsersFetchedRef.current = true
+      dispatch(fetchUsers())
+    }
+  }, [dispatch, usersInitialized])
+  
+  // Load roles
+  useEffect(() => {
+    if (!rolesInitialized && !hasRolesFetchedRef.current) {
+      hasRolesFetchedRef.current = true
+      dispatch(fetchRoles())
+    }
+  }, [dispatch, rolesInitialized])
   
   // Handle filter changes
   useEffect(() => {
@@ -158,7 +190,7 @@ export default function CIPControlFormPage() {
             </div>
             <div>
               <div className="flex items-center space-x-2">
-                <span className="font-light">{form.cip_control_form_machine_id_fkey?.name || `Machine: ${form.machine_id?.slice(0, 8)}...`}</span>
+                <span className="font-light">{form.machine_id?.name || 'N/A'}</span>
                 <Badge className={getStatusColor(form.status)}>{form.status}</Badge>
               </div>
               <p className="text-sm text-gray-500 mt-1">
@@ -314,7 +346,7 @@ export default function CIPControlFormPage() {
                     <Droplets className="h-4 w-4 text-blue-500" />
                     <p className="text-sm font-light text-gray-600">Machine</p>
                   </div>
-                  <p className="text-lg font-light text-blue-600">{latestForm.cip_control_form_machine_id_fkey?.name || 'N/A'}</p>
+                  <p className="text-lg font-light text-blue-600">{latestForm.machine_id?.name || 'N/A'}</p>
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center space-x-2">
@@ -414,6 +446,10 @@ export default function CIPControlFormPage() {
           open={viewDrawerOpen}
           onClose={() => setViewDrawerOpen(false)}
           form={selectedForm}
+          users={users}
+          roles={roles}
+          getUserById={getUserById}
+          getRoleById={getRoleById}
           onEdit={() => {
             setViewDrawerOpen(false)
             handleEditForm(selectedForm!)

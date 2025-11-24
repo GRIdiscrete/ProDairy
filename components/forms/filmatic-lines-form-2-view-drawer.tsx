@@ -108,7 +108,7 @@ export function FilmaticLinesForm2ViewDrawer({
                 <div>
                   <span className="text-xs font-light text-gray-500">Form</span>
                   <div className="mt-1">
-                    {form.tag ? <FormIdCopy displayId={form.tag} actualId={form.id} size="sm" /> : <p className="text-sm font-light">{form.id}</p>}
+                    {form.tag && form.id ? <FormIdCopy displayId={form.tag} actualId={form.id} size="sm" /> : <p className="text-sm font-light">{form.id || 'N/A'}</p>}
                   </div>
                 </div>
                 <div>
@@ -178,8 +178,8 @@ export function FilmaticLinesForm2ViewDrawer({
                     <span className="text-xs font-light text-gray-500">Manager</span>
                     <div className="mt-1">
                       {(() => {
-                        const managerUser = users.find((u:any) => u.id === form.groups.manager_id)
-                        return managerUser ? <UserAvatar user={managerUser} size="md" showName={true} showEmail={true} showDropdown={true} /> : <p className="text-sm font-light">{form.groups.manager_id?.slice(0,8) || 'N/A'}</p>
+                        const managerUser = form.groups ? users.find((u:any) => u.id === form.groups?.manager_id) : null
+                        return managerUser ? <UserAvatar user={managerUser} size="md" showName={true} showEmail={true} showDropdown={true} /> : <p className="text-sm font-light">{form.groups?.manager_id?.slice(0,8) || 'N/A'}</p>
                       })()}
                     </div>
                   </div>
@@ -294,18 +294,23 @@ export function FilmaticLinesForm2ViewDrawer({
                                 </div>
                                 {detail.filmatic_line_form_2_day_shift_details_stoppage_time && detail.filmatic_line_form_2_day_shift_details_stoppage_time.length > 0 && (
                                   <div className="mt-2">
-                                    <strong>Stoppage Times (Form 2):</strong>
-                                    <div className="grid grid-cols-2 gap-1 mt-1">
-                                      {detail.filmatic_line_form_2_day_shift_details_stoppage_time.map((stoppage, stoppageIndex) => (
-                                        <div key={stoppageIndex} className="text-xs">
-                                          {Object.entries(stoppage).map(([key, value]) => (
-                                            value !== undefined && value !== 0 && (
-                                              <div key={key}>{key}: {value}min</div>
-                                            )
-                                          ))}
-                                        </div>
-                                      ))}
-                                    </div>
+                                    <h5 className="text-xs font-medium text-gray-700 mb-2">Stoppage Time:</h5>
+                                    {detail.filmatic_line_form_2_day_shift_details_stoppage_time.map((st: any, stIndex: number) => (
+                                      <div key={stIndex} className="grid grid-cols-2 gap-1 text-xs">
+                                        <div><span className="font-medium">Capper 1 Hours:</span> {st.capper_1_hours ?? '—'}</div>
+                                        <div><span className="font-medium">Capper 2 Hours:</span> {st.capper_2_hours ?? '—'}</div>
+                                        <div><span className="font-medium">Sleever 1 Hours:</span> {st.sleever_1_hours ?? '—'}</div>
+                                        <div><span className="font-medium">Sleever 2 Hours:</span> {st.sleever_2_hours ?? '—'}</div>
+                                        <div><span className="font-medium">Shrink 1 Hours:</span> {st.shrink_1_hours ?? '—'}</div>
+                                        <div><span className="font-medium">Shrink 2 Hours:</span> {st.shrink_2_hours ?? '—'}</div>
+                                        <div><span className="font-medium">Capper 1:</span> {st.capper_1 ?? '—'}</div>
+                                        <div><span className="font-medium">Capper 2:</span> {st.capper_2 ?? '—'}</div>
+                                        <div><span className="font-medium">Sleever 1:</span> {st.sleever_1 ?? '—'}</div>
+                                        <div><span className="font-medium">Sleever 2:</span> {st.sleever_2 ?? '—'}</div>
+                                        <div><span className="font-medium">Shrink 1:</span> {st.shrink_1 ?? '—'}</div>
+                                        <div><span className="font-medium">Shrink 2:</span> {st.shrink_2 ?? '—'}</div>
+                                      </div>
+                                    ))}
                                   </div>
                                 )}
                               </div>
@@ -364,18 +369,23 @@ export function FilmaticLinesForm2ViewDrawer({
                                 </div>
                                 {detail.filmatic_line_form_2_night_shift_details_stoppage_time && detail.filmatic_line_form_2_night_shift_details_stoppage_time.length > 0 && (
                                   <div className="mt-2">
-                                    <strong>Stoppage Times (Form 2):</strong>
-                                    <div className="grid grid-cols-2 gap-1 mt-1">
-                                      {detail.filmatic_line_form_2_night_shift_details_stoppage_time.map((stoppage, stoppageIndex) => (
-                                        <div key={stoppageIndex} className="text-xs">
-                                          {Object.entries(stoppage).map(([key, value]) => (
-                                            value !== undefined && value !== 0 && (
-                                              <div key={key}>{key}: {value}min</div>
-                                            )
-                                          ))}
-                                        </div>
-                                      ))}
-                                    </div>
+                                    <h5 className="text-xs font-medium text-gray-700 mb-2">Stoppage Time:</h5>
+                                    {detail.filmatic_line_form_2_night_shift_details_stoppage_time.map((st: any, stIndex: number) => (
+                                      <div key={stIndex} className="grid grid-cols-2 gap-1 text-xs">
+                                        <div><span className="font-medium">Capper 1 Hours:</span> {st.capper_1_hours ?? '—'}</div>
+                                        <div><span className="font-medium">Capper 2 Hours:</span> {st.capper_2_hours ?? '—'}</div>
+                                        <div><span className="font-medium">Sleever 1 Hours:</span> {st.sleever_1_hours ?? '—'}</div>
+                                        <div><span className="font-medium">Sleever 2 Hours:</span> {st.sleever_2_hours ?? '—'}</div>
+                                        <div><span className="font-medium">Shrink 1 Hours:</span> {st.shrink_1_hours ?? '—'}</div>
+                                        <div><span className="font-medium">Shrink 2 Hours:</span> {st.shrink_2_hours ?? '—'}</div>
+                                        <div><span className="font-medium">Capper 1:</span> {st.capper_1 ?? '—'}</div>
+                                        <div><span className="font-medium">Capper 2:</span> {st.capper_2 ?? '—'}</div>
+                                        <div><span className="font-medium">Sleever 1:</span> {st.sleever_1 ?? '—'}</div>
+                                        <div><span className="font-medium">Sleever 2:</span> {st.sleever_2 ?? '—'}</div>
+                                        <div><span className="font-medium">Shrink 1:</span> {st.shrink_1 ?? '—'}</div>
+                                        <div><span className="font-medium">Shrink 2:</span> {st.shrink_2 ?? '—'}</div>
+                                      </div>
+                                    ))}
                                   </div>
                                 )}
                               </div>

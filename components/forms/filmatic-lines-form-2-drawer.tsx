@@ -128,9 +128,11 @@ type BasicInfoFormData = {
 type ShiftSelectionFormData = yup.InferType<typeof shiftSelectionSchema>
 type GroupSelectionFormData = yup.InferType<typeof groupSelectionSchema>
 type ShiftDetailsFormData = {
-  supervisor_approve?: boolean
-  operator_id?: string
+  id?: string
+  supervisor_approve: boolean | undefined
+  operator_id: string | undefined
   details?: Array<{
+    id?: string
     time?: string
     pallets?: number
     target?: number
@@ -214,7 +216,7 @@ export function FilmaticLinesForm2Drawer({
 
   // Step 4: Shift details form with array fields (Form 2 stoppage fields)
   const shiftDetailsForm = useForm<ShiftDetailsFormData>({
-    resolver: yupResolver(shiftDetailsSchema),
+    resolver: yupResolver(shiftDetailsSchema) as any,
     defaultValues: {
       supervisor_approve: false,
       operator_id: user?.id || "",
@@ -339,48 +341,28 @@ export function FilmaticLinesForm2Drawer({
           }
 
           if (shiftEntry) {
-            // details array keys differ between shapes:
-            // - API day: filmatic_line_form_2_day_shift_details
-            // - API night: filmatic_line_form_2_night_shift_details
-            // - legacy: details
-            const rawDetails = shiftEntry.filmatic_line_form_2_day_shift_details
-              || shiftEntry.filmatic_line_form_2_night_shift_details
-              || shiftEntry.details
-              || []
-
-            const mapped = (rawDetails || []).map((d: any) => {
-              // stoppage time array may be named differently:
-              const stoppageArray =
-                d.filmatic_line_form_2_day_shift_details_stoppage_time ||
-                d.filmatic_line_form_2_night_shift_details_stoppage_time ||
-                d.stoppage_time ||
-                []
-
-              const stoppage = Array.isArray(stoppageArray) ? (stoppageArray[0] || {}) : (stoppageArray || {})
-
-              // normalize time to HH:MM (support "HH:MM:SS" and full datetime)
-              let timeVal = d.time || ""
-              if (typeof timeVal === "string" && timeVal.indexOf(":") !== -1) {
-                const parts = timeVal.split(" ")
-                // time part may be "08:00:00" or "2025-08-21 08:00:00+00"
-                const timePart = parts.length > 1 ? parts[1] : parts[0]
-                const tparts = timePart.split(":")
-                if (tparts.length >= 2) timeVal = `${tparts[0].padStart(2, "0")}:${tparts[1].padStart(2, "0")}`
-              }
-
+            const detailsKey = shiftType === "day_shift" ? "filmatic_line_form_2_day_shift_details" : "filmatic_line_form_2_night_shift_details"
+            const stoppageKey = shiftType === "day_shift" ? "filmatic_line_form_2_day_shift_details_stoppage_time" : "filmatic_line_form_2_night_shift_details_stoppage_time"
+            const details = shiftEntry[detailsKey] || []
+            
+            const mapped = details.map((d: any) => {
+              const stoppageArray = d[stoppageKey] || []
+              const stoppage = stoppageArray[0] || {}
+              
               return {
-                time: timeVal,
+                id: d.id,
+                time: d.time?.split(' ')[1]?.slice(0, 5) || '',
                 pallets: d.pallets ?? undefined,
                 target: d.target ?? undefined,
-                setbacks: d.setbacks ?? "",
+                setbacks: d.setbacks || '',
                 stoppage_time: {
+                  id: stoppage.id,
                   capper_1_hours: stoppage.capper_1_hours ?? stoppage.capper_1 ?? undefined,
                   capper_2_hours: stoppage.capper_2_hours ?? stoppage.capper_2 ?? undefined,
                   sleever_1_hours: stoppage.sleever_1_hours ?? stoppage.sleever_1 ?? undefined,
                   sleever_2_hours: stoppage.sleever_2_hours ?? stoppage.sleever_2 ?? undefined,
                   shrink_1_hours: stoppage.shrink_1_hours ?? stoppage.shrink_1 ?? undefined,
                   shrink_2_hours: stoppage.shrink_2_hours ?? stoppage.shrink_2 ?? undefined,
-                  // also keep plain fields if present
                   capper_1: stoppage.capper_1 ?? undefined,
                   capper_2: stoppage.capper_2 ?? undefined,
                   sleever_1: stoppage.sleever_1 ?? undefined,
@@ -390,18 +372,11 @@ export function FilmaticLinesForm2Drawer({
                 }
               }
             })
-
+            
             shiftDetailsForm.reset({
-              supervisor_approve: shiftEntry.supervisor_approve ?? false,
-              operator_id: shiftEntry.operator_id ?? user?.id ?? "",
+              supervisor_approve: shiftEntry?.supervisor_approve ?? false,
+              operator_id: shiftEntry?.operator_id ?? user?.id ?? '',
               details: mapped.length ? mapped : shiftDetailsForm.getValues().details
-            })
-          } else {
-            // no shift entry found; keep defaults
-            shiftDetailsForm.reset({
-              supervisor_approve: false,
-              operator_id: user?.id || "",
-              details: shiftDetailsForm.getValues().details
             })
           }
         } catch (err) {
@@ -478,16 +453,15 @@ export function FilmaticLinesForm2Drawer({
         // Add bottle counts based on selected shift (only include selected shift fields)
         ...(shiftType === "day_shift" && {
           day_shift_opening_bottles: basicInfo.day_shift_opening_bottles ?? 0,
-          day_shift_closing_bottles: basicInfo.day_shift_closing_bottles ?? null,
-          day_shift_waste_bottles: basicInfo.day_shift_waste_bottles ?? null,
+          day_shift_closing_bottles: basicInfo.day_shift_closing_bottles ?? undefined,
+          day_shift_waste_bottles: basicInfo.day_shift_waste_bottles ?? undefined,
         }),
         ...(shiftType === "night_shift" && {
           night_shift_opening_bottles: basicInfo.night_shift_opening_bottles ?? 0,
-          night_shift_closing_bottles: basicInfo.night_shift_closing_bottles ?? null,
-          night_shift_waste_bottles: basicInfo.night_shift_waste_bottles ?? null,
+          night_shift_closing_bottles: basicInfo.night_shift_closing_bottles ?? undefined,
+          night_shift_waste_bottles: basicInfo.night_shift_waste_bottles ?? undefined,
         }),
         groups: selectedGroupData ? {
-          id: selectedGroupData.id,
           [groupData.selected_group]: selectedGroupData.members,
           manager_id: selectedGroupData.manager_id
         } : undefined,
@@ -496,59 +470,69 @@ export function FilmaticLinesForm2Drawer({
       // Add shift data based on selection
       if (shiftType === "day_shift") {
         formData.day_shift = {
+          ...(mode === "edit" && form?.filmatic_line_form_2_day_shift?.[0]?.id ? { id: form.filmatic_line_form_2_day_shift[0].id } : {}),
           supervisor_approve: data.supervisor_approve || false,
           operator_id: data.operator_id || user?.id || "",
-          details: data.details?.map(detail => ({
+          details: data.details?.map((detail: any) => ({
+            ...(detail.id ? { id: detail.id } : {}),
             time: detail.time || "",
             pallets: detail.pallets || 0,
             target: detail.target || 0,
             setbacks: detail.setbacks || "",
             stoppage_time: [{
-              capper_1_hours: detail.stoppage_time?.capper_1_hours ?? detail.stoppage_time?.capper_1,
-              capper_2_hours: detail.stoppage_time?.capper_2_hours ?? detail.stoppage_time?.capper_2,
-              sleever_1_hours: detail.stoppage_time?.sleever_1_hours ?? detail.stoppage_time?.sleever_1,
-              sleever_2_hours: detail.stoppage_time?.sleever_2_hours ?? detail.stoppage_time?.sleever_2,
-              shrink_1_hours: detail.stoppage_time?.shrink_1_hours ?? detail.stoppage_time?.shrink_1,
-              shrink_2_hours: detail.stoppage_time?.shrink_2_hours ?? detail.stoppage_time?.shrink_2,
-              capper_1: detail.stoppage_time?.capper_1,
-              capper_2: detail.stoppage_time?.capper_2,
-              sleever_1: detail.stoppage_time?.sleever_1,
-              sleever_2: detail.stoppage_time?.sleever_2,
-              shrink_1: detail.stoppage_time?.shrink_1,
-              shrink_2: detail.stoppage_time?.shrink_2,
+              ...((detail.stoppage_time as any)?.id ? { id: (detail.stoppage_time as any).id } : {}),
+              capper_1_hours: detail.stoppage_time?.capper_1_hours ?? detail.stoppage_time?.capper_1 ?? null,
+              capper_2_hours: detail.stoppage_time?.capper_2_hours ?? detail.stoppage_time?.capper_2 ?? null,
+              sleever_1_hours: detail.stoppage_time?.sleever_1_hours ?? detail.stoppage_time?.sleever_1 ?? null,
+              sleever_2_hours: detail.stoppage_time?.sleever_2_hours ?? detail.stoppage_time?.sleever_2 ?? null,
+              shrink_1_hours: detail.stoppage_time?.shrink_1_hours ?? detail.stoppage_time?.shrink_1 ?? null,
+              shrink_2_hours: detail.stoppage_time?.shrink_2_hours ?? detail.stoppage_time?.shrink_2 ?? null,
+              capper_1: detail.stoppage_time?.capper_1 ?? null,
+              capper_2: detail.stoppage_time?.capper_2 ?? null,
+              sleever_1: detail.stoppage_time?.sleever_1 ?? null,
+              sleever_2: detail.stoppage_time?.sleever_2 ?? null,
+              shrink_1: detail.stoppage_time?.shrink_1 ?? null,
+              shrink_2: detail.stoppage_time?.shrink_2 ?? null,
             }]
           })) || []
         }
+        // Ensure night shift is not sent
       } else if (shiftType === "night_shift") {
         formData.night_shift = {
+          ...(mode === "edit" && form?.filmatic_line_form_2_night_shift?.[0]?.id ? { id: form.filmatic_line_form_2_night_shift[0].id } : {}),
           supervisor_approve: data.supervisor_approve || false,
           operator_id: data.operator_id || user?.id || "",
-          details: data.details?.map(detail => ({
+          details: data.details?.map((detail: any) => ({
+            ...(detail.id ? { id: detail.id } : {}),
             time: detail.time || "",
             pallets: detail.pallets || 0,
             target: detail.target || 0,
             setbacks: detail.setbacks || "",
             stoppage_time: [{
-              capper_1_hours: detail.stoppage_time?.capper_1_hours ?? detail.stoppage_time?.capper_1,
-              capper_2_hours: detail.stoppage_time?.capper_2_hours ?? detail.stoppage_time?.capper_2,
-              sleever_1_hours: detail.stoppage_time?.sleever_1_hours ?? detail.stoppage_time?.sleever_1,
-              sleever_2_hours: detail.stoppage_time?.sleever_2_hours ?? detail.stoppage_time?.sleever_2,
-              shrink_1_hours: detail.stoppage_time?.shrink_1_hours ?? detail.stoppage_time?.shrink_1,
-              shrink_2_hours: detail.stoppage_time?.shrink_2_hours ?? detail.stoppage_time?.shrink_2,
-              capper_1: detail.stoppage_time?.capper_1,
-              capper_2: detail.stoppage_time?.capper_2,
-              sleever_1: detail.stoppage_time?.sleever_1,
-              sleever_2: detail.stoppage_time?.sleever_2,
-              shrink_1: detail.stoppage_time?.shrink_1,
-              shrink_2: detail.stoppage_time?.shrink_2,
+              ...((detail.stoppage_time as any)?.id ? { id: (detail.stoppage_time as any).id } : {}),
+              capper_1_hours: detail.stoppage_time?.capper_1_hours ?? detail.stoppage_time?.capper_1 ?? null,
+              capper_2_hours: detail.stoppage_time?.capper_2_hours ?? detail.stoppage_time?.capper_2 ?? null,
+              sleever_1_hours: detail.stoppage_time?.sleever_1_hours ?? detail.stoppage_time?.sleever_1 ?? null,
+              sleever_2_hours: detail.stoppage_time?.sleever_2_hours ?? detail.stoppage_time?.sleever_2 ?? null,
+              shrink_1_hours: detail.stoppage_time?.shrink_1_hours ?? detail.stoppage_time?.shrink_1 ?? null,
+              shrink_2_hours: detail.stoppage_time?.shrink_2_hours ?? detail.stoppage_time?.shrink_2 ?? null,
+              capper_1: detail.stoppage_time?.capper_1 ?? null,
+              capper_2: detail.stoppage_time?.capper_2 ?? null,
+              sleever_1: detail.stoppage_time?.sleever_1 ?? null,
+              sleever_2: detail.stoppage_time?.sleever_2 ?? null,
+              shrink_1: detail.stoppage_time?.shrink_1 ?? null,
+              shrink_2: detail.stoppage_time?.shrink_2 ?? null,
             }]
           })) || []
         }
+        // Ensure day shift is not sent
       }
 
       console.log("Final form data:", formData)
       if (mode === "edit" && form?.id) {
-        await filmaticLinesForm2Api.updateForm?.(form.id, { id: form.id, ...formData }) ?? await filmaticLinesForm2Api.createForm(formData)
+        const updatePayload: any = { ...formData }
+        if (form.id) updatePayload.id = form.id
+        await filmaticLinesForm2Api.updateForm?.(form.id, updatePayload) ?? await filmaticLinesForm2Api.createForm(formData)
         toast.success("Filmatic Lines Form 2 updated successfully")
       } else {
         await filmaticLinesForm2Api.createForm(formData)
@@ -807,7 +791,7 @@ export function FilmaticLinesForm2Drawer({
                               type="number"
                               placeholder="Enter opening bottles"
                               className="rounded-full border-gray-200"
-                              value={String(field.value || "")}
+                              value={field.value ?? ''}
                               onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
                               onBlur={field.onBlur}
                               name={field.name}
@@ -830,7 +814,7 @@ export function FilmaticLinesForm2Drawer({
                               type="number"
                               placeholder="Enter closing bottles"
                               className="rounded-full border-gray-200"
-                              value={String(field.value || "")}
+                              value={field.value ?? ''}
                               onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
                               onBlur={field.onBlur}
                               name={field.name}
@@ -854,7 +838,7 @@ export function FilmaticLinesForm2Drawer({
                             type="number"
                             placeholder="Enter waste bottles"
                             className="rounded-full border-gray-200"
-                            value={String(field.value || "")}
+                            value={field.value ?? ''}
                             onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
                             onBlur={field.onBlur}
                             name={field.name}
@@ -882,7 +866,7 @@ export function FilmaticLinesForm2Drawer({
                               type="number"
                               placeholder="Enter opening bottles"
                               className="rounded-full border-gray-200"
-                              value={String(field.value || "")}
+                              value={field.value ?? ''}
                               onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
                               onBlur={field.onBlur}
                               name={field.name}
@@ -905,7 +889,7 @@ export function FilmaticLinesForm2Drawer({
                               type="number"
                               placeholder="Enter closing bottles"
                               className="rounded-full border-gray-200"
-                              value={String(field.value || "")}
+                              value={field.value ?? ''}
                               onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
                               onBlur={field.onBlur}
                               name={field.name}
@@ -929,7 +913,7 @@ export function FilmaticLinesForm2Drawer({
                             type="number"
                             placeholder="Enter waste bottles"
                             className="rounded-full border-gray-200"
-                            value={String(field.value || "")}
+                            value={field.value ?? ''}
                             onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
                             onBlur={field.onBlur}
                             name={field.name}
@@ -1029,7 +1013,7 @@ export function FilmaticLinesForm2Drawer({
                                 type="number" 
                                 placeholder="Enter pallets"
                                 className="rounded-full border-gray-200"
-                                value={String(field.value || "")}
+                                value={field.value ?? ''}
                                 onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
                               />
                             )}
@@ -1046,7 +1030,7 @@ export function FilmaticLinesForm2Drawer({
                                 type="number" 
                                 placeholder="Enter target"
                                 className="rounded-full border-gray-200"
-                                value={String(field.value || "")}
+                                value={field.value ?? ''}
                                 onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
                               />
                             )}
@@ -1083,7 +1067,7 @@ export function FilmaticLinesForm2Drawer({
                                     type="number"
                                     placeholder="0"
                                     className="text-xs h-8 rounded-full border-gray-200"
-                                    value={String(field.value || "")}
+                                    value={field.value ?? ''}
                                     onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
                                   />
                                 )}

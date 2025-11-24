@@ -416,7 +416,7 @@ export default function FilmaticLines2Page() {
                     <p className="text-sm font-light text-gray-600">Form</p>
                   </div>
                   <div className="flex items-center space-x-2">
-                    {latestForm?.tag ? (
+                    {latestForm?.tag && latestForm.id ? (
                       <FormIdCopy displayId={latestForm.tag} actualId={latestForm.id} size="sm" />
                     ) : (
                       <>

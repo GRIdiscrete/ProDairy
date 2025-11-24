@@ -552,17 +552,17 @@ export function FilmaticLinesForm1Drawer({
 
         // Day shift object with details and IDs if updating
         payload.day_shift = {
-          ...(mode === "edit" && form?.filmatic_line_form_1_day_shift[0]?.id ? { id: form.filmatic_line_form_1_day_shift[0]?.id } : {}),
+          ...(mode === "edit" && form?.filmatic_line_form_1_day_shift?.[0]?.id ? { id: form.filmatic_line_form_1_day_shift[0].id } : {}),
           supervisor_approve: !!data.supervisor_approve,
           operator_id: data.operator_id || null,
           details: (data.details || []).map(d => ({
-            id: (d as any).id, // Preserve detail ID if exists
+            ...(d.id ? { id: d.id } : {}), // Preserve detail ID if exists
             time: d.time || null,
             pallets: d.pallets ?? null,
             target: d.target ?? null,
             setbacks: d.setbacks || null,
             stoppage_time: [{
-              id: (d.stoppage_time as any)?.id, // Preserve stoppage time ID if exists
+              ...((d.stoppage_time as any)?.id ? { id: (d.stoppage_time as any).id } : {}), // Preserve stoppage time ID if exists
               product_1_hours: d.stoppage_time?.product_1_hours ?? null,
               product_2_hours: d.stoppage_time?.product_2_hours ?? null,
               filler_1_hours: d.stoppage_time?.filler_1_hours ?? null,
@@ -571,12 +571,6 @@ export function FilmaticLinesForm1Drawer({
               product_2: d.stoppage_time?.product_2 ?? null,
               filler_1: d.stoppage_time?.filler_1 ?? null,
               filler_2: d.stoppage_time?.filler_2 ?? null,
-              capper_1: d.stoppage_time?.capper_1 ?? null,
-              capper_2: d.stoppage_time?.capper_2 ?? null,
-              sleever_1: d.stoppage_time?.sleever_1 ?? null,
-              sleever_2: d.stoppage_time?.sleever_2 ?? null,
-              shrink_1: d.stoppage_time?.shrink_1 ?? null,
-              shrink_2: d.stoppage_time?.shrink_2 ?? null,
             }]
           }))
         }
@@ -601,17 +595,17 @@ export function FilmaticLinesForm1Drawer({
 
         // Night shift object with details and IDs if updating
         payload.night_shift = {
-          ...(mode === "edit" && form?.night_shift?.id ? { id: form.night_shift.id } : {}),
+          ...(mode === "edit" && form?.filmatic_line_form_1_night_shift?.[0]?.id ? { id: form.filmatic_line_form_1_night_shift[0].id } : {}),
           supervisor_approve: !!data.supervisor_approve,
           operator_id: data.operator_id || null,
           details: (data.details || []).map(d => ({
-            id: (d as any).id, // Preserve detail ID if exists
+            ...(d.id ? { id: d.id } : {}), // Preserve detail ID if exists
             time: d.time || null,
             pallets: d.pallets ?? null,
             target: d.target ?? null,
             setbacks: d.setbacks || null,
             stoppage_time: [{
-              id: (d.stoppage_time as any)?.id, // Preserve stoppage time ID if exists
+              ...((d.stoppage_time as any)?.id ? { id: (d.stoppage_time as any).id } : {}), // Preserve stoppage time ID if exists
               product_1_hours: d.stoppage_time?.product_1_hours ?? null,
               product_2_hours: d.stoppage_time?.product_2_hours ?? null,
               filler_1_hours: d.stoppage_time?.filler_1_hours ?? null,
@@ -1121,7 +1115,10 @@ export function FilmaticLinesForm1Drawer({
                       <div>
                         <Label className="mb-2 block">Stoppage Time (minutes / hours)</Label>
                         <div className="grid grid-cols-2 gap-2">
-                          {["product_1_hours", "product_2_hours", "filler_1_hours", "filler_2_hours", "product_1", "product_2", "filler_1", "filler_2", "capper_1", "capper_2", "sleever_1", "sleever_2", "shrink_1", "shrink_2"].map(key => (
+                          {(selectedShift === "day_shift" 
+                            ? ["product_1_hours", "product_2_hours", "filler_1_hours", "filler_2_hours", "product_1", "product_2", "filler_1", "filler_2"]
+                            : ["product_1_hours", "product_2_hours", "filler_1_hours", "filler_2_hours", "product_1", "product_2", "filler_1", "filler_2", "capper_1", "capper_2", "sleever_1", "sleever_2", "shrink_1", "shrink_2"]
+                          ).map(key => (
                             <div key={key} className="flex items-center gap-2">
                               <Label className="text-xs w-28">{key.replace(/_/g, ' ')}</Label>
                               <Controller

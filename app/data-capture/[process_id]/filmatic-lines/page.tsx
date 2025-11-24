@@ -366,7 +366,7 @@ export default function FilmaticLines1Page() {
                     <span>Current Filmatic Lines Form 1</span>
                     <Badge className="bg-gradient-to-r from-blue-100 to-cyan-100 text-blue-800 font-light">Latest</Badge>
                     {/* show form tag as FormIdCopy */}
-                    {latestForm?.tag && (
+                    {latestForm?.tag && latestForm?.id && (
                       <div className="ml-2">
                         <FormIdCopy displayId={latestForm.tag} actualId={latestForm.id} size="sm" />
                       </div>
@@ -406,7 +406,14 @@ export default function FilmaticLines1Page() {
                     {(() => {
                       const bmt = bmtForms.find((b: any) => b.id === latestForm.holding_tank_bmt)
                       return bmt ? (
-                        <FormIdCopy displayId={bmt.tag} actualId={bmt.id} size="sm" />
+                        bmt.tag && bmt.id ? (
+                          <FormIdCopy displayId={bmt.tag} actualId={bmt.id} size="sm" />
+                        ) : (
+                          <>
+                            <span className="text-xs font-light">{bmt.id?.slice(0, 8) || 'N/A'}</span>
+                            {bmt.id && <CopyButton text={bmt.id} />}
+                          </>
+                        )
                       ) : (
                         <>
                           <span className="text-xs font-light">{latestForm.holding_tank_bmt?.slice(0, 8) || 'N/A'}</span>
@@ -503,7 +510,14 @@ export default function FilmaticLines1Page() {
                         {(() => {
                           const bmt = bmtForms.find((b: any) => b.id === latestForm.holding_tank_bmt)
                           return bmt ? (
-                            <FormIdCopy displayId={bmt.tag} actualId={bmt.id} size="sm" />
+                            bmt.tag && bmt.id ? (
+                              <FormIdCopy displayId={bmt.tag} actualId={bmt.id} size="sm" />
+                            ) : (
+                              <>
+                                <span className="text-xs font-light text-blue-600">{bmt.id ? bmt.id.slice(0, 8) : 'N/A'}</span>
+                                {bmt.id && <CopyButton text={bmt.id} />}
+                              </>
+                            )
                           ) : (
                             <>
                               <span className="text-xs font-light text-blue-600">{latestForm.holding_tank_bmt ? latestForm.holding_tank_bmt.slice(0, 8) : 'N/A'}</span>
