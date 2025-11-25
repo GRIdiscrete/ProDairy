@@ -397,14 +397,14 @@ export default function BMTControlFormPage() {
             >
               <Eye className="w-4 h-4" />
             </LoadingButton>
-            <LoadingButton 
+            {/* <LoadingButton 
               variant="outline" 
               size="sm" 
               onClick={() => handleEditForm(form)}
               className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 rounded-full"
             >
               <Edit className="w-4 h-4" />
-            </LoadingButton>
+            </LoadingButton> */}
             <LoadingButton 
               variant="destructive" 
               size="sm" 
