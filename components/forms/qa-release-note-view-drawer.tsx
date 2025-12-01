@@ -72,6 +72,42 @@ export function QaReleaseNoteViewDrawer({ open, onOpenChange, note, onEdit }: Pr
             </div>
           </div>
 
+          {note.incubation_tracking_form_tag && (
+            <div className="border p-4 rounded-md bg-blue-50">
+              <h4 className="text-sm font-medium">Incubation Tracking Form</h4>
+              <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
+                <div>
+                  <span className="text-xs text-gray-500">Tag</span>
+                  <p className="font-light">{note.incubation_tracking_form_tag.tag}</p>
+                </div>
+                <div>
+                  <span className="text-xs text-gray-500">Status</span>
+                  <p className="font-light">{note.incubation_tracking_form_tag.status}</p>
+                </div>
+                {note.incubation_tracking_form_tag.batch && (
+                  <>
+                    <div>
+                      <span className="text-xs text-gray-500">Batch Number</span>
+                      <p className="font-light">{note.incubation_tracking_form_tag.batch.batch_number}</p>
+                    </div>
+                    <div>
+                      <span className="text-xs text-gray-500">Manufacture Date</span>
+                      <p className="font-light">{note.incubation_tracking_form_tag.batch.manufacture_date}</p>
+                    </div>
+                    <div>
+                      <span className="text-xs text-gray-500">Best Before Date</span>
+                      <p className="font-light">{note.incubation_tracking_form_tag.batch.best_before_date}</p>
+                    </div>
+                    <div>
+                      <span className="text-xs text-gray-500">Event</span>
+                      <p className="font-light">{note.incubation_tracking_form_tag.batch.event}</p>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+
           {latestDetail && (
             <div className="border p-4 rounded-md bg-gray-50">
               <div className="flex items-center justify-between">
@@ -80,7 +116,7 @@ export function QaReleaseNoteViewDrawer({ open, onOpenChange, note, onEdit }: Pr
                   <Badge className="bg-green-100 text-green-800 font-light">{latestDetail.status}</Badge>
                 </div>
                 <div className="text-sm text-gray-500">
-                  <div>Product: {latestDetail.product}</div>
+                  <div>Product: {latestDetail.product?.name || latestDetail.product}</div>
                   <div>Batch: {latestDetail.batch_no}</div>
                 </div>
               </div>

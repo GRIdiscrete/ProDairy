@@ -178,65 +178,35 @@ export function RawMilkIntakeFormViewDrawer({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="tablet-sheet-full p-0 bg-white">
         <SheetHeader className="p-6 pb-0">
-          <SheetTitle className="flex items-center gap-2 text-lg font-light">
-            <Droplets className="w-5 h-5" />
-            Raw Milk Intake Form Details
-          </SheetTitle>
-          <SheetDescription className="text-sm font-light">
-            Complete information about the raw milk intake form record
-          </SheetDescription>
-        </SheetHeader>
-
-        <div className="flex-1 overflow-y-auto p-6">
-          {/* Process Overview */}
-          <div className="mb-8 p-6 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg">
-            <h3 className="text-lg font-light text-gray-900 mb-4">Process Overview</h3>
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
-                  <Truck className="w-4 h-4 text-blue-600" />
-                </div>
-                <span className="text-sm font-light">Drivers Form</span>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center">
+                <Droplets className="w-4 h-4 text-white" />
               </div>
-              <ArrowRight className="w-4 h-4 text-gray-400" />
-              <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
-                  <Droplets className="w-4 h-4 text-green-600" />
-                </div>
-                <div className="flex items-center space-x-2">
-                  <span className="text-sm font-medium text-green-600">Raw Milk Intake</span>
-                  <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-2 py-1 rounded-full text-xs font-medium shadow-lg">
-                    Current Step
-                  </div>
-                </div>
-              </div>
-              <ArrowRight className="w-4 h-4 text-gray-400" />
-              <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
-                  <Beaker className="w-4 h-4 text-gray-400" />
-                </div>
-                <span className="text-sm font-light text-gray-400">Standardizing</span>
-              </div>
-              <ArrowRight className="w-4 h-4 text-gray-400" />
-              <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
-                  <Package className="w-4 h-4 text-gray-400" />
-                </div>
-                <span className="text-sm font-light text-gray-400">Pasteurizing</span>
+              <div>
+                <SheetTitle className="text-lg font-light m-0">Raw Milk Intake Form Details</SheetTitle>
+                <SheetDescription className="text-sm font-light">
+                  Complete information about the raw milk intake form record
+                </SheetDescription>
               </div>
             </div>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex items-center justify-between mb-6">
             <div className="flex items-center space-x-2">
-              <FormIdCopy
-                displayId={form?.tag}
-                actualId={form.id}
-                size="lg"
-              />
-            </div>
-            <div className="flex items-center space-x-2">
+              {!currentResultSlip && (
+                <LoadingButton
+                  variant="outline"
+                  size="sm"
+                  onClick={() => { 
+                    setResultSlipMode("create"); 
+                    setResultSlipExistingId(undefined); 
+                    setResultSlipDrawerOpen(true);
+                    setActiveTab("lab");
+                  }}
+                  className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full"
+                >
+                  <Beaker className="w-4 h-4 mr-2" />
+                  Create Lab Test
+                </LoadingButton>
+              )}
               <LoadingButton
                 variant="outline"
                 size="sm"
@@ -257,8 +227,12 @@ export function RawMilkIntakeFormViewDrawer({
               </LoadingButton>
             </div>
           </div>
+        </SheetHeader>
 
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <div className="flex-1 overflow-y-auto p-6">
+          {/* Process Overview */}
+          <div className="mb-8 p-6 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg">
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="h-auto p-0 bg-transparent border-0 border-b border-gray-200">
               <TabsTrigger
                 value="details"
@@ -628,6 +602,7 @@ export function RawMilkIntakeFormViewDrawer({
               </div>
             </TabsContent>
           </Tabs>
+          </div>
         </div>
 
         <RawMilkResultSlipDrawer
@@ -638,6 +613,16 @@ export function RawMilkIntakeFormViewDrawer({
           existingId={resultSlipExistingId}
           existingData={currentResultSlip}
           driverFormId={form.drivers_form_id}
+          onSuccess={(result) => {
+            // Refetch the test data
+            dispatch(fetchRawMilkResultSlips())
+            // Reselect the updated item ID
+            if (result && result.id) {
+              setResultSlipExistingId(result.id)
+            }
+            // Switch to lab tab to show updated data
+            setActiveTab("lab")
+          }}
         />
       </SheetContent>
     </Sheet>

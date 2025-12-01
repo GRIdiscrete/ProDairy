@@ -136,7 +136,16 @@ export function UHTQualityCheckViewDrawer({
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <span className="text-xs font-light text-gray-500">pH 0 Days</span>
-                  <p className="text-sm font-light">{qualityCheck.ph_0_days}</p>
+                  <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+                    qualityCheck.ph_0_days < 0.1 
+                      ? 'bg-red-100 text-red-800 border border-red-200' 
+                      : qualityCheck.ph_0_days >= 4.0 && qualityCheck.ph_0_days <= 7.0
+                      ? 'bg-green-100 text-green-800 border border-green-200'
+                      : 'bg-yellow-100 text-yellow-800 border border-yellow-200'
+                  }`}>
+                    <TestTube className="w-3 h-3 mr-1" />
+                    {qualityCheck.ph_0_days}
+                  </div>
                 </div>
                 <div>
                   <span className="text-xs font-light text-gray-500">Created At</span>

@@ -288,6 +288,13 @@ export function SkimmingFormDrawer({
     }
   }, [open, mode, form])
 
+  const onInvalid = (errors: any) => {
+    const errorMessages = Object.values(errors).map((err: any) => err.message).filter(Boolean);
+    if (errorMessages.length > 0) {
+      toast.error(`Please check the following fields: ${errorMessages.join(', ')}`);
+    }
+  };
+
   const handleSubmit = async (data: SkimmingFormData) => {
     // Check if user is authenticated and has an ID
     if (!isAuthenticated || !user?.id) {
@@ -387,7 +394,7 @@ export function SkimmingFormDrawer({
               </div>
             </div>
           ) : (
-            <form onSubmit={formHook.handleSubmit(handleSubmit)} className="space-y-6 p-6">
+            <form onSubmit={formHook.handleSubmit(handleSubmit, onInvalid)} className="space-y-6 p-6">
               <ProcessOverview />
 
               {/* Basic Information */}

@@ -76,25 +76,20 @@ const qualityCheckSchema = yup.object({
   checked_by: yup.string().required("Checked by is required"),
   ph_0_days: yup.number()
     .transform((value, originalValue) => originalValue === "" ? undefined : value)
-    .required("pH 0 days is required")
-    .min(0, "Must be positive"),
+    .required("pH 0 days is required"),
 })
 
 // Step 2: Quality Check Details Form Schema
 const qualityCheckDetailsSchema = yup.object({
-  time: yup.string().required("Time is required"),
+  time: yup.string().oneOf(["", "1A", "1B", "1C"], "Invalid basket"),
   ph_30_degrees: yup.number()
-    .transform((value, originalValue) => originalValue === "" ? undefined : value)
-    .required("pH 30 degrees is required")
-    .min(0, "Must be positive"),
+    .transform((value, originalValue) => originalValue === "" ? undefined : value),
   ph_55_degrees: yup.number()
-    .transform((value, originalValue) => originalValue === "" ? undefined : value)
-    .required("pH 55 degrees is required")
-    .min(0, "Must be positive"),
-  defects: yup.string().required("Defects is required"),
-  event: yup.string().required("Event is required"),
-  analyst: yup.string().required("Analyst is required"),
-  verified_by: yup.string().required("Verified by is required"),
+    .transform((value, originalValue) => originalValue === "" ? undefined : value),
+  defects: yup.string(),
+  // event: yup.string().required("Event is required"),
+  analyst: yup.string(),
+  verified_by: yup.string(),
 })
 
 type QualityCheckFormData = yup.InferType<typeof qualityCheckSchema>
@@ -139,7 +134,7 @@ export function UHTQualityCheckDrawer({
       ph_30_degrees: "" as any,
       ph_55_degrees: "" as any,
       defects: "",
-      event: "",
+      // event: "",
       analyst: "",
       verified_by: "",
     },
@@ -195,7 +190,7 @@ export function UHTQualityCheckDrawer({
           ph_30_degrees: details.ph_30_degrees ?? "" as any,
           ph_55_degrees: details.ph_55_degrees ?? "" as any,
           defects: details.defects || "",
-          event: details.event || "",
+          // event: details.event || "",
           analyst: details.analyst || "",
           verified_by: details.verified_by || "",
         })
@@ -205,7 +200,7 @@ export function UHTQualityCheckDrawer({
           ph_30_degrees: "" as any,
           ph_55_degrees: "" as any,
           defects: "",
-          event: "",
+          // event: "",
           analyst: "",
           verified_by: "",
         })
@@ -234,7 +229,7 @@ export function UHTQualityCheckDrawer({
           ph_30_degrees: "" as any,
           ph_55_degrees: "" as any,
           defects: "",
-          event: "",
+          // event: "",
           analyst: "",
           verified_by: "",
         })
@@ -280,7 +275,7 @@ export function UHTQualityCheckDrawer({
         ph_30_degrees: data.ph_30_degrees,
         ph_55_degrees: data.ph_55_degrees,
         defects: data.defects,
-        event: data.event,
+        // event: data.event,
         analyst: data.analyst,
         verified_by: data.verified_by,
       },
@@ -498,24 +493,24 @@ export function UHTQualityCheckDrawer({
 
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
+            <Label htmlFor="time">Time</Label>
             <Controller
               name="time"
               control={qualityCheckDetailsForm.control}
-              render={({ field }) => {
-                const safeValue = typeof field.value === 'string' && field.value !== 'UTC' ? field.value : ""
-                return (
-                  <DatePicker
-                    label="Time *"
-                    value={safeValue}
-                    onChange={(value) => {
-                      field.onChange(value || "")
-                    }}
-                    placeholder="Select time"
-                    showTime={true}
-                    error={!!qualityCheckDetailsForm.formState.errors.time}
-                  />
-                )
-              }}
+              render={({ field }) => (
+                <SearchableSelect
+                  options={[
+                    { value: "1A", label: "1A" },
+                    { value: "1B", label: "1B" },
+                    { value: "1C", label: "1C" },
+                  ]}
+                  value={field.value}
+                  onValueChange={field.onChange}
+                  placeholder="Select basket"
+                  searchPlaceholder="Search baskets..."
+                  emptyMessage="No baskets available"
+                />
+              )}
             />
             {qualityCheckDetailsForm.formState.errors.time && (
               <p className="text-sm text-red-500">{qualityCheckDetailsForm.formState.errors.time.message}</p>
@@ -523,7 +518,7 @@ export function UHTQualityCheckDrawer({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="ph_30_degrees">pH 30°C *</Label>
+            <Label htmlFor="ph_30_degrees">pH 30°C</Label>
             <Controller
               name="ph_30_degrees"
               control={qualityCheckDetailsForm.control}
@@ -546,7 +541,7 @@ export function UHTQualityCheckDrawer({
 
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="ph_55_degrees">pH 55°C *</Label>
+            <Label htmlFor="ph_55_degrees">pH 55°C</Label>
             <Controller
               name="ph_55_degrees"
               control={qualityCheckDetailsForm.control}
@@ -567,7 +562,7 @@ export function UHTQualityCheckDrawer({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="analyst">Analyst *</Label>
+            <Label htmlFor="analyst">Analyst</Label>
             <Controller
               name="analyst"
               control={qualityCheckDetailsForm.control}
@@ -595,7 +590,7 @@ export function UHTQualityCheckDrawer({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="defects">Defects *</Label>
+          <Label htmlFor="defects">Defects</Label>
           <Controller
             name="defects"
             control={qualityCheckDetailsForm.control}
@@ -612,7 +607,7 @@ export function UHTQualityCheckDrawer({
           )}
         </div>
 
-        <div className="space-y-2">
+        {/* <div className="space-y-2">
           <Label htmlFor="event">Event *</Label>
           <Controller
             name="event"
@@ -628,10 +623,10 @@ export function UHTQualityCheckDrawer({
           {qualityCheckDetailsForm.formState.errors.event && (
             <p className="text-sm text-red-500">{qualityCheckDetailsForm.formState.errors.event.message}</p>
           )}
-        </div>
+        </div> */}
 
         <div className="space-y-2">
-          <Label htmlFor="verified_by">Verified By *</Label>
+          <Label htmlFor="verified_by">Verified By</Label>
           <Controller
             name="verified_by"
             control={qualityCheckDetailsForm.control}

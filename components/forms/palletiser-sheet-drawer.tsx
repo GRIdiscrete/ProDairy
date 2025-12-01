@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useForm, Controller } from "react-hook-form"
+import { useForm, Controller, useFieldArray } from "react-hook-form"
 import { yupResolver } from "@hookform/resolvers/yup"
 import * as yup from "yup"
 import { Button } from "@/components/ui/button"
@@ -44,13 +44,15 @@ const sheetSchema = yup.object({
 })
 
 const sheetDetailsSchema = yup.object({
-  pallet_number: yup.number().required("Pallet number is required").min(1),
-  start_time: yup.string().required("Start time is required"),
-  end_time: yup.string().required("End time is required"),
-  cases_packed: yup.number().required("Cases packed is required").min(0),
-  serial_number: yup.string().required("Serial number is required"),
-  counter_id: yup.string().required("Counter is required"),
-  counter_signature: yup.string().required("Counter signature is required"),
+  details: yup.array().of(yup.object({
+    pallet_number: yup.number().min(1).required("Pallet number is required"),
+    start_time: yup.string().required("Start time is required"),
+    end_time: yup.string().required("End time is required"),
+    cases_packed: yup.number().min(0).required("Cases packed is required"),
+    serial_number: yup.string().required("Serial number is required"),
+    counter_id: yup.string().required("Counter is required"),
+    counter_signature: yup.string().required("Counter signature is required"),
+  })).min(1, "At least one detail is required")
 })
 
 type SheetFormData = yup.InferType<typeof sheetSchema>
@@ -77,6 +79,7 @@ export function PalletiserSheetDrawer({
   const [loadingRoles, setLoadingRoles] = useState(false)
   const [counterSignatureOpen, setCounterSignatureOpen] = useState(false)
   const [counterSignatureViewOpen, setCounterSignatureViewOpen] = useState(false)
+  const [currentSignatureIndex, setCurrentSignatureIndex] = useState<number | null>(null)
 
   const sheetForm = useForm<SheetFormData>({
     resolver: yupResolver(sheetSchema),
@@ -92,15 +95,14 @@ export function PalletiserSheetDrawer({
   const sheetDetailsForm = useForm<SheetDetailsFormData>({
     resolver: yupResolver(sheetDetailsSchema),
     defaultValues: {
-      pallet_number: undefined,
-      start_time: "",
-      end_time: "",
-      cases_packed: undefined,
-      serial_number: "",
-      counter_id: "",
-      counter_signature: "",
+      details: []
     },
     mode: "onChange"
+  })
+
+  const { fields, append, remove } = useFieldArray({
+    control: sheetDetailsForm.control,
+    name: "details"
   })
 
   useEffect(() => {
@@ -140,19 +142,26 @@ export function PalletiserSheetDrawer({
         batch_number: sheet.batch_number ?? undefined,
         approved_by: sheet.approved_by || ""
       })
-      // take first details entry if exists
-      const first = Array.isArray(sheet.palletiser_sheet_details) && sheet.palletiser_sheet_details.length > 0
-        ? sheet.palletiser_sheet_details[0]
-        : null
+      // prefill details array
+      const existingDetails = Array.isArray(sheet.palletiser_sheet_details) ? sheet.palletiser_sheet_details.map((d: any) => ({
+        pallet_number: d.pallet_number ?? undefined,
+        start_time: normalizeTimeForPicker(d.start_time ?? "") ?? "",
+        end_time: normalizeTimeForPicker(d.end_time ?? "") ?? "",
+        cases_packed: d.cases_packed ?? undefined,
+        serial_number: d.serial_number ?? "",
+        counter_id: d.counter_id ?? "",
+        counter_signature: d.counter_signature ?? ""
+      })) : []
       sheetDetailsForm.reset({
-        pallet_number: first?.pallet_number ?? undefined,
-        // normalize stored "HH:MM:SS" to "HH:MM" for the time picker
-        start_time: normalizeTimeForPicker(first?.start_time ?? "") ?? "",
-        end_time: normalizeTimeForPicker(first?.end_time ?? "") ?? "",
-        cases_packed: first?.cases_packed ?? undefined,
-        serial_number: first?.serial_number ?? "",
-        counter_id: first?.counter_id ?? "",
-        counter_signature: first?.counter_signature ?? ""
+        details: existingDetails.length > 0 ? existingDetails : [{
+          pallet_number: undefined,
+          start_time: "",
+          end_time: "",
+          cases_packed: undefined,
+          serial_number: "",
+          counter_id: "",
+          counter_signature: "",
+        }]
       })
       setTempSheetData({
         machine_id: sheet.machine_id,
@@ -165,7 +174,17 @@ export function PalletiserSheetDrawer({
       setCurrentStep(1)
     } else {
       sheetForm.reset()
-      sheetDetailsForm.reset()
+      sheetDetailsForm.reset({
+        details: [{
+          pallet_number: undefined,
+          start_time: "",
+          end_time: "",
+          cases_packed: undefined,
+          serial_number: "",
+          counter_id: "",
+          counter_signature: "",
+        }]
+      })
       setTempSheetData(null)
       setCurrentStep(1)
     }
@@ -209,11 +228,13 @@ export function PalletiserSheetDrawer({
     return `${d} ${t}+00`
   }
 
-  const handleFinalSubmit = async (details: SheetDetailsFormData) => {
+  const handleFinalSubmit = async (data: SheetDetailsFormData) => {
     if (!tempSheetData && mode !== "edit") {
       toast.error("Missing sheet information")
       return
     }
+
+    const details = data.details || []
 
     const payload: any = {
       // include id for update payload
@@ -224,27 +245,24 @@ export function PalletiserSheetDrawer({
        batch_number: tempSheetData?.batch_number ?? sheet?.batch_number,
        product_type: tempSheetData?.product_type ?? sheet?.product_type ?? productType,
        approved_by: tempSheetData?.approved_by ?? sheet?.approved_by,
-      palletiser_sheet_details: [
-        (() => {
-          const detailPayload: any = {
-            pallet_number: details.pallet_number,
-            // build full timestamp using sheet date
-            start_time: buildFullTimestamp(tempSheetData?.manufacturing_date ?? sheet?.manufacturing_date, details.start_time),
-            end_time: buildFullTimestamp(tempSheetData?.manufacturing_date ?? sheet?.manufacturing_date, details.end_time),
-            cases_packed: details.cases_packed ?? null,
-            serial_number: details.serial_number || null,
-            counter_id: details.counter_id || null,
-            counter_signature: normalizeDataUrlToBase64(details.counter_signature || "")
-          }
-          // if editing, include detail id and palletiser_sheet_id if available
-          if (mode === "edit") {
-            const first = Array.isArray(sheet?.palletiser_sheet_details) && sheet!.palletiser_sheet_details.length > 0 ? sheet!.palletiser_sheet_details[0] : null
-            if (first?.id) detailPayload.id = first.id
-            if (sheet?.id) detailPayload.palletiser_sheet_id = sheet.id
-          }
-          return detailPayload
-        })()
-      ]
+      palletiser_sheet_details: details.map((detail, index) => {
+        const detailPayload: any = {
+          pallet_number: detail.pallet_number,
+          // build full timestamp using sheet date
+          start_time: buildFullTimestamp(tempSheetData?.manufacturing_date ?? sheet?.manufacturing_date, detail.start_time),
+          end_time: buildFullTimestamp(tempSheetData?.manufacturing_date ?? sheet?.manufacturing_date, detail.end_time),
+          cases_packed: detail.cases_packed ?? null,
+          serial_number: detail.serial_number || null,
+          counter_id: detail.counter_id || null,
+          counter_signature: normalizeDataUrlToBase64(detail.counter_signature || "")
+        }
+        // if editing, include detail id if available
+        if (mode === "edit" && Array.isArray(sheet?.palletiser_sheet_details) && sheet.palletiser_sheet_details[index]?.id) {
+          detailPayload.id = sheet.palletiser_sheet_details[index].id
+          detailPayload.palletiser_sheet_id = sheet.id
+        }
+        return detailPayload
+      })
      }
 
     try {
@@ -377,86 +395,105 @@ export function PalletiserSheetDrawer({
         <p className="text-sm text-gray-600 mt-1">Enter pallet details and counter information</p>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label className="mb-2">Pallet Number</Label>
-          <Controller name="pallet_number" control={sheetDetailsForm.control} render={({ field }) => (
-            <Input type="number" {...field} value={field.value ?? ""} onChange={(e)=> field.onChange(e.target.value ? Number(e.target.value) : undefined)} />
-          )} />
-          {sheetDetailsForm.formState.errors.pallet_number && <p className="text-xs text-red-500">{sheetDetailsForm.formState.errors.pallet_number.message}</p>}
-        </div>
+      {fields.map((field, index) => (
+        <div key={field.id} className="p-4 border border-gray-200 rounded-lg bg-gray-50">
+          <div className="flex items-center justify-between mb-4">
+            <h4 className="text-lg font-light">Pallet Detail #{index + 1}</h4>
+            {fields.length > 1 && (
+              <Button type="button" variant="ghost" size="sm" onClick={() => remove(index)} className="text-red-500 hover:text-red-700">
+                Remove
+              </Button>
+            )}
+          </div>
 
-        <div>
-          <Label className="mb-2">Cases Packed</Label>
-          <Controller name="cases_packed" control={sheetDetailsForm.control} render={({ field }) => (
-            <Input type="number" {...field} value={field.value ?? ""} onChange={(e)=> field.onChange(e.target.value ? Number(e.target.value) : undefined)} />
-          )} />
-          {sheetDetailsForm.formState.errors.cases_packed && <p className="text-xs text-red-500">{sheetDetailsForm.formState.errors.cases_packed.message}</p>}
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4 mt-4">
-        <div>
-          <Label className="mb-2">Start Time</Label>
-          <Controller name="start_time" control={sheetDetailsForm.control} render={({ field }) => (
-            <ShadcnTimePicker value={field.value} onChange={field.onChange} />
-          )} />
-          {sheetDetailsForm.formState.errors.start_time && <p className="text-xs text-red-500">{sheetDetailsForm.formState.errors.start_time.message}</p>}
-        </div>
-
-        <div>
-          <Label className="mb-2">End Time</Label>
-          <Controller name="end_time" control={sheetDetailsForm.control} render={({ field }) => (
-            <ShadcnTimePicker value={field.value} onChange={field.onChange} />
-          )} />
-          {sheetDetailsForm.formState.errors.end_time && <p className="text-xs text-red-500">{sheetDetailsForm.formState.errors.end_time.message}</p>}
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4 mt-4">
-        <div>
-          <Label className="mb-2">Serial Number</Label>
-          <Controller name="serial_number" control={sheetDetailsForm.control} render={({ field }) => (
-            <Input {...field} value={field.value ?? ""} onChange={(e) => field.onChange(e.target.value)} />
-          )} />
-          {sheetDetailsForm.formState.errors.serial_number && <p className="text-xs text-red-500">{sheetDetailsForm.formState.errors.serial_number.message}</p>}
-        </div>
-
-        <div>
-          <Label className="mb-2">Counter</Label>
-          <Controller name="counter_id" control={sheetDetailsForm.control} render={({ field }) => (
-            <SearchableSelect
-              options={users.map(u => ({ value: u.id, label: `${u.first_name} ${u.last_name}`.trim() || u.email, description: u.email }))}
-              value={field.value}
-              onValueChange={field.onChange}
-              onSearch={handleUserSearch}
-              loading={loadingUsers}
-            />
-          )} />
-          {sheetDetailsForm.formState.errors.counter_id && <p className="text-xs text-red-500">{sheetDetailsForm.formState.errors.counter_id.message}</p>}
-        </div>
-      </div>
-
-      <div className="mt-4">
-        <Label className="mb-2">Counter Signature</Label>
-        <Controller name="counter_signature" control={sheetDetailsForm.control} render={({ field }) => {
-          const val = typeof field.value === "string" ? field.value : ""
-          return (
-            <div className="space-y-2">
-              {val ? (
-                <img src={base64ToPngDataUrl(val)} alt="signature" className="h-24 border rounded-md" />
-              ) : (
-                <div className="h-24 border-dashed border rounded-md flex items-center justify-center text-xs text-gray-500">No signature</div>
-              )}
-              <div className="flex gap-2">
-                <Button type="button" variant="outline" onClick={() => setCounterSignatureOpen(true)}>Add</Button>
-                {val && <Button type="button" variant="outline" onClick={() => setCounterSignatureViewOpen(true)}>View</Button>}
-                {val && <Button type="button" variant="ghost" onClick={() => field.onChange("")}>Clear</Button>}
-              </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label className="mb-2">Pallet Number</Label>
+              <Controller name={`details.${index}.pallet_number`} control={sheetDetailsForm.control} render={({ field }) => (
+                <Input type="number" {...field} value={field.value ?? ""} onChange={(e)=> field.onChange(e.target.value ? Number(e.target.value) : undefined)} />
+              )} />
+              {sheetDetailsForm.formState.errors.details?.[index]?.pallet_number && <p className="text-xs text-red-500">{sheetDetailsForm.formState.errors.details[index].pallet_number.message}</p>}
             </div>
-          )
-        }} />
-        {sheetDetailsForm.formState.errors.counter_signature && <p className="text-xs text-red-500">{sheetDetailsForm.formState.errors.counter_signature.message}</p>}
+
+            <div>
+              <Label className="mb-2">Cases Packed</Label>
+              <Controller name={`details.${index}.cases_packed`} control={sheetDetailsForm.control} render={({ field }) => (
+                <Input type="number" {...field} value={field.value ?? ""} onChange={(e)=> field.onChange(e.target.value ? Number(e.target.value) : undefined)} />
+              )} />
+              {sheetDetailsForm.formState.errors.details?.[index]?.cases_packed && <p className="text-xs text-red-500">{sheetDetailsForm.formState.errors.details[index].cases_packed.message}</p>}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4 mt-4">
+            <div>
+              <Label className="mb-2">Start Time</Label>
+              <Controller name={`details.${index}.start_time`} control={sheetDetailsForm.control} render={({ field }) => (
+                <ShadcnTimePicker value={field.value} onChange={field.onChange} />
+              )} />
+              {sheetDetailsForm.formState.errors.details?.[index]?.start_time && <p className="text-xs text-red-500">{sheetDetailsForm.formState.errors.details[index].start_time.message}</p>}
+            </div>
+
+            <div>
+              <Label className="mb-2">End Time</Label>
+              <Controller name={`details.${index}.end_time`} control={sheetDetailsForm.control} render={({ field }) => (
+                <ShadcnTimePicker value={field.value} onChange={field.onChange} />
+              )} />
+              {sheetDetailsForm.formState.errors.details?.[index]?.end_time && <p className="text-xs text-red-500">{sheetDetailsForm.formState.errors.details[index].end_time.message}</p>}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4 mt-4">
+            <div>
+              <Label className="mb-2">Serial Number</Label>
+              <Controller name={`details.${index}.serial_number`} control={sheetDetailsForm.control} render={({ field }) => (
+                <Input {...field} value={field.value ?? ""} onChange={(e) => field.onChange(e.target.value)} />
+              )} />
+              {sheetDetailsForm.formState.errors.details?.[index]?.serial_number && <p className="text-xs text-red-500">{sheetDetailsForm.formState.errors.details[index].serial_number.message}</p>}
+            </div>
+
+            <div>
+              <Label className="mb-2">Counter</Label>
+              <Controller name={`details.${index}.counter_id`} control={sheetDetailsForm.control} render={({ field }) => (
+                <SearchableSelect
+                  options={users.map(u => ({ value: u.id, label: `${u.first_name} ${u.last_name}`.trim() || u.email, description: u.email }))}
+                  value={field.value}
+                  onValueChange={field.onChange}
+                  onSearch={handleUserSearch}
+                  loading={loadingUsers}
+                />
+              )} />
+              {sheetDetailsForm.formState.errors.details?.[index]?.counter_id && <p className="text-xs text-red-500">{sheetDetailsForm.formState.errors.details[index].counter_id.message}</p>}
+            </div>
+          </div>
+
+          <div className="mt-4">
+            <Label className="mb-2">Counter Signature</Label>
+            <Controller name={`details.${index}.counter_signature`} control={sheetDetailsForm.control} render={({ field }) => {
+              const val = typeof field.value === "string" ? field.value : ""
+              return (
+                <div className="space-y-2">
+                  {val ? (
+                    <img src={base64ToPngDataUrl(val)} alt="signature" className="h-24 border rounded-md" />
+                  ) : (
+                    <div className="h-24 border-dashed border rounded-md flex items-center justify-center text-xs text-gray-500">No signature</div>
+                  )}
+                  <div className="flex gap-2">
+                    <Button type="button" variant="outline" onClick={() => { setCurrentSignatureIndex(index); setCounterSignatureOpen(true) }}>Add</Button>
+                    {val && <Button type="button" variant="outline" onClick={() => { setCurrentSignatureIndex(index); setCounterSignatureViewOpen(true) }}>View</Button>}
+                    {val && <Button type="button" variant="ghost" onClick={() => field.onChange("")}>Clear</Button>}
+                  </div>
+                </div>
+              )
+            }} />
+            {sheetDetailsForm.formState.errors.details?.[index]?.counter_signature && <p className="text-xs text-red-500">{sheetDetailsForm.formState.errors.details[index].counter_signature.message}</p>}
+          </div>
+        </div>
+      ))}
+
+      <div className="flex justify-center">
+        <Button type="button" variant="outline" onClick={() => append({ pallet_number: undefined, start_time: "", end_time: "", cases_packed: undefined, serial_number: "", counter_id: "", counter_signature: "" })} className="flex items-center gap-2">
+          <Package className="h-4 w-4" /> Add More Pallet Detail
+        </Button>
       </div>
     </div>
   )
@@ -492,8 +529,8 @@ export function PalletiserSheetDrawer({
         </div>
       </SheetContent>
 
-      <SignatureModal open={counterSignatureOpen} onOpenChange={setCounterSignatureOpen} title="Capture Counter Signature" onSave={(dataUrl) => sheetDetailsForm.setValue("counter_signature", dataUrl, { shouldValidate: true })} />
-      <SignatureViewer open={counterSignatureViewOpen} onOpenChange={setCounterSignatureViewOpen} title="Counter Signature" value={sheetDetailsForm.getValues("counter_signature")} />
+      <SignatureModal open={counterSignatureOpen} onOpenChange={setCounterSignatureOpen} title="Capture Counter Signature" onSave={(dataUrl) => { if (currentSignatureIndex !== null) sheetDetailsForm.setValue(`details.${currentSignatureIndex}.counter_signature`, dataUrl, { shouldValidate: true }) }} />
+      <SignatureViewer open={counterSignatureViewOpen} onOpenChange={setCounterSignatureViewOpen} title="Counter Signature" value={currentSignatureIndex !== null ? sheetDetailsForm.getValues(`details.${currentSignatureIndex}.counter_signature`) : ""} />
     </Sheet>
   )
 }

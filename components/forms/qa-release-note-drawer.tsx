@@ -23,7 +23,7 @@ const detailSchema = yup.object({
   release_date: yup.string().required("Release date required"),
   mnf_date: yup.string().required("Manufacture date required"),
   batch_no: yup.string().required("Batch number required"),
-  pack_size_ml: yup.number().required().min(1),
+  pack_size_ml: yup.number().nullable(),
   product: yup.string().required("Product required"),
   status: yup.string().required(),
   pallets_on_hold: yup.number().nullable(),
@@ -56,7 +56,7 @@ export function QaReleaseNoteDrawer({ open, onOpenChange, note, mode = "create",
   const [signatureViewerOpen, setSignatureViewerOpen] = useState(false)
 
   const form = useForm<FormData>({
-    resolver: yupResolver(schema),
+    resolver: yupResolver(schema) as any,
     defaultValues: {
       approved_by: "",
       approver_signature: "",
@@ -64,11 +64,11 @@ export function QaReleaseNoteDrawer({ open, onOpenChange, note, mode = "create",
         release_date: "",
         mnf_date: "",
         batch_no: "",
-        pack_size_ml: 1000,
+        pack_size_ml: undefined,
         product: processId || "",
         status: "Pending",
-        pallets_on_hold: 0,
-        hold_times: 0
+        pallets_on_hold: undefined,
+        hold_times: undefined
       }]
     }
   })
@@ -106,11 +106,11 @@ export function QaReleaseNoteDrawer({ open, onOpenChange, note, mode = "create",
           release_date: "",
           mnf_date: "",
           batch_no: "",
-          pack_size_ml: 1000,
+          pack_size_ml: undefined,
           product: processId || "",
           status: "Pending",
-          pallets_on_hold: 0,
-          hold_times: 0
+          pallets_on_hold: undefined,
+          hold_times: undefined
         }]
       })
     }
@@ -122,11 +122,11 @@ export function QaReleaseNoteDrawer({ open, onOpenChange, note, mode = "create",
           release_date: "",
           mnf_date: "",
           batch_no: "",
-          pack_size_ml: 1000,
+          pack_size_ml: undefined,
           product: processId || "",
           status: "Pending",
-          pallets_on_hold: 0,
-          hold_times: 0
+          pallets_on_hold: undefined,
+          hold_times: undefined
         }]
       })
     }
@@ -183,7 +183,7 @@ export function QaReleaseNoteDrawer({ open, onOpenChange, note, mode = "create",
                   render={({ field }) => (
                     <SearchableSelect
                       options={roles.map(r => ({ value: r.id, label: r.role_name }))}
-                      value={field.value}
+                      value={field.value || undefined}
                       onValueChange={field.onChange}
                       onSearch={handleUserSearch}
                       placeholder="Search approver role"
@@ -191,26 +191,6 @@ export function QaReleaseNoteDrawer({ open, onOpenChange, note, mode = "create",
                     />
                   )}
                 />
-              </div>
-
-              <div>
-                <Label className="mb-2">Approver Signature</Label>
-                <Controller name="approver_signature" control={form.control} render={({ field }) => (
-                  <div className="space-y-2">
-                    {field.value ? (
-                      <img src={base64ToPngDataUrl(field.value)} alt="Approver signature" className="h-24 border border-gray-200 rounded-md bg-white" />
-                    ) : (
-                      <div className="h-24 flex items-center justify-center border border-dashed border-gray-300 rounded-md text-xs text-gray-500 bg-white">
-                        No signature captured
-                      </div>
-                    )}
-                    <div className="flex items-center gap-2">
-                      <Button type="button" size="sm" variant="outline" onClick={() => setSignatureModalOpen(true)}>Add Signature</Button>
-                      {field.value && <Button type="button" size="sm" variant="outline" onClick={() => setSignatureViewerOpen(true)}>View Signature</Button>}
-                      {field.value && <Button type="button" size="sm" variant="ghost" onClick={() => field.onChange("")}>Clear</Button>}
-                    </div>
-                  </div>
-                )} />
               </div>
 
               {/* single detail entry UI (supporting array but render first element) */}
@@ -248,8 +228,10 @@ export function QaReleaseNoteDrawer({ open, onOpenChange, note, mode = "create",
                       </div>
                       <div>
                         <Label className="mb-2">Pack Size (ml)</Label>
-                        <Input type="number" value={d.pack_size_ml || 1000} onChange={(e) => {
-                          const nv = [...ds]; nv[0] = { ...(nv[0]||{}), pack_size_ml: Number(e.target.value) }; field.onChange(nv)
+                        <Input type="number" value={d.pack_size_ml ?? ""} onChange={(e) => {
+                          const val = e.target.value;
+                          const num = val === "" ? undefined : Number(val);
+                          const nv = [...ds]; nv[0] = { ...(nv[0]||{}), pack_size_ml: num }; field.onChange(nv)
                         }} />
                       </div>
                       <div>
@@ -272,19 +254,43 @@ export function QaReleaseNoteDrawer({ open, onOpenChange, note, mode = "create",
                       </div>
                       <div>
                         <Label className="mb-2">Pallets On Hold</Label>
-                        <Input type="number" value={d.pallets_on_hold ?? 0} onChange={(e) => {
-                          const nv = [...ds]; nv[0] = { ...(nv[0]||{}), pallets_on_hold: Number(e.target.value) }; field.onChange(nv)
+                        <Input type="number" value={d.pallets_on_hold ?? ""} onChange={(e) => {
+                          const val = e.target.value;
+                          const num = val === "" ? undefined : Number(val);
+                          const nv = [...ds]; nv[0] = { ...(nv[0]||{}), pallets_on_hold: num }; field.onChange(nv)
                         }} />
                       </div>
                       <div>
-                        <Label className="mb-2">Hold Times</Label>
-                        <Input type="number" value={d.hold_times ?? 0} onChange={(e) => {
-                          const nv = [...ds]; nv[0] = { ...(nv[0]||{}), hold_times: Number(e.target.value) }; field.onChange(nv)
+                        <Label className="mb-2">Hold Batches</Label>
+                        <Input type="number" value={d.hold_times ?? ""} onChange={(e) => {
+                          const val = e.target.value;
+                          const num = val === "" ? undefined : Number(val);
+                          const nv = [...ds]; nv[0] = { ...(nv[0]||{}), hold_times: num }; field.onChange(nv)
                         }} />
                       </div>
                     </div>
                   )
                 }} />
+              </div>
+
+              <div>
+                <Label className="mb-2">Release Signature</Label>
+                <Controller name="approver_signature" control={form.control} render={({ field }) => (
+                  <div className="space-y-2">
+                    {field.value ? (
+                      <img src={base64ToPngDataUrl(field.value)} alt="Release Signature" className="h-24 border border-gray-200 rounded-md bg-white" />
+                    ) : (
+                      <div className="h-24 flex items-center justify-center border border-dashed border-gray-300 rounded-md text-xs text-gray-500 bg-white">
+                        No signature captured
+                      </div>
+                    )}
+                    <div className="flex items-center gap-2">
+                      <Button type="button" size="sm" variant="outline" onClick={() => setSignatureModalOpen(true)}>Add Signature</Button>
+                      {field.value && <Button type="button" size="sm" variant="outline" onClick={() => setSignatureViewerOpen(true)}>View Signature</Button>}
+                      {field.value && <Button type="button" size="sm" variant="ghost" onClick={() => field.onChange("")}>Clear</Button>}
+                    </div>
+                  </div>
+                )} />
               </div>
             </div>
           </form>
@@ -304,9 +310,9 @@ export function QaReleaseNoteDrawer({ open, onOpenChange, note, mode = "create",
       <SignatureModal open={signatureModalOpen} onOpenChange={setSignatureModalOpen} onSave={(sig) => {
         form.setValue("approver_signature", sig)
         setSignatureModalOpen(false)
-      }} title="Approver Signature" />
+      }} title="Release Signature" />
 
-      <SignatureViewer open={signatureViewerOpen} onOpenChange={setSignatureViewerOpen} value={form.getValues("approver_signature") || ""} title="Approver Signature" />
+      <SignatureViewer open={signatureViewerOpen} onOpenChange={setSignatureViewerOpen} value={form.getValues("approver_signature") || ""} title="Release Signature" />
     </Sheet>
   )
 }

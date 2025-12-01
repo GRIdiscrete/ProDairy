@@ -371,6 +371,13 @@ export function PasteurizingFormDrawer({
     }
   }
 
+  const onInvalid = (errors: any) => {
+    const errorMessages = Object.values(errors).map((err: any) => err.message).filter(Boolean)
+    toast.error(`Please check the following fields: ${errorMessages.join(', ')}`, {
+      style: { background: '#ef4444', color: 'white' }
+    })
+  }
+
   // Create options arrays from Redux data
   const machineOptions: SearchableSelectOption[] = machines.map(machine => ({
     value: machine.id,
@@ -430,7 +437,7 @@ export function PasteurizingFormDrawer({
         <div className="flex-1 overflow-y-auto p-6 bg-white">
           <ProcessOverview />
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={handleSubmit(onSubmit, onInvalid)} className="space-y-6">
             {/* Basic Information */}
             <Card className="shadow-none border border-gray-200 rounded-lg">
               <CardHeader className="pb-4">

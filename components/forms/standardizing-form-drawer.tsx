@@ -217,6 +217,13 @@ export function StandardizingFormDrawer({
     }
   }
 
+  const onInvalid = (errors: any) => {
+    const errorMessages = Object.values(errors).map((err: any) => err.message).filter(Boolean)
+    toast.error(`Please check the following fields: ${errorMessages.join(', ')}`, {
+      style: { background: '#ef4444', color: 'white' }
+    })
+  }
+
   const renderForm = () => {
     // Check if user is authenticated
     if (!isAuthenticated) {
@@ -429,7 +436,7 @@ export function StandardizingFormDrawer({
         </SheetHeader>
 
         <div className="flex-1 overflow-y-auto">
-          <form onSubmit={formHook.handleSubmit(handleSubmit)}>
+          <form onSubmit={formHook.handleSubmit(handleSubmit, onInvalid)}>
             {renderForm()}
             
             <div className="flex items-center justify-end p-6 border-t">

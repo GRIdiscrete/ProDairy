@@ -357,6 +357,13 @@ export function DriverFormDrawer({
     }
   }
 
+  const onInvalid = (errors: any) => {
+    const errorMessages = Object.values(errors).map((err: any) => err.message).filter(Boolean)
+    toast.error(`Please check the following fields: ${errorMessages.join(', ')}`, {
+      style: { background: '#ef4444', color: 'white' }
+    })
+  }
+
   const addCollectedProduct = () => {
     append({
       raw_material_id: "",
@@ -469,7 +476,7 @@ export function DriverFormDrawer({
             </div>
           </SheetHeader>
           <div className="flex-1 overflow-y-auto">
-            <form onSubmit={handleSubmit(onSubmit)} className={isMobile || isTablet ? "space-y-6 p-6" : "space-y-6"}>
+            <form onSubmit={handleSubmit(onSubmit, onInvalid)} className={isMobile || isTablet ? "space-y-6 p-6" : "space-y-6"}>
               <div className="border border-gray-200 rounded-lg bg-white">
                 <div className="p-6 pb-0">
                   <div className="flex items-center space-x-2">

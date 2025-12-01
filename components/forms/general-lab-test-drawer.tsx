@@ -90,6 +90,13 @@ export function GeneralLabTestDrawer({ open, onOpenChange, test, mode }: { open:
     }
   }
 
+  const onInvalid = (errors: any) => {
+    const errorMessages = Object.values(errors).map((err: any) => err.message).filter(Boolean)
+    toast.error(`Please check the following fields: ${errorMessages.join(', ')}`, {
+      style: { background: '#ef4444', color: 'white' }
+    })
+  }
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="tablet-sheet-full p-0 bg-white overflow-y-auto max-h-screen">
@@ -100,7 +107,7 @@ export function GeneralLabTestDrawer({ open, onOpenChange, test, mode }: { open:
               {mode === "create" ? "Create a new general lab test record" : "Update general lab test record"}
             </SheetDescription>
           </SheetHeader>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-8 mt-6">
+          <form onSubmit={handleSubmit(onSubmit, onInvalid)} className="space-y-8 mt-6">
             {/* Basic Information */}
             <div className="space-y-6">
               <h3 className="text-lg font-medium">Basic Information</h3>

@@ -490,6 +490,13 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
     }
   }
 
+  const onInvalid = (errors: any) => {
+    const errorMessages = Object.values(errors).map((err: any) => err.message).filter(Boolean)
+    toast.error(`Please check the following fields: ${errorMessages.join(', ')}`, {
+      style: { background: '#ef4444', color: 'white' }
+    })
+  }
+
   // Update default silo template with empty values
   const getEmptySiloDetails = (id: string, name: string) => ({
     id,
@@ -536,7 +543,7 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
               </SheetDescription>
             </SheetHeader>
 
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 mt-6">
+            <form onSubmit={handleSubmit(onSubmit, onInvalid)} className="space-y-6 mt-6">
               {/* BMT Information - Simplified */}
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">BMT Information</h3>

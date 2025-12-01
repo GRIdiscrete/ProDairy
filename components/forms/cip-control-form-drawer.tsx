@@ -238,6 +238,13 @@ export function CIPControlFormDrawer({ open, onOpenChange, form, mode }: CIPCont
     }
   }
 
+  const onInvalid = (errors: any) => {
+    const errorMessages = Object.values(errors).map((err: any) => err.message).filter(Boolean)
+    toast.error(`Please check the following fields: ${errorMessages.join(', ')}`, {
+      style: { background: '#ef4444', color: 'white' }
+    })
+  }
+
   useEffect(() => {
     if (open && form && mode === "edit") {
       reset({
@@ -295,7 +302,7 @@ export function CIPControlFormDrawer({ open, onOpenChange, form, mode }: CIPCont
         </div>
 
         <div className="flex-1 overflow-y-auto">
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 p-6">
+          <form onSubmit={handleSubmit(onSubmit, onInvalid)} className="space-y-6 p-6">
             {/* Basic Information */}
             <div className="space-y-4">
               <h3 className="text-lg font-light text-gray-900 border-b pb-2">Basic Information</h3>

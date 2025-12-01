@@ -34,13 +34,13 @@ const combinedSchema = yup.object({
   date_of_production: yup.string().required("Production date is required"),
   date_analysed: yup.string().required("Analysis date is required"),
   batch_number: yup.number().required("Batch number is required").min(1),
-  product: yup.string().required("Product is required"),
+  product: yup.string(),
   checked_by: yup.string().required("Checked by is required"),
-  issue: yup.string().required("Issue description is required"),
+  issue: yup.string(),
   analyst: yup.string().required("Analyst is required"),
-  qa_decision: yup.string().required("QA decision is required"),
+  qa_decision: yup.string(),
   details: yup.array().of(yup.object({
-    ph_after_7_days_at_30_degrees: yup.number().nullable("pH level is required"),
+    ph_after_7_days_at_30_degrees: yup.number().nullable(),
     packaging_integrity: yup.string().nullable(),
     defects: yup.string().nullable()
   })).min(1)
@@ -253,13 +253,13 @@ export function QACorrectiveActionDrawer({
               </div>
 
               <div className="col-span-2 space-y-2">
-                <Label>Issue Description *</Label>
+                <Label>Issue Description</Label>
                 <Controller name="issue" control={form.control} render={({ field }) => <Textarea {...field} rows={3} />} />
                 {form.formState.errors.issue && <p className="text-sm text-red-600">{form.formState.errors.issue.message}</p>}
               </div>
 
               <div className="col-span-2 space-y-2">
-                <Label>QA Decision *</Label>
+                <Label>QA Decision</Label>
                 <Controller name="qa_decision" control={form.control} render={({ field }) => <Textarea {...field} rows={3} />} />
                 {form.formState.errors.qa_decision && <p className="text-sm text-red-600">{form.formState.errors.qa_decision.message}</p>}
               </div>
@@ -267,7 +267,7 @@ export function QACorrectiveActionDrawer({
               {/* Details object (single entry in details array) */}
               <div className="col-span-2 grid grid-cols-3 gap-4">
                 <div className="space-y-2">
-                  <Label>pH After 7 days at 30°C *</Label>
+                  <Label>pH After 7 days at 30°C</Label>
                   <Controller name="details" control={form.control} render={({ field }) => {
                     const val = (field.value && field.value[0] && field.value[0].ph_after_7_days_at_30_degrees) ?? ""
                     return <Input type="number" step="0.1" value={val} onChange={(e) => {
@@ -279,7 +279,7 @@ export function QACorrectiveActionDrawer({
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Packaging Integrity *</Label>
+                  <Label>Packaging Integrity</Label>
                   <Controller name="details" control={form.control} render={({ field }) => {
                     const val = (field.value && field.value[0] && field.value[0].packaging_integrity) || ""
                     return <Input value={val} onChange={(e) => {
@@ -290,7 +290,7 @@ export function QACorrectiveActionDrawer({
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Defects *</Label>
+                  <Label>Defects</Label>
                   <Controller name="details" control={form.control} render={({ field }) => {
                     const val = (field.value && field.value[0] && field.value[0].defects) || ""
                     return <Input value={val} onChange={(e) => {

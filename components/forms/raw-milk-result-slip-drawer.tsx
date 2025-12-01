@@ -102,7 +102,7 @@ interface Props {
   existingId?: string
   existingData?: any
   driverFormId: string
-  onSuccess?: () => void
+  onSuccess?: (result?: any) => void
 }
 
 export function RawMilkResultSlipDrawer({
@@ -418,11 +418,11 @@ export function RawMilkResultSlipDrawer({
           ...payload
         })).unwrap()
         toast.success("Result slip updated")
-        onSuccess?.()
+        onSuccess?.(result)
       } else {
         const result = await dispatch(createRawMilkResultSlip(payload)).unwrap()
         toast.success("Result slip created")
-        onSuccess?.()
+        onSuccess?.(result)
       }
       onOpenChange(false)
     } catch (e: any) {

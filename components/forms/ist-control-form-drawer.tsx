@@ -102,6 +102,13 @@ export function ISTControlFormDrawer({ open, onOpenChange, form, mode }: ISTCont
     }
   }
 
+  const onInvalid = (errors: any) => {
+    const errorMessages = Object.values(errors).map((err: any) => err.message).filter(Boolean)
+    toast.error(`Please check the following fields: ${errorMessages.join(', ')}`, {
+      style: { background: '#ef4444', color: 'white' }
+    })
+  }
+
   useEffect(() => {
     if (open && form && mode === "edit") {
       reset({
@@ -208,7 +215,7 @@ export function ISTControlFormDrawer({ open, onOpenChange, form, mode }: ISTCont
         </SheetHeader>
         
         <div className="mt-6 p-6 bg-white">
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={handleSubmit(onSubmit, onInvalid)} className="space-y-6">
             {/* Item Information */}
             <div className="space-y-4">
               <h3 className="text-lg font-light text-gray-900 border-b pb-2">Item Information</h3>

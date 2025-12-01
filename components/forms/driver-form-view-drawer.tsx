@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Truck, Package, Calendar, User, Edit, Trash2, CheckCircle, XCircle, Eye, EyeOff, Beaker, FileText } from "lucide-react"
+import { Truck, Package, Calendar, User, Edit, Trash2, CheckCircle, XCircle, Eye, EyeOff, Beaker, FileText, Download } from "lucide-react"
 import { toast } from "sonner"
 import { useAppDispatch, useAppSelector } from "@/lib/store"
 import { deleteDriverForm, fetchDriverForms } from "@/lib/store/slices/driverFormSlice"
@@ -152,6 +152,135 @@ export function DriverFormViewDrawer({
 
   const isLoading = loading || operationLoading.delete
 
+  const handleExportCSV = () => {
+    try {
+      const legacyProducts = (driverForm as any).collected_products || []
+      const newProducts = (driverForm as any).drivers_form_collected_products || []
+      const allProducts = [...legacyProducts, ...newProducts]
+
+      // Get driver information
+      const driverId = typeof driverForm.driver === 'string' ? driverForm.driver : (driverForm as any).driver_id
+      const driverUser = users.find(user => user.id === driverId)
+      const driverName = driverUser ? `${driverUser.first_name} ${driverUser.last_name}` : 
+        ((driverForm as any).drivers_driver_fkey ? 
+          `${(driverForm as any).drivers_driver_fkey.first_name} ${(driverForm as any).drivers_driver_fkey.last_name}` : 
+          'Unknown Driver')
+
+      // Prepare CSV data
+      const csvData = []
+
+      // Add header row
+      csvData.push([
+        'Driver Form ID',
+        'Driver Name',
+        'Tanker',
+        'Start Date',
+        'End Date',
+        'Delivered',
+        'Rejected',
+        'Created Date',
+        'Product #',
+        'Collected Amount',
+        'Unit of Measure',
+        'Raw Material',
+        'Supplier Name',
+        'Supplier Email',
+        'Test Date',
+        'Organoleptic',
+        'Alcohol',
+        'COB',
+        'Accepted',
+        'Remarks'
+      ])
+
+      // Process each product and its tests
+      allProducts.forEach((product, productIndex) => {
+        const productTests = (tests || []).filter((t: any) => String(t.collected_product_id) === String(product.id))
+
+        // Get raw material and supplier info
+        const rawMat = rawMaterials.find((r: any) => String(r.id) === String(product.raw_material_id || product.rawMaterialId || product.raw_material))
+        const rawMatName = rawMat ? (rawMat.name || rawMat.raw_material_name || "") : (product.raw_material_name || "")
+
+        const supplierObj = suppliers.find((s: any) => String(s.id) === String(product.supplier_id || product.supplier))
+        const supplierName = supplierObj ? (supplierObj.name || supplierObj.company_name || "") : (product.supplier_name || "")
+        const supplierEmail = supplierObj ? (supplierObj.email || supplierObj.contact_email || "") : (product.supplier_email || "")
+
+        if (productTests.length > 0) {
+          // Add a row for each test
+          productTests.forEach((test: any) => {
+            csvData.push([
+              driverForm.tag || driverForm.id,
+              driverName,
+              driverForm.tanker || 'N/A',
+              new Date(driverForm.start_date).toLocaleDateString(),
+              new Date(driverForm.end_date).toLocaleDateString(),
+              driverForm.delivered ? 'Yes' : 'No',
+              driverForm.rejected ? 'Yes' : 'No',
+              new Date(driverForm.created_at).toLocaleDateString(),
+              `Product ${productIndex + 1}`,
+              product.collected_amount || '',
+              product.unit_of_measure || '',
+              rawMatName,
+              supplierName,
+              supplierEmail,
+              test.date || test.created_at || 'N/A',
+              test.organol_eptic || 'N/A',
+              test.alcohol || 'N/A',
+              test.cob !== null ? (test.cob ? 'Yes' : 'No') : 'N/A',
+              test.accepted ? 'Accepted' : 'Rejected',
+              test.remarks || ''
+            ])
+          })
+        } else {
+          // Add a row for product without tests
+          csvData.push([
+            driverForm.tag || driverForm.id,
+            driverName,
+            driverForm.tanker || 'N/A',
+            new Date(driverForm.start_date).toLocaleDateString(),
+            new Date(driverForm.end_date).toLocaleDateString(),
+            driverForm.delivered ? 'Yes' : 'No',
+            driverForm.rejected ? 'Yes' : 'No',
+            new Date(driverForm.created_at).toLocaleDateString(),
+            `Product ${productIndex + 1}`,
+            product.collected_amount || '',
+            product.unit_of_measure || '',
+            rawMatName,
+            supplierName,
+            supplierEmail,
+            'No Test',
+            'N/A',
+            'N/A',
+            'N/A',
+            'N/A',
+            'No milk test performed'
+          ])
+        }
+      })
+
+      // Convert to CSV string
+      const csvContent = csvData.map(row => 
+        row.map(field => `"${String(field).replace(/"/g, '""')}"`).join(',')
+      ).join('\n')
+
+      // Create and download the file
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+      const link = document.createElement('a')
+      const url = URL.createObjectURL(blob)
+      link.setAttribute('href', url)
+      link.setAttribute('download', `milk-test-report-${driverForm.tag || driverForm.id}-${new Date().toISOString().split('T')[0]}.csv`)
+      link.style.visibility = 'hidden'
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+
+      toast.success('Milk test report exported successfully')
+    } catch (error) {
+      console.error('Export error:', error)
+      toast.error('Failed to export milk test report')
+    }
+  }
+
   if (!driverForm) return <></>
 
   return (
@@ -175,6 +304,16 @@ export function DriverFormViewDrawer({
                 </div>
               </div>
               <div className="flex space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleExportCSV}
+                  disabled={isLoading}
+                  className="bg-gradient-to-r from-green-500 to-teal-500 hover:from-green-600 hover:to-teal-600 text-white border-0 rounded-full"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Export CSV
+                </Button>
                 {onEdit && (
                   <Button
                     variant="outline"
@@ -420,11 +559,27 @@ export function DriverFormViewDrawer({
                                           <p className="text-muted-foreground text-sm font-light">Raw Material Collection</p>
                                         </div>
                                       </div>
-                                      <div className="text-right">
-                                        <p className="font-light">
-                                          {product.collected_amount} {product.unit_of_measure}
-                                        </p>
-                                        <p className="text-muted-foreground text-sm font-light">Collected</p>
+                                      <div className="flex items-center gap-3">
+                                        <div className="text-right">
+                                          <p className="font-light">
+                                            {product.collected_amount} {product.unit_of_measure}
+                                          </p>
+                                        </div>
+                                        <LoadingButton
+                                          variant="outline"
+                                          size="sm"
+                                          onClick={() => {
+                                            setLabMode("create")
+                                            setLabExistingId(undefined)
+                                            setSelectedTestForLab(null)
+                                            setSelectedProductForLab(product)
+                                            setLabDrawerOpen(true)
+                                          }}
+                                          className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full"
+                                        >
+                                          <Beaker className="w-4 h-4 mr-2" />
+                                          Create Milk Test
+                                        </LoadingButton>
                                       </div>
                                     </div>
 
@@ -522,24 +677,6 @@ export function DriverFormViewDrawer({
                                       </details>
                                     </div>
 
-                                    {/* Create test button (bottom-right of product card) */}
-                                    <div className="flex justify-end">
-                                      <LoadingButton
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => {
-                                          setLabMode("create")
-                                          setLabExistingId(undefined)
-                                          setSelectedTestForLab(null)
-                                          setSelectedProductForLab(product)
-                                          setLabDrawerOpen(true)
-                                        }}
-                                        className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full"
-                                      >
-                                        <Beaker className="w-4 h-4 mr-2" />
-                                        Create Milk Test
-                                      </LoadingButton>
-                                    </div>
                                   </div>
                                 )
                               })}

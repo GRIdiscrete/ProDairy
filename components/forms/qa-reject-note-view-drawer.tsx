@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { rolesApi } from "@/lib/api/roles"
 import { base64ToPngDataUrl } from "@/lib/utils/signature"
+import { format } from "date-fns"
 
 interface Props {
   open: boolean
@@ -41,7 +42,7 @@ export function QaRejectNoteViewDrawer({ open, onOpenChange, note, onEdit }: Pro
               </div>
               <div className="text-right">
                 <p className="text-sm text-gray-500">Created</p>
-                <p className="text-sm font-light">{note.created_at || "N/A"}</p>
+                <p className="text-sm font-light">{note.created_at ? format(new Date(note.created_at), "PPP 'at' p") : "N/A"}</p>
               </div>
             </div>
           </div>
@@ -67,7 +68,7 @@ export function QaRejectNoteViewDrawer({ open, onOpenChange, note, onEdit }: Pro
                   <Badge className="bg-red-100 text-red-800 font-light">{d.status}</Badge>
                 </div>
                 <div className="text-sm text-gray-500">
-                  <div>Product: {d.product}</div>
+                  <div>Product ID: {d.product}</div>
                   <div>Batch: {d.batch_no}</div>
                 </div>
               </div>
