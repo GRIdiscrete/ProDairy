@@ -393,7 +393,7 @@ export default function BMTControlFormPage() {
               variant="outline" 
               size="sm" 
               onClick={() => handleViewForm(form)}
-              className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full"
+              className="bg-[#0068BD] hover:bg-[#005299] text-white border-0 rounded-full"
             >
               <Eye className="w-4 h-4" />
             </LoadingButton>
@@ -401,7 +401,7 @@ export default function BMTControlFormPage() {
               variant="outline" 
               size="sm" 
               onClick={() => handleEditForm(form)}
-              className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 rounded-full"
+              className="bg-[#A0D001] hover:bg-[#8AB801] text-white border-0 rounded-full"
             >
               <Edit className="w-4 h-4" />
             </LoadingButton> */}
@@ -411,7 +411,7 @@ export default function BMTControlFormPage() {
               onClick={() => handleDeleteForm(form)}
               loading={operationLoading.delete}
               disabled={operationLoading.delete}
-              className="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white border-0 rounded-full"
+              className="bg-red-600 hover:bg-red-700 text-white border-0 rounded-full"
             >
               <Trash2 className="w-4 h-4" />
             </LoadingButton>
@@ -452,14 +452,14 @@ export default function BMTControlFormPage() {
           <div className="flex gap-2">
             <LoadingButton 
               onClick={handleExportCSV}
-              className="bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 text-white border-0 rounded-full px-6 py-2 font-light"
+              className="bg-[#A0D001] hover:bg-[#8AB801] text-white border-0 rounded-full px-6 py-2 font-light"
             >
               <Download className="mr-2 h-4 w-4" />
               Export CSV
             </LoadingButton>
             <LoadingButton 
               onClick={handleAddForm}
-              className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full px-6 py-2 font-light"
+              className="bg-[#0068BD] hover:bg-[#005299] text-white border-0 rounded-full px-6 py-2 font-light"
             >
               <Plus className="mr-2 h-4 w-4" />
               Add BMT Form
@@ -493,7 +493,7 @@ export default function BMTControlFormPage() {
                 <LoadingButton 
                   variant="outline" 
                   onClick={() => handleViewForm(latestForm)}
-                  className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full px-4 py-2 font-light"
+                  className="bg-[#0068BD] hover:bg-[#005299] text-white border-0 rounded-full px-4 py-2 font-light"
                 >
                   <Eye className="mr-2 h-4 w-4" />
                   View Details
@@ -549,10 +549,10 @@ export default function BMTControlFormPage() {
                   });
                   
                   return (
-                    <div className="p-4 bg-purple-50 rounded-lg">
+                    <div className="p-4 bg-blue-50 rounded-lg">
                       <div className="flex items-center space-x-2 mb-3">
-                        <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center">
-                          <User className="h-4 w-4 text-purple-600" />
+                        <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
+                          <User className="h-4 w-4 text-blue-600" />
                         </div>
                         <h4 className="text-sm font-light text-gray-900">Dispatch Operator</h4>
                       </div>

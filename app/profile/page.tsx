@@ -176,8 +176,8 @@ export default function ProfilePage() {
         
         <div className="border border-gray-200 rounded-lg p-6">
           <div className="flex items-center space-x-3">
-            <div className="h-12 w-12 rounded-full bg-purple-100 flex items-center justify-center">
-              <CheckCircle className="h-6 w-6 text-purple-600" />
+            <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center">
+              <CheckCircle className="h-6 w-6 text-blue-600" />
             </div>
             <div>
               <p className="text-sm text-gray-600">Permissions</p>
@@ -281,8 +281,8 @@ export default function ProfilePage() {
           <div className="border border-gray-200 rounded-lg p-6">
             <div className="space-y-6">
               <div className="flex items-center space-x-2 mb-4">
-                <div className="h-8 w-8 rounded-full bg-purple-100 flex items-center justify-center">
-                  <User className="h-5 w-5 text-purple-600" />
+                <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
+                  <User className="h-5 w-5 text-blue-600" />
                 </div>
                 <div>
                   <h2 className="text-2xl text-gray-900">Profile Information</h2>

@@ -114,10 +114,10 @@ export function AdminOverviewCards() {
       </div>
 
       {/* Silos Card */}
-      <div className="bg-white border border-gray-200 rounded-lg p-6 transition-all duration-300 hover:shadow-lg hover:shadow-indigo-500/20 hover:border-indigo-300 cursor-pointer">
+      <div className="bg-white border border-gray-200 rounded-lg p-6 transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/20 hover:border-blue-300 cursor-pointer">
         <div className="flex flex-row items-center justify-between mb-4">
           <h3 className="text-sm text-gray-600">Total Silos</h3>
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-full bg-[#0068BD] flex items-center justify-center">
             <Database className="h-4 w-4 text-white" />
           </div>
         </div>
@@ -129,7 +129,7 @@ export function AdminOverviewCards() {
       <div className="bg-white border border-gray-200 rounded-lg p-6 transition-all duration-300 hover:shadow-lg hover:shadow-green-500/20 hover:border-green-300 cursor-pointer">
         <div className="flex flex-row items-center justify-between mb-4">
           <h3 className="text-sm text-gray-600">Active Silos</h3>
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-full bg-[#A0D001] flex items-center justify-center">
             <Activity className="h-4 w-4 text-white" />
           </div>
         </div>
@@ -138,10 +138,10 @@ export function AdminOverviewCards() {
       </div>
 
       {/* Total Capacity Card */}
-      <div className="bg-white border border-gray-200 rounded-lg p-6 transition-all duration-300 hover:shadow-lg hover:shadow-cyan-500/20 hover:border-cyan-300 cursor-pointer">
+      <div className="bg-white border border-gray-200 rounded-lg p-6 transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/20 hover:border-blue-300 cursor-pointer">
         <div className="flex flex-row items-center justify-between mb-4">
           <h3 className="text-sm text-gray-600">Total Capacity</h3>
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-full bg-[#0068BD] flex items-center justify-center">
             <Gauge className="h-4 w-4 text-white" />
           </div>
         </div>

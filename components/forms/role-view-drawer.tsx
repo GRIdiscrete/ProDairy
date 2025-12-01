@@ -63,7 +63,7 @@ const actionColors: Record<string, string> = {
   read: "bg-blue-100 text-blue-800",
   update: "bg-yellow-100 text-yellow-800", 
   delete: "bg-red-100 text-red-800",
-  approve: "bg-purple-100 text-purple-800",
+  approve: "bg-blue-100 text-blue-800",
 }
 
 export function RoleViewDrawer({ open, onClose, role, onEdit }: RoleViewDrawerProps) {
@@ -75,7 +75,7 @@ export function RoleViewDrawer({ open, onClose, role, onEdit }: RoleViewDrawerPr
   const getRoleColor = (roleName: string) => {
     switch (roleName?.toLowerCase()) {
       case "administrator":
-        return "bg-purple-100 text-purple-800"
+        return "bg-blue-100 text-blue-800"
       case "manager":
         return "bg-blue-100 text-blue-800"
       case "editor":

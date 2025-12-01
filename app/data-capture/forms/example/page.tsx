@@ -400,7 +400,7 @@ export default function FormsExamplePage() {
               </div>
               <div className="space-y-2">
                 <div className="flex items-center space-x-2">
-                  <Shield className="h-5 w-5 text-purple-600" />
+                  <Shield className="h-5 w-5 text-blue-600" />
                   <h3 className="font-medium">Role-Based Permissions</h3>
                 </div>
                 <p className="text-sm text-muted-foreground">

@@ -38,7 +38,7 @@ import { ShadcnTimePicker } from "@/components/ui/shadcn-time-picker"
 import { base64ToPngDataUrl, normalizeDataUrlToBase64 } from "@/lib/utils/signature"
 import { fetchRawMilkIntakeForms } from "@/lib/store/slices/rawMilkIntakeSlice"
 const ProcessOverview = () => (
-  <div className="mb-8 p-6 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg">
+  <div className="mb-8 p-6 bg-blue-50 rounded-lg">
     <h3 className="text-lg font-light text-gray-900 mb-4">Process Overview</h3>
     <div className="flex items-center justify-between mb-4">
       <div className="flex items-center space-x-2">
@@ -49,12 +49,12 @@ const ProcessOverview = () => (
       </div>
       <ArrowRight className="w-4 h-4 text-gray-400" />
       <div className="flex items-center space-x-2">
-        <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center">
-          <ArrowRight className="w-4 h-4 text-purple-600" />
+        <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+          <ArrowRight className="w-4 h-4 text-blue-600" />
         </div>
         <div className="flex items-center space-x-2">
-          <span className="text-sm font-medium text-purple-600">Skimming</span>
-          <div className="bg-gradient-to-r from-purple-500 to-pink-600 text-white px-2 py-1 rounded-full text-xs font-medium shadow-lg">
+          <span className="text-sm font-medium text-blue-600">Skimming</span>
+          <div className="bg-[#0068BD] text-white px-2 py-1 rounded-full text-xs font-medium shadow-lg">
             Current Step
           </div>
         </div>
@@ -754,7 +754,7 @@ export function SkimmingFormDrawer({
                 <Button
                   type="submit"
                   disabled={operationLoading.create || operationLoading.update}
-                  className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white rounded-full"
+                  className="bg-[#0068BD] hover:bg-[#005299] text-white rounded-full"
                 >
                   <Save className="w-4 h-4 mr-2" />
                   {mode === "create" ? "Create Skimming Form" : "Update Skimming Form"}

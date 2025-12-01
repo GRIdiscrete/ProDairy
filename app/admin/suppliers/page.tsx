@@ -315,7 +315,7 @@ export default function SuppliersPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Acceptance Rate</CardTitle>
-              <UserCheck className="h-4 w-4 text-purple-600" />
+              <UserCheck className="h-4 w-4 text-blue-600" />
             </CardHeader>
             <CardContent>
               {operationLoading.fetch ? (
@@ -325,7 +325,7 @@ export default function SuppliersPage() {
                 </div>
               ) : (
                 <>
-                  <div className="text-2xl font-bold text-purple-600">
+                  <div className="text-2xl font-bold text-blue-600">
                     {acceptanceRate.toFixed(1)}%
                   </div>
                   <p className="text-xs text-muted-foreground">Quality acceptance</p>

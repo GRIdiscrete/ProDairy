@@ -307,7 +307,7 @@ export function FormPermissions({
               <p className="text-xs text-muted-foreground">Can Edit</p>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-purple-600">
+              <div className="text-2xl font-bold text-blue-600">
                 {forms.filter(f => canUserAccess(f, 'approve')).length}
               </div>
               <p className="text-xs text-muted-foreground">Can Approve</p>

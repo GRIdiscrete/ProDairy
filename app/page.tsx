@@ -57,11 +57,11 @@ export default function HomePage() {
             {/* Admin Dashboard */}
             {allowedDashboards.includes("admin") && (
               <Card 
-                className="h-full w-full flex flex-col hover:shadow-xl hover:scale-105 transition-all duration-300 cursor-pointer group border-2 border-transparent hover:border-purple-200"
+                className="h-full w-full flex flex-col hover:shadow-xl hover:scale-105 transition-all duration-300 cursor-pointer group border-2 border-transparent hover:border-blue-200"
                 onClick={() => router.push('/admin')}
               >
                 <CardHeader className="text-center">
-                  <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                  <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[#0068BD] flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                     <Users className="h-8 w-8 text-white" />
                   </div>
                   <CardTitle className="text-xl">🧑‍💻 Admin Dashboard</CardTitle>
@@ -74,7 +74,7 @@ export default function HomePage() {
                     <li>• Audit Trails</li>
                   </ul>
                   <Button 
-                    className="w-full group-hover:bg-purple-600 transition-all duration-300 cursor-pointer hover:scale-105 hover:shadow-lg"
+                    className="w-full group-hover:bg-[#005299] transition-all duration-300 cursor-pointer hover:scale-105 hover:shadow-lg"
                     onClick={(e) => {
                       e.stopPropagation()
                       router.push('/admin')

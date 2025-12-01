@@ -844,7 +844,7 @@ export default function DriverFormsPage() {
                   onClick={handleSyncPending}
                   loading={syncingPending}
                   disabled={!isOnline}
-                  className="bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white border-0 rounded-full px-6 py-2 font-light disabled:opacity-50"
+                  className="bg-[#0068BD] hover:bg-[#005299] text-white border-0 rounded-full px-6 py-2 font-light disabled:opacity-50"
                 >
                   <Wifi className="mr-2 h-4 w-4" />
                   Sync Pending ({(() => {
@@ -1029,7 +1029,7 @@ export default function DriverFormsPage() {
                             variant="outline"
                             size="sm"
                             onClick={() => handleViewForm(form)}
-                            className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full"
+                            className="bg-[#0068BD] hover:bg-[#005299] text-white border-0 rounded-full"
                           >
                             <Eye className="h-4 w-4 mr-1" />
                             View
@@ -1038,7 +1038,7 @@ export default function DriverFormsPage() {
                             variant="outline"
                             size="sm"
                             onClick={() => handleEditForm(form)}
-                            className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 rounded-full"
+                            className="bg-[#A0D001] hover:bg-[#8AB801] text-white border-0 rounded-full"
                           >
                             <Settings className="h-4 w-4 mr-1" />
                             Edit
@@ -1047,7 +1047,7 @@ export default function DriverFormsPage() {
                             variant="outline"
                             size="sm"
                             onClick={() => handleCreateLabTest(form)}
-                            className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white border-0 rounded-full"
+                            className="bg-[#A0D001] hover:bg-[#8AB801] text-white border-0 rounded-full"
                           >
                             <Plus className="h-4 w-4 mr-1" />
                             Test
@@ -1110,7 +1110,7 @@ export default function DriverFormsPage() {
                           variant="outline"
                           size="sm"
                           onClick={() => handleCreateLabTest(form)}
-                          className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white border-0 rounded-full"
+                          className="bg-[#A0D001] hover:bg-[#8AB801] text-white border-0 rounded-full"
                         >
                           <Plus className="h-4 w-4 mr-1" />
                           Test

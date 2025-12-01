@@ -55,7 +55,7 @@ export function GeneralLabTestViewDrawer({ open, onClose, test, onEdit }: { open
                 <Badge className="bg-green-100 text-green-800 font-light">{test.analyst}</Badge>
               )}
               <Badge className="bg-gray-100 text-gray-800 font-light">{test.time}</Badge>
-              {test.tag && <Badge className="bg-purple-100 text-purple-800 font-light">{test.tag}</Badge>}
+              {test.tag && <Badge className="bg-blue-100 text-blue-800 font-light">{test.tag}</Badge>}
             </div>
           </div>
 

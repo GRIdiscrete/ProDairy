@@ -68,12 +68,12 @@ const adminNavigation = [
     icon: Package,
     current: false,
   },
-  {
-    name: "Devices",
-    href: "/admin/devices",
-    icon: Settings,
-    current: false,
-  },
+  // {
+  //   name: "Devices",
+  //   href: "/admin/devices",
+  //   icon: Settings,
+  //   current: false,
+  // },
   {
     name: "Materials",
     href: "/admin/materials",

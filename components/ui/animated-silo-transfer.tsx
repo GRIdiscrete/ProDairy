@@ -66,9 +66,9 @@ export function AnimatedSiloTransfer({
       case 'processing tanks':
         return 'from-green-400 to-green-600'
       case 'storage tanks':
-        return 'from-purple-400 to-purple-600'
+        return 'from-gray-400 to-gray-600'
       default:
-        return 'from-cyan-400 to-cyan-600'
+        return 'from-blue-300 to-blue-500'
     }
   }
 

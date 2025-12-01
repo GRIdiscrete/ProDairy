@@ -275,7 +275,7 @@ export function SkimmingFormViewDrawer({
                           {creamData.fat || 0}% fat
                         </Badge>
                         {creamData.transfer_start && creamData.transfer_end && (
-                          <Badge className="text-xs bg-purple-100 text-purple-800">
+                          <Badge className="text-xs bg-blue-100 text-blue-800">
                             {Math.round((new Date(creamData.transfer_end).getTime() - new Date(creamData.transfer_start).getTime()) / (1000 * 60))}min
                           </Badge>
                         )}

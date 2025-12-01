@@ -494,7 +494,7 @@ export default function SterilisedMilkProcessPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Avg Parameters</CardTitle>
-              <Milk className="h-4 w-4 text-purple-600" />
+              <Milk className="h-4 w-4 text-blue-600" />
             </CardHeader>
             <CardContent>
               {operationLoading.fetch ? (
@@ -504,7 +504,7 @@ export default function SterilisedMilkProcessPage() {
                 </div>
               ) : (
                 <>
-                  <div className="text-2xl font-bold text-purple-600">
+                  <div className="text-2xl font-bold text-blue-600">
                     {(processes || []).length ? Math.round((processes || []).filter((process: any) => process.sterilised_milk_process_details_fkey).length / processes.length) : 0}
                   </div>
                   <p className="text-xs text-muted-foreground">Per process</p>

@@ -255,9 +255,9 @@ export default function QACorrectiveMeasuresPage({ params }: QACorrectiveMeasure
         const details = action.qa_corrective_action_details_fkey
         return (
           <div className="space-y-2">
-            <div className="flex items-center space-x-2">
-              <div className="w-5 h-5 rounded-full bg-purple-100 flex items-center justify-center">
-                <FileText className="h-3 w-3 text-purple-600" />
+            <div className="flex items-center space-x-3">
+              <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center">
+                <FileText className="h-3 w-3 text-blue-600" />
               </div>
               <p className="text-sm font-light">
                 Test Results

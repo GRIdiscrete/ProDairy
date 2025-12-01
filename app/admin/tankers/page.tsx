@@ -160,7 +160,7 @@ export default function AdminTankersPage() {
             feature="tanker"
             permission="create"
             onClick={handleAdd}
-            className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full px-6 py-2 font-light"
+            className="bg-[#0068BD] hover:bg-[#005299] text-white border-0 rounded-full px-6 py-2 font-light"
           >
             <Plus className="mr-2 h-4 w-4" />
             Add Tanker

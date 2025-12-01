@@ -176,13 +176,13 @@ export default function ProductIncubationPage({ params }: ProductIncubationPageP
         const batch = incubation.batch // new single-object shape
         return (
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-[#0068BD] flex items-center justify-center">
               <TestTube className="w-4 h-4 text-white" />
             </div>
             <div>
               <div className="flex items-center space-x-2">
                 <span className="text-xs text-gray-500">Batch</span>
-                <Badge className="bg-purple-100 text-purple-800 font-light">#{batch?.batch_number ?? 'N/A'}</Badge>
+                <Badge className="bg-blue-100 text-blue-800 font-light">#{batch?.batch_number ?? 'N/A'}</Badge>
               </div>
               <p className="text-sm text-gray-500 mt-1">
                 {incubation.created_at ? new Date(incubation.created_at).toLocaleDateString() : 'N/A'} • {batch?.days ?? 'N/A'} days
@@ -308,7 +308,7 @@ export default function ProductIncubationPage({ params }: ProductIncubationPageP
               variant="outline"
               size="sm"
               onClick={() => handleViewIncubation(incubation)}
-              className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full"
+              className="bg-[#0068BD] hover:bg-[#005299] text-white border-0 rounded-full"
             >
               <Eye className="w-4 h-4" />
             </LoadingButton>
@@ -316,7 +316,7 @@ export default function ProductIncubationPage({ params }: ProductIncubationPageP
               variant="outline"
               size="sm"
               onClick={() => handleEditIncubation(incubation)}
-              className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 rounded-full"
+              className="bg-[#A0D001] hover:bg-[#8AB801] text-white border-0 rounded-full"
             >
               <Edit className="w-4 h-4" />
             </LoadingButton>
@@ -326,7 +326,7 @@ export default function ProductIncubationPage({ params }: ProductIncubationPageP
               onClick={() => handleDeleteIncubation(incubation)}
               loading={operationLoading.delete}
               disabled={operationLoading.delete}
-              className="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white border-0 rounded-full"
+              className="bg-red-600 hover:bg-red-700 text-white border-0 rounded-full"
             >
               <Trash2 className="w-4 h-4" />
             </LoadingButton>
@@ -362,7 +362,7 @@ export default function ProductIncubationPage({ params }: ProductIncubationPageP
           </div>
           <LoadingButton
             onClick={handleAddIncubation}
-            className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white border-0 rounded-full px-6 py-2 font-light"
+            className="bg-[#0068BD] hover:bg-[#005299] text-white border-0 rounded-full px-6 py-2 font-light"
           >
             <Plus className="mr-2 h-4 w-4" />
             Add Product Incubation
@@ -377,16 +377,16 @@ export default function ProductIncubationPage({ params }: ProductIncubationPageP
             <div className="p-6 pb-0">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2 text-lg font-light">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-full bg-[#0068BD] flex items-center justify-center">
                     <TestTube className="h-4 w-4 text-white" />
                   </div>
                   <span>Current Incubation Process</span>
-                  <Badge className="bg-gradient-to-r from-purple-100 to-pink-100 text-purple-800 font-light">Latest</Badge>
+                  <Badge className="bg-blue-100 text-blue-800 font-light">Latest</Badge>
                 </div>
                 <LoadingButton
                   variant="outline"
                   onClick={() => handleViewIncubation(latestIncubation)}
-                  className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white border-0 rounded-full px-4 py-2 font-light text-sm"
+                  className="bg-[#0068BD] hover:bg-[#005299] text-white border-0 rounded-full px-4 py-2 font-light text-sm"
                 >
                   <Eye className="mr-2 h-4 w-4" />
                   View Details
@@ -397,10 +397,10 @@ export default function ProductIncubationPage({ params }: ProductIncubationPageP
               <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <div className="space-y-2">
                   <div className="flex items-center space-x-2">
-                    <TestTube className="h-4 w-4 text-purple-500" />
+                    <TestTube className="h-4 w-4 text-blue-500" />
                     <p className="text-sm font-light text-gray-600">Tag / Plan</p>
                   </div>
-                  <div className="text-lg font-light text-purple-600">
+                  <div className="text-lg font-light text-blue-600">
                     {latestIncubation?.tag ? (
                       <FormIdCopy displayId={latestIncubation.tag} actualId={latestIncubation.id} size="sm" />
                     ) : latestIncubation?.production_plan_id ? (

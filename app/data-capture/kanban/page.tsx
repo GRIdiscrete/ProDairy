@@ -81,8 +81,8 @@ export default function KanbanPage() {
       id: "packaging",
       title: "Packaging",
       description: "Filling and packaging operations",
-      color: "bg-purple-500",
-      bgColor: "bg-purple-50",
+      color: "bg-blue-500",
+      bgColor: "bg-blue-50",
       cards: [
         {
           id: "4",

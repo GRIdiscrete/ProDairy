@@ -48,7 +48,7 @@ export function SupplierMetrics() {
         unit="avg quality rating"
         icon={CheckCircle}
         change={{ value: 1.8, type: "increase" }}
-        className="bg-gradient-to-br from-purple-500/10 to-purple-600/10 border-purple-500/20"
+        className="bg-blue-50 border-blue-200"
       />
     </div>
   )

@@ -229,7 +229,7 @@ export default function ISTControlFormPage() {
               variant="outline" 
               size="sm" 
               onClick={() => handleViewForm(form)}
-              className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full"
+              className="bg-[#0068BD] hover:bg-[#005299] text-white border-0 rounded-full"
             >
               <Eye className="w-4 h-4" />
             </LoadingButton>
@@ -237,7 +237,7 @@ export default function ISTControlFormPage() {
               variant="outline" 
               size="sm" 
               onClick={() => handleEditForm(form)}
-              className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 rounded-full"
+              className="bg-[#A0D001] hover:bg-[#8AB801] text-white border-0 rounded-full"
             >
               <Edit className="w-4 h-4" />
             </LoadingButton>
@@ -247,7 +247,7 @@ export default function ISTControlFormPage() {
               onClick={() => handleDeleteForm(form)}
               loading={operationLoading.delete}
               disabled={operationLoading.delete}
-              className="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white border-0 rounded-full"
+              className="bg-red-600 hover:bg-red-700 text-white border-0 rounded-full"
             >
               <Trash2 className="w-4 h-4" />
             </LoadingButton>
@@ -282,7 +282,7 @@ export default function ISTControlFormPage() {
           </div>
           <LoadingButton 
             onClick={handleAddForm}
-            className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full px-6 py-2 font-light"
+            className="bg-[#0068BD] hover:bg-[#005299] text-white border-0 rounded-full px-6 py-2 font-light"
           >
             <Plus className="mr-2 h-4 w-4" />
             Add IST Form
@@ -306,7 +306,7 @@ export default function ISTControlFormPage() {
                 <LoadingButton 
                   variant="outline" 
                   onClick={() => handleViewForm(latestForm)}
-                  className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full px-4 py-2 font-light text-sm"
+                  className="bg-[#0068BD] hover:bg-[#005299] text-white border-0 rounded-full px-4 py-2 font-light text-sm"
                 >
                   <Eye className="mr-2 h-4 w-4" />
                   View Details

@@ -219,7 +219,7 @@ export default function MaterialsPage() {
             feature="material"
             permission="create"
             onClick={handleAddRawMaterial}
-            className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full px-6 py-2 font-light"
+            className="bg-[#0068BD] hover:bg-[#005299] text-white border-0 rounded-full px-6 py-2 font-light"
           >
             <Plus className="mr-2 h-4 w-4" />
             Add Raw Material
@@ -284,7 +284,7 @@ export default function MaterialsPage() {
           <div className="border border-gray-200 rounded-lg bg-white p-4">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-light">Documentation</span>
-              <BookOpen className="h-4 w-4 text-purple-600" />
+              <BookOpen className="h-4 w-4 text-blue-600" />
             </div>
             {operationLoading.fetch ? (
               <div className="animate-pulse space-y-1">
@@ -293,7 +293,7 @@ export default function MaterialsPage() {
               </div>
             ) : (
               <>
-                <div className="text-2xl font-light text-purple-600">
+                <div className="text-2xl font-light text-blue-600">
                   {rawMaterials.filter(rm => rm.description && rm.description.trim().length > 0).length}
                 </div>
                 <p className="text-xs text-muted-foreground">With descriptions</p>

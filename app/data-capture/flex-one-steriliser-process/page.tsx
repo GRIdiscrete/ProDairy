@@ -169,7 +169,7 @@ export default function FlexOneSteriliserProcessPage() {
               <div className="flex items-center space-x-2">
                 <span className="font-medium">Flex 1 Steriliser</span>
                 <Badge className="bg-blue-100 text-blue-800">{productsCount} products</Badge>
-                <Badge className="bg-cyan-100 text-cyan-800">{waterStreamsCount} streams</Badge>
+                <Badge className="bg-blue-100 text-blue-800">{waterStreamsCount} streams</Badge>
               </div>
               <p className="text-sm text-gray-500 mt-1">
                 {process.product_being_processed || "Unknown Product"}
@@ -354,7 +354,7 @@ export default function FlexOneSteriliserProcessPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Water Streams</CardTitle>
-              <Droplets className="h-4 w-4 text-purple-600" />
+              <Droplets className="h-4 w-4 text-blue-600" />
             </CardHeader>
             <CardContent>
               {operationLoading.fetch ? (
@@ -364,7 +364,7 @@ export default function FlexOneSteriliserProcessPage() {
                 </div>
               ) : (
                 <>
-                  <div className="text-2xl font-bold text-purple-600">
+                  <div className="text-2xl font-bold text-blue-600">
                     {(waterStreams || []).length}
                   </div>
                   <p className="text-xs text-muted-foreground">Water stream records</p>

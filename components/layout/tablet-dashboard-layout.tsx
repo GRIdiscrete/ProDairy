@@ -57,7 +57,7 @@ const tabletModules = [
     name: 'Tools',
     icon: Wrench,
     path: '/tools',
-    color: 'bg-purple-500',
+    color: 'bg-blue-500',
   },
 ]
 

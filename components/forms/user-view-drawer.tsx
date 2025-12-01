@@ -23,7 +23,7 @@ export function UserViewDrawer({ open, onClose, user, onEdit }: UserViewDrawerPr
     switch (role) {
       case 'admin':
       case 'administrator':
-        return 'bg-purple-100 text-purple-800'
+        return 'bg-blue-100 text-blue-800'
       case 'manager':
         return 'bg-blue-100 text-blue-800'
       case 'operator':

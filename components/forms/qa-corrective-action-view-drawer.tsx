@@ -260,8 +260,8 @@ export function QACorrectiveActionViewDrawer({
             <Card className="shadow-none">
               <CardHeader className="pb-4">
                 <div className="flex items-center space-x-2">
-                  <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center">
-                    <TestTube className="h-4 w-4 text-purple-600" />
+                  <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
+                    <TestTube className="h-4 w-4 text-blue-600" />
                   </div>
                   <CardTitle className="text-base font-light">Test Results & Analysis</CardTitle>
                 </div>
@@ -270,7 +270,7 @@ export function QACorrectiveActionViewDrawer({
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-1">
                     <span className="text-xs font-light text-gray-500">pH Level (7 days @ 30°C)</span>
-                    <p className="text-lg font-medium text-purple-600">
+                    <p className="text-lg font-medium text-blue-600">
                       {details.ph_after_7_days_at_30_degrees}
                     </p>
                   </div>

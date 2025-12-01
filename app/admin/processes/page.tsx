@@ -213,8 +213,8 @@ export default function ProcessPage() {
           <div className="bg-white border border-gray-200 rounded-lg p-6">
             <div className="flex flex-row items-center justify-between mb-4">
               <h3 className="text-sm text-gray-600">Recently Updated</h3>
-              <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center">
-                <Settings className="h-4 w-4 text-purple-600" />
+              <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+                <Settings className="h-4 w-4 text-blue-600" />
               </div>
             </div>
             {isLoading ? (
@@ -224,7 +224,7 @@ export default function ProcessPage() {
               </div>
             ) : (
               <>
-                <div className="text-3xl text-purple-600">
+                <div className="text-3xl text-blue-600">
                   {processes?.filter(p => p.updated_at && new Date(p.updated_at) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)).length || 0}
                 </div>
                 <p className="text-xs text-gray-500 mt-1">This week</p>

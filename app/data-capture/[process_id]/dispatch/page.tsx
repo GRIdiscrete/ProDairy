@@ -133,8 +133,8 @@ export default function DispatchPage({ params }: Props) {
                 const n = row.original
                 const d = (n.qa_release_note_details && n.qa_release_note_details[0]) || {}
                 return (
-                    <div className="flex items-center space-x-3">
-                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center">
+                    <div className="flex items-center space-x-4">
+                        <div className="w-8 h-8 rounded-lg bg-[#0068BD] flex items-center justify-center">
                             <FileText className="w-4 h-4 text-white" />
                         </div>
                         <div>
@@ -207,7 +207,7 @@ export default function DispatchPage({ params }: Props) {
                 const n = row.original
                 return (
                     <div className="flex items-center space-x-3">
-                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-red-500 to-pink-600 flex items-center justify-center">
+                        <div className="w-8 h-8 rounded-lg bg-red-600 flex items-center justify-center">
                             <FileText className="w-4 h-4 text-white" />
                         </div>
                         <div>
@@ -308,7 +308,7 @@ export default function DispatchPage({ params }: Props) {
                         <h1 className="text-3xl font-light">Dispatch — QA Notes</h1>
                         <p className="text-sm font-light text-muted-foreground">Switch between Release and Reject notes</p>
                     </div>
-                    <LoadingButton onClick={handleAdd} className="bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-full px-6">
+                    <LoadingButton onClick={handleAdd} className="bg-[#0068BD] hover:bg-[#005299] text-white rounded-full px-6">
                         <Plus className="mr-2 h-4 w-4" /> Add {activeTab === "release" ? "Release Note" : "Reject Note"}
                     </LoadingButton>
                 </div>
@@ -347,12 +347,12 @@ export default function DispatchPage({ params }: Props) {
                         <div className="p-6 pb-0">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center space-x-2 text-lg font-light">
-                                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center">
+                                    <div className="w-8 h-8 rounded-full bg-[#0068BD] flex items-center justify-center">
                                         <FileText className="h-4 w-4 text-white" />
                                     </div>
                                     <span>Latest {activeTab === "release" ? "Release" : "Reject"} Note</span>
                                 </div>
-                                <LoadingButton variant="outline" onClick={() => handleView(latest)} className="bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-full px-4 py-2 text-sm">
+                                <LoadingButton variant="outline" onClick={() => handleView(latest)} className="bg-[#0068BD] hover:bg-[#005299] text-white rounded-full px-4 py-2 text-sm">
                                     <Eye className="mr-2 h-4 w-4" /> View Details
                                 </LoadingButton>
                             </div>
@@ -361,7 +361,7 @@ export default function DispatchPage({ params }: Props) {
                             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                                 <div>
                                     <p className="text-xs font-light text-gray-500">Tag</p>
-                                    <div className="text-lg font-light text-purple-600"><FormIdCopy displayId={latest.tag} actualId={latest.id} size="sm" /></div>
+                                    <div className="text-lg font-light text-blue-600"><FormIdCopy displayId={latest.tag} actualId={latest.id} size="sm" /></div>
                                 </div>
                                 <div>
                                     <p className="text-xs font-light text-gray-500">Approver</p>

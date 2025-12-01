@@ -785,10 +785,10 @@ export default function StandardizingPage() {
 
                     {/* Operator Details */}
                     {latestForm.operator_id && (
-                      <div className="p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg">
+                      <div className="p-4 bg-blue-50 rounded-lg">
                         <div className="flex items-center space-x-2 mb-3">
-                          <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center">
-                            <User className="h-4 w-4 text-purple-600" />
+                          <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
+                            <User className="h-4 w-4 text-blue-600" />
                           </div>
                           <h4 className="text-sm font-light text-gray-900">Operator</h4>
                         </div>
@@ -970,10 +970,10 @@ export default function StandardizingPage() {
 
                     {/* Operator Details */}
                     {latestSkimmingForm.operator_id && (
-                      <div className="p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg">
+                      <div className="p-4 bg-blue-50 rounded-lg">
                         <div className="flex items-center space-x-2 mb-3">
-                          <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center">
-                            <User className="h-4 w-4 text-purple-600" />
+                          <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
+                            <User className="h-4 w-4 text-blue-600" />
                           </div>
                           <h4 className="text-sm font-light text-gray-900">Operator</h4>
                         </div>

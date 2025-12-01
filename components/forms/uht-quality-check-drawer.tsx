@@ -46,8 +46,8 @@ const ProcessOverview = () => (
       </div>
       <ArrowRight className="w-4 h-4 text-gray-400" />
       <div className="flex items-center space-x-2">
-        <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center">
-          <Beaker className="w-4 h-4 text-purple-600" />
+        <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+          <Beaker className="w-4 h-4 text-blue-600" />
         </div>
         <span className="text-sm font-light">Incubation</span>
       </div>
@@ -71,7 +71,9 @@ const ProcessOverview = () => (
 const qualityCheckSchema = yup.object({
   date_of_production: yup.string().required("Date of production is required"),
   date_analysed: yup.string().required("Date analysed is required"),
-  batch_number: yup.string().required("Batch number is required"),
+  batch_number: yup.string()
+    .required("Batch number is required")
+    .matches(/^\d+-\d+$/, "Batch number must be a range (e.g., 1-15, 1-25)"),
   product: yup.string().required("Product is required"),
   checked_by: yup.string().required("Checked by is required"),
   ph_0_days: yup.number()
@@ -81,7 +83,7 @@ const qualityCheckSchema = yup.object({
 
 // Step 2: Quality Check Details Form Schema
 const qualityCheckDetailsSchema = yup.object({
-  time: yup.string().oneOf(["", "1A", "1B", "1C"], "Invalid basket"),
+  time: yup.string(),
   ph_30_degrees: yup.number()
     .transform((value, originalValue) => originalValue === "" ? undefined : value),
   ph_55_degrees: yup.number()
@@ -108,6 +110,7 @@ export function UHTQualityCheckDrawer({
   const [currentStep, setCurrentStep] = useState(1)
   const [createdQualityCheck, setCreatedQualityCheck] = useState<UHTQualityCheckAfterIncubation | null>(null)
   const [step1Data, setStep1Data] = useState<QualityCheckFormData | null>(null) // store step1 until final submit
+  const [incubationDetailsList, setIncubationDetailsList] = useState<QualityCheckDetailsFormData[]>([])
   const [users, setUsers] = useState<any[]>([])
   const [roles, setRoles] = useState<any[]>([])
   const [loadingUsers, setLoadingUsers] = useState(false)
@@ -182,29 +185,42 @@ export function UHTQualityCheckDrawer({
           ph_0_days: qualityCheck.ph_0_days ?? "" as any,
         })
 
-        // populate details from incubation_details if present, otherwise from old details_fkey
-        const details = qualityCheck.incubation_details ?? qualityCheck.uht_qa_check_after_incubation_details_fkey
-        if (details) {
-        qualityCheckDetailsForm.reset({
-          time: details.time || "",
-          ph_30_degrees: details.ph_30_degrees ?? "" as any,
-          ph_55_degrees: details.ph_55_degrees ?? "" as any,
-          defects: details.defects || "",
-          // event: details.event || "",
-          analyst: details.analyst || "",
-          verified_by: details.verified_by || "",
-        })
-      } else {
-        qualityCheckDetailsForm.reset({
-          time: "",
-          ph_30_degrees: "" as any,
-          ph_55_degrees: "" as any,
-          defects: "",
-          // event: "",
-          analyst: "",
-          verified_by: "",
-        })
-      }        setStep1Data({
+        // Load existing incubation_details array from API response
+        const detailsArray = (qualityCheck as any).uht_quality_check_after_incubation_details || []
+        if (detailsArray.length > 0) {
+          // Map the array to our form data format
+          const mappedDetails = detailsArray.map((detail: any) => ({
+            time: detail.time || "",
+            ph_30_degrees: detail.ph_30_degrees ?? "" as any,
+            ph_55_degrees: detail.ph_55_degrees ?? "" as any,
+            defects: detail.defects || "",
+            analyst: detail.analyst || "",
+            verified_by: detail.verified_by || "",
+            id: detail.id // Keep track of existing IDs for updates
+          }))
+          setIncubationDetailsList(mappedDetails)
+          // Reset form to empty for adding new ones
+          qualityCheckDetailsForm.reset({
+            time: "",
+            ph_30_degrees: "" as any,
+            ph_55_degrees: "" as any,
+            defects: "",
+            analyst: "",
+            verified_by: "",
+          })
+        } else {
+          setIncubationDetailsList([])
+          qualityCheckDetailsForm.reset({
+            time: "",
+            ph_30_degrees: "" as any,
+            ph_55_degrees: "" as any,
+            defects: "",
+            analyst: "",
+            verified_by: "",
+          })
+        }
+        
+        setStep1Data({
           date_of_production: qualityCheck.date_of_production || "",
           date_analysed: qualityCheck.date_analysed || "",
           batch_number: qualityCheck.batch_number || "",
@@ -235,6 +251,7 @@ export function UHTQualityCheckDrawer({
         })
         setStep1Data(null)
         setCreatedQualityCheck(null)
+        setIncubationDetailsList([])
         setCurrentStep(1)
       }
     }
@@ -263,6 +280,9 @@ export function UHTQualityCheckDrawer({
       return
     }
 
+    // Add current form data to the list
+    const allDetails = [...incubationDetailsList, data]
+
     const payload = {
       date_of_production: s1.date_of_production,
       date_analysed: s1.date_analysed,
@@ -270,29 +290,62 @@ export function UHTQualityCheckDrawer({
       product: processId || s1.product,
       checked_by: s1.checked_by,
       ph_0_days: s1.ph_0_days,
-      incubation_details: {
-        time: data.time,
-        ph_30_degrees: data.ph_30_degrees,
-        ph_55_degrees: data.ph_55_degrees,
-        defects: data.defects,
-        // event: data.event,
-        analyst: data.analyst,
-        verified_by: data.verified_by,
-      },
+      incubation_details: allDetails.map(detail => {
+        const mappedDetail: any = {
+          time: detail.time?.trim() || null,
+          ph_30_degrees: null,
+          ph_55_degrees: null,
+          defects: null,
+          analyst: null,
+          verified_by: null,
+        }
+
+        // Handle ph_30_degrees
+        if (detail.ph_30_degrees !== "" && detail.ph_30_degrees !== undefined && detail.ph_30_degrees !== null) {
+          mappedDetail.ph_30_degrees = detail.ph_30_degrees
+        }
+
+        // Handle ph_55_degrees
+        if (detail.ph_55_degrees !== "" && detail.ph_55_degrees !== undefined && detail.ph_55_degrees !== null) {
+          mappedDetail.ph_55_degrees = detail.ph_55_degrees
+        }
+
+        // Handle defects
+        const trimmedDefects = detail.defects?.trim()
+        if (trimmedDefects) {
+          mappedDetail.defects = trimmedDefects
+        }
+
+        // Handle analyst
+        const trimmedAnalyst = detail.analyst?.trim()
+        if (trimmedAnalyst) {
+          mappedDetail.analyst = trimmedAnalyst
+        }
+
+        // Handle verified_by
+        const trimmedVerifiedBy = detail.verified_by?.trim()
+        if (trimmedVerifiedBy) {
+          mappedDetail.verified_by = trimmedVerifiedBy
+        }
+
+        // Add id if exists
+        if ((detail as any).id) {
+          mappedDetail.id = (detail as any).id
+        }
+
+        return mappedDetail
+      }),
     }
+
+    console.log("Payload to send:", JSON.stringify(payload, null, 2))
 
     try {
       if (mode === "edit" && qualityCheck) {
         // include id for update
-        console.log("Updating Quality Check:", qualityCheck?.uht_qa_check_after_incubation_details_fkey?.id)
-        //add details id
+        console.log("Updating Quality Check with details:", payload.incubation_details)
         await dispatch(updateUHTQualityCheckAction({
           ...payload,
           id: qualityCheck.id,
-          incubation_details: {
-            ...payload.incubation_details,
-            id: qualityCheck?.uht_qa_check_after_incubation_details_fkey?.id
-          } as any
         } as any)).unwrap()
         toast.success("Quality Check updated successfully")
       } else {
@@ -412,14 +465,14 @@ export function UHTQualityCheckDrawer({
 
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="batch_number">Batch Number *</Label>
+            <Label htmlFor="batch_number">Batch Number Range *</Label>
             <Controller
               name="batch_number"
               control={qualityCheckForm.control}
               render={({ field }) => (
                 <Input
                   id="batch_number"
-                  placeholder="Enter batch number"
+                  placeholder="Enter range (e.g., 1-15, 1-25)"
                   {...field}
                 />
               )}
@@ -493,22 +546,15 @@ export function UHTQualityCheckDrawer({
 
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="time">Time</Label>
+            <Label htmlFor="time">Time (from batch range)</Label>
             <Controller
               name="time"
               control={qualityCheckDetailsForm.control}
               render={({ field }) => (
-                <SearchableSelect
-                  options={[
-                    { value: "1A", label: "1A" },
-                    { value: "1B", label: "1B" },
-                    { value: "1C", label: "1C" },
-                  ]}
-                  value={field.value}
-                  onValueChange={field.onChange}
-                  placeholder="Select basket"
-                  searchPlaceholder="Search baskets..."
-                  emptyMessage="No baskets available"
+                <Input
+                  id="time"
+                  placeholder="Enter time from batch range"
+                  {...field}
                 />
               )}
             />
@@ -650,6 +696,101 @@ export function UHTQualityCheckDrawer({
           {qualityCheckDetailsForm.formState.errors.verified_by && (
             <p className="text-sm text-red-500">{qualityCheckDetailsForm.formState.errors.verified_by.message}</p>
           )}
+        </div>
+
+        {incubationDetailsList.length > 0 && (
+          <div className="space-y-2 mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="flex items-center justify-between mb-3">
+              <Label className="text-base font-medium">Added Incubation Details</Label>
+              <div className="bg-blue-600 text-white px-3 py-1 rounded-full text-xs font-medium">
+                {incubationDetailsList.length} {incubationDetailsList.length === 1 ? 'Detail' : 'Details'}
+              </div>
+            </div>
+            <div className="space-y-3 max-h-64 overflow-y-auto">
+              {incubationDetailsList.map((detail, index) => (
+                <div key={index} className="bg-white border border-gray-200 rounded-lg p-3 shadow-sm">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="bg-green-100 text-green-800 px-2 py-0.5 rounded text-xs font-medium">
+                          #{index + 1}
+                        </div>
+                        <span className="text-sm font-medium text-gray-900">
+                          Time: {detail.time || 'Not specified'}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
+                        <div>pH 30°C: <span className="font-medium">{detail.ph_30_degrees || 'N/A'}</span></div>
+                        <div>pH 55°C: <span className="font-medium">{detail.ph_55_degrees || 'N/A'}</span></div>
+                      </div>
+                      {detail.defects && (
+                        <div className="text-xs text-gray-600 mt-1">
+                          Defects: <span className="font-medium">{detail.defects}</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex gap-1">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          // Load this detail into the form for editing
+                          qualityCheckDetailsForm.reset(detail)
+                          // Remove from list temporarily
+                          const newList = incubationDetailsList.filter((_, i) => i !== index)
+                          setIncubationDetailsList(newList)
+                          toast.info("Detail loaded for editing")
+                        }}
+                      >
+                        Edit
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        onClick={() => {
+                          const newList = incubationDetailsList.filter((_, i) => i !== index)
+                          setIncubationDetailsList(newList)
+                          toast.success("Detail removed")
+                        }}
+                      >
+                        Remove
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="flex gap-2 mt-4 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+          <Button
+            type="button"
+            variant="outline"
+            className="flex-1"
+            onClick={() => {
+              const formData = qualityCheckDetailsForm.getValues()
+              if (!formData.time) {
+                toast.error("Please enter a time value before adding")
+                return
+              }
+              setIncubationDetailsList([...incubationDetailsList, formData])
+              qualityCheckDetailsForm.reset({
+                time: "",
+                ph_30_degrees: "" as any,
+                ph_55_degrees: "" as any,
+                defects: "",
+                analyst: "",
+                verified_by: "",
+              })
+              toast.success("Incubation detail added")
+            }}
+          >
+            + Add Another Incubation Detail
+          </Button>
         </div>
       </div>
     </div>

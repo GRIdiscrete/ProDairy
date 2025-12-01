@@ -365,7 +365,7 @@ export default function ProcessLogPage() {
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center space-x-2">
-                    <User className="h-4 w-4 text-purple-500" />
+                    <User className="h-4 w-4 text-blue-500" />
                     <p className="text-sm font-light">Approver</p>
                   </div>
                   <p className="text-lg font-light text-blue-600">
@@ -407,8 +407,8 @@ export default function ProcessLogPage() {
 
                   <div className="p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg">
                     <div className="flex items-center space-x-2 mb-3">
-                      <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center">
-                        <Clock className="h-4 w-4 text-purple-600" />
+                      <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
+                        <Clock className="h-4 w-4 text-blue-600" />
                       </div>
                       <h4 className="text-sm font-light text-gray-900">Process Status</h4>
                     </div>

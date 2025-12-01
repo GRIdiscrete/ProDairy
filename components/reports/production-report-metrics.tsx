@@ -39,8 +39,8 @@ export function ProductionReportMetrics() {
         unit="K USD"
         change={{ value: 3.2, type: "increase" }}
         icon={DollarSign}
-        iconColor="text-purple-600"
-        className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200"
+        iconColor="text-blue-600"
+        className="bg-blue-50 border-blue-200"
       />
     </div>
   )

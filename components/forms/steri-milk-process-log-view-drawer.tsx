@@ -193,7 +193,7 @@ export function SteriMilkProcessLogViewDrawer({
                       onClick={() => setShowPostTestForm(true)}
                       variant="outline"
                       size="sm"
-                      className={`border-0 rounded-full ${hasPost ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white" : "bg-gradient-to-r from-purple-500 to-pink-500 text-white"}`}
+                      className={`border-0 rounded-full ${hasPost ? "bg-[#A0D001] text-white" : "bg-[#0068BD] text-white"}`}
                     >
                       <Beaker className="h-4 w-4 mr-1" />
                       {hasPost ? "Edit Post Test" : "Post Autoclave Test"}
@@ -320,8 +320,8 @@ export function SteriMilkProcessLogViewDrawer({
             <Card className="shadow-none border border-gray-200 rounded-lg">
               <CardHeader className="pb-4">
                 <div className="flex items-center space-x-2">
-                  <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center">
-                    <Package className="h-4 w-4 text-purple-600" />
+                  <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
+                    <Package className="h-4 w-4 text-blue-600" />
                   </div>
                   <CardTitle className="text-base font-light">Batch Information</CardTitle>
                 </div>
@@ -782,7 +782,7 @@ export function SteriMilkProcessLogViewDrawer({
                   <Button
                     onClick={() => setShowTestReportForm(true)}
                     size="sm"
-                    className="mt-4 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white border-0 rounded-full"
+                    className="mt-4 bg-[#0068BD] hover:bg-[#005299] text-white border-0 rounded-full"
                   >
                     <Plus className="h-4 w-4 mr-1" />
                     Create Test Report
@@ -922,8 +922,8 @@ export function SteriMilkProcessLogViewDrawer({
                           <Card className="shadow-none border border-gray-200 rounded-lg mt-4">
                             <CardHeader className="pb-4">
                               <div className="flex items-center space-x-2">
-                                <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center">
-                                  <Beaker className="h-4 w-4 text-purple-600" />
+                                <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
+                                  <Beaker className="h-4 w-4 text-blue-600" />
                                 </div>
                                 <CardTitle className="text-base font-light">Chemical Analysis</CardTitle>
                               </div>
@@ -973,8 +973,8 @@ export function SteriMilkProcessLogViewDrawer({
                           <Card className="shadow-none border border-gray-200 rounded-lg mt-4">
                             <CardHeader className="pb-4">
                               <div className="flex items-center space-x-2">
-                                <div className="w-6 h-6 rounded-full bg-pink-100 flex items-center justify-center">
-                                  <Gauge className="h-4 w-4 text-pink-600" />
+                                <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
+                                  <Gauge className="h-4 w-4 text-blue-600" />
                                 </div>
                                 <CardTitle className="text-base font-light">Additional Tests</CardTitle>
                               </div>
@@ -1016,7 +1016,7 @@ export function SteriMilkProcessLogViewDrawer({
                     <Button
                       onClick={() => setShowPostTestForm(true)}
                       size="sm"
-                      className="mt-4 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white border-0 rounded-full"
+                      className="mt-4 bg-[#0068BD] hover:bg-[#005299] text-white border-0 rounded-full"
                     >
                       <Plus className="h-4 w-4 mr-1" />
                       Create Post Test

@@ -216,8 +216,8 @@ export function FilmaticLinesForm1ViewDrawer({
             <Card className="shadow-none border border-gray-200 rounded-lg">
               <CardHeader className="pb-4">
                 <div className="flex items-center space-x-2">
-                  <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center">
-                    <Package className="h-4 w-4 text-purple-600" />
+                  <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
+                    <Package className="h-4 w-4 text-blue-600" />
                   </div>
                   <CardTitle className="text-base font-light">Groups Information</CardTitle>
                 </div>
@@ -314,7 +314,7 @@ export function FilmaticLinesForm1ViewDrawer({
                                 <UserAvatar user={user} size="md" showName={true} showEmail={false} showDropdown={true} />
                               </div>
                             ) : (
-                              <span key={index} className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded">{memberId.slice(0,8)}</span>
+                              <span key={index} className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">{memberId.slice(0,8)}</span>
                             )
                           })}
                           {form.groups.group_c.length > 8 && (

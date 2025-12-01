@@ -26,8 +26,8 @@ export function UHTQualityCheckViewDrawer({
 }: UHTQualityCheckViewDrawerProps) {
   if (!qualityCheck) return null
 
-  // Support both new nested incubation_details and old details fkey
-  const details = (qualityCheck as any).incubation_details ?? qualityCheck.uht_qa_check_after_incubation_details_fkey
+  // Get incubation details array from API response
+  const detailsArray = (qualityCheck as any).uht_quality_check_after_incubation_details || []
 
   // Local users state loaded when drawer opens
   const [users, setUsers] = useState<any[]>([])
@@ -55,12 +55,11 @@ export function UHTQualityCheckViewDrawer({
     qualityCheck.uht_qa_check_after_incubation_checked_by_fkey ||
     null
 
-  // Resolve analyst / verified user objects from details (ids) or fallback to raw strings
-  const analystId = details?.analyst
-  const verifiedById = details?.verified_by
-
-  const analystUser = analystId ? users.find(u => u.id === analystId) : null
-  const verifiedUser = verifiedById ? users.find(u => u.id === verifiedById) : null
+  // Helper function to resolve user from ID
+  const getUserById = (userId: string | null | undefined) => {
+    if (!userId) return null
+    return users.find(u => u.id === userId) || null
+  }
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -87,8 +86,8 @@ export function UHTQualityCheckViewDrawer({
               </div>
               <ArrowRight className="w-4 h-4 text-gray-400" />
               <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center">
-                  <Beaker className="w-4 h-4 text-purple-600" />
+                <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+                  <Beaker className="w-4 w-4 text-blue-600" />
                 </div>
                 <span className="text-sm font-light">Incubation</span>
               </div>
@@ -185,53 +184,54 @@ export function UHTQualityCheckViewDrawer({
             </CardContent>
           </Card>
 
-          {/* Test Details */}
-          {details && (
+          {/* Test Details (all incubation entries) */}
+          {detailsArray.length > 0 && (
             <Card className="shadow-none border border-gray-200 rounded-lg">
               <CardHeader className="pb-4">
                 <div className="flex items-center space-x-2">
-                  <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center">
-                    <TestTube className="h-4 w-4 text-purple-600" />
+                  <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
+                    <TestTube className="h-4 w-4 text-blue-600" />
                   </div>
                   <CardTitle className="text-base font-light">Test Details</CardTitle>
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <span className="text-xs font-light text-gray-500">Time</span>
-                    <p className="text-sm font-light">
-                      {details.time ? format(new Date(details.time), "PPP 'at' p") : "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <span className="text-xs font-light text-gray-500">pH 30°C</span>
-                    <p className="text-sm font-light">{details.ph_30_degrees}</p>
-                  </div>
-                </div>
+                {detailsArray.map((d: any, idx: number) => (
+                  <div key={d.id || idx} className="border rounded-lg p-4 bg-white">
+                    <div className="flex items-center justify-between mb-2">
+                      <div>
+                        <div className="text-xs text-gray-500">Detail</div>
+                        <div className="text-sm font-medium">#{idx + 1} — {d.time || 'N/A'}</div>
+                      </div>
+                      <div className="text-xs text-gray-500">Created: <span className="font-light">{d.created_at ? format(new Date(d.created_at), "PPP 'at' p") : 'N/A'}</span></div>
+                    </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <span className="text-xs font-light text-gray-500">pH 55°C</span>
-                    <p className="text-sm font-light">{details.ph_55_degrees}</p>
-                  </div>
-                  <div>
-                    <span className="text-xs font-light text-gray-500">Created At</span>
-                    <p className="text-sm font-light">
-                      {details.created_at ? format(new Date(details.created_at), "PPP 'at' p") : "N/A"}
-                    </p>
-                  </div>
-                </div>
+                    <div className="grid grid-cols-2 gap-4 mb-2 text-sm text-gray-700">
+                      <div>
+                        <div className="text-xs text-gray-500">pH 30°C</div>
+                        <div className="font-medium">{d.ph_30_degrees ?? 'N/A'}</div>
+                      </div>
+                      <div>
+                        <div className="text-xs text-gray-500">pH 55°C</div>
+                        <div className="font-medium">{d.ph_55_degrees ?? 'N/A'}</div>
+                      </div>
+                    </div>
 
-                <div className="space-y-2">
-                  <span className="text-xs font-light text-gray-500">Defects</span>
-                  <p className="text-sm font-light">{details.defects}</p>
-                </div>
+                    {d.defects && (
+                      <div className="text-sm text-gray-700 mb-2">
+                        <div className="text-xs text-gray-500">Defects</div>
+                        <div className="font-medium">{d.defects}</div>
+                      </div>
+                    )}
 
-                <div className="space-y-2">
-                  <span className="text-xs font-light text-gray-500">Event</span>
-                  <p className="text-sm font-light">{details.event}</p>
-                </div>
+                    {d.event && (
+                      <div className="text-sm text-gray-700">
+                        <div className="text-xs text-gray-500">Event</div>
+                        <div className="font-medium">{d.event}</div>
+                      </div>
+                    )}
+                  </div>
+                ))}
               </CardContent>
             </Card>
           )}
@@ -260,31 +260,42 @@ export function UHTQualityCheckViewDrawer({
                 </div>
               </div>
 
-              {/* Test Personnel (Analyst + Verified By) */}
+              {/* Test Personnel (Analyst + Verified By per detail) */}
               <div className="space-y-2">
                 <h4 className="text-sm font-medium">Test Personnel</h4>
                 <div className="pl-4 grid grid-cols-2 gap-4">
                   <div>
-                    <div className="text-xs text-gray-500 mb-2">Analyst</div>
-                    {analystUser ? (
-                      <UserAvatar user={analystUser} size="md" showName={true} showEmail={true} showDropdown={true} />
-                    ) : analystId ? (
-                      // fallback: show minimal avatar for unknown but present id
-                      <UserAvatar user={{ id: analystId, first_name: "", last_name: "", email: "" }} size="md" showName={false} showEmail={false} showDropdown={true} />
-                    ) : (
-                      <p className="text-sm font-light">N/A</p>
-                    )}
+                    <div className="text-xs text-gray-500 mb-2">Analysts</div>
+                    <div className="space-y-2">
+                      {Array.from(new Set(detailsArray.map((d: any) => d.analyst).filter(Boolean))).map((analystId: string) => {
+                        const user = getUserById(analystId)
+                        return user ? (
+                          <div key={analystId} className="mb-1">
+                            <UserAvatar user={user} size="sm" showName={true} showEmail={true} showDropdown={false} />
+                          </div>
+                        ) : (
+                          <div key={analystId} className="text-sm font-light">{analystId}</div>
+                        )
+                      })}
+                      {detailsArray.every((d: any) => !d.analyst) && <p className="text-sm font-light">N/A</p>}
+                    </div>
                   </div>
 
                   <div>
                     <div className="text-xs text-gray-500 mb-2">Verified By</div>
-                    {verifiedUser ? (
-                      <UserAvatar user={verifiedUser} size="md" showName={true} showEmail={true} showDropdown={true} />
-                    ) : verifiedById ? (
-                      <UserAvatar user={{ id: verifiedById, first_name: "", last_name: "", email: "" }} size="md" showName={false} showEmail={false} showDropdown={true} />
-                    ) : (
-                      <p className="text-sm font-light">N/A</p>
-                    )}
+                    <div className="space-y-2">
+                      {Array.from(new Set(detailsArray.map((d: any) => d.verified_by).filter(Boolean))).map((verifierId: string) => {
+                        const user = getUserById(verifierId)
+                        return user ? (
+                          <div key={verifierId} className="mb-1">
+                            <UserAvatar user={user} size="sm" showName={true} showEmail={true} showDropdown={false} />
+                          </div>
+                        ) : (
+                          <div key={verifierId} className="text-sm font-light">{verifierId}</div>
+                        )
+                      })}
+                      {detailsArray.every((d: any) => !d.verified_by) && <p className="text-sm font-light">N/A</p>}
+                    </div>
                   </div>
                 </div>
               </div>

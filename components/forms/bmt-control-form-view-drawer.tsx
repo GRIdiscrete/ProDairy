@@ -546,8 +546,8 @@ export function BMTControlFormViewDrawer({ open, onClose, form, onEdit }: BMTCon
             {/* Dispatch Operator */}
             <div className="p-6 bg-white border border-gray-200 rounded-lg">
               <div className="flex items-center space-x-2 mb-4">
-                <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center">
-                  <User className="h-4 w-4 text-purple-600" />
+                <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
+                  <User className="h-4 w-4 text-blue-600" />
                 </div>
                 <h3 className="text-lg font-light">Dispatch Operator</h3>
               </div>

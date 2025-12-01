@@ -137,7 +137,7 @@ export default function AdminUsersPage() {
         const role = roleNameById.get(row.original.role_id) || 'operator'
         const roleLower = role.toLowerCase()
         const getRoleColor = (roleName: string) => {
-          if (roleLower.includes('admin')) return 'bg-purple-100 text-purple-800'
+          if (roleLower.includes('admin')) return 'bg-blue-100 text-blue-800'
           if (roleLower.includes('manager')) return 'bg-blue-100 text-blue-800'
           if (roleLower.includes('technician')) return 'bg-orange-100 text-orange-800'
           return 'bg-green-100 text-green-800'

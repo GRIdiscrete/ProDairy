@@ -247,8 +247,8 @@ export default function ProductionPage() {
           <div className="bg-white border border-gray-200 rounded-lg p-6">
             <div className="flex flex-row items-center justify-between mb-4">
               <h3 className="text-sm text-gray-600">Total Materials</h3>
-              <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center">
-                <Package className="h-4 w-4 text-purple-600" />
+              <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+                <Package className="h-4 w-4 text-blue-600" />
               </div>
             </div>
             {isLoading ? (
@@ -258,7 +258,7 @@ export default function ProductionPage() {
               </div>
             ) : (
               <>
-                <div className="text-3xl text-purple-600">
+                <div className="text-3xl text-blue-600">
                   {productionPlans?.reduce((total, p) => total + p.raw_products.length, 0) || 0}
                 </div>
                 <p className="text-xs text-gray-500 mt-1">Material requests</p>

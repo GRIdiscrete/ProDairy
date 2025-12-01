@@ -131,7 +131,7 @@ export default function AdminRolesPage() {
         const role = row.original
         const roleLower = role.role_name?.toLowerCase() || ''
         const getRoleColor = (roleName: string) => {
-          if (roleName.includes('admin')) return 'bg-purple-100 text-purple-800'
+          if (roleName.includes('admin')) return 'bg-blue-100 text-blue-800'
           if (roleName.includes('manager')) return 'bg-blue-100 text-blue-800'
           if (roleName.includes('technician')) return 'bg-orange-100 text-orange-800'
           if (roleName.includes('operator')) return 'bg-green-100 text-green-800'
@@ -322,9 +322,9 @@ export default function AdminRolesPage() {
             <div className="border border-gray-200 rounded-lg bg-white p-4">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm font-light">Admin Roles</span>
-                <Shield className="h-4 w-4 text-purple-600" />
+                <Shield className="h-4 w-4 text-blue-600" />
               </div>
-              <div className="text-2xl font-light text-purple-600">{adminRoles}</div>
+              <div className="text-2xl font-light text-blue-600">{adminRoles}</div>
               <p className="text-xs text-muted-foreground">Administrative access</p>
             </div>
           </div>

@@ -227,9 +227,9 @@ export default function UHTQualityCheckPage({ params }: UHTQualityCheckPageProps
         const qualityCheck = row.original
         return (
           <div className="space-y-2">
-            <div className="flex items-center space-x-2">
-              <div className="w-5 h-5 rounded-full bg-purple-100 flex items-center justify-center">
-                <TestTube className="h-3 w-3 text-purple-600" />
+            <div className="flex items-center space-x-3">
+              <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center">
+                <TestTube className="h-3 w-3 text-blue-600" />
               </div>
               <p className="text-sm font-light">
                 pH Values
@@ -323,7 +323,7 @@ export default function UHTQualityCheckPage({ params }: UHTQualityCheckPageProps
               variant="outline" 
               size="sm" 
               onClick={() => handleViewQualityCheck(qualityCheck)}
-              className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full"
+              className="bg-[#0068BD] hover:bg-[#005299] text-white border-0 rounded-full"
             >
               <Eye className="w-4 h-4" />
             </LoadingButton>
@@ -331,7 +331,7 @@ export default function UHTQualityCheckPage({ params }: UHTQualityCheckPageProps
               variant="outline" 
               size="sm" 
               onClick={() => handleEditQualityCheck(qualityCheck)}
-              className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 rounded-full"
+              className="bg-[#A0D001] hover:bg-[#8AB801] text-white border-0 rounded-full"
             >
               <Edit className="w-4 h-4" />
             </LoadingButton>
@@ -341,7 +341,7 @@ export default function UHTQualityCheckPage({ params }: UHTQualityCheckPageProps
               onClick={() => handleDeleteQualityCheck(qualityCheck)}
               loading={operationLoading.delete}
               disabled={operationLoading.delete}
-              className="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white border-0 rounded-full"
+              className="bg-red-600 hover:bg-red-700 text-white border-0 rounded-full"
             >
               <Trash2 className="w-4 h-4" />
             </LoadingButton>
@@ -443,10 +443,10 @@ export default function UHTQualityCheckPage({ params }: UHTQualityCheckPageProps
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center space-x-2">
-                    <TestTube className="h-4 w-4 text-purple-500" />
+                    <TestTube className="h-4 w-4 text-blue-500" />
                     <p className="text-sm font-light text-gray-600">pH (0 days)</p>
                   </div>
-                  <p className="text-lg font-light text-purple-600">
+                  <p className="text-lg font-light text-blue-600">
                     {latestQualityCheck.ph_0_days}
                   </p>
                 </div>
@@ -469,8 +469,8 @@ export default function UHTQualityCheckPage({ params }: UHTQualityCheckPageProps
                   </div>
                   <ArrowRight className="w-4 h-4 text-gray-400" />
                   <div className="flex items-center space-x-2">
-                    <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center">
-                      <Beaker className="h-4 w-4 text-purple-600" />
+                    <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
+                      <Beaker className="h-4 w-4 text-blue-600" />
                     </div>
                     <span className="text-sm font-light">Incubation</span>
                   </div>

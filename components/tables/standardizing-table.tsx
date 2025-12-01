@@ -56,7 +56,7 @@ export function StandardizingTable({ forms, onView, onEdit, onDelete, operationL
                 onClick={() => onDelete(form)}
                 loading={operationLoading.delete}
                 disabled={operationLoading.delete}
-                className="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white border-0 rounded-full"
+                className="bg-red-600 hover:bg-red-700 text-white border-0 rounded-full"
               >
                 <Trash2 className="w-4 h-4" />
               </LoadingButton>

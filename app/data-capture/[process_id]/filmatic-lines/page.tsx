@@ -209,9 +209,9 @@ export default function FilmaticLines1Page() {
         const groups = form.groups
         return (
           <div className="space-y-2">
-            <div className="flex items-center space-x-2">
-              <div className="w-5 h-5 rounded-full bg-purple-100 flex items-center justify-center">
-                <TrendingUp className="w-3 h-3 text-purple-600" />
+            <div className="flex items-center space-x-3">
+              <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center">
+                <TrendingUp className="w-3 h-3 text-blue-600" />
               </div>
               <span className="text-sm font-light">Groups</span>
             </div>
@@ -291,7 +291,7 @@ export default function FilmaticLines1Page() {
               variant="outline"
               size="sm"
               onClick={() => handleViewForm(form)}
-              className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full"
+              className="bg-[#0068BD] hover:bg-[#005299] text-white border-0 rounded-full"
             >
               <Eye className="w-4 h-4" />
             </LoadingButton>
@@ -299,7 +299,7 @@ export default function FilmaticLines1Page() {
               variant="outline"
               size="sm"
               onClick={() => handleEditForm(form)}
-              className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 rounded-full"
+              className="bg-[#A0D001] hover:bg-[#8AB801] text-white border-0 rounded-full"
             >
               <Edit className="w-4 h-4" />
             </LoadingButton>
@@ -309,7 +309,7 @@ export default function FilmaticLines1Page() {
               onClick={() => handleDeleteForm(form)}
               loading={loading.delete}
               disabled={loading.delete}
-              className="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white border-0 rounded-full"
+              className="bg-red-600 hover:bg-red-700 text-white border-0 rounded-full"
             >
               <Trash2 className="w-4 h-4" />
             </LoadingButton>
@@ -544,7 +544,7 @@ export default function FilmaticLines1Page() {
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-light text-gray-600">Approval</span>
-                      <span className="text-xs font-light text-purple-600">{latestForm.approved ? 'Approved' : 'Pending'}</span>
+                      <span className="text-xs font-light text-blue-600">{latestForm.approved ? 'Approved' : 'Pending'}</span>
                     </div>
                   </div>
                 </div>

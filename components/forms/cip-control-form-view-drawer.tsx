@@ -199,7 +199,7 @@ export function CIPControlFormViewDrawer({ open, onClose, form, users = [], role
                 <span className="text-sm font-light text-gray-600 block mb-2">Approver Role</span>
                 {approverRole ? (
                   <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center text-white font-medium">
+                    <div className="w-10 h-10 rounded-full bg-[#0068BD] flex items-center justify-center text-white font-medium">
                       {approverRole.role_name?.substring(0, 2).toUpperCase() || 'NA'}
                     </div>
                     <div className="flex-1">
