@@ -19,12 +19,15 @@ import { createCIPControlFormAction, updateCIPControlFormAction, fetchCIPControl
 import { machineApi } from "@/lib/api/machine"
 import { usersApi } from "@/lib/api/users"
 import { rolesApi } from "@/lib/api/roles"
+import { siloApi } from "@/lib/api/silo"
 import { toast } from "sonner"
 import type { CIPControlForm, CIPControlFormStages } from "@/lib/api/data-capture-forms"
 
 const cipControlFormSchema = yup.object({
   status: yup.string().required("Status is required"),
-  machine_id: yup.string().required("Machine is required"),
+  machine_or_silo: yup.string().required("Machine or Silo type is required"),
+  machine_id: yup.string().nullable(),
+  silo_id: yup.string().nullable(),
   operator_id: yup.string().required("Operator is required"),
   date: yup.string().required("Date is required"),
   caustic_solution_strength: yup.number().required("Caustic solution strength is required").min(0, "Must be positive"),
@@ -58,21 +61,26 @@ export function CIPControlFormDrawer({ open, onOpenChange, form, mode }: CIPCont
 
   // State for searchable selects
   const [machines, setMachines] = useState<SearchableSelectOption[]>([])
+  const [silos, setSilos] = useState<SearchableSelectOption[]>([])
   const [users, setUsers] = useState<SearchableSelectOption[]>([])
   const [roles, setRoles] = useState<SearchableSelectOption[]>([])
   const [loadingMachines, setLoadingMachines] = useState(false)
+  const [loadingSilos, setLoadingSilos] = useState(false)
   const [loadingUsers, setLoadingUsers] = useState(false)
   const [loadingRoles, setLoadingRoles] = useState(false)
+  const [cipType, setCipType] = useState<'machine' | 'silo'>('machine')
 
   // Load initial data
   const loadInitialData = async () => {
     try {
       setLoadingMachines(true)
+      setLoadingSilos(true)
       setLoadingUsers(true)
       setLoadingRoles(true)
       
-      const [machinesResponse, usersResponse, rolesResponse] = await Promise.all([
+      const [machinesResponse, silosResponse, usersResponse, rolesResponse] = await Promise.all([
         machineApi.getMachines(),
+        siloApi.getSilos(),
         usersApi.getUsers(),
         rolesApi.getRoles()
       ])
@@ -81,6 +89,12 @@ export function CIPControlFormDrawer({ open, onOpenChange, form, mode }: CIPCont
         value: machine.id,
         label: machine.name,
         description: `${machine.location} • ${machine.category} • ${machine.serial_number}`
+      })) || [])
+      
+      setSilos(silosResponse.data?.map(silo => ({
+        value: silo.id,
+        label: silo.name,
+        description: `${silo.location} • ${silo.category} • ${silo.capacity}L capacity`
       })) || [])
       
       setUsers(usersResponse.data?.map(user => ({
@@ -99,6 +113,7 @@ export function CIPControlFormDrawer({ open, onOpenChange, form, mode }: CIPCont
       toast.error('Failed to load form data')
     } finally {
       setLoadingMachines(false)
+      setLoadingSilos(false)
       setLoadingUsers(false)
       setLoadingRoles(false)
     }
@@ -120,6 +135,25 @@ export function CIPControlFormDrawer({ open, onOpenChange, form, mode }: CIPCont
       console.error('Error searching machines:', error)
     } finally {
       setLoadingMachines(false)
+    }
+  }
+
+  // Handle silo search
+  const handleSiloSearch = async (searchTerm: string) => {
+    try {
+      setLoadingSilos(true)
+      const response = await siloApi.getSilos({
+        filters: { search: searchTerm }
+      })
+      setSilos(response.data?.map(silo => ({
+        value: silo.id,
+        label: silo.name,
+        description: `${silo.location} • ${silo.category} • ${silo.capacity}L capacity`
+      })) || [])
+    } catch (error) {
+      console.error('Error searching silos:', error)
+    } finally {
+      setLoadingSilos(false)
     }
   }
 
@@ -170,7 +204,9 @@ export function CIPControlFormDrawer({ open, onOpenChange, form, mode }: CIPCont
     resolver: yupResolver(cipControlFormSchema),
     defaultValues: {
       status: "",
+      machine_or_silo: "",
       machine_id: "",
+      silo_id: "",
       operator_id: "",
       date: "",
       caustic_solution_strength: undefined,
@@ -247,9 +283,21 @@ export function CIPControlFormDrawer({ open, onOpenChange, form, mode }: CIPCont
 
   useEffect(() => {
     if (open && form && mode === "edit") {
+      const formData = form as any
+      const machineOrSilo = formData.machine_or_silo || ""
+      
+      // Determine CIP type from form data
+      if (formData.machine_id) {
+        setCipType('machine')
+      } else if (formData.silo_id) {
+        setCipType('silo')
+      }
+      
       reset({
         status: form.status || "",
+        machine_or_silo: machineOrSilo,
         machine_id: form.machine_id || "",
+        silo_id: formData.silo_id || "",
         operator_id: form.operator_id || "",
         date: form.date || "",
         caustic_solution_strength: form.caustic_solution_strength || undefined,
@@ -266,9 +314,12 @@ export function CIPControlFormDrawer({ open, onOpenChange, form, mode }: CIPCont
         })) || [],
       })
     } else if (open && mode === "create") {
+      setCipType('machine')
       reset({
         status: "",
+        machine_or_silo: "",
         machine_id: "",
+        silo_id: "",
         operator_id: "",
         date: "",
         caustic_solution_strength: undefined,
@@ -328,29 +379,91 @@ export function CIPControlFormDrawer({ open, onOpenChange, form, mode }: CIPCont
                   />
                   {errors.status && <p className="text-sm text-red-500">{errors.status.message}</p>}
                 </div>
+                
                 <div className="space-y-2">
-                  <Label htmlFor="machine_id">Machine/System *</Label>
-                  <Controller
-                    name="machine_id"
-                    control={control}
-                    render={({ field }) => (
-                      <SearchableSelect
-                        options={machines}
-                        value={field.value}
-                        onValueChange={field.onChange}
-                        placeholder="Select machine"
-                        searchPlaceholder="Search machines..."
-                        emptyMessage="No machines found"
-                        loading={loadingMachines}
-                        onSearch={handleMachineSearch}
-                        className="w-full rounded-full border-gray-200"
-                      />
-                    )}
-                  />
-                  {errors.machine_id && <p className="text-sm text-red-500">{errors.machine_id.message}</p>}
+                  <Label htmlFor="cip_type">CIP Type *</Label>
+                  <Select 
+                    onValueChange={(val) => {
+                      setCipType(val as 'machine' | 'silo')
+                      // Clear the other field when switching
+                      if (val === 'machine') {
+                        setValue('silo_id', '')
+                      } else {
+                        setValue('machine_id', '')
+                      }
+                    }} 
+                    value={cipType}
+                  >
+                    <SelectTrigger className="w-full rounded-full border-gray-200">
+                      <SelectValue placeholder="Select CIP type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="machine">Machine</SelectItem>
+                      <SelectItem value="silo">Silo</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
+              
               <div className="grid grid-cols-2 gap-4">
+                {cipType === 'machine' ? (
+                  <div className="space-y-2">
+                    <Label htmlFor="machine_id">Machine/System *</Label>
+                    <Controller
+                      name="machine_id"
+                      control={control}
+                      render={({ field }) => (
+                        <SearchableSelect
+                          options={machines}
+                          value={field.value}
+                          onValueChange={(val) => {
+                            field.onChange(val)
+                            const machine = machines.find(m => m.value === val)
+                            if (machine) {
+                              setValue('machine_or_silo', machine.label)
+                            }
+                          }}
+                          placeholder="Select machine"
+                          searchPlaceholder="Search machines..."
+                          emptyMessage="No machines found"
+                          loading={loadingMachines}
+                          onSearch={handleMachineSearch}
+                          className="w-full rounded-full border-gray-200"
+                        />
+                      )}
+                    />
+                    {errors.machine_id && <p className="text-sm text-red-500">{errors.machine_id.message}</p>}
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <Label htmlFor="silo_id">Silo *</Label>
+                    <Controller
+                      name="silo_id"
+                      control={control}
+                      render={({ field }) => (
+                        <SearchableSelect
+                          options={silos}
+                          value={field.value}
+                          onValueChange={(val) => {
+                            field.onChange(val)
+                            const silo = silos.find(s => s.value === val)
+                            if (silo) {
+                              setValue('machine_or_silo', silo.label)
+                            }
+                          }}
+                          placeholder="Select silo"
+                          searchPlaceholder="Search silos..."
+                          emptyMessage="No silos found"
+                          loading={loadingSilos}
+                          onSearch={handleSiloSearch}
+                          className="w-full rounded-full border-gray-200"
+                        />
+                      )}
+                    />
+                    {errors.silo_id && <p className="text-sm text-red-500">{errors.silo_id.message}</p>}
+                  </div>
+                )}
+                
                 <div className="space-y-2">
                   <Label htmlFor="operator_id">Operator *</Label>
                   <Controller
@@ -372,22 +485,23 @@ export function CIPControlFormDrawer({ open, onOpenChange, form, mode }: CIPCont
                   />
                   {errors.operator_id && <p className="text-sm text-red-500">{errors.operator_id.message}</p>}
                 </div>
-                <div className="space-y-2">
-                  <Controller
-                    name="date"
-                    control={control}
-                    render={({ field }) => (
-                      <DatePicker
-                        label="Date *"
-                        value={field.value}
-                        onChange={field.onChange}
-                        placeholder="Select date"
-                        error={!!errors.date}
-                      />
-                    )}
-                  />
-                  {errors.date && <p className="text-sm text-red-500">{errors.date.message}</p>}
-                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Controller
+                  name="date"
+                  control={control}
+                  render={({ field }) => (
+                    <DatePicker
+                      label="Date *"
+                      value={field.value}
+                      onChange={field.onChange}
+                      placeholder="Select date"
+                      error={!!errors.date}
+                    />
+                  )}
+                />
+                {errors.date && <p className="text-sm text-red-500">{errors.date.message}</p>}
               </div>
             </div>
 
