@@ -152,19 +152,15 @@ export function QACorrectiveActionDrawer({
       }
 
       if (mode === "edit" && action?.id) {
-        // console.log('Panno' +  )
-
+        const existingDetailsId = action.qa_corrective_action_details?.[0]?.id
         const actualDetails = {
           ...payload.details[0],
-          id: action.qa_corrective_action_details[0]?.id,
-
+          ...(existingDetailsId ? { id: existingDetailsId } : {})
         }
         await dispatch(updateQACorrectiveActionAction({
           ...payload,
           id: action.id,
-          details: [{
-            ...actualDetails
-          }]
+          details: [actualDetails]
         })).unwrap()
         toast.success("QA Corrective Action updated successfully")
       } else {
@@ -172,12 +168,19 @@ export function QACorrectiveActionDrawer({
         toast.success("QA Corrective Action created successfully")
       }
 
-      // refresh list
-      await dispatch(fetchQACorrectiveActions()).unwrap()
+      // Close drawer first
       onOpenChange(false)
+      
+      // Then refresh list
+      setTimeout(() => {
+        dispatch(fetchQACorrectiveActions())
+      }, 100)
     } catch (err: any) {
-      const msg = err?.message || String(err) || "Failed to save"
-      toast.error(msg)
+      console.error('QA Corrective Action save error:', err)
+      const msg = err?.message || err || "Failed to save QA Corrective Action"
+      toast.error(msg, {
+        style: { background: '#ef4444', color: 'white' }
+      })
     }
   }
 

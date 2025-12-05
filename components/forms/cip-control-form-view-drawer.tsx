@@ -86,8 +86,8 @@ export function CIPControlFormViewDrawer({ open, onClose, form, users = [], role
                 <Badge className={getStatusColor(form.status)}>{form.status}</Badge>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm font-light text-gray-600">Machine/System</span>
-                <span className="text-sm font-light">{form.machine_id?.name || 'N/A'}</span>
+                <span className="text-sm font-light text-gray-600">{form.machine_id ? 'Machine' : form.silo_id ? 'Silo' : 'Machine/Silo'}</span>
+                <span className="text-sm font-light">{form.machine_or_silo || form.machine_id?.name || form.silo_id?.name || 'N/A'}</span>
               </div>
               
               {/* Operator with UserAvatar */}
@@ -117,49 +117,95 @@ export function CIPControlFormViewDrawer({ open, onClose, form, users = [], role
             </div>
           </div>
 
-          {/* Machine Details */}
-          <div className="p-6 bg-white border border-gray-200 rounded-lg mb-6">
-            <div className="flex items-center space-x-2 mb-4">
-              <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
-                <Settings className="w-4 h-4 text-blue-600" />
-              </div>
-              <h3 className="text-lg font-light">Machine Details</h3>
-            </div>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-light text-gray-600">Machine Name</span>
-                <span className="text-sm font-light">{form.machine_id?.name || 'N/A'}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-light text-gray-600">Tag</span>
-                <span className="text-sm font-light">{form.machine_id?.tag || 'N/A'}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-light text-gray-600">Serial Number</span>
-                <span className="text-sm font-light">{form.machine_id?.serial_number || 'N/A'}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-light text-gray-600">Category</span>
-                <span className="text-sm font-light">{form.machine_id?.category || 'N/A'}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-light text-gray-600">Location</span>
-                <span className="text-sm font-light">{form.machine_id?.location || 'N/A'}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-light text-gray-600">Machine Status</span>
-                <Badge className={form.machine_id?.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}>
-                  {form.machine_id?.status || 'N/A'}
-                </Badge>
-              </div>
-              {form.machine_id?.cases_packed && (
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-light text-gray-600">Cases Packed</span>
-                  <span className="text-sm font-light">{form.machine_id.cases_packed}</span>
+          {/* Machine/Silo Details */}
+          {form.machine_id && (
+            <div className="p-6 bg-white border border-gray-200 rounded-lg mb-6">
+              <div className="flex items-center space-x-2 mb-4">
+                <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
+                  <Settings className="w-4 h-4 text-blue-600" />
                 </div>
-              )}
+                <h3 className="text-lg font-light">Machine Details</h3>
+              </div>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-light text-gray-600">Machine Name</span>
+                  <span className="text-sm font-light">{form.machine_id?.name || 'N/A'}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-light text-gray-600">Tag</span>
+                  <span className="text-sm font-light">{form.machine_id?.tag || 'N/A'}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-light text-gray-600">Serial Number</span>
+                  <span className="text-sm font-light">{form.machine_id?.serial_number || 'N/A'}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-light text-gray-600">Category</span>
+                  <span className="text-sm font-light">{form.machine_id?.category || 'N/A'}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-light text-gray-600">Location</span>
+                  <span className="text-sm font-light">{form.machine_id?.location || 'N/A'}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-light text-gray-600">Machine Status</span>
+                  <Badge className={form.machine_id?.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}>
+                    {form.machine_id?.status || 'N/A'}
+                  </Badge>
+                </div>
+                {form.machine_id?.cases_packed && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-light text-gray-600">Cases Packed</span>
+                    <span className="text-sm font-light">{form.machine_id.cases_packed}</span>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
+          )}
+
+          {/* Silo Details */}
+          {form.silo_id && (
+            <div className="p-6 bg-white border border-gray-200 rounded-lg mb-6">
+              <div className="flex items-center space-x-2 mb-4">
+                <div className="w-6 h-6 rounded-full bg-cyan-100 flex items-center justify-center">
+                  <Droplets className="w-4 h-4 text-cyan-600" />
+                </div>
+                <h3 className="text-lg font-light">Silo Details</h3>
+              </div>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-light text-gray-600">Silo Name</span>
+                  <span className="text-sm font-light">{form.silo_id?.name || 'N/A'}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-light text-gray-600">Serial Number</span>
+                  <span className="text-sm font-light">{form.silo_id?.serial_number || 'N/A'}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-light text-gray-600">Category</span>
+                  <span className="text-sm font-light">{form.silo_id?.category || 'N/A'}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-light text-gray-600">Location</span>
+                  <span className="text-sm font-light">{form.silo_id?.location || 'N/A'}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-light text-gray-600">Capacity</span>
+                  <span className="text-sm font-light">{form.silo_id?.capacity ? `${form.silo_id.capacity}L` : 'N/A'}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-light text-gray-600">Milk Volume</span>
+                  <span className="text-sm font-light">{form.silo_id?.milk_volume ? `${form.silo_id.milk_volume}L` : 'N/A'}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-light text-gray-600">Silo Status</span>
+                  <Badge className={form.silo_id?.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}>
+                    {form.silo_id?.status || 'N/A'}
+                  </Badge>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Solution Concentrations */}
           <div className="p-6 bg-white border border-gray-200 rounded-lg mb-6">
