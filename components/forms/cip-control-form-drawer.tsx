@@ -200,13 +200,14 @@ export function CIPControlFormDrawer({ open, onOpenChange, form, mode }: CIPCont
     handleSubmit,
     formState: { errors },
     reset,
+    setValue,
   } = useForm<CIPControlFormData>({
     resolver: yupResolver(cipControlFormSchema),
     defaultValues: {
       status: "",
       machine_or_silo: "",
-      machine_id: "",
-      silo_id: "",
+      machine_id: null as any,
+      silo_id: null as any,
       operator_id: "",
       date: "",
       caustic_solution_strength: undefined,
@@ -232,6 +233,8 @@ export function CIPControlFormDrawer({ open, onOpenChange, form, mode }: CIPCont
 
       const payload = {
         ...data,
+        machine_id: cipType === 'machine' ? data.machine_id : null,
+        silo_id: cipType === 'silo' ? data.silo_id : null,
         stages: data.stages?.map((stage) => ({
           ...(mode === "edit" && stage.id ? { id: stage.id } : {}),
           ...(mode === "edit" && form?.id ? { cip_control_form_id: form.id } : {}),
@@ -296,8 +299,8 @@ export function CIPControlFormDrawer({ open, onOpenChange, form, mode }: CIPCont
       reset({
         status: form.status || "",
         machine_or_silo: machineOrSilo,
-        machine_id: form.machine_id || "",
-        silo_id: formData.silo_id || "",
+        machine_id: form.machine_id || null as any,
+        silo_id: formData.silo_id || null as any,
         operator_id: form.operator_id || "",
         date: form.date || "",
         caustic_solution_strength: form.caustic_solution_strength || undefined,
@@ -318,8 +321,8 @@ export function CIPControlFormDrawer({ open, onOpenChange, form, mode }: CIPCont
       reset({
         status: "",
         machine_or_silo: "",
-        machine_id: "",
-        silo_id: "",
+        machine_id: null as any,
+        silo_id: null as any,
         operator_id: "",
         date: "",
         caustic_solution_strength: undefined,
@@ -387,9 +390,9 @@ export function CIPControlFormDrawer({ open, onOpenChange, form, mode }: CIPCont
                       setCipType(val as 'machine' | 'silo')
                       // Clear the other field when switching
                       if (val === 'machine') {
-                        setValue('silo_id', '')
+                        setValue('silo_id', null as any)
                       } else {
-                        setValue('machine_id', '')
+                        setValue('machine_id', null as any)
                       }
                     }} 
                     value={cipType}
