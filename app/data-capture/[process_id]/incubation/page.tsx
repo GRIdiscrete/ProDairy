@@ -7,7 +7,7 @@ import { LoadingButton } from "@/components/ui/loading-button"
 import { DataTable } from "@/components/ui/data-table"
 import { DataTableFilters } from "@/components/ui/data-table-filters"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Eye, Edit, Trash2, TestTube, TrendingUp, FileText, Clock, ArrowRight, Package } from "lucide-react"
+import { Plus, Eye, Edit, Trash2, TestTube, TrendingUp, FileText, Clock, ArrowRight, Package, Beaker } from "lucide-react"
 import { ProductIncubationDrawer } from "@/components/forms/product-incubation-drawer"
 import { ProductIncubationViewDrawer } from "@/components/forms/product-incubation-view-drawer"
 import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-dialog"
@@ -176,8 +176,8 @@ export default function ProductIncubationPage({ params }: ProductIncubationPageP
         const batch = incubation.batch // new single-object shape
         return (
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 rounded-lg bg-[#0068BD] flex items-center justify-center">
-              <TestTube className="w-4 h-4 text-white" />
+            <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
+              <Beaker className="w-4 h-4 text-gray-600" />
             </div>
             <div>
               <div className="flex items-center space-x-2">
@@ -305,18 +305,18 @@ export default function ProductIncubationPage({ params }: ProductIncubationPageP
         return (
           <div className="flex space-x-2">
             <LoadingButton
-              variant="outline"
+              
               size="sm"
               onClick={() => handleViewIncubation(incubation)}
-              className="bg-[#0068BD] hover:bg-[#005299] text-white border-0 rounded-full"
+              className="bg-[#006BC4] text-white rounded-full"
             >
               <Eye className="w-4 h-4" />
             </LoadingButton>
             <LoadingButton
-              variant="outline"
+              
               size="sm"
               onClick={() => handleEditIncubation(incubation)}
-              className="bg-[#A0D001] hover:bg-[#8AB801] text-white border-0 rounded-full"
+              className="bg-[#A0CF06] text-[#211D1E] rounded-full"
             >
               <Edit className="w-4 h-4" />
             </LoadingButton>
@@ -326,7 +326,7 @@ export default function ProductIncubationPage({ params }: ProductIncubationPageP
               onClick={() => handleDeleteIncubation(incubation)}
               loading={operationLoading.delete}
               disabled={operationLoading.delete}
-              className="bg-red-600 hover:bg-red-700 text-white border-0 rounded-full"
+              className="rounded-full"
             >
               <Trash2 className="w-4 h-4" />
             </LoadingButton>
@@ -362,7 +362,7 @@ export default function ProductIncubationPage({ params }: ProductIncubationPageP
           </div>
           <LoadingButton
             onClick={handleAddIncubation}
-            className="bg-[#0068BD] hover:bg-[#005299] text-white border-0 rounded-full px-6 py-2 font-light"
+            className="bg-[#006BC4] text-white rounded-full px-6 py-2 font-light"
           >
             <Plus className="mr-2 h-4 w-4" />
             Add Product Incubation
@@ -377,16 +377,16 @@ export default function ProductIncubationPage({ params }: ProductIncubationPageP
             <div className="p-6 pb-0">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2 text-lg font-light">
-                  <div className="w-8 h-8 rounded-full bg-[#0068BD] flex items-center justify-center">
-                    <TestTube className="h-4 w-4 text-white" />
+                  <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+                    <Beaker className="h-4 w-4 text-gray-600" />
                   </div>
                   <span>Current Incubation Process</span>
-                  <Badge className="bg-blue-100 text-blue-800 font-light">Latest</Badge>
+                  <Badge className=" text-white font-light">Latest</Badge>
                 </div>
                 <LoadingButton
-                  variant="outline"
+                  
                   onClick={() => handleViewIncubation(latestIncubation)}
-                  className="bg-[#0068BD] hover:bg-[#005299] text-white border-0 rounded-full px-4 py-2 font-light text-sm"
+                  className="bg-[#006BC4] text-white rounded-full px-4 py-2 font-light text-sm"
                 >
                   <Eye className="mr-2 h-4 w-4" />
                   View Details

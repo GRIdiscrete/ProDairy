@@ -12,7 +12,7 @@ export const ContentSkeleton: React.FC<ContentSkeletonProps> = ({ sections = 1, 
   return (
     <div className="space-y-6">
       {Array.from({ length: sections }).map((_, sectionIndex) => (
-        <div key={sectionIndex} className="border border-gray-200 rounded-lg bg-white border-l-4 border-l-blue-500">
+        <div key={sectionIndex} className="border border-gray-200 rounded-lg bg-white border-l-4 border-l-[#006BC4]">
           <div className="p-6 pb-0">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">

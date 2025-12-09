@@ -446,11 +446,11 @@ export function SkimmingFormDrawer({
                             </div>
                           )}
                           <div className="flex items-center gap-2">
-                            <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={() => setSignatureOpen(true)}>
+                            <Button type="button"  size="sm" className="rounded-full" onClick={() => setSignatureOpen(true)}>
                               Add Signature
                             </Button>
                             {field.value && (
-                              <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={() => setSignatureViewOpen(true)}>
+                              <Button type="button"  size="sm" className="rounded-full" onClick={() => setSignatureViewOpen(true)}>
                                 View Signature
                               </Button>
                             )}
@@ -584,7 +584,7 @@ export function SkimmingFormDrawer({
                   <p className="text-sm font-light text-gray-600 mt-2">Enter the skim milk production details</p>
                 </div>
 
-                <div className="border border-gray-200 rounded-lg bg-white border-l-4 border-l-blue-500 p-4">
+                <div className="border border-gray-200 rounded-lg bg-white border-l-4 border-l-[#006BC4] p-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="skim_quantity">Quantity *</Label>
@@ -744,7 +744,7 @@ export function SkimmingFormDrawer({
               <div className="flex items-center justify-end space-x-4 pt-6">
                 <Button
                   type="button"
-                  variant="outline"
+                  
                   onClick={() => onOpenChange(false)}
                   className="rounded-full"
                 >
@@ -754,7 +754,7 @@ export function SkimmingFormDrawer({
                 <Button
                   type="submit"
                   disabled={operationLoading.create || operationLoading.update}
-                  className="bg-[#0068BD] hover:bg-[#005299] text-white rounded-full"
+                  className=" text-white rounded-full"
                 >
                   <Save className="w-4 h-4 mr-2" />
                   {mode === "create" ? "Create Skimming Form" : "Update Skimming Form"}

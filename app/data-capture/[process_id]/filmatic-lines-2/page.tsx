@@ -176,8 +176,8 @@ export default function FilmaticLines2Page() {
         const form = row.original
         return (
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center">
-              <Factory className="w-4 h-4 text-white" />
+            <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
+              <Factory className="w-4 h-4 text-gray-600" />
             </div>
             <div>
               <div className="flex items-center space-x-2">
@@ -311,18 +311,18 @@ export default function FilmaticLines2Page() {
         return (
           <div className="flex space-x-2">
             <LoadingButton
-              variant="outline"
+              
               size="sm"
               onClick={() => handleViewForm(form)}
-              className="bg-[#0068BD] hover:bg-[#005299] text-white border-0 rounded-full"
+              className="bg-[#006BC4] text-white rounded-full"
             >
               <Eye className="w-4 h-4" />
             </LoadingButton>
             <LoadingButton
-              variant="outline"
+              
               size="sm"
               onClick={() => handleEditForm(form)}
-              className="bg-[#A0D001] hover:bg-[#8AB801] text-white border-0 rounded-full"
+              className="bg-[#A0CF06] text-[#211D1E] rounded-full"
             >
               <Edit className="w-4 h-4" />
             </LoadingButton>
@@ -332,7 +332,7 @@ export default function FilmaticLines2Page() {
               onClick={() => handleDeleteForm(form)}
               loading={loading.delete}
               disabled={loading.delete}
-              className="bg-red-600 hover:bg-red-700 text-white border-0 rounded-full"
+              className="rounded-full"
             >
               <Trash2 className="w-4 h-4" />
             </LoadingButton>
@@ -352,7 +352,7 @@ export default function FilmaticLines2Page() {
           </div>
           <LoadingButton
             onClick={handleAddForm}
-            className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full px-6 py-2 font-light"
+            className="bg-[#006BC4] text-white rounded-full px-6 py-2 font-light"
           >
             <Plus className="mr-2 h-4 w-4" />
             Add Filmatic Lines Form 2
@@ -361,7 +361,7 @@ export default function FilmaticLines2Page() {
 
         {/* Current Form Details */}
         {loading.fetch ? (
-          <div className="border border-gray-200 rounded-lg bg-white border-l-4 border-l-blue-500">
+          <div className="border border-gray-200 rounded-lg bg-white border-l-4 border-l-[#006BC4]">
             <div className="p-6 pb-0">
               <div className="flex items-center space-x-2">
                 <Skeleton className="h-5 w-5 rounded" />
@@ -388,20 +388,20 @@ export default function FilmaticLines2Page() {
             </div>
           </div>
         ) : latestForm ? (
-          <div className="border border-gray-200 rounded-lg bg-white border-l-4 border-l-blue-500">
+          <div className="border border-gray-200 rounded-lg bg-white border-l-4 border-l-[#006BC4]">
             <div className="p-6 pb-0">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2 text-lg font-light">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center">
-                    <Factory className="h-4 w-4 text-white" />
+                  <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+                    <Factory className="h-4 w-4 text-gray-600" />
                   </div>
                   <span>Current Filmatic Lines Form 2</span>
-                  <Badge className="bg-gradient-to-r from-blue-100 to-cyan-100 text-blue-800 font-light">Latest</Badge>
+                  <Badge className=" from-blue-100 to-cyan-100 text-white font-light">Latest</Badge>
                 </div>
                 <LoadingButton
-                  variant="outline"
+                  
                   onClick={() => handleViewForm(latestForm)}
-                  className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full px-4 py-2 font-light text-sm"
+                  className=" from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full px-4 py-2 font-light text-sm"
                 >
                   <Eye className="mr-2 h-4 w-4" />
                   View Details
@@ -472,7 +472,7 @@ export default function FilmaticLines2Page() {
               {/* Process Flow Information */}
               <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {/* Production Summary */}
-                <div className="p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg">
+                <div className="p-4  from-blue-50 to-cyan-50 rounded-lg">
                   <div className="flex items-center space-x-2 mb-3">
                     <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
                       <Package className="h-4 w-4 text-blue-600" />

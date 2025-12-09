@@ -61,10 +61,10 @@ export function CIPControlFormViewDrawer({ open, onClose, form, users = [], role
             </div>
             <div className="flex items-center space-x-2">
               <Button
-                variant="outline"
+                
                 size="sm"
                 onClick={onEdit}
-                className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 rounded-full"
+                className="bg-[#A0CF06] text-[#211D1E] rounded-full"
               >
                 <Edit className="w-4 h-4 mr-2" />
                 Edit

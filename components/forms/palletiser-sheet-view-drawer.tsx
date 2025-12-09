@@ -68,12 +68,12 @@ export function PalletiserSheetViewDrawer({
 
         <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-white">
           {/* Sheet Overview */}
-          <Card className="border-l-4 border-l-blue-500 shadow-none">
+          <Card className="border-l-4 border-l-[#006BC4] shadow-none">
             <CardHeader className="pb-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center">
-                    <Package className="w-5 h-5 text-white" />
+                  <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center">
+                    <Package className="w-5 h-5 text-gray-600" />
                   </div>
                   <div>
                     <CardTitle className="text-lg font-light">Palletiser Sheet</CardTitle>
@@ -86,7 +86,7 @@ export function PalletiserSheetViewDrawer({
                   </div>
                 </div>
 
-                <Button onClick={onEdit} variant="outline" size="sm" className="bg-gradient-to-r from-green-500 to-emerald-500 text-white border-0 rounded-full">
+                <Button onClick={onEdit}  size="sm" className=" from-green-500 to-emerald-500 text-white border-0 rounded-full">
                   <Edit className="w-4 h-4 mr-2" /> Edit
                 </Button>
               </div>

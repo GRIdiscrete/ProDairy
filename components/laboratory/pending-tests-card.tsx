@@ -47,7 +47,7 @@ export function PendingTestsCard() {
                 {test.priority === "high" && <AlertTriangle className="h-4 w-4 text-red-500" />}
               </div>
               <div className="text-xs text-muted-foreground">{test.batchNumber}</div>
-              <Badge variant="outline" className="text-xs">
+              <Badge  className="text-xs">
                 {test.testType}
               </Badge>
             </div>

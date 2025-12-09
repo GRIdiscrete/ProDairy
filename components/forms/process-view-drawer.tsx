@@ -83,19 +83,19 @@ export function ProcessViewDrawer({ open, onOpenChange, process, onEdit }: Proce
             <div className="p-4 pb-0">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-gray-500 to-gray-700 flex items-center justify-center">
-                    <Settings className="w-4 h-4 text-white" />
+                  <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
+                    <Settings className="w-4 h-4 text-gray-600" />
                   </div>
                   <div className="text-base font-light">{process.name}</div>
                 </div>
                 <div className="flex space-x-2">
                   {onEdit && (
                     <Button
-                      variant="outline"
+                      
                       size="sm"
                       onClick={handleEdit}
                       disabled={isLoading}
-                      className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 rounded-full"
+                      className=" bg-[#006BC4] text-white rounded-full"
                     >
                       <Edit className="w-4 h-4 mr-2" />
                       Edit
@@ -143,8 +143,8 @@ export function ProcessViewDrawer({ open, onOpenChange, process, onEdit }: Proce
                 <div className="space-y-3">
                   {getSelectedRawMaterials().map((material) => (
                     <div key={material.id} className="flex items-center space-x-3 p-3 border rounded-lg">
-                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center">
-                        <Package className="w-4 h-4 text-white" />
+                      <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
+                        <Package className="w-4 h-4 text-gray-600" />
                       </div>
                       <div className="flex-1">
                         <p className="font-light">{material.name}</p>

@@ -34,6 +34,8 @@ import { motion, AnimatePresence } from "framer-motion"
 import { useTablet } from "@/hooks/use-tablet"
 import { getRecentNotifications, humanizeModule, moduleToRoute, type NotificationItem } from "@/lib/api/notifications"
 import { formatDistanceToNow, parseISO, isValid } from "date-fns"
+import cityTimezones from 'city-timezones'
+import axios from 'axios'
 // import { useAccessibleModules } from "@/hooks/use-permissions" // Removed - no longer using permissions
 
 interface HeaderProps {
@@ -58,34 +60,38 @@ export function Header({ title = "Dashboard", subtitle = "Welcome back!", onOpen
   const [notifOpen, setNotifOpen] = useState(false)
 
   // Weather/location state
-  const [weather, setWeather] = useState<{ temp: string; city: string } | null>({ temp: "--", city: "Harare" })
+  const [weather, setWeather] = useState<{ temp: string; city: string } | null>(null)
 
-  // Example using city-timezones and Open-Meteo (no API key required)
-  // Uncomment and install 'city-timezones' and 'axios' for this to work
-  /*
+  // Get user's location and weather
   useEffect(() => {
     if (typeof window !== "undefined" && navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(async (pos) => {
         const { latitude, longitude } = pos.coords
         try {
-          // Get city using city-timezones
-          const cityLookup = cityTimezones.lookupViaLatLon(latitude, longitude)
-          const city = cityLookup?.[0]?.city || "Unknown"
+          // Get city using reverse geocoding (OpenStreetMap Nominatim - free)
+          const geoRes = await axios.get(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=10&addressdetails=1`)
+          const city = geoRes.data?.address?.city || geoRes.data?.address?.town || geoRes.data?.address?.village || geoRes.data?.display_name?.split(',')[0] || "Unknown Location"
 
-          // Get weather using Open-Meteo
-          const weatherRes = await axios.get(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true`)
+          // Get weather using Open-Meteo (free API, no key required)
+          const weatherRes = await axios.get(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true&temperature_unit=celsius`)
           const temp = weatherRes.data.current_weather?.temperature
+
           setWeather({
             temp: temp !== undefined ? `${Math.round(temp)}°C` : "--",
             city,
           })
-        } catch {
-          setWeather(null)
+        } catch (error) {
+          console.error('Error fetching weather/location:', error)
+          setWeather({ temp: "--", city: "Detecting location..." })
         }
-      }, () => setWeather(null))
+      }, (error) => {
+        console.error('Geolocation error:', error)
+        setWeather({ temp: "--", city: "Detecting location..." })
+      })
+    } else {
+      setWeather({ temp: "--", city: "Geolocation not supported" })
     }
   }, [])
-  */
 
   useEffect(() => {
     // prefetch notifications on mount
@@ -396,10 +402,10 @@ export function Header({ title = "Dashboard", subtitle = "Welcome back!", onOpen
             <Popover open={searchOpen} onOpenChange={setSearchOpen}>
               <PopoverTrigger asChild>
                 <Button
-                  variant="outline"
+                  
                   role="combobox"
                   aria-expanded={searchOpen}
-                  className="w-full justify-start text-left font-normal h-10 border-zinc-200 bg-white hover:bg-zinc-50 focus:border-lime-400 focus:ring-2 focus:ring-blue-500/30"
+                  className="w-full justify-start text-left font-normal h-10 bg-transparent hover:bg-transparent border border-gray-300 hover:border-gray-400 focus:border-[#006BC4] shadow-none hover:shadow-none focus:shadow-none"
                 >
                   <Search className="mr-2 h-4 w-4 text-zinc-400" />
                   <span className="text-zinc-400">
@@ -466,7 +472,7 @@ export function Header({ title = "Dashboard", subtitle = "Welcome back!", onOpen
             <MapPin className="h-3.5 w-3.5 text-blue-600" />
             <span className="tabular-nums">{weather?.temp ?? "--"}</span>
             <span className="text-zinc-400">•</span>
-            <span>{weather?.city ?? "Detecting..."}</span>
+            <span>{weather?.city ?? "Detecting location..."}</span>
           </div>
 
           {/* Notifications */}
@@ -545,7 +551,7 @@ export function Header({ title = "Dashboard", subtitle = "Welcome back!", onOpen
                         src={user?.avatar || undefined} 
                         alt={profile ? `${profile.first_name} ${profile.last_name}` : "User"} 
                       />
-                      <AvatarFallback className="text-[10px] font-light bg-gradient-to-br from-blue-500 to-purple-600 text-white">
+                      <AvatarFallback className="text-[10px] font-light bg-gray-100 text-gray-600">
                         {profile && profile.first_name && profile.last_name 
                           ? `${profile.first_name[0]}${profile.last_name[0]}` 
                           : "U"
@@ -575,14 +581,14 @@ export function Header({ title = "Dashboard", subtitle = "Welcome back!", onOpen
                 <User className="mr-2 h-4 w-4" />
                 Profile
               </DropdownMenuItem>
-              <DropdownMenuItem className="cursor-pointer">
+              {/* <DropdownMenuItem className="cursor-pointer">
                 <Settings className="mr-2 h-4 w-4" />
                 Settings
-              </DropdownMenuItem>
-              <DropdownMenuItem className="cursor-pointer">
+              </DropdownMenuItem> */}
+              {/* <DropdownMenuItem className="cursor-pointer">
                 <HelpCircle className="mr-2 h-4 w-4" />
                 Support
-              </DropdownMenuItem>
+              </DropdownMenuItem> */}
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={handleLogout}
@@ -641,7 +647,7 @@ export function Header({ title = "Dashboard", subtitle = "Welcome back!", onOpen
                   {filteredRoutes.slice(0, 8).map((route) => (
                     <Button
                       key={route.path}
-                      variant="outline"
+                      
                       onClick={() => {
                         handleRouteSelect(route.path)
                         setMobileSearchOpen(false)

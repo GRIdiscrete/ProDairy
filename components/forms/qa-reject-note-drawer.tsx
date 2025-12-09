@@ -178,8 +178,8 @@ export function QaRejectNoteDrawer({ open, onOpenChange, note, mode = "create", 
                                 <div className="space-y-2">
                                     {field.value ? <img src={base64ToPngDataUrl(field.value)} className="h-24 border rounded-md" alt="sig" /> : <div className="h-24 border border-dashed rounded-md flex items-center justify-center text-xs text-gray-500">No signature</div>}
                                     <div className="flex gap-2">
-                                        <Button type="button" size="sm" variant="outline" onClick={() => setSigModalOpen(true)}>Add Signature</Button>
-                                        {field.value && <Button type="button" size="sm" variant="outline" onClick={() => setSigViewOpen(true)}>View</Button>}
+                                        <Button type="button" size="sm"  onClick={() => setSigModalOpen(true)}>Add Signature</Button>
+                                        {field.value && <Button type="button" size="sm"  onClick={() => setSigViewOpen(true)}>View</Button>}
                                         {field.value && <Button type="button" size="sm" variant="ghost" onClick={() => field.onChange("")}>Clear</Button>}
                                     </div>
                                 </div>
@@ -247,7 +247,7 @@ export function QaRejectNoteDrawer({ open, onOpenChange, note, mode = "create", 
 
                 <div className="flex items-center justify-end p-6 pt-0 border-t bg-white">
                     <div className="flex items-center gap-2">
-                        <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+                        <Button  onClick={() => onOpenChange(false)}>Cancel</Button>
                         <Button onClick={form.handleSubmit(onSubmit)} disabled={operationLoading?.create || operationLoading?.update}>{mode === "edit" ? "Update" : "Create"}</Button>
                     </div>
                 </div>

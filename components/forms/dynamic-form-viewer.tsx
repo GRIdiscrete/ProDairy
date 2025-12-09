@@ -202,7 +202,7 @@ export function DynamicFormViewer({
       case "error":
         return <Badge className="bg-red-100 text-red-800 border-red-200">Error</Badge>
       default:
-        return <Badge variant="outline">Pending</Badge>
+        return <Badge >Pending</Badge>
     }
   }
 
@@ -232,7 +232,7 @@ export function DynamicFormViewer({
             <div className="flex items-center space-x-2">
               {getStatusBadge(form.status)}
               {mode === "edit" && (
-                <Button variant="outline" size="sm" onClick={handleSave} disabled={isSaving}>
+                <Button  size="sm" onClick={handleSave} disabled={isSaving}>
                   <Save className="mr-2 h-4 w-4" />
                   Save
                 </Button>
@@ -280,7 +280,7 @@ export function DynamicFormViewer({
             </div>
             <div className="flex items-center space-x-2">
               <Button
-                variant="outline"
+                
                 size="sm"
                 onClick={handlePrevious}
                 disabled={currentStepIndex === 0}
@@ -289,7 +289,7 @@ export function DynamicFormViewer({
                 Previous
               </Button>
               <Button
-                variant="outline"
+                
                 size="sm"
                 onClick={handleNext}
                 disabled={currentStepIndex === formSteps.length - 1}
@@ -324,7 +324,7 @@ export function DynamicFormViewer({
                 <div className="flex items-center space-x-2">
                   {getStatusBadge(currentStep.status)}
                   {currentStep.estimatedTime && (
-                    <Badge variant="outline">{currentStep.estimatedTime}</Badge>
+                    <Badge >{currentStep.estimatedTime}</Badge>
                   )}
                 </div>
               </div>
@@ -345,7 +345,7 @@ export function DynamicFormViewer({
 
       {/* Action Buttons */}
       <div className="flex items-center justify-between">
-        <Button variant="outline" onClick={onCancel}>
+        <Button  onClick={onCancel}>
           Cancel
         </Button>
         <div className="flex items-center space-x-2">
@@ -478,7 +478,7 @@ function FormStepContent({
                   <h4 className="font-medium">Item {index + 1}</h4>
                   {!isReadOnly && (
                     <Button
-                      variant="outline"
+                      
                       size="sm"
                       onClick={() => onRemoveArrayItem(step.id, field.id, index)}
                     >
@@ -501,7 +501,7 @@ function FormStepContent({
             ))}
             {!isReadOnly && (
               <Button
-                variant="outline"
+                
                 onClick={() => onAddArrayItem(step.id, field.id)}
               >
                 Add Item

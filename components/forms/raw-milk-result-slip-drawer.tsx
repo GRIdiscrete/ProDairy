@@ -540,10 +540,10 @@ export function RawMilkResultSlipDrawer({
                     )}
                     {fieldState.error && <p className="text-sm text-red-500">{fieldState.error.message}</p>}
                     <div className="flex items-center gap-2">
-                      <Button type="button" variant="outline" onClick={() => setSignatureOpen(true)}>Add Signature</Button>
+                      <Button type="button"  onClick={() => setSignatureOpen(true)}>Add Signature</Button>
                       {field.value && (
                         <>
-                          <Button type="button" variant="outline" onClick={() => setSignatureOpen(true)}>View Signature</Button>
+                          <Button type="button"  onClick={() => setSignatureOpen(true)}>View Signature</Button>
                           <Button type="button" variant="ghost" onClick={() => field.onChange("")}>Clear</Button>
                         </>
                       )}
@@ -1011,7 +1011,7 @@ export function RawMilkResultSlipDrawer({
             </div>
 
             <div className="flex items-center justify-end space-x-2 pt-4">
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              <Button type="button"  onClick={() => onOpenChange(false)}>
                 Cancel
               </Button>
               <Button type="submit" disabled={operationLoading.create || operationLoading.update} className="rounded-full">

@@ -45,7 +45,7 @@ export function GeneralLabTestViewDrawer({ open, onClose, test, onEdit }: { open
         </SheetHeader>
         <div className="flex-1 overflow-y-auto p-6">
           {/* Test Overview */}
-          <div className="mb-8 p-6 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg">
+          <div className="mb-8 p-6 bg-blue-50 rounded-lg">
             <h3 className="text-lg font-light text-gray-900 mb-4">Test Overview</h3>
             <div className="flex items-center gap-4 flex-wrap">
               <Badge className="bg-blue-100 text-blue-800 font-light">{silo?.name || 'N/A'}</Badge>

@@ -92,7 +92,7 @@ export function ProductionFilters() {
             <div className="flex items-center space-x-2">
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" className="w-[120px] justify-start text-left font-normal bg-transparent">
+                  <Button  className="w-[120px] justify-start text-left font-normal bg-transparent">
                     <CalendarIcon className="mr-2 h-4 w-4" />
                     {dateFrom ? format(dateFrom, "MMM dd") : "From"}
                   </Button>
@@ -104,7 +104,7 @@ export function ProductionFilters() {
               <span className="text-muted-foreground">to</span>
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" className="w-[120px] justify-start text-left font-normal bg-transparent">
+                  <Button  className="w-[120px] justify-start text-left font-normal bg-transparent">
                     <CalendarIcon className="mr-2 h-4 w-4" />
                     {dateTo ? format(dateTo, "MMM dd") : "To"}
                   </Button>
@@ -113,18 +113,18 @@ export function ProductionFilters() {
                   <Calendar mode="single" selected={dateTo} onSelect={setDateTo} initialFocus />
                 </PopoverContent>
               </Popover>
-              <Button variant="outline" onClick={handleDateRangeChange}>
+              <Button  onClick={handleDateRangeChange}>
                 Apply
               </Button>
             </div>
 
             {/* Action Buttons */}
             <div className="flex items-center space-x-2 ml-auto">
-              <Button variant="outline" size="sm">
+              <Button  size="sm">
                 <Filter className="mr-2 h-4 w-4" />
                 More Filters
               </Button>
-              <Button variant="outline" size="sm">
+              <Button  size="sm">
                 <Download className="mr-2 h-4 w-4" />
                 Export
               </Button>

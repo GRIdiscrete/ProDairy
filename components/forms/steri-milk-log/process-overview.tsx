@@ -2,7 +2,7 @@ import { ArrowRight, Factory, Beaker, Package } from "lucide-react"
 
 export function ProcessOverview() {
   return (
-    <div className="mb-8 p-6 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg">
+    <div className="mb-8 p-6  from-blue-50 to-cyan-50 rounded-lg">
       <h3 className="text-lg font-light text-gray-900 mb-4">Process Overview</h3>
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center space-x-2">
@@ -18,7 +18,7 @@ export function ProcessOverview() {
           </div>
           <div className="flex items-center space-x-2">
             <span className="text-sm font-medium text-blue-600">Steri Milk Process Log</span>
-            <div className="bg-gradient-to-r from-blue-500 to-cyan-600 text-white px-2 py-1 rounded-full text-xs font-medium shadow-lg">
+            <div className=" bg-gray-100 text-gray-600 px-2 py-1 rounded-full text-xs font-medium shadow-lg">
               Current Step
             </div>
           </div>

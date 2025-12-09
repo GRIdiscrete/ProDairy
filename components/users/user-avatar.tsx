@@ -42,7 +42,7 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({ user, size = "md", showN
         onClick={() => showDropdown ? setOpen((s) => !s) : undefined}
         className={`flex items-center gap-3 focus:outline-none`}
       >
-        <div className={`rounded-full bg-red-600 flex items-center justify-center text-white font-semibold ${sizeClasses}`}>
+        <div className={`rounded-full bg-gray-100 flex items-center justify-center text-gray-600 font-semibold ${sizeClasses}`}>
           {initials}
         </div>
 
@@ -57,7 +57,7 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({ user, size = "md", showN
       {open && showDropdown && (
         <div className="absolute z-30 mt-2 ml-2 w-64 bg-white border rounded-md shadow-lg p-3 text-sm">
           <div className="flex items-center gap-3 mb-2">
-            <div className={`rounded-full bg-red-600 flex items-center justify-center text-white font-semibold ${size === "lg" ? "w-12 h-12 text-lg" : "w-10 h-10 text-base"}`}>
+            <div className={`rounded-full bg-gray-100 flex items-center justify-center text-gray-600 font-semibold ${size === "lg" ? "w-12 h-12 text-lg" : "w-10 h-10 text-base"}`}>
               {initials}
             </div>
             <div>

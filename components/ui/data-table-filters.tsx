@@ -124,7 +124,7 @@ export function DataTableFilters({
 
         {filterFields.length > 0 && (
           <Button
-            variant="outline"
+            
             onClick={() => setShowFilters(!showFilters)}
             className="flex items-center gap-2 h-10 px-4"
           >
@@ -216,7 +216,7 @@ export function DataTableFilters({
                     <Popover open={fromDateOpen} onOpenChange={setFromDateOpen}>
                       <PopoverTrigger asChild>
                         <Button
-                          variant="outline"
+                          
                           className="w-full justify-between font-normal h-10"
                           type="button"
                         >
@@ -252,7 +252,7 @@ export function DataTableFilters({
                     <Popover open={toDateOpen} onOpenChange={setToDateOpen}>
                       <PopoverTrigger asChild>
                         <Button
-                          variant="outline"
+                          
                           className="w-full justify-between font-normal h-10"
                           type="button"
                         >

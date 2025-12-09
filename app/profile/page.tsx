@@ -3,10 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useAppSelector, useAppDispatch } from '@/lib/store'
 import { fetchUserProfile } from '@/lib/store/slices/authSlice'
-import { usePathname } from 'next/navigation'
-import { AdminDashboardLayout } from '@/components/layout/admin-dashboard-layout'
-import { DataCaptureDashboardLayout } from '@/components/layout/data-capture-dashboard-layout'
-import { DriversDashboardLayout } from '@/components/layout/drivers-dashboard-layout'
+import { ProfileLayout } from '@/components/layout/profile-layout'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { 
@@ -30,7 +27,6 @@ export default function ProfilePage() {
   const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false)
   const [isChangePasswordDrawerOpen, setIsChangePasswordDrawerOpen] = useState(false)
   const [isClient, setIsClient] = useState(false)
-  const pathname = usePathname()
 
   // Prevent hydration mismatch
   useEffect(() => {
@@ -44,20 +40,6 @@ export default function ProfilePage() {
       dispatch(fetchUserProfile(user.id))
     }
   }, [isClient, isAuthenticated, user?.id, dispatch])
-
-  // Determine which layout to use based on pathname
-  const getDashboardLayout = () => {
-    if (pathname.startsWith('/admin')) {
-      return 'admin'
-    } else if (pathname.startsWith('/drivers')) {
-      return 'drivers'
-    } else if (pathname.startsWith('/data-capture')) {
-      return 'data-capture'
-    }
-    return 'admin' // Default
-  }
-
-  const dashboardLayout = getDashboardLayout()
 
   if (!isClient) {
     return <ProfilePulseLoading />
@@ -102,9 +84,9 @@ export default function ProfilePage() {
     .map(cat => ({
       category: cat.label,
       icon: cat.icon,
-      permissions: Array.isArray(userRole?.[cat.key]) && userRole[cat.key]
-        ? userRole[cat.key]
-        : (userRole?.[cat.key] ? [userRole[cat.key]] : [])
+      permissions: Array.isArray((userRole as any)?.[cat.key]) && (userRole as any)[cat.key]
+        ? (userRole as any)[cat.key]
+        : ((userRole as any)?.[cat.key] ? [(userRole as any)[cat.key]] : [])
     }))
     .filter(cat => cat.permissions && cat.permissions.length > 0)
 
@@ -144,14 +126,14 @@ export default function ProfilePage() {
           <div className="flex space-x-2">
             <Button 
               onClick={() => setIsChangePasswordDrawerOpen(true)}
-              className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white border-0 rounded-full px-6 py-2"
+              className="px-6 py-2"
             >
               <Shield className="h-4 w-4 mr-2" />
               Change Password
             </Button>
             <Button 
               onClick={() => setIsEditDrawerOpen(true)}
-              className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full px-6 py-2"
+              className="px-6 py-2"
             >
               <Edit3 className="h-4 w-4 mr-2" />
               Edit Profile
@@ -379,34 +361,9 @@ export default function ProfilePage() {
   // Render with appropriate dashboard layout
   return (
     <PermissionGuard requiredView="profile_tab">
-      {(() => {
-        switch (dashboardLayout) {
-          case 'admin':
-            return (
-              <AdminDashboardLayout title="Profile" subtitle="Your personal profile and settings">
-                {profileContent}
-              </AdminDashboardLayout>
-            )
-          case 'drivers':
-            return (
-              <DriversDashboardLayout title="Profile" subtitle="Your personal profile and settings">
-                {profileContent}
-              </DriversDashboardLayout>
-            )
-          case 'data-capture':
-            return (
-              <DataCaptureDashboardLayout title="Profile" subtitle="Your personal profile and settings">
-                {profileContent}
-              </DataCaptureDashboardLayout>
-            )
-          default:
-            return (
-              <AdminDashboardLayout title="Profile" subtitle="Your personal profile and settings">
-                {profileContent}
-              </AdminDashboardLayout>
-            )
-        }
-      })()}
+      <ProfileLayout title="Profile" subtitle="Your personal profile and settings">
+        {profileContent}
+      </ProfileLayout>
     </PermissionGuard>
   )
 }

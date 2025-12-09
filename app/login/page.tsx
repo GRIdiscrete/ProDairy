@@ -11,6 +11,7 @@ import { useAuth } from "@/hooks/use-auth"
 import { toast } from "sonner"
 import type { AppDispatch } from "@/lib/store"
 import * as yup from "yup"
+import { LoadingButton } from "@/components/ui/loading-button"
 
 export default function LoginPage() {
   const [formData, setFormData] = useState({ email: "", password: "" })
@@ -355,7 +356,7 @@ export default function LoginPage() {
               </div>
             </div>
 
-            <h2 className="mb-6 text-5xl font-thin leading-tight tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-lime-600">
+            <h2 className="mb-6 text-5xl font-thin leading-tight tracking-wide text-transparent bg-clip-text  from-blue-600 to-lime-600">
               Welcome Back
             </h2>
 
@@ -368,7 +369,7 @@ export default function LoginPage() {
                   className="rounded-2xl border border-zinc-200 bg-white/70 p-4 shadow-md backdrop-blur-sm"
                 >
                   <div className="flex items-center gap-2">
-                    <span className="inline-block h-2.5 w-2.5 rounded-full bg-gradient-to-r from-blue-500 to-lime-500" />
+                    <span className="inline-block h-2.5 w-2.5 rounded-full  from-blue-500 to-lime-500" />
                     <p className="text-sm font-light tracking-wide text-zinc-700">{item}</p>
                   </div>
                 </motion.div>
@@ -379,7 +380,7 @@ export default function LoginPage() {
           {/* Auth card */}
           <div className="order-1 md:order-2">
             <div className="relative">
-              <div className="absolute -inset-0.5 rounded-[1.75rem] bg-gradient-to-r from-blue-300 to-lime-300 opacity-40 blur-xl" aria-hidden />
+              <div className="absolute -inset-0.5 rounded-[1.75rem]  from-blue-300 to-lime-300 opacity-40 blur-xl" aria-hidden />
               <div className="relative rounded-[1.5rem] border border-zinc-200/70 bg-white/80 p-8 shadow-xl backdrop-blur-xl">
                 <div className="mb-6 text-center">
                   <h3 className="text-xl font-semibold tracking-tight">Sign in</h3>
@@ -390,7 +391,7 @@ export default function LoginPage() {
                 {/* <button
                   onClick={handleFingerprintLogin}
                   disabled={isUsingFingerprint || submitting}
-                  className="group mb-6 flex w-full items-center justify-center gap-3 rounded-xl bg-gradient-to-r from-blue-600 to-lime-600 px-4 py-3 font-medium text-white shadow-lg transition-all hover:brightness-110 disabled:opacity-50"
+                  className="group mb-6 flex w-full items-center justify-center gap-3 rounded-xl  from-blue-600 to-lime-600 px-4 py-3 font-medium text-white shadow-lg transition-all hover:brightness-110 disabled:opacity-50"
                 >
                   <Fingerprint className={`h-5 w-5 ${isUsingFingerprint ? "animate-pulse" : ""}`} />
                   {isUsingFingerprint ? "Authenticating…" : "Sign in with Fingerprint"}
@@ -481,37 +482,34 @@ export default function LoginPage() {
                     </div>
                   )} */}
 
-                  <button
+                  <LoadingButton
                     type="submit"
-                    disabled={submitting || isUsingFingerprint}
-                    className={`flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 font-semibold text-white shadow-lg transition-all disabled:opacity-50 ${
+                    loading={submitting}
+                    disabled={isUsingFingerprint}
+                    loadingText="Signing in..."
+                    className={`w-full rounded-xl px-4 py-4 font-semibold text-white shadow-lg transition-all ${
                       Object.keys(validationErrors).length > 0
-                        ? 'bg-gradient-to-r from-amber-500 to-orange-500 hover:brightness-110'
+                        ? 'bg-amber-500 hover:bg-amber-600'
                         : isFormValid
-                        ? 'bg-gradient-to-r from-green-500 to-emerald-500 hover:brightness-110'
-                        : 'bg-gradient-to-r from-blue-600 to-lime-600 hover:brightness-110'
+                        ? 'bg-green-500 hover:bg-green-600'
+                        : 'bg-[#006BC4] hover:bg-[#0056a0]'
                     }`}
                   >
-                    {submitting ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        Signing in…
-                      </>
-                    ) : Object.keys(validationErrors).length > 0 ? (
+                    {Object.keys(validationErrors).length > 0 ? (
                       "Fix errors to continue"
                     ) : isFormValid ? (
                       "Ready to sign in ✓"
                     ) : (
                       "Sign in"
                     )}
-                  </button>
+                  </LoadingButton>
                 </form>
 
                 <p className="mt-6 text-center text-xs text-zinc-500">
                   By continuing, you agree to our{" "}
-                  <a className="text-blue-700 hover:underline" href="#">Terms of Service</a>{" "}
+                  <a className="text-blue-700 hover:underline" href="https://prodairy.co.zw/">Terms of Service</a>{" "}
                   and{" "}
-                  <a className="text-blue-700 hover:underline" href="#">Privacy Policy</a>.
+                  <a className="text-blue-700 hover:underline" href="https://prodairy.co.zw/">Privacy Policy</a>.
                 </p>
               </div>
             </div>

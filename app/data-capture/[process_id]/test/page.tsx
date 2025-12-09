@@ -141,8 +141,8 @@ export default function UHTQualityCheckPage({ params }: UHTQualityCheckPageProps
         const qualityCheck = row.original
         return (
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center">
-              <TestTube className="w-4 h-4 text-white" />
+            <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
+              <TestTube className="w-4 h-4 text-gray-600" />
             </div>
             <div>
               <div className="flex items-center space-x-2">
@@ -320,18 +320,18 @@ export default function UHTQualityCheckPage({ params }: UHTQualityCheckPageProps
         return (
           <div className="flex space-x-2">
             <LoadingButton 
-              variant="outline" 
+               
               size="sm" 
               onClick={() => handleViewQualityCheck(qualityCheck)}
-              className="bg-[#0068BD] hover:bg-[#005299] text-white border-0 rounded-full"
+              className="bg-[#006BC4] text-white rounded-full"
             >
               <Eye className="w-4 h-4" />
             </LoadingButton>
             <LoadingButton 
-              variant="outline" 
+               
               size="sm" 
               onClick={() => handleEditQualityCheck(qualityCheck)}
-              className="bg-[#A0D001] hover:bg-[#8AB801] text-white border-0 rounded-full"
+              className="bg-[#A0CF06] text-[#211D1E] rounded-full"
             >
               <Edit className="w-4 h-4" />
             </LoadingButton>
@@ -341,7 +341,7 @@ export default function UHTQualityCheckPage({ params }: UHTQualityCheckPageProps
               onClick={() => handleDeleteQualityCheck(qualityCheck)}
               loading={operationLoading.delete}
               disabled={operationLoading.delete}
-              className="bg-red-600 hover:bg-red-700 text-white border-0 rounded-full"
+              className="rounded-full"
             >
               <Trash2 className="w-4 h-4" />
             </LoadingButton>
@@ -377,7 +377,7 @@ export default function UHTQualityCheckPage({ params }: UHTQualityCheckPageProps
           </div>
           <LoadingButton 
             onClick={handleAddQualityCheck}
-            className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 rounded-full px-6 py-2 font-light"
+            className="bg-[#006BC4] text-white rounded-full px-6 py-2 font-light"
           >
             <Plus className="mr-2 h-4 w-4" />
             Add Quality Check
@@ -392,16 +392,16 @@ export default function UHTQualityCheckPage({ params }: UHTQualityCheckPageProps
             <div className="p-6 pb-0">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2 text-lg font-light">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center">
-                    <TestTube className="h-4 w-4 text-white" />
+                  <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+                    <TestTube className="h-4 w-4 text-gray-600" />
                   </div>
                   <span>Current Quality Check Process</span>
-                  <Badge className="bg-gradient-to-r from-green-100 to-emerald-100 text-green-800 font-light">Latest</Badge>
+                  <Badge className=" text-white font-light">Latest</Badge>
                 </div>
                 <LoadingButton 
-                  variant="outline" 
+                   
                   onClick={() => handleViewQualityCheck(latestQualityCheck)}
-                  className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 rounded-full px-4 py-2 font-light text-sm"
+                  className="bg-[#006BC4] text-white rounded-full px-4 py-2 font-light text-sm"
                 >
                   <Eye className="mr-2 h-4 w-4" />
                   View Details
@@ -453,7 +453,7 @@ export default function UHTQualityCheckPage({ params }: UHTQualityCheckPageProps
               </div>
               
               {/* Process Overview */}
-              <div className="mt-6 p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg">
+              <div className="mt-6 p-4  from-green-50 to-emerald-50 rounded-lg">
                 <div className="flex items-center space-x-2 mb-3">
                   <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center">
                     <TestTube className="h-4 w-4 text-green-600" />
@@ -481,7 +481,7 @@ export default function UHTQualityCheckPage({ params }: UHTQualityCheckPageProps
                     </div>
                     <div className="flex items-center space-x-2">
                       <span className="text-sm font-medium text-green-600">Test</span>
-                      <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-2 py-1 rounded-full text-xs font-medium shadow-lg">
+                      <div className=" from-green-500 to-emerald-600 text-white px-2 py-1 rounded-full text-xs font-medium shadow-lg">
                         Current Step
                       </div>
                     </div>

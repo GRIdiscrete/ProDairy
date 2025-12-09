@@ -352,7 +352,7 @@ export function RoleFormDrawer({ open, onOpenChange, role, mode }: RoleFormDrawe
             <div className="flex justify-end space-x-3 pt-6">
               <LoadingButton 
                 type="button" 
-                variant="outline" 
+                 
                 onClick={() => onOpenChange(false)}
                 className="border border-gray-200 rounded-full px-6 py-2"
               >
@@ -362,7 +362,7 @@ export function RoleFormDrawer({ open, onOpenChange, role, mode }: RoleFormDrawe
                 type="submit" 
                 loading={mode === "create" ? operationLoading.create : operationLoading.update}
                 loadingText={mode === "create" ? "Creating..." : "Updating..."}
-                className="bg-gradient-to-r from-gray-500 to-gray-700 hover:from-gray-600 hover:to-gray-800 text-white border-0 rounded-full px-6 py-2 font-light"
+                className=" bg-[#006BC4] text-white rounded-full px-6 py-2 font-light"
               >
                 {mode === "create" ? "Create Role" : "Update Role"}
               </LoadingButton>

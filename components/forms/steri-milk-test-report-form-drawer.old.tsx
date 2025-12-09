@@ -1012,7 +1012,7 @@ export function SteriMilkTestReportFormDrawer({    tds: number    batch: yup.num
 
                         <div className="flex items-center gap-2">        console.error('Failed to fetch process log:', error)          </div>
 
-                          <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={() => setSignatureOpen(true)}>
+                          <Button type="button"  size="sm" className="rounded-full" onClick={() => setSignatureOpen(true)}>
 
                             Add Signature        toast.error('Failed to load batch data')        </div>
 
@@ -1022,7 +1022,7 @@ export function SteriMilkTestReportFormDrawer({    tds: number    batch: yup.num
 
                             <>
 
-                              <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={() => setSignatureViewOpen(true)}>    }          <div>
+                              <Button type="button"  size="sm" className="rounded-full" onClick={() => setSignatureViewOpen(true)}>    }          <div>
 
                                 View Signature
 
@@ -1322,7 +1322,7 @@ export function SteriMilkTestReportFormDrawer({    tds: number    batch: yup.num
 
                       <Input {...field} type="number" step="0.01" className="mt-1" value={field.value || ""} onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : 0)} />
 
-                    )}                    <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={() => setSignatureOpen(true)}>
+                    )}                    <Button type="button"  size="sm" className="rounded-full" onClick={() => setSignatureOpen(true)}>
 
                   />
 
@@ -1338,7 +1338,7 @@ export function SteriMilkTestReportFormDrawer({    tds: number    batch: yup.num
 
                   name="raw_milk_silos.remarks"
 
-                  control={control}      if (onSuccess) {                      <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={() => setSignatureViewOpen(true)}>
+                  control={control}      if (onSuccess) {                      <Button type="button"  size="sm" className="rounded-full" onClick={() => setSignatureViewOpen(true)}>
 
                   render={({ field }) => (
 
@@ -2026,7 +2026,7 @@ export function SteriMilkTestReportFormDrawer({    tds: number    batch: yup.num
 
               <div className="grid grid-cols-2 gap-4">
 
-                <div>                          <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={() => setSignatureOpen(true)}>            name="raw_milk_silos.fat"
+                <div>                          <Button type="button"  size="sm" className="rounded-full" onClick={() => setSignatureOpen(true)}>            name="raw_milk_silos.fat"
 
                   <Label htmlFor="uht_steri_milk.temperature">Temperature (°C)</Label>
 
@@ -2046,7 +2046,7 @@ export function SteriMilkTestReportFormDrawer({    tds: number    batch: yup.num
 
                 </div>
 
-                <div>                              <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={() => setSignatureViewOpen(true)}>          />
+                <div>                              <Button type="button"  size="sm" className="rounded-full" onClick={() => setSignatureViewOpen(true)}>          />
 
                   <Label htmlFor="uht_steri_milk.ot">OT</Label>
 
@@ -2546,7 +2546,7 @@ export function SteriMilkTestReportFormDrawer({    tds: number    batch: yup.num
 
                 type="button"
 
-                variant="outline"                    control={control}          )}
+                                    control={control}          )}
 
                 onClick={prevStep}
 
@@ -3870,7 +3870,7 @@ export function SteriMilkTestReportFormDrawer({    tds: number    batch: yup.num
 
                 type="button"      other_tests: {
 
-                variant="outline"        sample_details: "",
+                        sample_details: "",
 
                 onClick={prevStep}        ph: 0,
 
@@ -4247,11 +4247,11 @@ export function SteriMilkTestReportFormDrawer({    tds: number    batch: yup.num
                         </div>
                       )}
                       <div className="flex items-center gap-2">
-                        <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={() => setSignatureOpen(true)}>
+                        <Button type="button"  size="sm" className="rounded-full" onClick={() => setSignatureOpen(true)}>
                           Add Signature
                         </Button>
                         {field.value && (
-                          <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={() => setSignatureViewOpen(true)}>
+                          <Button type="button"  size="sm" className="rounded-full" onClick={() => setSignatureViewOpen(true)}>
                             View Signature
                           </Button>
                         )}
@@ -5082,7 +5082,7 @@ export function SteriMilkTestReportFormDrawer({    tds: number    batch: yup.num
             <div className="flex justify-between pt-6 border-t">
               <Button
                 type="button"
-                variant="outline"
+                
                 onClick={prevStep}
                 disabled={currentStep === 1}
                 className="flex items-center gap-2"

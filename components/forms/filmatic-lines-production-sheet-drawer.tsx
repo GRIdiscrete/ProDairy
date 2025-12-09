@@ -60,7 +60,7 @@ import { toast } from "sonner"
 
 // Process Overview Component
 const ProcessOverview = () => (
-  <div className="mb-8 p-6 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg">
+  <div className="mb-8 p-6  from-blue-50 to-cyan-50 rounded-lg">
     <h3 className="text-lg font-light text-gray-900 mb-4">Process Overview</h3>
     <div className="flex items-center justify-between mb-4">
       <div className="flex items-center space-x-2">
@@ -76,7 +76,7 @@ const ProcessOverview = () => (
         </div>
         <div className="flex items-center space-x-2">
           <span className="text-sm font-medium text-blue-600">Filmatic Lines</span>
-          <div className="bg-gradient-to-r from-blue-500 to-cyan-600 text-white px-2 py-1 rounded-full text-xs font-medium shadow-lg">
+          <div className=" bg-gray-100 text-gray-600 px-2 py-1 rounded-full text-xs font-medium shadow-lg">
             Current Step
           </div>
         </div>
@@ -126,7 +126,7 @@ const StepNavigation = ({ currentStep, onStepChange }: { currentStep: number, on
                 <div className={`
                   w-12 h-12 rounded-full flex items-center justify-center border-2 transition-all duration-200
                   ${isCompleted ? 'bg-green-500 border-green-500 text-white' : 
-                    isCurrent ? 'bg-blue-500 border-blue-500 text-white' : 
+                    isCurrent ? 'bg-blue-500 border-[#006BC4] text-white' : 
                     'bg-white border-gray-300 text-gray-400'}
                 `}>
                   {isCompleted ? (
@@ -650,7 +650,7 @@ export function FilmaticLinesProductionSheetDrawer({
                   control={formHook.control}
                   render={({ field }) => (
                     <Select onValueChange={field.onChange} value={field.value}>
-                      <SelectTrigger className="h-12 border border-gray-300 hover:border-gray-400 focus:border-blue-500 shadow-none hover:shadow-none focus:shadow-none rounded-full">
+                      <SelectTrigger className="h-12 border border-gray-300 hover:border-gray-400 focus:border-[#006BC4] shadow-none hover:shadow-none focus:shadow-none rounded-full">
                         <SelectValue placeholder="Select shift" />
                       </SelectTrigger>
                       <SelectContent>
@@ -673,7 +673,7 @@ export function FilmaticLinesProductionSheetDrawer({
                   control={formHook.control}
                   render={({ field }) => (
                     <Select onValueChange={field.onChange} value={field.value}>
-                      <SelectTrigger className="h-12 border border-gray-300 hover:border-gray-400 focus:border-blue-500 shadow-none hover:shadow-none focus:shadow-none rounded-full">
+                      <SelectTrigger className="h-12 border border-gray-300 hover:border-gray-400 focus:border-[#006BC4] shadow-none hover:shadow-none focus:shadow-none rounded-full">
                         <SelectValue placeholder="Select product" />
                       </SelectTrigger>
                       <SelectContent>
@@ -819,7 +819,7 @@ export function FilmaticLinesProductionSheetDrawer({
                   control={formHook.control}
                   render={({ field }) => (
                     <Select onValueChange={field.onChange} value={field.value}>
-                      <SelectTrigger className="h-12 border border-gray-300 hover:border-gray-400 focus:border-blue-500 shadow-none hover:shadow-none focus:shadow-none rounded-full">
+                      <SelectTrigger className="h-12 border border-gray-300 hover:border-gray-400 focus:border-[#006BC4] shadow-none hover:shadow-none focus:shadow-none rounded-full">
                         <SelectValue placeholder="Select shift" />
                       </SelectTrigger>
                       <SelectContent>
@@ -959,7 +959,7 @@ export function FilmaticLinesProductionSheetDrawer({
                   control={formHook.control}
                   render={({ field }) => (
                     <Select onValueChange={field.onChange} value={field.value}>
-                      <SelectTrigger className="h-12 border border-gray-300 hover:border-gray-400 focus:border-blue-500 shadow-none hover:shadow-none focus:shadow-none rounded-full">
+                      <SelectTrigger className="h-12 border border-gray-300 hover:border-gray-400 focus:border-[#006BC4] shadow-none hover:shadow-none focus:shadow-none rounded-full">
                         <SelectValue placeholder="Select shift" />
                       </SelectTrigger>
                       <SelectContent>
@@ -1324,7 +1324,7 @@ export function FilmaticLinesProductionSheetDrawer({
                 {currentStep > 1 && (
                   <Button
                     type="button"
-                    variant="outline"
+                    
                     onClick={handlePrevious}
                     className="flex items-center gap-2"
                     disabled={isSubmitting}

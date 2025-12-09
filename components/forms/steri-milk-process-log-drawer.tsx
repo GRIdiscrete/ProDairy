@@ -576,7 +576,7 @@ export function SteriMilkProcessLogDrawer({
 
         <div className="flex items-center justify-between p-6 pt-0 border-t bg-white">
           <Button
-            variant="outline"
+            
             onClick={handleBack}
             disabled={currentStep === 1}
             className="flex items-center gap-2"

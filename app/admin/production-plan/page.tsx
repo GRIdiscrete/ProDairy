@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import type { RootState, AppDispatch } from "@/lib/store"
 import { fetchProductionPlans } from "@/lib/store/slices/productionPlanSlice"
+import { fetchUsers } from "@/lib/store/slices/usersSlice"
 import { MainLayout } from "@/components/layout/main-layout"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -16,12 +17,12 @@ import { LoadingButton } from "@/components/ui/loading-button"
 import type { ProductionPlan } from "@/lib/types"
 import { AdminDashboardLayout } from "@/components/layout/admin-dashboard-layout"
 import { PermissionGuard } from "@/components/auth/permission-guard"
-import { PermissionButton } from "@/components/ui/permission-table-actions"
-import { PermissionTableActions } from "@/components/ui/permission-table-actions"
+import { UserAvatar } from "@/components/users/user-avatar"
 
 export default function ProductionPage() {
   const dispatch = useDispatch<AppDispatch>()
   const { productionPlans, operationLoading } = useSelector((state: RootState) => state.productionPlan)
+  const { items: users } = useSelector((state: RootState) => state.users)
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
   const [isViewDrawerOpen, setIsViewDrawerOpen] = useState(false)
   const [editingPlan, setEditingPlan] = useState<ProductionPlan | null>(null)
@@ -29,6 +30,7 @@ export default function ProductionPage() {
 
   useEffect(() => {
     dispatch(fetchProductionPlans())
+    dispatch(fetchUsers({}))
   }, [dispatch])
 
   const handleAddPlan = () => {
@@ -69,8 +71,8 @@ export default function ProductionPage() {
         const plan = row.original as ProductionPlan
         return (
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-gray-500 to-gray-700 flex items-center justify-center">
-              <ClipboardList className="w-4 h-4 text-white" />
+            <div className="w-8 h-8 rounded-lg bg-gray-100 text-gray-600 flex items-center justify-center">
+              <Calendar className="w-4 h-4" />
             </div>
             <div>
               <div className="flex items-center space-x-2">
@@ -79,7 +81,7 @@ export default function ProductionPage() {
                   {plan.status.charAt(0).toUpperCase() + plan.status.slice(1)}
                 </Badge>
               </div>
-              <p className="text-sm text-gray-500 mt-1">ID: {plan.id.slice(0, 8)}...</p>
+              {/* <p className="text-sm text-gray-500 mt-1">ID: {plan.id.slice(0, 8)}...</p> */}
             </div>
           </div>
         )
@@ -90,14 +92,24 @@ export default function ProductionPage() {
       header: "Supervisor",
       cell: ({ row }: any) => {
         const plan = row.original as ProductionPlan
+        const supervisor = users.find(user => user.id === plan.supervisor)
         return (
           <div className="space-y-1">
-            <p className="text-sm font-light">
-              {plan.production_plan_supervisor_fkey ? 
-                `${plan.production_plan_supervisor_fkey.first_name} ${plan.production_plan_supervisor_fkey.last_name}` :
-                'N/A'
-              }
-            </p>
+            {supervisor ? (
+              <UserAvatar 
+                user={supervisor} 
+                size="sm" 
+                showName={true} 
+                showDropdown={true}
+              />
+            ) : (
+              <div className="text-sm font-light text-muted-foreground">
+                {plan.production_plan_supervisor_fkey ? 
+                  `${plan.production_plan_supervisor_fkey.first_name} ${plan.production_plan_supervisor_fkey.last_name}` :
+                  'N/A'
+                }
+              </div>
+            )}
             <p className="text-xs text-gray-500">Assigned supervisor</p>
           </div>
         )
@@ -148,12 +160,24 @@ export default function ProductionPage() {
       cell: ({ row }: any) => {
         const plan = row.original as ProductionPlan
         return (
-          <PermissionTableActions
-            feature="production_plan"
-            onView={() => handleViewPlan(plan)}
-            onEdit={() => handleEditPlan(plan)}
-            showDropdown={true}
-          />
+          <div className="flex space-x-2">
+            <LoadingButton 
+               
+              size="sm" 
+              onClick={() => handleViewPlan(plan)}
+              className="bg-[#006BC4] text-white border-0 rounded-full"
+            >
+              <Eye className="w-4 h-4" />
+            </LoadingButton>
+            <LoadingButton 
+               
+              size="sm" 
+              onClick={() => handleEditPlan(plan)}
+              className="bg-[#A0CF06] text-[#211D1E] border-0 rounded-full"
+            >
+              <Edit className="w-4 h-4" />
+            </LoadingButton>
+          </div>
         )
       },
     },
@@ -170,15 +194,13 @@ export default function ProductionPage() {
             <h1 className="text-3xl font-light text-foreground">Production Plans</h1>
             <p className="text-sm font-light text-muted-foreground">Manage and monitor production planning</p>
           </div>
-          <PermissionButton
-            feature="production_plan"
-            permission="create"
+          <LoadingButton 
             onClick={handleAddPlan}
-            className="bg-gradient-to-r from-gray-500 to-gray-700 hover:from-gray-600 hover:to-gray-800 text-white border-0 rounded-full px-6 py-2 font-light"
+            className="bg-[#006BC4] text-white border-0 rounded-full px-6 py-2 font-light"
           >
             <Plus className="mr-2 h-4 w-4" />
             Create Plan
-          </PermissionButton>
+          </LoadingButton>
         </div>
 
         {/* Counter Widgets with Icons */}

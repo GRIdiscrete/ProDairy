@@ -44,7 +44,7 @@ export function QaReleaseNoteViewDrawer({ open, onOpenChange, note, onEdit }: Pr
         </SheetHeader>
 
         <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-white">
-          <div className="border rounded-lg p-4 bg-gradient-to-r from-gray-50 to-white">
+          <div className="border rounded-lg p-4  from-gray-50 to-white">
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-lg font-light">Release Note</h3>
@@ -148,7 +148,7 @@ export function QaReleaseNoteViewDrawer({ open, onOpenChange, note, onEdit }: Pr
         </div>
 
         <div className="flex items-center justify-between p-6 pt-0 border-t bg-white">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Close</Button>
+          <Button  onClick={() => onOpenChange(false)}>Close</Button>
           {onEdit && <Button onClick={onEdit}>Edit</Button>}
         </div>
       </SheetContent>

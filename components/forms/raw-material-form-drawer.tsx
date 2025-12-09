@@ -158,7 +158,7 @@ export function RawMaterialFormDrawer({ open, onOpenChange, rawMaterial, mode }:
             </div>
 
             <div className="flex justify-end space-x-2 pt-4 border-t bg-white">
-              <LoadingButton type="button" variant="outline" onClick={() => onOpenChange(false)} className="rounded-full">
+              <LoadingButton type="button"  onClick={() => onOpenChange(false)} className="rounded-full">
                 Cancel
               </LoadingButton>
               <LoadingButton 

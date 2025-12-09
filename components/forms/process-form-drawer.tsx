@@ -193,7 +193,7 @@ export function ProcessFormDrawer({ open, onOpenChange, process, mode, onSuccess
             <div className="flex justify-end space-x-2 pt-4">
               <LoadingButton
                 type="button"
-                variant="outline"
+                
                 onClick={() => onOpenChange(false)}
                 disabled={isLoading}
               >
@@ -203,7 +203,7 @@ export function ProcessFormDrawer({ open, onOpenChange, process, mode, onSuccess
                 type="submit"
                 loading={isLoading}
                 disabled={isLoading}
-                className="bg-gradient-to-r from-gray-500 to-gray-700 hover:from-gray-600 hover:to-gray-800 text-white border-0 rounded-full px-6 py-2 font-light"
+                className=" bg-[#006BC4] text-white rounded-full px-6 py-2 font-light"
               >
                 {mode === "create" ? "Create Process" : "Update Process"}
               </LoadingButton>

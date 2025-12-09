@@ -97,7 +97,7 @@ export function ProductionBatchesTable() {
     {
       accessorKey: "productType",
       header: "Product Type",
-      cell: ({ row }) => <Badge variant="outline">{row.getValue("productType")}</Badge>,
+      cell: ({ row }) => <Badge >{row.getValue("productType")}</Badge>,
     },
     {
       accessorKey: "status",

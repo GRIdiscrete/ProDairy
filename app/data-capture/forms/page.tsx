@@ -235,7 +235,7 @@ export default function FormsPage() {
                     }>
                       {form.status}
                     </Badge>
-                    <Button variant="outline" size="sm" onClick={() => handleFormView(form)}>
+                    <Button  size="sm" onClick={() => handleFormView(form)}>
                       View
                     </Button>
                   </div>

@@ -162,8 +162,8 @@ export default function FlexOneSteriliserProcessPage() {
         const waterStreamsCount = waterStreams.filter((stream: any) => stream.flex_1_steriliser_process_id === process.id).length
         return (
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center">
-              <Thermometer className="w-4 h-4 text-white" />
+            <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
+              <Thermometer className="w-4 h-4 text-gray-600" />
             </div>
             <div>
               <div className="flex items-center space-x-2">
@@ -251,10 +251,10 @@ export default function FlexOneSteriliserProcessPage() {
         const process = row.original
         return (
           <div className="flex space-x-2">
-            <LoadingButton variant="outline" size="sm" onClick={() => handleViewProcess(process)}>
+            <LoadingButton  size="sm" onClick={() => handleViewProcess(process)}>
               <Eye className="w-4 h-4" />
             </LoadingButton>
-            <LoadingButton variant="outline" size="sm" onClick={() => handleEditProcess(process)}>
+            <LoadingButton  size="sm" onClick={() => handleEditProcess(process)}>
               <Edit className="w-4 h-4" />
             </LoadingButton>
             <LoadingButton 

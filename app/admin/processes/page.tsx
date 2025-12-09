@@ -16,8 +16,6 @@ import { LoadingButton } from "@/components/ui/loading-button"
 import type { Process } from "@/lib/types"
 import { AdminDashboardLayout } from "@/components/layout/admin-dashboard-layout"
 import { PermissionGuard } from "@/components/auth/permission-guard"
-import { PermissionButton } from "@/components/ui/permission-table-actions"
-import { PermissionTableActions } from "@/components/ui/permission-table-actions"
 
 export default function ProcessPage() {
   const dispatch = useDispatch<AppDispatch>()
@@ -54,8 +52,8 @@ export default function ProcessPage() {
         const process = row.original as Process
         return (
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-gray-500 to-gray-700 flex items-center justify-center">
-              <Settings className="w-4 h-4 text-white" />
+            <div className="w-8 h-8 rounded-lg bg-gray-100 text-gray-600 flex items-center justify-center">
+              <Settings className="w-4 h-4" />
             </div>
             <div>
               <div className="flex items-center space-x-2">
@@ -114,12 +112,24 @@ export default function ProcessPage() {
       cell: ({ row }: any) => {
         const process = row.original as Process
         return (
-          <PermissionTableActions
-            feature="process"
-            onView={() => handleViewProcess(process)}
-            onEdit={() => handleEditProcess(process)}
-            showDropdown={true}
-          />
+          <div className="flex space-x-2">
+            <LoadingButton 
+               
+              size="sm" 
+              onClick={() => handleViewProcess(process)}
+              className="bg-[#006BC4] text-white border-0 rounded-full"
+            >
+              <Eye className="w-4 h-4" />
+            </LoadingButton>
+            <LoadingButton 
+               
+              size="sm" 
+              onClick={() => handleEditProcess(process)}
+              className="bg-[#A0CF06] text-[#211D1E] border-0 rounded-full"
+            >
+              <Edit className="w-4 h-4" />
+            </LoadingButton>
+          </div>
         )
       },
     },
@@ -136,15 +146,13 @@ export default function ProcessPage() {
             <h1 className="text-3xl font-light text-foreground">Manufacturing Processes</h1>
             <p className="text-sm font-light text-muted-foreground">Manage and configure manufacturing processes</p>
           </div>
-          <PermissionButton
-            feature="process"
-            permission="create"
+          <LoadingButton 
             onClick={handleAddProcess}
-            className="bg-gradient-to-r from-gray-500 to-gray-700 hover:from-gray-600 hover:to-gray-800 text-white border-0 rounded-full px-6 py-2 font-light"
+            className="bg-[#006BC4] text-white border-0 rounded-full px-6 py-2 font-light"
           >
             <Plus className="mr-2 h-4 w-4" />
             Add Process
-          </PermissionButton>
+          </LoadingButton>
         </div>
 
         {/* Counter Widgets with Icons */}

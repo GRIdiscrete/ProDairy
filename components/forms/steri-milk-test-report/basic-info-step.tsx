@@ -130,14 +130,14 @@ export function BasicInfoStep({ form, userRoles, loadingUserRoles }: BasicInfoSt
                     <>
                       <Button
                         type="button"
-                        variant="outline"
+                        
                         onClick={() => setSignatureViewOpen(true)}
                       >
                         View Signature
                       </Button>
                       <Button
                         type="button"
-                        variant="outline"
+                        
                         onClick={() => setSignatureOpen(true)}
                       >
                         Change Signature
@@ -146,7 +146,7 @@ export function BasicInfoStep({ form, userRoles, loadingUserRoles }: BasicInfoSt
                   ) : (
                     <Button
                       type="button"
-                      variant="outline"
+                      
                       onClick={() => setSignatureOpen(true)}
                     >
                       Add Signature

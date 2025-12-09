@@ -329,11 +329,11 @@ function Step1BasicInfo({
                     </div>
                   )}
                   <div className="flex items-center gap-2">
-                    <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={() => setSignatureOpen(true)}>
+                    <Button type="button"  size="sm" className="rounded-full" onClick={() => setSignatureOpen(true)}>
                       Add Signature
                     </Button>
                     {field.value && (
-                      <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={() => setSignatureViewOpen(true)}>
+                      <Button type="button"  size="sm" className="rounded-full" onClick={() => setSignatureViewOpen(true)}>
                         View Signature
                       </Button>
                     )}
@@ -1599,11 +1599,11 @@ export function SteriMilkTestReportFormDrawer({
                         </div>
                       )}
                       <div className="flex items-center gap-2">
-                        <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={() => setSignatureOpen(true)}>
+                        <Button type="button"  size="sm" className="rounded-full" onClick={() => setSignatureOpen(true)}>
                           Add Signature
                         </Button>
                         {field.value && (
-                          <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={() => setSignatureViewOpen(true)}>
+                          <Button type="button"  size="sm" className="rounded-full" onClick={() => setSignatureViewOpen(true)}>
                             View Signature
                           </Button>
                         )}
@@ -2434,7 +2434,7 @@ export function SteriMilkTestReportFormDrawer({
             <div className="flex justify-between pt-6 border-t">
               <Button
                 type="button"
-                variant="outline"
+                
                 onClick={prevStep}
                 disabled={currentStep === 1}
                 className="flex items-center gap-2"

@@ -57,23 +57,23 @@ export function RawMaterialViewDrawer({ open, onClose, rawMaterial, onEdit }: Ra
         <SheetHeader className="mb-6 bg-white">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#f59e0b] to-[#d97706] flex items-center justify-center">
-                <Package className="w-5 h-5 text-white" />
+              <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center">
+                <Package className="w-5 h-5 text-gray-600" />
               </div>
               <div>
                 <SheetTitle className="flex items-center space-x-2 text-lg font-light">
                   <span className="font-light">{rawMaterial.name}</span>
-                  <Badge variant="outline" className="text-xs">Raw Material</Badge>
+                  <Badge  className="text-xs">Raw Material</Badge>
                 </SheetTitle>
                 <p className="text-sm font-light text-gray-500 mt-1">Material Details</p>
               </div>
             </div>
             {onEdit && (
               <Button 
-                variant="outline" 
+                 
                 size="sm" 
                 onClick={onEdit}
-                className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 rounded-full"
+                className=" bg-[#006BC4] text-white rounded-full"
               >
                 <Edit className="w-4 h-4 mr-2" />
                 Edit Material

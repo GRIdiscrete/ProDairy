@@ -214,8 +214,8 @@ export default function PasteurizingPage() {
         const totalProduction = form.steri_milk_pasteurizing_form_production?.reduce((sum: number, item: any) => sum + (item.output_target_value || 0), 0) || 0
         return (
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center">
-              <FlaskConical className="w-4 h-4 text-white" />
+            <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
+              <FlaskConical className="w-4 h-4 text-gray-600" />
             </div>
             <div>
               <div className="flex items-center space-x-2">
@@ -384,18 +384,18 @@ export default function PasteurizingPage() {
         return (
           <div className="flex space-x-2">
             <LoadingButton
-              variant="outline"
+              
               size="sm"
               onClick={() => handleViewForm(form)}
-              className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full"
+              className="bg-[#006BC4] text-white rounded-full"
             >
               <Eye className="w-4 h-4" />
             </LoadingButton>
             <LoadingButton
-              variant="outline"
+              
               size="sm"
               onClick={() => handleEditForm(form)}
-              className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 rounded-full"
+              className="bg-[#A0CF06] text-[#211D1E] rounded-full"
             >
               <Edit className="w-4 h-4" />
             </LoadingButton>
@@ -405,7 +405,7 @@ export default function PasteurizingPage() {
               onClick={() => handleDeleteForm(form)}
               loading={operationLoading.delete}
               disabled={operationLoading.delete}
-              className="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white border-0 rounded-full"
+              className="rounded-full"
             >
               <Trash2 className="w-4 h-4" />
             </LoadingButton>
@@ -439,7 +439,7 @@ export default function PasteurizingPage() {
           </div>
           <LoadingButton
             onClick={handleAddForm}
-            className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full px-6 py-2 font-light"
+            className="bg-[#006BC4] text-white rounded-full px-6 py-2 font-light"
           >
             <Plus className="mr-2 h-4 w-4" />
             Add Pasteurizing Form
@@ -450,20 +450,20 @@ export default function PasteurizingPage() {
         {loading ? (
           <ContentSkeleton sections={1} cardsPerSection={4} />
         ) : latestForm ? (
-          <div className="border border-gray-200 rounded-lg bg-white border-l-4 border-l-blue-500">
+          <div className="border border-gray-200 rounded-lg bg-white border-l-4 border-l-[#006BC4]">
             <div className="p-6 pb-0">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2 text-lg font-light">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center">
-                    <FlaskConical className="h-4 w-4 text-white" />
+                  <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+                    <FlaskConical className="h-4 w-4 text-gray-600" />
                   </div>
                   <span>Current Pasteurizing Process</span>
-                  <Badge className="bg-gradient-to-r from-blue-100 to-cyan-100 text-blue-800 font-light">Latest</Badge>
+                  <Badge className="text-white font-light">Latest</Badge>
                 </div>
                 <LoadingButton
-                  variant="outline"
+                  
                   onClick={() => handleViewForm(latestForm)}
-                  className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full px-4 py-2 font-light text-sm"
+                  className="bg-[#006BC4] text-white rounded-full px-4 py-2 font-light text-sm"
                 >
                   <Eye className="mr-2 h-4 w-4" />
                   View Details
@@ -548,7 +548,7 @@ export default function PasteurizingPage() {
                 </div>
 
                 {/* Process Summary */}
-                <div className="p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg">
+                <div className="p-4 bg-blue-50 rounded-lg">
                   <div className="flex items-center space-x-2 mb-3">
                     <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
                       <FlaskConical className="h-4 w-4 text-blue-600" />

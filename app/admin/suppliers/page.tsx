@@ -128,8 +128,8 @@ export default function SuppliersPage() {
         const supplier = row.original
         return (
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#059669] to-[#10b981] flex items-center justify-center">
-              <Users className="w-4 h-4 text-white" />
+            <div className="w-8 h-8 rounded-lg bg-gray-100 text-gray-600 flex items-center justify-center">
+              <Users className="w-4 h-4" />
             </div>
             <div>
               <div className="flex items-center space-x-2">
@@ -185,7 +185,7 @@ export default function SuppliersPage() {
           <div className="space-y-1">
             <div className="flex items-center space-x-2">
               <span className="text-sm font-medium">{volumeSupplied.toLocaleString()}L</span>
-              <Badge variant="outline" className={rejectionRate > 10 ? "text-red-600" : rejectionRate > 5 ? "text-yellow-600" : "text-green-600"}>
+              <Badge  className={rejectionRate > 10 ? "text-white" : rejectionRate > 5 ? "text-white" : "text-white"}>
                 {rejectionRate.toFixed(1)}% rejected
               </Badge>
             </div>
@@ -214,10 +214,20 @@ export default function SuppliersPage() {
         const supplier = row.original
         return (
           <div className="flex space-x-2">
-            <LoadingButton variant="outline" size="sm" onClick={() => handleViewSupplier(supplier)}>
+            <LoadingButton 
+               
+              size="sm" 
+              onClick={() => handleViewSupplier(supplier)}
+              className="bg-[#006BC4] text-white border-0 rounded-full"
+            >
               <Eye className="w-4 h-4" />
             </LoadingButton>
-            <LoadingButton variant="outline" size="sm" onClick={() => handleEditSupplier(supplier)}>
+            <LoadingButton 
+               
+              size="sm" 
+              onClick={() => handleEditSupplier(supplier)}
+              className="bg-[#A0CF06] text-[#211D1E] border-0 rounded-full"
+            >
               <Edit className="w-4 h-4" />
             </LoadingButton>
             <LoadingButton 
@@ -226,6 +236,7 @@ export default function SuppliersPage() {
               onClick={() => handleDeleteSupplier(supplier)}
               loading={operationLoading.delete}
               disabled={operationLoading.delete}
+              className="bg-red-600 hover:bg-red-700 text-white border-0 rounded-full"
             >
               <Trash2 className="w-4 h-4" />
             </LoadingButton>

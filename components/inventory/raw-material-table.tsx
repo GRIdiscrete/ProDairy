@@ -19,7 +19,7 @@ export function RawMaterialTable({ materials, loading }: RawMaterialTableProps) 
         const material = row.original as RawMaterial
         return (
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-blue-500 rounded-lg flex items-center justify-center text-white">
+          <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center text-gray-600">
             <Package className="w-5 h-5" />
           </div>
           <div>

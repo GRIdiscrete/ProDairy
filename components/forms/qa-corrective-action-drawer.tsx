@@ -306,8 +306,8 @@ export function QACorrectiveActionDrawer({
             </div>
 
             <div className="flex justify-end pt-4">
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="mr-2">Cancel</Button>
-              <Button type="submit" className="bg-gradient-to-r from-red-500 to-orange-500 text-white" disabled={operationLoading.create || operationLoading.update}>
+              <Button type="button"  onClick={() => onOpenChange(false)} className="mr-2">Cancel</Button>
+              <Button type="submit" className=" from-red-500 to-orange-500 text-white" disabled={operationLoading.create || operationLoading.update}>
                 {mode === "create" ? "Create QA Action" : "Save Changes"}
                 <ChevronRight className="ml-2 h-4 w-4" />
               </Button>

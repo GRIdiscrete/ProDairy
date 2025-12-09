@@ -1,8 +1,9 @@
 "use client";
 
+import dynamic from "next/dynamic"
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -26,6 +27,27 @@ import { motion, AnimatePresence, Variants } from "framer-motion";
 import { processApi } from "@/lib/api/process";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAppSelector } from "@/lib/store";
+
+// Dynamic import to avoid hydration mismatch
+const DataCaptureSidebarContent = dynamic(() => Promise.resolve(DataCaptureSidebarComponent), {
+  ssr: false,
+  loading: () => (
+    <div className="w-80 min-h-screen border-r border-zinc-200 bg-white/80 backdrop-blur-xl">
+      <div className="h-16 border-b border-zinc-200 px-3 flex items-center">
+        <div className="h-10 w-10 bg-zinc-100 rounded animate-pulse" />
+      </div>
+      <div className="p-3 border-t border-zinc-200">
+        <div className="flex items-center gap-3">
+          <div className="h-9 w-9 bg-zinc-100 rounded-full animate-pulse" />
+          <div className="space-y-1">
+            <div className="h-4 w-24 bg-zinc-100 rounded animate-pulse" />
+            <div className="h-3 w-32 bg-zinc-100 rounded animate-pulse" />
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+})
 
 const dataCaptureNavigation = [
   {
@@ -83,7 +105,7 @@ interface DataCaptureSidebarProps {
   onToggle?: () => void;
 }
 
-export function DataCaptureSidebar({
+function DataCaptureSidebarComponent({
   collapsed = false,
   onToggle,
 }: DataCaptureSidebarProps) {
@@ -92,6 +114,9 @@ export function DataCaptureSidebar({
   const [processes, setProcesses] = useState<any[]>([])
   const [processOpen, setProcessOpen] = useState(false)
   const [selectedProcess, setSelectedProcess] = useState<string | null>(null)
+
+    const router = useRouter()
+  
 
   useEffect(() => {
     const load = async () => {
@@ -154,7 +179,7 @@ export function DataCaptureSidebar({
       <div className="relative flex h-16 items-center justify-between border-b border-zinc-200 px-3">
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-x-0 -bottom-px h-[1px] bg-gradient-to-r from-blue-300 via-zinc-200 to-lime-300"
+          className="pointer-events-none absolute inset-x-0 -bottom-px h-[1px]  from-blue-300 via-zinc-200 to-lime-300"
         />
         <div
           className={cn(
@@ -223,8 +248,11 @@ export function DataCaptureSidebar({
           {/* Place the switcher below Standardizing */}
 
           {dataCaptureNavigation.map((item) => {
-            const isActive =
-              pathname === item.href || pathname.startsWith(item.href + "/");
+            // For Dashboard (/data-capture), only match exact path
+            // For other routes, match if path starts with the href
+            const isActive = item.href === "/data-capture" 
+              ? pathname === item.href 
+              : pathname === item.href || pathname.startsWith(item.href + "/");
 
             return (
               <li key={item.name} className="relative">
@@ -233,7 +261,7 @@ export function DataCaptureSidebar({
                   className={cn(
                     "group flex items-center rounded-xl px-2.5 py-2 text-sm transition-all",
                     isActive
-                      ? "bg-gradient-to-r from-blue-50 to-lime-50 text-zinc-900 ring-1 ring-inset ring-blue-200/50"
+                      ? " from-blue-50 to-lime-50 text-zinc-900 ring-1 ring-inset ring-blue-200/50"
                       : "text-zinc-700 hover:bg-zinc-50"
                   )}
                 >
@@ -309,10 +337,10 @@ export function DataCaptureSidebar({
                     const isActive = s.enabled && (pathname === href || pathname.startsWith(href + '/'))
                     const content = (
                       <div className={cn("group flex items-center rounded-xl px-2.5 py-2 text-sm transition-all",
-                        isActive ? "bg-gradient-to-r from-blue-50 to-lime-50 text-zinc-900 ring-1 ring-inset ring-blue-200/50" : s.enabled ? "text-zinc-700 hover:bg-zinc-50" : "text-zinc-400")}
+                        isActive ? " from-blue-50 to-lime-50 text-zinc-900 ring-1 ring-inset ring-blue-200/50" : s.enabled ? "text-zinc-700 hover:bg-zinc-50" : "text-zinc-400")}
                       >
                         <div className="relative mr-2">
-                          <div className={cn("flex h-5 w-5 items-center justify-center rounded-full border", isActive ? "border-blue-500 text-blue-600" : "border-zinc-300 text-zinc-500")}>{idx + 1}</div>
+                          <div className={cn("flex h-5 w-5 items-center justify-center rounded-full border", isActive ? "border-[#006BC4] text-blue-600" : "border-zinc-300 text-zinc-500")}>{idx + 1}</div>
                         </div>
                         <s.Icon className={cn("h-5 w-5 flex-shrink-0", isActive ? "text-blue-600" : s.enabled ? "text-zinc-500 group-hover:text-zinc-700" : "text-zinc-400")} />
                         <span className="ml-3 font-light tracking-wide">{s.label}</span>
@@ -337,7 +365,8 @@ export function DataCaptureSidebar({
       </nav>
 
       {/* Footer / Profile */}
-      <div className="border-t border-zinc-200 p-3">
+      <div onClick={() => router.push('/profile')}
+        className="border-t border-zinc-200 p-3 cursor-pointer">
         <div
           className={cn(
             "flex items-center gap-3",
@@ -379,4 +408,8 @@ export function DataCaptureSidebar({
       </div>
     </motion.aside>
   );
+}
+
+export function DataCaptureSidebar(props: DataCaptureSidebarProps) {
+  return <DataCaptureSidebarContent {...props} />
 }

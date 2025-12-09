@@ -21,8 +21,8 @@ export function MetricCard({
   unit,
   change,
   icon: Icon,
-  iconColor = "text-white",
-  iconBgColor = "bg-gradient-to-br from-[#4f46e5] to-[#7c3aed]",
+  iconColor = "text-gray-600",
+  iconBgColor = "bg-gray-100",
   className,
 }: MetricCardProps) {
   return (

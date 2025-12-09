@@ -7,7 +7,7 @@ import { LoadingButton } from "@/components/ui/loading-button"
 import { DataTable } from "@/components/ui/data-table"
 import { DataTableFilters } from "@/components/ui/data-table-filters"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Eye, Trash2, Shield, Settings, Users, Database, Truck, Wrench } from "lucide-react"
+import { Plus, Eye, Trash2, Shield, Settings, Users, Database, Truck, Wrench, Edit } from "lucide-react"
 import { RoleFormDrawer } from "@/components/forms/role-form-drawer"
 import { RoleViewDrawer } from "@/components/forms/role-view-drawer"
 import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-dialog"
@@ -17,9 +17,8 @@ import { toast } from "sonner"
 import { UserRole, TableFilters } from "@/lib/types"
 import { ColumnDef } from "@tanstack/react-table"
 import { TablePulseLoading, MetricsPulseLoading } from "@/components/ui/pulse-loading"
-import { PermissionTableActions } from "@/components/ui/permission-table-actions"
-import { PermissionButton } from "@/components/ui/permission-table-actions"
 import { PermissionGuard } from "@/components/auth/permission-guard"
+import { PermissionButton } from "@/components/ui/permission-table-actions"
 
 export default function AdminRolesPage() {
   const dispatch = useAppDispatch()
@@ -140,8 +139,8 @@ export default function AdminRolesPage() {
         
         return (
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-              <Shield className="w-5 h-5 text-white" />
+            <div className="w-10 h-10 rounded-lg bg-gray-100 text-gray-600 flex items-center justify-center">
+              <Shield className="w-5 h-5" />
             </div>
             <div>
               <Badge className={getRoleColor(roleLower)}>
@@ -169,12 +168,12 @@ export default function AdminRolesPage() {
         return (
           <div className="flex flex-wrap gap-1">
             {shownPerms.map((permKey) => (
-              <Badge key={permKey} variant="outline" className="text-xs">
+              <Badge key={permKey}  className="text-xs">
                 {permissionLabels[permKey]}
               </Badge>
             ))}
             {moreCount > 0 && (
-              <Badge variant="outline" className="text-xs">
+              <Badge  className="text-xs">
                 +{moreCount} more
               </Badge>
             )}
@@ -199,7 +198,7 @@ export default function AdminRolesPage() {
                 </Badge>
               ))}
               {role.views && role.views.length > 3 && (
-                <Badge variant="outline" className="text-xs">
+                <Badge  className="text-xs">
                   +{role.views.length - 3} more
                 </Badge>
               )}
@@ -231,12 +230,32 @@ export default function AdminRolesPage() {
       cell: ({ row }) => {
         const role = row.original
         return (
-          <PermissionTableActions
-            feature="role"
-            onView={() => handleViewRole(role)}
-            onEdit={() => handleEditRole(role)}
-            onDelete={() => handleDeleteRole(role)}
-          />
+          <div className="flex space-x-2">
+            <LoadingButton 
+               
+              size="sm" 
+              onClick={() => handleViewRole(role)}
+              className="bg-[#006BC4] text-white border-0 rounded-full"
+            >
+              <Eye className="w-4 h-4" />
+            </LoadingButton>
+            <LoadingButton 
+               
+              size="sm" 
+              onClick={() => handleEditRole(role)}
+              className="bg-[#A0CF06] text-[#211D1E] border-0 rounded-full"
+            >
+              <Edit className="w-4 h-4" />
+            </LoadingButton>
+            <LoadingButton 
+              variant="destructive" 
+              size="sm" 
+              onClick={() => handleDeleteRole(role)}
+              className="bg-red-600 hover:bg-red-700 text-white border-0 rounded-full"
+            >
+              <Trash2 className="w-4 h-4" />
+            </LoadingButton>
+          </div>
         )
       },
     },
@@ -287,15 +306,14 @@ export default function AdminRolesPage() {
             <h1 className="text-3xl font-light text-foreground">Roles Management</h1>
             <p className="text-sm font-light text-muted-foreground">Manage user roles and their permissions</p>
           </div>
-          <PermissionButton
-            feature="role"
-            permission="create"
+          <LoadingButton 
             onClick={handleAddRole}
             disabled={rolesLoading}
+            className="bg-[#006BC4] text-white border-0 rounded-full px-6 py-2 font-light"
           >
             <Plus className="mr-2 h-4 w-4" />
             Add Role
-          </PermissionButton>
+          </LoadingButton>
         </div>
 
         {/* Metrics Cards */}

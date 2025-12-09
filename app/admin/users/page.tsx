@@ -7,7 +7,7 @@ import { LoadingButton } from "@/components/ui/loading-button"
 import { DataTable } from "@/components/ui/data-table"
 import { DataTableFilters } from "@/components/ui/data-table-filters"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Eye, Trash2, User, Settings } from "lucide-react"
+import { Plus, Eye, Trash2, User, Settings, Edit } from "lucide-react"
 import { UserFormDrawer } from "@/components/forms/user-form-drawer"
 import { UserViewDrawer } from "@/components/forms/user-view-drawer"
 import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-dialog"
@@ -18,9 +18,8 @@ import { toast } from "sonner"
 import { User as UserType, TableFilters } from "@/lib/types"
 import { ColumnDef } from "@tanstack/react-table"
 import { TablePulseLoading } from "@/components/ui/pulse-loading"
-import { PermissionTableActions } from "@/components/ui/permission-table-actions"
-import { PermissionButton } from "@/components/ui/permission-table-actions"
 import { PermissionGuard } from "@/components/auth/permission-guard"
+import { PermissionButton } from "@/components/ui/permission-table-actions"
 
 export default function AdminUsersPage() {
   const dispatch = useAppDispatch()
@@ -184,12 +183,32 @@ export default function AdminUsersPage() {
       cell: ({ row }) => {
         const user = row.original
         return (
-          <PermissionTableActions
-            feature="user"
-            onView={() => handleViewUser(user)}
-            onEdit={() => handleEditUser(user)}
-            onDelete={() => handleDeleteUser(user)}
-          />
+          <div className="flex space-x-2">
+            <LoadingButton 
+               
+              size="sm" 
+              onClick={() => handleViewUser(user)}
+              className="bg-[#006BC4] text-white border-0 rounded-full"
+            >
+              <Eye className="w-4 h-4" />
+            </LoadingButton>
+            <LoadingButton 
+               
+              size="sm" 
+              onClick={() => handleEditUser(user)}
+              className="bg-[#A0CF06] text-[#211D1E] border-0 rounded-full"
+            >
+              <Edit className="w-4 h-4" />
+            </LoadingButton>
+            <LoadingButton 
+              variant="destructive" 
+              size="sm" 
+              onClick={() => handleDeleteUser(user)}
+              className="bg-red-600 hover:bg-red-700 text-white border-0 rounded-full"
+            >
+              <Trash2 className="w-4 h-4" />
+            </LoadingButton>
+          </div>
         )
       },
     },

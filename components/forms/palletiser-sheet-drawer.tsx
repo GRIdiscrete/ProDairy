@@ -478,8 +478,8 @@ export function PalletiserSheetDrawer({
                     <div className="h-24 border-dashed border rounded-md flex items-center justify-center text-xs text-gray-500">No signature</div>
                   )}
                   <div className="flex gap-2">
-                    <Button type="button" variant="outline" onClick={() => { setCurrentSignatureIndex(index); setCounterSignatureOpen(true) }}>Add</Button>
-                    {val && <Button type="button" variant="outline" onClick={() => { setCurrentSignatureIndex(index); setCounterSignatureViewOpen(true) }}>View</Button>}
+                    <Button type="button"  onClick={() => { setCurrentSignatureIndex(index); setCounterSignatureOpen(true) }}>Add</Button>
+                    {val && <Button type="button"  onClick={() => { setCurrentSignatureIndex(index); setCounterSignatureViewOpen(true) }}>View</Button>}
                     {val && <Button type="button" variant="ghost" onClick={() => field.onChange("")}>Clear</Button>}
                   </div>
                 </div>
@@ -491,7 +491,7 @@ export function PalletiserSheetDrawer({
       ))}
 
       <div className="flex justify-center">
-        <Button type="button" variant="outline" onClick={() => append({ pallet_number: undefined, start_time: "", end_time: "", cases_packed: undefined, serial_number: "", counter_id: "", counter_signature: "" })} className="flex items-center gap-2">
+        <Button type="button"  onClick={() => append({ pallet_number: undefined, start_time: "", end_time: "", cases_packed: undefined, serial_number: "", counter_id: "", counter_signature: "" })} className="flex items-center gap-2">
           <Package className="h-4 w-4" /> Add More Pallet Detail
         </Button>
       </div>
@@ -511,7 +511,7 @@ export function PalletiserSheetDrawer({
         </div>
 
         <div className="flex items-center justify-between p-6 border-t bg-white">
-          <Button variant="outline" onClick={handleBack} disabled={currentStep === 1} className="flex items-center gap-2">
+          <Button  onClick={handleBack} disabled={currentStep === 1} className="flex items-center gap-2">
             <ChevronLeft className="h-4 w-4" /> Back
           </Button>
 

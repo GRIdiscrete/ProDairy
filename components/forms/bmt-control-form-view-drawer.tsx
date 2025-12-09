@@ -218,7 +218,7 @@ export function BMTControlFormViewDrawer({ open, onClose, form, onEdit }: BMTCon
 
         <div className="flex-1 overflow-y-auto p-6">
           {/* Process Overview */}
-          <div className="mb-8 p-6 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg">
+          <div className="mb-8 p-6 bg-blue-50 rounded-lg">
             <h3 className="text-lg font-light text-gray-900 mb-4">Process Overview</h3>
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center space-x-2">
@@ -234,7 +234,7 @@ export function BMTControlFormViewDrawer({ open, onClose, form, onEdit }: BMTCon
                 </div>
                 <div className="flex items-center space-x-2">
                   <span className="text-sm font-medium text-green-600">BMT Transfer</span>
-                  <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-2 py-1 rounded-full text-xs font-medium shadow-lg">
+                  <div className=" bg-gray-100 text-gray-600 px-2 py-1 rounded-full text-xs font-medium shadow-lg">
                     Current Step
                   </div>
                 </div>
@@ -256,10 +256,10 @@ export function BMTControlFormViewDrawer({ open, onClose, form, onEdit }: BMTCon
             </div>
             <div className="flex items-center space-x-2">
               <LoadingButton
-                variant="outline"
+                
                 size="sm"
                 onClick={onEdit}
-                className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 rounded-full"
+                className="bg-[#A0CF06] text-[#211D1E] rounded-full"
               >
                 <Edit className="w-4 h-4 mr-2" />
                 Edit
@@ -277,7 +277,7 @@ export function BMTControlFormViewDrawer({ open, onClose, form, onEdit }: BMTCon
               />
             </div>
             <div className="flex items-center space-x-2">
-              <Badge className="bg-gradient-to-r from-blue-100 to-cyan-100 text-blue-800 font-light">
+              <Badge className="bg-blue-100 text-blue-800 font-light">
                 Status: {(form as any).status || 'Draft'}
               </Badge>
             </div>
@@ -660,7 +660,7 @@ export function BMTControlFormViewDrawer({ open, onClose, form, onEdit }: BMTCon
               <div className="flex items-center justify-between">
                 <span className="text-sm font-light text-gray-600">Form ID</span>
                 <div className="flex items-center space-x-2">
-                  <Badge variant="outline" className="font-mono">
+                  <Badge  className="font-mono">
                     {form?.tag}
                   </Badge>
                   <CopyButton text={form.id || ''} />

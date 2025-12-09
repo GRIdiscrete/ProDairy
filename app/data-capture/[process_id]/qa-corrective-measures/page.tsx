@@ -157,8 +157,8 @@ export default function QACorrectiveMeasuresPage({ params }: QACorrectiveMeasure
         const action = row.original
         return (
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-red-500 to-orange-600 flex items-center justify-center">
-              <AlertTriangle className="w-4 h-4 text-white" />
+            <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
+              <AlertTriangle className="w-4 h-4 text-gray-600" />
             </div>
             <div>
               <div className="flex items-center space-x-2">
@@ -308,18 +308,18 @@ export default function QACorrectiveMeasuresPage({ params }: QACorrectiveMeasure
         return (
           <div className="flex space-x-2">
             <LoadingButton 
-              variant="outline" 
+               
               size="sm" 
               onClick={() => handleViewAction(action)}
-              className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full"
+              className="bg-[#006BC4] text-white rounded-full"
             >
               <Eye className="w-4 h-4" />
             </LoadingButton>
             <LoadingButton 
-              variant="outline" 
+               
               size="sm" 
               onClick={() => handleEditAction(action)}
-              className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 rounded-full"
+              className="bg-[#A0CF06] text-[#211D1E] rounded-full"
             >
               <Edit className="w-4 h-4" />
             </LoadingButton>
@@ -329,7 +329,7 @@ export default function QACorrectiveMeasuresPage({ params }: QACorrectiveMeasure
               onClick={() => handleDeleteAction(action)}
               loading={operationLoading.delete}
               disabled={operationLoading.delete}
-              className="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white border-0 rounded-full"
+              className="rounded-full"
             >
               <Trash2 className="w-4 h-4" />
             </LoadingButton>
@@ -349,7 +349,7 @@ export default function QACorrectiveMeasuresPage({ params }: QACorrectiveMeasure
           </div>
           <LoadingButton 
             onClick={handleAddAction}
-            className="bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 text-white border-0 rounded-full px-6 py-2 font-light"
+            className="bg-[#006BC4] text-white rounded-full px-6 py-2 font-light"
           >
             <Plus className="mr-2 h-4 w-4" />
             Add QA Corrective Action
@@ -364,16 +364,16 @@ export default function QACorrectiveMeasuresPage({ params }: QACorrectiveMeasure
             <div className="p-6 pb-0">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2 text-lg font-light">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-red-500 to-orange-600 flex items-center justify-center">
-                    <AlertTriangle className="h-4 w-4 text-white" />
+                  <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+                    <AlertTriangle className="h-4 w-4 text-gray-600" />
                   </div>
                   <span>Latest QA Corrective Action</span>
-                  <Badge className="bg-gradient-to-r from-red-100 to-orange-100 text-red-800 font-light">Latest</Badge>
+                  <Badge className=" text-white font-light">Latest</Badge>
                 </div>
                 <LoadingButton 
-                  variant="outline" 
+                   
                   onClick={() => handleViewAction(latestAction)}
-                  className="bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 text-white border-0 rounded-full px-4 py-2 font-light text-sm"
+                  className=" from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 text-white border-0 rounded-full px-4 py-2 font-light text-sm"
                 >
                   <Eye className="mr-2 h-4 w-4" />
                   View Details
@@ -439,7 +439,7 @@ export default function QACorrectiveMeasuresPage({ params }: QACorrectiveMeasure
 
                 {/* Test Results Summary */}
                 {latestAction.qa_corrective_action_details_fkey && (
-                  <div className="p-4 bg-gradient-to-r from-red-50 to-orange-50 rounded-lg">
+                  <div className="p-4  from-red-50 to-orange-50 rounded-lg">
                     <div className="flex items-center space-x-2 mb-3">
                       <div className="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center">
                         <FileText className="h-4 w-4 text-red-600" />

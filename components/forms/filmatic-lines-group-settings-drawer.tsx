@@ -146,7 +146,7 @@ export function FilmaticLinesGroupSettingsDrawer({
 
         <div className="flex items-center justify-end gap-2 pt-4 border-t">
           <Button
-            variant="outline"
+            
             onClick={() => onOpenChange(false)}
             disabled={loading}
           >

@@ -180,8 +180,8 @@ export function RawMilkIntakeFormViewDrawer({
         <SheetHeader className="p-6 pb-0">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center">
-                <Droplets className="w-4 h-4 text-white" />
+              <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
+                <Droplets className="w-4 h-4 text-gray-600" />
               </div>
               <div>
                 <SheetTitle className="text-lg font-light m-0">Raw Milk Intake Form Details</SheetTitle>
@@ -193,7 +193,7 @@ export function RawMilkIntakeFormViewDrawer({
             <div className="flex items-center space-x-2">
               {!currentResultSlip && (
                 <LoadingButton
-                  variant="outline"
+                  
                   size="sm"
                   onClick={() => { 
                     setResultSlipMode("create"); 
@@ -201,26 +201,25 @@ export function RawMilkIntakeFormViewDrawer({
                     setResultSlipDrawerOpen(true);
                     setActiveTab("lab");
                   }}
-                  className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full"
+                  className="bg-[#006BC4] text-white border-0 rounded-full"
                 >
                   <Beaker className="w-4 h-4 mr-2" />
                   Create Lab Test
                 </LoadingButton>
               )}
               <LoadingButton
-                variant="outline"
+                
                 size="sm"
                 onClick={onEdit}
-                className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 rounded-full"
+                className="bg-[#A0CF06] text-[#211D1E] border-0 rounded-full"
               >
                 <Edit className="w-4 h-4 mr-2" />
                 Edit
               </LoadingButton>
               <LoadingButton
-                variant="outline"
+                variant="destructive"
                 size="sm"
                 onClick={onDelete}
-                className="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white border-0 rounded-full"
               >
                 <Trash2 className="w-4 h-4 mr-2" />
                 Delete
@@ -231,7 +230,7 @@ export function RawMilkIntakeFormViewDrawer({
 
         <div className="flex-1 overflow-y-auto p-6">
           {/* Process Overview */}
-          <div className="mb-8 p-6 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg">
+          <div className="mb-8 p-6  from-blue-50 to-cyan-50 rounded-lg">
             <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="h-auto p-0 bg-transparent border-0 border-b border-gray-200">
               <TabsTrigger
@@ -473,7 +472,7 @@ export function RawMilkIntakeFormViewDrawer({
                                 </div>
                                 <div className="w-full bg-gray-200 rounded-full h-2">
                                   <div
-                                    className="bg-gradient-to-r from-blue-500 to-green-500 h-2 rounded-full transition-all duration-300"
+                                    className=" from-blue-500 to-green-500 h-2 rounded-full transition-all duration-300"
                                     style={{
                                       width: `${Math.min((silo.milk_volume / silo.capacity) * 100, 100)}%`
                                     }}
@@ -533,7 +532,7 @@ export function RawMilkIntakeFormViewDrawer({
                         </Badge>
                         <LoadingButton 
                           size="sm" 
-                          variant="outline" 
+                           
                           className="rounded-full"
                           onClick={handleExportLabTestCSV}
                         >
@@ -542,7 +541,7 @@ export function RawMilkIntakeFormViewDrawer({
                         </LoadingButton>
                         <LoadingButton 
                           size="sm" 
-                          variant="outline" 
+                           
                           className="rounded-full"
                           onClick={() => { 
                             setResultSlipMode("edit"); 

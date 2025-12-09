@@ -106,9 +106,9 @@ export function SterilisedMilkProcessViewDrawer({
             {onEdit && (
               <Button
                 onClick={onEdit}
-                variant="outline"
+                
                 size="sm"
-                className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 rounded-full"
+                className=" bg-[#006BC4] text-white rounded-full"
               >
                 Edit
               </Button>
@@ -118,7 +118,7 @@ export function SterilisedMilkProcessViewDrawer({
 
         <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-white">
           {/* Process Overview */}
-          <div className="mb-2 p-6 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg">
+          <div className="mb-2 p-6  from-blue-50 to-cyan-50 rounded-lg">
             <h3 className="text-lg font-light text-gray-900 mb-4">Process Overview</h3>
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center space-x-2">
@@ -134,7 +134,7 @@ export function SterilisedMilkProcessViewDrawer({
                 </div>
                 <div className="flex items-center space-x-2">
                   <span className="text-sm font-medium text-blue-600">Process Log</span>
-                  <div className="bg-gradient-to-r from-blue-500 to-cyan-600 text-white px-2 py-1 rounded-full text-xs font-medium shadow-lg">
+                  <div className=" bg-gray-100 text-gray-600 px-2 py-1 rounded-full text-xs font-medium shadow-lg">
                     Current Step
                   </div>
                 </div>

@@ -17,8 +17,6 @@ import { toast } from "sonner"
 import { TableFilters } from "@/lib/types"
 import { AdminDashboardLayout } from "@/components/layout/admin-dashboard-layout"
 import { PermissionGuard } from "@/components/auth/permission-guard"
-import { PermissionButton } from "@/components/ui/permission-table-actions"
-import { PermissionTableActions } from "@/components/ui/permission-table-actions"
 
 export default function SilosPage() {
   const dispatch = useAppDispatch()
@@ -168,8 +166,8 @@ export default function SilosPage() {
         }
         return (
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-gray-500 to-gray-700 flex items-center justify-center">
-              <Database className="w-4 h-4 text-white" />
+            <div className="w-8 h-8 rounded-lg bg-gray-100 text-gray-600 flex items-center justify-center">
+              <Database className="w-4 h-4" />
             </div>
             <div>
               <div className="flex items-center space-x-2">
@@ -205,7 +203,7 @@ export default function SilosPage() {
           <div className="space-y-1">
             <div className="flex items-center space-x-2">
               <span className="text-sm font-light">{silo.capacity.toLocaleString()}L</span>
-              <Badge variant="outline" className={fillPercentage > 80 ? "text-red-600" : fillPercentage > 60 ? "text-yellow-600" : "text-green-600"}>
+              <Badge  className={fillPercentage > 80 ? "text-white" : fillPercentage > 60 ? "text-white" : "text-white"}>
                 {fillPercentage.toFixed(1)}%
               </Badge>
             </div>
@@ -233,13 +231,34 @@ export default function SilosPage() {
       cell: ({ row }: any) => {
         const silo = row.original
         return (
-          <PermissionTableActions
-            feature="silo_item"
-            onView={() => handleViewSilo(silo)}
-            onEdit={() => handleEditSilo(silo)}
-            onDelete={() => handleDeleteSilo(silo)}
-            showDropdown={true}
-          />
+          <div className="flex space-x-2">
+            <LoadingButton 
+               
+              size="sm" 
+              onClick={() => handleViewSilo(silo)}
+              className="bg-[#006BC4] text-white border-0 rounded-full"
+            >
+              <Eye className="w-4 h-4" />
+            </LoadingButton>
+            <LoadingButton 
+               
+              size="sm" 
+              onClick={() => handleEditSilo(silo)}
+              className="bg-[#A0CF06] text-[#211D1E] border-0 rounded-full"
+            >
+              <Edit className="w-4 h-4" />
+            </LoadingButton>
+            <LoadingButton 
+              variant="destructive" 
+              size="sm" 
+              onClick={() => handleDeleteSilo(silo)}
+              loading={operationLoading.delete}
+              disabled={operationLoading.delete}
+              className="bg-red-600 hover:bg-red-700 text-white border-0 rounded-full"
+            >
+              <Trash2 className="w-4 h-4" />
+            </LoadingButton>
+          </div>
         )
       },
     },
@@ -254,15 +273,13 @@ export default function SilosPage() {
             <h1 className="text-3xl font-light text-foreground">Silo Configuration</h1>
             <p className="text-sm font-light text-muted-foreground">Manage and configure storage silos</p>
           </div>
-          <PermissionButton
-            feature="silo_item"
-            permission="create"
+          <LoadingButton 
             onClick={handleAddSilo}
-            className="bg-gradient-to-r from-gray-500 to-gray-700 hover:from-gray-600 hover:to-gray-800 text-white border-0 rounded-full px-6 py-2 font-light"
+            className="bg-[#006BC4] text-white border-0 rounded-full px-6 py-2 font-light"
           >
             <Plus className="mr-2 h-4 w-4" />
             Add Silo
-          </PermissionButton>
+          </LoadingButton>
         </div>
 
         {/* Counter Widgets with Icons */}

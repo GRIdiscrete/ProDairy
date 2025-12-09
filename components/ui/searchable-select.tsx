@@ -124,11 +124,11 @@ export function SearchableSelect({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
-          variant="outline"
+          
           role="combobox"
           aria-expanded={open}
           className={cn(
-            "w-full justify-between h-12 border border-gray-300 hover:border-gray-400 focus:border-blue-500 shadow-none hover:shadow-none focus:shadow-none",
+            "w-full justify-between h-12 bg-transparent hover:bg-transparent border border-gray-300 hover:border-gray-400 focus:border-[#006BC4] shadow-none hover:shadow-none focus:shadow-none text-gray-900",
             !selectedOptions.length && "text-muted-foreground",
             className
           )}

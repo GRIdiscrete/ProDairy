@@ -228,7 +228,7 @@ export function FillerLog2ViewDrawer({
 
           {/* Actions */}
           <div className="flex justify-end space-x-2 pt-4 border-t">
-            <Button variant="outline" onClick={() => onOpenChange(false)}>
+            <Button  onClick={() => onOpenChange(false)}>
               Close
             </Button>
             <Button onClick={onEdit} className="flex items-center gap-2">

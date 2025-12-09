@@ -117,8 +117,8 @@ export function RoleViewDrawer({ open, onClose, role, onEdit }: RoleViewDrawerPr
         <SheetHeader className="mb-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#4f46e5] to-[#7c3aed] flex items-center justify-center">
-                <Shield className="w-5 h-5 text-white" />
+              <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center">
+                <Shield className="w-5 h-5 text-gray-600" />
               </div>
               <div>
                 <SheetTitle className="flex items-center space-x-2">
@@ -128,7 +128,7 @@ export function RoleViewDrawer({ open, onClose, role, onEdit }: RoleViewDrawerPr
               </div>
             </div>
             {onEdit && (
-              <Button variant="outline" size="sm" onClick={onEdit}>
+              <Button  size="sm" onClick={onEdit}>
                 <Edit className="w-4 h-4 mr-2" />
                 Edit Role
               </Button>
@@ -199,7 +199,7 @@ export function RoleViewDrawer({ open, onClose, role, onEdit }: RoleViewDrawerPr
                       <h4 className="font-medium text-gray-900">
                         {featureLabels[featureKey]}
                       </h4>
-                      <Badge variant="outline">
+                      <Badge >
                         {operations.length} {operations.length === 1 ? 'Operation' : 'Operations'}
                       </Badge>
                     </div>

@@ -163,8 +163,8 @@ export function FormPermissions({
                 <h3 className="font-medium">{currentUser.name}</h3>
                 <p className="text-sm text-muted-foreground">{currentUser.email}</p>
                 <div className="flex items-center space-x-2 mt-1">
-                  <Badge variant="outline">{currentUser.role}</Badge>
-                  <Badge variant="outline">{currentUser.department}</Badge>
+                  <Badge >{currentUser.role}</Badge>
+                  <Badge >{currentUser.department}</Badge>
                 </div>
               </div>
             </div>

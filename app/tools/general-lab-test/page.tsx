@@ -290,18 +290,18 @@ export default function GeneralLabTestPage() {
         return (
           <div className="flex space-x-2">
             <LoadingButton 
-              variant="outline" 
+               
               size="sm" 
               onClick={() => handleViewTest(test)}
-              className="bg-[#0068BD] hover:bg-[#005299] text-white border-0 rounded-full"
+              className="bg-[#006BC4] text-white border-0 rounded-full"
             >
               <Eye className="w-4 h-4" />
             </LoadingButton>
             <LoadingButton 
-              variant="outline" 
+               
               size="sm" 
               onClick={() => handleEditTest(test)}
-              className="bg-[#A0D001] hover:bg-[#8AB801] text-white border-0 rounded-full"
+              className="bg-[#A0CF06] text-[#211D1E] border-0 rounded-full"
             >
               <Edit className="w-4 h-4" />
             </LoadingButton>
@@ -333,7 +333,7 @@ export default function GeneralLabTestPage() {
           </div>
           <div className="flex items-center gap-2">
             <LoadingButton 
-              variant="outline"
+              
               onClick={handleExportCSV}
               disabled={!tests.length}
               className="bg-[#A0D001] hover:bg-[#8AB801] text-white border-0 rounded-full px-6 py-2 font-light"
@@ -343,7 +343,7 @@ export default function GeneralLabTestPage() {
             </LoadingButton>
             <LoadingButton 
               onClick={handleAddTest}
-              className="bg-[#0068BD] hover:bg-[#005299] text-white border-0 rounded-full px-6 py-2 font-light"
+              className=" text-white border-0 rounded-full px-6 py-2 font-light"
             >
               <Plus className="mr-2 h-4 w-4" />
               Add Lab Test
@@ -355,15 +355,15 @@ export default function GeneralLabTestPage() {
         {loading ? (
           <ContentSkeleton sections={1} cardsPerSection={4} />
         ) : latestTest ? (
-          <div className="border border-gray-200 rounded-lg bg-white border-l-4 border-l-blue-500">
+          <div className="border border-gray-200 rounded-lg bg-white border-l-4 border-l-[#006BC4]">
             <div className="p-6 pb-0">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2 text-lg font-light">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center">
-                    <Beaker className="h-4 w-4 text-white" />
+                  <div className="w-8 h-8 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center">
+                    <Beaker className="h-4 w-4" />
                   </div>
                   <span>Current Lab Test</span>
-                  <Badge className="bg-gradient-to-r from-blue-100 to-cyan-100 text-blue-800 font-light">Latest</Badge>
+                  <Badge className="text-white font-light">Latest</Badge>
                   <FormIdCopy 
                     displayId={generateLabTestId(latestTest.created_at)}
                     actualId={latestTest.id}
@@ -371,9 +371,9 @@ export default function GeneralLabTestPage() {
                   />
                 </div>
                 <LoadingButton 
-                  variant="outline" 
+                   
                   onClick={() => handleViewTest(latestTest)}
-                  className="bg-[#0068BD] hover:bg-[#005299] text-white border-0 rounded-full px-4 py-2 font-light text-sm"
+                  className="bg-[#006BC4] text-white border-0 rounded-full px-4 py-2 font-light text-sm"
                 >
                   <Eye className="mr-2 h-4 w-4" />
                   View Details

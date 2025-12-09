@@ -51,9 +51,9 @@ export function FilmaticLinesForm1ViewDrawer({
             {onEdit && (
               <Button
                 onClick={onEdit}
-                variant="outline"
+                
                 size="sm"
-                className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 rounded-full"
+                className=" bg-[#006BC4] text-white rounded-full"
               >
                 Edit
               </Button>
@@ -63,7 +63,7 @@ export function FilmaticLinesForm1ViewDrawer({
 
         <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-white">
           {/* Process Overview */}
-          <div className="mb-2 p-6 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg">
+          <div className="mb-2 p-6  from-blue-50 to-cyan-50 rounded-lg">
             <h3 className="text-lg font-light text-gray-900 mb-4">Process Overview</h3>
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center space-x-2">
@@ -79,7 +79,7 @@ export function FilmaticLinesForm1ViewDrawer({
                 </div>
                 <div className="flex items-center space-x-2">
                   <span className="text-sm font-medium text-blue-600">Filmatic Lines Form 1</span>
-                  <div className="bg-gradient-to-r from-blue-500 to-cyan-600 text-white px-2 py-1 rounded-full text-xs font-medium shadow-lg">
+                  <div className=" bg-gray-100 text-gray-600 px-2 py-1 rounded-full text-xs font-medium shadow-lg">
                     Current Step
                   </div>
                 </div>
@@ -366,7 +366,7 @@ export function FilmaticLinesForm1ViewDrawer({
                         <div className="mt-3 space-y-3">
                           <h5 className="text-sm font-medium text-gray-700">Production Details ({shift.filmatic_line_form_1_day_shift_details.length} entries)</h5>
                           {shift.filmatic_line_form_1_day_shift_details.map((detail, detailIndex) => (
-                            <div key={detail.id || detailIndex} className="p-4 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg space-y-3 border border-yellow-200">
+                            <div key={detail.id || detailIndex} className="p-4  from-yellow-50 to-orange-50 rounded-lg space-y-3 border border-yellow-200">
                               <div className="grid grid-cols-2 gap-3">
                                 <div className="space-y-1">
                                   <span className="text-xs font-medium text-gray-600">Time</span>
@@ -486,7 +486,7 @@ export function FilmaticLinesForm1ViewDrawer({
                         <div className="mt-3 space-y-3">
                           <h5 className="text-sm font-medium text-gray-700">Production Details ({shift.filmatic_line_form_1_night_shift_details.length} entries)</h5>
                           {shift.filmatic_line_form_1_night_shift_details.map((detail, detailIndex) => (
-                            <div key={detail.id || detailIndex} className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg space-y-3 border border-blue-200">
+                            <div key={detail.id || detailIndex} className="p-4  from-blue-50 to-indigo-50 rounded-lg space-y-3 border border-blue-200">
                               <div className="grid grid-cols-2 gap-3">
                                 <div className="space-y-1">
                                   <span className="text-xs font-medium text-gray-600">Time</span>
@@ -646,7 +646,7 @@ export function FilmaticLinesForm1ViewDrawer({
             <CardContent className="space-y-4">
               {/* Day Shift Bottles */}
               {(form.day_shift_opening_bottles != null || form.day_shift_closing_bottles != null || form.day_shift_waste_bottles != null) && (
-                <div className="p-4 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg border border-yellow-200">
+                <div className="p-4  from-yellow-50 to-orange-50 rounded-lg border border-yellow-200">
                   <h5 className="font-medium mb-3 text-gray-800">Day Shift Bottles</h5>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                     <div className="space-y-1">
@@ -679,7 +679,7 @@ export function FilmaticLinesForm1ViewDrawer({
 
               {/* Night Shift Bottles */}
               {(form.night_shift_opening_bottles != null || form.night_shift_closing_bottles != null || form.night_shift_waste_bottles != null) && (
-                <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+                <div className="p-4  from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
                   <h5 className="font-medium mb-3 text-gray-800">Night Shift Bottles</h5>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                     <div className="space-y-1">
@@ -712,7 +712,7 @@ export function FilmaticLinesForm1ViewDrawer({
 
               {/* Transferrable Milk */}
               {form.transferrable_milk != null && (
-                <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200">
+                <div className="p-4  from-green-50 to-emerald-50 rounded-lg border border-green-200">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium text-gray-700">Transferrable Milk</span>
                     <span className="text-xl font-medium text-green-700">{form.transferrable_milk} L</span>

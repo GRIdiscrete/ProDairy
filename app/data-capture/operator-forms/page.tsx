@@ -245,7 +245,7 @@ export default function OperatorFormsPage() {
 
         {/* Action Buttons */}
         <div className="flex justify-end space-x-2">
-          <Button variant="outline">
+          <Button >
             Save Draft
           </Button>
           <Button>

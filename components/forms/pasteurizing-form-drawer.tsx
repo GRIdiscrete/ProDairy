@@ -93,7 +93,7 @@ const extractTime = (value: string | undefined | null) => {
 
 // Process Overview Component
 const ProcessOverview = () => (
-  <div className="mb-6 p-6 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg">
+  <div className="mb-6 p-6  from-blue-50 to-cyan-50 rounded-lg">
     <h3 className="text-lg font-light text-gray-900 mb-4">Process Overview</h3>
     <div className="flex items-center justify-between mb-2">
       <div className="flex items-center space-x-2">
@@ -109,7 +109,7 @@ const ProcessOverview = () => (
         </div>
         <div className="flex items-center space-x-2">
           <span className="text-sm font-medium text-blue-600">Pasteurizing</span>
-          <div className="bg-gradient-to-r from-blue-500 to-cyan-600 text-white px-2 py-1 rounded-full text-xs font-medium shadow-lg">
+          <div className=" bg-gray-100 text-gray-600 px-2 py-1 rounded-full text-xs font-medium shadow-lg">
             Current Step
           </div>
         </div>
@@ -624,7 +624,7 @@ export function PasteurizingFormDrawer({
                   <Button
                     type="button"
                     onClick={addProductionEntry}
-                    variant="outline"
+                    
                     size="sm"
                     className="rounded-full"
                   >
@@ -770,7 +770,7 @@ export function PasteurizingFormDrawer({
             <div className="flex justify-end space-x-4 pt-6 border-t">
               <Button
                 type="button"
-                variant="outline"
+                
                 onClick={() => onOpenChange(false)}
                 disabled={isSubmitting}
               >
@@ -779,7 +779,7 @@ export function PasteurizingFormDrawer({
               <Button
                 type="submit"
                 disabled={isSubmitting}
-                className="bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white"
+                className=" from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white"
               >
                 {isSubmitting ? (
                   <>

@@ -223,8 +223,8 @@ export default function StandardizingPage() {
 
         return (
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center">
-              <Droplets className="w-4 h-4 text-white" />
+            <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
+              <Droplets className="w-4 h-4 text-gray-600" />
             </div>
             <div>
               <FormIdCopy
@@ -392,26 +392,26 @@ export default function StandardizingPage() {
         return (
           <div className="flex space-x-2">
             <LoadingButton
-              variant="outline"
+
               size="sm"
               onClick={() => handleViewSkimmingForm(form)}
-              className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full"
+              className="bg-[#006BC4] text-white border-0 rounded-full"
             >
               <Eye className="w-4 h-4" />
             </LoadingButton>
             <LoadingButton
-              variant="outline"
+
               size="sm"
               onClick={() => handleEditSkimmingForm(form)}
-              className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 rounded-full"
+              className="bg-[#A0CF06] text-[#211D1E] border-0 rounded-full"
             >
               <Edit className="w-4 h-4" />
             </LoadingButton>
             <LoadingButton
+              className=" text-white rounded-full"
               variant="destructive"
               size="sm"
               onClick={() => handleDeleteSkimmingForm(form)}
-              className="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white border-0 rounded-full"
             >
               <Trash2 className="w-4 h-4" />
             </LoadingButton>
@@ -432,8 +432,8 @@ export default function StandardizingPage() {
 
         return (
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center">
-              <Beaker className="w-4 h-4 text-white" />
+            <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
+              <Beaker className="w-4 h-4 text-gray-600" />
             </div>
             <div>
               <FormIdCopy
@@ -573,28 +573,28 @@ export default function StandardizingPage() {
         return (
           <div className="flex space-x-2">
             <LoadingButton
-              variant="outline"
+
               size="sm"
               onClick={() => handleViewForm(form)}
-              className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full"
+              className="bg-[#006BC4] text-white border-0 rounded-full"
             >
               <Eye className="w-4 h-4" />
             </LoadingButton>
             <LoadingButton
-              variant="outline"
+
               size="sm"
               onClick={() => handleEditForm(form)}
-              className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 rounded-full"
+              className="bg-[#A0CF06] text-[#211D1E] border-0 rounded-full"
             >
               <Edit className="w-4 h-4" />
             </LoadingButton>
             <LoadingButton
+              className=" text-white rounded-full"
               variant="destructive"
               size="sm"
               onClick={() => handleDeleteForm(form)}
               loading={operationLoading.delete}
               disabled={operationLoading.delete}
-              className="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white border-0 rounded-full"
             >
               <Trash2 className="w-4 h-4" />
             </LoadingButton>
@@ -646,10 +646,7 @@ export default function StandardizingPage() {
           </div>
           <LoadingButton
             onClick={activeTab === "standardizing" ? handleAddForm : handleAddSkimmingForm}
-            className={activeTab === "standardizing"
-              ? "bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white border-0 rounded-full px-6 py-2 font-light"
-              : "bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full px-6 py-2 font-light"
-            }
+            className="px-6 py-2 font-light"
           >
             <Plus className="mr-2 h-4 w-4" />
             {activeTab === "standardizing" ? "Add Standardizing Form" : "Add Skimming Form"}
@@ -678,11 +675,11 @@ export default function StandardizingPage() {
                 <div className="p-6 pb-0">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2 text-lg font-light">
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center">
-                        <Beaker className="h-4 w-4 text-white" />
+                      <div className="w-8 h-8 rounded-full bg-gray-100  flex items-center justify-center">
+                        <Beaker className="h-4 w-4 text-light" />
                       </div>
                       <span>Current Standardizing Process</span>
-                      <Badge className="bg-gradient-to-r from-orange-100 to-red-100 text-orange-800 font-light">Latest</Badge>
+                      <Badge className=" text-white font-light">Latest</Badge>
                       <FormIdCopy
                         displayId={latestForm.tag}
                         actualId={latestForm.id}
@@ -690,9 +687,9 @@ export default function StandardizingPage() {
                       />
                     </div>
                     <LoadingButton
-                      variant="outline"
+
                       onClick={() => handleViewForm(latestForm)}
-                      className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white border-0 rounded-full px-4 py-2 font-light text-sm"
+                      className="text-white border-0 rounded-full px-4 py-2 font-light text-sm"
                     >
                       <Eye className="mr-2 h-4 w-4" />
                       View Details
@@ -846,15 +843,15 @@ export default function StandardizingPage() {
             {skimmingLoading ? (
               <ContentSkeleton sections={1} cardsPerSection={4} />
             ) : latestSkimmingForm ? (
-              <div className="border border-gray-200 rounded-lg bg-white border-l-4 border-l-blue-500">
+              <div className="border border-gray-200 rounded-lg bg-white border-l-4 border-l-[#006BC4]">
                 <div className="p-6 pb-0">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2 text-lg font-light">
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center">
-                        <Droplets className="h-4 w-4 text-white" />
+                      <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+                        <Droplets className="h-4 w-4 text-gray-600" />
                       </div>
                       <span>Current Skimming Process</span>
-                      <Badge className="bg-gradient-to-r from-blue-100 to-cyan-100 text-blue-800 font-light">Latest</Badge>
+                      <Badge className=" from-blue-100 to-cyan-100 text-white font-light">Latest</Badge>
                       <FormIdCopy
                         displayId={latestSkimmingForm.tag}
                         actualId={latestSkimmingForm.id}
@@ -862,9 +859,9 @@ export default function StandardizingPage() {
                       />
                     </div>
                     <LoadingButton
-                      variant="outline"
+
                       onClick={() => handleViewSkimmingForm(latestSkimmingForm)}
-                      className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full px-4 py-2 font-light text-sm"
+                      className=" from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full px-4 py-2 font-light text-sm"
                     >
                       <Eye className="mr-2 h-4 w-4" />
                       View Details
@@ -1000,7 +997,7 @@ export default function StandardizingPage() {
                 </div>
               </div>
             ) : (
-              <div className="border border-gray-200 rounded-lg bg-white border-l-4 border-l-blue-500">
+              <div className="border border-gray-200 rounded-lg bg-white border-l-4 border-l-[#006BC4]">
                 <div className="p-6">
                   <div className="text-center py-12">
                     <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -1012,7 +1009,6 @@ export default function StandardizingPage() {
                     </p>
                     <LoadingButton
                       onClick={handleAddSkimmingForm}
-                      className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full"
                     >
                       <Plus className="mr-2 h-4 w-4" />
                       Add Skimming Form

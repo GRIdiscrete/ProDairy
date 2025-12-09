@@ -357,7 +357,7 @@ export function QaReleaseNoteDrawer({ open, onOpenChange, note, mode = "create",
 
               {/* Incubation Data Display */}
               {selectedIncubation && (
-                <Card className="border-l-4 border-l-blue-500">
+                <Card className="border-l-4 border-l-[#006BC4]">
                   <CardHeader className="pb-3">
                     <CardTitle className="text-base font-light flex items-center gap-2">
                       <TestTube className="h-4 w-4 text-blue-600" />
@@ -531,8 +531,8 @@ export function QaReleaseNoteDrawer({ open, onOpenChange, note, mode = "create",
                       </div>
                     )}
                     <div className="flex items-center gap-2">
-                      <Button type="button" size="sm" variant="outline" onClick={() => setSignatureModalOpen(true)}>Add Signature</Button>
-                      {field.value && <Button type="button" size="sm" variant="outline" onClick={() => setSignatureViewerOpen(true)}>View Signature</Button>}
+                      <Button type="button" size="sm"  onClick={() => setSignatureModalOpen(true)}>Add Signature</Button>
+                      {field.value && <Button type="button" size="sm"  onClick={() => setSignatureViewerOpen(true)}>View Signature</Button>}
                       {field.value && <Button type="button" size="sm" variant="ghost" onClick={() => field.onChange("")}>Clear</Button>}
                     </div>
                   </div>
@@ -544,7 +544,7 @@ export function QaReleaseNoteDrawer({ open, onOpenChange, note, mode = "create",
 
         <div className="flex items-center justify-end p-6 pt-0 border-t bg-white">
           <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+            <Button  onClick={() => onOpenChange(false)}>Cancel</Button>
             <Button onClick={handleFormSubmit} disabled={operationLoading?.create || operationLoading?.update}>
               {mode === "edit" ? "Update" : "Create"}
             </Button>

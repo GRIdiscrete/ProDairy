@@ -5,17 +5,19 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Truck, Gauge, User as UserIcon, Edit, FileText } from "lucide-react"
 import { Tanker } from "@/lib/api/tanker"
+import { UserAvatar } from "@/components/ui/user-avatar"
 
 interface Props {
   open: boolean
   onOpenChange: (open: boolean) => void
   tanker: Tanker | null
+  users?: any[]
   onEdit?: () => void
 }
 
-export function TankerViewDrawer({ open, onOpenChange, tanker, onEdit }: Props) {
+export function TankerViewDrawer({ open, onOpenChange, tanker, users = [], onEdit }: Props) {
   if (!tanker) return null
-  const driver = tanker.tanker_driver_id_fkey
+  const driver = Array.isArray(users) ? users.find((u: any) => u.id === tanker.driver_id) : null
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -30,14 +32,14 @@ export function TankerViewDrawer({ open, onOpenChange, tanker, onEdit }: Props) 
             <div className="p-4 pb-0">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center">
-                    <Truck className="w-4 h-4 text-white" />
+                  <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
+                    <Truck className="w-4 h-4 text-gray-600" />
                   </div>
                   <div className="text-base font-light">{tanker.reg_number}</div>
                   <Badge className="bg-blue-100 text-blue-800 font-light">{Math.round(tanker.capacity)} L</Badge>
                 </div>
                 {onEdit && (
-                  <Button onClick={onEdit} variant="outline" size="sm" className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 rounded-full"> 
+                  <Button onClick={onEdit}  size="sm" className=" bg-[#006BC4] text-white rounded-full"> 
                     <Edit className="w-4 h-4 mr-2" /> Edit
                   </Button>
                 )}
@@ -60,9 +62,13 @@ export function TankerViewDrawer({ open, onOpenChange, tanker, onEdit }: Props) 
                 <div className="text-xs text-gray-500 flex items-center gap-1"><FileText className="h-3 w-3" />Compartments</div>
                 <div className="text-sm font-light">{tanker.compartments || 'N/A'}</div>
               </div>
-              <div className="space-y-1">
-                <div className="text-xs text-gray-500 flex items-center gap-1"><UserIcon className="h-3 w-3" />Driver</div>
-                <div className="text-sm font-light">{driver ? `${driver.first_name} ${driver.last_name}` : 'Unassigned'}</div>
+              <div className="space-y-1 col-span-2">
+                <div className="text-xs text-gray-500 flex items-center gap-1 mb-2"><UserIcon className="h-3 w-3" />Driver</div>
+                {driver ? (
+                  <UserAvatar user={driver} size="sm" showName={true} showEmail={true} />
+                ) : (
+                  <div className="text-sm font-light text-gray-500">Unassigned</div>
+                )}
               </div>
             </div>
           </div>

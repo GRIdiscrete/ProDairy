@@ -304,7 +304,7 @@ export default function FormsExamplePage() {
           </div>
           <div className="flex items-center space-x-2">
             <Badge className="bg-green-100 text-green-800">Live Demo</Badge>
-            <Badge variant="outline">v2.0</Badge>
+            <Badge >v2.0</Badge>
           </div>
         </div>
 

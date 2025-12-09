@@ -107,9 +107,9 @@ export function DatePicker({
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger asChild>
             <Button
-              variant="outline"
+              
               className={cn(
-                "w-full justify-start text-left font-normal h-12 border border-gray-300 hover:border-gray-400 focus:border-blue-500 shadow-none hover:shadow-none focus:shadow-none",
+                "w-full justify-start text-left font-normal h-12 bg-transparent hover:bg-transparent border border-gray-300 hover:border-gray-400 focus:border-[#006BC4] shadow-none hover:shadow-none focus:shadow-none text-gray-900",
                 !isValidDate && "text-muted-foreground",
                 error && "border-red-500 focus:border-red-500",
                 disabled && "opacity-50 cursor-not-allowed"

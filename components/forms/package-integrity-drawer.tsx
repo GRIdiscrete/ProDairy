@@ -209,7 +209,7 @@ export function PackageIntegrityDrawer({
         </div>
 
         <div className="flex items-center justify-end space-x-2 p-6 pt-0 border-t">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button  onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
           <Button onClick={form.handleSubmit(handleSubmit)}>

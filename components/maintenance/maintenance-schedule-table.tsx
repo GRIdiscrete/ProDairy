@@ -113,7 +113,7 @@ export function MaintenanceScheduleTable() {
       accessorKey: "taskType",
       header: "Type",
       cell: ({ row }) => (
-        <Badge variant="outline" className="capitalize">
+        <Badge  className="capitalize">
           {row.getValue("taskType")}
         </Badge>
       ),

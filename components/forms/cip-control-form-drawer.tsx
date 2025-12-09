@@ -645,10 +645,10 @@ export function CIPControlFormDrawer({ open, onOpenChange, form, mode }: CIPCont
                 <h3 className="text-lg font-light text-gray-900">CIP Stages</h3>
                 <Button
                   type="button"
-                  variant="outline"
+                  
                   size="sm"
                   onClick={() => append({ stage: "", start_time: "", stop_time: "" })}
-                  className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full"
+                  className=" bg-[#006BC4] text-white rounded-full"
                 >
                   <Plus className="w-4 h-4 mr-2" />
                   Add Stage
@@ -742,7 +742,7 @@ export function CIPControlFormDrawer({ open, onOpenChange, form, mode }: CIPCont
             </div>
 
             <div className="flex justify-end space-x-2 pt-4 border-t bg-white sticky bottom-0 pb-6">
-              <LoadingButton type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              <LoadingButton type="button"  onClick={() => onOpenChange(false)}>
                 Cancel
               </LoadingButton>
               <LoadingButton 

@@ -75,7 +75,7 @@ export function UHTQualityCheckViewDrawer({
 
         <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-white">
           {/* Process Overview */}
-          <div className="mb-8 p-6 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg">
+          <div className="mb-8 p-6  from-green-50 to-emerald-50 rounded-lg">
             <h3 className="text-lg font-light text-gray-900 mb-4">Process Overview</h3>
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center space-x-2">
@@ -98,7 +98,7 @@ export function UHTQualityCheckViewDrawer({
                 </div>
                 <div className="flex items-center space-x-2">
                   <span className="text-sm font-medium text-green-600">Test</span>
-                  <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-2 py-1 rounded-full text-xs font-medium shadow-lg">
+                  <div className=" bg-gray-100 text-gray-600 px-2 py-1 rounded-full text-xs font-medium shadow-lg">
                     Current Step
                   </div>
                 </div>
@@ -333,7 +333,7 @@ export function UHTQualityCheckViewDrawer({
 
         <div className="flex items-center justify-between p-6 pt-0 border-t bg-white">
           <Button
-            variant="outline"
+            
             onClick={() => onOpenChange(false)}
             className="flex items-center gap-2"
           >
@@ -342,7 +342,7 @@ export function UHTQualityCheckViewDrawer({
           {onEdit && (
             <Button
               onClick={onEdit}
-              className="flex items-center gap-2 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 rounded-full"
+              className="flex items-center gap-2  bg-[#006BC4] text-white rounded-full"
             >
               Edit Quality Check
             </Button>

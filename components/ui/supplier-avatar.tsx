@@ -65,7 +65,7 @@ export function SupplierAvatar({
 
   const SupplierInfo = ({ showChevron = false }) => (
     <div className="flex items-center space-x-3">
-      <div className={`${sizeClasses[size]} rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center text-white font-medium flex-shrink-0`}>
+      <div className={`${sizeClasses[size]} rounded-full bg-gray-100 flex items-center justify-center text-gray-600 font-medium flex-shrink-0`}>
         {initials || <Building2 className="w-4 h-4" />}
       </div>
       
@@ -104,7 +104,7 @@ export function SupplierAvatar({
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-80" align="start">
         <DropdownMenuLabel className="flex items-center space-x-2">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center text-white font-medium text-sm">
+          <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 font-medium text-sm">
             {initials || <Building2 className="w-4 h-4" />}
           </div>
           <div>

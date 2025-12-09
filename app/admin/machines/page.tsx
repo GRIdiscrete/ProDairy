@@ -18,7 +18,6 @@ import { TableFilters } from "@/lib/types"
 import { AdminDashboardLayout } from "@/components/layout/admin-dashboard-layout"
 import { PermissionGuard } from "@/components/auth/permission-guard"
 import { PermissionButton } from "@/components/ui/permission-table-actions"
-import { PermissionTableActions } from "@/components/ui/permission-table-actions"
 
 export default function MachinesPage() {
   const dispatch = useAppDispatch()
@@ -165,8 +164,8 @@ export default function MachinesPage() {
         }
         return (
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-gray-500 to-gray-700 flex items-center justify-center">
-              <Settings className="w-4 h-4 text-white" />
+            <div className="w-8 h-8 rounded-lg bg-gray-100 text-gray-600 flex items-center justify-center">
+              <Settings className="w-4 h-4" />
             </div>
             <div>
               <div className="flex items-center space-x-2">
@@ -211,13 +210,34 @@ export default function MachinesPage() {
       cell: ({ row }: any) => {
         const machine = row.original
         return (
-          <PermissionTableActions
-            feature="machine_item"
-            onView={() => handleViewMachine(machine)}
-            onEdit={() => handleEditMachine(machine)}
-            onDelete={() => handleDeleteMachine(machine)}
-            showDropdown={true}
-          />
+          <div className="flex space-x-2">
+            <LoadingButton 
+               
+              size="sm" 
+              onClick={() => handleViewMachine(machine)}
+              className="bg-[#006BC4] text-white border-0 rounded-full"
+            >
+              <Eye className="w-4 h-4" />
+            </LoadingButton>
+            <LoadingButton 
+               
+              size="sm" 
+              onClick={() => handleEditMachine(machine)}
+              className="bg-[#A0CF06] text-[#211D1E] border-0 rounded-full"
+            >
+              <Edit className="w-4 h-4" />
+            </LoadingButton>
+            <LoadingButton 
+              variant="destructive" 
+              size="sm" 
+              onClick={() => handleDeleteMachine(machine)}
+              loading={operationLoading.delete}
+              disabled={operationLoading.delete}
+              className="bg-red-600 hover:bg-red-700 text-white border-0 rounded-full"
+            >
+              <Trash2 className="w-4 h-4" />
+            </LoadingButton>
+          </div>
         )
       },
     },
@@ -236,7 +256,7 @@ export default function MachinesPage() {
             feature="machine_item"
             permission="create"
             onClick={handleAddMachine}
-            className="bg-gradient-to-r from-gray-500 to-gray-700 hover:from-gray-600 hover:to-gray-800 text-white border-0 rounded-full px-6 py-2 font-light"
+            className=" from-gray-500 to-gray-700 hover:from-gray-600 hover:to-gray-800 text-white border-0 rounded-full px-6 py-2 font-light"
           >
             <Plus className="mr-2 h-4 w-4" />
             Add Machine

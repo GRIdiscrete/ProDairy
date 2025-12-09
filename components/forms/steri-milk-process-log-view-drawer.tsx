@@ -182,16 +182,16 @@ export function SteriMilkProcessLogViewDrawer({
                   <>
                     <Button
                       onClick={() => setShowTestReportForm(true)}
-                      variant="outline"
+                      
                       size="sm"
-                      className={`border-0 rounded-full ${hasTest ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white" : "bg-gradient-to-r from-blue-500 to-cyan-500 text-white"}`}
+                      className={`border-0 rounded-full ${hasTest ? " from-green-500 to-emerald-500 text-white" : " from-blue-500 to-cyan-500 text-white"}`}
                     >
                       <Beaker className="h-4 w-4 mr-1" />
                       {hasTest ? "Edit Test Report" : "Mixing & Pasteurizing Test"}
                     </Button>
                     <Button
                       onClick={() => setShowPostTestForm(true)}
-                      variant="outline"
+                      
                       size="sm"
                       className={`border-0 rounded-full ${hasPost ? "bg-[#A0D001] text-white" : "bg-[#0068BD] text-white"}`}
                     >
@@ -204,9 +204,9 @@ export function SteriMilkProcessLogViewDrawer({
               {onEdit && (
                 <Button
                   onClick={onEdit}
-                  variant="outline"
+                  
                   size="sm"
-                  className="bg-gradient-to-r from-green-500 to-emerald-500 text-white border-0 rounded-full"
+                  className=" from-green-500 to-emerald-500 text-white border-0 rounded-full"
                 >
                   Edit
                 </Button>
@@ -218,7 +218,7 @@ export function SteriMilkProcessLogViewDrawer({
         <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-white">
           <Tabs defaultValue="log-details" className="w-full">
             <TabsList className="w-full justify-start border-b rounded-none bg-transparent p-0">
-              <TabsTrigger value="log-details" className="rounded-none border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:bg-transparent">
+              <TabsTrigger value="log-details" className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#006BC4] data-[state=active]:bg-transparent">
                 Log Details
               </TabsTrigger>
               <TabsTrigger value="test-report" className="rounded-none border-b-2 border-transparent data-[state=active]:border-purple-500 data-[state=active]:bg-transparent">
@@ -232,7 +232,7 @@ export function SteriMilkProcessLogViewDrawer({
             {/* Log Details Tab */}
             <TabsContent value="log-details" className="mt-6 space-y-6">
               {/* Process Overview */}
-              <div className="mb-2 p-6 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg">
+              <div className="mb-2 p-6  from-blue-50 to-cyan-50 rounded-lg">
                 <h3 className="text-lg font-light text-gray-900 mb-4">Process Overview</h3>
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center space-x-2">
@@ -248,7 +248,7 @@ export function SteriMilkProcessLogViewDrawer({
                     </div>
                     <div className="flex items-center space-x-2">
                       <span className="text-sm font-medium text-blue-600">Process Log</span>
-                      <div className="bg-gradient-to-r from-blue-500 to-cyan-600 text-white px-2 py-1 rounded-full text-xs font-medium shadow-lg">
+                      <div className=" bg-gray-100 text-gray-600 px-2 py-1 rounded-full text-xs font-medium shadow-lg">
                         Current Step
                       </div>
                     </div>
@@ -455,7 +455,7 @@ export function SteriMilkProcessLogViewDrawer({
                             <Button
                               onClick={() => setShowTestReportForm(true)}
                               size="sm"
-                              variant="outline"
+                              
                               className="rounded-full"
                             >
                               <Edit className="h-4 w-4 mr-1" />
@@ -782,7 +782,7 @@ export function SteriMilkProcessLogViewDrawer({
                   <Button
                     onClick={() => setShowTestReportForm(true)}
                     size="sm"
-                    className="mt-4 bg-[#0068BD] hover:bg-[#005299] text-white border-0 rounded-full"
+                    className="mt-4  text-white border-0 rounded-full"
                   >
                     <Plus className="h-4 w-4 mr-1" />
                     Create Test Report
@@ -820,7 +820,7 @@ export function SteriMilkProcessLogViewDrawer({
                                   <div className="flex items-center space-x-3">
                                     <CardTitle className="text-lg font-medium">Post Autoclave Test</CardTitle>
                                     {test.tag && (
-                                      <Badge variant="outline" className="font-mono text-xs">
+                                      <Badge  className="font-mono text-xs">
                                         {test.tag}
                                       </Badge>
                                     )}
@@ -840,7 +840,7 @@ export function SteriMilkProcessLogViewDrawer({
                                 <Button
                                   onClick={() => setShowPostTestForm(true)}
                                   size="sm"
-                                  variant="outline"
+                                  
                                   className="rounded-full"
                                 >
                                   <Edit className="h-4 w-4 mr-1" />
@@ -1016,7 +1016,7 @@ export function SteriMilkProcessLogViewDrawer({
                     <Button
                       onClick={() => setShowPostTestForm(true)}
                       size="sm"
-                      className="mt-4 bg-[#0068BD] hover:bg-[#005299] text-white border-0 rounded-full"
+                      className="mt-4  text-white border-0 rounded-full"
                     >
                       <Plus className="h-4 w-4 mr-1" />
                       Create Post Test

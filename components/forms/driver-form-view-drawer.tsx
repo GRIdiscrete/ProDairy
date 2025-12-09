@@ -293,8 +293,8 @@ export function DriverFormViewDrawer({
           <SheetHeader className={isMobile || isTablet ? "p-6 pb-0 bg-white" : "mb-6"}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center">
-                  <Truck className="w-4 h-4 text-white" />
+                <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
+                  <Truck className="w-4 h-4 text-gray-600" />
                 </div>
                 <div>
                   <SheetTitle className="text-lg font-light m-0">Driver Form Details</SheetTitle>
@@ -305,22 +305,22 @@ export function DriverFormViewDrawer({
               </div>
               <div className="flex space-x-2">
                 <Button
-                  variant="outline"
+                  
                   size="sm"
                   onClick={handleExportCSV}
                   disabled={isLoading}
-                  className="bg-gradient-to-r from-green-500 to-teal-500 hover:from-green-600 hover:to-teal-600 text-white border-0 rounded-full"
+                  className="bg-[#006BC4] text-white rounded-full"
                 >
                   <Download className="w-4 h-4 mr-2" />
                   Export CSV
                 </Button>
                 {onEdit && (
                   <Button
-                    variant="outline"
+                    
                     size="sm"
                     onClick={handleEdit}
                     disabled={isLoading}
-                    className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 rounded-full"
+                    className="bg-[#A0CF06] text-[#211D1E] rounded-full"
                   >
                     <Edit className="w-4 h-4 mr-2" />
                     Edit
@@ -551,8 +551,8 @@ export function DriverFormViewDrawer({
                                   <div key={index} className="p-4 border border-gray-200 rounded-lg space-y-3 relative">
                                     <div className="flex items-start justify-between">
                                       <div className="flex items-center space-x-3">
-                                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center">
-                                          <Package className="w-4 h-4 text-white" />
+                                        <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
+                                          <Package className="w-4 h-4 text-gray-600" />
                                         </div>
                                         <div>
                                           <p className="font-light">Product #{index + 1}</p>
@@ -566,7 +566,7 @@ export function DriverFormViewDrawer({
                                           </p>
                                         </div>
                                         <LoadingButton
-                                          variant="outline"
+                                          
                                           size="sm"
                                           onClick={() => {
                                             setLabMode("create")
@@ -575,7 +575,7 @@ export function DriverFormViewDrawer({
                                             setSelectedProductForLab(product)
                                             setLabDrawerOpen(true)
                                           }}
-                                          className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full"
+                                          className="bg-[#006BC4] text-white rounded-full"
                                         >
                                           <Beaker className="w-4 h-4 mr-2" />
                                           Create Milk Test
@@ -653,7 +653,7 @@ export function DriverFormViewDrawer({
                                                   <Badge className={"text-xs " + (pt.accepted ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800')}>
                                                     {pt.accepted ? 'Accepted' : 'Rejected'}
                                                   </Badge>
-                                                  <LoadingButton size="sm" variant="outline" className="rounded-full"
+                                                  <LoadingButton size="sm"  className="rounded-full"
                                                     onClick={() => {
                                                       setLabMode("edit")
                                                       setLabExistingId(pt.id)
@@ -689,10 +689,10 @@ export function DriverFormViewDrawer({
                     <div className="flex justify-end pt-4">
                       <Button
                         type="button"
-                        variant="outline"
+                        
                         onClick={() => onOpenChange(false)}
                         disabled={isLoading}
-                        className="bg-gradient-to-r from-gray-500 to-gray-700 hover:from-gray-600 hover:to-gray-800 text-white border-0 rounded-full px-6 py-2 font-light"
+                        className="bg-gray-100 text-gray-600 rounded-full px-6 py-2 font-light"
                       >
                         Close
                       </Button>
@@ -710,7 +710,7 @@ export function DriverFormViewDrawer({
                             <Badge className={"text-xs " + (currentLabTest.accepted ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800')}>
                               {currentLabTest.accepted ? 'Accepted' : 'Rejected'}
                             </Badge>
-                            <LoadingButton size="sm" variant="outline" className="rounded-full"
+                            <LoadingButton size="sm"  className="rounded-full"
                               onClick={() => { setLabMode("edit"); setLabExistingId(currentLabTest.id); setLabDrawerOpen(true) }}>
                               Edit
                             </LoadingButton>

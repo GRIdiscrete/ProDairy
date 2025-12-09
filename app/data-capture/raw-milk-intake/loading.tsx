@@ -13,7 +13,7 @@ export default function Loading() {
       </div>
 
       {/* Current Form Card Skeleton */}
-      <div className="border border-gray-200 rounded-lg bg-white border-l-4 border-l-blue-500">
+      <div className="border border-gray-200 rounded-lg bg-white border-l-4 border-l-[#006BC4]">
         <div className="p-6 pb-0">
           <div className="flex items-center space-x-2">
             <Skeleton className="h-5 w-5 rounded" />

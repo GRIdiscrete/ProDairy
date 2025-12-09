@@ -232,7 +232,7 @@ export function ProductIncubationViewDrawer({
                   </div>
                   <CardTitle className="text-base font-light">Production Plan</CardTitle>
                 </div>
-                <Button size="sm" variant="outline" onClick={() => setPlanOpen(p => !p)}>
+                <Button size="sm"  onClick={() => setPlanOpen(p => !p)}>
                   {planOpen ? "Hide Plan" : "View Plan"}
                 </Button>
               </CardHeader>
@@ -278,7 +278,7 @@ export function ProductIncubationViewDrawer({
 
         <div className="flex items-center justify-between p-6 pt-0 border-t bg-white">
           <Button
-            variant="outline"
+            
             onClick={() => onOpenChange(false)}
             className="flex items-center gap-2"
           >
@@ -287,7 +287,7 @@ export function ProductIncubationViewDrawer({
           {onEdit && (
             <Button
               onClick={onEdit}
-              className="flex items-center gap-2 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 rounded-full"
+              className="flex items-center gap-2  bg-[#006BC4] text-white rounded-full"
             >
               Edit Incubation
             </Button>

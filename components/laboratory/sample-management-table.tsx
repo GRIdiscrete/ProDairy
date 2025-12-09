@@ -97,7 +97,7 @@ export function SampleManagementTable() {
     {
       accessorKey: "batchId",
       header: "Batch ID",
-      cell: ({ row }) => <Badge variant="outline">{row.getValue("batchId")}</Badge>,
+      cell: ({ row }) => <Badge >{row.getValue("batchId")}</Badge>,
     },
     {
       accessorKey: "sampleType",
@@ -152,12 +152,12 @@ export function SampleManagementTable() {
         return (
           <div className="flex flex-wrap gap-1">
             {testTypes.slice(0, 2).map((type) => (
-              <Badge key={type} variant="outline" className="text-xs">
+              <Badge key={type}  className="text-xs">
                 {type}
               </Badge>
             ))}
             {testTypes.length > 2 && (
-              <Badge variant="outline" className="text-xs">
+              <Badge  className="text-xs">
                 +{testTypes.length - 2}
               </Badge>
             )}

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import { DataCaptureDashboardLayout } from "@/components/layout/data-capture-dashboard-layout"
 import { LoadingButton } from "@/components/ui/loading-button"
-import { Plus, Eye, Edit, Trash2, FileText } from "lucide-react"
+import { Plus, Eye, Edit, Trash2, Package } from "lucide-react"
 import { QaReleaseNoteDrawer } from "@/components/forms/qa-release-note-drawer"
 import { QaReleaseNoteViewDrawer } from "@/components/forms/qa-release-note-view-drawer"
 import { QaRejectNoteDrawer } from "@/components/forms/qa-reject-note-drawer"
@@ -134,8 +134,8 @@ export default function DispatchPage({ params }: Props) {
                 const d = (n.qa_release_note_details && n.qa_release_note_details[0]) || {}
                 return (
                     <div className="flex items-center space-x-4">
-                        <div className="w-8 h-8 rounded-lg bg-[#0068BD] flex items-center justify-center">
-                            <FileText className="w-4 h-4 text-white" />
+                        <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
+                            <Package className="w-4 h-4 text-gray-600" />
                         </div>
                         <div>
                             <div className="flex items-center space-x-2">
@@ -190,9 +190,9 @@ export default function DispatchPage({ params }: Props) {
                 const n = row.original
                 return (
                     <div className="flex space-x-2">
-                        <LoadingButton variant="outline" size="sm" onClick={() => handleView(n)} className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-full"><Eye className="w-4 h-4" /></LoadingButton>
-                        <LoadingButton variant="outline" size="sm" onClick={() => handleEdit(n)} className="bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-full"><Edit className="w-4 h-4" /></LoadingButton>
-                        <LoadingButton variant="destructive" size="sm" onClick={() => handleDelete(n)} loading={operationLoading?.delete} className="bg-gradient-to-r from-red-500 to-pink-500 text-white rounded-full"><Trash2 className="w-4 h-4" /></LoadingButton>
+                        <LoadingButton  size="sm" onClick={() => handleView(n)} className="bg-[#006BC4] text-white rounded-full"><Eye className="w-4 h-4" /></LoadingButton>
+                        <LoadingButton  size="sm" onClick={() => handleEdit(n)} className="bg-[#A0CF06] text-[#211D1E] rounded-full"><Edit className="w-4 h-4" /></LoadingButton>
+                        <LoadingButton className=" text-white rounded-full" variant="destructive" size="sm" onClick={() => handleDelete(n)} loading={operationLoading?.delete}><Trash2 className="w-4 h-4" /></LoadingButton>
                     </div>
                 )
             }
@@ -207,8 +207,8 @@ export default function DispatchPage({ params }: Props) {
                 const n = row.original
                 return (
                     <div className="flex items-center space-x-3">
-                        <div className="w-8 h-8 rounded-lg bg-red-600 flex items-center justify-center">
-                            <FileText className="w-4 h-4 text-white" />
+                        <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
+                            <Package className="w-4 h-4 text-gray-600" />
                         </div>
                         <div>
                             <div className="flex items-center space-x-2">
@@ -262,9 +262,9 @@ export default function DispatchPage({ params }: Props) {
                 const n = row.original
                 return (
                     <div className="flex space-x-2">
-                        <LoadingButton variant="outline" size="sm" onClick={() => handleView(n)} className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-full"><Eye className="w-4 h-4" /></LoadingButton>
-                        <LoadingButton variant="outline" size="sm" onClick={() => handleEdit(n)} className="bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-full"><Edit className="w-4 h-4" /></LoadingButton>
-                        <LoadingButton variant="destructive" size="sm" onClick={() => handleDelete(n)} loading={operationLoading?.delete} className="bg-gradient-to-r from-red-500 to-pink-500 text-white rounded-full"><Trash2 className="w-4 h-4" /></LoadingButton>
+                        <LoadingButton  size="sm" onClick={() => handleView(n)} className="bg-[#006BC4] text-white rounded-full"><Eye className="w-4 h-4" /></LoadingButton>
+                        <LoadingButton  size="sm" onClick={() => handleEdit(n)} className="bg-[#A0CF06] text-[#211D1E] rounded-full"><Edit className="w-4 h-4" /></LoadingButton>
+                        <LoadingButton className=" text-white rounded-full" variant="destructive" size="sm" onClick={() => handleDelete(n)} loading={operationLoading?.delete}><Trash2 className="w-4 h-4" /></LoadingButton>
                     </div>
                 )
             }
@@ -308,7 +308,7 @@ export default function DispatchPage({ params }: Props) {
                         <h1 className="text-3xl font-light">Dispatch — QA Notes</h1>
                         <p className="text-sm font-light text-muted-foreground">Switch between Release and Reject notes</p>
                     </div>
-                    <LoadingButton onClick={handleAdd} className="bg-[#0068BD] hover:bg-[#005299] text-white rounded-full px-6">
+                    <LoadingButton onClick={handleAdd} className=" text-white rounded-full px-6">
                         <Plus className="mr-2 h-4 w-4" /> Add {activeTab === "release" ? "Release Note" : "Reject Note"}
                     </LoadingButton>
                 </div>
@@ -320,11 +320,11 @@ export default function DispatchPage({ params }: Props) {
                             onClick={() => setActiveTab("release")}
                             aria-pressed={activeTab === "release"}
                             className={`flex items-center gap-2 pb-2 px-3 text-sm font-medium transition-colors ${activeTab === "release"
-                                ? "text-blue-600 border-b-2 border-blue-500"
+                                ? "text-blue-600 border-b-2 border-[#006BC4]"
                                 : "text-gray-600 hover:text-gray-800"
                                 }`}
                         >
-                            <FileText className="w-4 h-4" />
+                            <Package className="w-4 h-4" />
                             <span>Release Notes</span>
                         </button>
 
@@ -332,7 +332,7 @@ export default function DispatchPage({ params }: Props) {
                             onClick={() => setActiveTab("reject")}
                             aria-pressed={activeTab === "reject"}
                             className={`flex items-center gap-2 pb-2 px-3 text-sm font-medium transition-colors ${activeTab === "reject"
-                                ? "text-blue-600 border-b-2 border-blue-500"
+                                ? "text-blue-600 border-b-2 border-[#006BC4]"
                                 : "text-gray-600 hover:text-gray-800"
                                 }`}
                         >
@@ -347,12 +347,12 @@ export default function DispatchPage({ params }: Props) {
                         <div className="p-6 pb-0">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center space-x-2 text-lg font-light">
-                                    <div className="w-8 h-8 rounded-full bg-[#0068BD] flex items-center justify-center">
-                                        <FileText className="h-4 w-4 text-white" />
+                                    <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+                                        <Package className="h-4 w-4 text-gray-600" />
                                     </div>
                                     <span>Latest {activeTab === "release" ? "Release" : "Reject"} Note</span>
                                 </div>
-                                <LoadingButton variant="outline" onClick={() => handleView(latest)} className="bg-[#0068BD] hover:bg-[#005299] text-white rounded-full px-4 py-2 text-sm">
+                                <LoadingButton  onClick={() => handleView(latest)} className="bg-[#006BC4] text-white rounded-full px-4 py-2 text-sm">
                                     <Eye className="mr-2 h-4 w-4" /> View Details
                                 </LoadingButton>
                             </div>

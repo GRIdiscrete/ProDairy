@@ -105,7 +105,7 @@ export function MobileDriversLayout({ children, title, subtitle }: MobileDrivers
                 {isActive && (
                   <motion.div
                     layoutId="mobile-active-indicator"
-                    className="absolute bottom-0 left-1/2 h-1 w-8 -translate-x-1/2 rounded-full bg-gradient-to-r from-blue-500 to-blue-600"
+                    className="absolute bottom-0 left-1/2 h-1 w-8 -translate-x-1/2 rounded-full  from-blue-500 to-blue-600"
                   />
                 )}
               </Link>

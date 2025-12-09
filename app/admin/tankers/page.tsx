@@ -17,8 +17,7 @@ import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-di
 import { TankerFormDrawer } from "@/components/forms/tanker-form-drawer"
 import { TankerViewDrawer } from "@/components/forms/tanker-view-drawer"
 import { PermissionGuard } from "@/components/auth/permission-guard"
-import { PermissionButton } from "@/components/ui/permission-table-actions"
-import { PermissionTableActions } from "@/components/ui/permission-table-actions"
+import { UserAvatar } from "@/components/ui/user-avatar"
 
 export default function AdminTankersPage() {
   const dispatch = useAppDispatch()
@@ -75,20 +74,22 @@ export default function AdminTankersPage() {
       header: "Tanker",
       cell: ({ row }: any) => {
         const t: Tanker = row.original
-        const driver = t.tanker_driver_id_fkey
+        const driver = Array.isArray(userItems) ? userItems.find((u: any) => u.id === t.driver_id) : null
         return (
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center">
-              <Truck className="w-4 h-4 text-white" />
-            </div>
-            <div>
+            
+            <div className="flex-1 min-w-0">
               <div className="flex items-center space-x-2">
                 <span className="font-light">{t.reg_number}</span>
                 <Badge className="bg-blue-100 text-blue-800 font-light">{Math.round(t.capacity)}L</Badge>
               </div>
-              <p className="text-sm text-gray-500 mt-1">
-                Driver: {driver ? `${driver.first_name} ${driver.last_name}` : 'Unassigned'}
-              </p>
+              {driver ? (
+                <div className="mt-1">
+                  <UserAvatar user={driver} size="sm" showName={true} showEmail={false} />
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500 mt-1">Driver: Unassigned</p>
+              )}
             </div>
           </div>
         )
@@ -130,13 +131,34 @@ export default function AdminTankersPage() {
       cell: ({ row }: any) => {
         const t: Tanker = row.original
         return (
-          <PermissionTableActions
-            feature="tanker"
-            onView={() => handleView(t)}
-            onEdit={() => handleEdit(t)}
-            onDelete={() => handleDelete(t)}
-            showDropdown={true}
-          />
+          <div className="flex space-x-2">
+            <LoadingButton 
+               
+              size="sm" 
+              onClick={() => handleView(t)}
+              className="bg-[#006BC4] text-white border-0 rounded-full"
+            >
+              <Eye className="w-4 h-4" />
+            </LoadingButton>
+            <LoadingButton 
+               
+              size="sm" 
+              onClick={() => handleEdit(t)}
+              className="bg-[#A0CF06] text-[#211D1E] border-0 rounded-full"
+            >
+              <Edit className="w-4 h-4" />
+            </LoadingButton>
+            <LoadingButton 
+              variant="destructive" 
+              size="sm" 
+              onClick={() => handleDelete(t)}
+              loading={operationLoading.delete}
+              disabled={operationLoading.delete}
+              className="bg-red-600 hover:bg-red-700 text-white border-0 rounded-full"
+            >
+              <Trash2 className="w-4 h-4" />
+            </LoadingButton>
+          </div>
         )
       }
     }
@@ -156,15 +178,13 @@ export default function AdminTankersPage() {
             <h1 className="text-3xl font-light text-foreground">Tankers</h1>
             <p className="text-sm font-light text-muted-foreground">Manage vehicle tankers and assignments</p>
           </div>
-          <PermissionButton
-            feature="tanker"
-            permission="create"
+          <LoadingButton 
             onClick={handleAdd}
-            className="bg-[#0068BD] hover:bg-[#005299] text-white border-0 rounded-full px-6 py-2 font-light"
+            className="bg-[#006BC4] text-white border-0 rounded-full px-6 py-2 font-light"
           >
             <Plus className="mr-2 h-4 w-4" />
             Add Tanker
-          </PermissionButton>
+          </LoadingButton>
         </div>
 
         {operationLoading.fetch ? (
@@ -194,7 +214,7 @@ export default function AdminTankersPage() {
         )}
 
         <TankerFormDrawer open={formDrawerOpen} onOpenChange={setFormDrawerOpen} tanker={selected} mode={formMode} />
-        <TankerViewDrawer open={viewDrawerOpen} onOpenChange={setViewDrawerOpen} tanker={selected} onEdit={() => { setViewDrawerOpen(false); handleEdit(selected!) }} />
+        <TankerViewDrawer open={viewDrawerOpen} onOpenChange={setViewDrawerOpen} tanker={selected} users={userItems} onEdit={() => { setViewDrawerOpen(false); handleEdit(selected!) }} />
         <DeleteConfirmationDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen} title="Delete Tanker" description={`Are you sure you want to delete this tanker? This action cannot be undone.`} onConfirm={confirmDelete} loading={operationLoading.delete} />
       </div>
     </AdminDashboardLayout>

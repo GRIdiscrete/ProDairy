@@ -36,8 +36,8 @@ export function SupplierViewDrawer({ open, onClose, supplier, onEdit }: Supplier
         <SheetHeader className="mb-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#059669] to-[#10b981] flex items-center justify-center">
-                <Users className="w-5 h-5 text-white" />
+              <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center">
+                <Users className="w-5 h-5 text-gray-600" />
               </div>
               <div>
                 <SheetTitle className="flex items-center space-x-2">
@@ -47,7 +47,7 @@ export function SupplierViewDrawer({ open, onClose, supplier, onEdit }: Supplier
               </div>
             </div>
             {onEdit && (
-              <Button variant="outline" size="sm" onClick={onEdit}>
+              <Button  size="sm" onClick={onEdit}>
                 <Edit className="w-4 h-4 mr-2" />
                 Edit Supplier
               </Button>
@@ -118,7 +118,7 @@ export function SupplierViewDrawer({ open, onClose, supplier, onEdit }: Supplier
                 <div>
                   <label className="text-sm font-medium text-gray-500">Acceptance Rate</label>
                   <div className="flex items-center space-x-2">
-                    <Badge variant="outline" className={acceptanceRate > 90 ? "text-green-600" : acceptanceRate > 75 ? "text-yellow-600" : "text-red-600"}>
+                    <Badge  className={acceptanceRate > 90 ? "text-green-600" : acceptanceRate > 75 ? "text-yellow-600" : "text-red-600"}>
                       {acceptanceRate.toFixed(1)}%
                     </Badge>
                   </div>

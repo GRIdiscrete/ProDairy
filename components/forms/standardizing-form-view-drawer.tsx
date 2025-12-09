@@ -88,7 +88,7 @@ export function StandardizingFormViewDrawer({
 
         <div className="flex-1 overflow-y-auto p-6">
           {/* Process Overview */}
-          <div className="mb-8 p-6 bg-gradient-to-r from-orange-50 to-red-50 rounded-lg">
+          <div className="mb-8 p-6  from-orange-50 to-red-50 rounded-lg">
             <h3 className="text-lg font-light text-gray-900 mb-4">Process Overview</h3>
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center space-x-2">
@@ -104,7 +104,7 @@ export function StandardizingFormViewDrawer({
                 </div>
                 <div className="flex items-center space-x-2">
                   <span className="text-sm font-medium text-orange-600">Standardizing</span>
-                  <div className="bg-gradient-to-r from-orange-500 to-red-600 text-white px-2 py-1 rounded-full text-xs font-medium shadow-lg">
+                  <div className="  to-red-600 text-white px-2 py-1 rounded-full text-xs font-medium shadow-lg">
                     Current Step
                   </div>
                 </div>
@@ -131,19 +131,18 @@ export function StandardizingFormViewDrawer({
             </div>
             <div className="flex items-center space-x-2">
               <LoadingButton
-                variant="outline"
+                
                 size="sm"
                 onClick={onEdit}
-                className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 rounded-full"
+                className="bg-[#A0CF06] text-[#211D1E] border-0 rounded-full"
               >
                 <Edit className="w-4 h-4 mr-2" />
                 Edit
               </LoadingButton>
               <LoadingButton
-                variant="outline"
+                variant="destructive"
                 size="sm"
                 onClick={onDelete}
-                className="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white border-0 rounded-full"
               >
                 <Trash2 className="w-4 h-4 mr-2" />
                 Delete

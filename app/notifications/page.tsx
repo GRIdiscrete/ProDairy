@@ -235,7 +235,7 @@ function NotificationsContent() {
               {/* Pagination */}
               <div className="flex items-center justify-between mt-6 pt-4 border-t">
                 <Button
-                  variant="outline"
+                  
                   disabled={page <= 1}
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                 >
@@ -245,7 +245,7 @@ function NotificationsContent() {
                   Page {page}
                 </div>
                 <Button
-                  variant="outline"
+                  
                   onClick={() => setPage((p) => p + 1)}
                   disabled={items.length < limit}
                 >

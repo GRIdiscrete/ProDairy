@@ -166,7 +166,7 @@ export function TankerFormDrawer({ open, onOpenChange, tanker, mode }: Props) {
             </div>
 
             <div className="flex justify-end gap-2 pt-4 border-t">
-              <LoadingButton type="button" variant="outline" onClick={() => onOpenChange(false)} className="rounded-full">Cancel</LoadingButton>
+              <LoadingButton type="button"  onClick={() => onOpenChange(false)} className="rounded-full">Cancel</LoadingButton>
               <LoadingButton type="submit" loading={mode === "create" ? operationLoading.create : operationLoading.update} className="rounded-full">
                 {mode === "create" ? "Create Tanker" : "Update Tanker"}
               </LoadingButton>

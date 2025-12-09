@@ -85,7 +85,7 @@ export default function DevicesPage() {
   {
     accessorKey: "type",
     header: "Type",
-    cell: ({ row }: any) => <Badge variant="outline">{row.getValue("type")}</Badge>,
+    cell: ({ row }: any) => <Badge >{row.getValue("type")}</Badge>,
   },
   {
     accessorKey: "status",

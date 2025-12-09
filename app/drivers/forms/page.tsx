@@ -689,18 +689,16 @@ export default function DriverFormsPage() {
         return (
           <div className="flex space-x-2">
             <LoadingButton
-              variant="outline"
               size="sm"
               onClick={() => handleViewForm(form)}
-              className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full"
+              className="from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full"
             >
               <Eye className="w-4 h-4" />
             </LoadingButton>
             <LoadingButton
-              variant="outline"
               size="sm"
               onClick={() => handleEditForm(form)}
-              className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 rounded-full"
+              className="from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 rounded-full"
             >
               <Settings className="w-4 h-4" />
             </LoadingButton>
@@ -800,13 +798,11 @@ export default function DriverFormsPage() {
                   )}
                 </div>
 
-              
-
                 {/* Load Data Button */}
                 <LoadingButton
                   onClick={handleLoadData}
                   loading={isLoadingData}
-                  className="bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-600 hover:to-blue-800 text-white border-0 rounded-full px-6 py-2 font-light"
+                  className="from-blue-500 to-blue-700 hover:from-blue-600 hover:to-blue-800 text-white border-0 rounded-full px-6 py-2 font-light"
                 >
                   <Download className="mr-2 h-4 w-4" />
                   {driverForms && driverForms.length > 0 ? 'Refresh Data' : 'Load Data'}
@@ -833,7 +829,7 @@ export default function DriverFormsPage() {
                       toast.error("❌ No network connection detected (cannot reach server)")
                     }
                   }}
-                  className="bg-gradient-to-r from-gray-400 to-gray-600 hover:from-gray-500 hover:to-gray-700 text-white border-0 rounded-full px-6 py-2 font-light"
+                  className=" from-gray-400 to-gray-600 hover:from-gray-500 hover:to-gray-700 text-white border-0 rounded-full px-6 py-2 font-light"
                 >
                   <Wifi className="mr-2 h-4 w-4" />
                   Check Network
@@ -844,7 +840,7 @@ export default function DriverFormsPage() {
                   onClick={handleSyncPending}
                   loading={syncingPending}
                   disabled={!isOnline}
-                  className="bg-[#0068BD] hover:bg-[#005299] text-white border-0 rounded-full px-6 py-2 font-light disabled:opacity-50"
+                  className="from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white border-0 rounded-full px-6 py-2 font-light disabled:opacity-50"
                 >
                   <Wifi className="mr-2 h-4 w-4" />
                   Sync Pending ({(() => {
@@ -854,21 +850,27 @@ export default function DriverFormsPage() {
                 </LoadingButton>
                 <div className="flex justify-end mb-2">
                   {csvUrl && (
-                    <a
-                      href={csvUrl}
-                      download="driver-forms.csv"
-                      className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-700 text-white rounded-full text-sm font-light hover:from-blue-600 hover:to-blue-800 transition"
+                    <LoadingButton
+                      onClick={() => {
+                        const link = document.createElement('a');
+                        link.href = csvUrl;
+                        link.download = 'driver-forms.csv';
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                      }}
+                      className="bg-[#A0CF06] text-[#211D1E] border-0 rounded-full px-6 py-2 font-light"
                     >
                       <DownloadIcon className="w-4 h-4 mr-2" />
                       Export CSV
-                    </a>
+                    </LoadingButton>
                   )}
                 </div>
                 {/* Create Form Button */}
                 <LoadingButton
                   onClick={handleAddForm}
                   loading={isLoading}
-                  className="bg-gradient-to-r from-gray-500 to-gray-700 hover:from-gray-600 hover:to-gray-800 text-white border-0 rounded-full px-6 py-2 font-light"
+                  className="from-gray-500 to-gray-700 hover:from-gray-600 hover:to-gray-800 text-white border-0 rounded-full px-6 py-2 font-light"
                 >
                   <Plus className="mr-2 h-4 w-4" />
                   Create Form
@@ -1026,16 +1028,16 @@ export default function DriverFormsPage() {
 
                         <div className="mt-4 flex items-center justify-end gap-2">
                           <Button
-                            variant="outline"
+                            
                             size="sm"
                             onClick={() => handleViewForm(form)}
-                            className="bg-[#0068BD] hover:bg-[#005299] text-white border-0 rounded-full"
+                            className=" text-white border-0 rounded-full"
                           >
                             <Eye className="h-4 w-4 mr-1" />
                             View
                           </Button>
                           <Button
-                            variant="outline"
+                            
                             size="sm"
                             onClick={() => handleEditForm(form)}
                             className="bg-[#A0D001] hover:bg-[#8AB801] text-white border-0 rounded-full"
@@ -1044,7 +1046,7 @@ export default function DriverFormsPage() {
                             Edit
                           </Button>
                           <Button
-                            variant="outline"
+                            
                             size="sm"
                             onClick={() => handleCreateLabTest(form)}
                             className="bg-[#A0D001] hover:bg-[#8AB801] text-white border-0 rounded-full"
@@ -1089,25 +1091,25 @@ export default function DriverFormsPage() {
                       </div>
                       <div className="mt-4 flex items-center justify-end gap-2">
                         <Button
-                          variant="outline"
+                          
                           size="sm"
                           onClick={() => handleViewForm(form)}
-                          className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full"
+                          className=" from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full"
                         >
                           <Eye className="h-4 w-4 mr-1" />
                           View
                         </Button>
                         <Button
-                          variant="outline"
+                          
                           size="sm"
                           onClick={() => handleEditForm(form)}
-                          className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 rounded-full"
+                          className=" from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 rounded-full"
                         >
                           <Settings className="h-4 w-4 mr-1" />
                           Edit
                         </Button>
                         <Button
-                          variant="outline"
+                          
                           size="sm"
                           onClick={() => handleCreateLabTest(form)}
                           className="bg-[#A0D001] hover:bg-[#8AB801] text-white border-0 rounded-full"
@@ -1138,7 +1140,7 @@ export default function DriverFormsPage() {
                     </div>
                     <div className="flex items-center gap-2">
                       <Button
-                        variant="outline"
+                        
                         size="sm"
                         onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                         disabled={currentPage === 1}
@@ -1150,7 +1152,7 @@ export default function DriverFormsPage() {
                         {currentPage} of {totalPages}
                       </span>
                       <Button
-                        variant="outline"
+                        
                         size="sm"
                         onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                         disabled={currentPage === totalPages}

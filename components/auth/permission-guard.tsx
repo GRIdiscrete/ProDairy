@@ -137,7 +137,7 @@ function AccessDenied() {
           <div className="flex flex-col space-y-2">
             <Button 
               onClick={() => router.back()}
-              variant="outline"
+              
               className="w-full"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />

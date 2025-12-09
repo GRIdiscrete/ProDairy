@@ -53,7 +53,7 @@ export function UserViewDrawer({ open, onClose, user, onEdit }: UserViewDrawerPr
            
             </div>
             <Button
-              variant="outline"
+              
               size="sm"
               onClick={(e) => {
                 e.stopPropagation()
@@ -73,7 +73,7 @@ export function UserViewDrawer({ open, onClose, user, onEdit }: UserViewDrawerPr
           <Card>
             <CardContent className="p-6">
               <div className="flex items-start gap-4">
-                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary/10 to-primary/20 flex items-center justify-center flex-shrink-0">
+                <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
                   <User className="w-8 h-8 text-primary" />
                 </div>
                 <div className="flex-1 min-w-0">

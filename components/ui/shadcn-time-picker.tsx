@@ -112,7 +112,7 @@ export function ShadcnTimePicker({
           <Button
             variant="outline"
             className={cn(
-              "w-full justify-start text-left font-normal",
+              "w-full h-12 justify-start text-left font-normal bg-transparent hover:bg-transparent border border-gray-300 hover:border-gray-400 focus:border-[#006BC4]",
               !displayTime && "text-muted-foreground",
               error && "border-red-500 focus:border-red-500",
               disabled && "opacity-50 cursor-not-allowed"
@@ -159,7 +159,7 @@ export function ShadcnTimePicker({
               </div>
             </div>
             <div className="flex justify-end space-x-2">
-              <Button variant="outline" size="sm" onClick={() => setOpen(false)}>
+              <Button  size="sm" onClick={() => setOpen(false)}>
                 Cancel
               </Button>
               <Button size="sm" onClick={handleTimeChange}>

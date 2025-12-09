@@ -967,10 +967,10 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
                             </div>
                           )}
                           <div className="flex items-center gap-2">
-                            <LoadingButton type="button" variant="outline" onClick={() => setDispatchSigOpen(true)}>Add Signature</LoadingButton>
+                            <LoadingButton type="button"  onClick={() => setDispatchSigOpen(true)}>Add Signature</LoadingButton>
                             {field.value && (
                               <>
-                                <LoadingButton type="button" variant="outline" onClick={() => setDispatchSigOpen(true)}>View Signature</LoadingButton>
+                                <LoadingButton type="button"  onClick={() => setDispatchSigOpen(true)}>View Signature</LoadingButton>
                                 <LoadingButton type="button" variant="ghost" onClick={() => field.onChange("")}>Clear</LoadingButton>
                               </>
                             )}
@@ -996,10 +996,10 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
                             </div>
                           )}
                           <div className="flex items-center gap-2">
-                            <LoadingButton type="button" variant="outline" onClick={() => setReceiverSigOpen(true)}>Add Signature</LoadingButton>
+                            <LoadingButton type="button"  onClick={() => setReceiverSigOpen(true)}>Add Signature</LoadingButton>
                             {field.value && (
                               <>
-                                <LoadingButton type="button" variant="outline" onClick={() => setReceiverSigOpen(true)}>View Signature</LoadingButton>
+                                <LoadingButton type="button"  onClick={() => setReceiverSigOpen(true)}>View Signature</LoadingButton>
                                 <LoadingButton type="button" variant="ghost" onClick={() => field.onChange("")}>Clear</LoadingButton>
                               </>
                             )}

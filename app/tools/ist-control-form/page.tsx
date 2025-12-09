@@ -17,6 +17,8 @@ import {
   deleteISTControlFormAction,
   clearError
 } from "@/lib/store/slices/istControlFormSlice"
+import { fetchUsers } from "@/lib/store/slices/usersSlice"
+import { UserAvatar } from "@/components/ui/user-avatar"
 import { toast } from "sonner"
 import { TableFilters } from "@/lib/types"
 import { ISTControlForm } from "@/lib/api/data-capture-forms"
@@ -27,16 +29,24 @@ import { useRouter, useSearchParams } from "next/navigation"
 export default function ISTControlFormPage() {
   const dispatch = useAppDispatch()
   const { forms, loading, error, operationLoading, isInitialized } = useAppSelector((state) => state.istControlForms)
+  const { items: users } = useAppSelector((state) => state.users)
   
   const [tableFilters, setTableFilters] = useState<TableFilters>({})
   const hasFetchedRef = useRef(false)
   const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
 
-  // Load IST control forms on initial mount
+  // Helper function to get user by ID
+  const getUserById = (userId: string) => {
+    if (!users || !Array.isArray(users)) return null
+    return users.find((user: any) => user.id === userId)
+  }
+
+  // Load IST control forms and users on initial mount
   useEffect(() => {
     if (!isInitialized && !hasFetchedRef.current) {
       hasFetchedRef.current = true
       dispatch(fetchISTControlForms())
+      dispatch(fetchUsers({}))
     }
   }, [dispatch, isInitialized])
   
@@ -144,8 +154,8 @@ export default function ISTControlFormPage() {
         const form = row.original
         return (
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center">
-              <Package className="w-4 h-4 text-white" />
+            <div className="w-8 h-8 rounded-lg bg-gray-100 text-gray-600 flex items-center justify-center">
+              <Package className="w-4 h-4" />
             </div>
             <div>
               <div className="flex items-center space-x-2">
@@ -183,20 +193,19 @@ export default function ISTControlFormPage() {
       header: "Personnel",
       cell: ({ row }: any) => {
         const form = row.original
+        const issuedByUser = form.ist_control_form_issued_by_fkey || getUserById(form.issued_by)
+        const receivedByUser = form.ist_control_form_received_by_fkey || getUserById(form.received_by)
+        
         return (
-          <div className="space-y-1">
-            <p className="text-sm font-light">
-              Issued: {form.ist_control_form_issued_by_fkey
-                ? `${form.ist_control_form_issued_by_fkey.first_name} ${form.ist_control_form_issued_by_fkey.last_name}`
-                : `User: ${form.issued_by?.slice(0, 8)}...`
-              }
-            </p>
-            <p className="text-xs text-gray-500">
-              Received: {form.ist_control_form_received_by_fkey
-                ? `${form.ist_control_form_received_by_fkey.first_name} ${form.ist_control_form_received_by_fkey.last_name}`
-                : `User: ${form.received_by?.slice(0, 8)}...`
-              }
-            </p>
+          <div className="space-y-2">
+            {issuedByUser ? (
+              <div>
+                <p className="text-xs text-gray-500 mb-1">Issued:</p>
+                <UserAvatar user={issuedByUser} size="sm" showName={true} showEmail={true} showDropdown={true} />
+              </div>
+            ) : (
+              <p className="text-sm font-light text-gray-500">Issued: Unknown</p>
+            )}
           </div>
         )
       },
@@ -226,18 +235,18 @@ export default function ISTControlFormPage() {
         return (
           <div className="flex space-x-2">
             <LoadingButton 
-              variant="outline" 
+               
               size="sm" 
               onClick={() => handleViewForm(form)}
-              className="bg-[#0068BD] hover:bg-[#005299] text-white border-0 rounded-full"
+              className="bg-[#006BC4] text-white border-0 rounded-full"
             >
               <Eye className="w-4 h-4" />
             </LoadingButton>
             <LoadingButton 
-              variant="outline" 
+               
               size="sm" 
               onClick={() => handleEditForm(form)}
-              className="bg-[#A0D001] hover:bg-[#8AB801] text-white border-0 rounded-full"
+              className="bg-[#A0CF06] text-[#211D1E] border-0 rounded-full"
             >
               <Edit className="w-4 h-4" />
             </LoadingButton>
@@ -282,7 +291,7 @@ export default function ISTControlFormPage() {
           </div>
           <LoadingButton 
             onClick={handleAddForm}
-            className="bg-[#0068BD] hover:bg-[#005299] text-white border-0 rounded-full px-6 py-2 font-light"
+            className="bg-[#006BC4] text-white border-0 rounded-full px-6 py-2 font-light"
           >
             <Plus className="mr-2 h-4 w-4" />
             Add IST Form
@@ -293,20 +302,20 @@ export default function ISTControlFormPage() {
         {loading ? (
           <ContentSkeleton sections={1} cardsPerSection={4} />
         ) : latestForm ? (
-          <div className="border border-gray-200 rounded-lg bg-white border-l-4 border-l-blue-500">
+          <div className="border border-gray-200 rounded-lg bg-white border-l-4 border-l-[#006BC4]">
             <div className="p-6 pb-0">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2 text-lg font-light">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center">
-                    <Package className="h-4 w-4 text-white" />
+                  <div className="w-8 h-8 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center">
+                    <Package className="h-4 w-4" />
                   </div>
                   <span>Current IST Control Form</span>
-                  <Badge className="bg-gradient-to-r from-blue-100 to-cyan-100 text-blue-800 font-light">Latest</Badge>
+                  <Badge className="text-white font-light">Latest</Badge>
                 </div>
                 <LoadingButton 
-                  variant="outline" 
+                   
                   onClick={() => handleViewForm(latestForm)}
-                  className="bg-[#0068BD] hover:bg-[#005299] text-white border-0 rounded-full px-4 py-2 font-light text-sm"
+                  className=" text-white border-0 rounded-full px-4 py-2 font-light text-sm"
                 >
                   <Eye className="mr-2 h-4 w-4" />
                   View Details
@@ -359,7 +368,7 @@ export default function ISTControlFormPage() {
                   </div>
                 </div>
 
-                <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg">
+                <div className="p-4 bg-green-50 rounded-lg">
                   <div className="flex items-center space-x-2 mb-3">
                     <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center">
                       <ArrowRight className="h-4 w-4 text-green-600" />
@@ -421,6 +430,7 @@ export default function ISTControlFormPage() {
         open={viewDrawerOpen}
         onOpenChange={setViewDrawerOpen}
         form={selectedForm}
+        users={users}
       />
         
       {/* Delete Confirmation Dialog */}

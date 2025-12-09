@@ -51,17 +51,17 @@ export function RawMaterialFilters({ filters, onFiltersChange }: RawMaterialFilt
           </SelectContent>
         </Select>
 
-        <Button variant="outline" className="border-orange-600 text-orange-300 hover:bg-orange-700/20 bg-transparent">
+        <Button  className="border-orange-600 text-orange-300 hover:bg-orange-700/20 bg-transparent">
           <AlertTriangle className="w-4 h-4 mr-2" />
           Low Stock Only
         </Button>
 
-        <Button variant="outline" className="border-gray-600 text-gray-300 hover:bg-gray-700 bg-transparent">
+        <Button  className="border-gray-600 text-gray-300 hover:bg-gray-700 bg-transparent">
           <Filter className="w-4 h-4 mr-2" />
           More Filters
         </Button>
 
-        <Button variant="outline" className="border-gray-600 text-gray-300 hover:bg-gray-700 bg-transparent">
+        <Button  className="border-gray-600 text-gray-300 hover:bg-gray-700 bg-transparent">
           <Download className="w-4 h-4 mr-2" />
           Export
         </Button>

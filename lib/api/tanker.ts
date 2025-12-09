@@ -10,6 +10,7 @@ export interface Tanker {
   condition: string
   age: number
   mileage: number
+  compartments?: number
   tanker_driver_id_fkey?: any
 }
 

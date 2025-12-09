@@ -604,7 +604,7 @@ export function ProductIncubationDrawer({
           <div className="flex items-center gap-2">
             <Button
               type="button"
-              variant="outline"
+              
               onClick={() => onOpenChange(false)}
               className="flex items-center gap-2"
             >

@@ -16,8 +16,6 @@ import { fetchRawMaterials, deleteRawMaterial, clearError } from "@/lib/store/sl
 import { toast } from "sonner"
 import { AdminDashboardLayout } from "@/components/layout/admin-dashboard-layout"
 import { PermissionGuard } from "@/components/auth/permission-guard"
-import { PermissionButton } from "@/components/ui/permission-table-actions"
-import { PermissionTableActions } from "@/components/ui/permission-table-actions"
 
 export default function MaterialsPage() {
   const dispatch = useAppDispatch()
@@ -112,13 +110,13 @@ export default function MaterialsPage() {
         const rawMaterial = row.original
         return (
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#f59e0b] to-[#d97706] flex items-center justify-center">
-              <Package className="w-4 h-4 text-white" />
+            <div className="w-8 h-8 rounded-lg bg-gray-100 text-gray-600 flex items-center justify-center">
+              <Package className="w-4 h-4" />
             </div>
             <div>
               <div className="flex items-center space-x-2">
                 <span className="font-medium">{rawMaterial.name}</span>
-                <Badge variant="outline" className="text-xs">Material</Badge>
+                <Badge  className="text-xs">Material</Badge>
               </div>
               <p className="text-sm text-gray-500 mt-1 truncate max-w-[200px]">
                 {rawMaterial.description || "No description"}
@@ -162,7 +160,7 @@ export default function MaterialsPage() {
           <div className="space-y-1">
             <div className="flex items-center space-x-2">
               <p className="text-sm font-medium">{new Date(rawMaterial.created_at).toLocaleDateString()}</p>
-              {isRecent() && <Badge variant="outline" className="text-xs text-green-600">New</Badge>}
+              {isRecent() && <Badge  className="text-xs text-green-600">New</Badge>}
             </div>
             <p className="text-xs text-gray-500">Updated: {new Date(rawMaterial.updated_at).toLocaleDateString()}</p>
           </div>
@@ -194,13 +192,34 @@ export default function MaterialsPage() {
       cell: ({ row }: any) => {
         const rawMaterial = row.original
         return (
-          <PermissionTableActions
-            feature="material"
-            onView={() => handleViewRawMaterial(rawMaterial)}
-            onEdit={() => handleEditRawMaterial(rawMaterial)}
-            onDelete={() => handleDeleteRawMaterial(rawMaterial)}
-            showDropdown={true}
-          />
+          <div className="flex space-x-2">
+            <LoadingButton 
+               
+              size="sm" 
+              onClick={() => handleViewRawMaterial(rawMaterial)}
+              className="bg-[#006BC4] text-white border-0 rounded-full"
+            >
+              <Eye className="w-4 h-4" />
+            </LoadingButton>
+            <LoadingButton 
+               
+              size="sm" 
+              onClick={() => handleEditRawMaterial(rawMaterial)}
+              className="bg-[#A0CF06] text-[#211D1E] border-0 rounded-full"
+            >
+              <Edit className="w-4 h-4" />
+            </LoadingButton>
+            <LoadingButton 
+              variant="destructive" 
+              size="sm" 
+              onClick={() => handleDeleteRawMaterial(rawMaterial)}
+              loading={operationLoading.delete}
+              disabled={operationLoading.delete}
+              className="bg-red-600 hover:bg-red-700 text-white border-0 rounded-full"
+            >
+              <Trash2 className="w-4 h-4" />
+            </LoadingButton>
+          </div>
         )
       },
     },
@@ -215,15 +234,13 @@ export default function MaterialsPage() {
             <h1 className="text-3xl font-light text-foreground">Raw Materials</h1>
             <p className="text-sm font-light text-muted-foreground">Manage raw materials inventory and specifications</p>
           </div>
-          <PermissionButton
-            feature="material"
-            permission="create"
+          <LoadingButton 
             onClick={handleAddRawMaterial}
-            className="bg-[#0068BD] hover:bg-[#005299] text-white border-0 rounded-full px-6 py-2 font-light"
+            className="bg-[#006BC4] text-white border-0 rounded-full px-6 py-2 font-light"
           >
             <Plus className="mr-2 h-4 w-4" />
             Add Raw Material
-          </PermissionButton>
+          </LoadingButton>
         </div>
 
         {/* Stats (no shadow, gray border, rounded) */}

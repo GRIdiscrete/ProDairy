@@ -45,14 +45,14 @@ export function SiloViewDrawer({ open, onClose, silo, onEdit }: SiloViewDrawerPr
             <div className="p-4 pb-0">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-gray-500 to-gray-700 flex items-center justify-center">
-                    <Database className="w-4 h-4 text-white" />
+                  <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
+                    <Database className="w-4 h-4 text-gray-600" />
                   </div>
                   <div className="text-base font-light">{silo.name}</div>
                   <Badge className={getStatusVariant(silo.status)}>{silo.status}</Badge>
                 </div>
                 {onEdit && (
-                  <Button onClick={onEdit} variant="outline" size="sm" className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 rounded-full"> 
+                  <Button onClick={onEdit}  size="sm" className=" bg-[#006BC4] text-white rounded-full"> 
                     <Edit className="w-4 h-4 mr-2" /> Edit
                   </Button>
                 )}

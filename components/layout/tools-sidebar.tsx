@@ -7,7 +7,7 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence, Variants } from "framer-motion";
-import { ChevronLeft, Beaker, Droplets, TestTube, Wrench } from "lucide-react";
+import { ChevronLeft, Beaker, Droplets, TestTube, Wrench, Package, FlaskConical } from "lucide-react";
 import { useAppSelector } from "@/lib/store";
 
 // Map sidebar links to permission keys in views[]
@@ -23,8 +23,8 @@ const toolsNavigation = [
   { name: "Tools Dashboard", href: "/tools", icon: Wrench },
   { name: "Bulk Milk Transfer", href: "/tools/bmt-control-form", icon: Beaker },
   { name: "CIP Control Form", href: "/tools/cip-control-form", icon: Droplets },
-  { name: "IST Control Form", href: "/tools/ist-control-form", icon: TestTube },
-  { name: "General Lab Test", href: "/tools/general-lab-test", icon: TestTube },
+  { name: "IST Control Form", href: "/tools/ist-control-form", icon: Package },
+  { name: "General Lab Test", href: "/tools/general-lab-test", icon: FlaskConical },
 ];
 
 interface ToolsSidebarProps {
@@ -71,7 +71,7 @@ export function ToolsSidebar({ collapsed = false, onToggle }: ToolsSidebarProps)
       <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(80rem_30rem_at_0%_-10%,rgba(59,130,246,0.08),transparent_60%),radial-gradient(80rem_30rem_at_120%_110%,rgba(132,204,22,0.08),transparent_60%)]" />
 
       <div className="relative flex h-16 items-center justify-between border-b border-zinc-200 px-3">
-        <div aria-hidden className="pointer-events-none absolute inset-x-0 -bottom-px h-[1px] bg-gradient-to-r from-blue-300 via-zinc-200 to-lime-300" />
+        <div aria-hidden className="pointer-events-none absolute inset-x-0 -bottom-px h-[1px]  from-blue-300 via-zinc-200 to-lime-300" />
         <div className={cn("flex items-center gap-3", collapsed && "w-full justify-center")}> 
           <div className="relative flex-shrink-0">
             <Image src="/Prodairy-3D-Logo.png" alt="ProDairy Logo" width={collapsed ? 36 : 40} height={collapsed ? 36 : 40} className="object-contain" priority />
@@ -93,11 +93,15 @@ export function ToolsSidebar({ collapsed = false, onToggle }: ToolsSidebarProps)
       <nav className="flex-1 overflow-y-auto px-3 py-3">
         <ul className="space-y-1">
           {filteredNavigation.map((item) => {
-            const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+            // For Tools Dashboard (/tools), only match exact path
+            // For other routes, match if path starts with the href
+            const isActive = item.href === "/tools" 
+              ? pathname === item.href 
+              : pathname === item.href || pathname.startsWith(item.href + "/");
             const Icon = item.icon as any;
             return (
               <li key={item.name} className="relative">
-                <Link href={item.href} className={cn("group flex items-center rounded-xl px-2.5 py-2 text-sm transition-all", isActive ? "bg-gradient-to-r from-blue-50 to-lime-50 text-zinc-900 ring-1 ring-inset ring-blue-200/50" : "text-zinc-700 hover:bg-zinc-50")}>
+                <Link href={item.href} className={cn("group flex items-center rounded-xl px-2.5 py-2 text-sm transition-all", isActive ? " from-blue-50 to-lime-50 text-zinc-900 ring-1 ring-inset ring-blue-200/50" : "text-zinc-700 hover:bg-zinc-50")}>
                   <Icon className={cn("h-5 w-5 flex-shrink-0", isActive ? "text-blue-600" : "text-zinc-500 group-hover:text-zinc-700")} />
                   {!collapsed && <span className="ml-3 font-light tracking-wide">{item.name}</span>}
                 </Link>

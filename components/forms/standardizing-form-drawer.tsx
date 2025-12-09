@@ -47,7 +47,7 @@ import { generateBMTFormId } from "@/lib/utils/form-id-generator"
 
 // Process Overview Component
 const ProcessOverview = () => (
-  <div className="mb-8 p-6 bg-gradient-to-r from-orange-50 to-red-50 rounded-lg">
+  <div className="mb-8 p-6  from-orange-50 to-red-50 rounded-lg">
     <h3 className="text-lg font-light text-gray-900 mb-4">Process Overview</h3>
     <div className="flex items-center justify-between mb-4">
       <div className="flex items-center space-x-2">
@@ -63,7 +63,7 @@ const ProcessOverview = () => (
         </div>
         <div className="flex items-center space-x-2">
           <span className="text-sm font-medium text-orange-600">Standardizing</span>
-          <div className="bg-gradient-to-r from-orange-500 to-red-600 text-white px-2 py-1 rounded-full text-xs font-medium shadow-lg">
+          <div className="  to-red-600 text-white px-2 py-1 rounded-full text-xs font-medium shadow-lg">
             Current Step
           </div>
         </div>
@@ -318,11 +318,11 @@ export function StandardizingFormDrawer({
                         </div>
                       )}
                       <div className="flex items-center gap-2">
-                        <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={() => setSignatureOpen(true)}>
+                        <Button type="button"  size="sm" className="rounded-full" onClick={() => setSignatureOpen(true)}>
                           Add Signature
                         </Button>
                         {field.value && (
-                          <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={() => setSignatureViewOpen(true)}>
+                          <Button type="button"  size="sm" className="rounded-full" onClick={() => setSignatureViewOpen(true)}>
                             View Signature
                           </Button>
                         )}
@@ -347,7 +347,7 @@ export function StandardizingFormDrawer({
               <p className="text-sm font-light text-gray-600 mt-2">Enter the skim milk quantity and resulting fat content</p>
             </div>
             
-            <div className="border border-gray-200 rounded-lg bg-white border-l-4 border-l-blue-500 p-4">
+            <div className="border border-gray-200 rounded-lg bg-white border-l-4 border-l-[#006BC4] p-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="skim.quantity">Quantity (L) *</Label>

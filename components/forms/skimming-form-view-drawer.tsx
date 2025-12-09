@@ -324,7 +324,7 @@ export function SkimmingFormViewDrawer({
         {/* Action Buttons */}
         <div className="p-6 border-t bg-gray-50">
           <div className="flex justify-end space-x-3">
-            <Button variant="outline" onClick={() => onOpenChange(false)}>
+            <Button  onClick={() => onOpenChange(false)}>
               Close
             </Button>
             {onEdit && (

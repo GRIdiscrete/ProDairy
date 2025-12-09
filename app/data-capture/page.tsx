@@ -69,15 +69,15 @@ function DataCaptureDashboardContent() {
                   <Kanban className="h-3 w-3 mr-1" />
                   Kanban View
                 </Badge>
-                <Button
-                  variant="outline"
+                {/* <Button
+                  
                   size="sm"
                   onClick={() => setShowKanban(false)}
                   className="font-light"
                 >
                   <Settings className="h-4 w-4 mr-1" />
                   Settings
-                </Button>
+                </Button> */}
               </div>
             </div>
 

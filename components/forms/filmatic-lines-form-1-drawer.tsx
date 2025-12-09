@@ -45,7 +45,7 @@ const NIGHT_SHIFT_TIMES = [
 
 // Process Overview Component (copied style from Form 2)
 const ProcessOverview = () => (
-  <div className="mb-8 p-6 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg">
+  <div className="mb-8 p-6  from-blue-50 to-cyan-50 rounded-lg">
     <h3 className="text-lg font-light text-gray-900 mb-4">Process Overview</h3>
     <div className="flex items-center justify-between mb-4">
       <div className="flex items-center space-x-2">
@@ -61,7 +61,7 @@ const ProcessOverview = () => (
         </div>
         <div className="flex items-center space-x-2">
           <span className="text-sm font-medium text-blue-600">Filmatic Lines</span>
-          <div className="bg-gradient-to-r from-blue-500 to-cyan-600 text-white px-2 py-1 rounded-full text-xs font-medium shadow-lg">
+          <div className=" bg-gray-100 text-gray-600 px-2 py-1 rounded-full text-xs font-medium shadow-lg">
             Current Step
           </div>
         </div>
@@ -992,7 +992,7 @@ export function FilmaticLinesForm1Drawer({
                     <Label>Production Details</Label>
                     <Button
                       type="button"
-                      variant="outline"
+                      
                       size="sm"
                       onClick={() => append({
                         time: "",
@@ -1114,7 +1114,7 @@ export function FilmaticLinesForm1Drawer({
 
             {/* Navigation */}
             <div className="flex justify-between items-center p-6 border-t">
-              <Button type="button" variant="outline" onClick={handleBack} disabled={currentStep === 1} className="flex items-center space-x-2">
+              <Button type="button"  onClick={handleBack} disabled={currentStep === 1} className="flex items-center space-x-2">
                 <ChevronLeft className="w-4 h-4" /><span>Back</span>
               </Button>
 
@@ -1125,11 +1125,11 @@ export function FilmaticLinesForm1Drawer({
               </div>
 
               {currentStep < 4 ? (
-                <Button type="button" onClick={handleNext} className="flex items-center space-x-2 bg-gradient-to-r from-blue-500 to-cyan-500">
+                <Button type="button" onClick={handleNext} className="flex items-center space-x-2  from-blue-500 to-cyan-500">
                   <span>Next</span><ChevronRight className="w-4 h-4" />
                 </Button>
               ) : (
-                <Button type="button" onClick={shiftDetailsForm.handleSubmit(handleFinalSubmit)} disabled={loading.create} className="flex items-center space-x-2 bg-gradient-to-r from-green-500 to-emerald-500">
+                <Button type="button" onClick={shiftDetailsForm.handleSubmit(handleFinalSubmit)} disabled={loading.create} className="flex items-center space-x-2  from-green-500 to-emerald-500">
                   {loading.create ? "Saving..." : (mode === "edit" ? "Update Form" : "Create Form")}
                 </Button>
               )}

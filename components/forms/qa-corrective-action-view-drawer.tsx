@@ -90,7 +90,7 @@ export function QACorrectiveActionViewDrawer({
 
         <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-white">
           {/* Process Overview */}
-          <div className="mb-8 p-6 bg-gradient-to-r from-red-50 to-orange-50 rounded-lg">
+          <div className="mb-8 p-6  from-red-50 to-orange-50 rounded-lg">
             <h3 className="text-lg font-light text-gray-900 mb-4">Process Overview</h3>
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center space-x-2">
@@ -106,7 +106,7 @@ export function QACorrectiveActionViewDrawer({
                 </div>
                 <div className="flex items-center space-x-2">
                   <span className="text-sm font-medium text-red-600">QA Corrective Action</span>
-                  <div className="bg-gradient-to-r from-red-500 to-orange-600 text-white px-2 py-1 rounded-full text-xs font-medium shadow-lg">
+                  <div className=" bg-gray-100 text-gray-600 px-2 py-1 rounded-full text-xs font-medium shadow-lg">
                     Current Step
                   </div>
                 </div>
@@ -126,8 +126,8 @@ export function QACorrectiveActionViewDrawer({
             <CardHeader className="pb-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-red-500 to-orange-600 flex items-center justify-center">
-                    <AlertTriangle className="w-5 h-5 text-white" />
+                  <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center">
+                    <AlertTriangle className="w-5 h-5 text-gray-600" />
                   </div>
                   <div>
                     <CardTitle className="text-lg font-light">QA Corrective Action</CardTitle>
@@ -143,9 +143,9 @@ export function QACorrectiveActionViewDrawer({
                 </div>
                 <Button
                   onClick={onEdit}
-                  variant="outline"
+                  
                   size="sm"
-                  className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 rounded-full"
+                  className=" bg-[#006BC4] text-white rounded-full"
                 >
                   <Edit className="w-4 h-4 mr-2" />
                   Edit
@@ -301,7 +301,7 @@ export function QACorrectiveActionViewDrawer({
           )}
 
           {/* Summary */}
-          <Card className="bg-gradient-to-r from-gray-50 to-red-50 border-l-4 border-l-red-500">
+          <Card className=" from-gray-50 to-red-50 border-l-4 border-l-red-500">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -310,7 +310,7 @@ export function QACorrectiveActionViewDrawer({
                 </div>
                 <div className="text-right">
                   <h4 className="text-sm font-light text-gray-600">Status</h4>
-                  <Badge className="bg-gradient-to-r from-red-500 to-orange-500 text-white">
+                  <Badge className=" from-red-500 to-orange-500 text-white">
                     {details ? 'Completed' : 'Pending Details'}
                   </Badge>
                 </div>

@@ -57,7 +57,7 @@ export function PMSpliceViewDrawer({ isOpen, onClose, pmSplice }: PMSpliceViewDr
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-500">Lane Number</label>
-                  <Badge variant="outline">{pmSplice.lane_number}</Badge>
+                  <Badge >{pmSplice.lane_number}</Badge>
                 </div>
               </div>
 

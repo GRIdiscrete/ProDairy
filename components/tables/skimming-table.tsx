@@ -35,18 +35,18 @@ export function SkimmingTable({ forms, onView, onEdit, onDelete, operationLoadin
             </div>
             <div className="flex space-x-2">
               <LoadingButton
-                variant="outline"
+                
                 size="sm"
                 onClick={() => onView(form)}
-                className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full"
+                className="bg-[#006BC4] text-white rounded-full"
               >
                 <Eye className="w-4 h-4" />
               </LoadingButton>
               <LoadingButton
-                variant="outline"
+                
                 size="sm"
                 onClick={() => onEdit(form)}
-                className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 rounded-full"
+                className="bg-[#A0CF06] text-[#211D1E] rounded-full"
               >
                 <Edit className="w-4 h-4" />
               </LoadingButton>

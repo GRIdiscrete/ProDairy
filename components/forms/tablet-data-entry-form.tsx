@@ -52,7 +52,7 @@ export function TabletDataEntryForm({
         transition={{ duration: 0.3 }}
       >
         <Card className="shadow-lg">
-          <CardHeader className="bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-t-lg">
+          <CardHeader className=" from-blue-500 to-blue-600 text-white rounded-t-lg">
             <CardTitle className="text-2xl font-bold">{title}</CardTitle>
           </CardHeader>
           <CardContent className="p-6">
@@ -67,7 +67,7 @@ export function TabletDataEntryForm({
               {onCancel && (
                 <Button
                   onClick={onCancel}
-                  variant="outline"
+                  
                   size="lg"
                   className="min-w-[120px] h-12 text-base"
                 >

@@ -98,7 +98,7 @@ export default function TabletDashboard() {
               <Button
                 asChild
                 className="h-20 flex flex-col items-center space-y-2 bg-white hover:bg-gray-50 border border-gray-200 shadow-sm"
-                variant="outline"
+                
               >
                 <a href={action.href}>
                   <div className={`p-2 rounded-lg ${action.color}`}>

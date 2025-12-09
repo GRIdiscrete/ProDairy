@@ -388,8 +388,8 @@ export function DriverFormDrawer({
           <SheetHeader className={isMobile || isTablet ? "p-6 pb-0 bg-white" : "mb-6"}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center">
-                  <Truck className="w-4 h-4 text-white" />
+                <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
+                  <Truck className="w-4 h-4 text-gray-600" />
                 </div>
                 <div>
                   <SheetTitle className="text-lg font-light m-0">
@@ -428,7 +428,7 @@ export function DriverFormDrawer({
                 <Button
                   type="button"
                   size="sm"
-                  variant="outline"
+                  
                   onClick={async () => {
                     console.log('Manual data refresh triggered')
                     
@@ -616,7 +616,7 @@ export function DriverFormDrawer({
                       onClick={addCollectedProduct}
                       size="sm"
                       disabled={isSubmitting}
-                      className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full"
+                      className=" bg-[#006BC4] text-white rounded-full"
                     >
                       <Plus className="w-4 h-4 mr-2" />
                       Add Product
@@ -799,7 +799,7 @@ export function DriverFormDrawer({
                                         </div>
                                       )}
                                       <div className="flex items-center gap-2">
-                                        <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={() => {
+                                        <Button type="button"  size="sm" className="rounded-full" onClick={() => {
                                           setCurrentSignatureIndex(index)
                                           setCurrentSignatureType('supplier')
                                           setSupplierSignatureOpen(true)
@@ -807,7 +807,7 @@ export function DriverFormDrawer({
                                           Add Signature
                                         </Button>
                                         {field.value && (
-                                          <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={() => {
+                                          <Button type="button"  size="sm" className="rounded-full" onClick={() => {
                                             setCurrentSignatureIndex(index)
                                             setCurrentSignatureType('supplier')
                                             setSupplierSignatureViewOpen(true)
@@ -844,7 +844,7 @@ export function DriverFormDrawer({
                                         </div>
                                       )}
                                       <div className="flex items-center gap-2">
-                                        <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={() => {
+                                        <Button type="button"  size="sm" className="rounded-full" onClick={() => {
                                           setCurrentSignatureIndex(index)
                                           setCurrentSignatureType('driver')
                                           setDriverSignatureOpen(true)
@@ -852,7 +852,7 @@ export function DriverFormDrawer({
                                           Add Signature
                                         </Button>
                                         {field.value && (
-                                          <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={() => {
+                                          <Button type="button"  size="sm" className="rounded-full" onClick={() => {
                                             setCurrentSignatureIndex(index)
                                             setCurrentSignatureType('driver')
                                             setDriverSignatureViewOpen(true)
@@ -933,7 +933,7 @@ export function DriverFormDrawer({
               <div className="flex justify-end space-x-3 pt-4 m-6">
                 <Button
                   type="button"
-                  variant="outline"
+                  
                   onClick={() => onOpenChange(false)}
                   disabled={isLoading}
                   className="bg-white border-gray-200 rounded-full font-light"
@@ -943,7 +943,7 @@ export function DriverFormDrawer({
                 <LoadingButton
                   type="submit"
                   loading={isLoading}
-                  className="bg-gradient-to-r from-gray-500 to-gray-700 hover:from-gray-600 hover:to-gray-800 text-white border-0 rounded-full px-6 py-2 font-light"
+                  className=" bg-[#006BC4] text-white rounded-full px-6 py-2 font-light"
                 >
                   {mode === "create" ? "Create Form" : "Save Changes"}
                 </LoadingButton>

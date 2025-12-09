@@ -531,7 +531,7 @@ export function GeneralLabTestDrawer({ open, onOpenChange, test, mode }: { open:
             </div>
 
             <div className="flex justify-end space-x-2 pt-4">
-              <LoadingButton type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              <LoadingButton type="button"  onClick={() => onOpenChange(false)}>
                 Cancel
               </LoadingButton>
               <LoadingButton 

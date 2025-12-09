@@ -134,8 +134,8 @@ export function DriverFormsTable({ onEdit, onView }: DriverFormsTableProps) {
                     <TableRow key={form.id}>
                       <TableCell className="font-medium">
                         <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center">
-                            <Truck className="w-4 h-4 text-white" />
+                          <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
+                            <Truck className="w-4 h-4 text-gray-600" />
                           </div>
                           <div>
                             <div className="font-medium text-sm">{formId}</div>
@@ -160,7 +160,7 @@ export function DriverFormsTable({ onEdit, onView }: DriverFormsTableProps) {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline" className="text-xs">
+                        <Badge  className="text-xs">
                           {productsCount} {productsCount === 1 ? 'Product' : 'Products'}
                         </Badge>
                       </TableCell>
@@ -195,7 +195,7 @@ export function DriverFormsTable({ onEdit, onView }: DriverFormsTableProps) {
                         <div className="flex items-center justify-end gap-2">
                           {onView && (
                             <Button
-                              variant="outline"
+                              
                               size="sm"
                               onClick={() => onView(form)}
                               className="rounded-full"
@@ -205,7 +205,7 @@ export function DriverFormsTable({ onEdit, onView }: DriverFormsTableProps) {
                           )}
                           {onEdit && (
                             <Button
-                              variant="outline"
+                              
                               size="sm"
                               onClick={() => onEdit(form)}
                               className="rounded-full"

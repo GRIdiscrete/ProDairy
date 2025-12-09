@@ -9,8 +9,10 @@ import { ClipboardList, Package, Calendar, User, Edit, Trash2 } from "lucide-rea
 import { toast } from "sonner"
 import { useAppDispatch, useAppSelector } from "@/lib/store"
 import { deleteProductionPlan, fetchProductionPlans } from "@/lib/store/slices/productionPlanSlice"
+import { fetchUsers } from "@/lib/store/slices/usersSlice"
 import { LoadingButton } from "@/components/ui/loading-button"
 import type { ProductionPlan } from "@/lib/types"
+import { UserAvatar } from "@/components/users/user-avatar"
 
 interface ProductionPlanViewDrawerProps {
   open: boolean
@@ -29,6 +31,13 @@ export function ProductionPlanViewDrawer({
   const dispatch = useAppDispatch()
 
   const { operationLoading } = useAppSelector((state) => state.productionPlan)
+  const { items: users } = useAppSelector((state) => state.users)
+
+  useEffect(() => {
+    if (open) {
+      dispatch(fetchUsers({}))
+    }
+  }, [dispatch, open])
 
   const handleDelete = async () => {
     if (!productionPlan) return
@@ -86,8 +95,8 @@ export function ProductionPlanViewDrawer({
             <div className="p-4 pb-0">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-gray-500 to-gray-700 flex items-center justify-center">
-                    <ClipboardList className="w-4 h-4 text-white" />
+                  <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
+                    <ClipboardList className="w-4 h-4 text-gray-600" />
                   </div>
                   <div className="text-base font-light">{productionPlan.name}</div>
                   <Badge className={getStatusColor(productionPlan.status)}>
@@ -97,11 +106,11 @@ export function ProductionPlanViewDrawer({
                 <div className="flex space-x-2">
                   {onEdit && (
                     <Button
-                      variant="outline"
+                      
                       size="sm"
                       onClick={handleEdit}
                       disabled={isLoading}
-                      className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 rounded-full"
+                      className=" bg-[#006BC4] text-white rounded-full"
                     >
                       <Edit className="w-4 h-4 mr-2" />
                       Edit
@@ -132,10 +141,21 @@ export function ProductionPlanViewDrawer({
               <div className="space-y-1">
                 <div className="text-xs text-gray-500 flex items-center gap-1"><User className="h-3 w-3" />Supervisor</div>
                 <div className="text-sm font-light">
-                  {productionPlan.production_plan_supervisor_fkey ? 
-                    `${productionPlan.production_plan_supervisor_fkey.first_name} ${productionPlan.production_plan_supervisor_fkey.last_name}` :
-                    productionPlan.supervisor
-                  }
+                  {(() => {
+                    const supervisor = users.find(user => user.id === productionPlan.supervisor)
+                    return supervisor ? (
+                      <UserAvatar 
+                        user={supervisor} 
+                        size="sm" 
+                        showName={true} 
+                        showDropdown={true}
+                      />
+                    ) : (
+                      productionPlan.production_plan_supervisor_fkey ? 
+                        `${productionPlan.production_plan_supervisor_fkey.first_name} ${productionPlan.production_plan_supervisor_fkey.last_name}` :
+                        productionPlan.supervisor
+                    )
+                  })()}
                 </div>
               </div>
               <div className="space-y-1">
@@ -172,8 +192,8 @@ export function ProductionPlanViewDrawer({
                   {productionPlan.raw_products.map((material, index) => (
                     <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
                       <div className="flex items-center space-x-3">
-                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center">
-                          <Package className="w-4 h-4 text-white" />
+                        <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
+                          <Package className="w-4 h-4 text-gray-600" />
                         </div>
                         <div>
                           <p className="font-light">{material.raw_material_name}</p>

@@ -169,8 +169,7 @@ export function ISTControlFormDrawer({ open, onOpenChange, form, mode }: ISTCont
     setLoadingUsers(true)
     try {
       const response = await usersApi.getUsers({
-        filters: { search: searchTerm },
-        pagination: { page: 1, limit: 20 }
+        filters: { search: searchTerm }
       })
       
       const userOptions: SearchableSelectOption[] = response.data?.map((user) => ({
@@ -202,7 +201,7 @@ export function ISTControlFormDrawer({ open, onOpenChange, form, mode }: ISTCont
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="tablet-sheet-full p-0 bg-white">
-        <SheetHeader>
+        <SheetHeader className="p-6 pb-0">
           <SheetTitle>
             {mode === "create" ? "Create IST Control Form" : "Edit IST Control Form"}
           </SheetTitle>
@@ -214,7 +213,7 @@ export function ISTControlFormDrawer({ open, onOpenChange, form, mode }: ISTCont
           </SheetDescription>
         </SheetHeader>
         
-        <div className="mt-6 p-6 bg-white">
+        <div className="flex-1 overflow-y-auto p-6">
           <form onSubmit={handleSubmit(onSubmit, onInvalid)} className="space-y-6">
             {/* Item Information */}
             <div className="space-y-4">
@@ -393,7 +392,7 @@ export function ISTControlFormDrawer({ open, onOpenChange, form, mode }: ISTCont
             </div>
 
             <div className="flex justify-end space-x-2 pt-4">
-              <LoadingButton type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              <LoadingButton type="button"  onClick={() => onOpenChange(false)}>
                 Cancel
               </LoadingButton>
               <LoadingButton 

@@ -61,7 +61,7 @@ export function UserAvatar({
 
   const UserInfo = ({ showChevron = false }) => (
     <div className="flex items-center space-x-3">
-      <div className={`${sizeClasses[size]} rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-medium flex-shrink-0`}>
+      <div className={`${sizeClasses[size]} rounded-full bg-gray-100 flex items-center justify-center text-gray-600 font-medium flex-shrink-0`}>
         {initials || <User className="w-4 h-4" />}
       </div>
       
@@ -100,7 +100,7 @@ export function UserAvatar({
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-72" align="start">
         <DropdownMenuLabel className="flex items-center space-x-2">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-medium text-sm">
+          <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 font-medium text-sm">
             {initials || <User className="w-4 h-4" />}
           </div>
           <div>

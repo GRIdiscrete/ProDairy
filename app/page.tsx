@@ -94,7 +94,7 @@ export default function HomePage() {
                 onClick={() => router.push('/drivers')}
               >
                 <CardHeader className="text-center">
-                  <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                  <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br  to-red-600 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                     <Truck className="h-8 w-8 text-white" />
                   </div>
                   <CardTitle className="text-xl">🚚 Drivers UI</CardTitle>

@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { CopyButton } from "@/components/ui/copy-button"
-import { Eye, Edit, Trash2, Beaker, FileText, TrendingUp, User, Clock, Thermometer, Gauge } from "lucide-react"
+import { Eye, Edit, Trash2, Beaker, FileText, TrendingUp, User, Clock, Thermometer, Gauge, Workflow } from "lucide-react"
 import { useAppDispatch, useAppSelector } from "@/lib/store"
 import { fetchSteriMilkProcessLogs, deleteSteriMilkProcessLog, clearError } from "@/lib/store/slices/steriMilkProcessLogSlice"
 import { TableFilters } from "@/lib/types"
@@ -150,8 +150,8 @@ export default function ProcessLogPage() {
         const log = row.original
         return (
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center">
-              <Beaker className="w-4 h-4 text-white" />
+            <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
+              <Workflow className="w-4 h-4 text-gray-600" />
             </div>
             <div>
               <div className="flex items-center space-x-2">
@@ -237,28 +237,28 @@ export default function ProcessLogPage() {
         return (
           <div className="flex space-x-2">
             <LoadingButton
-              variant="outline"
+              
               size="sm"
               onClick={() => handleView(log)}
-              className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full"
+              className="bg-[#006BC4] text-white border-0 rounded-full"
             >
               <Eye className="w-4 h-4" />
             </LoadingButton>
             <LoadingButton
-              variant="outline"
+              
               size="sm"
               onClick={() => handleEdit(log)}
-              className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 rounded-full"
+              className="bg-[#A0CF06] text-[#211D1E] border-0 rounded-full"
             >
               <Edit className="w-4 h-4" />
             </LoadingButton>
             <LoadingButton
+            className=" text-white rounded-full"
               variant="destructive"
               size="sm"
               onClick={() => handleDelete(log)}
               loading={loading.delete}
               disabled={loading.delete}
-              className="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white border-0 rounded-full"
             >
               <Trash2 className="w-4 h-4" />
             </LoadingButton>
@@ -297,7 +297,7 @@ export default function ProcessLogPage() {
           </div>
           <LoadingButton
             onClick={handleAdd}
-            className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full px-6 py-2 font-light"
+            className="px-6 py-2 font-light"
           >
             Add Process Log
           </LoadingButton>
@@ -306,20 +306,20 @@ export default function ProcessLogPage() {
         {loading.fetch ? (
           <ContentSkeleton sections={1} cardsPerSection={4} />
         ) : latest ? (
-          <div className="border border-gray-200 rounded-lg bg-white border-l-4 border-l-blue-500">
+          <div className="border border-gray-200 rounded-lg bg-white border-l-4 border-l-[#006BC4]">
             <div className="p-6 pb-0">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2 text-lg font-light">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center">
-                    <FileText className="h-4 w-4 text-white" />
+                  <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+                    <Workflow className="h-4 w-4 text-gray-600" />
                   </div>
                   <span>Current Steri Milk Process Log</span>
-                  <Badge className="bg-gradient-to-r from-blue-100 to-cyan-100 text-blue-800 font-light">Latest</Badge>
+                  <Badge className=" from-blue-100 to-cyan-100 text-white font-light">Latest</Badge>
                 </div>
                 <LoadingButton
-                  variant="outline"
+                  
                   onClick={() => handleView(latest)}
-                  className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full px-4 py-2 font-light text-sm"
+                  className=" from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full px-4 py-2 font-light text-sm"
                 >
                   <Eye className="mr-2 h-4 w-4" />
                   View Details
@@ -405,7 +405,7 @@ export default function ProcessLogPage() {
                     </div>
                   </div>
 
-                  <div className="p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg">
+                  <div className="p-4  from-blue-50 to-cyan-50 rounded-lg">
                     <div className="flex items-center space-x-2 mb-3">
                       <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
                         <Clock className="h-4 w-4 text-blue-600" />
