@@ -237,7 +237,7 @@ export default function ProcessLogPage() {
         return (
           <div className="flex space-x-2">
             <LoadingButton
-              
+
               size="sm"
               onClick={() => handleView(log)}
               className="bg-[#006BC4] text-white border-0 rounded-full"
@@ -245,7 +245,7 @@ export default function ProcessLogPage() {
               <Eye className="w-4 h-4" />
             </LoadingButton>
             <LoadingButton
-              
+
               size="sm"
               onClick={() => handleEdit(log)}
               className="bg-[#A0CF06] text-[#211D1E] border-0 rounded-full"
@@ -253,7 +253,7 @@ export default function ProcessLogPage() {
               <Edit className="w-4 h-4" />
             </LoadingButton>
             <LoadingButton
-            className=" text-white rounded-full"
+              className=" text-white rounded-full"
               variant="destructive"
               size="sm"
               onClick={() => handleDelete(log)}
@@ -317,7 +317,7 @@ export default function ProcessLogPage() {
                   <Badge className=" from-blue-100 to-cyan-100 text-white font-light">Latest</Badge>
                 </div>
                 <LoadingButton
-                  
+
                   onClick={() => handleView(latest)}
                   className=" from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full px-4 py-2 font-light text-sm"
                 >
