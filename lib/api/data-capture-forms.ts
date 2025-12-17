@@ -1446,3 +1446,10 @@ export const updateQACorrectiveAction = async (payload: Partial<QACorrectiveActi
   })
   return res.data
 }
+
+export const deleteQACorrectiveAction = async (id: string) => {
+  const res = await apiRequest<{ statusCode:number; message:string; data: null }>(`/qa-corrective-action/${id}`, {
+    method: "DELETE"
+  })
+  return res.data
+}

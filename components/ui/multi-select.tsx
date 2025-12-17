@@ -72,7 +72,11 @@ export function MultiSelect({
             
             role="combobox"
             aria-expanded={open}
-            className="w-full justify-between h-auto min-h-[40px] p-2"
+            className={cn(
+              "w-full justify-between h-12 bg-transparent hover:bg-transparent border border-gray-300 hover:border-gray-400 focus:border-[#006BC4] shadow-none hover:shadow-none focus:shadow-none text-gray-900",
+              !selectedOptions.length && "text-muted-foreground",
+              className
+            )}
             disabled={disabled || loading}
           >
             <div className="flex flex-wrap gap-1 flex-1">
