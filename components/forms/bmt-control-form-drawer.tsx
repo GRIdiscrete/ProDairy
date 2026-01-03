@@ -36,12 +36,23 @@ const sourceSiloDetailSchema = yup.object({
   product: yup.string().required("Product is required"),
 })
 
+const destinationSiloDetailSchema = yup.object({
+  id: yup.string().required(),
+  name: yup.string().required(),
+  flow_meter_start: yup.string().required("Start time is required"),
+  flow_meter_start_reading: yup.number().required("Start reading is required"),
+  flow_meter_end: yup.string().required("End time is required"),
+  flow_meter_end_reading: yup.number().required("End reading is required"),
+  quantity_received: yup.number().required("Quantity received is required"),
+  product: yup.string().required("Product is required"),
+})
+
 const bmtControlFormSchema = yup.object({
   source_silo_details: yup.array().of(sourceSiloDetailSchema).min(1, "At least one source silo is required").required("Source silo details are required"),
   movement_start: yup.string().required("Movement start is required"),
   movement_end: yup.string().required("Movement end is required"),
   destination_silo_id: yup.string().required("Destination silo is required"),
-  destination_silo_details: sourceSiloDetailSchema.required("Destination silo details are required"),
+  destination_silo_details: destinationSiloDetailSchema.required("Destination silo details are required"),
   dispatch_operator_id: yup.string().required("Dispatch operator is required"),
   dispatch_operator_signature: yup.string().required("Dispatch operator signature is required"),
   receiver_operator_id: yup.string().required("Receiver operator is required"),
@@ -53,6 +64,7 @@ const bmtControlFormSchema = yup.object({
 })
 
 type SourceSiloDetail = yup.InferType<typeof sourceSiloDetailSchema>
+type DestinationSiloDetail = yup.InferType<typeof destinationSiloDetailSchema>
 type BMTControlFormData = yup.InferType<typeof bmtControlFormSchema>
 
 interface BMTControlFormDrawerProps {
@@ -196,7 +208,7 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
   }
 
   // --- Handler for updating destination silo detail ---
-  const updateDestinationSiloDetail = (field: keyof SourceSiloDetail, value: any) => {
+  const updateDestinationSiloDetail = (field: keyof DestinationSiloDetail, value: any) => {
     setValue("destination_silo_details", { ...watch("destination_silo_details"), [field]: value })
   }
 
@@ -225,7 +237,7 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
           flow_meter_start_reading: (form as any).destination_silo.flow_meter_start_reading ?? 0,
           flow_meter_end: (form as any).destination_silo.flow_meter_end || "",
           flow_meter_end_reading: (form as any).destination_silo.flow_meter_end_reading ?? 0,
-          source_silo_quantity_requested: (form as any).destination_silo.source_silo_quantity_requested ?? 0,
+          quantity_received: (form as any).destination_silo.quantity_received ?? 0,
           product: (form as any).destination_silo.product ?? "",
         }
         : undefined
@@ -321,7 +333,7 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
       }
 
       // Destination silo details
-      let destinationSiloDetails: SourceSiloDetail | undefined = undefined
+      let destinationSiloDetails: DestinationSiloDetail | undefined = undefined
       if (!(form as any).destination_silo && destinationSiloId) {
         const silo = silos.find(s => s.value === destinationSiloId)
         if (silo) {
@@ -332,7 +344,7 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
             flow_meter_start_reading: 0,
             flow_meter_end: "",
             flow_meter_end_reading: 0,
-            source_silo_quantity_requested: 0,
+            quantity_received: 0,
             product: "",
           }
         }
@@ -344,7 +356,7 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
           flow_meter_start_reading: (form as any).destination_silo.flow_meter_start_reading ?? 0,
           flow_meter_end: (form as any).destination_silo.flow_meter_end || "",
           flow_meter_end_reading: (form as any).destination_silo.flow_meter_end_reading ?? 0,
-          source_silo_quantity_requested: (form as any).destination_silo.source_silo_quantity_requested ?? 0,
+          quantity_received: (form as any).destination_silo.quantity_received ?? 0,
           product: (form as any).destination_silo.product ?? "",
         }
       }
@@ -442,7 +454,7 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
               flow_meter_end: toIsoDateTime(data.destination_silo_details.flow_meter_end || null),
               flow_meter_start_reading: Number(data.destination_silo_details.flow_meter_start_reading || 0),
               flow_meter_end_reading: Number(data.destination_silo_details.flow_meter_end_reading || 0),
-              source_silo_quantity_requested: Number(data.destination_silo_details.source_silo_quantity_requested || 0),
+              quantity_received: Number(data.destination_silo_details.quantity_received || 0),
               product: data.destination_silo_details.product,
             }
           : undefined,
@@ -509,22 +521,24 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
     product: "",
   });
 
+  const getEmptyDestinationSiloDetails = (id: string, name: string) => ({
+    id,
+    name,
+    flow_meter_start: "",
+    flow_meter_start_reading: 0,
+    flow_meter_end: "",
+    flow_meter_end_reading: 0,
+    quantity_received: 0,
+    product: "",
+  });
+
   // Update destination silo selection to properly prefill details
   const handleDestinationSiloSelection = (val: string) => {
     const silo = silos.find(s => s.value === val);
     if (silo) {
       // Set both ID and details
       setValue("destination_silo_id", val);
-      setValue("destination_silo_details", {
-        id: silo.value,
-        name: silo.label,
-        flow_meter_start: "",
-        flow_meter_start_reading: 0,
-        flow_meter_end: "",
-        flow_meter_end_reading: 0,
-        source_silo_quantity_requested: 0,
-        product: "",
-      } as any);
+      setValue("destination_silo_details", getEmptyDestinationSiloDetails(silo.value, silo.label));
     } else {
       setValue("destination_silo_id", "");
       setValue("destination_silo_details", {} as any);
@@ -840,12 +854,12 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
                         />
                       </div>
                       <div>
-                        <Label>Quantity Requested</Label>
+                        <Label>Quantity Received</Label>
                         <Input
                           type="number"
-                          value={destinationSiloDetails.source_silo_quantity_requested}
-                          onChange={e => updateDestinationSiloDetail("source_silo_quantity_requested", e.target.value)}
-                          placeholder="Enter quantity requested"
+                          value={destinationSiloDetails.quantity_received}
+                          onChange={e => updateDestinationSiloDetail("quantity_received", e.target.value)}
+                          placeholder="Enter quantity received"
                           className="rounded-full border-gray-200"
                         />
                       </div>
