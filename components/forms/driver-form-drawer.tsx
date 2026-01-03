@@ -50,6 +50,7 @@ const driverFormSchema = yup.object({
       unit_of_measure: yup.string().required("Unit of measure is required"),
       e_sign_supplier: yup.string().required("Supplier signature is required"),
       e_sign_driver: yup.string().required("Driver signature is required"),
+      tanker_compartment: yup.number().positive("Compartment must be positive").required("Compartment is required"),
     })
   ),
 })
@@ -205,7 +206,7 @@ export function DriverFormDrawer({
       dispatch(fetchTankers({})).catch((error) => {
         console.log('API fetch failed, using localStorage', error)
       })
-      
+
       // Also load localStorage data as backup
       setOfflineData({
         drivers: LocalStorageService.getDrivers(),
@@ -219,11 +220,11 @@ export function DriverFormDrawer({
   // Also load data when component mounts, regardless of drawer state
   useEffect(() => {
     // Try API first
-    dispatch(fetchRawMaterials({})).catch(() => {})
-    dispatch(fetchUsers({})).catch(() => {})
-    dispatch(fetchSuppliers({})).catch(() => {})
-    dispatch(fetchTankers({})).catch(() => {})
-    
+    dispatch(fetchRawMaterials({})).catch(() => { })
+    dispatch(fetchUsers({})).catch(() => { })
+    dispatch(fetchSuppliers({})).catch(() => { })
+    dispatch(fetchTankers({})).catch(() => { })
+
     // Load localStorage as backup
     setOfflineData({
       drivers: LocalStorageService.getDrivers(),
@@ -251,7 +252,7 @@ export function DriverFormDrawer({
       const offlineMaterials = LocalStorageService.getRawMaterials()
       const offlineSuppliers = LocalStorageService.getSuppliers()
       const offlineTankers = LocalStorageService.getTankers()
-      
+
       setOfflineData({
         drivers: offlineDrivers,
         rawMaterials: offlineMaterials,
@@ -317,7 +318,7 @@ export function DriverFormDrawer({
         dispatch(fetchDriverForms({}))
       } catch (apiError: any) {
         console.error('API submission failed, saving offline:', apiError)
-        
+
         // Fallback to offline storage
         if (mode === "create") {
           const offlineFormData = {
@@ -372,6 +373,7 @@ export function DriverFormDrawer({
       unit_of_measure: "Kilograms",
       e_sign_supplier: "",
       e_sign_driver: "",
+      tanker_compartment: 1,
     })
   }
 
@@ -428,10 +430,10 @@ export function DriverFormDrawer({
                 <Button
                   type="button"
                   size="sm"
-                  
+
                   onClick={async () => {
                     console.log('Manual data refresh triggered')
-                    
+
                     // Try API first
                     try {
                       console.log('Attempting to fetch from API...')
@@ -444,27 +446,27 @@ export function DriverFormDrawer({
                       toast.success('Data refreshed from server')
                     } catch (error) {
                       console.log('API fetch failed, loading from localStorage...', error)
-                      
+
                       // Fallback to localStorage
                       const offlineDrivers = LocalStorageService.getDrivers()
                       const offlineMaterials = LocalStorageService.getRawMaterials()
                       const offlineSuppliers = LocalStorageService.getSuppliers()
                       const offlineTankers = LocalStorageService.getTankers()
-                      
+
                       console.log('Loaded offline data:', {
                         driversCount: offlineDrivers.length,
                         materialsCount: offlineMaterials.length,
                         suppliersCount: offlineSuppliers.length,
                         tankersCount: offlineTankers.length
                       })
-                      
+
                       setOfflineData({
                         drivers: offlineDrivers,
                         rawMaterials: offlineMaterials,
                         suppliers: offlineSuppliers,
                         tankers: offlineTankers
                       })
-                      
+
                       toast.info('Using cached data - connection unavailable')
                     }
                   }}
@@ -783,6 +785,57 @@ export function DriverFormDrawer({
                               </div>
                             </div>
 
+                            {/* Tanker Compartment Selector */}
+                            <div className="space-y-2">
+                              <Label className="font-light">Tanker Compartment *</Label>
+                              <Controller
+                                name={`drivers_form_collected_products.${index}.tanker_compartment`}
+                                control={control}
+                                render={({ field }) => {
+                                  // Get selected tanker
+                                  const selectedTankerRegNumber = watch('tanker')
+                                  const selectedTanker = tankersData.find((t: any) => t.reg_number === selectedTankerRegNumber)
+                                  const compartmentCount = selectedTanker?.compartments || 0
+
+                                  // Generate compartment options
+                                  const compartmentOptions = Array.from(
+                                    { length: compartmentCount },
+                                    (_, i) => i + 1
+                                  )
+
+                                  return (
+                                    <Select
+                                      value={field.value?.toString() || ""}
+                                      onValueChange={(val) => field.onChange(parseInt(val))}
+                                      disabled={isSubmitting || !selectedTankerRegNumber}
+                                    >
+                                      <SelectTrigger className="w-full rounded-full border-gray-200">
+                                        <SelectValue placeholder={selectedTankerRegNumber ? "Select compartment" : "Select tanker first"} />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        {!selectedTankerRegNumber ? (
+                                          <SelectItem value="no-tanker" disabled>Select a tanker first</SelectItem>
+                                        ) : compartmentOptions.length === 0 ? (
+                                          <SelectItem value="no-compartments" disabled>No compartments available</SelectItem>
+                                        ) : (
+                                          compartmentOptions.map((num) => (
+                                            <SelectItem key={num} value={num.toString()}>
+                                              Compartment - {num}
+                                            </SelectItem>
+                                          ))
+                                        )}
+                                      </SelectContent>
+                                    </Select>
+                                  )
+                                }}
+                              />
+                              {errors.drivers_form_collected_products?.[index]?.tanker_compartment && (
+                                <p className="text-sm text-red-500 font-light">
+                                  {errors.drivers_form_collected_products[index]?.tanker_compartment?.message}
+                                </p>
+                              )}
+                            </div>
+
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                               <div className="space-y-2">
                                 <Label className="font-light">Supplier E-Signature *</Label>
@@ -799,7 +852,7 @@ export function DriverFormDrawer({
                                         </div>
                                       )}
                                       <div className="flex items-center gap-2">
-                                        <Button type="button"  size="sm" className="rounded-full" onClick={() => {
+                                        <Button type="button" size="sm" className="rounded-full" onClick={() => {
                                           setCurrentSignatureIndex(index)
                                           setCurrentSignatureType('supplier')
                                           setSupplierSignatureOpen(true)
@@ -807,7 +860,7 @@ export function DriverFormDrawer({
                                           Add Signature
                                         </Button>
                                         {field.value && (
-                                          <Button type="button"  size="sm" className="rounded-full" onClick={() => {
+                                          <Button type="button" size="sm" className="rounded-full" onClick={() => {
                                             setCurrentSignatureIndex(index)
                                             setCurrentSignatureType('supplier')
                                             setSupplierSignatureViewOpen(true)
@@ -844,7 +897,7 @@ export function DriverFormDrawer({
                                         </div>
                                       )}
                                       <div className="flex items-center gap-2">
-                                        <Button type="button"  size="sm" className="rounded-full" onClick={() => {
+                                        <Button type="button" size="sm" className="rounded-full" onClick={() => {
                                           setCurrentSignatureIndex(index)
                                           setCurrentSignatureType('driver')
                                           setDriverSignatureOpen(true)
@@ -852,7 +905,7 @@ export function DriverFormDrawer({
                                           Add Signature
                                         </Button>
                                         {field.value && (
-                                          <Button type="button"  size="sm" className="rounded-full" onClick={() => {
+                                          <Button type="button" size="sm" className="rounded-full" onClick={() => {
                                             setCurrentSignatureIndex(index)
                                             setCurrentSignatureType('driver')
                                             setDriverSignatureViewOpen(true)
@@ -933,7 +986,7 @@ export function DriverFormDrawer({
               <div className="flex justify-end space-x-3 pt-4 m-6">
                 <Button
                   type="button"
-                  
+
                   onClick={() => onOpenChange(false)}
                   disabled={isLoading}
                   className="bg-white border-gray-200 rounded-full font-light"

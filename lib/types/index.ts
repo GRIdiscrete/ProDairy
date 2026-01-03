@@ -173,6 +173,7 @@ export interface DriverFormCollectedProduct {
   unit_of_measure: string
   e_sign_supplier: string
   e_sign_driver: string
+  tanker_compartment?: number
   raw_milk_intake_lab_test: RawMilkIntakeLabTest[]
 }
 

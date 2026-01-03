@@ -161,9 +161,9 @@ export function DriverFormViewDrawer({
       // Get driver information
       const driverId = typeof driverForm.driver === 'string' ? driverForm.driver : (driverForm as any).driver_id
       const driverUser = users.find(user => user.id === driverId)
-      const driverName = driverUser ? `${driverUser.first_name} ${driverUser.last_name}` : 
-        ((driverForm as any).drivers_driver_fkey ? 
-          `${(driverForm as any).drivers_driver_fkey.first_name} ${(driverForm as any).drivers_driver_fkey.last_name}` : 
+      const driverName = driverUser ? `${driverUser.first_name} ${driverUser.last_name}` :
+        ((driverForm as any).drivers_driver_fkey ?
+          `${(driverForm as any).drivers_driver_fkey.first_name} ${(driverForm as any).drivers_driver_fkey.last_name}` :
           'Unknown Driver')
 
       // Prepare CSV data
@@ -182,6 +182,7 @@ export function DriverFormViewDrawer({
         'Product #',
         'Collected Amount',
         'Unit of Measure',
+        'Tanker Compartment',
         'Raw Material',
         'Supplier Name',
         'Supplier Email',
@@ -220,6 +221,7 @@ export function DriverFormViewDrawer({
               `Product ${productIndex + 1}`,
               product.collected_amount || '',
               product.unit_of_measure || '',
+              product.tanker_compartment ? `Compartment - ${product.tanker_compartment}` : 'N/A',
               rawMatName,
               supplierName,
               supplierEmail,
@@ -245,6 +247,7 @@ export function DriverFormViewDrawer({
             `Product ${productIndex + 1}`,
             product.collected_amount || '',
             product.unit_of_measure || '',
+            product.tanker_compartment ? `Compartment - ${product.tanker_compartment}` : 'N/A',
             rawMatName,
             supplierName,
             supplierEmail,
@@ -259,7 +262,7 @@ export function DriverFormViewDrawer({
       })
 
       // Convert to CSV string
-      const csvContent = csvData.map(row => 
+      const csvContent = csvData.map(row =>
         row.map(field => `"${String(field).replace(/"/g, '""')}"`).join(',')
       ).join('\n')
 
@@ -305,7 +308,7 @@ export function DriverFormViewDrawer({
               </div>
               <div className="flex space-x-2">
                 <Button
-                  
+
                   size="sm"
                   onClick={handleExportCSV}
                   disabled={isLoading}
@@ -316,7 +319,7 @@ export function DriverFormViewDrawer({
                 </Button>
                 {onEdit && (
                   <Button
-                    
+
                     size="sm"
                     onClick={handleEdit}
                     disabled={isLoading}
@@ -566,7 +569,7 @@ export function DriverFormViewDrawer({
                                           </p>
                                         </div>
                                         <LoadingButton
-                                          
+
                                           size="sm"
                                           onClick={() => {
                                             setLabMode("create")
@@ -593,6 +596,14 @@ export function DriverFormViewDrawer({
                                         <p className="font-light">{product.collected_amount} {product.unit_of_measure}</p>
                                       </div>
                                     </div>
+
+                                    {/* Tanker Compartment Display */}
+                                    {product.tanker_compartment && (
+                                      <div className="space-y-1">
+                                        <div className="text-xs text-gray-500">Tanker Compartment</div>
+                                        <p className="font-light">Compartment - {product.tanker_compartment}</p>
+                                      </div>
+                                    )}
 
                                     <div className="grid grid-cols-2 gap-4 text-sm">
                                       <SignatureViewer
@@ -653,7 +664,7 @@ export function DriverFormViewDrawer({
                                                   <Badge className={"text-xs " + (pt.accepted ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800')}>
                                                     {pt.accepted ? 'Accepted' : 'Rejected'}
                                                   </Badge>
-                                                  <LoadingButton size="sm"  className="rounded-full"
+                                                  <LoadingButton size="sm" className="rounded-full"
                                                     onClick={() => {
                                                       setLabMode("edit")
                                                       setLabExistingId(pt.id)
@@ -689,7 +700,7 @@ export function DriverFormViewDrawer({
                     <div className="flex justify-end pt-4">
                       <Button
                         type="button"
-                        
+
                         onClick={() => onOpenChange(false)}
                         disabled={isLoading}
                         className="bg-gray-100 text-gray-600 rounded-full px-6 py-2 font-light"
@@ -710,7 +721,7 @@ export function DriverFormViewDrawer({
                             <Badge className={"text-xs " + (currentLabTest.accepted ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800')}>
                               {currentLabTest.accepted ? 'Accepted' : 'Rejected'}
                             </Badge>
-                            <LoadingButton size="sm"  className="rounded-full"
+                            <LoadingButton size="sm" className="rounded-full"
                               onClick={() => { setLabMode("edit"); setLabExistingId(currentLabTest.id); setLabDrawerOpen(true) }}>
                               Edit
                             </LoadingButton>
