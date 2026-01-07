@@ -17,9 +17,15 @@ import { useAppSelector } from "@/lib/store"
 
 const driversNavigation = [
   { name: "Dashboard", href: "/drivers", icon: LayoutDashboard, current: false },
+  // {
+  //   name: "Driver Forms",
+  //   href: "/drivers/forms",
+  //   icon: FileText,
+  //   current: false,
+  // }
   {
-    name: "Driver Forms",
-    href: "/drivers/forms",
+    name: "Collection Vouchers",
+    href: "/collection-vouchers",
     icon: FileText,
     current: false,
   }
@@ -74,7 +80,7 @@ export function DriversSidebar({ collapsed = false, onToggle }: DriversSidebarPr
       <div className="relative flex h-16 items-center justify-between border-b border-zinc-200 px-3">
         <div
           aria-hidden
-   ="pointer-events-none absolute inset-x-0 -bottom-px h-[1px] bg-gradient-to-r from-blue-300 via-zinc-200 to-lime-300"
+          ="pointer-events-none absolute inset-x-0 -bottom-px h-[1px] bg-gradient-to-r from-blue-300 via-zinc-200 to-lime-300"
         />
         <div className={cn("flex items-center gap-3", collapsed && "w-full justify-center")}>
           {/* Logo */}
@@ -144,7 +150,7 @@ export function DriversSidebar({ collapsed = false, onToggle }: DriversSidebarPr
                 <Link
                   href={item.href}
                   className={cn(
-    "group flex items-center rounded-xl px-2.5 py-2 text-sm transition-all",
+                    "group flex items-center rounded-xl px-2.5 py-2 text-sm transition-all",
                     isActive
                       ? "bg-gradient-to-r from-blue-50 to-lime-50 text-zinc-900 ring-1 ring-inset ring-blue-200/50"
                       : "text-zinc-700 hover:bg-zinc-50"

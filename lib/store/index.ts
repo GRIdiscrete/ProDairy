@@ -44,6 +44,7 @@ import qaCorrectiveActionReducer from "./slices/qaCorrectiveActionSlice"
 import generalLabTestSlice from "./slices/generalLabTestSlice"
 import qaReleaseNoteSlice from "./slices/qaReleaseNoteSlice"
 import qaRejectNoteSlice from "./slices/qaRejectNoteSlice"
+import collectionVoucherReducer from "./slices/collectionVoucherSlice"
 export const store = configureStore({
   reducer: {
     dashboard: dashboardReducer,
@@ -90,6 +91,7 @@ export const store = configureStore({
     productIncubations: productIncubationReducer,
     uhtQualityChecks: uhtQualityCheckReducer,
     qaCorrectiveActions: qaCorrectiveActionReducer,
+    collectionVoucher: collectionVoucherReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

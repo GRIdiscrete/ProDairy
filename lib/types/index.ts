@@ -335,3 +335,48 @@ export interface SortConfig {
   key: string
   direction: "asc" | "desc"
 }
+
+// Raw Milk Collection Voucher Types
+export interface CollectionVoucherDetails {
+  id?: string
+  created_at?: string
+  updated_at?: string
+  raw_milk_collection_voucher_id?: string
+  temperature: number
+  dip_reading: number
+  meter_start: number
+  meter_finish: number
+  volume: number
+  dairy_total: number
+  farmer_tank_number: number
+  truck_compartment_number: number
+  route_total: number
+}
+
+export interface CollectionVoucherLabTest {
+  id?: string
+  created_at?: string
+  updated_at?: string
+  raw_milk_collection_voucher_id?: string
+  ot_result?: string
+  cob_result?: boolean
+  organoleptic?: string
+  alcohol?: string
+}
+
+export interface CollectionVoucher {
+  id: string
+  created_at: string
+  updated_at: string
+  driver: string
+  date: string
+  route: string
+  farmer: string // This is a supplier ID
+  details: CollectionVoucherDetails
+  truck_number: string
+  time_in: string
+  time_out: string
+  lab_test: CollectionVoucherLabTest
+  remark: string
+  driver_signature: string
+}
