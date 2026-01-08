@@ -20,10 +20,10 @@ import { AdminDashboardLayout } from "@/components/layout/admin-dashboard-layout
 export default function SuppliersPage() {
   const dispatch = useAppDispatch()
   const { suppliers, loading, error, operationLoading } = useAppSelector((state) => state.supplier)
-  
+
   const [tableFilters, setTableFilters] = useState<TableFilters>({})
   const hasFetchedRef = useRef(false)
-  
+
   // Load suppliers on component mount and when filters change
   useEffect(() => {
     if (!hasFetchedRef.current) {
@@ -31,7 +31,7 @@ export default function SuppliersPage() {
     }
     dispatch(fetchSuppliers({ filters: tableFilters }))
   }, [dispatch, tableFilters])
-  
+
   // Handle errors with toast notifications
   useEffect(() => {
     if (error) {
@@ -39,12 +39,12 @@ export default function SuppliersPage() {
       dispatch(clearError())
     }
   }, [error, dispatch])
-  
+
   // Drawer states
   const [formDrawerOpen, setFormDrawerOpen] = useState(false)
   const [viewDrawerOpen, setViewDrawerOpen] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
-  
+
   // Selected supplier and mode
   const [selectedSupplier, setSelectedSupplier] = useState<any>(null)
   const [formMode, setFormMode] = useState<"create" | "edit">("create")
@@ -102,7 +102,7 @@ export default function SuppliersPage() {
 
   const confirmDelete = async () => {
     if (!selectedSupplier) return
-    
+
     try {
       await dispatch(deleteSupplier(selectedSupplier.id)).unwrap()
       toast.success('Supplier deleted successfully')
@@ -134,6 +134,11 @@ export default function SuppliersPage() {
             <div>
               <div className="flex items-center space-x-2">
                 <span className="font-medium">{supplier.first_name} {supplier.last_name}</span>
+                {supplier.company_name && (
+                  <Badge variant="secondary" className="text-[10px] px-1 h-4">
+                    {supplier.company_name}
+                  </Badge>
+                )}
               </div>
               <p className="text-sm text-gray-500 mt-1">Product: {supplier.raw_product || 'N/A'}</p>
             </div>
@@ -185,7 +190,7 @@ export default function SuppliersPage() {
           <div className="space-y-1">
             <div className="flex items-center space-x-2">
               <span className="text-sm font-medium">{volumeSupplied.toLocaleString()}L</span>
-              <Badge  className={rejectionRate > 10 ? "text-white" : rejectionRate > 5 ? "text-white" : "text-white"}>
+              <Badge className={rejectionRate > 10 ? "text-white" : rejectionRate > 5 ? "text-white" : "text-white"}>
                 {rejectionRate.toFixed(1)}% rejected
               </Badge>
             </div>
@@ -214,25 +219,25 @@ export default function SuppliersPage() {
         const supplier = row.original
         return (
           <div className="flex space-x-2">
-            <LoadingButton 
-               
-              size="sm" 
+            <LoadingButton
+
+              size="sm"
               onClick={() => handleViewSupplier(supplier)}
               className="bg-[#006BC4] text-white border-0 rounded-full"
             >
               <Eye className="w-4 h-4" />
             </LoadingButton>
-            <LoadingButton 
-               
-              size="sm" 
+            <LoadingButton
+
+              size="sm"
               onClick={() => handleEditSupplier(supplier)}
               className="bg-[#A0CF06] text-[#211D1E] border-0 rounded-full"
             >
               <Edit className="w-4 h-4" />
             </LoadingButton>
-            <LoadingButton 
-              variant="destructive" 
-              size="sm" 
+            <LoadingButton
+              variant="destructive"
+              size="sm"
               onClick={() => handleDeleteSupplier(supplier)}
               loading={operationLoading.delete}
               disabled={operationLoading.delete}
@@ -358,7 +363,7 @@ export default function SuppliersPage() {
               searchPlaceholder="Search suppliers..."
               filterFields={filterFields}
             />
-            
+
             {loading ? (
               <div className="flex items-center justify-center h-64">
                 <div className="flex flex-col items-center space-y-4">
@@ -377,11 +382,11 @@ export default function SuppliersPage() {
         </Card>
 
         {/* Form Drawer */}
-        <SupplierFormDrawer 
-          open={formDrawerOpen} 
-          onOpenChange={setFormDrawerOpen} 
+        <SupplierFormDrawer
+          open={formDrawerOpen}
+          onOpenChange={setFormDrawerOpen}
           supplier={selectedSupplier}
-          mode={formMode} 
+          mode={formMode}
         />
 
         {/* View Drawer */}
@@ -405,6 +410,6 @@ export default function SuppliersPage() {
           loading={operationLoading.delete}
         />
       </div>
-   </AdminDashboardLayout>
+    </AdminDashboardLayout>
   )
 }

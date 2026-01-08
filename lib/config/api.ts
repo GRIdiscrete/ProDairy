@@ -6,7 +6,7 @@ export const API_CONFIG = {
     AUTH: '/auth',
     MACHINES: '/machine',
     SILOS: '/silo',
-    SUPPLIERS: '/supplier',
+    SUPPLIERS: '/supplier-2',
     RAW_MATERIALS: '/raw-material',
     PROCESSES: '/process',
     PRODUCTION_PLANS: '/production-plan',

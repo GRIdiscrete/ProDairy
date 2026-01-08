@@ -13,6 +13,17 @@ export interface User {
 
 export type UserRole = "admin" | "manager" | "operator" | "lab_technician" | "quality_control"
 
+export interface SupplierTank {
+  id: string
+  code: string
+  name: string
+  capacity: number
+  quantity: number | null
+  supplier: string
+  created_at: string
+  updated_at: string | null
+}
+
 export interface Supplier {
   id: string
   created_at: string
@@ -22,9 +33,14 @@ export interface Supplier {
   phone_number: string
   physical_address: string
   raw_product: string
-  volume_supplied: number
-  volume_rejected: number
+  company_name: string | null
+  number_of_tanks: number | null
+  tank_id?: string | null
+  volume_supplied: number | null
+  volume_rejected: number | null
   updated_at: string
+  suppliers_tanks?: SupplierTank[]
+  tanks?: Partial<SupplierTank>[]
 }
 
 export interface Vehicle {
