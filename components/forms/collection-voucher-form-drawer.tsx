@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useForm, SubmitHandler, Controller } from "react-hook-form"
+import { useForm, SubmitHandler, Controller, useFieldArray } from "react-hook-form"
 import { yupResolver } from "@hookform/resolvers/yup"
 import * as yup from "yup"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
@@ -9,8 +9,10 @@ import { useIsMobile } from "@/hooks/use-mobile"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Truck, User, ClipboardList, Beaker, FileSignature } from "lucide-react"
+import { Truck, User, ClipboardList, Beaker, FileSignature, Trash2 } from "lucide-react"
 import { Label } from "@/components/ui/label"
+import { Badge } from "@/components/ui/badge"
+import { cn } from "@/lib/utils"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { DatePicker } from "@/components/ui/date-picker"
 import { SignatureModal } from "@/components/ui/signature-modal"
@@ -28,29 +30,34 @@ import type { CollectionVoucher } from "@/lib/types"
 
 const collectionVoucherSchema = yup.object({
     driver: yup.string().required("Driver is required"),
+    number_of_compartments: yup.number().required("Number of compartments is required"),
     date: yup.string().required("Date is required"),
     route: yup.string().required("Route is required"),
     farmer: yup.string().required("Farmer is required"),
     truck_number: yup.string().required("Truck number is required"),
     time_in: yup.string().required("Time in is required"),
     time_out: yup.string().required("Time out is required"),
-    details: yup.object({
-        temperature: yup.number().transform((value, originalValue) => originalValue === '' ? undefined : value).nullable(),
-        dip_reading: yup.number().transform((value, originalValue) => originalValue === '' ? undefined : value).nullable(),
-        meter_start: yup.number().transform((value, originalValue) => originalValue === '' ? undefined : value).nullable(),
-        meter_finish: yup.number().transform((value, originalValue) => originalValue === '' ? undefined : value).nullable(),
-        volume: yup.number().transform((value, originalValue) => originalValue === '' ? undefined : value).nullable(),
-        dairy_total: yup.number().transform((value, originalValue) => originalValue === '' ? undefined : value).nullable(),
-        farmer_tank_number: yup.number().transform((value, originalValue) => originalValue === '' ? undefined : value).nullable(),
-        truck_compartment_number: yup.number().transform((value, originalValue) => originalValue === '' ? undefined : value).nullable(),
-        route_total: yup.number().transform((value, originalValue) => originalValue === '' ? undefined : value).nullable(),
-    }),
-    lab_test: yup.object({
-        ot_result: yup.string(),
-        cob_result: yup.boolean(),
-        organoleptic: yup.string(),
-        alcohol: yup.string(),
-    }),
+    details: yup.array().of(
+        yup.object({
+            temperature: yup.number().transform((value, originalValue) => originalValue === '' ? undefined : value).nullable(),
+            dip_reading: yup.number().transform((value, originalValue) => originalValue === '' ? undefined : value).nullable(),
+            meter_start: yup.number().transform((value, originalValue) => originalValue === '' ? undefined : value).nullable(),
+            meter_finish: yup.number().transform((value, originalValue) => originalValue === '' ? undefined : value).nullable(),
+            volume: yup.number().transform((value, originalValue) => originalValue === '' ? undefined : value).nullable(),
+            dairy_total: yup.number().transform((value, originalValue) => originalValue === '' ? undefined : value).nullable(),
+            farmer_tank_number: yup.array().of(yup.number()).default([]),
+            truck_compartment_number: yup.number().required(),
+            route_total: yup.number().transform((value, originalValue) => originalValue === '' ? undefined : value).nullable(),
+        })
+    ).min(1, "At least one detail is required"),
+    lab_test: yup.array().of(
+        yup.object({
+            ot_result: yup.string(),
+            cob_result: yup.boolean(),
+            organoleptic: yup.string(),
+            alcohol: yup.string(),
+        })
+    ).default([]),
     remark: yup.string(),
     driver_signature: yup.string().required("Driver signature is required"),
 })
@@ -95,37 +102,69 @@ export function CollectionVoucherFormDrawer({
         resolver: yupResolver(collectionVoucherSchema) as any,
         defaultValues: {
             driver: user?.id || "",
+            number_of_compartments: 0,
             date: "",
             route: "",
             farmer: "",
             truck_number: "",
             time_in: "",
             time_out: "",
-            details: {
-                temperature: "" as any,
-                dip_reading: "" as any,
-                meter_start: "" as any,
-                meter_finish: "" as any,
-                volume: "" as any,
-                dairy_total: "" as any,
-                farmer_tank_number: "" as any,
-                truck_compartment_number: "" as any,
-                route_total: "" as any,
-            },
-            lab_test: {
-                ot_result: "",
-                cob_result: false,
-                organoleptic: "",
-                alcohol: "",
-            },
+            details: [],
+            lab_test: [
+                {
+                    ot_result: "",
+                    cob_result: false,
+                    organoleptic: "",
+                    alcohol: "",
+                }
+            ],
             remark: "",
             driver_signature: "",
         },
     })
 
+    const { fields: detailsFields, append: appendDetail, remove: removeDetail, replace: replaceDetails } = useFieldArray({
+        control,
+        name: "details"
+    })
+
+    const { fields: labTestFields } = useFieldArray({
+        control,
+        name: "lab_test"
+    })
+
     const selectedTruckNumber = watch("truck_number")
     const selectedTanker = tankers?.find((t: any) => t.reg_number === selectedTruckNumber)
     const compartmentCount = selectedTanker?.compartments || 0
+    const selectedFarmerId = watch("farmer")
+    const selectedFarmer = suppliers?.find(s => s.id === selectedFarmerId)
+    const farmerTankCount = selectedFarmer?.number_of_tanks || 0
+
+    // Auto-sync compartments when tanker changes
+    useEffect(() => {
+        if (selectedTanker) {
+            const count = selectedTanker.compartments || 0
+            setValue("number_of_compartments", count)
+
+            if (mode === "create") {
+                const currentLength = detailsFields.length
+                if (currentLength !== count) {
+                    const newDetails = Array.from({ length: count }, (_, i) => ({
+                        temperature: "" as any,
+                        dip_reading: "" as any,
+                        meter_start: "" as any,
+                        meter_finish: "" as any,
+                        volume: "" as any,
+                        dairy_total: "" as any,
+                        farmer_tank_number: [],
+                        truck_compartment_number: i + 1,
+                        route_total: "" as any
+                    }))
+                    replaceDetails(newDetails)
+                }
+            }
+        }
+    }, [selectedTanker, setValue, replaceDetails, mode, detailsFields.length])
 
     // Load required data
     useEffect(() => {
@@ -141,42 +180,45 @@ export function CollectionVoucherFormDrawer({
         if (open) {
             if (mode === "edit" && collectionVoucher) {
                 setValue("driver", collectionVoucher.driver)
+                setValue("number_of_compartments", collectionVoucher.number_of_compartments || 0)
                 setValue("date", collectionVoucher.date.split('T')[0])
                 setValue("route", collectionVoucher.route)
-                setValue("farmer", collectionVoucher.farmer)
+                setValue("farmer", typeof collectionVoucher.farmer === "object" ? (collectionVoucher.farmer as any).id : collectionVoucher.farmer)
                 setValue("truck_number", collectionVoucher.truck_number)
                 setValue("time_in", collectionVoucher.time_in)
                 setValue("time_out", collectionVoucher.time_out)
-                setValue("details", collectionVoucher.details)
-                setValue("lab_test", collectionVoucher.lab_test)
+
+                const details = Array.isArray(collectionVoucher.raw_milk_collection_voucher_details)
+                    ? collectionVoucher.raw_milk_collection_voucher_details
+                    : (Array.isArray(collectionVoucher.details) ? collectionVoucher.details : [])
+
+                const labTests = Array.isArray(collectionVoucher.raw_milk_collection_voucher_lab_test)
+                    ? collectionVoucher.raw_milk_collection_voucher_lab_test
+                    : (Array.isArray(collectionVoucher.lab_test) ? collectionVoucher.lab_test : [])
+
+                setValue("details", details as any)
+                setValue("lab_test", labTests as any)
                 setValue("remark", collectionVoucher.remark)
                 setValue("driver_signature", collectionVoucher.driver_signature)
-            } else {
+            } else if (mode === "create") {
                 reset({
                     driver: user?.id || "",
-                    date: "",
+                    number_of_compartments: 0,
+                    date: new Date().toISOString().split('T')[0],
                     route: "",
                     farmer: "",
                     truck_number: "",
                     time_in: "",
                     time_out: "",
-                    details: {
-                        temperature: "" as any,
-                        dip_reading: "" as any,
-                        meter_start: "" as any,
-                        meter_finish: "" as any,
-                        volume: "" as any,
-                        dairy_total: "" as any,
-                        farmer_tank_number: "" as any,
-                        truck_compartment_number: "" as any,
-                        route_total: "" as any,
-                    },
-                    lab_test: {
-                        ot_result: "",
-                        cob_result: false,
-                        organoleptic: "",
-                        alcohol: "",
-                    },
+                    details: [],
+                    lab_test: [
+                        {
+                            ot_result: "",
+                            cob_result: false,
+                            organoleptic: "",
+                            alcohol: "",
+                        }
+                    ],
                     remark: "",
                     driver_signature: "",
                 })
@@ -190,23 +232,24 @@ export function CollectionVoucherFormDrawer({
 
             const submitData: any = {
                 driver: data.driver,
+                number_of_compartments: data.number_of_compartments,
                 date: data.date,
                 route: data.route,
                 farmer: data.farmer,
                 truck_number: data.truck_number,
                 time_in: data.time_in,
                 time_out: data.time_out,
-                details: {
-                    temperature: data.details.temperature == null || data.details.temperature === '' ? null : data.details.temperature,
-                    dip_reading: data.details.dip_reading == null || data.details.dip_reading === '' ? null : data.details.dip_reading,
-                    meter_start: data.details.meter_start == null || data.details.meter_start === '' ? null : data.details.meter_start,
-                    meter_finish: data.details.meter_finish == null || data.details.meter_finish === '' ? null : data.details.meter_finish,
-                    volume: data.details.volume == null || data.details.volume === '' ? null : data.details.volume,
-                    dairy_total: data.details.dairy_total == null || data.details.dairy_total === '' ? null : data.details.dairy_total,
-                    farmer_tank_number: data.details.farmer_tank_number == null || data.details.farmer_tank_number === '' ? null : data.details.farmer_tank_number,
-                    truck_compartment_number: data.details.truck_compartment_number == null || data.details.truck_compartment_number === '' ? null : data.details.truck_compartment_number,
-                    route_total: data.details.route_total == null || data.details.route_total === '' ? null : data.details.route_total,
-                },
+                details: data.details.map(d => ({
+                    ...d,
+                    temperature: d.temperature == null || (d.temperature as any) === '' ? null : d.temperature,
+                    dip_reading: d.dip_reading == null || (d.dip_reading as any) === '' ? null : d.dip_reading,
+                    meter_start: d.meter_start == null || (d.meter_start as any) === '' ? null : d.meter_start,
+                    meter_finish: d.meter_finish == null || (d.meter_finish as any) === '' ? null : d.meter_finish,
+                    volume: d.volume == null || (d.volume as any) === '' ? null : d.volume,
+                    dairy_total: d.dairy_total == null || (d.dairy_total as any) === '' ? null : d.dairy_total,
+                    route_total: d.route_total == null || (d.route_total as any) === '' ? null : d.route_total,
+                    farmer_tank_number: Array.isArray(d.farmer_tank_number) ? d.farmer_tank_number : []
+                })),
                 lab_test: data.lab_test,
                 remark: data.remark || "",
                 driver_signature: data.driver_signature,
@@ -222,14 +265,6 @@ export function CollectionVoucherFormDrawer({
                     await dispatch(updateCollectionVoucher({
                         ...submitData,
                         id: collectionVoucher.id,
-                        details: {
-                            ...submitData.details,
-                            id: collectionVoucher.details?.id,
-                        },
-                        lab_test: {
-                            ...submitData.lab_test,
-                            id: collectionVoucher.lab_test?.id,
-                        },
                     })).unwrap()
                     toast.success("Collection voucher updated successfully")
                 }
@@ -458,215 +493,264 @@ export function CollectionVoucherFormDrawer({
                         {/* Collection Details */}
                         <div className="border border-gray-200 rounded-lg bg-white">
                             <div className="p-6 pb-0">
-                                <div className="flex items-center space-x-2">
-                                    <ClipboardList className="w-5 h-5 text-blue-600" />
-                                    <div className="text-lg font-light">Collection Details (Optional)</div>
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center space-x-2">
+                                        <ClipboardList className="w-5 h-5 text-blue-600" />
+                                        <div className="text-lg font-light">Collection Details</div>
+                                    </div>
+                                    {mode === "edit" && (
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => appendDetail({
+                                                temperature: "" as any,
+                                                dip_reading: "" as any,
+                                                meter_start: "" as any,
+                                                meter_finish: "" as any,
+                                                volume: "" as any,
+                                                dairy_total: "" as any,
+                                                farmer_tank_number: [],
+                                                truck_compartment_number: detailsFields.length + 1,
+                                                route_total: "" as any
+                                            })}
+                                            className="rounded-full"
+                                        >
+                                            Add Entry
+                                        </Button>
+                                    )}
                                 </div>
                             </div>
-                            <div className="p-6 space-y-4">
-                                <div className="grid grid-cols-3 gap-4">
-                                    <div className="space-y-2">
-                                        <Label className="font-light">Temperature</Label>
-                                        <Controller
-                                            name="details.temperature"
-                                            control={control}
-                                            render={({ field }) => (
-                                                <Input {...field} type="number" step="0.1" placeholder="Enter temperature" className="rounded-full" disabled={isSubmitting} onChange={(e) => field.onChange(e.target.value === '' ? '' : parseFloat(e.target.value))} />
+                            <div className="p-6 space-y-6">
+                                {detailsFields.map((field, index) => (
+                                    <div key={field.id} className="p-4 border border-gray-100 rounded-xl bg-gray-50/50 space-y-4 relative">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <Badge variant="secondary" className="bg-blue-50 text-blue-700 font-light rounded-full">
+                                                Compartment {field.truck_compartment_number}
+                                            </Badge>
+                                            {mode === "edit" && (
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={() => removeDetail(index)}
+                                                    className="text-red-500 hover:text-red-700 h-8 w-8 p-0"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </Button>
                                             )}
-                                        />
-                                        {errors.details?.temperature && <p className="text-sm text-red-500">{errors.details.temperature.message}</p>}
+                                        </div>
+
+                                        <div className="grid grid-cols-3 gap-4">
+                                            <div className="space-y-2">
+                                                <Label className="font-light text-xs">Temperature (°C)</Label>
+                                                <Controller
+                                                    name={`details.${index}.temperature`}
+                                                    control={control}
+                                                    render={({ field }) => (
+                                                        <Input {...field} type="number" step="0.1" placeholder="0.0" className="rounded-full h-9" disabled={isSubmitting} onChange={(e) => field.onChange(e.target.value === '' ? '' : parseFloat(e.target.value))} />
+                                                    )}
+                                                />
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <Label className="font-light text-xs">Dip Reading</Label>
+                                                <Controller
+                                                    name={`details.${index}.dip_reading`}
+                                                    control={control}
+                                                    render={({ field }) => (
+                                                        <Input {...field} type="number" step="0.1" placeholder="0.0" className="rounded-full h-9" disabled={isSubmitting} onChange={(e) => field.onChange(e.target.value === '' ? '' : parseFloat(e.target.value))} />
+                                                    )}
+                                                />
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <Label className="font-light text-xs">Volume (L)</Label>
+                                                <Controller
+                                                    name={`details.${index}.volume`}
+                                                    control={control}
+                                                    render={({ field }) => (
+                                                        <Input {...field} type="number" step="0.1" placeholder="0.0" className="rounded-full h-9" disabled={isSubmitting} onChange={(e) => field.onChange(e.target.value === '' ? '' : parseFloat(e.target.value))} />
+                                                    )}
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="space-y-2">
+                                                <Label className="font-light text-xs">Meter Start</Label>
+                                                <Controller
+                                                    name={`details.${index}.meter_start`}
+                                                    control={control}
+                                                    render={({ field }) => (
+                                                        <Input {...field} type="number" step="0.1" placeholder="0.0" className="rounded-full h-9" disabled={isSubmitting} onChange={(e) => field.onChange(e.target.value === '' ? '' : parseFloat(e.target.value))} />
+                                                    )}
+                                                />
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <Label className="font-light text-xs">Meter Finish</Label>
+                                                <Controller
+                                                    name={`details.${index}.meter_finish`}
+                                                    control={control}
+                                                    render={({ field }) => (
+                                                        <Input {...field} type="number" step="0.1" placeholder="0.0" className="rounded-full h-9" disabled={isSubmitting} onChange={(e) => field.onChange(e.target.value === '' ? '' : parseFloat(e.target.value))} />
+                                                    )}
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="space-y-2">
+                                                <Label className="font-light text-xs">Dairy Total</Label>
+                                                <Controller
+                                                    name={`details.${index}.dairy_total`}
+                                                    control={control}
+                                                    render={({ field }) => (
+                                                        <Input {...field} type="number" step="0.1" placeholder="0.0" className="rounded-full h-9" disabled={isSubmitting} onChange={(e) => field.onChange(e.target.value === '' ? '' : parseFloat(e.target.value))} />
+                                                    )}
+                                                />
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <Label className="font-light text-xs">Farmer Tank(s)</Label>
+                                                <Controller
+                                                    name={`details.${index}.farmer_tank_number`}
+                                                    control={control}
+                                                    render={({ field }) => {
+                                                        const tankOptions = Array.from(
+                                                            { length: farmerTankCount },
+                                                            (_, i) => (i + 1)
+                                                        )
+
+                                                        return (
+                                                            <div className="flex flex-wrap gap-1 p-2 border rounded-xl bg-white min-h-[36px]">
+                                                                {tankOptions.length === 0 ? (
+                                                                    <span className="text-xs text-gray-400 p-1">Select farmer first</span>
+                                                                ) : (
+                                                                    tankOptions.map(tankNum => {
+                                                                        const isSelected = field.value?.includes(tankNum)
+                                                                        return (
+                                                                            <Badge
+                                                                                key={tankNum}
+                                                                                variant={isSelected ? "default" : "outline"}
+                                                                                className={cn(
+                                                                                    "cursor-pointer px-2 py-0 h-6 text-[10px] font-light rounded-full transition-colors",
+                                                                                    isSelected ? "bg-[#006BC4]" : "hover:bg-gray-100"
+                                                                                )}
+                                                                                onClick={() => {
+                                                                                    const current = Array.isArray(field.value) ? field.value : []
+                                                                                    if (isSelected) {
+                                                                                        field.onChange(current.filter(v => v !== tankNum))
+                                                                                    } else {
+                                                                                        field.onChange([...current, tankNum])
+                                                                                    }
+                                                                                }}
+                                                                            >
+                                                                                Tank {tankNum}
+                                                                            </Badge>
+                                                                        )
+                                                                    })
+                                                                )}
+                                                            </div>
+                                                        )
+                                                    }}
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <Label className="font-light text-xs">Route Total</Label>
+                                            <Controller
+                                                name={`details.${index}.route_total`}
+                                                control={control}
+                                                render={({ field }) => (
+                                                    <Input {...field} type="number" step="0.1" placeholder="0.0" className="rounded-full h-9" disabled={isSubmitting} onChange={(e) => field.onChange(e.target.value === '' ? '' : parseFloat(e.target.value))} />
+                                                )}
+                                            />
+                                        </div>
                                     </div>
-
-                                    <div className="space-y-2">
-                                        <Label className="font-light">Dip Reading</Label>
-                                        <Controller
-                                            name="details.dip_reading"
-                                            control={control}
-                                            render={({ field }) => (
-                                                <Input {...field} type="number" step="0.1" placeholder="Enter dip reading" className="rounded-full" disabled={isSubmitting} onChange={(e) => field.onChange(e.target.value === '' ? '' : parseFloat(e.target.value))} />
-                                            )}
-                                        />
-                                        {errors.details?.dip_reading && <p className="text-sm text-red-500">{errors.details.dip_reading.message}</p>}
+                                ))}
+                                {detailsFields.length === 0 && (
+                                    <div className="text-center py-10 border-2 border-dashed border-gray-100 rounded-xl">
+                                        <p className="text-sm text-gray-400 font-light">Select a tanker to generate collection slots</p>
                                     </div>
-
-                                    <div className="space-y-2">
-                                        <Label className="font-light">Volume</Label>
-                                        <Controller
-                                            name="details.volume"
-                                            control={control}
-                                            render={({ field }) => (
-                                                <Input {...field} type="number" step="0.1" placeholder="Enter volume" className="rounded-full" disabled={isSubmitting} onChange={(e) => field.onChange(e.target.value === '' ? '' : parseFloat(e.target.value))} />
-                                            )}
-                                        />
-                                        {errors.details?.volume && <p className="text-sm text-red-500">{errors.details.volume.message}</p>}
-                                    </div>
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <Label className="font-light">Meter Start</Label>
-                                        <Controller
-                                            name="details.meter_start"
-                                            control={control}
-                                            render={({ field }) => (
-                                                <Input {...field} type="number" step="0.1" placeholder="Enter meter start" className="rounded-full" disabled={isSubmitting} onChange={(e) => field.onChange(e.target.value === '' ? '' : parseFloat(e.target.value))} />
-                                            )}
-                                        />
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <Label className="font-light">Meter Finish</Label>
-                                        <Controller
-                                            name="details.meter_finish"
-                                            control={control}
-                                            render={({ field }) => (
-                                                <Input {...field} type="number" step="0.1" placeholder="Enter meter finish" className="rounded-full" disabled={isSubmitting} onChange={(e) => field.onChange(e.target.value === '' ? '' : parseFloat(e.target.value))} />
-                                            )}
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="grid grid-cols-3 gap-4">
-                                    <div className="space-y-2">
-                                        <Label className="font-light">Dairy Total</Label>
-                                        <Controller
-                                            name="details.dairy_total"
-                                            control={control}
-                                            render={({ field }) => (
-                                                <Input {...field} type="number" step="0.1" placeholder="Enter dairy total" className="rounded-full" disabled={isSubmitting} onChange={(e) => field.onChange(e.target.value === '' ? '' : parseFloat(e.target.value))} />
-                                            )}
-                                        />
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <Label className="font-light">Farmer Tank #</Label>
-                                        <Controller
-                                            name="details.farmer_tank_number"
-                                            control={control}
-                                            render={({ field }) => (
-                                                <Input {...field} type="number" placeholder="Enter tank number" className="rounded-full" disabled={isSubmitting} onChange={(e) => field.onChange(e.target.value === '' ? '' : parseInt(e.target.value))} />
-                                            )}
-                                        />
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <Label className="font-light">Truck Compartment #</Label>
-                                        <Controller
-                                            name="details.truck_compartment_number"
-                                            control={control}
-                                            render={({ field }) => {
-                                                // Generate compartment options from count
-                                                const compartmentOptions = Array.from(
-                                                    { length: compartmentCount },
-                                                    (_, i) => (i + 1).toString()
-                                                )
-
-                                                return (
-                                                    <Select
-                                                        value={field.value?.toString() || ""}
-                                                        onValueChange={(val) => field.onChange(parseInt(val))}
-                                                        disabled={isSubmitting || !selectedTruckNumber}
-                                                    >
-                                                        <SelectTrigger className="w-full rounded-full border-gray-200">
-                                                            <SelectValue placeholder={selectedTruckNumber ? "Select compartment" : "Select tanker first"} />
-                                                        </SelectTrigger>
-                                                        <SelectContent>
-                                                            {!selectedTruckNumber ? (
-                                                                <SelectItem value="no-tanker" disabled>Select a tanker first</SelectItem>
-                                                            ) : compartmentOptions.length === 0 ? (
-                                                                <SelectItem value="no-compartments" disabled>No compartments found ({compartmentCount})</SelectItem>
-                                                            ) : (
-                                                                compartmentOptions.map((num) => (
-                                                                    <SelectItem key={num} value={num}>
-                                                                        Compartment - {num}
-                                                                    </SelectItem>
-                                                                ))
-                                                            )}
-                                                        </SelectContent>
-                                                    </Select>
-                                                )
-                                            }}
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label className="font-light">Route Total</Label>
-                                    <Controller
-                                        name="details.route_total"
-                                        control={control}
-                                        render={({ field }) => (
-                                            <Input {...field} type="number" step="0.1" placeholder="Enter route total" className="rounded-full" disabled={isSubmitting} onChange={(e) => field.onChange(e.target.value === '' ? '' : parseFloat(e.target.value))} />
-                                        )}
-                                    />
-                                </div>
+                                )}
                             </div>
                         </div>
 
-                        {/* Lab Test (Optional) */}
+                        {/* Lab Test */}
                         <div className="border border-gray-200 rounded-lg bg-white">
                             <div className="p-6 pb-0">
                                 <div className="flex items-center space-x-2">
                                     <Beaker className="w-5 h-5 text-blue-600" />
-                                    <div className="text-lg font-light">Lab Test (Optional)</div>
+                                    <div className="text-lg font-light">Lab Test Results</div>
                                 </div>
                             </div>
-                            <div className="p-6 space-y-4">
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <Label className="font-light">OT Result</Label>
-                                        <Controller
-                                            name="lab_test.ot_result"
-                                            control={control}
-                                            render={({ field }) => (
-                                                <Input {...field} placeholder="Enter result" className="rounded-full" disabled={isSubmitting} />
-                                            )}
-                                        />
-                                    </div>
+                            <div className="p-6 space-y-6">
+                                {labTestFields.map((field, index) => (
+                                    <div key={field.id} className="space-y-4">
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="space-y-2">
+                                                <Label className="font-light text-xs">OT Result</Label>
+                                                <Controller
+                                                    name={`lab_test.${index}.ot_result`}
+                                                    control={control}
+                                                    render={({ field }) => (
+                                                        <Input {...field} placeholder="Enter result" className="rounded-full h-9" disabled={isSubmitting} />
+                                                    )}
+                                                />
+                                            </div>
 
-                                    <div className="space-y-2">
-                                        <Label className="font-light">Organoleptic</Label>
-                                        <Controller
-                                            name="lab_test.organoleptic"
-                                            control={control}
-                                            render={({ field }) => (
-                                                <Input {...field} placeholder="Enter result" className="rounded-full" disabled={isSubmitting} />
-                                            )}
-                                        />
-                                    </div>
-                                </div>
+                                            <div className="space-y-2">
+                                                <Label className="font-light text-xs">Organoleptic</Label>
+                                                <Controller
+                                                    name={`lab_test.${index}.organoleptic`}
+                                                    control={control}
+                                                    render={({ field }) => (
+                                                        <Input {...field} placeholder="Enter result" className="rounded-full h-9" disabled={isSubmitting} />
+                                                    )}
+                                                />
+                                            </div>
+                                        </div>
 
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <Label className="font-light">Alcohol</Label>
-                                        <Controller
-                                            name="lab_test.alcohol"
-                                            control={control}
-                                            render={({ field }) => (
-                                                <Input {...field} placeholder="Enter result" className="rounded-full" disabled={isSubmitting} />
-                                            )}
-                                        />
-                                    </div>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="space-y-2">
+                                                <Label className="font-light text-xs">Alcohol</Label>
+                                                <Controller
+                                                    name={`lab_test.${index}.alcohol`}
+                                                    control={control}
+                                                    render={({ field }) => (
+                                                        <Input {...field} placeholder="Enter result" className="rounded-full h-9" disabled={isSubmitting} />
+                                                    )}
+                                                />
+                                            </div>
 
-                                    <div className="space-y-2 flex items-center">
-                                        <Controller
-                                            name="lab_test.cob_result"
-                                            control={control}
-                                            render={({ field }) => (
-                                                <label className="flex items-center space-x-2 cursor-pointer">
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={field.value}
-                                                        onChange={field.onChange}
-                                                        className="rounded"
-                                                        disabled={isSubmitting}
-                                                    />
-                                                    <span className="font-light">COB Result</span>
-                                                </label>
-                                            )}
-                                        />
+                                            <div className="space-y-2 flex items-center pt-4">
+                                                <Controller
+                                                    name={`lab_test.${index}.cob_result`}
+                                                    control={control}
+                                                    render={({ field }) => (
+                                                        <label className="flex items-center space-x-2 cursor-pointer group">
+                                                            <div className={cn(
+                                                                "w-5 h-5 rounded border-2 flex items-center justify-center transition-colors",
+                                                                field.value ? "bg-blue-600 border-blue-600" : "bg-white border-gray-200 group-hover:border-blue-400"
+                                                            )} onClick={() => field.onChange(!field.value)}>
+                                                                {field.value && <div className="w-2 h-2 bg-white rounded-full" />}
+                                                            </div>
+                                                            <span className="font-light text-sm text-gray-600">COB Result</span>
+                                                        </label>
+                                                    )}
+                                                />
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
+                                ))}
+                                {labTestFields.length === 0 && (
+                                    <div className="text-center py-4 bg-gray-50 rounded-xl">
+                                        <p className="text-xs text-gray-400">Initialize lab test to add data</p>
+                                    </div>
+                                )}
                             </div>
                         </div>
 

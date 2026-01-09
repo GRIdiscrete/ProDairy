@@ -21,6 +21,7 @@ import { LocalStorageService } from "@/lib/offline/local-storage-service"
 import { toast } from "sonner"
 import type { CollectionVoucher } from "@/lib/types"
 import { UserAvatar } from "@/components/ui/user-avatar"
+import { FormIdCopy } from "@/components/ui/form-id-copy"
 
 export default function CollectionVouchersPage() {
     const dispatch = useDispatch<AppDispatch>()
@@ -210,41 +211,74 @@ export default function CollectionVouchersPage() {
                 "Created At"
             ]
 
-            const rows = displayVouchers.map(voucher => {
-                const driver = displayUsers.find(u => u.id === voucher.driver)
-                const supplier = displaySuppliers.find(s => s.id === voucher.farmer)
+            const rows: any[] = []
 
-                return [
-                    voucher.id,
-                    driver ? `${driver.first_name} ${driver.last_name}` : 'Unknown',
-                    new Date(voucher.date).toLocaleDateString(),
-                    voucher.route,
-                    typeof voucher.farmer === 'object' && voucher.farmer
-                        ? `${(voucher.farmer as any).first_name} ${(voucher.farmer as any).last_name}`
-                        : supplier ? `${supplier.first_name} ${supplier.last_name}` : 'Unknown',
-                    voucher.truck_number,
-                    voucher.time_in,
-                    voucher.time_out,
-                    voucher.details?.temperature || 'N/A',
-                    voucher.details?.dip_reading || 'N/A',
-                    voucher.details?.meter_start || 'N/A',
-                    voucher.details?.meter_finish || 'N/A',
-                    voucher.details?.volume || 'N/A',
-                    voucher.details?.dairy_total || 'N/A',
-                    voucher.details?.farmer_tank_number || 'N/A',
-                    voucher.details?.truck_compartment_number || 'N/A',
-                    voucher.details?.route_total || 'N/A',
-                    voucher.lab_test?.ot_result || 'N/A',
-                    voucher.lab_test?.organoleptic || 'N/A',
-                    voucher.lab_test?.alcohol || 'N/A',
-                    voucher.lab_test?.cob_result ? 'Yes' : 'No',
-                    voucher.remark,
-                    new Date(voucher.created_at).toLocaleDateString()
-                ]
+            displayVouchers.forEach(voucher => {
+                const driver = displayUsers.find(u => u.id === voucher.driver)
+                const supplier = displaySuppliers.find(s => s.id === (typeof voucher.farmer === 'string' ? voucher.farmer : (voucher.farmer as any)?.id))
+                const driverName = driver ? `${driver.first_name} ${driver.last_name}` : 'Unknown'
+                const farmerName = typeof voucher.farmer === 'object' && voucher.farmer
+                    ? `${(voucher.farmer as any).first_name} ${(voucher.farmer as any).last_name}`
+                    : supplier ? `${supplier.first_name} ${supplier.last_name}` : 'Unknown'
+
+                const details = Array.isArray(voucher.raw_milk_collection_voucher_details) ? voucher.raw_milk_collection_voucher_details : (Array.isArray(voucher.details) ? voucher.details : [])
+                const labTests = Array.isArray(voucher.raw_milk_collection_voucher_lab_test) ? voucher.raw_milk_collection_voucher_lab_test : (Array.isArray(voucher.lab_test) ? voucher.lab_test : [])
+
+                // Create a row for each detail entry
+                details.forEach((detail: any, index: number) => {
+                    const lab = labTests[index] || labTests[0] // Fallback to first lab test or empty
+
+                    rows.push([
+                        voucher.id,
+                        driverName,
+                        new Date(voucher.date).toLocaleDateString(),
+                        voucher.route,
+                        farmerName,
+                        voucher.truck_number,
+                        voucher.time_in,
+                        voucher.time_out,
+                        detail.temperature || 'N/A',
+                        detail.dip_reading || 'N/A',
+                        detail.meter_start || 'N/A',
+                        detail.meter_finish || 'N/A',
+                        detail.volume || 'N/A',
+                        detail.dairy_total || 'N/A',
+                        Array.isArray(detail.farmer_tank_number) ? detail.farmer_tank_number.join(';') : detail.farmer_tank_number || 'N/A',
+                        detail.truck_compartment_number || 'N/A',
+                        detail.route_total || 'N/A',
+                        lab?.ot_result || 'N/A',
+                        lab?.organoleptic || 'N/A',
+                        lab?.alcohol || 'N/A',
+                        lab?.cob_result ? 'Yes' : 'No',
+                        voucher.remark,
+                        new Date(voucher.created_at).toLocaleDateString()
+                    ])
+                })
+
+                // If no details, add one summarized row
+                if (details.length === 0) {
+                    rows.push([
+                        voucher.id,
+                        driverName,
+                        new Date(voucher.date).toLocaleDateString(),
+                        voucher.route,
+                        farmerName,
+                        voucher.truck_number,
+                        voucher.time_in,
+                        voucher.time_out,
+                        'N/A', 'N/A', 'N/A', 'N/A', 'N/A', 'N/A', 'N/A', 'N/A', 'N/A',
+                        labTests[0]?.ot_result || 'N/A',
+                        labTests[0]?.organoleptic || 'N/A',
+                        labTests[0]?.alcohol || 'N/A',
+                        labTests[0]?.cob_result ? 'Yes' : 'No',
+                        voucher.remark,
+                        new Date(voucher.created_at).toLocaleDateString()
+                    ])
+                }
             })
 
             const csvContent = [headers, ...rows]
-                .map(row => row.map(field => `"${String(field ?? "").replace(/"/g, '""')}"`).join(","))
+                .map(row => row.map((field: any) => `"${String(field ?? "").replace(/"/g, '""')}"`).join(","))
                 .join("\r\n")
 
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
@@ -298,8 +332,8 @@ export default function CollectionVouchersPage() {
 
     const columns = [
         {
-            accessorKey: "id",
-            header: "Voucher ID",
+            accessorKey: "tag",
+            header: "Voucher Tag",
             cell: ({ row }: any) => {
                 const voucher = row.original as CollectionVoucher
                 return (
@@ -307,7 +341,11 @@ export default function CollectionVouchersPage() {
                         <div className="h-9 w-9 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center">
                             <Truck className="h-4 w-4 text-white" />
                         </div>
-                        <div className="text-sm font-light">{voucher.id.substring(0, 8)}...</div>
+                        <FormIdCopy
+                            displayId={voucher.tag || "N/A"}
+                            actualId={voucher.id}
+                            size="sm"
+                        />
                     </div>
                 )
             },
@@ -388,10 +426,12 @@ export default function CollectionVouchersPage() {
         },
         {
             accessorKey: "volume",
-            header: "Volume",
+            header: "Total Volume",
             cell: ({ row }: any) => {
                 const voucher = row.original as CollectionVoucher
-                return <span className="text-sm font-light">{voucher.details?.volume || 0} L</span>
+                const details = Array.isArray(voucher.raw_milk_collection_voucher_details) ? voucher.raw_milk_collection_voucher_details : (Array.isArray(voucher.details) ? voucher.details : [])
+                const totalVolume = details.reduce((acc, curr) => acc + (Number(curr.volume) || 0), 0)
+                return <span className="text-sm font-light">{totalVolume} L</span>
             },
         },
         {
@@ -528,7 +568,6 @@ export default function CollectionVouchersPage() {
                         <DataTable
                             columns={columns}
                             data={paginatedVouchers}
-                            loading={isLoading}
                         />
 
                         {/* Pagination */}

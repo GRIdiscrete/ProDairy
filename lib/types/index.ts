@@ -364,7 +364,7 @@ export interface CollectionVoucherDetails {
   meter_finish: number
   volume: number
   dairy_total: number
-  farmer_tank_number: number
+  farmer_tank_number: number[]
   truck_compartment_number: number
   route_total: number
 }
@@ -387,12 +387,16 @@ export interface CollectionVoucher {
   driver: string
   date: string
   route: string
-  farmer: string // This is a supplier ID
-  details: CollectionVoucherDetails
+  farmer: string | Supplier
+  number_of_compartments: number
+  details: string | CollectionVoucherDetails[]
+  raw_milk_collection_voucher_details: CollectionVoucherDetails[]
   truck_number: string
   time_in: string
   time_out: string
-  lab_test: CollectionVoucherLabTest
+  lab_test: string | CollectionVoucherLabTest[]
+  raw_milk_collection_voucher_lab_test: CollectionVoucherLabTest[]
   remark: string
   driver_signature: string
+  tag?: string
 }

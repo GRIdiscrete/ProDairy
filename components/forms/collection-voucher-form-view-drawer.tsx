@@ -15,6 +15,7 @@ import { LoadingButton } from "@/components/ui/loading-button"
 import { base64ToPngDataUrl } from "@/lib/utils/signature"
 import { UserAvatar } from "@/components/ui/user-avatar"
 import { SupplierAvatar } from "@/components/ui/supplier-avatar"
+import { FormIdCopy } from "@/components/ui/form-id-copy"
 import type { CollectionVoucher } from "@/lib/types"
 
 interface SignatureViewerProps {
@@ -114,6 +115,14 @@ export function CollectionVoucherViewDrawer({
     const driverUser = users.find(user => user.id === collectionVoucher.driver)
     const supplierData = suppliers.find(s => s.id === (typeof collectionVoucher.farmer === 'string' ? collectionVoucher.farmer : (collectionVoucher.farmer as any)?.id))
 
+    const details = Array.isArray(collectionVoucher.raw_milk_collection_voucher_details)
+        ? collectionVoucher.raw_milk_collection_voucher_details
+        : (Array.isArray(collectionVoucher.details) ? collectionVoucher.details : [])
+
+    const labTests = Array.isArray(collectionVoucher.raw_milk_collection_voucher_lab_test)
+        ? collectionVoucher.raw_milk_collection_voucher_lab_test
+        : (Array.isArray(collectionVoucher.lab_test) ? collectionVoucher.lab_test : [])
+
     return (
         <Sheet open={open} onOpenChange={onOpenChange}>
             <SheetContent
@@ -130,7 +139,11 @@ export function CollectionVoucherViewDrawer({
                                 <div>
                                     <SheetTitle className="text-lg font-light m-0">Collection Voucher Details</SheetTitle>
                                     <SheetDescription className="text-sm font-light">
-                                        View collection voucher information
+                                        <FormIdCopy
+                                            displayId={collectionVoucher.tag || "N/A"}
+                                            actualId={collectionVoucher.id}
+                                            size="sm"
+                                        />
                                     </SheetDescription>
                                 </div>
                             </div>
@@ -202,6 +215,11 @@ export function CollectionVoucherViewDrawer({
                                             <Truck className="h-3 w-3" />Truck Number
                                         </div>
                                         <div className="text-sm font-light">{collectionVoucher.truck_number}</div>
+                                    </div>
+
+                                    <div className="space-y-1">
+                                        <div className="text-xs text-gray-500">Compartments</div>
+                                        <div className="text-sm font-light">{collectionVoucher.number_of_compartments}</div>
                                     </div>
                                 </div>
 
@@ -299,53 +317,66 @@ export function CollectionVoucherViewDrawer({
                                     <div className="text-lg font-light">Collection Details</div>
                                 </div>
                             </div>
-                            <div className="p-6">
-                                <div className="grid grid-cols-3 gap-4 text-sm">
-                                    <div className="space-y-1">
-                                        <div className="text-xs text-gray-500">Temperature</div>
-                                        <div className="font-light">{collectionVoucher.details.temperature}°</div>
-                                    </div>
+                            <div className="p-6 space-y-6">
+                                {details.map((detail, index) => (
+                                    <div key={index} className="p-4 border border-gray-100 rounded-xl bg-gray-50/50 space-y-4">
+                                        <div className="flex items-center justify-between">
+                                            <Badge variant="secondary" className="bg-blue-50 text-blue-700 font-light rounded-full">
+                                                Compartment {detail.truck_compartment_number}
+                                            </Badge>
+                                        </div>
+                                        <div className="grid grid-cols-3 gap-4 text-xs">
+                                            <div className="space-y-1">
+                                                <div className="text-gray-500">Temp</div>
+                                                <div className="font-light">{detail.temperature}°C</div>
+                                            </div>
+                                            <div className="space-y-1">
+                                                <div className="text-gray-500">Dip</div>
+                                                <div className="font-light">{detail.dip_reading}</div>
+                                            </div>
+                                            <div className="space-y-1">
+                                                <div className="text-gray-500">Volume</div>
+                                                <div className="font-light">{detail.volume} L</div>
+                                            </div>
+                                        </div>
 
-                                    <div className="space-y-1">
-                                        <div className="text-xs text-gray-500">Dip Reading</div>
-                                        <div className="font-light">{collectionVoucher.details.dip_reading}</div>
-                                    </div>
+                                        <div className="grid grid-cols-2 gap-4 text-xs">
+                                            <div className="space-y-1">
+                                                <div className="text-gray-500">Meter Start</div>
+                                                <div className="font-light">{detail.meter_start}</div>
+                                            </div>
+                                            <div className="space-y-1">
+                                                <div className="text-gray-500">Meter Finish</div>
+                                                <div className="font-light">{detail.meter_finish}</div>
+                                            </div>
+                                        </div>
 
-                                    <div className="space-y-1">
-                                        <div className="text-xs text-gray-500">Volume</div>
-                                        <div className="font-light">{collectionVoucher.details.volume} L</div>
-                                    </div>
+                                        <div className="grid grid-cols-2 gap-4 text-xs">
+                                            <div className="space-y-1">
+                                                <div className="text-gray-500">Dairy Total</div>
+                                                <div className="font-light">{detail.dairy_total}</div>
+                                            </div>
+                                            <div className="space-y-1">
+                                                <div className="text-gray-500">Farmer Tank(s)</div>
+                                                <div className="flex flex-wrap gap-1">
+                                                    {Array.isArray(detail.farmer_tank_number) ? detail.farmer_tank_number.map(tn => (
+                                                        <Badge key={tn} variant="outline" className="text-[10px] font-light h-5">Tank {tn}</Badge>
+                                                    )) : <span className="font-light text-gray-400">N/A</span>}
+                                                </div>
+                                            </div>
+                                        </div>
 
-                                    <div className="space-y-1">
-                                        <div className="text-xs text-gray-500">Meter Start</div>
-                                        <div className="font-light">{collectionVoucher.details.meter_start}</div>
+                                        <div className="space-y-1 text-xs">
+                                            <div className="text-gray-500">Route Total</div>
+                                            <div className="font-light">{detail.route_total}</div>
+                                        </div>
                                     </div>
-
-                                    <div className="space-y-1">
-                                        <div className="text-xs text-gray-500">Meter Finish</div>
-                                        <div className="font-light">{collectionVoucher.details.meter_finish}</div>
+                                ))}
+                                {details.length === 0 && (
+                                    <div className="text-center py-4 text-gray-400 text-sm font-light italic">
+                                        No collection details available
                                     </div>
-
-                                    <div className="space-y-1">
-                                        <div className="text-xs text-gray-500">Dairy Total</div>
-                                        <div className="font-light">{collectionVoucher.details.dairy_total}</div>
-                                    </div>
-
-                                    <div className="space-y-1">
-                                        <div className="text-xs text-gray-500">Farmer Tank #</div>
-                                        <div className="font-light">{collectionVoucher.details.farmer_tank_number}</div>
-                                    </div>
-
-                                    <div className="space-y-1">
-                                        <div className="text-xs text-gray-500">Truck Compartment #</div>
-                                        <div className="font-light">{collectionVoucher.details.truck_compartment_number}</div>
-                                    </div>
-
-                                    <div className="space-y-1">
-                                        <div className="text-xs text-gray-500">Route Total</div>
-                                        <div className="font-light">{collectionVoucher.details.route_total}</div>
-                                    </div>
-                                </div>
+                                )}
                             </div>
                         </div>
 
@@ -357,30 +388,39 @@ export function CollectionVoucherViewDrawer({
                                     <div className="text-lg font-light">Lab Test Results</div>
                                 </div>
                             </div>
-                            <div className="p-6">
-                                <div className="grid grid-cols-2 gap-4 text-sm">
-                                    <div className="space-y-1">
-                                        <div className="text-xs text-gray-500">OT Result</div>
-                                        <div className="font-light">{collectionVoucher.lab_test?.ot_result || 'N/A'}</div>
-                                    </div>
+                            <div className="p-6 space-y-6">
+                                {labTests.map((test, index) => (
+                                    <div key={index} className="space-y-4">
+                                        <div className="grid grid-cols-2 gap-4 text-sm">
+                                            <div className="space-y-1">
+                                                <div className="text-xs text-gray-500">OT Result</div>
+                                                <div className="font-light">{test.ot_result || 'N/A'}</div>
+                                            </div>
 
-                                    <div className="space-y-1">
-                                        <div className="text-xs text-gray-500">Organoleptic</div>
-                                        <div className="font-light">{collectionVoucher.lab_test?.organoleptic || 'N/A'}</div>
-                                    </div>
+                                            <div className="space-y-1">
+                                                <div className="text-xs text-gray-500">Organoleptic</div>
+                                                <div className="font-light">{test.organoleptic || 'N/A'}</div>
+                                            </div>
 
-                                    <div className="space-y-1">
-                                        <div className="text-xs text-gray-500">Alcohol</div>
-                                        <div className="font-light">{collectionVoucher.lab_test?.alcohol || 'N/A'}</div>
-                                    </div>
+                                            <div className="space-y-1">
+                                                <div className="text-xs text-gray-500">Alcohol</div>
+                                                <div className="font-light">{test.alcohol || 'N/A'}</div>
+                                            </div>
 
-                                    <div className="space-y-1">
-                                        <div className="text-xs text-gray-500">COB Result</div>
-                                        <Badge className={collectionVoucher.lab_test?.cob_result ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}>
-                                            {collectionVoucher.lab_test?.cob_result ? 'Positive' : 'Negative'}
-                                        </Badge>
+                                            <div className="space-y-1">
+                                                <div className="text-xs text-gray-500">COB Result</div>
+                                                <Badge className={test.cob_result ? "bg-green-100 text-green-800 border-0" : "bg-gray-100 text-gray-800 border-0"}>
+                                                    {test.cob_result ? 'Positive' : 'Negative'}
+                                                </Badge>
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
+                                ))}
+                                {labTests.length === 0 && (
+                                    <div className="text-center py-4 text-gray-400 text-sm font-light italic">
+                                        No lab tests available
+                                    </div>
+                                )}
                             </div>
                         </div>
 

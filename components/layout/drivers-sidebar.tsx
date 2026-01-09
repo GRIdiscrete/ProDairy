@@ -25,7 +25,7 @@ const driversNavigation = [
   // }
   {
     name: "Collection Vouchers",
-    href: "/collection-vouchers",
+    href: "/drivers/collection-vouchers",
     icon: FileText,
     current: false,
   }
