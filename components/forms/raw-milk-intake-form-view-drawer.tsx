@@ -13,7 +13,8 @@ import { useAppDispatch, useAppSelector } from "@/lib/store"
 import type { RootState } from "@/lib/store"
 import { fetchRawMilkResultSlips, deleteRawMilkResultSlip } from "@/lib/store/slices/rawMilkResultSlipSlice"
 import { fetchSuppliers } from "@/lib/store/slices/supplierSlice"
-import { generateRawMilkIntakeFormId, generateDriverFormId } from "@/lib/utils/form-id-generator"
+import { fetchCollectionVouchers } from "@/lib/store/slices/collectionVoucherSlice"
+import { generateRawMilkIntakeFormId } from "@/lib/utils/form-id-generator"
 import { FormIdCopy } from "@/components/ui/form-id-copy"
 import { UserAvatar } from "@/components/ui/user-avatar"
 import { SupplierAvatar } from "@/components/ui/supplier-avatar"
@@ -43,7 +44,7 @@ export function RawMilkIntakeFormViewDrawer({
   const { slips, isInitialized, operationLoading } = useAppSelector((s) => (s as any).rawMilkResultSlips)
   const { items: users } = useAppSelector((state: RootState) => state.users)
   const { silos } = useAppSelector((state: RootState) => state.silo)
-  const { driverForms } = useAppSelector((state: RootState) => state.driverForm)
+  const { collectionVouchers } = useAppSelector((state: RootState) => state.collectionVoucher)
   const { suppliers } = useAppSelector((state: RootState) => state.supplier)
   const [resultSlipDrawerOpen, setResultSlipDrawerOpen] = useState(false)
   const [resultSlipMode, setResultSlipMode] = useState<"create" | "edit">("create")
@@ -54,17 +55,32 @@ export function RawMilkIntakeFormViewDrawer({
     return silos.find((silo: any) => silo.id === siloId)
   }
 
-  // Helper function to get driver form by ID
-  const getDriverFormById = (driverFormId: string) => {
-    return driverForms.find((form: any) => form.id === driverFormId)
+  // Helper function to get collection voucher by ID
+  const getCollectionVoucherById = (voucherId: any) => {
+    // If voucherId is already an object (populated), use it
+    if (typeof voucherId === 'object' && voucherId !== null) {
+      return voucherId
+    }
+    // Otherwise look it up in the store
+    return collectionVouchers.find((voucher: any) => voucher.id === voucherId)
   }
 
-  // Helper function to get driver info from driver form
-  const getDriverInfoFromForm = (driverFormId: string) => {
-    const driverForm = getDriverFormById(driverFormId)
-    if (!driverForm) return null
+  // Helper function to get driver info from collection voucher
+  const getDriverInfoFromVoucher = (voucher: any) => {
+    if (!voucher) return null
 
-    const driverId = typeof driverForm.driver === 'string' ? driverForm.driver : (driverForm as any).driver_id
+    // If driver is already populate object
+    if (voucher.driver && typeof voucher.driver === 'object') {
+      const driverUser = voucher.driver
+      return {
+        name: `${driverUser.first_name} ${driverUser.last_name}`,
+        email: driverUser.email,
+        user: driverUser
+      }
+    }
+
+    // specific lookup if just ID
+    const driverId = voucher.driver
     const driverUser = users.find((user: any) => user.id === driverId)
 
     if (driverUser) {
@@ -81,6 +97,7 @@ export function RawMilkIntakeFormViewDrawer({
   useEffect(() => {
     if (open && !isInitialized) {
       dispatch(fetchRawMilkResultSlips())
+      dispatch(fetchCollectionVouchers({}))
       dispatch(fetchSuppliers({})) // Load suppliers for sample information
     }
   }, [open, isInitialized, dispatch])
@@ -165,7 +182,7 @@ export function RawMilkIntakeFormViewDrawer({
     const link = document.createElement('a')
     const url = URL.createObjectURL(blob)
     const currentDateTime = formatDate(new Date().toISOString())
-    
+
     link.setAttribute('href', url)
     link.setAttribute('download', `raw-milk-intake-test-${form?.tag || ''}-${currentDateTime}.csv`)
     link.style.visibility = 'hidden'
@@ -193,11 +210,11 @@ export function RawMilkIntakeFormViewDrawer({
             <div className="flex items-center space-x-2">
               {!currentResultSlip && (
                 <LoadingButton
-                  
+
                   size="sm"
-                  onClick={() => { 
-                    setResultSlipMode("create"); 
-                    setResultSlipExistingId(undefined); 
+                  onClick={() => {
+                    setResultSlipMode("create");
+                    setResultSlipExistingId(undefined);
                     setResultSlipDrawerOpen(true);
                     setActiveTab("lab");
                   }}
@@ -208,7 +225,7 @@ export function RawMilkIntakeFormViewDrawer({
                 </LoadingButton>
               )}
               <LoadingButton
-                
+
                 size="sm"
                 onClick={onEdit}
                 className="bg-[#A0CF06] text-[#211D1E] border-0 rounded-full"
@@ -232,86 +249,107 @@ export function RawMilkIntakeFormViewDrawer({
           {/* Process Overview */}
           <div className="mb-8 p-6  from-blue-50 to-cyan-50 rounded-lg">
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="h-auto p-0 bg-transparent border-0 border-b border-gray-200">
-              <TabsTrigger
-                value="details"
-                className="rounded-none bg-transparent border-0 border-b-2 border-transparent text-lg font-light text-gray-700 px-0 mr-6 data-[state=active]:text-blue-700 data-[state=active]:border-blue-600"
-              >
-                <FileText className="w-4 h-4 mr-2" /> Details
-              </TabsTrigger>
-              <TabsTrigger
-                value="lab"
-                className="rounded-none bg-transparent border-0 border-b-2 border-transparent text-lg font-light text-gray-700 px-0 mr-6 data-[state=active]:text-blue-700 data-[state=active]:border-blue-600"
-              >
-                <Beaker className="w-4 h-4 mr-2" /> Lab Test
-              </TabsTrigger>
-            </TabsList>
+              <TabsList className="h-auto p-0 bg-transparent border-0 border-b border-gray-200">
+                <TabsTrigger
+                  value="details"
+                  className="rounded-none bg-transparent border-0 border-b-2 border-transparent text-lg font-light text-gray-700 px-0 mr-6 data-[state=active]:text-blue-700 data-[state=active]:border-blue-600"
+                >
+                  <FileText className="w-4 h-4 mr-2" /> Details
+                </TabsTrigger>
+                <TabsTrigger
+                  value="lab"
+                  className="rounded-none bg-transparent border-0 border-b-2 border-transparent text-lg font-light text-gray-700 px-0 mr-6 data-[state=active]:text-blue-700 data-[state=active]:border-blue-600"
+                >
+                  <Beaker className="w-4 h-4 mr-2" /> Lab Test
+                </TabsTrigger>
+              </TabsList>
 
-            <TabsContent value="details" className="mt-4">
-              {/* Form Details Grid */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Basic Information */}
-                <div className="p-6 bg-white border border-gray-200 rounded-lg">
-                  <div className="flex items-center space-x-2 mb-4">
-                    <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
-                      <FileText className="w-4 h-4 text-blue-600" />
+              <TabsContent value="details" className="mt-4">
+                {/* Form Details Grid */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Basic Information */}
+                  <div className="p-6 bg-white border border-gray-200 rounded-lg">
+                    <div className="flex items-center space-x-2 mb-4">
+                      <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
+                        <FileText className="w-4 h-4 text-blue-600" />
+                      </div>
+                      <h3 className="text-lg font-light">Basic Information</h3>
                     </div>
-                    <h3 className="text-lg font-light">Basic Information</h3>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-light text-gray-600">Form ID</span>
+                        <FormIdCopy
+                          displayId={form?.tag}
+                          actualId={form.id}
+                          size="sm"
+                        />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-light text-gray-600">Date</span>
+                        <span className="text-sm font-light">
+                          {new Date(form.date).toLocaleDateString('en-GB', {
+                            day: 'numeric',
+                            month: 'long',
+                            year: 'numeric'
+                          })}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-light text-gray-600">Quantity Received</span>
+                        <span className="text-sm font-light text-blue-600">{form.quantity_received}L</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-light text-gray-600">Samples</span>
+                        <span className="text-sm font-light text-green-600">
+                          {(form as any).raw_milk_intake_form_samples?.length || 0} samples
+                        </span>
+                      </div>
+                    </div>
                   </div>
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-light text-gray-600">Form ID</span>
-                      <FormIdCopy
-                        displayId={form?.tag}
-                        actualId={form.id}
-                        size="sm"
-                      />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-light text-gray-600">Date</span>
-                      <span className="text-sm font-light">
-                        {new Date(form.date).toLocaleDateString('en-GB', {
-                          day: 'numeric',
-                          month: 'long',
-                          year: 'numeric'
-                        })}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-light text-gray-600">Quantity Received</span>
-                      <span className="text-sm font-light text-blue-600">{form.quantity_received}L</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-light text-gray-600">Samples</span>
-                      <span className="text-sm font-light text-green-600">
-                        {(form as any).raw_milk_intake_form_samples?.length || 0} samples
-                      </span>
-                    </div>
-                  </div>
-                </div>
 
-                {/* Operator Information */}
-                <div className="p-6 bg-white border border-gray-200 rounded-lg">
-                  <div className="flex items-center space-x-2 mb-4">
-                    <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
-                      <User className="w-4 h-4 text-blue-600" />
+                  {/* Operator Information */}
+                  <div className="p-6 bg-white border border-gray-200 rounded-lg">
+                    <div className="flex items-center space-x-2 mb-4">
+                      <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
+                        <User className="w-4 h-4 text-blue-600" />
+                      </div>
+                      <h3 className="text-lg font-light">Operator Information</h3>
                     </div>
-                    <h3 className="text-lg font-light">Operator Information</h3>
-                  </div>
-                  <div className="space-y-3">
-                    {(() => {
-                      const operatorUser = users.find((user: any) => user.id === form.operator_id)
+                    <div className="space-y-3">
+                      {(() => {
+                        const operatorUser = users.find((user: any) => user.id === form.operator_id)
 
-                      if (operatorUser) {
+                        if (operatorUser) {
+                          return (
+                            <div className="space-y-3">
+                              <UserAvatar
+                                user={operatorUser}
+                                size="lg"
+                                showName={true}
+                                showEmail={true}
+                                showDropdown={true}
+                              />
+                              {form.operator_signature && (
+                                <div className="space-y-2">
+                                  <span className="text-sm font-light text-gray-600">Digital Signature</span>
+                                  <div className="border border-gray-200 rounded-md p-2 bg-white">
+                                    <img
+                                      src={base64ToPngDataUrl(form.operator_signature)}
+                                      alt="Operator signature"
+                                      className="h-16 max-w-full object-contain"
+                                    />
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          )
+                        }
+
                         return (
                           <div className="space-y-3">
-                            <UserAvatar
-                              user={operatorUser}
-                              size="lg"
-                              showName={true}
-                              showEmail={true}
-                              showDropdown={true}
-                            />
+                            <div className="text-sm text-gray-500">
+                              <p>No operator user data available</p>
+                            </div>
                             {form.operator_signature && (
                               <div className="space-y-2">
                                 <span className="text-sm font-light text-gray-600">Digital Signature</span>
@@ -326,281 +364,261 @@ export function RawMilkIntakeFormViewDrawer({
                             )}
                           </div>
                         )
-                      }
-
-                      return (
-                        <div className="space-y-3">
-                          <div className="text-sm text-gray-500">
-                            <p>No operator user data available</p>
-                          </div>
-                          {form.operator_signature && (
-                            <div className="space-y-2">
-                              <span className="text-sm font-light text-gray-600">Digital Signature</span>
-                              <div className="border border-gray-200 rounded-md p-2 bg-white">
-                                <img
-                                  src={base64ToPngDataUrl(form.operator_signature)}
-                                  alt="Operator signature"
-                                  className="h-16 max-w-full object-contain"
-                                />
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      )
-                    })()}
-                  </div>
-                </div>
-
-                {/* Driver Form Details */}
-                {form.drivers_form_id && (
-                  <div className="p-6 bg-white border border-gray-200 rounded-lg">
-                    <div className="flex items-center space-x-2 mb-4">
-                      <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
-                        <Truck className="w-4 h-4 text-blue-600" />
-                      </div>
-                      <h3 className="text-lg font-light">Driver Form</h3>
+                      })()}
                     </div>
-                    <div className="space-y-3">
-                      {(() => {
-                        const driverForm = getDriverFormById(form.drivers_form_id)
-                        const driverInfo = getDriverInfoFromForm(form.drivers_form_id)
+                  </div>
 
-                        if (driverForm) {
-                          return (
-                            <>
-                              <div className="flex items-center justify-between">
-                                <span className="text-sm font-light text-gray-600">Form ID</span>
-                                <FormIdCopy
-                                  displayId={form?.tag}
-                                  actualId={form.drivers_form_id}
-                                  size="sm"
-                                />
-                              </div>
-                              {driverInfo && (
-                                <div className="space-y-2">
-                                  <span className="text-sm font-light text-gray-600">Driver</span>
-                                  <UserAvatar
-                                    user={driverInfo.user}
-                                    size="md"
-                                    showName={true}
-                                    showEmail={true}
+                  {/* Collection Voucher Details */}
+                  {(form as any).raw_milk_collection_voucher_id && (
+                    <div className="p-6 bg-white border border-gray-200 rounded-lg">
+                      <div className="flex items-center space-x-2 mb-4">
+                        <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
+                          <Truck className="w-4 h-4 text-blue-600" />
+                        </div>
+                        <h3 className="text-lg font-light">Collection Voucher</h3>
+                      </div>
+                      <div className="space-y-3">
+                        {(() => {
+                          const voucher = getCollectionVoucherById((form as any).raw_milk_collection_voucher_id)
+                          const driverInfo = getDriverInfoFromVoucher(voucher)
+
+                          if (voucher) {
+                            return (
+                              <>
+                                <div className="flex items-center justify-between">
+                                  <span className="text-sm font-light text-gray-600">Voucher Tag</span>
+                                  <FormIdCopy
+                                    displayId={voucher?.tag}
+                                    actualId={voucher.id}
+                                    size="sm"
                                   />
                                 </div>
-                              )}
+                                {driverInfo && (
+                                  <div className="space-y-2">
+                                    <span className="text-sm font-light text-gray-600">Driver</span>
+                                    <UserAvatar
+                                      user={driverInfo.user}
+                                      size="md"
+                                      showName={true}
+                                      showEmail={true}
+                                    />
+                                  </div>
+                                )}
+                                <div className="flex items-center justify-between">
+                                  <span className="text-sm font-light text-gray-600">Date</span>
+                                  <span className="text-sm font-light">
+                                    {new Date(voucher.date).toLocaleDateString('en-GB', {
+                                      day: 'numeric',
+                                      month: 'short',
+                                      year: 'numeric'
+                                    })}
+                                  </span>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                  <span className="text-sm font-light text-gray-600">Route</span>
+                                  <Badge className="text-xs bg-gray-100 text-gray-800">
+                                    {voucher.route || 'N/A'}
+                                  </Badge>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                  <span className="text-sm font-light text-gray-600">Truck Number</span>
+                                  <span className="text-sm font-light">{voucher.truck_number?.reg_number || voucher.truck_number || 'N/A'}</span>
+                                </div>
+                              </>
+                            )
+                          } else {
+                            const voucherId = (form as any).raw_milk_collection_voucher_id?.id || (form as any).raw_milk_collection_voucher_id;
+                            return (
                               <div className="flex items-center justify-between">
-                                <span className="text-sm font-light text-gray-600">Start Date</span>
-                                <span className="text-sm font-light">
-                                  {new Date(driverForm.start_date).toLocaleDateString('en-GB', {
-                                    day: 'numeric',
-                                    month: 'short',
-                                    year: 'numeric'
-                                  })}
-                                </span>
+                                <span className="text-sm font-light text-gray-600">Voucher ID</span>
+                                <div className="flex items-center space-x-2">
+                                  <span className="text-sm font-light">#{typeof voucherId === 'string' ? voucherId.slice(0, 8) : 'Unknown'}</span>
+                                  {typeof voucherId === 'string' && <CopyButton text={voucherId} />}
+                                </div>
                               </div>
-                              <div className="flex items-center justify-between">
-                                <span className="text-sm font-light text-gray-600">Status</span>
-                                <Badge className={`text-xs ${driverForm.delivered ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
-                                  {driverForm.delivered ? 'Delivered' : 'Pending'}
-                                </Badge>
-                              </div>
-                              <div className="flex items-center justify-between">
-                                <span className="text-sm font-light text-gray-600">Products</span>
-                                <span className="text-sm font-light">{driverForm.collected_products?.length || 0}</span>
-                              </div>
-                            </>
-                          )
-                        } else {
-                          return (
-                            <div className="flex items-center justify-between">
-                              <span className="text-sm font-light text-gray-600">Form ID</span>
-                              <div className="flex items-center space-x-2">
-                                <span className="text-sm font-light">#{form.drivers_form_id.slice(0, 8)}</span>
-                                <CopyButton text={form.drivers_form_id} />
-                              </div>
-                            </div>
-                          )
-                        }
-                      })()}
-                    </div>
-                  </div>
-                )}
-
-                {/* Destination Silo Details */}
-                {form.destination_silo_id && (
-                  <div className="p-6 bg-white border border-gray-200 rounded-lg">
-                    <div className="flex items-center space-x-2 mb-4">
-                      <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center">
-                        <Package className="w-4 h-4 text-green-600" />
+                            )
+                          }
+                        })()}
                       </div>
-                      <h3 className="text-lg font-light">Destination Silo</h3>
                     </div>
-                    <div className="space-y-3">
-                      {(() => {
-                        const silo = getSiloById(form.destination_silo_id) || form.raw_milk_intake_form_destination_silo_id_fkey
+                  )}
 
-                        if (silo) {
-                          return (
-                            <>
-                              <div className="flex items-center justify-between">
-                                <span className="text-sm font-light text-gray-600">Silo Name</span>
-                                <span className="text-sm font-light text-green-600">{silo.name}</span>
-                              </div>
-                              <div className="flex items-center justify-between">
-                                <span className="text-sm font-light text-gray-600">Location</span>
-                                <span className="text-sm font-light">{silo.location}</span>
-                              </div>
-                              <div className="flex items-center justify-between">
-                                <span className="text-sm font-light text-gray-600">Capacity</span>
-                                <span className="text-sm font-light">{silo.capacity.toLocaleString()}L</span>
-                              </div>
-                              <div className="flex items-center justify-between">
-                                <span className="text-sm font-light text-gray-600">Current Volume</span>
-                                <span className="text-sm font-light text-blue-600">{silo?.milk_volume?.toLocaleString()}L</span>
-                              </div>
-                              <div className="flex items-center justify-between">
-                                <span className="text-sm font-light text-gray-600">Expected New</span>
-                                <span className="text-sm font-light text-orange-600">
-                                  {(silo.milk_volume + form.quantity_received).toLocaleString()}L
-                                </span>
-                              </div>
+                  {/* Destination Silo Details */}
+                  {form.destination_silo_id && (
+                    <div className="p-6 bg-white border border-gray-200 rounded-lg">
+                      <div className="flex items-center space-x-2 mb-4">
+                        <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center">
+                          <Package className="w-4 h-4 text-green-600" />
+                        </div>
+                        <h3 className="text-lg font-light">Destination Silo</h3>
+                      </div>
+                      <div className="space-y-3">
+                        {(() => {
+                          const silo = getSiloById(form.destination_silo_id) || form.raw_milk_intake_form_destination_silo_id_fkey
 
-                              {/* Capacity Bar */}
-                              <div className="mt-4">
-                                <div className="flex justify-between text-xs font-light text-gray-600 mb-2">
-                                  <span>Capacity Usage</span>
-                                  <span>{Math.round((silo.milk_volume / silo.capacity) * 100)}%</span>
+                          if (silo) {
+                            return (
+                              <>
+                                <div className="flex items-center justify-between">
+                                  <span className="text-sm font-light text-gray-600">Silo Name</span>
+                                  <span className="text-sm font-light text-green-600">{silo.name}</span>
                                 </div>
-                                <div className="w-full bg-gray-200 rounded-full h-2">
-                                  <div
-                                    className=" from-blue-500 to-green-500 h-2 rounded-full transition-all duration-300"
-                                    style={{
-                                      width: `${Math.min((silo.milk_volume / silo.capacity) * 100, 100)}%`
-                                    }}
-                                  ></div>
+                                <div className="flex items-center justify-between">
+                                  <span className="text-sm font-light text-gray-600">Location</span>
+                                  <span className="text-sm font-light">{silo.location}</span>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                  <span className="text-sm font-light text-gray-600">Capacity</span>
+                                  <span className="text-sm font-light">{silo.capacity.toLocaleString()}L</span>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                  <span className="text-sm font-light text-gray-600">Current Volume</span>
+                                  <span className="text-sm font-light text-blue-600">{silo?.milk_volume?.toLocaleString()}L</span>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                  <span className="text-sm font-light text-gray-600">Expected New</span>
+                                  <span className="text-sm font-light text-orange-600">
+                                    {(silo.milk_volume + form.quantity_received).toLocaleString()}L
+                                  </span>
+                                </div>
+
+                                {/* Capacity Bar */}
+                                <div className="mt-4">
+                                  <div className="flex justify-between text-xs font-light text-gray-600 mb-2">
+                                    <span>Capacity Usage</span>
+                                    <span>{Math.round((silo.milk_volume / silo.capacity) * 100)}%</span>
+                                  </div>
+                                  <div className="w-full bg-gray-200 rounded-full h-2">
+                                    <div
+                                      className=" from-blue-500 to-green-500 h-2 rounded-full transition-all duration-300"
+                                      style={{
+                                        width: `${Math.min((silo.milk_volume / silo.capacity) * 100, 100)}%`
+                                      }}
+                                    ></div>
+                                  </div>
+                                </div>
+                              </>
+                            )
+                          } else {
+                            return (
+                              <div className="flex items-center justify-between">
+                                <span className="text-sm font-light text-gray-600">Silo ID</span>
+                                <div className="flex items-center space-x-2">
+                                  <span className="text-sm font-light">#{form.destination_silo_id.slice(0, 8)}</span>
+                                  <CopyButton text={form.destination_silo_id} />
                                 </div>
                               </div>
-                            </>
-                          )
-                        } else {
-                          return (
-                            <div className="flex items-center justify-between">
-                              <span className="text-sm font-light text-gray-600">Silo ID</span>
-                              <div className="flex items-center space-x-2">
-                                <span className="text-sm font-light">#{form.destination_silo_id.slice(0, 8)}</span>
-                                <CopyButton text={form.destination_silo_id} />
-                              </div>
-                            </div>
-                          )
-                        }
-                      })()}
+                            )
+                          }
+                        })()}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
 
-              </div>
+                </div>
 
-              {/* Record Information */}
-              <div className="mt-6 p-6 bg-white border border-gray-200 rounded-lg">
-                <h3 className="text-lg font-light mb-4">Record Information</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-light text-gray-600">Created</span>
-                    <span className="text-sm font-light">
-                      {form.created_at ? format(new Date(form.created_at), 'PPP') : 'N/A'}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-light text-gray-600">Last Updated</span>
-                    <span className="text-sm font-light">
-                      {form.updated_at ? format(new Date(form.updated_at), 'PPP') : 'Never'}
-                    </span>
+                {/* Record Information */}
+                <div className="mt-6 p-6 bg-white border border-gray-200 rounded-lg">
+                  <h3 className="text-lg font-light mb-4">Record Information</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-light text-gray-600">Created</span>
+                      <span className="text-sm font-light">
+                        {form.created_at ? format(new Date(form.created_at), 'PPP') : 'N/A'}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-light text-gray-600">Last Updated</span>
+                      <span className="text-sm font-light">
+                        {form.updated_at ? format(new Date(form.updated_at), 'PPP') : 'Never'}
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </TabsContent>
+              </TabsContent>
 
-            <TabsContent value="lab" className="mt-4">
-              <div className="space-y-4">
-                {currentResultSlip ? (
-                  <div className="p-6 bg-white border border-gray-200 rounded-lg">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-lg font-light">Lab Test</h3>
-                      <div className="flex items-center gap-2">
-                        <Badge className="text-xs bg-blue-100 text-blue-800">
-                          Completed
-                        </Badge>
-                        <LoadingButton 
-                          size="sm" 
-                           
-                          className="rounded-full"
-                          onClick={handleExportLabTestCSV}
-                        >
-                          <Download className="w-4 h-4 mr-2" />
-                          Export CSV
-                        </LoadingButton>
-                        <LoadingButton 
-                          size="sm" 
-                           
-                          className="rounded-full"
-                          onClick={() => { 
-                            setResultSlipMode("edit"); 
-                            setResultSlipExistingId(currentResultSlip.id); 
-                            setResultSlipDrawerOpen(true) 
-                          }}
-                        >
-                          <Edit className="w-4 h-4 mr-2" />
-                          Edit
-                        </LoadingButton>
+              <TabsContent value="lab" className="mt-4">
+                <div className="space-y-4">
+                  {currentResultSlip ? (
+                    <div className="p-6 bg-white border border-gray-200 rounded-lg">
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-lg font-light">Lab Test</h3>
+                        <div className="flex items-center gap-2">
+                          <Badge className="text-xs bg-blue-100 text-blue-800">
+                            Completed
+                          </Badge>
+                          <LoadingButton
+                            size="sm"
+
+                            className="rounded-full"
+                            onClick={handleExportLabTestCSV}
+                          >
+                            <Download className="w-4 h-4 mr-2" />
+                            Export CSV
+                          </LoadingButton>
+                          <LoadingButton
+                            size="sm"
+
+                            className="rounded-full"
+                            onClick={() => {
+                              setResultSlipMode("edit");
+                              setResultSlipExistingId(currentResultSlip.id);
+                              setResultSlipDrawerOpen(true)
+                            }}
+                          >
+                            <Edit className="w-4 h-4 mr-2" />
+                            Edit
+                          </LoadingButton>
+                        </div>
                       </div>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                      <div className="flex items-center justify-between"><span className="text-sm text-gray-600">Date</span><span className="text-sm font-light">{currentResultSlip.date}</span></div>
-                      <div className="flex items-center justify-between"><span className="text-sm text-gray-600">Time In</span><span className="text-sm font-light">{currentResultSlip.time_in}</span></div>
-                      <div className="flex items-center justify-between"><span className="text-sm text-gray-600">Time Out</span><span className="text-sm font-light">{currentResultSlip.time_out}</span></div>
-                      <div className="flex items-center justify-between"><span className="text-sm text-gray-600">Details Count</span><span className="text-sm font-light">{currentResultSlip.raw_milk_result_slip_details?.length || 0}</span></div>
-                    </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div className="flex items-center justify-between"><span className="text-sm text-gray-600">Date</span><span className="text-sm font-light">{currentResultSlip.date}</span></div>
+                        <div className="flex items-center justify-between"><span className="text-sm text-gray-600">Time In</span><span className="text-sm font-light">{currentResultSlip.time_in}</span></div>
+                        <div className="flex items-center justify-between"><span className="text-sm text-gray-600">Time Out</span><span className="text-sm font-light">{currentResultSlip.time_out}</span></div>
+                        <div className="flex items-center justify-between"><span className="text-sm text-gray-600">Details Count</span><span className="text-sm font-light">{currentResultSlip.raw_milk_result_slip_details?.length || 0}</span></div>
+                      </div>
 
-                    {currentResultSlip.raw_milk_result_slip_details && currentResultSlip.raw_milk_result_slip_details.length > 0 && (
-                      <div className="space-y-3">
-                        <h4 className="text-md font-light">Test Details</h4>
-                        {currentResultSlip.raw_milk_result_slip_details.map((detail: any, index: number) => (
-                          <div key={detail.id} className="p-4 bg-gray-50 rounded-lg">
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-                              <div className="flex items-center justify-between"><span className="text-gray-600">Temperature</span><span className="font-light">{detail.temperature}°C</span></div>
-                              <div className="flex items-center justify-between"><span className="text-gray-600">pH</span><span className="font-light">{detail.ph}</span></div>
-                              <div className="flex items-center justify-between"><span className="text-gray-600">Fat</span><span className="font-light">{detail.fat}%</span></div>
-                              <div className="flex items-center justify-between"><span className="text-gray-600">Protein</span><span className="font-light">{detail.protein}%</span></div>
-                              <div className="flex items-center justify-between"><span className="text-gray-600">Alcohol</span><span className="font-light">{detail.alcohol}</span></div>
-                              <div className="flex items-center justify-between"><span className="text-gray-600">Resazurin</span><span className="font-light">{detail.resazurin}</span></div>
-                              <div className="flex items-center justify-between"><span className="text-gray-600">Total Solids</span><span className="font-light">{detail.total_solids}</span></div>
-                              <div className="flex items-center justify-between"><span className="text-gray-600">Density</span><span className="font-light">{detail.density}</span></div>
-                              <div className="flex items-center justify-between"><span className="text-gray-600">Starch</span><span className="font-light">{detail.starch ? "Yes" : "No"}</span></div>
-                            </div>
-                            {detail.remark && (
-                              <div className="mt-2 pt-2 border-t border-gray-200">
-                                <span className="text-xs text-gray-600">Remark: </span>
-                                <span className="text-xs font-light">{detail.remark}</span>
+                      {currentResultSlip.raw_milk_result_slip_details && currentResultSlip.raw_milk_result_slip_details.length > 0 && (
+                        <div className="space-y-3">
+                          <h4 className="text-md font-light">Test Details</h4>
+                          {currentResultSlip.raw_milk_result_slip_details.map((detail: any, index: number) => (
+                            <div key={detail.id} className="p-4 bg-gray-50 rounded-lg">
+                              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                                <div className="flex items-center justify-between"><span className="text-gray-600">Temperature</span><span className="font-light">{detail.temperature}°C</span></div>
+                                <div className="flex items-center justify-between"><span className="text-gray-600">pH</span><span className="font-light">{detail.ph}</span></div>
+                                <div className="flex items-center justify-between"><span className="text-gray-600">Fat</span><span className="font-light">{detail.fat}%</span></div>
+                                <div className="flex items-center justify-between"><span className="text-gray-600">Protein</span><span className="font-light">{detail.protein}%</span></div>
+                                <div className="flex items-center justify-between"><span className="text-gray-600">Alcohol</span><span className="font-light">{detail.alcohol}</span></div>
+                                <div className="flex items-center justify-between"><span className="text-gray-600">Resazurin</span><span className="font-light">{detail.resazurin}</span></div>
+                                <div className="flex items-center justify-between"><span className="text-gray-600">Total Solids</span><span className="font-light">{detail.total_solids}</span></div>
+                                <div className="flex items-center justify-between"><span className="text-gray-600">Density</span><span className="font-light">{detail.density}</span></div>
+                                <div className="flex items-center justify-between"><span className="text-gray-600">Starch</span><span className="font-light">{detail.starch ? "Yes" : "No"}</span></div>
                               </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="p-6 bg-white border border-gray-200 rounded-lg">
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="text-lg font-light">Lab Test</h3>
-                      <Badge className="text-xs bg-yellow-100 text-yellow-800">No Result</Badge>
+                              {detail.remark && (
+                                <div className="mt-2 pt-2 border-t border-gray-200">
+                                  <span className="text-xs text-gray-600">Remark: </span>
+                                  <span className="text-xs font-light">{detail.remark}</span>
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                    <p className="text-sm text-gray-600 mb-3">No result slip found for this intake form.</p>
-                    <LoadingButton className="rounded-full" onClick={() => { setResultSlipMode("create"); setResultSlipExistingId(undefined); setResultSlipDrawerOpen(true) }}>Create Lab Test</LoadingButton>
-                  </div>
-                )}
-              </div>
-            </TabsContent>
-          </Tabs>
+                  ) : (
+                    <div className="p-6 bg-white border border-gray-200 rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="text-lg font-light">Lab Test</h3>
+                        <Badge className="text-xs bg-yellow-100 text-yellow-800">No Result</Badge>
+                      </div>
+                      <p className="text-sm text-gray-600 mb-3">No result slip found for this intake form.</p>
+                      <LoadingButton className="rounded-full" onClick={() => { setResultSlipMode("create"); setResultSlipExistingId(undefined); setResultSlipDrawerOpen(true) }}>Create Lab Test</LoadingButton>
+                    </div>
+                  )}
+                </div>
+              </TabsContent>
+            </Tabs>
           </div>
         </div>
 

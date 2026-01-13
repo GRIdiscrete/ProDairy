@@ -3,6 +3,7 @@
 import React, { useState, useMemo, useEffect } from "react"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 import { useDispatch } from "react-redux"
 import { Fingerprint, Loader2 } from "lucide-react"
 import { motion } from "framer-motion"
@@ -36,29 +37,29 @@ export default function LoginPage() {
       .min(6, "Password must be at least 6 characters"),
   })
 
-    const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     console.log("Form submission started with data:", formData)
 
     // Clear previous errors and reset profile fetch success
     setValidationErrors({})
     setProfileFetchSuccess(false)
     dispatch(clearError())
-    
+
     try {
       // Validate form data with Yup
       await loginSchema.validate(formData, { abortEarly: false })
-      
+
       setSubmitting(true)
-      
+
       try {
         const result = await dispatch(loginUser(formData)).unwrap()
         console.log("Login successful:", result)
-        
+
         // Show success toast
         toast.success("Welcome back! Redirecting to dashboard...")
-        
+
         // Set profile fetch success flag to trigger immediate redirect
         setProfileFetchSuccess(true)
       } catch (err: any) {
@@ -68,16 +69,16 @@ export default function LoginPage() {
           message: err.message,
           fullError: err
         })
-        
+
         // Handle API error responses with toast notifications
         console.log('Toast error handling - Full error object:', err)
-        
+
         // Extract statusCode and message from the error structure
         let statusCode = err.statusCode || 500
         let message = err.message || "Login failed"
-        
+
         console.log('Toast error handling - Extracted:', { statusCode, message })
-        
+
         if (statusCode === 400) {
           if (err.message === "missing email or phone") {
             toast.error("Please provide both email and password")
@@ -117,29 +118,29 @@ export default function LoginPage() {
     setValidationErrors({})
     setProfileFetchSuccess(false) // Reset profile fetch success flag
     dispatch(clearError())
-    
+
     try {
       // Simulated biometric auth; hook up WebAuthn later
       await new Promise((r) => setTimeout(r, 1600))
       // For demo purposes, use a default account
-      const result = await dispatch(loginUser({ 
-        email: "bmwale@gmail.com", 
-        password: "password" 
+      const result = await dispatch(loginUser({
+        email: "bmwale@gmail.com",
+        password: "password"
       })).unwrap()
       console.log("Fingerprint login successful:", result)
-      
+
       // Show success toast
       toast.success("Welcome back! Redirecting to dashboard...")
-      
+
       // Set profile fetch success flag to trigger immediate redirect
       setProfileFetchSuccess(true)
     } catch (error: any) {
       console.error("Fingerprint authentication failed:", error)
-      
+
       // Handle API error responses for fingerprint login with toast
       const statusCode = error.statusCode || error.apiError?.statusCode || 500
       const message = error.message || error.apiError?.message || "Authentication failed"
-      
+
       if (statusCode === 400) {
         if (message === "missing email or phone") {
           toast.error("Authentication failed. Please try again.")
@@ -162,9 +163,9 @@ export default function LoginPage() {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const fieldName = e.target.name
     const fieldValue = e.target.value
-    
+
     setFormData((prev) => ({ ...prev, [fieldName]: fieldValue }))
-    
+
     // Clear validation error for this field when user starts typing
     if (validationErrors[fieldName]) {
       setValidationErrors(prev => {
@@ -173,9 +174,9 @@ export default function LoginPage() {
         return newErrors
       })
     }
-    
 
-    
+
+
     // Validate the field immediately if it has a value
     if (fieldValue.trim()) {
       validateField(fieldName, fieldValue)
@@ -193,7 +194,7 @@ export default function LoginPage() {
           return newErrors
         })
       }
-      
+
       // Check if entire form is now valid
       checkFormValidity()
     } catch (err: any) {
@@ -214,11 +215,11 @@ export default function LoginPage() {
   const handleInputBlur = async (e: React.FocusEvent<HTMLInputElement>) => {
     const fieldName = e.target.name
     const fieldValue = e.target.value
-    
+
     try {
       // Validate only this field
       await loginSchema.validateAt(fieldName, { [fieldName]: fieldValue })
-      
+
       // Clear validation error for this field if validation passes
       if (validationErrors[fieldName]) {
         setValidationErrors(prev => {
@@ -239,7 +240,7 @@ export default function LoginPage() {
   // Redirect if already authenticated (but only if not in the middle of a login)
   useEffect(() => {
     console.log("Login page useEffect - isAuthenticated:", isAuthenticated, "submitting:", submitting, "isUsingFingerprint:", isUsingFingerprint)
-    
+
     if (isAuthenticated && !submitting && !isUsingFingerprint) {
       console.log("Authentication detected and login process complete, scheduling redirect...")
       // Add a small delay to ensure all state updates are complete
@@ -248,7 +249,7 @@ export default function LoginPage() {
         // Use replace to prevent back button issues
         router.replace("/")
       }, 200) // 200ms delay to ensure state synchronization
-      
+
       return () => clearTimeout(redirectTimer)
     } else if (isAuthenticated && (submitting || isUsingFingerprint)) {
       console.log("Authentication detected but login process still active, waiting...")
@@ -257,7 +258,7 @@ export default function LoginPage() {
 
   // Direct listener for profile fetch success - more reliable than waiting for Redux state
   const [profileFetchSuccess, setProfileFetchSuccess] = useState(false)
-  
+
   useEffect(() => {
     if (profileFetchSuccess) {
       console.log("Profile fetch success detected, redirecting to dashboard...")
@@ -416,11 +417,10 @@ export default function LoginPage() {
                       value={formData.email}
                       onChange={handleInputChange}
                       onBlur={handleInputBlur}
-                      className={`w-full rounded-xl border bg-white px-4 py-3 text-zinc-900 outline-none ring-0 transition placeholder:text-zinc-400 focus:ring-2 focus:ring-blue-500/30 ${
-                        validationErrors.email 
-                          ? 'border-red-300 focus:border-red-400' 
+                      className={`w-full rounded-xl border bg-white px-4 py-3 text-zinc-900 outline-none ring-0 transition placeholder:text-zinc-400 focus:ring-2 focus:ring-blue-500/30 ${validationErrors.email
+                          ? 'border-red-300 focus:border-red-400'
                           : 'border-zinc-200 focus:border-lime-400'
-                      }`}
+                        }`}
                     />
                     {validationErrors.email && (
                       <p className="mt-1 text-sm text-red-600">{validationErrors.email}</p>
@@ -436,11 +436,10 @@ export default function LoginPage() {
                       value={formData.password}
                       onChange={handleInputChange}
                       onBlur={handleInputBlur}
-                      className={`w-full rounded-xl border bg-white px-4 py-3 text-zinc-900 outline-none ring-0 transition placeholder:text-zinc-400 focus:ring-2 focus:ring-blue-500/30 ${
-                        validationErrors.password 
-                          ? 'border-red-300 focus:border-red-400' 
+                      className={`w-full rounded-xl border bg-white px-4 py-3 text-zinc-900 outline-none ring-0 transition placeholder:text-zinc-400 focus:ring-2 focus:ring-blue-500/30 ${validationErrors.password
+                          ? 'border-red-300 focus:border-red-400'
                           : 'border-zinc-200 focus:border-lime-400'
-                      }`}
+                        }`}
                     />
                     {validationErrors.password && (
                       <p className="mt-1 text-sm text-red-600">{validationErrors.password}</p>
@@ -452,7 +451,7 @@ export default function LoginPage() {
                       <input type="checkbox" className="h-4 w-4 rounded border-zinc-300 text-blue-600 focus:ring-blue-500" />
                       Remember me
                     </label>
-                    <a href="#" className="font-medium text-blue-700 hover:underline">Forgot password?</a>
+                    <Link href="/forgot-password" className="font-medium text-blue-700 hover:underline">Forgot password?</Link>
                   </div>
 
 
@@ -487,13 +486,12 @@ export default function LoginPage() {
                     loading={submitting}
                     disabled={isUsingFingerprint}
                     loadingText="Signing in..."
-                    className={`w-full rounded-xl px-4 py-4 font-semibold text-white shadow-lg transition-all ${
-                      Object.keys(validationErrors).length > 0
+                    className={`w-full rounded-xl px-4 py-4 font-semibold text-white shadow-lg transition-all ${Object.keys(validationErrors).length > 0
                         ? 'bg-amber-500 hover:bg-amber-600'
                         : isFormValid
-                        ? 'bg-green-500 hover:bg-green-600'
-                        : 'bg-[#006BC4] hover:bg-[#0056a0]'
-                    }`}
+                          ? 'bg-green-500 hover:bg-green-600'
+                          : 'bg-[#006BC4] hover:bg-[#0056a0]'
+                      }`}
                   >
                     {Object.keys(validationErrors).length > 0 ? (
                       "Fix errors to continue"

@@ -19,7 +19,7 @@ export interface CreateRawMilkIntakeFormRequest {
   operator_signature: string
   date: string
   quantity_received: number
-  drivers_form_id: string
+  raw_milk_collection_voucher_id: string
   destination_silo_name: string
   status: string
   id?: string | null
@@ -62,7 +62,7 @@ export const rawMilkIntakeApi = {
   },
 
   // Update form
-  update: async (id: string, formData: reateRawMilkIntakeFormRequest) => {
+  update: async (id: string, formData: CreateRawMilkIntakeFormRequest) => {
     return apiRequest<ApiResponse<RawMilkIntakeForm>>(`/raw-milk-intake-form`, {
       method: 'PATCH',
       body: JSON.stringify(formData),

@@ -10,11 +10,13 @@ export interface CreateUserRequest {
   email: string
   password: string
   role_id: string
+  phone_number?: string
 }
 
 export interface UpdateUserRequest extends Omit<CreateUserRequest, 'password'> {
   id: string
   password?: string
+  phone_number?: string
 }
 
 export interface UserEntity {
@@ -27,6 +29,7 @@ export interface UserEntity {
   email: string
   department: string
   password?: string
+  phone_number?: string | null
 }
 
 export interface ApiEnvelope<T> {
@@ -45,11 +48,24 @@ export const usersApi = {
       department: payload.department,
       email: payload.email,
       password: payload.password,
+      phone_number: payload.phone_number,
       updated_at: new Date().toISOString()
     }
-    
+
     const authResponse = await authApi.createAccount(authPayload)
-    
+
+    // Check if the auth request was successful
+    if (authResponse.statusCode >= 400 || !authResponse.data) {
+      // Check specifically for email exists error
+      if (authResponse.errorObject?.code === 'email_exists') {
+        throw new Error("This email address is already registered. Please use a different email.");
+      }
+
+      // Fallback to general message
+      const errorMsg = authResponse.message || "Failed to create user account";
+      throw new Error(errorMsg);
+    }
+
     // Transform the auth response to match the expected UserEntity format
     const userEntity: UserEntity = {
       id: authResponse.data.user.id,
@@ -60,8 +76,9 @@ export const usersApi = {
       last_name: authResponse.data.user.last_name,
       email: authResponse.data.user.email,
       department: payload.department,
+      phone_number: payload.phone_number,
     }
-    
+
     return {
       statusCode: authResponse.statusCode,
       message: authResponse.message,
@@ -72,15 +89,15 @@ export const usersApi = {
     filters?: TableFilters
   } = {}): Promise<ApiEnvelope<UserEntity[]>> => {
     const { filters } = params
-    
+
     // If no filters, use the regular endpoint
     if (!filters || Object.keys(filters).length === 0) {
       return apiRequest<ApiEnvelope<UserEntity[]>>(API_CONFIG.ENDPOINTS.USERS)
     }
-    
+
     // Build query parameters for filter endpoint
     const queryParams = new URLSearchParams()
-    
+
     // Map common filters to API parameters
     if (filters.search) {
       queryParams.append('first_name', filters.search)
@@ -100,18 +117,18 @@ export const usersApi = {
     if (filters.dateRange?.to) {
       queryParams.append('created_before', filters.dateRange.to)
     }
-    
+
     // Add any other custom filters
     Object.keys(filters).forEach(key => {
       if (!['search', 'email', 'department', 'role_id', 'dateRange'].includes(key) && filters[key]) {
         queryParams.append(key, filters[key])
       }
     })
-    
-    const endpoint = queryParams.toString() 
+
+    const endpoint = queryParams.toString()
       ? `${API_CONFIG.ENDPOINTS.USERS}/filter?${queryParams.toString()}`
       : API_CONFIG.ENDPOINTS.USERS
-      
+
     return apiRequest<ApiEnvelope<UserEntity[]>>(endpoint)
   },
   getUser: async (id: string): Promise<ApiEnvelope<UserEntity>> => {

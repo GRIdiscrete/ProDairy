@@ -18,17 +18,19 @@ import { toast } from "sonner"
 import { useAppDispatch, useAppSelector } from "@/lib/store"
 import { createUser as createUserThunk, updateUser as updateUserThunk, fetchUsers } from "@/lib/store/slices/usersSlice"
 import { LoadingButton } from "@/components/ui/loading-button"
+import { PhoneInput } from "@/components/ui/phone-input"
 import { User as UserType } from "@/lib/types"
 
 const userSchema = yup.object({
   first_name: yup.string().required("First name is required"),
   last_name: yup.string().required("Last name is required"),
   email: yup.string().email("Invalid email").required("Email is required"),
+  phone_number: yup.string().optional(),
   password: yup.string()
     .when('mode', {
       is: 'create',
       then: (schema) => schema.required("Password is required").min(6, "Password must be at least 6 characters"),
-      otherwise: (schema) => schema.optional().test('password-length', 'Password must be at least 6 characters', function(value) {
+      otherwise: (schema) => schema.optional().test('password-length', 'Password must be at least 6 characters', function (value) {
         if (!value || value.length === 0) return true; // Allow empty password in edit mode
         return value.length >= 6;
       })
@@ -41,6 +43,7 @@ type UserFormData = {
   first_name: string
   last_name: string
   email: string
+  phone_number?: string
   password?: string
   role_id: string
   department: string
@@ -61,7 +64,7 @@ export function UserFormDrawer({ open, onOpenChange, user, mode, onSuccess }: Us
   const dispatch = useAppDispatch()
 
   const { loading: usersLoading } = useAppSelector((state) => state.users)
-  
+
   const {
     control,
     handleSubmit,
@@ -76,6 +79,7 @@ export function UserFormDrawer({ open, onOpenChange, user, mode, onSuccess }: Us
         first_name: "",
         last_name: "",
         email: "",
+        phone_number: "",
         password: "",
         role_id: "",
         department: "",
@@ -94,6 +98,7 @@ export function UserFormDrawer({ open, onOpenChange, user, mode, onSuccess }: Us
         email: user.email || "",
         role_id: user.role_id || "",
         department: user.department || "",
+        phone_number: user.phone_number || "",
         password: "",
         mode
       })
@@ -102,6 +107,7 @@ export function UserFormDrawer({ open, onOpenChange, user, mode, onSuccess }: Us
         first_name: "",
         last_name: "",
         email: "",
+        phone_number: "",
         password: "",
         role_id: "",
         department: "",
@@ -127,17 +133,18 @@ export function UserFormDrawer({ open, onOpenChange, user, mode, onSuccess }: Us
   const onSubmit: SubmitHandler<UserFormData> = async (data) => {
     try {
       setLoading(true)
-      
+
       if (mode === 'create') {
         const createData: CreateUserRequest = {
           first_name: data.first_name,
           last_name: data.last_name,
           email: data.email,
+          phone_number: data.phone_number,
           password: data.password!,
           role_id: data.role_id,
           department: data.department,
         }
-        
+
         await dispatch(createUserThunk(createData)).unwrap()
         toast.success('User created successfully')
       } else if (user) {
@@ -146,28 +153,29 @@ export function UserFormDrawer({ open, onOpenChange, user, mode, onSuccess }: Us
           first_name: data.first_name,
           last_name: data.last_name,
           email: data.email,
+          phone_number: data.phone_number,
           role_id: data.role_id,
           department: data.department,
         }
-        
+
         // Only include password if it was provided
         if (data.password) {
           updateData.password = data.password
         }
-        
+
         await dispatch(updateUserThunk(updateData)).unwrap()
         toast.success('User updated successfully')
       }
-      
+
       onOpenChange(false)
-      
+
       // Call onSuccess callback if provided
       if (onSuccess) {
         onSuccess()
       }
     } catch (error: any) {
       console.error('Error saving user:', error)
-      
+
       // Backend error message will be used from the thunk
       const message = error || (mode === "create" ? "Failed to create user" : "Failed to update user")
       toast.error(message)
@@ -184,8 +192,8 @@ export function UserFormDrawer({ open, onOpenChange, user, mode, onSuccess }: Us
             {mode === "create" ? "Add New User" : `Edit User: ${user?.first_name} ${user?.last_name}`}
           </SheetTitle>
           <SheetDescription>
-            {mode === "create" 
-              ? "Create a new user account with the required permissions" 
+            {mode === "create"
+              ? "Create a new user account with the required permissions"
               : "Update user information and permissions"}
           </SheetDescription>
         </SheetHeader>
@@ -207,8 +215,8 @@ export function UserFormDrawer({ open, onOpenChange, user, mode, onSuccess }: Us
                     name="first_name"
                     control={control}
                     render={({ field }) => (
-                      <Input 
-                        id="first_name" 
+                      <Input
+                        id="first_name"
                         placeholder="Enter first name"
                         {...field}
                         disabled={isSubmitting}
@@ -225,8 +233,8 @@ export function UserFormDrawer({ open, onOpenChange, user, mode, onSuccess }: Us
                     name="last_name"
                     control={control}
                     render={({ field }) => (
-                      <Input 
-                        id="last_name" 
+                      <Input
+                        id="last_name"
                         placeholder="Enter last name"
                         {...field}
                         disabled={isSubmitting}
@@ -243,9 +251,9 @@ export function UserFormDrawer({ open, onOpenChange, user, mode, onSuccess }: Us
                     name="email"
                     control={control}
                     render={({ field }) => (
-                      <Input 
-                        id="email" 
-                        type="email" 
+                      <Input
+                        id="email"
+                        type="email"
                         placeholder="Enter email address"
                         {...field}
                         disabled={isSubmitting}
@@ -254,6 +262,24 @@ export function UserFormDrawer({ open, onOpenChange, user, mode, onSuccess }: Us
                   />
                   {errors.email && (
                     <p className="text-sm text-red-500">{errors.email.message}</p>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="phone_number">Phone Number</Label>
+                  <Controller
+                    name="phone_number"
+                    control={control}
+                    render={({ field }) => (
+                      <PhoneInput
+                        value={field.value || ""}
+                        onChange={field.onChange}
+                        disabled={isSubmitting}
+                        error={!!errors.phone_number}
+                      />
+                    )}
+                  />
+                  {errors.phone_number && (
+                    <p className="text-sm text-red-500">{errors.phone_number.message}</p>
                   )}
                 </div>
                 {mode === "create" && (
@@ -266,9 +292,9 @@ export function UserFormDrawer({ open, onOpenChange, user, mode, onSuccess }: Us
                       name="password"
                       control={control}
                       render={({ field }) => (
-                        <Input 
-                          id="password" 
-                          type="password" 
+                        <Input
+                          id="password"
+                          type="password"
                           placeholder="Enter password"
                           {...field}
                           disabled={isSubmitting}
@@ -291,9 +317,9 @@ export function UserFormDrawer({ open, onOpenChange, user, mode, onSuccess }: Us
                       name="password"
                       control={control}
                       render={({ field }) => (
-                        <Input 
-                          id="password" 
-                          type="password" 
+                        <Input
+                          id="password"
+                          type="password"
                           placeholder="Enter new password"
                           {...field}
                           disabled={isSubmitting}
@@ -326,7 +352,7 @@ export function UserFormDrawer({ open, onOpenChange, user, mode, onSuccess }: Us
                     name="role_id"
                     control={control}
                     render={({ field }) => (
-                      <Select 
+                      <Select
                         onValueChange={field.onChange}
                         value={field.value}
                         disabled={isSubmitting}
@@ -354,7 +380,7 @@ export function UserFormDrawer({ open, onOpenChange, user, mode, onSuccess }: Us
                     name="department"
                     control={control}
                     render={({ field }) => (
-                      <Select 
+                      <Select
                         onValueChange={field.onChange}
                         value={field.value}
                         disabled={isSubmitting}
@@ -377,21 +403,21 @@ export function UserFormDrawer({ open, onOpenChange, user, mode, onSuccess }: Us
                   )}
                 </div>
               </div>
-              
+
             </CardContent>
           </Card>
 
           <div className="flex justify-end space-x-3 pt-4">
-            <Button 
-              type="button" 
-               
+            <Button
+              type="button"
+
               onClick={() => onOpenChange(false)}
               disabled={isSubmitting}
             >
               Cancel
             </Button>
-            <LoadingButton 
-              type="submit" 
+            <LoadingButton
+              type="submit"
               loading={isSubmitting}
             >
               {mode === 'create' ? 'Create User' : 'Save Changes'}

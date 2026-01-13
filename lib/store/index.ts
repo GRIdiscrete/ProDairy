@@ -45,8 +45,10 @@ import generalLabTestSlice from "./slices/generalLabTestSlice"
 import qaReleaseNoteSlice from "./slices/qaReleaseNoteSlice"
 import qaRejectNoteSlice from "./slices/qaRejectNoteSlice"
 import collectionVoucherReducer from "./slices/collectionVoucherSlice"
+import forgotPasswordReducer from "./slices/forgotPasswordSlice"
 export const store = configureStore({
   reducer: {
+    forgotPassword: forgotPasswordReducer,
     dashboard: dashboardReducer,
     production: productionReducer,
     laboratory: laboratoryReducer,

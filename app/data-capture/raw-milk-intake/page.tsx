@@ -25,9 +25,8 @@ import {
 } from "@/lib/store/slices/rawMilkIntakeSlice"
 import { fetchUsers } from "@/lib/store/slices/usersSlice"
 import { fetchSilos } from "@/lib/store/slices/siloSlice"
-import { fetchDriverForms } from "@/lib/store/slices/driverFormSlice"
+import { fetchCollectionVouchers } from "@/lib/store/slices/collectionVoucherSlice"
 import { fetchSuppliers } from "@/lib/store/slices/supplierSlice"
-import { generateDriverFormId } from "@/lib/utils/form-id-generator"
 import { toast } from "sonner"
 import { TableFilters } from "@/lib/types"
 import { RawMilkIntakeForm } from "@/lib/api/raw-milk-intake"
@@ -36,14 +35,14 @@ import { useRouter, useSearchParams } from "next/navigation"
 
 export default function RawMilkIntakePage() {
   const dispatch = useAppDispatch()
-  const { 
-    rawMilkIntakeForms, 
+  const {
+    rawMilkIntakeForms,
     operationLoading,
-    error 
+    error
   } = useAppSelector((state) => state.rawMilkIntake)
   const { items: users } = useAppSelector((state: RootState) => state.users)
   const { silos } = useAppSelector((state: RootState) => state.silo)
-  const { driverForms } = useAppSelector((state: RootState) => state.driverForm)
+  const { collectionVouchers } = useAppSelector((state: RootState) => state.collectionVoucher)
   const { suppliers } = useAppSelector((state: RootState) => state.supplier)
 
   const [tableFilters, setTableFilters] = useState<TableFilters>({})
@@ -60,9 +59,14 @@ export default function RawMilkIntakePage() {
     return silos.find((silo: any) => silo.name === name)
   }
 
-  // Helper function to get driver form by ID
-  const getDriverFormById = (driverFormId: string) => {
-    return driverForms.find((form: any) => form.id === driverFormId)
+  // Helper function to get collection voucher by ID
+  const getCollectionVoucherById = (voucherId: any) => {
+    // If voucherId is already an object (populated), use it
+    if (typeof voucherId === 'object' && voucherId !== null) {
+      return voucherId
+    }
+    // Otherwise look it up in the store
+    return collectionVouchers.find((voucher: any) => voucher.id === voucherId)
   }
 
   // Helper function to get driver info from driver form
@@ -91,7 +95,7 @@ export default function RawMilkIntakePage() {
       dispatch(fetchRawMilkIntakeForms())
       dispatch(fetchUsers({})) // Load users for operator information
       dispatch(fetchSilos({})) // Load silos for destination information
-      dispatch(fetchDriverForms({})) // Load driver forms for reference
+      dispatch(fetchCollectionVouchers({}))
       dispatch(fetchSuppliers({})) // Load suppliers for sample information
     }
   }, [dispatch])
@@ -205,7 +209,7 @@ export default function RawMilkIntakePage() {
                     ? Number(form.quantity_received).toFixed(4)
                     : "0.0000"}L
                 </Badge>
-               
+
               </div>
             </div>
           </div>
@@ -214,12 +218,11 @@ export default function RawMilkIntakePage() {
     },
     {
       accessorKey: "driver_info",
-      header: "Driver Form",
+      header: "Collection Voucher",
       cell: ({ row }: any) => {
         const form = row.original
-        const driverFormId = form.drivers_form_id
-        const driverForm = getDriverFormById(driverFormId)
-        const driverInfo = getDriverInfoFromForm(driverFormId)
+        const voucherId = form.raw_milk_collection_voucher_id
+        const voucher = getCollectionVoucherById(voucherId)
 
         return (
           <div className="space-y-2">
@@ -227,18 +230,18 @@ export default function RawMilkIntakePage() {
               <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center">
                 <Truck className="w-3 h-3 text-blue-600" />
               </div>
-              <span className="text-sm font-light">Driver Form</span>
+              <span className="text-sm font-light">Collection Voucher</span>
             </div>
-            {driverForm ? (
+            {voucher ? (
               <div className="space-y-1">
                 <FormIdCopy
-                  displayId={driverForm?.tag}
-                  actualId={driverFormId}
+                  displayId={voucher?.tag}
+                  actualId={voucher?.id || voucherId}
                   size="sm"
                 />
               </div>
             ) : (
-              <p className="text-xs text-gray-400">No driver form</p>
+              <p className="text-xs text-gray-400">No voucher</p>
             )}
           </div>
         )
@@ -345,7 +348,7 @@ export default function RawMilkIntakePage() {
         return (
           <div className="flex space-x-2">
             <LoadingButton
-              
+
               size="sm"
               onClick={() => handleViewForm(form)}
               className="bg-[#006BC4] text-white border-0 rounded-full"
@@ -353,7 +356,7 @@ export default function RawMilkIntakePage() {
               <Eye className="w-4 h-4" />
             </LoadingButton>
             <LoadingButton
-              
+
               size="sm"
               onClick={() => handleEditForm(form)}
               className="bg-[#A0CF06] text-[#211D1E] border-0 rounded-full"
@@ -361,7 +364,7 @@ export default function RawMilkIntakePage() {
               <Edit className="w-4 h-4" />
             </LoadingButton>
             <LoadingButton
-            className=" text-white rounded-full"
+              className=" text-white rounded-full"
               variant="destructive"
               size="sm"
               onClick={() => handleDeleteForm(form)}
@@ -422,7 +425,7 @@ export default function RawMilkIntakePage() {
                   <Badge className=" from-blue-100 to-cyan-100 text-white font-light">Latest</Badge>
                 </div>
                 <LoadingButton
-                  
+
                   onClick={() => handleViewForm(latestForm)}
                   className=" from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full px-4 py-2 font-light text-sm"
                 >
@@ -466,52 +469,36 @@ export default function RawMilkIntakePage() {
                     year: 'numeric'
                   })}</p>
                 </div>
-              
+
               </div>
 
               {/* Driver Form, Operator, and Silo Details */}
               <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-4">
-                {/* Driver Form Details */}
-                {latestForm?.drivers_form_id && (
+                {/* Collection Voucher Details */}
+                {(latestForm as any)?.raw_milk_collection_voucher_id && (
                   <div className="p-4 bg-gray-50 rounded-lg">
                     <div className="flex items-center space-x-2 mb-3">
                       <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
                         <Truck className="h-4 w-4 text-blue-600" />
                       </div>
-                      <h4 className="text-sm font-light text-gray-900">Driver Form</h4>
+                      <h4 className="text-sm font-light text-gray-900">Collection Voucher</h4>
                     </div>
                     <div className="space-y-2">
                       {(() => {
-                        const driverForm = getDriverFormById(latestForm.drivers_form_id)
-                        const driverInfo = getDriverInfoFromForm(latestForm.drivers_form_id)
+                        const voucher = getCollectionVoucherById((latestForm as any).raw_milk_collection_voucher_id)
 
-                        return driverForm ? (
+                        return voucher ? (
                           <>
                             <FormIdCopy
-                              displayId={driverForm?.tag}
-                              actualId={latestForm.drivers_form_id}
+                              displayId={voucher?.tag}
+                              actualId={voucher.id}
                               size="sm"
                             />
-                            {driverInfo && (
-                              <div className="flex items-center space-x-2 mt-2">
-                                <UserAvatar
-                                  user={driverInfo.user}
-                                  size="sm"
-                                  showName={false}
-                                  showEmail={false}
-                                  showDropdown={true}
-                                />
-                                <div>
-                                  <div className="text-xs font-light text-gray-900">{driverInfo.name}</div>
-                                  <div className="text-xs text-gray-500">{driverInfo.email}</div>
-                                </div>
-                              </div>
-                            )}
+                            {/* add driver details if needed from voucher object */}
                           </>
                         ) : (
                           <div className="flex items-center space-x-2">
-                            <span className="text-xs font-light">#{latestForm.drivers_form_id.slice(0, 8)}</span>
-                            <CopyButton text={latestForm.drivers_form_id} />
+                            <span className="text-xs text-gray-400">Voucher Loaded...</span>
                           </div>
                         )
                       })()}
@@ -616,9 +603,9 @@ export default function RawMilkIntakePage() {
               {operationLoading.fetch ? (
                 <ContentSkeleton sections={1} cardsPerSection={4} />
               ) : (
-                <DataTable 
-                  columns={columns} 
-                  data={rawMilkIntakeForms} 
+                <DataTable
+                  columns={columns}
+                  data={rawMilkIntakeForms}
                   loading={operationLoading.fetch}
                   error={error}
                   onRowClick={(row) => {

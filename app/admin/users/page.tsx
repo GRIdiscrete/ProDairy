@@ -24,25 +24,25 @@ import { PermissionButton } from "@/components/ui/permission-table-actions"
 export default function AdminUsersPage() {
   const dispatch = useAppDispatch()
   const { items: userEntities, loading: usersLoading, error: usersError, isInitialized: usersInitialized } = useAppSelector((s) => s.users)
-  
+
   const { roles, isInitialized: rolesInitialized } = useAppSelector((s) => s.roles)
   const hasFetchedRef = useRef(false)
-  
+
   const roleNameById = useMemo(() => {
     const map = new Map<string, string>()
     roles?.forEach((role) => role && role.id && map.set(role.id, role.role_name || 'Unknown Role'))
     return map
   }, [roles])
-  
+
   // Drawer states
   const [formDrawerOpen, setFormDrawerOpen] = useState(false)
   const [viewDrawerOpen, setViewDrawerOpen] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
-  
+
   // Selected user and mode
   const [selectedUser, setSelectedUser] = useState<UserType | null>(null)
   const [formMode, setFormMode] = useState<"create" | "edit">("create")
-  
+
   // Filter state
   const [tableFilters, setTableFilters] = useState<TableFilters>({})
 
@@ -50,7 +50,7 @@ export default function AdminUsersPage() {
   const mappedUsers = useMemo(() => {
     return userEntities.map(user => ({
       ...user,
-      role: roleNameById.get(user.role_id) || 'operator', // Default to operator if role not found
+      role: user.users_role_id_fkey?.role_name || roleNameById.get(user.role_id) || 'Unknown Role',
       created_at: user.created_at || new Date().toISOString(),
       updated_at: user.updated_at || user.created_at || new Date().toISOString()
     } as UserType))
@@ -62,7 +62,7 @@ export default function AdminUsersPage() {
       dispatch(fetchRoles({}))
     }
   }, [dispatch, rolesInitialized, roles])
-  
+
   // Load users only when needed
   useEffect(() => {
     // Only fetch users if not already fetched or if filters have changed
@@ -95,7 +95,7 @@ export default function AdminUsersPage() {
     },
     {
       key: "department",
-      label: "Department", 
+      label: "Department",
       type: "select" as const,
       options: departments.map(dept => ({ label: dept, value: dept })),
       placeholder: "Select department"
@@ -133,20 +133,31 @@ export default function AdminUsersPage() {
       accessorKey: "role",
       header: "Role",
       cell: ({ row }) => {
-        const role = roleNameById.get(row.original.role_id) || 'operator'
-        const roleLower = role.toLowerCase()
+        const role = row.original.users_role_id_fkey?.role_name || roleNameById.get(row.original.role_id) || 'Unknown'
         const getRoleColor = (roleName: string) => {
+          if (!roleName) return 'bg-gray-100 text-gray-800';
+          const roleLower = roleName.toLowerCase()
           if (roleLower.includes('admin')) return 'bg-blue-100 text-blue-800'
-          if (roleLower.includes('manager')) return 'bg-blue-100 text-blue-800'
-          if (roleLower.includes('technician')) return 'bg-orange-100 text-orange-800'
-          return 'bg-green-100 text-green-800'
+          if (roleLower.includes('manager') || roleLower.includes('supervisor')) return 'bg-purple-100 text-purple-800'
+          if (roleLower.includes('technician') || roleLower.includes('quality')) return 'bg-orange-100 text-orange-800'
+          if (roleLower.includes('driver')) return 'bg-yellow-100 text-yellow-800'
+          if (roleLower.includes('operator')) return 'bg-green-100 text-green-800'
+          return 'bg-gray-100 text-gray-800'
         }
-        
+
         return (
           <Badge className={getRoleColor(role)}>
             {role}
           </Badge>
         )
+      },
+    },
+    {
+      accessorKey: "phone_number",
+      header: "Phone",
+      cell: ({ row }) => {
+        const phone = row.original.phone_number || 'N/A'
+        return <span className="text-sm text-muted-foreground">{phone}</span>
       },
     },
     {
@@ -184,25 +195,25 @@ export default function AdminUsersPage() {
         const user = row.original
         return (
           <div className="flex space-x-2">
-            <LoadingButton 
-               
-              size="sm" 
+            <LoadingButton
+
+              size="sm"
               onClick={() => handleViewUser(user)}
               className="bg-[#006BC4] text-white border-0 rounded-full"
             >
               <Eye className="w-4 h-4" />
             </LoadingButton>
-            <LoadingButton 
-               
-              size="sm" 
+            <LoadingButton
+
+              size="sm"
               onClick={() => handleEditUser(user)}
               className="bg-[#A0CF06] text-[#211D1E] border-0 rounded-full"
             >
               <Edit className="w-4 h-4" />
             </LoadingButton>
-            <LoadingButton 
-              variant="destructive" 
-              size="sm" 
+            <LoadingButton
+              variant="destructive"
+              size="sm"
               onClick={() => handleDeleteUser(user)}
               className="bg-red-600 hover:bg-red-700 text-white border-0 rounded-full"
             >
@@ -246,7 +257,7 @@ export default function AdminUsersPage() {
 
   const confirmDelete = async () => {
     if (!selectedUser) return
-    
+
     try {
       await dispatch(deleteUser(selectedUser.id)).unwrap()
       toast.success('User deleted successfully')
@@ -261,86 +272,86 @@ export default function AdminUsersPage() {
     <PermissionGuard requiredView="user_tab">
       <AdminDashboardLayout title="Users Management" subtitle="Manage system users and their permissions">
         <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-light text-foreground">Users Management</h1>
-            <p className="text-sm font-light text-muted-foreground">Manage system users and their permissions</p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-light text-foreground">Users Management</h1>
+              <p className="text-sm font-light text-muted-foreground">Manage system users and their permissions</p>
+            </div>
+            <PermissionButton
+              feature="user"
+              permission="create"
+              onClick={handleAddUser}
+              disabled={usersLoading}
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Add User
+            </PermissionButton>
           </div>
-          <PermissionButton
-            feature="user"
-            permission="create"
-            onClick={handleAddUser}
-            disabled={usersLoading}
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Add User
-          </PermissionButton>
-        </div>
 
-        <div className="border border-gray-200 rounded-lg bg-white">
-          <div className="p-6 pb-0">
-            <div className="text-lg font-light">Users</div>
-          </div>
-          <div className="p-6 space-y-4">
-            <DataTableFilters
-              filters={tableFilters}
-              onFiltersChange={setTableFilters}
-              onSearch={(searchTerm) => setTableFilters(prev => ({ ...prev, search: searchTerm }))}
-              searchPlaceholder="Search users by name or email..."
-              filterFields={filterFields}
-            />
-            
-            {usersLoading ? (
-              <div className="space-y-3">
-                <div className="h-10 bg-gray-100 rounded w-48" />
-                <div className="h-64 bg-gray-50 border border-dashed border-gray-200 rounded" />
-              </div>
-            ) : (
-              <DataTable
-                columns={columns}
-                data={mappedUsers}
-                showSearch={false}
+          <div className="border border-gray-200 rounded-lg bg-white">
+            <div className="p-6 pb-0">
+              <div className="text-lg font-light">Users</div>
+            </div>
+            <div className="p-6 space-y-4">
+              <DataTableFilters
+                filters={tableFilters}
+                onFiltersChange={setTableFilters}
+                onSearch={(searchTerm) => setTableFilters(prev => ({ ...prev, search: searchTerm }))}
+                searchPlaceholder="Search users by name or email..."
+                filterFields={filterFields}
               />
-            )}
-          </div>
-        </div>
 
-        {/* Form Drawer */}
-        <UserFormDrawer 
-          open={formDrawerOpen} 
-          onOpenChange={(open) => {
-            setFormDrawerOpen(open)
-            if (!open) setSelectedUser(null)
-          }}
-          user={formMode === 'edit' && selectedUser ? selectedUser : undefined}
-          mode={formMode}
-          onSuccess={() => {
-            setFormDrawerOpen(false)
-            setSelectedUser(null)
-          }}
-        />
-        
-        {/* View Drawer */}
-        <UserViewDrawer
-          open={viewDrawerOpen}
-          onClose={() => setViewDrawerOpen(false)}
-          user={selectedUser}
-          onEdit={() => {
-            setFormMode('edit')
-            setViewDrawerOpen(false)
-            setFormDrawerOpen(true)
-          }}
-        />
-        
-        {/* Delete Confirmation Dialog */}
-        <DeleteConfirmationDialog
-          open={deleteDialogOpen}
-          onOpenChange={setDeleteDialogOpen}
-          title="Delete User"
-          description={`Are you sure you want to delete ${selectedUser ? `${selectedUser.first_name} ${selectedUser.last_name}`.trim() || 'User' : 'User'}? This action cannot be undone.`}
-          onConfirm={confirmDelete}
-          loading={usersLoading}
-        />
+              {usersLoading ? (
+                <div className="space-y-3">
+                  <div className="h-10 bg-gray-100 rounded w-48" />
+                  <div className="h-64 bg-gray-50 border border-dashed border-gray-200 rounded" />
+                </div>
+              ) : (
+                <DataTable
+                  columns={columns}
+                  data={mappedUsers}
+                  showSearch={false}
+                />
+              )}
+            </div>
+          </div>
+
+          {/* Form Drawer */}
+          <UserFormDrawer
+            open={formDrawerOpen}
+            onOpenChange={(open) => {
+              setFormDrawerOpen(open)
+              if (!open) setSelectedUser(null)
+            }}
+            user={formMode === 'edit' && selectedUser ? selectedUser : undefined}
+            mode={formMode}
+            onSuccess={() => {
+              setFormDrawerOpen(false)
+              setSelectedUser(null)
+            }}
+          />
+
+          {/* View Drawer */}
+          <UserViewDrawer
+            open={viewDrawerOpen}
+            onClose={() => setViewDrawerOpen(false)}
+            user={selectedUser}
+            onEdit={() => {
+              setFormMode('edit')
+              setViewDrawerOpen(false)
+              setFormDrawerOpen(true)
+            }}
+          />
+
+          {/* Delete Confirmation Dialog */}
+          <DeleteConfirmationDialog
+            open={deleteDialogOpen}
+            onOpenChange={setDeleteDialogOpen}
+            title="Delete User"
+            description={`Are you sure you want to delete ${selectedUser ? `${selectedUser.first_name} ${selectedUser.last_name}`.trim() || 'User' : 'User'}? This action cannot be undone.`}
+            onConfirm={confirmDelete}
+            loading={usersLoading}
+          />
         </div>
       </AdminDashboardLayout>
     </PermissionGuard>

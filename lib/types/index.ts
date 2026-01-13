@@ -9,6 +9,35 @@ export interface User {
   password?: string
   created_at: string
   updated_at: string
+  phone_number?: string | null
+  users_role_id_fkey?: UserRoleFkey
+}
+
+export interface UserRoleFkey {
+  id: string
+  role_name: string
+  created_at: string
+  updated_at: string | null
+  views: string[]
+  bmt_operations: string[]
+  role_operations: string[]
+  user_operations: string[]
+  devices_operations: string[]
+  process_operations: string[]
+  dispatch_operations: string[]
+  supplier_operations: string[]
+  silo_item_operations: string[]
+  incubation_operations: string[]
+  machine_item_operations: string[]
+  pasteurizing_operations: string[]
+  production_plan_operations: string[]
+  raw_milk_intake_operations: string[]
+  raw_milk_lab_test_operations: string[]
+  filmatic_operation_operations: string[]
+  incubation_lab_test_operations: string[]
+  raw_product_collection_operations: string[]
+  steri_process_operation_operations: string[]
+  before_and_after_autoclave_lab_test_operations: string[]
 }
 
 export type UserRole = "admin" | "manager" | "operator" | "lab_technician" | "quality_control"

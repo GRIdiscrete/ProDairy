@@ -37,8 +37,8 @@ import {
   fetchRawMilkIntakeForms
 } from "@/lib/store/slices/rawMilkIntakeSlice"
 import {
-  fetchDriverForms
-} from "@/lib/store/slices/driverFormSlice"
+  fetchCollectionVouchers
+} from "@/lib/store/slices/collectionVoucherSlice"
 import {
   fetchSuppliers
 } from "@/lib/store/slices/supplierSlice"
@@ -58,7 +58,7 @@ const ProcessOverview = () => (
         <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
           <Truck className="w-4 h-4 text-blue-600" />
         </div>
-        <span className="text-sm font-light">Drivers Form</span>
+        <span className="text-sm font-light">Collection Vouchers</span>
       </div>
       <ArrowRight className="w-4 h-4 text-gray-400" />
       <div className="flex items-center space-x-2">
@@ -93,11 +93,11 @@ const ProcessOverview = () => (
 // Combined Form Schema
 const rawMilkIntakeFormSchema = yup.object({
   date: yup.string().required("Date is required"),
-  drivers_form_id: yup.string().required("Driver form ID is required"),
+  raw_milk_collection_voucher_id: yup.string().required("Collection voucher is required"),
   destination_silo_name: yup.string().required("Destination silo name is required"),
   operator_id: yup.string().required("Operator ID is required"),
   operator_signature: yup.string().required("Operator signature is required"),
-  status: yup.string().oneOf(["Draft", "Pending", "Final"]).required("Status is required"),
+  status: yup.string().oneOf(["draft", "pending", "final"]).required("Status is required"),
   quantity_received: yup.number().required("Quantity is required").min(0.1, "Quantity must be greater than 0"),
 })
 
@@ -118,11 +118,11 @@ export function RawMilkIntakeFormDrawer({
 }: RawMilkIntakeFormDrawerProps) {
   const dispatch = useAppDispatch()
   const { operationLoading } = useAppSelector((state) => state.rawMilkIntake)
-  const { driverForms } = useAppSelector((state) => state.driverForm)
+  const { collectionVouchers } = useAppSelector((state) => state.collectionVoucher)
   const { suppliers } = useAppSelector((state) => state.supplier)
   const { user, profile } = useAppSelector((state) => state.auth)
 
-  const [loadingDriverForms, setLoadingDriverForms] = useState(false)
+  const [loadingVouchers, setLoadingVouchers] = useState(false)
 
   // State for searchable silos
   const [silos, setSilos] = useState<SearchableSelectOption[]>([])
@@ -134,12 +134,12 @@ export function RawMilkIntakeFormDrawer({
     resolver: yupResolver(rawMilkIntakeFormSchema),
     defaultValues: {
       date: new Date().toISOString().split('T')[0],
-      drivers_form_id: "",
+      raw_milk_collection_voucher_id: "",
       destination_silo_name: "",
       operator_id: user?.id || "",
       operator_signature: "",
-      status: "Draft",
-      quantity_received: undefined, // Remove default 0
+      status: "draft",
+      quantity_received: undefined,
     },
   })
 
@@ -150,12 +150,12 @@ export function RawMilkIntakeFormDrawer({
   // Load initial data
   const loadInitialData = async () => {
     try {
-      setLoadingDriverForms(true)
+      setLoadingVouchers(true)
       setLoadingSilos(true)
 
-      // Load driver forms
-      if (driverForms.length === 0) {
-        await dispatch(fetchDriverForms({}))
+      // Load collection vouchers
+      if (collectionVouchers.length === 0) {
+        await dispatch(fetchCollectionVouchers({}))
       }
 
       // Load suppliers
@@ -179,7 +179,7 @@ export function RawMilkIntakeFormDrawer({
       console.error("Error details:", error)
       toast.error("Failed to load form data")
     } finally {
-      setLoadingDriverForms(false)
+      setLoadingVouchers(false)
       setLoadingSilos(false)
     }
   }
@@ -209,7 +209,7 @@ export function RawMilkIntakeFormDrawer({
     if (open) {
       loadInitialData()
     }
-  }, [open, dispatch, driverForms.length])
+  }, [open, dispatch, collectionVouchers.length])
 
   // Auto-populate operator fields when user changes
   useEffect(() => {
@@ -227,22 +227,22 @@ export function RawMilkIntakeFormDrawer({
       if (mode === "edit" && form) {
         formHook.reset({
           date: form.date,
-          drivers_form_id: form.drivers_form_id,
+          raw_milk_collection_voucher_id: (form as any).raw_milk_collection_voucher_id || "",
           destination_silo_name: form.destination_silo_name || "",
           operator_id: form.operator_id || user?.id || "",
           operator_signature: form.operator_signature,
           status: form.status || "Draft",
-          quantity_received: form.quantity_received || undefined, // Update this line
+          quantity_received: form.quantity_received || undefined,
         })
       } else {
         formHook.reset({
           date: new Date().toISOString().split('T')[0],
-          drivers_form_id: "",
+          raw_milk_collection_voucher_id: "",
           destination_silo_name: "",
           operator_id: user?.id || "",
           operator_signature: "",
-          status: "Draft",
-          quantity_received: undefined, // Update this line
+          status: "draft",
+          quantity_received: undefined,
         })
       }
     }
@@ -257,7 +257,7 @@ export function RawMilkIntakeFormDrawer({
         operator_signature: normalizedSignature,
         date: data.date,
         quantity_received: Number(data.quantity_received),
-        drivers_form_id: data.drivers_form_id,
+        raw_milk_collection_voucher_id: data.raw_milk_collection_voucher_id,
         destination_silo_name: data.destination_silo_name,
         status: data.status,
       }
@@ -279,7 +279,7 @@ export function RawMilkIntakeFormDrawer({
 
       // Fetch updated forms list
       await dispatch(fetchRawMilkIntakeForms())
-      
+
       onOpenChange(false)
     } catch (error: any) {
       console.error("Form submission error:", error)
@@ -337,9 +337,9 @@ export function RawMilkIntakeFormDrawer({
                       <SelectValue placeholder="Select status" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Draft">Draft</SelectItem>
-                      <SelectItem value="Pending">Pending</SelectItem>
-                      <SelectItem value="Final">Final</SelectItem>
+                      <SelectItem value="draft">Draft</SelectItem>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="final">Final</SelectItem>
                     </SelectContent>
                   </Select>
                 )}
@@ -352,26 +352,26 @@ export function RawMilkIntakeFormDrawer({
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="drivers_form_id">Driver Form *</Label>
+              <Label htmlFor="raw_milk_collection_voucher_id">Collection Voucher *</Label>
               <Controller
-                name="drivers_form_id"
+                name="raw_milk_collection_voucher_id"
                 control={formHook.control}
                 render={({ field }) => (
                   <SearchableSelect
-                    options={driverForms.map(driverForm => ({
-                      value: driverForm.id,
-                      label: driverForm?.tag ?? 'N/A',
-                      description: `${new Date(driverForm.start_date).toLocaleDateString()} • ${driverForm.delivered ? 'Delivered' : 'Pending'}`
+                    options={collectionVouchers.map(voucher => ({
+                      value: voucher.id,
+                      label: voucher?.tag ?? 'N/A',
+                      description: `${new Date(voucher.date).toLocaleDateString()} • Route: ${voucher.route}`
                     }))}
                     value={field.value}
                     onValueChange={field.onChange}
-                    placeholder="Search and select driver form"
-                    loading={loadingDriverForms}
+                    placeholder="Search and select collection voucher"
+                    loading={loadingVouchers}
                   />
                 )}
               />
-              {formHook.formState.errors.drivers_form_id && (
-                <p className="text-sm text-red-500">{formHook.formState.errors.drivers_form_id.message}</p>
+              {formHook.formState.errors.raw_milk_collection_voucher_id && (
+                <p className="text-sm text-red-500">{formHook.formState.errors.raw_milk_collection_voucher_id.message}</p>
               )}
             </div>
 
@@ -465,11 +465,11 @@ export function RawMilkIntakeFormDrawer({
                         </div>
                       )}
                       <div className="flex items-center gap-2">
-                        <Button type="button"  size="sm" className="rounded-full" onClick={() => setSignatureOpen(true)}>
+                        <Button type="button" size="sm" className="rounded-full" onClick={() => setSignatureOpen(true)}>
                           Add Signature
                         </Button>
                         {field.value && (
-                          <Button type="button"  size="sm" className="rounded-full" onClick={() => setSignatureViewOpen(true)}>
+                          <Button type="button" size="sm" className="rounded-full" onClick={() => setSignatureViewOpen(true)}>
                             View Signature
                           </Button>
                         )}
