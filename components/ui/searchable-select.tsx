@@ -124,7 +124,7 @@ export function SearchableSelect({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
-          
+
           role="combobox"
           aria-expanded={open}
           className={cn(
@@ -181,7 +181,7 @@ export function SearchableSelect({
               className="flex h-10 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 border-0 focus-visible:ring-0"
             />
           </div>
-          <CommandList>
+          <CommandList className="max-h-[300px] overflow-y-auto overflow-x-hidden">
             {loading ? (
               <div className="py-6 text-center text-sm text-muted-foreground">
                 Loading...

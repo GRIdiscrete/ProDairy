@@ -34,15 +34,13 @@ import { useAppDispatch, useAppSelector } from "@/lib/store"
 import {
   createRawMilkIntakeForm,
   updateRawMilkIntakeForm,
-  fetchRawMilkIntakeForms
+  fetchRawMilkIntakeForms,
+  fetchPendingVouchers
 } from "@/lib/store/slices/rawMilkIntakeSlice"
-import {
-  fetchCollectionVouchers
-} from "@/lib/store/slices/collectionVoucherSlice"
 import {
   fetchSuppliers
 } from "@/lib/store/slices/supplierSlice"
-import { RawMilkIntakeForm, CreateRawMilkIntakeFormRequest } from "@/lib/api/raw-milk-intake"
+import { RawMilkIntakeForm, CreateRawMilkIntakeFormRequest, RawMilkIntakePendingVoucher } from "@/lib/api/raw-milk-intake"
 import { siloApi } from "@/lib/api/silo"
 import { toast } from "sonner"
 import { normalizeDataUrlToBase64, base64ToPngDataUrl } from "@/lib/utils/signature"
@@ -93,12 +91,15 @@ const ProcessOverview = () => (
 // Combined Form Schema
 const rawMilkIntakeFormSchema = yup.object({
   date: yup.string().required("Date is required"),
-  raw_milk_collection_voucher_id: yup.string().required("Collection voucher is required"),
+  collection_voucher_id: yup.string().required("Collection voucher is required"),
+  truck_compartment_number: yup.number().required("Compartment number is required"),
   destination_silo_name: yup.string().required("Destination silo name is required"),
   operator_id: yup.string().required("Operator ID is required"),
   operator_signature: yup.string().required("Operator signature is required"),
+  driver_signature: yup.string().required("Driver signature is required"),
   status: yup.string().oneOf(["draft", "pending", "final"]).required("Status is required"),
   quantity_received: yup.number().required("Quantity is required").min(0.1, "Quantity must be greater than 0"),
+  tag: yup.string().required("Tag is required"),
 })
 
 type RawMilkIntakeFormData = yup.InferType<typeof rawMilkIntakeFormSchema>
@@ -117,8 +118,7 @@ export function RawMilkIntakeFormDrawer({
   mode = "create"
 }: RawMilkIntakeFormDrawerProps) {
   const dispatch = useAppDispatch()
-  const { operationLoading } = useAppSelector((state) => state.rawMilkIntake)
-  const { collectionVouchers } = useAppSelector((state) => state.collectionVoucher)
+  const { operationLoading, pendingVouchers } = useAppSelector((state) => state.rawMilkIntake)
   const { suppliers } = useAppSelector((state) => state.supplier)
   const { user, profile } = useAppSelector((state) => state.auth)
 
@@ -134,12 +134,15 @@ export function RawMilkIntakeFormDrawer({
     resolver: yupResolver(rawMilkIntakeFormSchema),
     defaultValues: {
       date: new Date().toISOString().split('T')[0],
-      raw_milk_collection_voucher_id: "",
+      collection_voucher_id: "",
+      truck_compartment_number: undefined,
       destination_silo_name: "",
       operator_id: user?.id || "",
       operator_signature: "",
+      driver_signature: "",
       status: "draft",
       quantity_received: undefined,
+      tag: "",
     },
   })
 
@@ -153,10 +156,8 @@ export function RawMilkIntakeFormDrawer({
       setLoadingVouchers(true)
       setLoadingSilos(true)
 
-      // Load collection vouchers
-      if (collectionVouchers.length === 0) {
-        await dispatch(fetchCollectionVouchers({}))
-      }
+      // Load pending vouchers
+      await dispatch(fetchPendingVouchers()).unwrap()
 
       // Load suppliers
       if (suppliers.length === 0) {
@@ -209,7 +210,7 @@ export function RawMilkIntakeFormDrawer({
     if (open) {
       loadInitialData()
     }
-  }, [open, dispatch, collectionVouchers.length])
+  }, [open, dispatch])
 
   // Auto-populate operator fields when user changes
   useEffect(() => {
@@ -227,53 +228,85 @@ export function RawMilkIntakeFormDrawer({
       if (mode === "edit" && form) {
         formHook.reset({
           date: form.date,
-          raw_milk_collection_voucher_id: (form as any).raw_milk_collection_voucher_id || "",
+          collection_voucher_id: form.collection_voucher_id || "",
+          truck_compartment_number: form.truck_compartment_number,
           destination_silo_name: form.destination_silo_name || "",
           operator_id: form.operator_id || user?.id || "",
           operator_signature: form.operator_signature,
-          status: form.status || "Draft",
+          driver_signature: form.driver_signature,
+          status: form.status === "Draft" ? "draft" : (form.status === "Pending" ? "pending" : (form.status === "Final" ? "final" : (form.status as any))),
           quantity_received: form.quantity_received || undefined,
+          tag: form.tag || "",
         })
       } else {
         formHook.reset({
           date: new Date().toISOString().split('T')[0],
-          raw_milk_collection_voucher_id: "",
+          collection_voucher_id: "",
+          truck_compartment_number: undefined,
           destination_silo_name: "",
           operator_id: user?.id || "",
           operator_signature: "",
+          driver_signature: "",
           status: "draft",
           quantity_received: undefined,
+          tag: "",
         })
       }
     }
-  }, [open, mode, form])
+  }, [open, mode, form, user])
+
+  // Auto-populate from voucher selection
+  useEffect(() => {
+    const subscription = formHook.watch((value, { name }) => {
+      if (name === "collection_voucher_id" && value.collection_voucher_id) {
+        const selectedVoucher = pendingVouchers.find(v => v.id === value.collection_voucher_id)
+        if (selectedVoucher) {
+          formHook.setValue("truck_compartment_number", selectedVoucher.truck_compartment_number)
+          formHook.setValue("driver_signature", selectedVoucher.driver_signature)
+
+          // Generate tag: RMI-compartment-DD-MM-YYYY
+          const date = new Date()
+          const day = String(date.getDate()).padStart(2, '0')
+          const month = String(date.getMonth() + 1).padStart(2, '0')
+          const year = date.getFullYear()
+          const newTag = `RMI-${selectedVoucher.truck_compartment_number}-${day}-${month}-${year}`
+          formHook.setValue("tag", newTag)
+        }
+      }
+    })
+    return () => subscription.unsubscribe()
+  }, [formHook.watch, pendingVouchers, formHook])
 
   const handleSubmit = async (data: RawMilkIntakeFormData) => {
     try {
-      const normalizedSignature = normalizeDataUrlToBase64(data.operator_signature)
+      const normalizedOperatorSignature = normalizeDataUrlToBase64(data.operator_signature)
+      // driver_signature might already be base64 from the voucher, but we should normalize just in case it's a data URL
+      const normalizedDriverSignature = normalizeDataUrlToBase64(data.driver_signature)
 
-      const formData = {
+      const formData: CreateRawMilkIntakeFormRequest = {
+        collection_voucher_id: data.collection_voucher_id,
+        truck_compartment_number: data.truck_compartment_number,
         operator_id: data.operator_id,
-        operator_signature: normalizedSignature,
+        operator_signature: normalizedOperatorSignature,
+        driver_signature: normalizedDriverSignature,
         date: data.date,
         quantity_received: Number(data.quantity_received),
-        raw_milk_collection_voucher_id: data.raw_milk_collection_voucher_id,
         destination_silo_name: data.destination_silo_name,
         status: data.status,
+        tag: data.tag,
+        updated_at: new Date().toISOString(),
       }
 
       console.log('Submitting form data:', formData)
 
       if (mode === "edit" && form) {
-        const result = await dispatch(updateRawMilkIntakeForm({
+        await dispatch(updateRawMilkIntakeForm({
           ...formData,
           id: form.id
         })).unwrap()
-        console.log('Update response:', result)
         toast.success("Form updated successfully")
       } else {
-        const result = await dispatch(createRawMilkIntakeForm(formData)).unwrap()
-        console.log('Create response:', result)
+        await dispatch(createRawMilkIntakeForm(formData)).unwrap()
         toast.success("Form created successfully")
       }
 
@@ -352,16 +385,16 @@ export function RawMilkIntakeFormDrawer({
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="raw_milk_collection_voucher_id">Collection Voucher *</Label>
+              <Label htmlFor="collection_voucher_id">Collection Voucher *</Label>
               <Controller
-                name="raw_milk_collection_voucher_id"
+                name="collection_voucher_id"
                 control={formHook.control}
                 render={({ field }) => (
                   <SearchableSelect
-                    options={collectionVouchers.map(voucher => ({
+                    options={pendingVouchers.map(voucher => ({
                       value: voucher.id,
                       label: voucher?.tag ?? 'N/A',
-                      description: `${new Date(voucher.date).toLocaleDateString()} • Route: ${voucher.route}`
+                      description: `${new Date(voucher.date).toLocaleDateString()} • Route: ${voucher.route} • Driver: ${voucher.driver_first_name} ${voucher.driver_last_name}`
                     }))}
                     value={field.value}
                     onValueChange={field.onChange}
@@ -370,8 +403,8 @@ export function RawMilkIntakeFormDrawer({
                   />
                 )}
               />
-              {formHook.formState.errors.raw_milk_collection_voucher_id && (
-                <p className="text-sm text-red-500">{formHook.formState.errors.raw_milk_collection_voucher_id.message}</p>
+              {formHook.formState.errors.collection_voucher_id && (
+                <p className="text-sm text-red-500">{formHook.formState.errors.collection_voucher_id.message}</p>
               )}
             </div>
 
@@ -403,9 +436,54 @@ export function RawMilkIntakeFormDrawer({
             </div>
           </div>
 
-          {/* Hidden operator_id field - auto-populated but not visible */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="truck_compartment_number">Truck Compartment Number *</Label>
+              <Controller
+                name="truck_compartment_number"
+                control={formHook.control}
+                render={({ field }) => (
+                  <Input
+                    type="number"
+                    placeholder="Auto-populated"
+                    value={field.value || ""}
+                    onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
+                  />
+                )}
+              />
+              {formHook.formState.errors.truck_compartment_number && (
+                <p className="text-sm text-red-500">{formHook.formState.errors.truck_compartment_number.message}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="tag">Intake Tag *</Label>
+              <Controller
+                name="tag"
+                control={formHook.control}
+                render={({ field }) => (
+                  <Input
+                    placeholder="e.g. RMI-1-12-10-2025"
+                    {...field}
+                  />
+                )}
+              />
+              {formHook.formState.errors.tag && (
+                <p className="text-sm text-red-500">{formHook.formState.errors.tag.message}</p>
+              )}
+            </div>
+          </div>
+
+          {/* Hidden operator_id and driver_signature fields */}
           <Controller
             name="operator_id"
+            control={formHook.control}
+            render={({ field }) => (
+              <input type="hidden" {...field} />
+            )}
+          />
+          <Controller
+            name="driver_signature"
             control={formHook.control}
             render={({ field }) => (
               <input type="hidden" {...field} />
@@ -441,49 +519,59 @@ export function RawMilkIntakeFormDrawer({
           </div>
         </div>
 
-        {/* Operator Signature Section */}
-        <div className="space-y-4">
+        {/* Signatures Section */}
+        <div className="space-y-6">
           <div className="text-center mb-6">
-            <h3 className="text-xl font-light text-gray-900">Operator Signature</h3>
-            <p className="text-sm font-light text-gray-600 mt-2">Provide your signature to authorize this intake</p>
+            <h3 className="text-xl font-light text-gray-900">Signatures</h3>
+            <p className="text-sm font-light text-gray-600 mt-2">Required signatures for this intake</p>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="operator_signature">Operator Signature *</Label>
-            <div className="flex items-start gap-4">
-              <div className="flex-1">
-                <Controller
-                  name="operator_signature"
-                  control={formHook.control}
-                  render={({ field }) => (
-                    <div className="space-y-2">
-                      {field.value ? (
-                        <img src={base64ToPngDataUrl(field.value)} alt="Operator signature" className="h-24 border border-gray-200 rounded-md bg-white" />
-                      ) : (
-                        <div className="h-24 flex items-center justify-center border border-dashed border-gray-300 rounded-md text-xs text-gray-500 bg-white">
-                          No signature captured
-                        </div>
-                      )}
-                      <div className="flex items-center gap-2">
-                        <Button type="button" size="sm" className="rounded-full" onClick={() => setSignatureOpen(true)}>
-                          Add Signature
-                        </Button>
-                        {field.value && (
-                          <Button type="button" size="sm" className="rounded-full" onClick={() => setSignatureViewOpen(true)}>
-                            View Signature
-                          </Button>
-                        )}
-                        {field.value && (
-                          <Button type="button" variant="ghost" size="sm" className="rounded-full text-red-600" onClick={() => field.onChange("")}>Clear</Button>
-                        )}
+          <div className="grid grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <Label htmlFor="operator_signature">Operator Signature *</Label>
+              <Controller
+                name="operator_signature"
+                control={formHook.control}
+                render={({ field }) => (
+                  <div className="space-y-2">
+                    {field.value ? (
+                      <img src={base64ToPngDataUrl(field.value)} alt="Operator signature" className="h-24 border border-gray-200 rounded-md bg-white w-full object-contain p-2" />
+                    ) : (
+                      <div className="h-24 flex items-center justify-center border border-dashed border-gray-300 rounded-md text-xs text-gray-500 bg-white">
+                        No signature captured
                       </div>
+                    )}
+                    <div className="flex items-center gap-2">
+                      <Button type="button" size="sm" className="rounded-full h-8" onClick={() => setSignatureOpen(true)}>
+                        Capture
+                      </Button>
+                      {field.value && (
+                        <Button type="button" variant="ghost" size="sm" className="rounded-full text-red-600 h-8" onClick={() => field.onChange("")}>Clear</Button>
+                      )}
                     </div>
-                  )}
-                />
-                {formHook.formState.errors.operator_signature && (
-                  <p className="text-sm text-red-500">{formHook.formState.errors.operator_signature.message}</p>
+                  </div>
                 )}
-              </div>
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="driver_signature">Driver Signature *</Label>
+              <Controller
+                name="driver_signature"
+                control={formHook.control}
+                render={({ field }) => (
+                  <div className="space-y-2">
+                    {field.value ? (
+                      <img src={base64ToPngDataUrl(field.value)} alt="Driver signature" className="h-24 border border-gray-200 rounded-md bg-white w-full object-contain p-2" />
+                    ) : (
+                      <div className="h-24 flex items-center justify-center border border-dashed border-gray-300 rounded-md text-xs text-gray-500 bg-white">
+                        From voucher
+                      </div>
+                    )}
+                    <p className="text-[10px] text-gray-500 italic text-center">Auto-populated from voucher</p>
+                  </div>
+                )}
+              />
             </div>
           </div>
         </div>

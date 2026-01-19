@@ -16,7 +16,8 @@ import { base64ToPngDataUrl } from "@/lib/utils/signature"
 import { UserAvatar } from "@/components/ui/user-avatar"
 import { SupplierAvatar } from "@/components/ui/supplier-avatar"
 import { FormIdCopy } from "@/components/ui/form-id-copy"
-import type { CollectionVoucher } from "@/lib/types"
+import { cn } from "@/lib/utils"
+import type { CollectionVoucher2 } from "@/lib/types"
 
 interface SignatureViewerProps {
     signature: string
@@ -55,8 +56,8 @@ function SignatureViewer({ signature, title }: SignatureViewerProps) {
 interface CollectionVoucherViewDrawerProps {
     open: boolean
     onOpenChange: (open: boolean) => void
-    collectionVoucher: CollectionVoucher | null
-    onEdit?: (voucher: CollectionVoucher) => void
+    collectionVoucher: CollectionVoucher2 | null
+    onEdit?: (voucher: CollectionVoucher2) => void
 }
 
 export function CollectionVoucherViewDrawer({
@@ -113,15 +114,11 @@ export function CollectionVoucherViewDrawer({
 
     // Get driver information
     const driverUser = users.find(user => user.id === collectionVoucher.driver)
-    const supplierData = suppliers.find(s => s.id === (typeof collectionVoucher.farmer === 'string' ? collectionVoucher.farmer : (collectionVoucher.farmer as any)?.id))
+    const supplierData = suppliers.find(s => s.id === (typeof collectionVoucher.supplier === 'string' ? collectionVoucher.supplier : (collectionVoucher.supplier as any)?.id))
 
-    const details = Array.isArray(collectionVoucher.raw_milk_collection_voucher_details)
-        ? collectionVoucher.raw_milk_collection_voucher_details
-        : (Array.isArray(collectionVoucher.details) ? collectionVoucher.details : [])
-
-    const labTests = Array.isArray(collectionVoucher.raw_milk_collection_voucher_lab_test)
-        ? collectionVoucher.raw_milk_collection_voucher_lab_test
-        : (Array.isArray(collectionVoucher.lab_test) ? collectionVoucher.lab_test : [])
+    const details = Array.isArray(collectionVoucher.raw_milk_collection_voucher_2_details)
+        ? collectionVoucher.raw_milk_collection_voucher_2_details
+        : []
 
     return (
         <Sheet open={open} onOpenChange={onOpenChange}>
@@ -246,10 +243,10 @@ export function CollectionVoucherViewDrawer({
                                 </div>
                             </div>
                             <div className="p-6 space-y-4">
-                                {typeof collectionVoucher.farmer === 'object' && collectionVoucher.farmer ? (
+                                {typeof collectionVoucher.supplier === 'object' && collectionVoucher.supplier ? (
                                     <div className="space-y-4">
                                         <SupplierAvatar
-                                            supplier={collectionVoucher.farmer as any}
+                                            supplier={collectionVoucher.supplier as any}
                                             size="lg"
                                             showName={true}
                                             showEmail={true}
@@ -261,19 +258,19 @@ export function CollectionVoucherViewDrawer({
                                                 <div className="text-xs text-gray-500 flex items-center gap-1">
                                                     <Phone className="h-3 w-3" /> Phone
                                                 </div>
-                                                <div className="font-light">{(collectionVoucher.farmer as any).phone_number || 'N/A'}</div>
+                                                <div className="font-light">{(collectionVoucher.supplier as any).phone_number || 'N/A'}</div>
                                             </div>
                                             <div className="space-y-1">
                                                 <div className="text-xs text-gray-500 flex items-center gap-1">
                                                     <MapPin className="h-3 w-3" /> Address
                                                 </div>
-                                                <div className="font-light">{(collectionVoucher.farmer as any).physical_address || 'N/A'}</div>
+                                                <div className="font-light">{(collectionVoucher.supplier as any).physical_address || 'N/A'}</div>
                                             </div>
                                             <div className="space-y-1">
                                                 <div className="text-xs text-gray-500 flex items-center gap-1">
                                                     <ClipboardList className="h-3 w-3" /> Raw Product
                                                 </div>
-                                                <div className="font-light capitalize">{(collectionVoucher.farmer as any).raw_product || 'N/A'}</div>
+                                                <div className="font-light capitalize">{(collectionVoucher.supplier as any).raw_product || 'N/A'}</div>
                                             </div>
                                         </div>
                                     </div>
@@ -309,116 +306,100 @@ export function CollectionVoucherViewDrawer({
                             </div>
                         </div>
 
-                        {/* Collection Details */}
+                        {/* Collected Milk */}
                         <div className="border border-gray-200 rounded-lg bg-white">
                             <div className="p-6 pb-0">
                                 <div className="flex items-center space-x-2">
                                     <ClipboardList className="w-5 h-5 text-blue-600" />
-                                    <div className="text-lg font-light">Collection Details</div>
+                                    <div className="text-lg font-light">Collected Milk</div>
                                 </div>
                             </div>
-                            <div className="p-6 space-y-6">
-                                {details.map((detail, index) => (
-                                    <div key={index} className="p-4 border border-gray-100 rounded-xl bg-gray-50/50 space-y-4">
-                                        <div className="flex items-center justify-between">
-                                            <Badge variant="secondary" className="bg-blue-50 text-blue-700 font-light rounded-full">
-                                                Compartment {detail.truck_compartment_number}
-                                            </Badge>
-                                        </div>
-                                        <div className="grid grid-cols-3 gap-4 text-xs">
-                                            <div className="space-y-1">
-                                                <div className="text-gray-500">Temp</div>
-                                                <div className="font-light">{detail.temperature}°C</div>
-                                            </div>
-                                            <div className="space-y-1">
-                                                <div className="text-gray-500">Dip</div>
-                                                <div className="font-light">{detail.dip_reading}</div>
-                                            </div>
-                                            <div className="space-y-1">
-                                                <div className="text-gray-500">Volume</div>
-                                                <div className="font-light">{detail.volume} L</div>
-                                            </div>
-                                        </div>
-
-                                        <div className="grid grid-cols-2 gap-4 text-xs">
-                                            <div className="space-y-1">
-                                                <div className="text-gray-500">Meter Start</div>
-                                                <div className="font-light">{detail.meter_start}</div>
-                                            </div>
-                                            <div className="space-y-1">
-                                                <div className="text-gray-500">Meter Finish</div>
-                                                <div className="font-light">{detail.meter_finish}</div>
-                                            </div>
-                                        </div>
-
-                                        <div className="grid grid-cols-2 gap-4 text-xs">
-                                            <div className="space-y-1">
-                                                <div className="text-gray-500">Dairy Total</div>
-                                                <div className="font-light">{detail.dairy_total}</div>
-                                            </div>
-                                            <div className="space-y-1">
-                                                <div className="text-gray-500">Farmer Tank(s)</div>
-                                                <div className="flex flex-wrap gap-1">
-                                                    {Array.isArray(detail.farmer_tank_number) ? detail.farmer_tank_number.map(tn => (
-                                                        <Badge key={tn} variant="outline" className="text-[10px] font-light h-5">Tank {tn}</Badge>
-                                                    )) : <span className="font-light text-gray-400">N/A</span>}
+                            <div className="p-6 space-y-8">
+                                {details.map((detail, detailIndex) => (
+                                    <div key={detail.id || detailIndex} className="space-y-6">
+                                        {(detail.raw_milk_collection_voucher_2_details_farmer_tank || []).map((tank, tankIndex) => (
+                                            <div key={tank.id || tankIndex} className="p-4 border border-gray-100 rounded-xl bg-gray-50/50 space-y-4">
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex items-center gap-2">
+                                                        <Badge variant="secondary" className="bg-blue-50 text-blue-700 font-light rounded-full">
+                                                            Compartment {tank.truck_compartment_number}
+                                                        </Badge>
+                                                        <span className="text-[10px] text-gray-500 font-light">Entry {tankIndex + 1}</span>
+                                                    </div>
+                                                    {/* <div className="text-[10px] font-medium text-gray-400">
+                                                        Tank ID: {tank.supplier_tank_id || 'N/A'}
+                                                    </div> */}
                                                 </div>
-                                            </div>
-                                        </div>
 
-                                        <div className="space-y-1 text-xs">
-                                            <div className="text-gray-500">Route Total</div>
-                                            <div className="font-light">{detail.route_total}</div>
-                                        </div>
+                                                <div className="grid grid-cols-3 gap-4 text-[11px]">
+                                                    <div className="space-y-1">
+                                                        <div className="text-gray-500 uppercase tracking-tighter">Temp</div>
+                                                        <div className="font-light">{tank.temperature}°C</div>
+                                                    </div>
+                                                    <div className="space-y-1">
+                                                        <div className="text-gray-500 uppercase tracking-tighter">Dip</div>
+                                                        <div className="font-light">{tank.dip_reading}</div>
+                                                    </div>
+                                                    <div className="space-y-1">
+                                                        <div className="text-gray-500 uppercase tracking-tighter">Volume</div>
+                                                        <div className="font-light">{tank.volume} L</div>
+                                                    </div>
+                                                </div>
+
+                                                <div className="grid grid-cols-3 gap-4 text-[11px]">
+                                                    <div className="space-y-1">
+                                                        <div className="text-gray-500 uppercase tracking-tighter">Meter Start</div>
+                                                        <div className="font-light">{tank.meter_start}</div>
+                                                    </div>
+                                                    <div className="space-y-1">
+                                                        <div className="text-gray-500 uppercase tracking-tighter">Meter Finish</div>
+                                                        <div className="font-light">{tank.meter_finish}</div>
+                                                    </div>
+                                                    <div className="space-y-1">
+                                                        <div className="text-gray-500 uppercase tracking-tighter">Dairy Total</div>
+                                                        <div className="font-light">{tank.dairy_total}</div>
+                                                    </div>
+                                                </div>
+
+                                                {/* Lab results for this tank */}
+                                                {tank.lab_test && (
+                                                    <div className="mt-3 pt-3 border-t border-gray-100 space-y-2">
+                                                        <div className="flex items-center gap-2">
+                                                            <Beaker className="w-3 h-3 text-blue-500" />
+                                                            <span className="text-[10px] font-medium text-gray-600">Lab Results</span>
+                                                        </div>
+                                                        <div className="grid grid-cols-2 gap-3 text-[11px]">
+                                                            <div className="flex justify-between border-b border-gray-50 pb-1">
+                                                                <span className="text-gray-500">OT Result:</span>
+                                                                <span className="font-light">{tank.lab_test.ot_result || 'N/A'}</span>
+                                                            </div>
+                                                            <div className="flex justify-between border-b border-gray-50 pb-1">
+                                                                <span className="text-gray-500">Organoleptic:</span>
+                                                                <span className="font-light">{tank.lab_test.organoleptic || 'N/A'}</span>
+                                                            </div>
+                                                            <div className="flex justify-between border-b border-gray-50 pb-1">
+                                                                <span className="text-gray-500">Alcohol:</span>
+                                                                <span className="font-light">{tank.lab_test.alcohol || 'N/A'}</span>
+                                                            </div>
+                                                            <div className="flex justify-between border-b border-gray-50 pb-1">
+                                                                <span className="text-gray-500">COB Result:</span>
+                                                                <Badge variant="outline" className={cn(
+                                                                    "text-[9px] h-4 px-1 font-light border-0",
+                                                                    tank.lab_test.cob_result ? "bg-green-50 text-green-700" : "bg-gray-50 text-gray-700"
+                                                                )}>
+                                                                    {tank.lab_test.cob_result ? 'Positive' : 'Negative'}
+                                                                </Badge>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ))}
                                     </div>
                                 ))}
                                 {details.length === 0 && (
                                     <div className="text-center py-4 text-gray-400 text-sm font-light italic">
                                         No collection details available
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Lab Test Results */}
-                        <div className="border border-gray-200 rounded-lg bg-white">
-                            <div className="p-6 pb-0">
-                                <div className="flex items-center space-x-2">
-                                    <Beaker className="w-5 h-5 text-blue-600" />
-                                    <div className="text-lg font-light">Lab Test Results</div>
-                                </div>
-                            </div>
-                            <div className="p-6 space-y-6">
-                                {labTests.map((test, index) => (
-                                    <div key={index} className="space-y-4">
-                                        <div className="grid grid-cols-2 gap-4 text-sm">
-                                            <div className="space-y-1">
-                                                <div className="text-xs text-gray-500">OT Result</div>
-                                                <div className="font-light">{test.ot_result || 'N/A'}</div>
-                                            </div>
-
-                                            <div className="space-y-1">
-                                                <div className="text-xs text-gray-500">Organoleptic</div>
-                                                <div className="font-light">{test.organoleptic || 'N/A'}</div>
-                                            </div>
-
-                                            <div className="space-y-1">
-                                                <div className="text-xs text-gray-500">Alcohol</div>
-                                                <div className="font-light">{test.alcohol || 'N/A'}</div>
-                                            </div>
-
-                                            <div className="space-y-1">
-                                                <div className="text-xs text-gray-500">COB Result</div>
-                                                <Badge className={test.cob_result ? "bg-green-100 text-green-800 border-0" : "bg-gray-100 text-gray-800 border-0"}>
-                                                    {test.cob_result ? 'Positive' : 'Negative'}
-                                                </Badge>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                                {labTests.length === 0 && (
-                                    <div className="text-center py-4 text-gray-400 text-sm font-light italic">
-                                        No lab tests available
                                     </div>
                                 )}
                             </div>

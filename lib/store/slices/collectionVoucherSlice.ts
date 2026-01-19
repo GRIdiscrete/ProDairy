@@ -1,10 +1,10 @@
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit"
 import { collectionVoucherApi, type CreateCollectionVoucherRequest, type UpdateCollectionVoucherRequest } from "@/lib/api/collection-voucher"
-import type { CollectionVoucher, TableFilters } from "@/lib/types"
+import type { CollectionVoucher2, TableFilters } from "@/lib/types"
 
 export interface CollectionVoucherState {
-    collectionVouchers: CollectionVoucher[]
-    selectedCollectionVoucher: CollectionVoucher | null
+    collectionVouchers: CollectionVoucher2[]
+    selectedCollectionVoucher: CollectionVoucher2 | null
     filters: TableFilters
     loading: boolean
     error: string | null
@@ -106,7 +106,7 @@ const collectionVoucherSlice = createSlice({
         clearError: (state) => {
             state.error = null
         },
-        setSelectedCollectionVoucher: (state, action: PayloadAction<CollectionVoucher | null>) => {
+        setSelectedCollectionVoucher: (state, action: PayloadAction<CollectionVoucher2 | null>) => {
             state.selectedCollectionVoucher = action.payload
         },
         clearSelectedCollectionVoucher: (state) => {

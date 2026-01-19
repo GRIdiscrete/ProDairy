@@ -295,37 +295,37 @@ export default function PasteurizingPage() {
         )
       },
     },
-    {
-      accessorKey: "production",
-      header: "Production",
-      cell: ({ row }: any) => {
-        const form = row.original
-        const totalQuantity = form.steri_milk_pasteurizing_form_production?.reduce((sum: number, item: any) => sum + (item.output_target_value || 0), 0) || 0
-        const avgFat = form.fat || 0
-        return (
-          <div className="space-y-2">
-            <div className="flex items-center space-x-2">
-              <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center">
-                <FlaskConical className="w-3 h-3 text-blue-600" />
-              </div>
-              <p className="text-sm font-light">
-                {form.steri_milk_pasteurizing_form_production?.length || 0} entries
-              </p>
-            </div>
-            <div className="space-y-1">
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-gray-500">Total Qty</span>
-                <span className="text-xs font-light">{totalQuantity.toFixed(1)}L</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-gray-500">Fat Content</span>
-                <span className="text-xs font-light">{avgFat}%</span>
-              </div>
-            </div>
-          </div>
-        )
-      },
-    },
+    // {
+    //   accessorKey: "production",
+    //   header: "Production",
+    //   cell: ({ row }: any) => {
+    //     const form = row.original
+    //     const totalQuantity = form.steri_milk_pasteurizing_form_production?.reduce((sum: number, item: any) => sum + (item.output_target_value || 0), 0) || 0
+    //     const avgFat = form.fat || 0
+    //     return (
+    //       <div className="space-y-2">
+    //         <div className="flex items-center space-x-2">
+    //           <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center">
+    //             <FlaskConical className="w-3 h-3 text-blue-600" />
+    //           </div>
+    //           <p className="text-sm font-light">
+    //             {form.steri_milk_pasteurizing_form_production?.length || 0} entries
+    //           </p>
+    //         </div>
+    //         <div className="space-y-1">
+    //           <div className="flex items-center justify-between">
+    //             <span className="text-xs text-gray-500">Total Qty</span>
+    //             <span className="text-xs font-light">{totalQuantity.toFixed(1)}L</span>
+    //           </div>
+    //           <div className="flex items-center justify-between">
+    //             <span className="text-xs text-gray-500">Fat Content</span>
+    //             <span className="text-xs font-light">{avgFat}%</span>
+    //           </div>
+    //         </div>
+    //       </div>
+    //     )
+    //   },
+    // },
     {
       accessorKey: "timing",
       header: "Timing",
@@ -384,7 +384,7 @@ export default function PasteurizingPage() {
         return (
           <div className="flex space-x-2">
             <LoadingButton
-              
+
               size="sm"
               onClick={() => handleViewForm(form)}
               className="bg-[#006BC4] text-white rounded-full"
@@ -392,7 +392,7 @@ export default function PasteurizingPage() {
               <Eye className="w-4 h-4" />
             </LoadingButton>
             <LoadingButton
-              
+
               size="sm"
               onClick={() => handleEditForm(form)}
               className="bg-[#A0CF06] text-[#211D1E] rounded-full"
@@ -461,7 +461,7 @@ export default function PasteurizingPage() {
                   <Badge className="text-white font-light">Latest</Badge>
                 </div>
                 <LoadingButton
-                  
+
                   onClick={() => handleViewForm(latestForm)}
                   className="bg-[#006BC4] text-white rounded-full px-4 py-2 font-light text-sm"
                 >

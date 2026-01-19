@@ -131,7 +131,7 @@ const pasteurizingFormSchema = yup.object({
   date: yup.string().required("Date is required"),
   machine: yup.string().required("Machine is required"),
   preheating_start: yup.string().required("Preheating start time is required"),
- 
+
   production_start: yup.string().required("Production start time is required"),
   production_end: yup.string().required("Production end time is required"),
   machine_start: yup.string().required("Machine start time is required"),
@@ -139,7 +139,7 @@ const pasteurizingFormSchema = yup.object({
   bmt: yup.string().required("BMT is required"),
   fat: yup.number().required("Fat content is required").min(0, "Fat content must be positive"),
   cream_index: yup.number().optional().nullable().min(0, "Cream index must be positive"),
-  production_: yup.array().of(
+  steri_milk_pasteurizing_form_production: yup.array().of(
     yup.object({
       process_id: yup.string().required("Process ID is required"),
       time: yup.string().required("Time is required"),
@@ -206,19 +206,18 @@ export function PasteurizingFormDrawer({
       bmt: "",
       fat: "",
       cream_index: "",
-      production_: [] as any[]
+      steri_milk_pasteurizing_form_production: [] as any[]
     }
   })
 
   const { fields, append, remove } = useFieldArray({
     control,
-    name: "production_"
+    name: "steri_milk_pasteurizing_form_production"
   })
 
-  // Fetch data on component mount
   useEffect(() => {
     if (dispatch) {
-      dispatch(fetchMachines())
+      dispatch(fetchMachines({}))
       dispatch(fetchBMTControlForms())
     }
   }, [dispatch])
@@ -237,7 +236,7 @@ export function PasteurizingFormDrawer({
       // Auto-prefill process ID from route params and add initial production entry (create mode only)
       if (mode === "create" && processId) {
         // Add initial production entry with process ID
-        setValue("production_", [{
+        setValue("steri_milk_pasteurizing_form_production", [{
           process_id: processId,
           time: "",
           temp_hot_water: "",
@@ -268,11 +267,11 @@ export function PasteurizingFormDrawer({
         machine_start: extractTime(form.machine_start),
         machine_end: extractTime(form.machine_end),
         bmt: form.bmt || "",
-        fat: form.fat || undefined,
-        cream_index: form.cream_index || undefined,
+        fat: (form.fat as any) || "",
+        cream_index: (form.cream_index as any) || "",
         // include existing production ids so they persist through edit -> submit
-        production_: form.steri_milk_pasteurizing_form_production?.map(prod => ({
-          id: prod.id, // preserve backend id
+        steri_milk_pasteurizing_form_production: form.steri_milk_pasteurizing_form_production?.map(prod => ({
+          id: prod.id || "", // ensure id exists
           process_id: prod.process_id,
           // prefill picker with HH:mm (handles "HH:mm:ss" and full datetimes)
           time: extractTime(prod.time),
@@ -300,7 +299,7 @@ export function PasteurizingFormDrawer({
         bmt: "",
         fat: undefined,
         cream_index: undefined,
-        production_: []
+        steri_milk_pasteurizing_form_production: []
       })
     }
   }, [form, mode, reset])
@@ -315,11 +314,11 @@ export function PasteurizingFormDrawer({
       const normalizeTime = (val: any) => (val === "" || val === undefined || val === null) ? null : val
 
 
-      // Normalize production_ entries (time -> null if empty; numeric fields -> null if empty)
-      const productionEntries = (data.production_ || []).map((p: any) => ({
+      // Normalize production entries (time -> null if empty; numeric fields -> null if empty)
+      const productionEntries = (data.steri_milk_pasteurizing_form_production || []).map((p: any) => ({
         ...p,
         // ensure id exists (use existing or generate one)
-        id: p.id || (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function" ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2,8)}`),
+        id: p.id || (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function" ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`),
         time: normalizeTime(p.time),
         temp_hot_water: p.temp_hot_water === "" || p.temp_hot_water === undefined ? null : p.temp_hot_water,
         temp_product_out: p.temp_product_out === "" || p.temp_product_out === undefined ? null : p.temp_product_out,
@@ -331,20 +330,29 @@ export function PasteurizingFormDrawer({
         ouput_target_units: p.ouput_target_units || null,
       }))
 
-      const formData: CreatePasteurizingFormRequest = {
-        operator: operatorId,
+      // Tag generation: SMPF-{machineIndex}-{DD}-{MM}-{YYYY}
+      const machineIndex = machines.findIndex(m => m.id === data.machine) + 1
+      const dateObj = data.date ? new Date(data.date) : new Date()
+      const d = String(dateObj.getDate()).padStart(2, '0')
+      const m = String(dateObj.getMonth() + 1).padStart(2, '0')
+      const y = dateObj.getFullYear()
+      const tag = `SMPF-${machineIndex || 1}-${d}-${m}-${y}`
+
+      const formData: any = {
+        operator: operatorId || null,
         date: data.date || null,
         machine: data.machine || null,
-        preheating_start: convertTimeToBackend(data.date, data.preheating_start),
-        water_circulation: convertTimeToBackend(data.date, data.water_circulation),
-        production_start: convertTimeToBackend(data.date, data.production_start),
-        production_end: convertTimeToBackend(data.date, data.production_end),
-        machine_start: convertTimeToBackend(data.date, data.machine_start),
-        machine_end: convertTimeToBackend(data.date, data.machine_end),
+        preheating_start: convertTimeToBackend(data.date, data.preheating_start) || null,
+        water_circulation: convertTimeToBackend(data.date, data.water_circulation) || null,
+        production_start: convertTimeToBackend(data.date, data.production_start) || null,
+        production_end: convertTimeToBackend(data.date, data.production_end) || null,
+        machine_start: convertTimeToBackend(data.date, data.machine_start) || null,
+        machine_end: convertTimeToBackend(data.date, data.machine_end) || null,
         bmt: data.bmt || null,
-        fat: data.fat === "" || data.fat === undefined ? null : data.fat,
-        cream_index: data.cream_index === "" || data.cream_index === undefined ? null : data.cream_index,
-        production_: productionEntries
+        fat: (data.fat === "" || data.fat === undefined || isNaN(data.fat)) ? null : data.fat,
+        cream_index: (data.cream_index === "" || data.cream_index === undefined || isNaN(data.cream_index)) ? null : data.cream_index,
+        tag: tag,
+        steri_milk_pasteurizing_form_production: productionEntries
       }
 
       if (mode === "create") {
@@ -381,33 +389,33 @@ export function PasteurizingFormDrawer({
   // Create options arrays from Redux data
   const machineOptions: SearchableSelectOption[] = machines.map(machine => ({
     value: machine.id,
-    label: machine.name,
+    label: (machine.name as string) || "Unknown Machine",
     description: `${machine.category} - ${machine.location}`
   }))
 
   const bmtOptions: SearchableSelectOption[] = bmtForms.map(bmt => ({
     value: bmt.id,
-    label: bmt?.tag,
+    label: (bmt?.tag as string) || "Unknown BMT",
     description: `Volume: ${bmt.volume ?? 0}L`
   }))
 
   const addProductionEntry = () => {
-	append({
-		// generate id for new entry so it persists through edits/submits
-		id: (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function")
-			? crypto.randomUUID()
-			: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-		process_id: processId || "",
-		time: "",
-		temp_hot_water: undefined,
-		temp_product_out: undefined,
-		temp_product_pasteurisation: undefined,
-		homogenisation_pressure_stage_1: undefined,
-		homogenisation_pressure_stage_2: undefined,
-		total_homogenisation_pressure: undefined,
-		output_target_value: undefined,
-		ouput_target_units: ""
-	})
+    append({
+      // generate id for new entry so it persists through edits/submits
+      id: (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function")
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      process_id: processId || "",
+      time: "",
+      temp_hot_water: undefined,
+      temp_product_out: undefined,
+      temp_product_pasteurisation: undefined,
+      homogenisation_pressure_stage_1: undefined,
+      homogenisation_pressure_stage_2: undefined,
+      total_homogenisation_pressure: undefined,
+      output_target_value: undefined,
+      ouput_target_units: ""
+    })
   }
 
   return (
@@ -454,7 +462,7 @@ export function PasteurizingFormDrawer({
 
                 <div className="grid grid-cols-1 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="date">Date</Label>
+                    <Label htmlFor="date">Date <span className="text-red-500">*</span></Label>
                     <DatePicker
                       value={watch("date")}
                       onChange={(date) => setValue("date", date ? format(date, "yyyy-MM-dd") : "")}
@@ -467,7 +475,7 @@ export function PasteurizingFormDrawer({
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="machine">Machine</Label>
+                    <Label htmlFor="machine">Machine <span className="text-red-500">*</span></Label>
                     <SearchableSelect
                       options={machineOptions}
                       value={watch("machine")}
@@ -480,7 +488,7 @@ export function PasteurizingFormDrawer({
                     )}
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="bmt">BMT Form</Label>
+                    <Label htmlFor="bmt">BMT Form <span className="text-red-500">*</span></Label>
                     <SearchableSelect
                       options={bmtOptions}
                       value={watch("bmt")}
@@ -496,10 +504,10 @@ export function PasteurizingFormDrawer({
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="fat">Fat Content (%)</Label>
+                    <Label htmlFor="fat">Fat Content (%) <span className="text-red-500">*</span></Label>
                     <Input
                       type="number"
-                      step="0.1"
+                      step="any"
                       placeholder="Enter fat content"
                       {...register("fat", { valueAsNumber: true })}
                     />
@@ -511,7 +519,7 @@ export function PasteurizingFormDrawer({
                     <Label htmlFor="cream_index">Cream Index</Label>
                     <Input
                       type="number"
-                      step="0.1"
+                      step="any"
                       placeholder="Enter cream index"
                       {...register("cream_index", { valueAsNumber: true, min: 0, max: 100 })}
                     />
@@ -536,7 +544,7 @@ export function PasteurizingFormDrawer({
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="preheating_start">Preheating Start</Label>
+                    <Label htmlFor="preheating_start">Preheating Start <span className="text-red-500">*</span></Label>
                     <ShadcnTimePicker
                       value={watch("preheating_start")}
                       onChange={(time) => setValue("preheating_start", time)}
@@ -561,7 +569,7 @@ export function PasteurizingFormDrawer({
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="production_start">Production Start</Label>
+                    <Label htmlFor="production_start">Production Start <span className="text-red-500">*</span></Label>
                     <ShadcnTimePicker
                       value={watch("production_start")}
                       onChange={(time) => setValue("production_start", time)}
@@ -572,7 +580,7 @@ export function PasteurizingFormDrawer({
                     )}
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="production_end">Production End</Label>
+                    <Label htmlFor="production_end">Production End <span className="text-red-500">*</span></Label>
                     <ShadcnTimePicker
                       value={watch("production_end")}
                       onChange={(time) => setValue("production_end", time)}
@@ -586,7 +594,7 @@ export function PasteurizingFormDrawer({
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="machine_start">Machine Start</Label>
+                    <Label htmlFor="machine_start">Machine Start <span className="text-red-500">*</span></Label>
                     <ShadcnTimePicker
                       value={watch("machine_start")}
                       onChange={(time) => setValue("machine_start", time)}
@@ -597,7 +605,7 @@ export function PasteurizingFormDrawer({
                     )}
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="machine_end">Machine End</Label>
+                    <Label htmlFor="machine_end">Machine End <span className="text-red-500">*</span></Label>
                     <ShadcnTimePicker
                       value={watch("machine_end")}
                       onChange={(time) => setValue("machine_end", time)}
@@ -624,7 +632,7 @@ export function PasteurizingFormDrawer({
                   <Button
                     type="button"
                     onClick={addProductionEntry}
-                    
+
                     size="sm"
                     className="rounded-full"
                   >
@@ -657,15 +665,15 @@ export function PasteurizingFormDrawer({
                       </div>
 
                       {/* Hidden process ID field - auto-filled */}
-                      <input type="hidden" {...register(`production_.${index}.id`)} />
-                      <input type="hidden" {...register(`production_.${index}.process_id`)} />
+                      <input type="hidden" {...register(`steri_milk_pasteurizing_form_production.${index}.id`)} />
+                      <input type="hidden" {...register(`steri_milk_pasteurizing_form_production.${index}.process_id`)} />
 
                       <div className="grid grid-cols-1 gap-4">
                         <div className="space-y-2">
-                          <Label>Time</Label>
+                          <Label>Time <span className="text-red-500">*</span></Label>
                           <ShadcnTimePicker
-                            value={watch(`production_.${index}.time`) || ""}
-                            onChange={(time) => setValue(`production_.${index}.time`, time)}
+                            value={watch(`steri_milk_pasteurizing_form_production.${index}.time`) || ""}
+                            onChange={(time) => setValue(`steri_milk_pasteurizing_form_production.${index}.time`, time)}
                             placeholder="Select production time"
                           />
                         </div>
@@ -673,79 +681,79 @@ export function PasteurizingFormDrawer({
 
                       <div className="grid grid-cols-3 gap-4">
                         <div className="space-y-2">
-                          <Label>Hot Water Temp (°C)</Label>
+                          <Label>Hot Water Temp (°C) <span className="text-red-500">*</span></Label>
                           <Input
                             type="number"
-                            step="0.1"
+                            step="any"
                             placeholder="Enter temperature"
-                            {...register(`production_.${index}.temp_hot_water`, { valueAsNumber: true })}
+                            {...register(`steri_milk_pasteurizing_form_production.${index}.temp_hot_water`, { valueAsNumber: true })}
                           />
                         </div>
                         <div className="space-y-2">
-                          <Label>Product Out Temp (°C)</Label>
+                          <Label>Product Out Temp (°C) <span className="text-red-500">*</span></Label>
                           <Input
                             type="number"
-                            step="0.1"
+                            step="any"
                             placeholder="Enter temperature"
-                            {...register(`production_.${index}.temp_product_out`, { valueAsNumber: true })}
+                            {...register(`steri_milk_pasteurizing_form_production.${index}.temp_product_out`, { valueAsNumber: true })}
                           />
                         </div>
                         <div className="space-y-2">
-                          <Label>Pasteurisation Temp (°C)</Label>
+                          <Label>Pasteurisation Temp (°C) <span className="text-red-500">*</span></Label>
                           <Input
                             type="number"
-                            step="0.1"
+                            step="any"
                             placeholder="Enter temperature"
-                            {...register(`production_.${index}.temp_product_pasteurisation`, { valueAsNumber: true })}
+                            {...register(`steri_milk_pasteurizing_form_production.${index}.temp_product_pasteurisation`, { valueAsNumber: true })}
                           />
                         </div>
                       </div>
 
                       <div className="grid grid-cols-3 gap-4">
                         <div className="space-y-2">
-                          <Label>Stage 1 Pressure</Label>
+                          <Label>Stage 1 Pressure <span className="text-red-500">*</span></Label>
                           <Input
                             type="number"
-                            step="0.1"
+                            step="any"
                             placeholder="Enter pressure (bar)"
-                            {...register(`production_.${index}.homogenisation_pressure_stage_1`, { valueAsNumber: true })}
+                            {...register(`steri_milk_pasteurizing_form_production.${index}.homogenisation_pressure_stage_1`, { valueAsNumber: true })}
                           />
                         </div>
                         <div className="space-y-2">
-                          <Label>Stage 2 Pressure</Label>
+                          <Label>Stage 2 Pressure <span className="text-red-500">*</span></Label>
                           <Input
                             type="number"
-                            step="0.1"
+                            step="any"
                             placeholder="Enter pressure (bar)"
-                            {...register(`production_.${index}.homogenisation_pressure_stage_2`, { valueAsNumber: true })}
+                            {...register(`steri_milk_pasteurizing_form_production.${index}.homogenisation_pressure_stage_2`, { valueAsNumber: true })}
                           />
                         </div>
                         <div className="space-y-2">
-                          <Label>Total Pressure</Label>
+                          <Label>Total Pressure <span className="text-red-500">*</span></Label>
                           <Input
                             type="number"
-                            step="0.1"
+                            step="any"
                             placeholder="Enter total pressure (bar)"
-                            {...register(`production_.${index}.total_homogenisation_pressure`, { valueAsNumber: true })}
+                            {...register(`steri_milk_pasteurizing_form_production.${index}.total_homogenisation_pressure`, { valueAsNumber: true })}
                           />
                         </div>
                       </div>
 
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                          <Label>Output Target Value</Label>
+                          <Label>Output Target Value <span className="text-red-500">*</span></Label>
                           <Input
                             type="number"
-                            step="0.1"
+                            step="any"
                             placeholder="Enter target value"
-                            {...register(`production_.${index}.output_target_value`, { valueAsNumber: true })}
+                            {...register(`steri_milk_pasteurizing_form_production.${index}.output_target_value`, { valueAsNumber: true })}
                           />
                         </div>
                         <div className="space-y-2">
-                          <Label>Output Target Units</Label>
+                          <Label>Output Target Units <span className="text-red-500">*</span></Label>
                           <Select
-                            value={watch(`production_.${index}.ouput_target_units`) || ""}
-                            onValueChange={(value) => setValue(`production_.${index}.ouput_target_units`, value)}
+                            value={watch(`steri_milk_pasteurizing_form_production.${index}.ouput_target_units`) || ""}
+                            onValueChange={(value) => setValue(`steri_milk_pasteurizing_form_production.${index}.ouput_target_units`, value)}
                           >
                             <SelectTrigger className="w-full">
                               <SelectValue placeholder="Select units" />
@@ -770,7 +778,7 @@ export function PasteurizingFormDrawer({
             <div className="flex justify-end space-x-4 pt-6 border-t">
               <Button
                 type="button"
-                
+
                 onClick={() => onOpenChange(false)}
                 disabled={isSubmitting}
               >

@@ -64,6 +64,12 @@ const dataCaptureNavigation = [
   // },
 
   {
+    name: "Test Before Intake",
+    href: "/data-capture/raw-milk-test-before-intake",
+    icon: FlaskConical,
+    current: false,
+  },
+  {
     name: "Raw Milk Intake",
     href: "/data-capture/raw-milk-intake",
     icon: ClipboardList,
@@ -115,8 +121,8 @@ function DataCaptureSidebarComponent({
   const [processOpen, setProcessOpen] = useState(false)
   const [selectedProcess, setSelectedProcess] = useState<string | null>(null)
 
-    const router = useRouter()
-  
+  const router = useRouter()
+
 
   useEffect(() => {
     const load = async () => {
@@ -250,8 +256,8 @@ function DataCaptureSidebarComponent({
           {dataCaptureNavigation.map((item) => {
             // For Dashboard (/data-capture), only match exact path
             // For other routes, match if path starts with the href
-            const isActive = item.href === "/data-capture" 
-              ? pathname === item.href 
+            const isActive = item.href === "/data-capture"
+              ? pathname === item.href
               : pathname === item.href || pathname.startsWith(item.href + "/");
 
             return (

@@ -19,7 +19,7 @@ import { useIsMobile } from "@/hooks/use-mobile"
 import { useNetworkStatus } from "@/hooks/use-network-status"
 import { LocalStorageService } from "@/lib/offline/local-storage-service"
 import { toast } from "sonner"
-import type { CollectionVoucher } from "@/lib/types"
+import type { CollectionVoucher2 } from "@/lib/types"
 import { UserAvatar } from "@/components/ui/user-avatar"
 import { FormIdCopy } from "@/components/ui/form-id-copy"
 
@@ -33,8 +33,8 @@ export default function CollectionVouchersPage() {
 
     const [isDrawerOpen, setIsDrawerOpen] = useState(false)
     const [isViewDrawerOpen, setIsViewDrawerOpen] = useState(false)
-    const [editingVoucher, setEditingVoucher] = useState<CollectionVoucher | null>(null)
-    const [viewingVoucher, setViewingVoucher] = useState<CollectionVoucher | null>(null)
+    const [editingVoucher, setEditingVoucher] = useState<CollectionVoucher2 | null>(null)
+    const [viewingVoucher, setViewingVoucher] = useState<CollectionVoucher2 | null>(null)
     const [currentPage, setCurrentPage] = useState(1)
     const [isLoadingData, setIsLoadingData] = useState(false)
     const [syncingPending, setSyncingPending] = useState(false)
@@ -187,6 +187,7 @@ export default function CollectionVouchersPage() {
         try {
             const headers = [
                 "Voucher ID",
+                "Voucher Tag",
                 "Driver Name",
                 "Date",
                 "Route",
@@ -194,15 +195,15 @@ export default function CollectionVouchersPage() {
                 "Truck Number",
                 "Time In",
                 "Time Out",
+                "Tank Entry #",
+                "Truck Compartment #",
                 "Temperature",
                 "Dip Reading",
                 "Meter Start",
                 "Meter Finish",
                 "Volume",
                 "Dairy Total",
-                "Farmer Tank #",
-                "Truck Compartment #",
-                "Route Total",
+                "Farmer Tank ID",
                 "OT Result",
                 "Organoleptic",
                 "Alcohol",
@@ -215,50 +216,55 @@ export default function CollectionVouchersPage() {
 
             displayVouchers.forEach(voucher => {
                 const driver = displayUsers.find(u => u.id === voucher.driver)
-                const supplier = displaySuppliers.find(s => s.id === (typeof voucher.farmer === 'string' ? voucher.farmer : (voucher.farmer as any)?.id))
+                const supplier = displaySuppliers.find(s => s.id === (typeof voucher.supplier === 'string' ? voucher.supplier : (voucher.supplier as any)?.id))
                 const driverName = driver ? `${driver.first_name} ${driver.last_name}` : 'Unknown'
-                const farmerName = typeof voucher.farmer === 'object' && voucher.farmer
-                    ? `${(voucher.farmer as any).first_name} ${(voucher.farmer as any).last_name}`
+                const farmerName = typeof voucher.supplier === 'object' && voucher.supplier
+                    ? `${(voucher.supplier as any).first_name} ${(voucher.supplier as any).last_name}`
                     : supplier ? `${supplier.first_name} ${supplier.last_name}` : 'Unknown'
 
-                const details = Array.isArray(voucher.raw_milk_collection_voucher_details) ? voucher.raw_milk_collection_voucher_details : (Array.isArray(voucher.details) ? voucher.details : [])
-                const labTests = Array.isArray(voucher.raw_milk_collection_voucher_lab_test) ? voucher.raw_milk_collection_voucher_lab_test : (Array.isArray(voucher.lab_test) ? voucher.lab_test : [])
+                const details = voucher.raw_milk_collection_voucher_2_details || []
 
-                // Create a row for each detail entry
-                details.forEach((detail: any, index: number) => {
-                    const lab = labTests[index] || labTests[0] // Fallback to first lab test or empty
+                // Create a row for each tank entry
+                details.forEach((detail: any) => {
+                    const tanks = detail.raw_milk_collection_voucher_2_details_farmer_tank || []
 
-                    rows.push([
-                        voucher.id,
-                        driverName,
-                        new Date(voucher.date).toLocaleDateString(),
-                        voucher.route,
-                        farmerName,
-                        voucher.truck_number,
-                        voucher.time_in,
-                        voucher.time_out,
-                        detail.temperature || 'N/A',
-                        detail.dip_reading || 'N/A',
-                        detail.meter_start || 'N/A',
-                        detail.meter_finish || 'N/A',
-                        detail.volume || 'N/A',
-                        detail.dairy_total || 'N/A',
-                        Array.isArray(detail.farmer_tank_number) ? detail.farmer_tank_number.join(';') : detail.farmer_tank_number || 'N/A',
-                        detail.truck_compartment_number || 'N/A',
-                        detail.route_total || 'N/A',
-                        lab?.ot_result || 'N/A',
-                        lab?.organoleptic || 'N/A',
-                        lab?.alcohol || 'N/A',
-                        lab?.cob_result ? 'Yes' : 'No',
-                        voucher.remark,
-                        new Date(voucher.created_at).toLocaleDateString()
-                    ])
+                    tanks.forEach((tank: any, tankIdx: number) => {
+                        const lab = tank.lab_test || {}
+
+                        rows.push([
+                            voucher.id,
+                            voucher.tag || 'N/A',
+                            driverName,
+                            new Date(voucher.date).toLocaleDateString(),
+                            voucher.route,
+                            farmerName,
+                            voucher.truck_number,
+                            voucher.time_in,
+                            voucher.time_out,
+                            tankIdx + 1,
+                            tank.truck_compartment_number || 'N/A',
+                            tank.temperature || 'N/A',
+                            tank.dip_reading || 'N/A',
+                            tank.meter_start || 'N/A',
+                            tank.meter_finish || 'N/A',
+                            tank.volume || 'N/A',
+                            tank.dairy_total || 'N/A',
+                            tank.supplier_tank_id || 'N/A',
+                            lab.ot_result || 'N/A',
+                            lab.organoleptic || 'N/A',
+                            lab.alcohol || 'N/A',
+                            lab.cob_result ? 'Yes' : 'No',
+                            voucher.remark,
+                            new Date(voucher.created_at).toLocaleDateString()
+                        ])
+                    })
                 })
 
-                // If no details, add one summarized row
-                if (details.length === 0) {
+                // If no details/tanks, add one basic row
+                if (details.length === 0 || details.every(d => !d.raw_milk_collection_voucher_2_details_farmer_tank?.length)) {
                     rows.push([
                         voucher.id,
+                        voucher.tag || 'N/A',
                         driverName,
                         new Date(voucher.date).toLocaleDateString(),
                         voucher.route,
@@ -266,11 +272,7 @@ export default function CollectionVouchersPage() {
                         voucher.truck_number,
                         voucher.time_in,
                         voucher.time_out,
-                        'N/A', 'N/A', 'N/A', 'N/A', 'N/A', 'N/A', 'N/A', 'N/A', 'N/A',
-                        labTests[0]?.ot_result || 'N/A',
-                        labTests[0]?.organoleptic || 'N/A',
-                        labTests[0]?.alcohol || 'N/A',
-                        labTests[0]?.cob_result ? 'Yes' : 'No',
+                        'N/A', 'N/A', 'N/A', 'N/A', 'N/A', 'N/A', 'N/A', 'N/A', 'N/A', 'N/A', 'N/A', 'N/A', 'N/A',
                         voucher.remark,
                         new Date(voucher.created_at).toLocaleDateString()
                     ])
@@ -303,12 +305,12 @@ export default function CollectionVouchersPage() {
         setIsDrawerOpen(true)
     }
 
-    const handleEditVoucher = (voucher: CollectionVoucher) => {
+    const handleEditVoucher = (voucher: CollectionVoucher2) => {
         setEditingVoucher(voucher)
         setIsDrawerOpen(true)
     }
 
-    const handleViewVoucher = (voucher: CollectionVoucher) => {
+    const handleViewVoucher = (voucher: CollectionVoucher2) => {
         setViewingVoucher(voucher)
         setIsViewDrawerOpen(true)
     }
@@ -335,12 +337,12 @@ export default function CollectionVouchersPage() {
             accessorKey: "tag",
             header: "Voucher Tag",
             cell: ({ row }: any) => {
-                const voucher = row.original as CollectionVoucher
+                const voucher = row.original as CollectionVoucher2
                 return (
                     <div className="flex items-center gap-3">
-                        <div className="h-9 w-9 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center">
-                            <Truck className="h-4 w-4 text-white" />
-                        </div>
+                        {/* <div className="h-9 w-9 rounded-lg bg-gradient-to-br from-[#A0CF06] to-[#8eb805] flex items-center justify-center">
+                            <Truck className="h-4 w-4 text-[#211D1E]" />
+                        </div> */}
                         <FormIdCopy
                             displayId={voucher.tag || "N/A"}
                             actualId={voucher.id}
@@ -354,7 +356,7 @@ export default function CollectionVouchersPage() {
             accessorKey: "driver",
             header: "Driver",
             cell: ({ row }: any) => {
-                const voucher = row.original as CollectionVoucher
+                const voucher = row.original as CollectionVoucher2
                 const driverUser = displayUsers.find((user: any) => user.id === voucher.driver)
 
                 if (driverUser) {
@@ -383,7 +385,7 @@ export default function CollectionVouchersPage() {
             accessorKey: "date",
             header: "Date",
             cell: ({ row }: any) => {
-                const voucher = row.original as CollectionVoucher
+                const voucher = row.original as CollectionVoucher2
                 return (
                     <div className="flex items-center gap-2 text-sm">
                         <Calendar className="w-4 h-4 text-gray-500" />
@@ -396,7 +398,7 @@ export default function CollectionVouchersPage() {
             accessorKey: "route",
             header: "Route",
             cell: ({ row }: any) => {
-                const voucher = row.original as CollectionVoucher
+                const voucher = row.original as CollectionVoucher2
                 return <span className="text-sm font-light">{voucher.route}</span>
             },
         },
@@ -404,12 +406,12 @@ export default function CollectionVouchersPage() {
             accessorKey: "farmer",
             header: "Farmer",
             cell: ({ row }: any) => {
-                const voucher = row.original as CollectionVoucher
-                const supplier = displaySuppliers.find((s: any) => s.id === (typeof voucher.farmer === 'string' ? voucher.farmer : (voucher.farmer as any)?.id))
+                const voucher = row.original as CollectionVoucher2
+                const supplier = displaySuppliers.find((s: any) => s.id === (typeof voucher.supplier === 'string' ? voucher.supplier : (voucher.supplier as any)?.id))
 
-                // If farmer is an object (nested response), use it directly
-                if (typeof voucher.farmer === 'object' && voucher.farmer) {
-                    const f = voucher.farmer as any
+                // If farmer/supplier is an object (nested response), use it directly
+                if (typeof voucher.supplier === 'object' && voucher.supplier) {
+                    const f = voucher.supplier as any
                     return (
                         <span className="text-sm font-light">
                             {f.first_name} {f.last_name}
@@ -428,16 +430,19 @@ export default function CollectionVouchersPage() {
             accessorKey: "volume",
             header: "Total Volume",
             cell: ({ row }: any) => {
-                const voucher = row.original as CollectionVoucher
-                const details = Array.isArray(voucher.raw_milk_collection_voucher_details) ? voucher.raw_milk_collection_voucher_details : (Array.isArray(voucher.details) ? voucher.details : [])
-                const totalVolume = details.reduce((acc, curr) => acc + (Number(curr.volume) || 0), 0)
+                const voucher = row.original as CollectionVoucher2
+                const details = voucher.raw_milk_collection_voucher_2_details || []
+                const totalVolume = details.reduce((acc, detail) => {
+                    const tanks = detail.raw_milk_collection_voucher_2_details_farmer_tank || []
+                    return acc + tanks.reduce((tacc, tank) => tacc + (Number(tank.volume) || 0), 0)
+                }, 0)
                 return <span className="text-sm font-light">{totalVolume} L</span>
             },
         },
         {
             id: "actions",
             cell: ({ row }: any) => {
-                const voucher = row.original as CollectionVoucher
+                const voucher = row.original as CollectionVoucher2
                 return (
                     <div className="flex space-x-2">
                         <LoadingButton

@@ -7,21 +7,49 @@ export interface ApiResponse<T> {
   data: T
 }
 
-export interface RawMilkIntakeSample {
+export interface RawMaterialSample {
   supplier_id: string
   amount_collected: number
   unit_of_measure: string
   serial_no: string
 }
 
+export interface RawMilkIntakePendingVoucher {
+  id: string
+  tag: string
+  date: string
+  route: string
+  supplier: string
+  truck_number: string
+  truck_compartment_number: number
+  driver: string
+  driver_first_name: string
+  driver_last_name: string
+  driver_signature: string
+  time_in: string
+  time_out: string
+  ot_result: string | null
+  cob_result: string | null
+  remark: string | null
+  lab_test: any | null
+  number_of_compartments: number | null
+  route_total: number | null
+  created_at: string
+  updated_at: string
+}
+
 export interface CreateRawMilkIntakeFormRequest {
+  collection_voucher_id: string
+  truck_compartment_number: number
   operator_id: string
   operator_signature: string
+  driver_signature: string
   date: string
   quantity_received: number
-  raw_milk_collection_voucher_id: string
   destination_silo_name: string
   status: string
+  tag: string
+  updated_at?: string
   id?: string | null
 }
 
@@ -51,6 +79,11 @@ export const rawMilkIntakeApi = {
   // Get single form by ID
   getById: async (id: string) => {
     return apiRequest<ApiResponse<RawMilkIntakeForm>>(`/raw-milk-intake-form/${id}`)
+  },
+
+  // Get vouchers pending transfer
+  getVouchersPendingTransfer: async () => {
+    return apiRequest<ApiResponse<RawMilkIntakePendingVoucher[]>>('/raw-milk-intake-form/vouchers-pending-transfer')
   },
 
   // Create new form

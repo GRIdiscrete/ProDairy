@@ -95,18 +95,8 @@ export interface CreatePasteurizingFormRequest {
   bmt: string
   fat: number
   cream_index?: number
-  production_: {
-    process_id: string
-    output_target_value: number
-    ouput_target_units: string
-    temp_hot_water: number
-    temp_product_out: number
-    temp_product_pasteurisation: number
-    total_homogenisation_pressure: number
-    homogenisation_pressure_stage_1: number
-    homogenisation_pressure_stage_2: number
-    time: string
-  }[]
+  tag?: string
+  steri_milk_pasteurizing_form_production: Omit<Production, 'id' | 'created_at' | 'updated_at' | 'steri_milk_pasteurizing_form_id'>[]
 }
 
 export interface UpdatePasteurizingFormRequest {
@@ -123,19 +113,8 @@ export interface UpdatePasteurizingFormRequest {
   bmt?: string
   fat?: number
   cream_index?: number
-  production_?: {
-    id: string
-    process_id: string
-    output_target_value: number
-    ouput_target_units: string
-    temp_hot_water: number
-    temp_product_out: number
-    temp_product_pasteurisation: number
-    total_homogenisation_pressure: number
-    homogenisation_pressure_stage_1: number
-    homogenisation_pressure_stage_2: number
-    time: string
-  }[]
+  tag?: string
+  steri_milk_pasteurizing_form_production?: (Omit<Production, 'created_at' | 'updated_at' | 'steri_milk_pasteurizing_form_id'> & { id: string })[]
 }
 
 export interface PasteurizingFormResponse {

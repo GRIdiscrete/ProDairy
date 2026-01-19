@@ -299,6 +299,10 @@ export function RawMilkIntakeFormViewDrawer({
                         <span className="text-sm font-light text-blue-600">{form.quantity_received}L</span>
                       </div>
                       <div className="flex items-center justify-between">
+                        <span className="text-sm font-light text-gray-600">Compartment</span>
+                        <Badge variant="outline" className="font-light">#{form.truck_compartment_number}</Badge>
+                      </div>
+                      <div className="flex items-center justify-between">
                         <span className="text-sm font-light text-gray-600">Samples</span>
                         <span className="text-sm font-light text-green-600">
                           {(form as any).raw_milk_intake_form_samples?.length || 0} samples
@@ -341,6 +345,18 @@ export function RawMilkIntakeFormViewDrawer({
                                   </div>
                                 </div>
                               )}
+                              {form.driver_signature && (
+                                <div className="space-y-2">
+                                  <span className="text-sm font-light text-gray-600">Driver Signature</span>
+                                  <div className="border border-gray-200 rounded-md p-2 bg-white">
+                                    <img
+                                      src={base64ToPngDataUrl(form.driver_signature)}
+                                      alt="Driver signature"
+                                      className="h-16 max-w-full object-contain"
+                                    />
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           )
                         }
@@ -369,7 +385,7 @@ export function RawMilkIntakeFormViewDrawer({
                   </div>
 
                   {/* Collection Voucher Details */}
-                  {(form as any).raw_milk_collection_voucher_id && (
+                  {form.collection_voucher_id && (
                     <div className="p-6 bg-white border border-gray-200 rounded-lg">
                       <div className="flex items-center space-x-2 mb-4">
                         <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
@@ -379,7 +395,7 @@ export function RawMilkIntakeFormViewDrawer({
                       </div>
                       <div className="space-y-3">
                         {(() => {
-                          const voucher = getCollectionVoucherById((form as any).raw_milk_collection_voucher_id)
+                          const voucher = getCollectionVoucherById(form.collection_voucher_id)
                           const driverInfo = getDriverInfoFromVoucher(voucher)
 
                           if (voucher) {
@@ -427,7 +443,7 @@ export function RawMilkIntakeFormViewDrawer({
                               </>
                             )
                           } else {
-                            const voucherId = (form as any).raw_milk_collection_voucher_id?.id || (form as any).raw_milk_collection_voucher_id;
+                            const voucherId = form.collection_voucher_id;
                             return (
                               <div className="flex items-center justify-between">
                                 <span className="text-sm font-light text-gray-600">Voucher ID</span>
@@ -454,7 +470,7 @@ export function RawMilkIntakeFormViewDrawer({
                       </div>
                       <div className="space-y-3">
                         {(() => {
-                          const silo = getSiloById(form.destination_silo_id) || form.raw_milk_intake_form_destination_silo_id_fkey
+                          const silo = getSiloByName(form.destination_silo_name)
 
                           if (silo) {
                             return (
@@ -464,36 +480,22 @@ export function RawMilkIntakeFormViewDrawer({
                                   <span className="text-sm font-light text-green-600">{silo.name}</span>
                                 </div>
                                 <div className="flex items-center justify-between">
-                                  <span className="text-sm font-light text-gray-600">Location</span>
-                                  <span className="text-sm font-light">{silo.location}</span>
-                                </div>
-                                <div className="flex items-center justify-between">
                                   <span className="text-sm font-light text-gray-600">Capacity</span>
-                                  <span className="text-sm font-light">{silo.capacity.toLocaleString()}L</span>
+                                  <span className="text-sm font-light text-gray-900">{silo.capacity?.toLocaleString()}L</span>
                                 </div>
                                 <div className="flex items-center justify-between">
                                   <span className="text-sm font-light text-gray-600">Current Volume</span>
-                                  <span className="text-sm font-light text-blue-600">{silo?.milk_volume?.toLocaleString()}L</span>
+                                  <span className="text-sm font-light text-blue-600">{silo.milk_volume?.toLocaleString()}L</span>
                                 </div>
-                                <div className="flex items-center justify-between">
-                                  <span className="text-sm font-light text-gray-600">Expected New</span>
-                                  <span className="text-sm font-light text-orange-600">
-                                    {(silo.milk_volume + form.quantity_received).toLocaleString()}L
-                                  </span>
-                                </div>
-
-                                {/* Capacity Bar */}
-                                <div className="mt-4">
-                                  <div className="flex justify-between text-xs font-light text-gray-600 mb-2">
-                                    <span>Capacity Usage</span>
+                                <div className="space-y-1.5">
+                                  <div className="flex items-center justify-between text-xs text-gray-500">
+                                    <span>Utilization</span>
                                     <span>{Math.round((silo.milk_volume / silo.capacity) * 100)}%</span>
                                   </div>
-                                  <div className="w-full bg-gray-200 rounded-full h-2">
+                                  <div className="w-full bg-gray-100 rounded-full h-2">
                                     <div
-                                      className=" from-blue-500 to-green-500 h-2 rounded-full transition-all duration-300"
-                                      style={{
-                                        width: `${Math.min((silo.milk_volume / silo.capacity) * 100, 100)}%`
-                                      }}
+                                      className="bg-blue-600 h-2 rounded-full transition-all duration-500"
+                                      style={{ width: `${Math.min((silo.milk_volume / silo.capacity) * 100, 100)}%` }}
                                     ></div>
                                   </div>
                                 </div>
@@ -502,11 +504,8 @@ export function RawMilkIntakeFormViewDrawer({
                           } else {
                             return (
                               <div className="flex items-center justify-between">
-                                <span className="text-sm font-light text-gray-600">Silo ID</span>
-                                <div className="flex items-center space-x-2">
-                                  <span className="text-sm font-light">#{form.destination_silo_id.slice(0, 8)}</span>
-                                  <CopyButton text={form.destination_silo_id} />
-                                </div>
+                                <span className="text-sm font-light text-gray-600">Silo Name</span>
+                                <span className="text-sm font-light text-gray-900">{form.destination_silo_name}</span>
                               </div>
                             )
                           }
