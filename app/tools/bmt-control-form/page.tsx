@@ -5,7 +5,7 @@ import { LoadingButton } from "@/components/ui/loading-button"
 import { DataTable } from "@/components/ui/data-table"
 import { DataTableFilters } from "@/components/ui/data-table-filters"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Eye, Trash2, Beaker, TrendingUp, Clock, User, Download } from "lucide-react"
+import { Plus, Eye, Edit, Trash2, Beaker, TrendingUp, Clock, User, Download } from "lucide-react"
 import { BMTControlFormDrawer } from "@/components/forms/bmt-control-form-drawer"
 import { BMTControlFormViewDrawer } from "@/components/forms/bmt-control-form-view-drawer"
 import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-dialog"
@@ -277,7 +277,7 @@ export default function BMTControlFormPage() {
         return (
           <FormIdCopy
             displayId={form.tag}
-            actualId={form.id}
+            actualId={form.tag}
             size="sm"
           />
         )
@@ -334,6 +334,13 @@ export default function BMTControlFormPage() {
               className="bg-[#006BC4] text-white border-0 rounded-full"
             >
               <Eye className="w-4 h-4" />
+            </LoadingButton>
+            <LoadingButton
+              size="sm"
+              onClick={() => handleEditForm(form)}
+              className="bg-[#A0CF06] text-[#211D1E] border-0 rounded-full"
+            >
+              <Edit className="w-4 h-4" />
             </LoadingButton>
             <LoadingButton
               variant="destructive"
