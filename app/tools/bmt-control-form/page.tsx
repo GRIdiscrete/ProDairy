@@ -1,31 +1,26 @@
 "use client"
 
 import { useState, useEffect, useRef, useMemo } from "react"
-import { DataCaptureDashboardLayout } from "@/components/layout/data-capture-dashboard-layout"
 import { LoadingButton } from "@/components/ui/loading-button"
 import { DataTable } from "@/components/ui/data-table"
 import { DataTableFilters } from "@/components/ui/data-table-filters"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Eye, Edit, Trash2, Beaker, TrendingUp, FileText, Clock, Package, Truck, User, Download } from "lucide-react"
-import { CopyButton } from "@/components/ui/copy-button"
+import { Plus, Eye, Trash2, Beaker, TrendingUp, Clock, User, Download } from "lucide-react"
 import { BMTControlFormDrawer } from "@/components/forms/bmt-control-form-drawer"
 import { BMTControlFormViewDrawer } from "@/components/forms/bmt-control-form-view-drawer"
 import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-dialog"
 import { useAppDispatch, useAppSelector } from "@/lib/store"
-import { 
-  fetchBMTControlForms, 
+import {
+  fetchBMTControlForms,
   deleteBMTControlFormAction,
   clearError
 } from "@/lib/store/slices/bmtControlFormSlice"
 import { fetchUsers } from "@/lib/store/slices/usersSlice"
-import { useRouter, useSearchParams } from "next/navigation"
-
 import { toast } from "sonner"
 import { TableFilters } from "@/lib/types"
 import { BMTControlForm } from "@/lib/api/bmt-control-form"
 import ContentSkeleton from "@/components/ui/content-skeleton"
 import { ToolsDashboardLayout } from "@/components/layout/tools-dashboard-layout"
-import { generateFormId } from "@/lib/utils/form-id-generator"
 import { siloApi } from "@/lib/api/silo"
 import { UserAvatar } from "@/components/ui/user-avatar"
 import { FormIdCopy } from "@/components/ui/form-id-copy"
@@ -34,37 +29,26 @@ export default function BMTControlFormPage() {
   const dispatch = useAppDispatch()
   const { forms, loading, error, operationLoading, isInitialized } = useAppSelector((state) => state.bmtControlForms)
   const { items: users, loading: usersLoading, isInitialized: usersInitialized } = useAppSelector((state) => state.users)
-  
+
   const [tableFilters, setTableFilters] = useState<TableFilters>({})
   const hasFetchedRef = useRef(false)
-  
+
   // State for silos
   const [silos, setSilos] = useState<any[]>([])
   const [loadingSilos, setLoadingSilos] = useState(false)
-  
+
   // Load initial data
   const loadInitialData = async () => {
     try {
       setLoadingSilos(true)
-      
-      console.log('BMT Page - Starting to load initial data...')
-      
-      // Load silos
       const silosResponse = await siloApi.getSilos()
       setSilos(silosResponse.data || [])
-      console.log('BMT Page - Loaded silos:', silosResponse.data?.length || 0)
-      
     } catch (error) {
       console.error('Error loading initial data:', error)
       toast.error('Failed to load data')
     } finally {
       setLoadingSilos(false)
     }
-  }
-
-  // Helper function to get silo by ID
-  const getSiloById = (siloId: string) => {
-    return silos.find((silo: any) => silo.id === siloId)
   }
 
   // Helper function to get user by ID
@@ -75,7 +59,7 @@ export default function BMTControlFormPage() {
   // Helper to get user name by ID
   const getUserNameById = (userId: string) => {
     const user = getUserById(userId)
-    return user ? user.name || user.email || user.id : userId || ""
+    return user ? `${user.first_name || ""} ${user.last_name || ""}`.trim() || user.email || user.id : userId || ""
   }
 
   // Helper to get silo name by ID
@@ -83,8 +67,6 @@ export default function BMTControlFormPage() {
     const silo = silos.find((s: any) => s.id === siloId)
     return silo ? silo.name : siloId || ""
   }
-
-
 
   // Load BMT control forms on initial mount
   useEffect(() => {
@@ -97,50 +79,67 @@ export default function BMTControlFormPage() {
 
   // Initialize users on component mount
   useEffect(() => {
- 
-    
-    // Always try to load users if not already loaded
     if (!usersInitialized || users.length === 0) {
-      console.log('BMT Page - Dispatching fetchUsers...')
       dispatch(fetchUsers({}))
-        .then((result) => {
-          console.log('BMT Page - fetchUsers success:', result)
-        })
-        .catch((error) => {
-          console.error('BMT Page - fetchUsers error:', error)
-        })
     }
-  }, [dispatch, usersInitialized, users.length, usersLoading])
+  }, [dispatch, usersInitialized, users.length])
 
-  // Force load users after a short delay if still empty
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (users.length === 0 && !usersLoading) {
-        console.log('BMT Page - Force loading users after delay...')
-        dispatch(fetchUsers({}))
+  // Frontend Filtering Logic
+  const filteredForms = useMemo(() => {
+    if (!forms) return [];
+
+    return forms.filter((form: BMTControlForm) => {
+      // 1. Search filter (by tag)
+      if (tableFilters.search) {
+        const searchLower = tableFilters.search.toLowerCase();
+        const tag = (form.tag || "").toLowerCase();
+        if (!tag.includes(searchLower)) return false;
       }
-    }, 1000)
 
-    return () => clearTimeout(timer)
-  }, [dispatch, users.length, usersLoading])
+      // 2. Product filter
+      if (tableFilters.product && tableFilters.product !== "all") {
+        if (form.product !== tableFilters.product) return false;
+      }
 
-  // Debug log when users change
-  useEffect(() => {
-    console.log('BMT Page - Users state changed:', {
-      count: users.length,
-      loading: usersLoading,  
-      initialized: usersInitialized,
-      userIds: users.map(u => u.id).slice(0, 5) // Show first 5 user IDs
-    })
-  }, [users, usersLoading, usersInitialized])
-  
-  // Handle filter changes
-  useEffect(() => {
-    if (isInitialized && Object.keys(tableFilters).length > 0) {
-      dispatch(fetchBMTControlForms())
-    }
-  }, [dispatch, tableFilters, isInitialized])
-  
+      // 3. Source Silo filter
+      if (tableFilters.source_silo_id) {
+        const sourceSiloMatch = (form as any).bmt_control_form_source_silo?.some(
+          (s: any) => (s.name || "").toLowerCase().includes(tableFilters.source_silo_id.toLowerCase())
+        );
+        if (!sourceSiloMatch) return false;
+      }
+
+      // 4. Destination Silo filter
+      if (tableFilters.destination_silo_id) {
+        const destSiloMatch = (form as any).bmt_control_form_destination_silo?.some(
+          (s: any) => (s.name || "").toLowerCase().includes(tableFilters.destination_silo_id.toLowerCase())
+        );
+        if (!destSiloMatch) return false;
+      }
+
+      // 5. Date Range filter
+      if (tableFilters.dateRange) {
+        const formDate = form.created_at ? new Date(form.created_at) : null;
+        if (formDate) {
+          if (tableFilters.dateRange.from) {
+            const from = new Date(tableFilters.dateRange.from);
+            from.setHours(0, 0, 0, 0);
+            if (formDate < from) return false;
+          }
+          if (tableFilters.dateRange.to) {
+            const to = new Date(tableFilters.dateRange.to);
+            to.setHours(23, 59, 59, 999);
+            if (formDate > to) return false;
+          }
+        } else if (tableFilters.dateRange.from || tableFilters.dateRange.to) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  }, [forms, tableFilters]);
+
   // Handle errors with toast notifications
   useEffect(() => {
     if (error) {
@@ -148,12 +147,12 @@ export default function BMTControlFormPage() {
       dispatch(clearError())
     }
   }, [error, dispatch])
-  
+
   // Drawer states
   const [formDrawerOpen, setFormDrawerOpen] = useState(false)
   const [viewDrawerOpen, setViewDrawerOpen] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
-  
+
   // Selected form and mode
   const [selectedForm, setSelectedForm] = useState<BMTControlForm | null>(null)
   const [formMode, setFormMode] = useState<"create" | "edit">("create")
@@ -179,7 +178,7 @@ export default function BMTControlFormPage() {
       placeholder: "Filter by source silo"
     },
     {
-      key: "destination_silo_id", 
+      key: "destination_silo_id",
       label: "Destination Silo",
       type: "text" as const,
       placeholder: "Filter by destination silo"
@@ -200,9 +199,6 @@ export default function BMTControlFormPage() {
   }
 
   const handleEditForm = (form: BMTControlForm) => {
-    // Debug: Log the form being passed to edit
-
-    
     setSelectedForm(form)
     setFormMode("edit")
     setFormDrawerOpen(true)
@@ -220,7 +216,7 @@ export default function BMTControlFormPage() {
 
   const confirmDelete = async () => {
     if (!selectedForm) return
-    
+
     try {
       await dispatch(deleteBMTControlFormAction(selectedForm.id!)).unwrap()
       toast.success('BMT Control Form deleted successfully')
@@ -233,78 +229,33 @@ export default function BMTControlFormPage() {
 
   // CSV Export Handler
   const handleExportCSV = () => {
-    if (!forms || forms.length === 0) {
+    if (!filteredForms || filteredForms.length === 0) {
       toast.error("No forms to export")
       return
     }
 
-    // CSV headers (removed Form ID column)
     const headers = [
-      "Tag",
-      "Product",
-      "Volume (L)",
-      "Movement Start",
-      "Movement End",
-      "Status",
-      "Dispatch Operator",
-      "Receiver Operator",
-      "Source Silos",
-      "Destination Silo",
-      "Created At",
-      "Updated At"
+      "Tag", "Product", "Volume (L)", "Movement Start", "Movement End",
+      "Status", "Dispatch Operator", "Receiver Operator", "Created At"
     ]
 
-    // Build CSV rows
-    const rows = forms.map((form: any) => {
-      // Source silos: names, comma separated
-      let sourceSilos = ""
-      if (Array.isArray(form.bmt_control_form_source_silo) && form.bmt_control_form_source_silo.length > 0) {
-        sourceSilos = form.bmt_control_form_source_silo.map((silo: any) => silo.name || silo.id).join(", ")
-      } else if (form.source_silo_id) {
-        sourceSilos = getSiloNameById(form.source_silo_id)
-      }
+    const rows = filteredForms.map((form: any) => [
+      form.tag,
+      form.product,
+      form.volume ?? "",
+      form.movement_start ? new Date(form.movement_start).toLocaleString() : "",
+      form.movement_end ? new Date(form.movement_end).toLocaleString() : "",
+      form.status,
+      getUserNameById(form.dispatch_operator_id || form.llm_operator_id),
+      getUserNameById(form.receiver_operator_id || form.dpp_operator_id),
+      form.created_at ? new Date(form.created_at).toLocaleString() : ""
+    ])
 
-      // Destination silo: name
-      let destinationSilo = ""
-      if (form.destination_silo && form.destination_silo.name) {
-        destinationSilo = form.destination_silo.name
-      } else if (form.destination_silo_id) {
-        destinationSilo = getSiloNameById(form.destination_silo_id)
-      }
-
-      // Operator names
-      const dispatchOperator = getUserNameById(form.dispatch_operator_id || form.llm_operator_id)
-      const receiverOperator = getUserNameById(form.receiver_operator_id || form.dpp_operator_id)
-
-      // Format dates
-      const movementStart = form.movement_start ? new Date(form.movement_start).toLocaleString() : ""
-      const movementEnd = form.movement_end ? new Date(form.movement_end).toLocaleString() : ""
-      const createdAt = form.created_at ? new Date(form.created_at).toLocaleString() : ""
-      const updatedAt = form.updated_at ? new Date(form.updated_at).toLocaleString() : ""
-
-      return [
-        form.tag,
-        form.product,
-        form.volume ?? "",
-        movementStart,
-        movementEnd,
-        form.status,
-        dispatchOperator,
-        receiverOperator,
-        sourceSilos,
-        destinationSilo,
-        createdAt,
-        updatedAt
-      ]
-    })
-
-    // CSV string
     const csvContent = [
       headers.join(","),
       ...rows.map(row => row.map(val => `"${String(val).replace(/"/g, '""')}"`).join(","))
     ].join("\r\n")
 
-    // Download CSV
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" })
     const url = URL.createObjectURL(blob)
     const link = document.createElement("a")
@@ -316,15 +267,15 @@ export default function BMTControlFormPage() {
     URL.revokeObjectURL(url)
   }
 
-  // Table columns with actions
+  // Table columns
   const columns = [
     {
-      accessorKey: "form_id",
+      accessorKey: "tag",
       header: "Form ID",
       cell: ({ row }: any) => {
         const form = row.original
         return (
-          <FormIdCopy 
+          <FormIdCopy
             displayId={form.tag}
             actualId={form.id}
             size="sm"
@@ -332,9 +283,8 @@ export default function BMTControlFormPage() {
         )
       },
     },
-   
     {
-      accessorKey: "movement_details",
+      accessorKey: "volume",
       header: "Movement",
       cell: ({ row }: any) => {
         const form = row.original
@@ -342,7 +292,7 @@ export default function BMTControlFormPage() {
           <div className="space-y-1">
             <p className="text-sm font-light">Vol: {form.volume}L</p>
             <p className="text-xs text-gray-500">
-              {form.movement_start ? new Date(form.movement_start).toLocaleTimeString() : 'N/A'} - 
+              {form.movement_start ? new Date(form.movement_start).toLocaleTimeString() : 'N/A'} -
               {form.movement_end ? new Date(form.movement_end).toLocaleTimeString() : 'N/A'}
             </p>
           </div>
@@ -350,18 +300,9 @@ export default function BMTControlFormPage() {
       },
     },
     {
-      accessorKey: "flow_readings",
-      header: "Volume",
-      cell: ({ row }: any) => {
-        const form = row.original
-        return (
-          <div className="space-y-1">
-            <p className="text-sm font-light">
-              {form.volume != null ? `${form.volume} L` : "N/A"}
-            </p>
-          </div>
-        )
-      },
+      accessorKey: "product",
+      header: "Product",
+      cell: ({ row }: any) => <span className="text-sm font-light">{row.original.product}</span>,
     },
     {
       accessorKey: "created_at",
@@ -373,7 +314,7 @@ export default function BMTControlFormPage() {
             <p className="text-sm font-light">
               {form.created_at ? new Date(form.created_at).toLocaleDateString() : 'N/A'}
             </p>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-gray-500 italic">
               {form.updated_at ? `Updated: ${new Date(form.updated_at).toLocaleDateString()}` : 'Never updated'}
             </p>
           </div>
@@ -385,29 +326,18 @@ export default function BMTControlFormPage() {
       header: "Actions",
       cell: ({ row }: any) => {
         const form = row.original
-
-        console.log('BMT Form Actions - Form ID:', form)
         return (
           <div className="flex space-x-2">
-            <LoadingButton 
-               
-              size="sm" 
+            <LoadingButton
+              size="sm"
               onClick={() => handleViewForm(form)}
               className="bg-[#006BC4] text-white border-0 rounded-full"
             >
               <Eye className="w-4 h-4" />
             </LoadingButton>
-            {/* <LoadingButton 
-               
-              size="sm" 
-              onClick={() => handleEditForm(form)}
-              className="bg-[#A0CF06] text-[#211D1E] border-0 rounded-full"
-            >
-              <Edit className="w-4 h-4" />
-            </LoadingButton> */}
-            <LoadingButton 
-              variant="destructive" 
-              size="sm" 
+            <LoadingButton
+              variant="destructive"
+              size="sm"
               onClick={() => handleDeleteForm(form)}
               loading={operationLoading.delete}
               disabled={operationLoading.delete}
@@ -421,25 +351,7 @@ export default function BMTControlFormPage() {
     },
   ]
 
-  // Get latest form for display
   const latestForm = Array.isArray(forms) && forms.length > 0 ? forms[0] : null
-
-  // --- Query param handling ---
-  const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
-
-  // --- Helper: open view drawer if form_id query param is present ---
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const formId = searchParams?.get("form_id");
-    if (formId && forms && forms.length > 0) {
-      const foundForm = forms.find((form: any) => String(form.id) === String(formId));
-      if (foundForm) {
-        setSelectedForm(foundForm);
-        setViewDrawerOpen(true);
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [forms]);
 
   return (
     <ToolsDashboardLayout title="BMT Control Forms" subtitle="Bulk Milk Transfer control and monitoring">
@@ -447,17 +359,17 @@ export default function BMTControlFormPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-light text-foreground">BMT Control Forms</h1>
-            <p className="text-sm font-light text-muted-foreground">Manage bulk milk transfer control forms</p>
+            <p className="text-sm font-light text-muted-foreground transition-all">Manage bulk milk transfer control forms</p>
           </div>
           <div className="flex gap-2">
-            <LoadingButton 
+            <LoadingButton
               onClick={handleExportCSV}
               className="bg-[#A0D001] hover:bg-[#8AB801] text-white border-0 rounded-full px-6 py-2 font-light"
             >
               <Download className="mr-2 h-4 w-4" />
               Export CSV
             </LoadingButton>
-            <LoadingButton 
+            <LoadingButton
               onClick={handleAddForm}
               className="bg-[#006BC4] text-white border-0 rounded-full px-6 py-2 font-light"
             >
@@ -468,200 +380,111 @@ export default function BMTControlFormPage() {
         </div>
 
         {/* Current Form Details */}
-        {loading ? (
-          <ContentSkeleton sections={1} cardsPerSection={4} />
-        ) : latestForm ? (
-          <div className="border border-gray-200 rounded-lg bg-white border-l-4 border-l-[#006BC4]">
-            <div className="p-6 pb-0">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2 text-lg font-light">
-                  <div className="w-8 h-8 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center">
-                    <Beaker className="h-4 w-4" />
+        {!loading && latestForm && (
+          <div className="border border-gray-200 rounded-lg bg-white border-l-4 border-l-[#006BC4] shadow-none overflow-hidden transition-all">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center">
+                    <Beaker className="h-5 w-5" />
                   </div>
-                  <span>Current BMT Control Form</span>
-                  <Badge className="text-white font-light">Latest</Badge>
-                  {(() => {
-                    return (
-                      <FormIdCopy 
-                        displayId={latestForm.tag}
-                        actualId={latestForm.id}
-                        size="sm"
-                      />
-                    );
-                  })()}
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg font-medium">Latest BMT Form</span>
+                      <Badge variant="secondary" className="font-light bg-blue-50 text-blue-700 border-blue-100">Live</Badge>
+                    </div>
+                    <FormIdCopy displayId={latestForm.tag} actualId={latestForm.tag} size="sm" />
+                  </div>
                 </div>
-                <LoadingButton 
-                   
+                <LoadingButton
                   onClick={() => handleViewForm(latestForm)}
-                  className=" text-white border-0 rounded-full px-4 py-2 font-light"
+                  variant="outline"
+                  className="rounded-full px-4 h-10"
                 >
                   <Eye className="mr-2 h-4 w-4" />
-                  View Details
+                  Detailed View
                 </LoadingButton>
               </div>
-            </div>
-            <div className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="space-y-2">
-                  <div className="flex items-center space-x-2">
-                    <Beaker className="h-4 w-4 text-blue-500" />
-                    <p className="text-sm font-light text-gray-600">Product</p>
-                  </div>
-                  <p className="text-lg font-light text-blue-600">{latestForm.product}</p>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-center space-x-2">
-                    <TrendingUp className="h-4 w-4 text-green-500" />
-                    <p className="text-sm font-light text-gray-600">Volume</p>
-                  </div>
-                  <p className="text-lg font-light text-green-600">{latestForm.volume}L</p>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-center space-x-2">
-                    <Clock className="h-4 w-4 text-gray-500" />
-                    <p className="text-sm font-light text-gray-600">Created</p>
-                  </div>
-                  <p className="text-lg font-light">{latestForm.created_at ? new Date(latestForm.created_at).toLocaleDateString('en-GB', { 
-                    day: 'numeric', 
-                    month: 'long', 
-                    year: 'numeric' 
-                  }) : 'N/A'}</p>
-                </div>
-              </div>
-              
-              {/* Remove source silos and destination silo snapshot section */}
-              
-              {/* Operators Information */}
-              <div className="mt-4 grid grid-cols-1 lg:grid-cols-2 gap-4">
-                {/* Dispatch Operator */}
-                {(() => {
-                  // Try dispatch_operator_id and llm_operator_id (cast to any for dynamic access)
-                  const dispatchOperatorId = (latestForm as any).dispatch_operator_id || latestForm.llm_operator_id;
-                  const dispatchUser = getUserById(dispatchOperatorId);
-                  
-                  console.log('Dispatch Operator Debug:', {
-                    dispatch_operator_id: (latestForm as any).dispatch_operator_id,
-                    llm_operator_id: latestForm.llm_operator_id,
-                    selectedId: dispatchOperatorId,
-                    foundUser: dispatchUser,
-                    allUsers: users.length,
-                    userIds: users.map(u => u.id)
-                  });
-                  
-                  return (
-                    <div className="p-4 bg-blue-50 rounded-lg">
-                      <div className="flex items-center space-x-2 mb-3">
-                        <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
-                          <User className="h-4 w-4 text-blue-600" />
-                        </div>
-                        <h4 className="text-sm font-light text-gray-900">Dispatch Operator</h4>
-                      </div>
-                      {dispatchUser ? (
-                        <UserAvatar 
-                          user={dispatchUser} 
-                          size="md" 
-                          showName={true} 
-                          showEmail={true}
-                          showDropdown={true}
-                        />
-                      ) : (
-                        <div className="text-sm text-gray-500">
-                          {dispatchOperatorId ? `User not found (${dispatchOperatorId.slice(0, 8)}...)` : 'No operator assigned'}
-                        </div>
-                      )}
-                    </div>
-                  )
-                })()}
-                
-                {/* Receiver Operator */}
-                {(() => {
-                  // Try receiver_operator_id and dpp_operator_id (cast to any for dynamic access)
-                  const receiverOperatorId = (latestForm as any).receiver_operator_id || latestForm.dpp_operator_id;
-                  const receiverUser = getUserById(receiverOperatorId);
-                  
-                  console.log('Receiver Operator Debug:', {
-                    receiver_operator_id: (latestForm as any).receiver_operator_id,
-                    dpp_operator_id: latestForm.dpp_operator_id,
-                    selectedId: receiverOperatorId,
-                    foundUser: receiverUser,
-                    allUsers: users.length,
-                    userIds: users.map(u => u.id)
-                  });
-                  
-                  return (
-                    <div className="p-4 bg-green-50 rounded-lg">
-                      <div className="flex items-center space-x-2 mb-3">
-                        <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center">
-                          <User className="h-4 w-4 text-green-600" />
-                        </div>
-                        <h4 className="text-sm font-light text-gray-900">Receiver Operator</h4>
-                      </div>
-                      {receiverUser ? (
-                        <UserAvatar 
-                          user={receiverUser} 
-                          size="md" 
-                          showName={true} 
-                          showEmail={true}
-                          showDropdown={true}
-                        />
-                      ) : (
-                        <div className="text-sm text-gray-500">
-                          {receiverOperatorId ? `User not found (${receiverOperatorId.slice(0, 8)}...)` : 'No operator assigned'}
-                        </div>
-                      )}
-                    </div>
-                  )
-                })()}
-              </div>
-              
-              <div className="mt-4 grid grid-cols-1 lg:grid-cols-2 gap-4">
-                {/* ...existing code... */}
-              </div>
-              <div className="mt-4 flex flex-wrap gap-4">
-                {/* ...existing code... */}
-              </div>
-            </div>
-          </div>
-        ) : null}
 
-        {/* Data Table */}
-        {!loading && (
-          <div className="border border-gray-200 rounded-lg bg-white">
-            <div className="p-6 pb-0">
-              <div className="text-lg font-light">BMT Control Forms</div>
-            </div>
-            <div className="p-6 space-y-4">
-              <DataTableFilters
-                filters={tableFilters}
-                onFiltersChange={setTableFilters}
-                onSearch={(searchTerm) => setTableFilters(prev => ({ ...prev, search: searchTerm }))}
-                searchPlaceholder="Search BMT forms..."
-                filterFields={filterFields}
-              />
-              
-              {loading ? (
-                <ContentSkeleton sections={1} cardsPerSection={4} />
-              ) : (
-                <DataTable 
-                  columns={columns} 
-                  data={forms} 
-                  showSearch={false}
-                  searchKey="product"
-                />
-              )}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="p-4 bg-gray-50 rounded-xl space-y-1">
+                  <p className="text-xs font-medium uppercase text-gray-500">Product</p>
+                  <p className="text-xl font-light text-blue-600">{latestForm.product}</p>
+                </div>
+                <div className="p-4 bg-gray-50 rounded-xl space-y-1">
+                  <p className="text-xs font-medium uppercase text-gray-500">Total Volume</p>
+                  <p className="text-xl font-light text-green-600">{latestForm.volume} L</p>
+                </div>
+                <div className="p-4 bg-gray-50 rounded-xl space-y-1">
+                  <p className="text-xs font-medium uppercase text-gray-500">Date Captured</p>
+                  <p className="text-xl font-light">{latestForm.created_at ? new Date(latestForm.created_at).toLocaleDateString('en-GB') : 'N/A'}</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+                {/* Dispatch */}
+                <div className="p-4 border rounded-xl bg-white shadow-none flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center">
+                      <User className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold uppercase text-gray-400">Dispatch Operator</p>
+                      <p className="text-sm font-medium">{getUserNameById((latestForm as any).dispatch_operator_id || latestForm.llm_operator_id) || "Unassigned"}</p>
+                    </div>
+                  </div>
+                </div>
+                {/* Receiver */}
+                <div className="p-4 border rounded-xl bg-white shadow-sm flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 rounded-full bg-green-100 text-green-600 flex items-center justify-center">
+                      <User className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold uppercase text-gray-400">Receiver Operator</p>
+                      <p className="text-sm font-medium">{getUserNameById((latestForm as any).receiver_operator_id || latestForm.dpp_operator_id) || "Unassigned"}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         )}
 
-        {/* Form Drawer */}
-        <BMTControlFormDrawer 
-          open={formDrawerOpen} 
-          onOpenChange={setFormDrawerOpen} 
+        {/* List Section */}
+        <div className="border border-gray-200 rounded-xl bg-white shadow-none">
+          <div className="p-6 border-b bg-gray-50/30">
+            <h2 className="text-lg font-medium text-gray-800">History & Records</h2>
+          </div>
+          <div className="p-6 space-y-4">
+            <DataTableFilters
+              filters={tableFilters}
+              onFiltersChange={setTableFilters}
+              searchPlaceholder="Search by tag (e.g. BMT-001)..."
+              filterFields={filterFields}
+            />
+
+            {loading ? (
+              <ContentSkeleton sections={1} cardsPerSection={5} />
+            ) : (
+              <DataTable
+                columns={columns}
+                data={filteredForms}
+                showSearch={false}
+                searchKey="tag"
+              />
+            )}
+          </div>
+        </div>
+
+        {/* Drawers */}
+        <BMTControlFormDrawer
+          open={formDrawerOpen}
+          onOpenChange={setFormDrawerOpen}
           form={selectedForm}
-          mode={formMode} 
+          mode={formMode}
         />
 
-        {/* View Drawer */}
         <BMTControlFormViewDrawer
           open={viewDrawerOpen}
           onClose={() => setViewDrawerOpen(false)}
@@ -672,12 +495,11 @@ export default function BMTControlFormPage() {
           }}
         />
 
-        {/* Delete Confirmation Dialog */}
         <DeleteConfirmationDialog
           open={deleteDialogOpen}
           onOpenChange={setDeleteDialogOpen}
           title="Delete BMT Control Form"
-          description={`Are you sure you want to delete this BMT control form? This action cannot be undone and may affect production tracking.`}
+          description="Are you sure you want to delete this form? This action cannot be undone."
           onConfirm={confirmDelete}
           loading={operationLoading.delete}
         />

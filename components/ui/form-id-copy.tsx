@@ -23,16 +23,16 @@ export function FormIdCopy({ displayId, actualId, showCopyButton = true, size = 
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(actualId)
+      await navigator.clipboard.writeText(displayId)
       setCopied(true)
-      toast.success("Form ID copied to clipboard")
-      
+      toast.success("Form Tag copied to clipboard")
+
       // Reset the copied state after 2 seconds
       setTimeout(() => {
         setCopied(false)
       }, 2000)
     } catch (error) {
-      toast.error("Failed to copy form ID")
+      toast.error("Failed to copy form tag")
     }
   }
 
@@ -72,7 +72,7 @@ export function FormIdCopy({ displayId, actualId, showCopyButton = true, size = 
           Driver Form
         </div> */}
       </div>
-      
+
       {showCopyButton && (
         <TooltipProvider>
           <Tooltip>
@@ -91,7 +91,7 @@ export function FormIdCopy({ displayId, actualId, showCopyButton = true, size = 
               </Button>
             </TooltipTrigger>
             <TooltipContent>
-              <p>{copied ? "Copied!" : "Copy full form ID"}</p>
+              <p>{copied ? "Copied!" : "Copy full form tag"}</p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>

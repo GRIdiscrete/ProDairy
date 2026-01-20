@@ -52,18 +52,62 @@ export default function ProductIncubationPage({ params }: ProductIncubationPageP
       hasFetchedRef.current = true
       dispatch(fetchProductIncubations())
       // ensure production plans are available for the drawer selector
-      dispatch(fetchProductionPlans())
+      dispatch(fetchProductionPlans({}))
       //fetch users
       dispatch(fetchUsers({}))
     }
   }, [dispatch, isInitialized])
 
-  // Handle filter changes
-  useEffect(() => {
-    if (isInitialized && Object.keys(tableFilters).length > 0) {
-      dispatch(fetchProductIncubations())
-    }
-  }, [dispatch, tableFilters, isInitialized])
+  // Frontend Filtering Logic
+  const filteredIncubations = useMemo(() => {
+    if (!Array.isArray(incubations)) return []
+
+    return incubations.filter((inc: any) => {
+      // 1. Search filter (Global search)
+      if (tableFilters.search) {
+        const searchLower = tableFilters.search.toLowerCase()
+        const tag = String(inc.tag || "").toLowerCase()
+        const batchNum = String(inc.batch?.batch_number || "").toLowerCase()
+        const productDesc = String(inc.product_description || "").toLowerCase()
+
+        if (!tag.includes(searchLower) && !batchNum.includes(searchLower) && !productDesc.includes(searchLower)) return false
+      }
+
+      // 2. Specific filter fields
+      if (tableFilters.created_at) {
+        const filterDate = new Date(tableFilters.created_at)
+        const incDate = new Date(inc.created_at)
+        if (filterDate.toDateString() !== incDate.toDateString()) return false
+      }
+
+      if (tableFilters.bn) {
+        const bnLower = tableFilters.bn.toLowerCase()
+        if (!String(inc.batch?.batch_number || "").toLowerCase().includes(bnLower)) return false
+      }
+
+      if (tableFilters.product_description) {
+        const descLower = tableFilters.product_description.toLowerCase()
+        if (!String(inc.product_description || "").toLowerCase().includes(descLower)) return false
+      }
+
+      // 3. Date Range filter
+      if (tableFilters.dateRange) {
+        const incDate = new Date(inc.created_at)
+        if (tableFilters.dateRange.from) {
+          const from = new Date(tableFilters.dateRange.from)
+          from.setHours(0, 0, 0, 0)
+          if (incDate < from) return false
+        }
+        if (tableFilters.dateRange.to) {
+          const to = new Date(tableFilters.dateRange.to)
+          to.setHours(23, 59, 59, 999)
+          if (incDate > to) return false
+        }
+      }
+
+      return true
+    })
+  }, [incubations, tableFilters])
 
   // Handle errors with toast notifications
   useEffect(() => {
@@ -190,7 +234,7 @@ export default function ProductIncubationPage({ params }: ProductIncubationPageP
 
               {/* show tag/id copy control in each row */}
               <div className="mt-2">
-                <FormIdCopy displayId={incubation.tag} actualId={incubation.id} size="sm" />
+                <FormIdCopy displayId={incubation.tag!} actualId={incubation.id!} size="sm" />
               </div>
             </div>
           </div>
@@ -264,7 +308,7 @@ export default function ProductIncubationPage({ params }: ProductIncubationPageP
         const scientistUser = batch?.scientist_id ? users.find((u: any) => u.id === batch.scientist_id) : null
         return (
           <div className="space-y-2">
-            
+
             {approverUser ? (
               <div className="flex items-center space-x-2">
                 <UserAvatar user={approverUser} size="sm" showName={true} showEmail={false} showDropdown={true} />
@@ -305,7 +349,6 @@ export default function ProductIncubationPage({ params }: ProductIncubationPageP
         return (
           <div className="flex space-x-2">
             <LoadingButton
-              
               size="sm"
               onClick={() => handleViewIncubation(incubation)}
               className="bg-[#006BC4] text-white rounded-full"
@@ -313,7 +356,6 @@ export default function ProductIncubationPage({ params }: ProductIncubationPageP
               <Eye className="w-4 h-4" />
             </LoadingButton>
             <LoadingButton
-              
               size="sm"
               onClick={() => handleEditIncubation(incubation)}
               className="bg-[#A0CF06] text-[#211D1E] rounded-full"
@@ -381,10 +423,9 @@ export default function ProductIncubationPage({ params }: ProductIncubationPageP
                     <Beaker className="h-4 w-4 text-gray-600" />
                   </div>
                   <span>Current Incubation Process</span>
-                  <Badge className=" text-white font-light">Latest</Badge>
+                  <Badge className="bg-blue-100 text-blue-800 font-light">Latest</Badge>
                 </div>
                 <LoadingButton
-                  
                   onClick={() => handleViewIncubation(latestIncubation)}
                   className="bg-[#006BC4] text-white rounded-full px-4 py-2 font-light text-sm"
                 >
@@ -402,7 +443,7 @@ export default function ProductIncubationPage({ params }: ProductIncubationPageP
                   </div>
                   <div className="text-lg font-light text-blue-600">
                     {latestIncubation?.tag ? (
-                      <FormIdCopy displayId={latestIncubation.tag} actualId={latestIncubation.id} size="sm" />
+                      <FormIdCopy displayId={latestIncubation.tag!} actualId={latestIncubation.id!} size="sm" />
                     ) : latestIncubation?.production_plan_id ? (
                       <span>{`Plan ${latestIncubation.production_plan_id.slice(0, 8)}`}</span>
                     ) : (
@@ -460,7 +501,7 @@ export default function ProductIncubationPage({ params }: ProductIncubationPageP
               {loading ? (
                 <ContentSkeleton sections={1} cardsPerSection={4} />
               ) : (
-                <DataTable columns={columns} data={incubations} showSearch={false} />
+                <DataTable columns={columns} data={filteredIncubations} showSearch={false} />
               )}
             </div>
           </div>

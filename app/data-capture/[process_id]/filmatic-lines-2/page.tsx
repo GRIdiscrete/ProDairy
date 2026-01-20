@@ -50,12 +50,57 @@ export default function FilmaticLines2Page() {
     }
   }, [dispatch, isInitialized])
 
-  // Handle filter changes
-  useEffect(() => {
-    if (isInitialized && Object.keys(tableFilters).length > 0) {
-      dispatch(fetchFilmaticLinesForm2s())
-    }
-  }, [dispatch, tableFilters, isInitialized])
+  // Frontend Filtering Logic
+  const filteredForms = useMemo(() => {
+    if (!forms) return []
+
+    return forms.filter((form: FilmaticLinesForm2) => {
+      // 1. Search filter (Global search)
+      if (tableFilters.search) {
+        const searchLower = tableFilters.search.toLowerCase()
+        const tag = String(form.tag || "").toLowerCase()
+        const date = form.date ? new Date(form.date).toLocaleDateString().toLowerCase() : ""
+
+        if (!tag.includes(searchLower) && !date.includes(searchLower)) return false
+      }
+
+      // 2. Specific filter fields
+      if (tableFilters.created_at) {
+        const filterDate = new Date(tableFilters.created_at)
+        const formDate = new Date(form.date || form.created_at!)
+        if (filterDate.toDateString() !== formDate.toDateString()) return false
+      }
+
+      if (tableFilters.holding_tank_bmt) {
+        // Holding tank BMT is complex to filter on client side if not in main object,
+        // but let's assume it's a searchable string if provided.
+        // If it's intended to filter by the BMT form tag, we'd need a map or joined data.
+        // For now, simpler filtering.
+      }
+
+      if (tableFilters.approved !== undefined) {
+        const isApproved = tableFilters.approved === "true"
+        if (form.approved !== isApproved) return false
+      }
+
+      // 3. Date Range filter
+      if (tableFilters.dateRange) {
+        const formDate = new Date(form.date || form.created_at!)
+        if (tableFilters.dateRange.from) {
+          const from = new Date(tableFilters.dateRange.from)
+          from.setHours(0, 0, 0, 0)
+          if (formDate < from) return false
+        }
+        if (tableFilters.dateRange.to) {
+          const to = new Date(tableFilters.dateRange.to)
+          to.setHours(23, 59, 59, 999)
+          if (formDate > to) return false
+        }
+      }
+
+      return true
+    })
+  }, [forms, tableFilters])
 
   // Handle errors with toast notifications
   useEffect(() => {
@@ -182,7 +227,7 @@ export default function FilmaticLines2Page() {
             <div>
               <div className="flex items-center space-x-2">
                 <FormIdCopy
-                  displayId={form.tag}
+                  displayId={form.tag!}
                   actualId={form.id}
                   size="sm"
                 />
@@ -311,7 +356,7 @@ export default function FilmaticLines2Page() {
         return (
           <div className="flex space-x-2">
             <LoadingButton
-              
+
               size="sm"
               onClick={() => handleViewForm(form)}
               className="bg-[#006BC4] text-white rounded-full"
@@ -319,7 +364,7 @@ export default function FilmaticLines2Page() {
               <Eye className="w-4 h-4" />
             </LoadingButton>
             <LoadingButton
-              
+
               size="sm"
               onClick={() => handleEditForm(form)}
               className="bg-[#A0CF06] text-[#211D1E] rounded-full"
@@ -396,12 +441,11 @@ export default function FilmaticLines2Page() {
                     <Factory className="h-4 w-4 text-gray-600" />
                   </div>
                   <span>Current Filmatic Lines Form 2</span>
-                  <Badge className=" from-blue-100 to-cyan-100 text-white font-light">Latest</Badge>
+                  <Badge className="bg-blue-100 text-blue-800 font-light">Latest</Badge>
                 </div>
                 <LoadingButton
-                  
                   onClick={() => handleViewForm(latestForm)}
-                  className=" from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full px-4 py-2 font-light text-sm"
+                  className="bg-[#006BC4] text-white rounded-full px-4 py-2 font-light text-sm"
                 >
                   <Eye className="mr-2 h-4 w-4" />
                   View Details
@@ -416,14 +460,7 @@ export default function FilmaticLines2Page() {
                     <p className="text-sm font-light text-gray-600">Form</p>
                   </div>
                   <div className="flex items-center space-x-2">
-                    {latestForm?.tag && latestForm.id ? (
-                      <FormIdCopy displayId={latestForm.tag} actualId={latestForm.id} size="sm" />
-                    ) : (
-                      <>
-                        <p className="text-lg font-light">#{latestForm.id?.slice(0, 8) || 'N/A'}</p>
-                        {latestForm.id && <CopyButton text={latestForm.id} />}
-                      </>
-                    )}
+                    <FormIdCopy displayId={latestForm.tag!} actualId={latestForm.id!} size="sm" />
                   </div>
                 </div>
 
@@ -472,7 +509,7 @@ export default function FilmaticLines2Page() {
               {/* Process Flow Information */}
               <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {/* Production Summary */}
-                <div className="p-4  from-blue-50 to-cyan-50 rounded-lg">
+                <div className="p-4 bg-blue-50 rounded-lg">
                   <div className="flex items-center space-x-2 mb-3">
                     <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
                       <Package className="h-4 w-4 text-blue-600" />
@@ -554,7 +591,7 @@ export default function FilmaticLines2Page() {
               {loading.fetch ? (
                 <ContentSkeleton sections={1} cardsPerSection={4} />
               ) : (
-                <DataTable columns={columns} data={forms} showSearch={false} />
+                <DataTable columns={columns} data={filteredForms} showSearch={false} />
               )}
             </div>
           </div>

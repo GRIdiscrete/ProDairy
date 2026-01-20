@@ -46,15 +46,41 @@ export default function AdminUsersPage() {
   // Filter state
   const [tableFilters, setTableFilters] = useState<TableFilters>({})
 
-  // Map UserEntity to User type
-  const mappedUsers = useMemo(() => {
-    return userEntities.map(user => ({
-      ...user,
-      role: user.users_role_id_fkey?.role_name || roleNameById.get(user.role_id) || 'Unknown Role',
-      created_at: user.created_at || new Date().toISOString(),
-      updated_at: user.updated_at || user.created_at || new Date().toISOString()
-    } as UserType))
-  }, [userEntities, roleNameById])
+  // Map UserEntity to User type and filter client-side
+  const filteredUsers = useMemo(() => {
+    return userEntities
+      .map(user => ({
+        ...user,
+        role: user.users_role_id_fkey?.role_name || roleNameById.get(user.role_id) || 'Unknown Role',
+        created_at: user.created_at || new Date().toISOString(),
+        updated_at: user.updated_at || user.created_at || new Date().toISOString()
+      } as UserType))
+      .filter(user => {
+        // Search filter (name or email)
+        if (tableFilters.search) {
+          const search = tableFilters.search.toLowerCase()
+          const firstName = (user.first_name || "").toLowerCase()
+          const lastName = (user.last_name || "").toLowerCase()
+          const email = (user.email || "").toLowerCase()
+          if (!firstName.includes(search) && !lastName.includes(search) && !email.includes(search)) {
+            return false
+          }
+        }
+        // Email filter
+        if (tableFilters.email && !user.email?.toLowerCase().includes(tableFilters.email.toLowerCase())) {
+          return false
+        }
+        // Department filter
+        if (tableFilters.department && user.department !== tableFilters.department) {
+          return false
+        }
+        // Role filter
+        if (tableFilters.role_id && user.role_id !== tableFilters.role_id) {
+          return false
+        }
+        return true
+      })
+  }, [userEntities, roleNameById, tableFilters])
 
   // Load roles only once on mount
   useEffect(() => {
@@ -65,11 +91,11 @@ export default function AdminUsersPage() {
 
   // Load users only when needed
   useEffect(() => {
-    // Only fetch users if not already fetched or if filters have changed
-    if (!usersInitialized || Object.keys(tableFilters).length > 0) {
-      dispatch(fetchUsers({ filters: tableFilters }))
+    // Only fetch users once on initialization
+    if (!usersInitialized) {
+      dispatch(fetchUsers({}))
     }
-  }, [dispatch, tableFilters, usersInitialized])
+  }, [dispatch, usersInitialized])
 
   // Handle errors with toast notifications
   useEffect(() => {
@@ -309,7 +335,7 @@ export default function AdminUsersPage() {
               ) : (
                 <DataTable
                   columns={columns}
-                  data={mappedUsers}
+                  data={filteredUsers}
                   showSearch={false}
                 />
               )}

@@ -19,6 +19,7 @@ export interface BMTControlForm {
   dpp_signature: string
   product: string
   updated_at?: string
+  tag?: string
   // Relationship data
   bmt_control_form_source_silo_id_fkey?: {
     id: string
@@ -364,6 +365,7 @@ export interface ISTControlForm {
   from_warehouse: string
   to_warehouse: string
   updated_at?: string
+  tag?: string
   // Relationship data
   ist_control_form_issued_by_fkey?: {
     id: string
@@ -426,6 +428,7 @@ export interface PalletiserSheet {
   batch_number: number
   product_type: string
   approved_by: string
+  tag?: string
   // Details array (new payload shape)
   palletiser_sheet_details?: PalletiserSheetDetails[]
   // Relationship data
@@ -510,6 +513,7 @@ export interface SterilisedMilkProcess {
   supervisor_signature: string
   details?: string | null
   filmatic_form_id?: string
+  tag?: string
   // Relationship data
   sterilised_milk_process_details_fkey?: SterilisedMilkProcessDetails
   sterilised_milk_process_approved_by_fkey?: {
@@ -1432,7 +1436,7 @@ export const getQACorrectiveActions = async () => {
 }
 
 export const createQACorrectiveAction = async (payload: Partial<QACorrectiveAction>) => {
-  const res = await apiRequest<{ statusCode:number; message:string; data: QACorrectiveAction }>(`/qa-corrective-action`, {
+  const res = await apiRequest<{ statusCode: number; message: string; data: QACorrectiveAction }>(`/qa-corrective-action`, {
     method: "POST",
     body: JSON.stringify(payload)
   })
@@ -1440,7 +1444,7 @@ export const createQACorrectiveAction = async (payload: Partial<QACorrectiveActi
 }
 
 export const updateQACorrectiveAction = async (payload: Partial<QACorrectiveAction>) => {
-  const res = await apiRequest<{ statusCode:number; message:string; data: QACorrectiveAction }>(`/qa-corrective-action`, {
+  const res = await apiRequest<{ statusCode: number; message: string; data: QACorrectiveAction }>(`/qa-corrective-action`, {
     method: "PATCH",
     body: JSON.stringify(payload)
   })
@@ -1448,7 +1452,7 @@ export const updateQACorrectiveAction = async (payload: Partial<QACorrectiveActi
 }
 
 export const deleteQACorrectiveAction = async (id: string) => {
-  const res = await apiRequest<{ statusCode:number; message:string; data: null }>(`/qa-corrective-action/${id}`, {
+  const res = await apiRequest<{ statusCode: number; message: string; data: null }>(`/qa-corrective-action/${id}`, {
     method: "DELETE"
   })
   return res.data

@@ -10,8 +10,8 @@ import { QaRejectNoteDrawer } from "@/components/forms/qa-reject-note-drawer"
 import { QaRejectNoteViewDrawer } from "@/components/forms/qa-reject-note-view-drawer"
 import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-dialog"
 import { DataTable } from "@/components/ui/data-table"
-import { useAppDispatch, useAppSelector } from "@/lib/store"
-import { RootState } from "@/lib/store"
+import { DataTableFilters } from "@/components/ui/data-table-filters"
+import { useAppDispatch, useAppSelector, RootState } from "@/lib/store"
 import { fetchQaReleaseNotes, deleteQaReleaseNoteAction, clearError as clearReleaseError } from "@/lib/store/slices/qaReleaseNoteSlice"
 import { fetchQaRejectNotes, deleteQaRejectNoteAction, clearError as clearRejectError } from "@/lib/store/slices/qaRejectNoteSlice"
 import { fetchUsers } from "@/lib/store/slices/usersSlice"
@@ -44,6 +44,119 @@ export default function DispatchPage({ params }: Props) {
         }
     }, [dispatch, releaseInit, rejectInit])
 
+    // roles map for display (robust: pick common name properties)
+    const [rolesMap, setRolesMap] = useState<Record<string, string>>({})
+    const [rolesList, setRolesList] = useState<any[]>([])
+    useEffect(() => {
+        let mounted = true
+            ; (async () => {
+                try {
+                    const res = await rolesApi.getRoles()
+                    if (!mounted) return
+                    const list = res.data || []
+                    const m: Record<string, string> = {}
+                    list.forEach((r: any) => {
+                        // prefer common name-like fields
+                        const name = r.role_name || r.name || r.display_name || r.title || r.label || ""
+                        m[r.id] = name || r.id
+                    })
+                    setRolesList(list)
+                    setRolesMap(m)
+                } catch {
+                    // ignore
+                }
+            })()
+        return () => { mounted = false }
+    }, [])
+
+    // helper: resolve role name with fallbacks
+    const getRoleName = (id?: string | null) => {
+        if (!id) return "N/A"
+        if (rolesMap[id]) return rolesMap[id]
+        const r = rolesList.find((x: any) => x.id === id)
+        if (r) return r.role_name || r.name || r.display_name || id
+        // fallback: truncate id for readability
+        return typeof id === "string" && id.length > 8 ? `${id.slice(0, 8)}...` : id
+    }
+
+    // Filter fields configuration
+    const filterFields = useMemo(() => [
+        {
+            key: "created_at",
+            label: "Date",
+            type: "date" as const,
+            placeholder: "Filter by date"
+        },
+        {
+            key: "approved_by",
+            label: "Approver",
+            type: "text" as const,
+            placeholder: "Filter by approver"
+        },
+        {
+            key: "status",
+            label: "Status",
+            type: "text" as const,
+            placeholder: "Filter by status"
+        }
+    ], [])
+
+    // Frontend Filtering Logic
+    const filteredNotes = useMemo(() => {
+        const notes = activeTab === "release" ? (Array.isArray(releaseNotes) ? releaseNotes : []) : (Array.isArray(rejectNotes) ? rejectNotes : [])
+
+        return notes.filter((n: any) => {
+            // 1. Search filter (Global search)
+            if (tableFilters.search) {
+                const searchLower = tableFilters.search.toLowerCase()
+                const tag = String(n.tag || "").toLowerCase()
+                const approver = getRoleName(n.approved_by).toLowerCase()
+                const details = activeTab === "release"
+                    ? String(n.qa_release_note_details?.[0]?.status || "").toLowerCase()
+                    : String(n.qa_reject_note_details?.[0]?.status || "").toLowerCase()
+
+                if (!tag.includes(searchLower) && !approver.includes(searchLower) && !details.includes(searchLower)) return false
+            }
+
+            // 2. Specific filter fields
+            if (tableFilters.created_at) {
+                const filterDate = new Date(tableFilters.created_at)
+                const noteDate = new Date(n.created_at)
+                if (filterDate.toDateString() !== noteDate.toDateString()) return false
+            }
+
+            if (tableFilters.approved_by) {
+                const approverLower = tableFilters.approved_by.toLowerCase()
+                if (!getRoleName(n.approved_by).toLowerCase().includes(approverLower)) return false
+            }
+
+            if (tableFilters.status) {
+                const statusLower = tableFilters.status.toLowerCase()
+                const status = activeTab === "release"
+                    ? (n.qa_release_note_details?.[0]?.status || "").toLowerCase()
+                    : (n.qa_reject_note_details?.[0]?.status || "").toLowerCase()
+                if (!status.includes(statusLower)) return false
+            }
+
+            // 3. Date Range filter
+            if (tableFilters.dateRange) {
+                const noteDate = new Date(n.created_at)
+                if (tableFilters.dateRange.from) {
+                    const from = new Date(tableFilters.dateRange.from)
+                    from.setHours(0, 0, 0, 0)
+                    if (noteDate < from) return false
+                }
+                if (tableFilters.dateRange.to) {
+                    const to = new Date(tableFilters.dateRange.to)
+                    to.setHours(23, 59, 59, 999)
+                    if (noteDate > to) return false
+                }
+            }
+
+            return true
+        })
+    }, [activeTab, releaseNotes, rejectNotes, tableFilters, rolesMap, rolesList])
+
     useEffect(() => {
         if (releaseError) { toast.error(String(releaseError)); dispatch(clearReleaseError()) }
         if (rejectError) { toast.error(String(rejectError)); dispatch(clearRejectError()) }
@@ -73,41 +186,6 @@ export default function DispatchPage({ params }: Props) {
         } catch (err: any) {
             toast.error(err?.message || String(err) || "Failed to delete")
         }
-    }
-
-    // roles map for display (robust: pick common name properties)
-    const [rolesMap, setRolesMap] = useState<Record<string, string>>({})
-    const [rolesList, setRolesList] = useState<any[]>([])
-    useEffect(() => {
-        let mounted = true
-        ;(async () => {
-            try {
-                const res = await rolesApi.getRoles()
-                if (!mounted) return
-                const list = res.data || []
-                const m: Record<string, string> = {}
-                list.forEach((r: any) => {
-                    // prefer common name-like fields
-                    const name = r.role_name || r.name || r.display_name || r.title || r.label || ""
-                    m[r.id] = name || r.id
-                })
-                setRolesList(list)
-                setRolesMap(m)
-            } catch {
-                // ignore
-            }
-        })()
-        return () => { mounted = false }
-    }, [])
-
-    // helper: resolve role name with fallbacks
-    const getRoleName = (id?: string | null) => {
-        if (!id) return "N/A"
-        if (rolesMap[id]) return rolesMap[id]
-        const r = rolesList.find((x: any) => x.id === id)
-        if (r) return r.role_name || r.name || r.display_name || id
-        // fallback: truncate id for readability
-        return typeof id === "string" && id.length > 8 ? `${id.slice(0,8)}...` : id
     }
 
     // helper: show product name or shorten GUID-like product id
@@ -140,7 +218,7 @@ export default function DispatchPage({ params }: Props) {
                         <div>
                             <div className="flex items-center space-x-2">
                                 <span className="text-xs text-gray-500">Tag</span>
-                                <FormIdCopy displayId={n.tag} actualId={n.id} size="sm" />
+                                <FormIdCopy displayId={n.tag!} actualId={n.id} size="sm" />
                             </div>
                         </div>
                     </div>
@@ -190,9 +268,9 @@ export default function DispatchPage({ params }: Props) {
                 const n = row.original
                 return (
                     <div className="flex space-x-2">
-                        <LoadingButton  size="sm" onClick={() => handleView(n)} className="bg-[#006BC4] text-white rounded-full"><Eye className="w-4 h-4" /></LoadingButton>
-                        <LoadingButton  size="sm" onClick={() => handleEdit(n)} className="bg-[#A0CF06] text-[#211D1E] rounded-full"><Edit className="w-4 h-4" /></LoadingButton>
-                        <LoadingButton className=" text-white rounded-full" variant="destructive" size="sm" onClick={() => handleDelete(n)} loading={operationLoading?.delete}><Trash2 className="w-4 h-4" /></LoadingButton>
+                        <LoadingButton size="sm" onClick={() => handleView(n)} className="bg-[#006BC4] text-white rounded-full"><Eye className="w-4 h-4" /></LoadingButton>
+                        <LoadingButton size="sm" onClick={() => handleEdit(n)} className="bg-[#A0CF06] text-[#211D1E] rounded-full"><Edit className="w-4 h-4" /></LoadingButton>
+                        <LoadingButton className="rounded-full" variant="destructive" size="sm" onClick={() => handleDelete(n)} loading={operationLoading?.delete}><Trash2 className="w-4 h-4" /></LoadingButton>
                     </div>
                 )
             }
@@ -213,7 +291,7 @@ export default function DispatchPage({ params }: Props) {
                         <div>
                             <div className="flex items-center space-x-2">
                                 <span className="text-xs text-gray-500">Tag</span>
-                                <FormIdCopy displayId={n.tag} actualId={n.id} size="sm" />
+                                <FormIdCopy displayId={n.tag!} actualId={n.id} size="sm" />
                             </div>
                         </div>
                     </div>
@@ -262,9 +340,9 @@ export default function DispatchPage({ params }: Props) {
                 const n = row.original
                 return (
                     <div className="flex space-x-2">
-                        <LoadingButton  size="sm" onClick={() => handleView(n)} className="bg-[#006BC4] text-white rounded-full"><Eye className="w-4 h-4" /></LoadingButton>
-                        <LoadingButton  size="sm" onClick={() => handleEdit(n)} className="bg-[#A0CF06] text-[#211D1E] rounded-full"><Edit className="w-4 h-4" /></LoadingButton>
-                        <LoadingButton className=" text-white rounded-full" variant="destructive" size="sm" onClick={() => handleDelete(n)} loading={operationLoading?.delete}><Trash2 className="w-4 h-4" /></LoadingButton>
+                        <LoadingButton size="sm" onClick={() => handleView(n)} className="bg-[#006BC4] text-white rounded-full"><Eye className="w-4 h-4" /></LoadingButton>
+                        <LoadingButton size="sm" onClick={() => handleEdit(n)} className="bg-[#A0CF06] text-[#211D1E] rounded-full"><Edit className="w-4 h-4" /></LoadingButton>
+                        <LoadingButton className="rounded-full" variant="destructive" size="sm" onClick={() => handleDelete(n)} loading={operationLoading?.delete}><Trash2 className="w-4 h-4" /></LoadingButton>
                     </div>
                 )
             }
@@ -308,7 +386,7 @@ export default function DispatchPage({ params }: Props) {
                         <h1 className="text-3xl font-light">Dispatch — QA Notes</h1>
                         <p className="text-sm font-light text-muted-foreground">Switch between Release and Reject notes</p>
                     </div>
-                    <LoadingButton onClick={handleAdd} className=" text-white rounded-full px-6">
+                    <LoadingButton onClick={handleAdd} className="bg-[#006BC4] text-white rounded-full px-6">
                         <Plus className="mr-2 h-4 w-4" /> Add {activeTab === "release" ? "Release Note" : "Reject Note"}
                     </LoadingButton>
                 </div>
@@ -343,7 +421,7 @@ export default function DispatchPage({ params }: Props) {
                 </div>
 
                 {loading ? <ContentSkeleton sections={1} cardsPerSection={4} /> : latest ? (
-                    <div className="border border-gray-200 rounded-lg bg-white border-l-4 border-l-purple-500">
+                    <div className="border border-gray-200 rounded-lg bg-white border-l-4 border-l-[#006BC4]">
                         <div className="p-6 pb-0">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center space-x-2 text-lg font-light">
@@ -352,7 +430,7 @@ export default function DispatchPage({ params }: Props) {
                                     </div>
                                     <span>Latest {activeTab === "release" ? "Release" : "Reject"} Note</span>
                                 </div>
-                                <LoadingButton  onClick={() => handleView(latest)} className="bg-[#006BC4] text-white rounded-full px-4 py-2 text-sm">
+                                <LoadingButton onClick={() => handleView(latest)} className="bg-[#006BC4] text-white rounded-full px-4 py-2 text-sm">
                                     <Eye className="mr-2 h-4 w-4" /> View Details
                                 </LoadingButton>
                             </div>
@@ -361,7 +439,7 @@ export default function DispatchPage({ params }: Props) {
                             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                                 <div>
                                     <p className="text-xs font-light text-gray-500">Tag</p>
-                                    <div className="text-lg font-light text-blue-600"><FormIdCopy displayId={latest.tag} actualId={latest.id} size="sm" /></div>
+                                    <div className="text-lg font-light text-blue-600"><FormIdCopy displayId={latest.tag!} actualId={latest.id} size="sm" /></div>
                                 </div>
                                 <div>
                                     <p className="text-xs font-light text-gray-500">Approver</p>
@@ -389,8 +467,15 @@ export default function DispatchPage({ params }: Props) {
                     <div className="p-6">
                         <div className="text-lg font-light">{activeTab === "release" ? "QA Release Notes" : "QA Reject Notes"}</div>
                     </div>
-                    <div className="p-6">
-                        <DataTable columns={activeTab === "release" ? releaseColumns : rejectColumns} data={effectiveNotes || []} showSearch={false} />
+                    <div className="p-6 space-y-4">
+                        <DataTableFilters
+                            filters={tableFilters}
+                            onFiltersChange={setTableFilters}
+                            onSearch={(s) => setTableFilters((p: any) => ({ ...p, search: s }))}
+                            searchPlaceholder="Search QA notes..."
+                            filterFields={filterFields}
+                        />
+                        <DataTable columns={activeTab === "release" ? releaseColumns : rejectColumns} data={filteredNotes} showSearch={false} />
                     </div>
                 </div>
 

@@ -47,6 +47,8 @@ export interface CreateRawMilkIntakeFormRequest {
   date: string
   quantity_received: number
   destination_silo_name: string
+  destination_silo_id?: string
+  drivers_form_id?: string
   status: string
   tag: string
   updated_at?: string

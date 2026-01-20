@@ -138,7 +138,7 @@ export function CollectionVoucherViewDrawer({
                                     <SheetDescription className="text-sm font-light">
                                         <FormIdCopy
                                             displayId={collectionVoucher.tag || "N/A"}
-                                            actualId={collectionVoucher.id}
+                                            actualId={collectionVoucher.tag || collectionVoucher.id || ""}
                                             size="sm"
                                         />
                                     </SheetDescription>

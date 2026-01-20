@@ -82,13 +82,6 @@ export default function RawMilkIntakePage() {
     }
   }, [dispatch])
 
-  // Handle filter changes
-  useEffect(() => {
-    if (Object.keys(tableFilters).length > 0) {
-      dispatch(fetchRawMilkIntakeForms())
-    }
-  }, [dispatch, tableFilters])
-
   // Drawer states
   const [formDrawerOpen, setFormDrawerOpen] = useState(false)
   const [viewDrawerOpen, setViewDrawerOpen] = useState(false)
@@ -97,6 +90,67 @@ export default function RawMilkIntakePage() {
   // Selected form and mode
   const [selectedForm, setSelectedForm] = useState<RawMilkIntakeForm | null>(null)
   const [formMode, setFormMode] = useState<"create" | "edit">("create")
+
+  // Frontend Filtering Logic
+  const filteredForms = useMemo(() => {
+    if (!rawMilkIntakeForms) return []
+
+    return rawMilkIntakeForms.filter((form: RawMilkIntakeForm) => {
+      // 1. Search filter (Global search)
+      if (tableFilters.search) {
+        const searchLower = tableFilters.search.toLowerCase()
+        const tag = (form.tag || "").toLowerCase()
+        const siloName = (form.destination_silo_name || "").toLowerCase()
+        const voucher = getCollectionVoucherById(form.collection_voucher_id)
+        const voucherTag = (voucher?.tag || "").toLowerCase()
+
+        if (!tag.includes(searchLower) &&
+          !siloName.includes(searchLower) &&
+          !voucherTag.includes(searchLower)) return false
+      }
+
+      // 2. Specific filter fields
+      if (tableFilters.date) {
+        const filterDate = new Date(tableFilters.date)
+        const formDate = new Date(form.date)
+        if (filterDate.toDateString() !== formDate.toDateString()) return false
+      }
+
+      if (tableFilters.destination_silo_name) {
+        const siloLower = tableFilters.destination_silo_name.toLowerCase()
+        if (!(form.destination_silo_name || "").toLowerCase().includes(siloLower)) return false
+      }
+
+      if (tableFilters.collection_voucher_id) {
+        const voucherLower = tableFilters.collection_voucher_id.toLowerCase()
+        const voucher = getCollectionVoucherById(form.collection_voucher_id)
+        const voucherTag = (voucher?.tag || "").toLowerCase()
+        if (!voucherTag.includes(voucherLower)) return false
+      }
+
+      if (tableFilters.tag) {
+        const tagLower = tableFilters.tag.toLowerCase()
+        if (!(form.tag || "").toLowerCase().includes(tagLower)) return false
+      }
+
+      // 3. Date Range filter
+      if (tableFilters.dateRange) {
+        const formDate = new Date(form.date)
+        if (tableFilters.dateRange.from) {
+          const from = new Date(tableFilters.dateRange.from)
+          from.setHours(0, 0, 0, 0)
+          if (formDate < from) return false
+        }
+        if (tableFilters.dateRange.to) {
+          const to = new Date(tableFilters.dateRange.to)
+          to.setHours(23, 59, 59, 999)
+          if (formDate > to) return false
+        }
+      }
+
+      return true
+    })
+  }, [rawMilkIntakeForms, tableFilters, collectionVouchers, silos])
 
   // Filter fields configuration for Raw Milk Intake
   const filterFields = useMemo(() => [
@@ -395,7 +449,7 @@ export default function RawMilkIntakePage() {
           </div>
           <LoadingButton
             onClick={handleAddForm}
-            className="px-6 py-2 font-light"
+            className="bg-[#006BC4] text-white px-6 py-2 rounded-full"
           >
             <Plus className="mr-2 h-4 w-4" />
             Add Intake Form
@@ -417,9 +471,8 @@ export default function RawMilkIntakePage() {
                   <Badge className=" from-blue-100 to-cyan-100 text-white font-light">Latest</Badge>
                 </div>
                 <LoadingButton
-
                   onClick={() => handleViewForm(latestForm)}
-                  className=" from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full px-4 py-2 font-light text-sm"
+                  className="bg-[#006BC4] text-white rounded-full px-4 py-2 text-sm"
                 >
                   <Eye className="mr-2 h-4 w-4" />
                   View Details
@@ -607,7 +660,8 @@ export default function RawMilkIntakePage() {
               ) : (
                 <DataTable
                   columns={columns}
-                  data={rawMilkIntakeForms}
+                  showSearch={false}
+                  data={filteredForms}
                 />
               )}
             </div>

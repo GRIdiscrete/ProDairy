@@ -34,6 +34,7 @@ export interface PasteurizingForm {
   fat: number
   production_?: string | null
   cream_index?: number | null
+  tag?: string
   steri_milk_pasteurizing_form_production: Production[]
   // Related data from API response (for backward compatibility)
   steri_milk_pasteurizing_form_operator_fkey?: any

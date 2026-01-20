@@ -51,7 +51,7 @@ export function DatePicker({
     if (!date) return
 
     let dateString = format(date, "yyyy-MM-dd")
-    
+
     // If time is enabled and we have a time value, append it
     if (showTime && timeValue) {
       dateString += `T${timeValue}`
@@ -67,7 +67,7 @@ export function DatePicker({
   // Handle time change
   const handleTimeChange = (time: string) => {
     setTimeValue(time)
-    
+
     if (currentDate && isValidDate) {
       const dateString = format(currentDate, "yyyy-MM-dd")
       onChange?.(`${dateString}T${time}`)
@@ -88,7 +88,7 @@ export function DatePicker({
   // Format display value
   const displayValue = React.useMemo(() => {
     if (!isValidDate) return ""
-    
+
     if (showTime) {
       return format(currentDate!, "MMM dd, yyyy 'at' HH:mm")
     }
@@ -102,14 +102,14 @@ export function DatePicker({
           {label}
         </Label>
       )}
-      
+
       <div className="space-y-3">
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger asChild>
             <Button
-              
+
               className={cn(
-                "w-full justify-start text-left font-normal h-12 bg-transparent hover:bg-transparent border border-gray-300 hover:border-gray-400 focus:border-[#006BC4] shadow-none hover:shadow-none focus:shadow-none text-gray-900",
+                "w-full justify-start text-left font-normal h-10 bg-transparent hover:bg-transparent border border-gray-200 hover:border-gray-300 focus:border-[#006BC4] rounded-full shadow-none hover:shadow-none focus:shadow-none text-gray-900 px-4",
                 !isValidDate && "text-muted-foreground",
                 error && "border-red-500 focus:border-red-500",
                 disabled && "opacity-50 cursor-not-allowed"
@@ -145,7 +145,7 @@ export function DatePicker({
               type="time"
               value={timeValue}
               onChange={(e) => handleTimeChange(e.target.value)}
-              className="w-full bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
+              className="w-full bg-background rounded-full border-gray-200 appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none h-10 px-4"
               disabled={disabled}
             />
           </div>
@@ -176,9 +176,9 @@ export function TimePicker({
   error = false,
 }: TimePickerProps) {
   // Extract time from datetime string for display
-  const displayTime = value ? 
-    (value.includes('T') ? value.split('T')[1]?.substring(0, 5) : 
-     value.includes(' ') ? value.split(' ')[1]?.substring(0, 5) : value) : ""
+  const displayTime = value ?
+    (value.includes('T') ? value.split('T')[1]?.substring(0, 5) :
+      value.includes(' ') ? value.split(' ')[1]?.substring(0, 5) : value) : ""
 
   const handleTimeChange = (timeValue: string) => {
     if (timeValue && onChange) {
@@ -196,7 +196,7 @@ export function TimePicker({
           {label}
         </Label>
       )}
-      
+
       <div className="flex items-center space-x-2">
         <Clock className="h-4 w-4 text-muted-foreground" />
         <Input
@@ -206,6 +206,7 @@ export function TimePicker({
           placeholder={placeholder}
           disabled={disabled}
           className={cn(
+            "rounded-full border-gray-200 h-10 px-4",
             error && "border-red-500 focus:border-red-500"
           )}
         />

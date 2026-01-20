@@ -24,13 +24,13 @@ export default function SuppliersPage() {
   const [tableFilters, setTableFilters] = useState<TableFilters>({})
   const hasFetchedRef = useRef(false)
 
-  // Load suppliers on component mount and when filters change
+  // Load suppliers once on mount
   useEffect(() => {
     if (!hasFetchedRef.current) {
       hasFetchedRef.current = true
+      dispatch(fetchSuppliers({}))
     }
-    dispatch(fetchSuppliers({ filters: tableFilters }))
-  }, [dispatch, tableFilters])
+  }, [dispatch])
 
   // Handle errors with toast notifications
   useEffect(() => {
@@ -76,6 +76,30 @@ export default function SuppliersPage() {
       placeholder: "Filter by phone number"
     }
   ], [])
+
+  // Client-side filtering
+  const filteredSuppliers = useMemo(() => {
+    return (suppliers || []).filter(supplier => {
+      // Search filter
+      if (tableFilters.search) {
+        const search = tableFilters.search.toLowerCase()
+        const firstName = (supplier.first_name || "").toLowerCase()
+        const lastName = (supplier.last_name || "").toLowerCase()
+        const email = (supplier.email || "").toLowerCase()
+        const phone = (supplier.phone_number || "").toLowerCase()
+        if (!firstName.includes(search) && !lastName.includes(search) && !email.includes(search) && !phone.includes(search)) return false
+      }
+      // First name filter
+      if (tableFilters.first_name && !supplier.first_name?.toLowerCase().includes(tableFilters.first_name.toLowerCase())) return false
+      // Last name filter
+      if (tableFilters.last_name && !supplier.last_name?.toLowerCase().includes(tableFilters.last_name.toLowerCase())) return false
+      // Email filter
+      if (tableFilters.email && !supplier.email?.toLowerCase().includes(tableFilters.email.toLowerCase())) return false
+      // Phone number filter
+      if (tableFilters.phone_number && !supplier.phone_number?.toLowerCase().includes(tableFilters.phone_number.toLowerCase())) return false
+      return true
+    })
+  }, [suppliers, tableFilters])
 
   // Action handlers
   const handleAddSupplier = () => {
@@ -374,7 +398,7 @@ export default function SuppliersPage() {
             ) : (
               <DataTable
                 columns={columns}
-                data={suppliers}
+                data={filteredSuppliers}
                 showSearch={false}
               />
             )}

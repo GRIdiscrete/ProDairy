@@ -51,12 +51,55 @@ export default function FilmaticLines1Page() {
     }
   }, [dispatch, isInitialized])
 
-  // Handle filter changes
-  useEffect(() => {
-    if (isInitialized && Object.keys(tableFilters).length > 0) {
-      dispatch(fetchFilmaticLinesForm1s())
-    }
-  }, [dispatch, tableFilters, isInitialized])
+  // Frontend Filtering Logic
+  const filteredForms = useMemo(() => {
+    if (!Array.isArray(forms)) return []
+
+    return forms.filter((form: any) => {
+      // 1. Search filter (Global search)
+      if (tableFilters.search) {
+        const searchLower = tableFilters.search.toLowerCase()
+        const tag = String(form.tag || "").toLowerCase()
+        const date = form.date ? new Date(form.date).toLocaleDateString().toLowerCase() : ""
+
+        if (!tag.includes(searchLower) && !date.includes(searchLower)) return false
+      }
+
+      // 2. Specific filter fields
+      if (tableFilters.created_at) {
+        const filterDate = new Date(tableFilters.created_at)
+        const formDate = new Date(form.date)
+        if (filterDate.toDateString() !== formDate.toDateString()) return false
+      }
+
+      if (tableFilters.holding_tank_bmt) {
+        const hTankLower = tableFilters.holding_tank_bmt.toLowerCase()
+        if (!String(form.holding_tank_bmt || "").toLowerCase().includes(hTankLower)) return false
+      }
+
+      if (tableFilters.approved) {
+        const isApproved = tableFilters.approved === "true"
+        if (form.approved !== isApproved) return false
+      }
+
+      // 3. Date Range filter
+      if (tableFilters.dateRange) {
+        const formDate = new Date(form.date)
+        if (tableFilters.dateRange.from) {
+          const from = new Date(tableFilters.dateRange.from)
+          from.setHours(0, 0, 0, 0)
+          if (formDate < from) return false
+        }
+        if (tableFilters.dateRange.to) {
+          const to = new Date(tableFilters.dateRange.to)
+          to.setHours(23, 59, 59, 999)
+          if (formDate > to) return false
+        }
+      }
+
+      return true
+    })
+  }, [forms, tableFilters])
 
   // Handle errors with toast notifications
   useEffect(() => {
@@ -159,8 +202,8 @@ export default function FilmaticLines1Page() {
             <div>
               <div className="flex items-center space-x-2">
                 <FormIdCopy
-                  displayId={form.tag}
-                  actualId={form.id}
+                  displayId={form.tag!}
+                  actualId={form.id!}
                   size="sm"
                 />
               </div>
@@ -288,7 +331,6 @@ export default function FilmaticLines1Page() {
         return (
           <div className="flex space-x-2">
             <LoadingButton
-              
               size="sm"
               onClick={() => handleViewForm(form)}
               className="bg-[#006BC4] text-white rounded-full"
@@ -296,7 +338,6 @@ export default function FilmaticLines1Page() {
               <Eye className="w-4 h-4" />
             </LoadingButton>
             <LoadingButton
-              
               size="sm"
               onClick={() => handleEditForm(form)}
               className="bg-[#A0CF06] text-[#211D1E] rounded-full"
@@ -364,19 +405,18 @@ export default function FilmaticLines1Page() {
                   </div>
                   <div className="flex items-center space-x-2">
                     <span>Current Filmatic Lines Form 1</span>
-                    <Badge className=" from-blue-100 to-cyan-100 text-white font-light">Latest</Badge>
+                    <Badge className="bg-blue-100 text-blue-800 font-light">Latest</Badge>
                     {/* show form tag as FormIdCopy */}
                     {latestForm?.tag && latestForm?.id && (
                       <div className="ml-2">
-                        <FormIdCopy displayId={latestForm.tag} actualId={latestForm.id} size="sm" />
+                        <FormIdCopy displayId={latestForm.tag!} actualId={latestForm.id!} size="sm" />
                       </div>
                     )}
                   </div>
                 </div>
                 <LoadingButton
-                  
                   onClick={() => handleViewForm(latestForm)}
-                  className=" from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full px-4 py-2 font-light text-sm"
+                  className="bg-[#006BC4] text-white rounded-full px-4 py-2 font-light text-sm"
                 >
                   <Eye className="mr-2 h-4 w-4" />
                   View Details
@@ -463,7 +503,7 @@ export default function FilmaticLines1Page() {
               {/* Process Flow Information */}
               <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {/* Production Summary */}
-                <div className="p-4  from-blue-50 to-cyan-50 rounded-lg">
+                <div className="p-4 bg-blue-50 rounded-lg">
                   <div className="flex items-center space-x-2 mb-3">
                     <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
                       <Package className="h-4 w-4 text-blue-600" />
@@ -571,7 +611,7 @@ export default function FilmaticLines1Page() {
               {loading.fetch ? (
                 <ContentSkeleton sections={1} cardsPerSection={4} />
               ) : (
-                <DataTable columns={columns} data={forms} showSearch={false} />
+                <DataTable columns={columns} data={filteredForms} showSearch={false} />
               )}
             </div>
           </div>

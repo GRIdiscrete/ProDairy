@@ -31,6 +31,7 @@ export interface StandardizingForm {
   raw_milk: RawMilk[]
   skim_milk: SkimMilk[]
   cream: Cream[]
+  tag?: string
   standardizing_form_operator_id_fkey?: any
   standardizing_form_bmt_id_fkey?: {
     id: string

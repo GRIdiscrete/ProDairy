@@ -11,6 +11,7 @@ export interface SterilisedMilkProcess {
   supervisor_signature: string
   details: string | null
   filmatic_form_id: string | null
+  tag?: string
   sterilised_milk_process_supervisor_id_fkey?: any
   sterilised_milk_process_operator_id_fkey?: any
   sterilised_milk_process_approved_by_fkey?: any
@@ -61,7 +62,7 @@ export interface SterilisedMilkProcessDetails {
   cooling_two_finish_reading: number
 }
 
-export interface CreateSterilisedMilkProcessDetailsRequest extends Omit<SterilisedMilkProcessDetails, "id" | "created_at" | "updated_at"> {}
+export interface CreateSterilisedMilkProcessDetailsRequest extends Omit<SterilisedMilkProcessDetails, "id" | "created_at" | "updated_at"> { }
 
 export interface SterilisedMilkProcessDetailsResponse {
   statusCode: number

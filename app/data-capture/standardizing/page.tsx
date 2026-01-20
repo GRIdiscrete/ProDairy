@@ -25,7 +25,7 @@ import { fetchUsers } from "@/lib/store/slices/usersSlice"
 import { fetchBMTControlForms } from "@/lib/store/slices/bmtControlFormSlice"
 import { toast } from "sonner"
 import { TableFilters } from "@/lib/types"
-import { StandardizingForm } from "@/lib/api/standardizing"
+import { StandardizingForm } from "@/lib/api/standardizing-form"
 import ContentSkeleton from "@/components/ui/content-skeleton"
 import { generateSkimmingFormId } from "@/lib/utils/form-id-generator"
 import { SkimmingFormDrawer } from "@/components/forms/skimming-form-drawer"
@@ -67,21 +67,6 @@ export default function StandardizingPage() {
     }
   }, [dispatch, isInitialized])
 
-  // Handle filter changes
-  useEffect(() => {
-    if (isInitialized && Object.keys(tableFilters).length > 0) {
-      dispatch(fetchStandardizingForms())
-    }
-  }, [dispatch, tableFilters, isInitialized])
-
-  // Handle errors with toast notifications
-  useEffect(() => {
-    if (error) {
-      toast.error(error)
-      dispatch(clearError())
-    }
-  }, [error, dispatch])
-
   // Drawer states
   const [formDrawerOpen, setFormDrawerOpen] = useState(false)
   const [viewDrawerOpen, setViewDrawerOpen] = useState(false)
@@ -98,6 +83,124 @@ export default function StandardizingPage() {
   const [formMode, setFormMode] = useState<"create" | "edit">("create")
   const [skimmingFormMode, setSkimmingFormMode] = useState<"create" | "edit">("create")
   const [activeTab, setActiveTab] = useState("standardizing")
+
+  // Frontend Filtering Logic for Standardizing Forms
+  const filteredForms = useMemo(() => {
+    if (!forms) return []
+
+    return forms.filter((form: any) => {
+      // 1. Search filter (Global search)
+      if (tableFilters.search) {
+        const searchLower = tableFilters.search.toLowerCase()
+        const tag = (form.tag || "").toLowerCase()
+        const operator = getUserById(form.operator_id)
+        const operatorName = `${operator?.first_name} ${operator?.last_name}`.toLowerCase()
+        const bmtForm = getBMTFormById(form.bmt_id)
+        const bmtTag = (bmtForm?.tag || "").toLowerCase()
+
+        if (!tag.includes(searchLower) &&
+          !operatorName.includes(searchLower) &&
+          !bmtTag.includes(searchLower)) return false
+      }
+
+      // 2. Specific filter fields
+      if (tableFilters.created_at) {
+        const filterDate = new Date(tableFilters.created_at)
+        const formDate = new Date(form.created_at)
+        if (filterDate.toDateString() !== formDate.toDateString()) return false
+      }
+
+      if (tableFilters.bmt_id) {
+        const bmtLower = tableFilters.bmt_id.toLowerCase()
+        const bmtForm = getBMTFormById(form.bmt_id)
+        const bmtTag = (bmtForm?.tag || "").toLowerCase()
+        if (!bmtTag.includes(bmtLower)) return false
+      }
+
+      if (tableFilters.operator_id) {
+        const opLower = tableFilters.operator_id.toLowerCase()
+        const operator = getUserById(form.operator_id)
+        const operatorName = `${operator?.first_name} ${operator?.last_name}`.toLowerCase()
+        if (!operatorName.includes(opLower)) return false
+      }
+
+      // 3. Date Range filter
+      if (tableFilters.dateRange) {
+        const formDate = new Date(form.created_at)
+        if (tableFilters.dateRange.from) {
+          const from = new Date(tableFilters.dateRange.from)
+          from.setHours(0, 0, 0, 0)
+          if (formDate < from) return false
+        }
+        if (tableFilters.dateRange.to) {
+          const to = new Date(tableFilters.dateRange.to)
+          to.setHours(23, 59, 59, 999)
+          if (formDate > to) return false
+        }
+      }
+
+      return true
+    })
+  }, [forms, tableFilters, users, bmtForms])
+
+  // Frontend Filtering Logic for Skimming Forms
+  const filteredSkimmingForms = useMemo(() => {
+    if (!skimmingForms) return []
+
+    return skimmingForms.filter((form: any) => {
+      // 1. Search filter (Global search)
+      if (tableFilters.search) {
+        const searchLower = tableFilters.search.toLowerCase()
+        const tag = (form.tag || "").toLowerCase()
+        const operator = getUserById(form.operator_id)
+        const operatorName = `${operator?.first_name} ${operator?.last_name}`.toLowerCase()
+        const bmtForm = getBMTFormById(form.bmt_id)
+        const bmtTag = (bmtForm?.tag || "").toLowerCase()
+
+        if (!tag.includes(searchLower) &&
+          !operatorName.includes(searchLower) &&
+          !bmtTag.includes(searchLower)) return false
+      }
+
+      // 2. Specific filter fields
+      if (tableFilters.created_at) {
+        const filterDate = new Date(tableFilters.created_at)
+        const formDate = new Date(form.created_at)
+        if (filterDate.toDateString() !== formDate.toDateString()) return false
+      }
+
+      if (tableFilters.bmt_id) {
+        const bmtLower = tableFilters.bmt_id.toLowerCase()
+        const bmtForm = getBMTFormById(form.bmt_id)
+        const bmtTag = (bmtForm?.tag || "").toLowerCase()
+        if (!bmtTag.includes(bmtLower)) return false
+      }
+
+      if (tableFilters.operator_id) {
+        const opLower = tableFilters.operator_id.toLowerCase()
+        const operator = getUserById(form.operator_id)
+        const operatorName = `${operator?.first_name} ${operator?.last_name}`.toLowerCase()
+        if (!operatorName.includes(opLower)) return false
+      }
+
+      // 3. Date Range filter
+      if (tableFilters.dateRange) {
+        const formDate = new Date(form.created_at)
+        if (tableFilters.dateRange.from) {
+          const from = new Date(tableFilters.dateRange.from)
+          from.setHours(0, 0, 0, 0)
+          if (formDate < from) return false
+        }
+        if (tableFilters.dateRange.to) {
+          const to = new Date(tableFilters.dateRange.to)
+          to.setHours(23, 59, 59, 999)
+          if (formDate > to) return false
+        }
+      }
+
+      return true
+    })
+  }, [skimmingForms, tableFilters, users, bmtForms])
 
   // Filter fields configuration for Standardizing Forms
   const filterFields = useMemo(() => [
@@ -228,7 +331,7 @@ export default function StandardizingPage() {
             </div>
             <div>
               <FormIdCopy
-                displayId={form.tag}
+                displayId={form.tag!}
                 actualId={form.id}
                 size="sm"
               />
@@ -269,7 +372,7 @@ export default function StandardizingPage() {
             {bmtForm ? (
               <div className="space-y-1">
                 <FormIdCopy
-                  displayId={bmtForm.tag}
+                  displayId={bmtForm.tag!}
                   actualId={form.bmt_id}
                   size="sm"
                 />
@@ -437,7 +540,7 @@ export default function StandardizingPage() {
             </div>
             <div>
               <FormIdCopy
-                displayId={form.tag}
+                displayId={form.tag!}
                 actualId={form.id}
                 size="sm"
               />
@@ -467,7 +570,7 @@ export default function StandardizingPage() {
             {bmtForm ? (
               <div className="space-y-1">
                 <FormIdCopy
-                  displayId={bmtForm.tag}
+                  displayId={bmtForm.tag!}
                   actualId={form.bmt_id}
                   size="sm"
                 />
@@ -646,7 +749,7 @@ export default function StandardizingPage() {
           </div>
           <LoadingButton
             onClick={activeTab === "standardizing" ? handleAddForm : handleAddSkimmingForm}
-            className="px-6 py-2 font-light"
+            className="bg-[#006BC4] text-white px-6 py-2 rounded-full font-light"
           >
             <Plus className="mr-2 h-4 w-4" />
             {activeTab === "standardizing" ? "Add Standardizing Form" : "Add Skimming Form"}
@@ -681,15 +784,14 @@ export default function StandardizingPage() {
                       <span>Current Standardizing Process</span>
                       <Badge className=" text-white font-light">Latest</Badge>
                       <FormIdCopy
-                        displayId={latestForm.tag}
+                        displayId={latestForm.tag!}
                         actualId={latestForm.id}
                         size="sm"
                       />
                     </div>
                     <LoadingButton
-
                       onClick={() => handleViewForm(latestForm)}
-                      className="text-white border-0 rounded-full px-4 py-2 font-light text-sm"
+                      className="bg-[#006BC4] text-white rounded-full px-4 py-2 font-light text-sm"
                     >
                       <Eye className="mr-2 h-4 w-4" />
                       View Details
@@ -704,7 +806,7 @@ export default function StandardizingPage() {
                         <p className="text-sm font-light text-gray-600">Form ID</p>
                       </div>
                       <FormIdCopy
-                        displayId={latestForm.tag}
+                        displayId={latestForm.tag!}
                         actualId={latestForm.id}
                         size="md"
                       />
@@ -831,7 +933,7 @@ export default function StandardizingPage() {
                   {loading ? (
                     <ContentSkeleton sections={1} cardsPerSection={4} />
                   ) : (
-                    <DataTable columns={columns} data={forms} showSearch={false} />
+                    <DataTable columns={columns} data={filteredForms} showSearch={false} />
                   )}
                 </div>
               </div>
@@ -853,15 +955,14 @@ export default function StandardizingPage() {
                       <span>Current Skimming Process</span>
                       <Badge className=" from-blue-100 to-cyan-100 text-white font-light">Latest</Badge>
                       <FormIdCopy
-                        displayId={latestSkimmingForm.tag}
+                        displayId={latestSkimmingForm.tag!}
                         actualId={latestSkimmingForm.id}
                         size="sm"
                       />
                     </div>
                     <LoadingButton
-
                       onClick={() => handleViewSkimmingForm(latestSkimmingForm)}
-                      className=" from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full px-4 py-2 font-light text-sm"
+                      className="bg-[#006BC4] text-white rounded-full px-4 py-2 font-light text-sm"
                     >
                       <Eye className="mr-2 h-4 w-4" />
                       View Details
@@ -876,7 +977,7 @@ export default function StandardizingPage() {
                         <p className="text-sm font-light text-gray-600">Form ID</p>
                       </div>
                       <FormIdCopy
-                        displayId={latestSkimmingForm.tag}
+                        displayId={latestSkimmingForm.tag!}
                         actualId={latestSkimmingForm.id}
                         size="md"
                       />
@@ -1009,6 +1110,7 @@ export default function StandardizingPage() {
                     </p>
                     <LoadingButton
                       onClick={handleAddSkimmingForm}
+                      className="bg-[#006BC4] text-white rounded-full"
                     >
                       <Plus className="mr-2 h-4 w-4" />
                       Add Skimming Form
@@ -1036,7 +1138,7 @@ export default function StandardizingPage() {
                   {skimmingLoading ? (
                     <ContentSkeleton sections={1} cardsPerSection={4} />
                   ) : (
-                    <DataTable columns={skimmingColumns} data={skimmingForms} showSearch={false} />
+                    <DataTable columns={skimmingColumns} data={filteredSkimmingForms} showSearch={false} />
                   )}
                 </div>
               </div>
@@ -1048,7 +1150,7 @@ export default function StandardizingPage() {
         <StandardizingFormDrawer
           open={formDrawerOpen}
           onOpenChange={setFormDrawerOpen}
-          form={selectedForm}
+          form={selectedForm as any}
           mode={formMode}
         />
 
@@ -1056,7 +1158,7 @@ export default function StandardizingPage() {
         <StandardizingFormViewDrawer
           open={viewDrawerOpen}
           onOpenChange={setViewDrawerOpen}
-          form={selectedForm}
+          form={selectedForm as any}
           onEdit={() => {
             setViewDrawerOpen(false)
             handleEditForm(selectedForm!)

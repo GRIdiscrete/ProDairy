@@ -55,6 +55,11 @@ export function RawMilkIntakeFormViewDrawer({
     return silos.find((silo: any) => silo.id === siloId)
   }
 
+  // Helper function to get silo by name
+  const getSiloByName = (siloName: string) => {
+    return silos.find((silo: any) => silo.name === siloName)
+  }
+
   // Helper function to get collection voucher by ID
   const getCollectionVoucherById = (voucherId: any) => {
     // If voucherId is already an object (populated), use it
@@ -175,7 +180,7 @@ export function RawMilkIntakeFormViewDrawer({
     const headers = Object.keys(formatTestData[0])
     const csvContent = [
       headers.join(','),
-      ...formatTestData.map(row => headers.map(header => `"${row[header]}"`).join(','))
+      ...formatTestData.map((row: any) => headers.map(header => `"${row[header]}"`).join(','))
     ].join('\n')
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
@@ -279,8 +284,8 @@ export function RawMilkIntakeFormViewDrawer({
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-light text-gray-600">Form ID</span>
                         <FormIdCopy
-                          displayId={form?.tag}
-                          actualId={form.id}
+                          displayId={(form as any).tag || "N/A"}
+                          actualId={(form as any).tag || ""}
                           size="sm"
                         />
                       </div>
@@ -404,8 +409,8 @@ export function RawMilkIntakeFormViewDrawer({
                                 <div className="flex items-center justify-between">
                                   <span className="text-sm font-light text-gray-600">Voucher Tag</span>
                                   <FormIdCopy
-                                    displayId={voucher?.tag}
-                                    actualId={voucher.id}
+                                    displayId={(voucher as any).tag || "N/A"}
+                                    actualId={(voucher as any).tag || ""}
                                     size="sm"
                                   />
                                 </div>
@@ -460,7 +465,7 @@ export function RawMilkIntakeFormViewDrawer({
                   )}
 
                   {/* Destination Silo Details */}
-                  {form.destination_silo_id && (
+                  {form.destination_silo_name && (
                     <div className="p-6 bg-white border border-gray-200 rounded-lg">
                       <div className="flex items-center space-x-2 mb-4">
                         <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center">
@@ -628,7 +633,7 @@ export function RawMilkIntakeFormViewDrawer({
           mode={resultSlipMode}
           existingId={resultSlipExistingId}
           existingData={currentResultSlip}
-          driverFormId={form.drivers_form_id}
+          driverFormId={(form as any).drivers_form_id}
           onSuccess={(result) => {
             // Refetch the test data
             dispatch(fetchRawMilkResultSlips())

@@ -23,12 +23,12 @@ import { PermissionButton } from "@/components/ui/permission-table-actions"
 export default function AdminRolesPage() {
   const dispatch = useAppDispatch()
   const { roles, loading: rolesLoading, error: rolesError, isInitialized: rolesInitialized } = useAppSelector((s) => s.roles)
-  
+
   // Drawer states
   const [formDrawerOpen, setFormDrawerOpen] = useState(false)
   const [viewDrawerOpen, setViewDrawerOpen] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
-  
+
   // Selected role and mode
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(null)
   const [formMode, setFormMode] = useState<"create" | "edit">("create")
@@ -39,7 +39,7 @@ export default function AdminRolesPage() {
   // Load roles only once on mount
   useEffect(() => {
     if (!rolesInitialized && (!roles || roles.length === 0)) {
-      dispatch(fetchRoles())
+      dispatch(fetchRoles({}))
     }
   }, [dispatch, rolesInitialized, roles])
 
@@ -121,6 +121,26 @@ export default function AdminRolesPage() {
     ist: "IST",
   };
 
+  // Client-side filtering
+  const filteredRoles = useMemo(() => {
+    return (roles || []).filter(role => {
+      // Search filter
+      if (tableFilters.search) {
+        const search = tableFilters.search.toLowerCase()
+        const roleName = (role.role_name || "").toLowerCase()
+        if (!roleName.includes(search)) return false
+      }
+      // Role name filter
+      if (tableFilters.role_name && !role.role_name?.toLowerCase().includes(tableFilters.role_name.toLowerCase())) return false
+      // Permissions filter
+      if (tableFilters.permissions) {
+        const hasPermission = role.role_operations?.some(op => op.toLowerCase().includes(tableFilters.permissions.toLowerCase()))
+        if (!hasPermission) return false
+      }
+      return true
+    })
+  }, [roles, tableFilters])
+
   // Define columns for DataTable
   const columns: ColumnDef<UserRole>[] = [
     {
@@ -136,7 +156,7 @@ export default function AdminRolesPage() {
           if (roleName.includes('operator')) return 'bg-green-100 text-green-800'
           return 'bg-gray-100 text-gray-800'
         }
-        
+
         return (
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-gray-100 text-gray-600 flex items-center justify-center">
@@ -168,12 +188,12 @@ export default function AdminRolesPage() {
         return (
           <div className="flex flex-wrap gap-1">
             {shownPerms.map((permKey) => (
-              <Badge key={permKey}  className="text-xs">
+              <Badge key={permKey} className="text-xs">
                 {permissionLabels[permKey]}
               </Badge>
             ))}
             {moreCount > 0 && (
-              <Badge  className="text-xs">
+              <Badge className="text-xs">
                 +{moreCount} more
               </Badge>
             )}
@@ -198,7 +218,7 @@ export default function AdminRolesPage() {
                 </Badge>
               ))}
               {role.views && role.views.length > 3 && (
-                <Badge  className="text-xs">
+                <Badge className="text-xs">
                   +{role.views.length - 3} more
                 </Badge>
               )}
@@ -231,25 +251,25 @@ export default function AdminRolesPage() {
         const role = row.original
         return (
           <div className="flex space-x-2">
-            <LoadingButton 
-               
-              size="sm" 
+            <LoadingButton
+
+              size="sm"
               onClick={() => handleViewRole(role)}
               className="bg-[#006BC4] text-white border-0 rounded-full"
             >
               <Eye className="w-4 h-4" />
             </LoadingButton>
-            <LoadingButton 
-               
-              size="sm" 
+            <LoadingButton
+
+              size="sm"
               onClick={() => handleEditRole(role)}
               className="bg-[#A0CF06] text-[#211D1E] border-0 rounded-full"
             >
               <Edit className="w-4 h-4" />
             </LoadingButton>
-            <LoadingButton 
-              variant="destructive" 
-              size="sm" 
+            <LoadingButton
+              variant="destructive"
+              size="sm"
               onClick={() => handleDeleteRole(role)}
               className="bg-red-600 hover:bg-red-700 text-white border-0 rounded-full"
             >
@@ -286,7 +306,7 @@ export default function AdminRolesPage() {
 
   const confirmDelete = async () => {
     if (!selectedRole) return
-    
+
     try {
       await dispatch(deleteRole(selectedRole.id)).unwrap()
       toast.success('Role deleted successfully')
@@ -297,120 +317,120 @@ export default function AdminRolesPage() {
     }
   }
 
-        return (
+  return (
     <PermissionGuard requiredView="role_tab">
-    <AdminDashboardLayout title="Roles Management" subtitle="Manage user roles and permissions">
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-light text-foreground">Roles Management</h1>
-            <p className="text-sm font-light text-muted-foreground">Manage user roles and their permissions</p>
+      <AdminDashboardLayout title="Roles Management" subtitle="Manage user roles and permissions">
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-light text-foreground">Roles Management</h1>
+              <p className="text-sm font-light text-muted-foreground">Manage user roles and their permissions</p>
+            </div>
+            <LoadingButton
+              onClick={handleAddRole}
+              disabled={rolesLoading}
+              className="bg-[#006BC4] text-white border-0 rounded-full px-6 py-2 font-light"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Add Role
+            </LoadingButton>
           </div>
-          <LoadingButton 
-            onClick={handleAddRole}
-            disabled={rolesLoading}
-            className="bg-[#006BC4] text-white border-0 rounded-full px-6 py-2 font-light"
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Add Role
-          </LoadingButton>
-        </div>
 
-        {/* Metrics Cards */}
-        {rolesLoading ? (
-          <MetricsPulseLoading className="grid-cols-1 md:grid-cols-3" />
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="border border-gray-200 rounded-lg bg-white p-4">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-light">Total Roles</span>
-                <Shield className="h-4 w-4 text-gray-500" />
+          {/* Metrics Cards */}
+          {rolesLoading ? (
+            <MetricsPulseLoading className="grid-cols-1 md:grid-cols-3" />
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="border border-gray-200 rounded-lg bg-white p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-light">Total Roles</span>
+                  <Shield className="h-4 w-4 text-gray-500" />
+                </div>
+                <div className="text-2xl font-light">{totalRoles}</div>
+                <p className="text-xs text-muted-foreground">Active roles</p>
               </div>
-              <div className="text-2xl font-light">{totalRoles}</div>
-              <p className="text-xs text-muted-foreground">Active roles</p>
-            </div>
-            <div className="border border-gray-200 rounded-lg bg-white p-4">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-light">Active Roles</span>
-                <Users className="h-4 w-4 text-blue-600" />
+              <div className="border border-gray-200 rounded-lg bg-white p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-light">Active Roles</span>
+                  <Users className="h-4 w-4 text-blue-600" />
+                </div>
+                <div className="text-2xl font-light text-blue-600">{activeRoles}</div>
+                <p className="text-xs text-muted-foreground">With permissions</p>
               </div>
-              <div className="text-2xl font-light text-blue-600">{activeRoles}</div>
-              <p className="text-xs text-muted-foreground">With permissions</p>
-            </div>
-            <div className="border border-gray-200 rounded-lg bg-white p-4">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-light">Admin Roles</span>
-                <Shield className="h-4 w-4 text-blue-600" />
+              <div className="border border-gray-200 rounded-lg bg-white p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-light">Admin Roles</span>
+                  <Shield className="h-4 w-4 text-blue-600" />
+                </div>
+                <div className="text-2xl font-light text-blue-600">{adminRoles}</div>
+                <p className="text-xs text-muted-foreground">Administrative access</p>
               </div>
-              <div className="text-2xl font-light text-blue-600">{adminRoles}</div>
-              <p className="text-xs text-muted-foreground">Administrative access</p>
             </div>
-          </div>
-        )}
+          )}
 
-        <div className="border border-gray-200 rounded-lg bg-white">
-          <div className="p-6 pb-0">
-            <div className="text-lg font-light">Roles</div>
-          </div>
-          <div className="p-6 space-y-4">
-            <DataTableFilters
-              filters={tableFilters}
-              onFiltersChange={setTableFilters}
-              onSearch={(searchTerm) => setTableFilters(prev => ({ ...prev, search: searchTerm }))}
-              searchPlaceholder="Search roles by name or permissions..."
-              filterFields={filterFields}
-            />
-            
-            {rolesLoading ? (
-              <TablePulseLoading rows={6} />
-            ) : (
-              <DataTable
-                columns={columns}
-                data={roles || []}
-                showSearch={false}
+          <div className="border border-gray-200 rounded-lg bg-white">
+            <div className="p-6 pb-0">
+              <div className="text-lg font-light">Roles</div>
+            </div>
+            <div className="p-6 space-y-4">
+              <DataTableFilters
+                filters={tableFilters}
+                onFiltersChange={setTableFilters}
+                onSearch={(searchTerm) => setTableFilters(prev => ({ ...prev, search: searchTerm }))}
+                searchPlaceholder="Search roles by name or permissions..."
+                filterFields={filterFields}
               />
-            )}
+
+              {rolesLoading ? (
+                <TablePulseLoading rows={6} />
+              ) : (
+                <DataTable
+                  columns={columns}
+                  data={filteredRoles}
+                  showSearch={false}
+                />
+              )}
+            </div>
           </div>
+
+          {/* Form Drawer */}
+          <RoleFormDrawer
+            open={formDrawerOpen}
+            onOpenChange={(open) => {
+              setFormDrawerOpen(open)
+              if (!open) setSelectedRole(null)
+            }}
+            role={formMode === 'edit' && selectedRole ? selectedRole : undefined}
+            mode={formMode}
+            onSuccess={() => {
+              setFormDrawerOpen(false)
+              setSelectedRole(null)
+            }}
+          />
+
+          {/* View Drawer */}
+          <RoleViewDrawer
+            open={viewDrawerOpen}
+            onClose={() => setViewDrawerOpen(false)}
+            role={selectedRole}
+            onEdit={() => {
+              setFormMode('edit')
+              setViewDrawerOpen(false)
+              setFormDrawerOpen(true)
+            }}
+          />
+
+          {/* Delete Confirmation Dialog */}
+          <DeleteConfirmationDialog
+            open={deleteDialogOpen}
+            onOpenChange={setDeleteDialogOpen}
+            title="Delete Role"
+            description={`Are you sure you want to delete the role "${selectedRole?.role_name}"? This action cannot be undone and may affect users with this role.`}
+            onConfirm={confirmDelete}
+            loading={rolesLoading}
+          />
         </div>
-
-        {/* Form Drawer */}
-        <RoleFormDrawer 
-          open={formDrawerOpen} 
-          onOpenChange={(open) => {
-            setFormDrawerOpen(open)
-            if (!open) setSelectedRole(null)
-          }}
-          role={formMode === 'edit' && selectedRole ? selectedRole : undefined}
-          mode={formMode} 
-          onSuccess={() => {
-            setFormDrawerOpen(false)
-            setSelectedRole(null)
-          }}
-        />
-
-        {/* View Drawer */}
-        <RoleViewDrawer
-          open={viewDrawerOpen}
-          onClose={() => setViewDrawerOpen(false)}
-          role={selectedRole}
-          onEdit={() => {
-            setFormMode('edit')
-            setViewDrawerOpen(false)
-            setFormDrawerOpen(true)
-          }}
-        />
-
-        {/* Delete Confirmation Dialog */}
-        <DeleteConfirmationDialog
-          open={deleteDialogOpen}
-          onOpenChange={setDeleteDialogOpen}
-          title="Delete Role"
-          description={`Are you sure you want to delete the role "${selectedRole?.role_name}"? This action cannot be undone and may affect users with this role.`}
-          onConfirm={confirmDelete}
-          loading={rolesLoading}
-        />
-      </div>
-    </AdminDashboardLayout>
+      </AdminDashboardLayout>
     </PermissionGuard>
   )
 }

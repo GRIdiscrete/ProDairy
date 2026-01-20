@@ -49,6 +49,21 @@ export function SearchableSelect({
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedOptions, setSelectedOptions] = useState<SearchableSelectOption[]>([])
   const searchTimeoutRef = useRef<NodeJS.Timeout>()
+  const listRef = useRef<HTMLDivElement>(null)
+
+  // Ensure proper scroll behavior on mount
+  useEffect(() => {
+    if (open && listRef.current) {
+      const listElement = listRef.current
+      // Force scroll container to be focusable and scrollable
+      listElement.style.overflow = 'auto'
+      listElement.style.overflowX = 'hidden'
+      listElement.style.overflowY = 'auto'
+      listElement.style.WebkitOverflowScrolling = 'touch'
+      listElement.style.touchAction = 'pan-y'
+      listElement.tabIndex = 0
+    }
+  }, [open])
 
   // Filter options based on search term
   const filteredOptions = (options || []).filter(option =>
@@ -178,50 +193,62 @@ export function SearchableSelect({
               placeholder={searchPlaceholder}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="flex h-10 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 border-0 focus-visible:ring-0"
+              className="flex h-10 w-full bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 "
             />
           </div>
-          <CommandList className="max-h-[300px] overflow-y-auto overflow-x-hidden">
-            {loading ? (
-              <div className="py-6 text-center text-sm text-muted-foreground">
-                Loading...
-              </div>
-            ) : filteredOptions.length === 0 ? (
-              <CommandEmpty>{emptyMessage}</CommandEmpty>
-            ) : (
-              <CommandGroup>
-                {filteredOptions.map((option) => {
-                  const isSelected = multiple
-                    ? Array.isArray(value) && value.includes(option.value)
-                    : value === option.value
+          <div
+            ref={listRef}
+            className="max-h-[300px] overflow-y-auto overflow-x-hidden overscroll-contain"
+            style={{
+              WebkitOverflowScrolling: 'touch',
+              scrollBehavior: 'smooth',
+              touchAction: 'pan-y',
+              overscrollBehavior: 'contain'
+            }}
+            tabIndex={0}
+          >
+            <CommandList className="max-h-full overflow-visible">
+              {loading ? (
+                <div className="py-6 text-center text-sm text-muted-foreground">
+                  Loading...
+                </div>
+              ) : filteredOptions.length === 0 ? (
+                <CommandEmpty>{emptyMessage}</CommandEmpty>
+              ) : (
+                <CommandGroup>
+                  {filteredOptions.map((option) => {
+                    const isSelected = multiple
+                      ? Array.isArray(value) && value.includes(option.value)
+                      : value === option.value
 
-                  return (
-                    <CommandItem
-                      key={option.value}
-                      value={option.value}
-                      onSelect={() => handleSelect(option.value)}
-                      disabled={option.disabled}
-                      className="cursor-pointer"
-                    >
-                      <div className="flex items-center justify-between w-full">
-                        <div className="flex flex-col">
-                          <span className="font-normal">{option.label || 'Unknown'}</span>
-                          {option.description && (
-                            <span className="text-sm text-muted-foreground">
-                              {option.description}
-                            </span>
+                    return (
+                      <CommandItem
+                        key={option.value}
+                        value={option.value}
+                        onSelect={() => handleSelect(option.value)}
+                        disabled={option.disabled}
+                        className="cursor-pointer"
+                      >
+                        <div className="flex items-center justify-between w-full">
+                          <div className="flex flex-col">
+                            <span className="font-normal">{option.label || 'Unknown'}</span>
+                            {option.description && (
+                              <span className="text-sm text-muted-foreground">
+                                {option.description}
+                              </span>
+                            )}
+                          </div>
+                          {isSelected && (
+                            <Check className="ml-2 h-4 w-4" />
                           )}
                         </div>
-                        {isSelected && (
-                          <Check className="ml-2 h-4 w-4" />
-                        )}
-                      </div>
-                    </CommandItem>
-                  )
-                })}
-              </CommandGroup>
-            )}
-          </CommandList>
+                      </CommandItem>
+                    )
+                  })}
+                </CommandGroup>
+              )}
+            </CommandList>
+          </div>
         </Command>
       </PopoverContent>
     </Popover>

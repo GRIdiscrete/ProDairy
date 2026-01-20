@@ -20,9 +20,9 @@ interface FilmaticLinesForm1ViewDrawerProps {
   onEdit?: () => void
 }
 
-export function FilmaticLinesForm1ViewDrawer({ 
-  open, 
-  onOpenChange, 
+export function FilmaticLinesForm1ViewDrawer({
+  open,
+  onOpenChange,
   form,
   onEdit
 }: FilmaticLinesForm1ViewDrawerProps) {
@@ -51,7 +51,7 @@ export function FilmaticLinesForm1ViewDrawer({
             {onEdit && (
               <Button
                 onClick={onEdit}
-                
+
                 size="sm"
                 className=" bg-[#006BC4] text-white rounded-full"
               >
@@ -111,7 +111,7 @@ export function FilmaticLinesForm1ViewDrawer({
                   <div className="mt-1">
                     {/* show form tag with FormIdCopy */}
                     {form.tag && form.id ? (
-                      <FormIdCopy displayId={form.tag} actualId={form.id} size="sm" />
+                      <FormIdCopy displayId={form.tag || "N/A"} actualId={form.tag || ""} size="sm" />
                     ) : (
                       <p className="text-sm font-light">{form.id || 'N/A'}</p>
                     )}
@@ -185,11 +185,7 @@ export function FilmaticLinesForm1ViewDrawer({
                     <>
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-light text-gray-600">BMT Form</span>
-                        {bmt.tag && bmt.id ? (
-                          <FormIdCopy displayId={bmt.tag} actualId={bmt.id} size="sm" />
-                        ) : (
-                          <span className="text-sm font-light">{bmt.id?.slice(0, 8) || 'N/A'}</span>
-                        )}
+                        {bmt.tag ? <FormIdCopy displayId={bmt.tag} actualId={bmt.tag} size="sm" /> : <p className="text-sm font-light">{bmt.id}</p>}
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-light text-gray-600">Volume</span>
@@ -242,9 +238,9 @@ export function FilmaticLinesForm1ViewDrawer({
                     <p className="text-sm font-light">{form.groups.id?.slice(0, 8) || 'N/A'}</p>
                   </div>
                 </div>
- 
+
                 <Separator />
- 
+
                 {/* Group A */}
                 {form.groups.group_a && form.groups.group_a.length > 0 && (
                   <div className="space-y-2">
@@ -259,7 +255,7 @@ export function FilmaticLinesForm1ViewDrawer({
                               <UserAvatar user={user} size="md" showName={true} showEmail={false} showDropdown={true} />
                             </div>
                           ) : (
-                            <span key={index} className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">{memberId.slice(0,8)}</span>
+                            <span key={index} className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">{memberId.slice(0, 8)}</span>
                           )
                         })}
                         {form.groups.group_a.length > 8 && (
@@ -286,7 +282,7 @@ export function FilmaticLinesForm1ViewDrawer({
                                 <UserAvatar user={user} size="md" showName={true} showEmail={false} showDropdown={true} />
                               </div>
                             ) : (
-                              <span key={index} className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">{memberId.slice(0,8)}</span>
+                              <span key={index} className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">{memberId.slice(0, 8)}</span>
                             )
                           })}
                           {form.groups.group_b.length > 8 && (
@@ -314,7 +310,7 @@ export function FilmaticLinesForm1ViewDrawer({
                                 <UserAvatar user={user} size="md" showName={true} showEmail={false} showDropdown={true} />
                               </div>
                             ) : (
-                              <span key={index} className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">{memberId.slice(0,8)}</span>
+                              <span key={index} className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">{memberId.slice(0, 8)}</span>
                             )
                           })}
                           {form.groups.group_c.length > 8 && (
@@ -361,7 +357,7 @@ export function FilmaticLinesForm1ViewDrawer({
                           )
                         })()}
                       </div>
-                      
+
                       {shift.filmatic_line_form_1_day_shift_details && shift.filmatic_line_form_1_day_shift_details.length > 0 ? (
                         <div className="mt-3 space-y-3">
                           <h5 className="text-sm font-medium text-gray-700">Production Details ({shift.filmatic_line_form_1_day_shift_details.length} entries)</h5>
@@ -385,7 +381,7 @@ export function FilmaticLinesForm1ViewDrawer({
                                   <p className="text-sm font-light">{detail.setbacks || 'None'}</p>
                                 </div>
                               </div>
-                              
+
                               {detail.filmatic_line_form_1_day_shift_details_stoppage_time && detail.filmatic_line_form_1_day_shift_details_stoppage_time.length > 0 && (
                                 <div className="mt-3 pt-3 border-t border-yellow-300">
                                   <p className="text-xs font-medium text-gray-700 mb-2">Stoppage Times</p>
@@ -481,7 +477,7 @@ export function FilmaticLinesForm1ViewDrawer({
                           )
                         })()}
                       </div>
-                      
+
                       {shift.filmatic_line_form_1_night_shift_details && shift.filmatic_line_form_1_night_shift_details.length > 0 ? (
                         <div className="mt-3 space-y-3">
                           <h5 className="text-sm font-medium text-gray-700">Production Details ({shift.filmatic_line_form_1_night_shift_details.length} entries)</h5>
@@ -505,7 +501,7 @@ export function FilmaticLinesForm1ViewDrawer({
                                   <p className="text-sm font-light">{detail.setbacks || 'None'}</p>
                                 </div>
                               </div>
-                              
+
                               {detail.filmatic_line_form_1_night_shift_details_stoppage_time && detail.filmatic_line_form_1_night_shift_details_stoppage_time.length > 0 && (
                                 <div className="mt-3 pt-3 border-t border-blue-300">
                                   <p className="text-xs font-medium text-gray-700 mb-2">Stoppage Times</p>

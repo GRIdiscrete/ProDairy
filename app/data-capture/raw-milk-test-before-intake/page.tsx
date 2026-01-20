@@ -65,6 +65,51 @@ export default function RawMilkTestBeforeIntakePage() {
         }
     }, [dispatch])
 
+    const filteredSlips = useMemo(() => {
+        if (!resultSlips) return []
+
+        return resultSlips.filter((slip: RawMilkResultSlipBeforeIntake) => {
+            // 1. Search filter (Global search)
+            if (tableFilters.search) {
+                const searchLower = tableFilters.search.toLowerCase()
+                const tag = (slip.tag || "").toLowerCase()
+                const truckNumber = (collectionVouchers.find(v => v.id === slip.voucher_id)?.truck_number || "").toLowerCase()
+                if (!tag.includes(searchLower) && !truckNumber.includes(searchLower)) return false
+            }
+
+            // 2. Tag filter (Specific field)
+            if (tableFilters.tag) {
+                const tagLower = tableFilters.tag.toLowerCase()
+                const tag = (slip.tag || "").toLowerCase()
+                if (!tag.includes(tagLower)) return false
+            }
+
+            // 3. Date filter (Specific field)
+            if (tableFilters.date) {
+                const filterDate = new Date(tableFilters.date)
+                const slipDate = new Date(slip.date)
+                if (filterDate.toDateString() !== slipDate.toDateString()) return false
+            }
+
+            // 4. Date Range filter
+            if (tableFilters.dateRange) {
+                const slipDate = new Date(slip.date)
+                if (tableFilters.dateRange.from) {
+                    const from = new Date(tableFilters.dateRange.from)
+                    from.setHours(0, 0, 0, 0)
+                    if (slipDate < from) return false
+                }
+                if (tableFilters.dateRange.to) {
+                    const to = new Date(tableFilters.dateRange.to)
+                    to.setHours(23, 59, 59, 999)
+                    if (slipDate > to) return false
+                }
+            }
+
+            return true
+        })
+    }, [resultSlips, tableFilters, collectionVouchers])
+
     const handleAddSlip = () => {
         setSelectedSlip(null)
         setFormMode("create")
@@ -165,10 +210,10 @@ export default function RawMilkTestBeforeIntakePage() {
             header: "Actions",
             cell: ({ row }: any) => (
                 <div className="flex space-x-2">
-                    <LoadingButton size="sm" onClick={() => handleViewSlip(row.original)} className="bg-blue-600 text-white rounded-full">
+                    <LoadingButton size="sm" onClick={() => handleViewSlip(row.original)} className="bg-[#006BC4] text-white rounded-full">
                         <Eye className="w-4 h-4" />
                     </LoadingButton>
-                    <LoadingButton size="sm" onClick={() => handleEditSlip(row.original)} className="bg-lime-500 text-black rounded-full">
+                    <LoadingButton size="sm" onClick={() => handleEditSlip(row.original)} className="bg-[#A0CF06] text-[#211D1E] rounded-full">
                         <Edit className="w-4 h-4" />
                     </LoadingButton>
                     <LoadingButton size="sm" variant="destructive" onClick={() => handleDeleteSlip(row.original)} className="rounded-full">
@@ -194,7 +239,7 @@ export default function RawMilkTestBeforeIntakePage() {
                         <h1 className="text-3xl font-light text-foreground">Test Before Intake</h1>
                         <p className="text-sm font-light text-muted-foreground italic">Scientist validation of truck compartments</p>
                     </div>
-                    <LoadingButton onClick={handleAddSlip} className="px-6 py-2 rounded-full shadow-lg">
+                    <LoadingButton onClick={handleAddSlip} className="bg-[#006BC4] px-6 py-2 rounded-full">
                         <Plus className="mr-2 h-4 w-4" />
                         New Test Result
                     </LoadingButton>
@@ -202,7 +247,7 @@ export default function RawMilkTestBeforeIntakePage() {
 
                 {/* Untested Compartments Alert / Card */}
                 {untestedCompartments.length > 0 && (
-                    <div className="bg-orange-50 border-l-4 border-orange-400 p-4 rounded-r-lg shadow-sm">
+                    <div className="bg-orange-50 border-l-4 border-orange-400 p-4 rounded-r-lg">
                         <div className="flex items-center">
                             <AlertCircle className="w-5 h-5 text-orange-400 mr-3" />
                             <h3 className="text-sm font-medium text-orange-800">Pending Compartment Tests</h3>
@@ -214,7 +259,7 @@ export default function RawMilkTestBeforeIntakePage() {
                 )}
 
                 {/* Main Data Table */}
-                <div className="border border-gray-200 rounded-2xl bg-white overflow-hidden shadow-sm">
+                <div className="border border-gray-200 rounded-lg bg-white overflow-hidden">
                     <div className="p-6 border-b bg-gray-50/50">
                         <h3 className="text-lg font-light">Recent Test Results</h3>
                     </div>
@@ -239,7 +284,8 @@ export default function RawMilkTestBeforeIntakePage() {
                         ) : (
                             <DataTable
                                 columns={columns}
-                                data={resultSlips}
+                                showSearch={false}
+                                data={filteredSlips}
                             />
                         )}
                     </div>

@@ -24,6 +24,7 @@ import { toast } from "sonner"
 import { TableFilters } from "@/lib/types"
 import { FilmaticLinesProductionSheet } from "@/lib/api/filmatic-lines"
 import ContentSkeleton from "@/components/ui/content-skeleton"
+import { FormIdCopy } from "@/components/ui/form-id-copy"
 import { useRouter, useSearchParams } from "next/navigation"
 
 export default function FilmaticLinesPage() {
@@ -43,12 +44,58 @@ export default function FilmaticLinesPage() {
     }
   }, [dispatch, isInitialized])
 
-  // Handle filter changes
-  useEffect(() => {
-    if (isInitialized && Object.keys(tableFilters).length > 0) {
-      dispatch(fetchFilmaticLinesProductionSheets())
-    }
-  }, [dispatch, tableFilters, isInitialized])
+  // Frontend Filtering Logic
+  const filteredSheets = useMemo(() => {
+    if (!sheets) return []
+
+    return sheets.filter((sheet: FilmaticLinesProductionSheet) => {
+      // 1. Search filter (Global search)
+      if (tableFilters.search) {
+        const searchLower = tableFilters.search.toLowerCase()
+        const tag = (sheet.tag || "").toLowerCase()
+        const product = (sheet.product || "").toLowerCase()
+        const shift = (sheet.shift || "").toLowerCase()
+
+        if (!tag.includes(searchLower) &&
+          !product.includes(searchLower) &&
+          !shift.includes(searchLower)) return false
+      }
+
+      // 2. Specific filter fields
+      if (tableFilters.created_at) {
+        const filterDate = new Date(tableFilters.created_at)
+        const sheetDate = new Date(sheet.created_at)
+        if (filterDate.toDateString() !== sheetDate.toDateString()) return false
+      }
+
+      if (tableFilters.shift) {
+        const shiftLower = tableFilters.shift.toLowerCase()
+        if (!sheet.shift.toLowerCase().includes(shiftLower)) return false
+      }
+
+      if (tableFilters.product) {
+        const productLower = tableFilters.product.toLowerCase()
+        if (!sheet.product.toLowerCase().includes(productLower)) return false
+      }
+
+      // 3. Date Range filter
+      if (tableFilters.dateRange) {
+        const sheetDate = new Date(sheet.created_at)
+        if (tableFilters.dateRange.from) {
+          const from = new Date(tableFilters.dateRange.from)
+          from.setHours(0, 0, 0, 0)
+          if (sheetDate < from) return false
+        }
+        if (tableFilters.dateRange.to) {
+          const to = new Date(tableFilters.dateRange.to)
+          to.setHours(23, 59, 59, 999)
+          if (sheetDate > to) return false
+        }
+      }
+
+      return true
+    })
+  }, [sheets, tableFilters])
 
   // Handle errors with toast notifications
   useEffect(() => {
@@ -150,7 +197,11 @@ export default function FilmaticLinesPage() {
             </div>
             <div>
               <div className="flex items-center space-x-2">
-                <span className="font-light">#{sheet.id.slice(0, 8)}</span>
+                <FormIdCopy
+                  displayId={sheet.tag!}
+                  actualId={sheet.id}
+                  size="sm"
+                />
                 <Badge className="bg-blue-100 text-blue-800 font-light">{sheet.product}</Badge>
               </div>
               <p className="text-sm text-gray-500 mt-1">
@@ -267,18 +318,16 @@ export default function FilmaticLinesPage() {
         return (
           <div className="flex space-x-2">
             <LoadingButton
-              
               size="sm"
               onClick={() => handleViewSheet(sheet)}
-              className=" from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full"
+              className="bg-[#006BC4] text-white rounded-full"
             >
               <Eye className="w-4 h-4" />
             </LoadingButton>
             <LoadingButton
-              
               size="sm"
               onClick={() => handleEditSheet(sheet)}
-              className=" from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 rounded-full"
+              className="bg-[#A0CF06] text-[#211D1E] rounded-full"
             >
               <Edit className="w-4 h-4" />
             </LoadingButton>
@@ -288,7 +337,7 @@ export default function FilmaticLinesPage() {
               onClick={() => handleDeleteSheet(sheet)}
               loading={loading.delete}
               disabled={loading.delete}
-              className=" from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white border-0 rounded-full"
+              className="rounded-full"
             >
               <Trash2 className="w-4 h-4" />
             </LoadingButton>
@@ -343,7 +392,7 @@ export default function FilmaticLinesPage() {
           </div>
           <LoadingButton
             onClick={handleAddSheet}
-            className=" from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full px-6 py-2 font-light"
+            className="bg-[#006BC4] text-white rounded-full px-6 py-2 font-light"
           >
             <Plus className="mr-2 h-4 w-4" />
             Add Filmatic Lines Sheet
@@ -390,9 +439,8 @@ export default function FilmaticLinesPage() {
                   <Badge className=" from-blue-100 to-cyan-100 text-white font-light">Latest</Badge>
                 </div>
                 <LoadingButton
-                  
                   onClick={() => handleViewSheet(latestSheet)}
-                  className=" from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full px-4 py-2 font-light text-sm"
+                  className="bg-[#006BC4] text-white rounded-full px-4 py-2 font-light text-sm"
                 >
                   <Eye className="mr-2 h-4 w-4" />
                   View Details
@@ -407,8 +455,11 @@ export default function FilmaticLinesPage() {
                     <p className="text-sm font-light text-gray-600">Sheet ID</p>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <p className="text-lg font-light">#{latestSheet.id.slice(0, 8)}</p>
-                    <CopyButton text={latestSheet.id} />
+                    <FormIdCopy
+                      displayId={latestSheet.tag!}
+                      actualId={latestSheet.id}
+                      size="sm"
+                    />
                   </div>
                 </div>
                 <div className="space-y-2">
@@ -441,7 +492,7 @@ export default function FilmaticLinesPage() {
               {/* Process Flow Information */}
               <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {/* Process Summary */}
-                <div className="p-4  from-blue-50 to-cyan-50 rounded-lg">
+                <div className="p-4 bg-blue-50 rounded-lg">
                   <div className="flex items-center space-x-2 mb-3">
                     <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
                       <Factory className="h-4 w-4 text-blue-600" />
@@ -510,7 +561,7 @@ export default function FilmaticLinesPage() {
               {loading.fetch ? (
                 <ContentSkeleton sections={1} cardsPerSection={4} />
               ) : (
-                <DataTable columns={columns} data={sheets} showSearch={false} />
+                <DataTable columns={columns} data={filteredSheets} showSearch={false} />
               )}
             </div>
           </div>

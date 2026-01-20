@@ -68,12 +68,57 @@ export default function PalletiserSheetPage({ processId }: PalletiserSheetPagePr
     }
   }, [dispatch, isInitialized])
 
-  // Handle filter changes
-  useEffect(() => {
-    if (isInitialized && Object.keys(tableFilters).length > 0) {
-      dispatch(fetchPalletiserSheets())
-    }
-  }, [dispatch, tableFilters, isInitialized])
+  // Frontend Filtering Logic
+  const filteredSheets = useMemo(() => {
+    if (!Array.isArray(sheets)) return []
+
+    return sheets.filter((sheet: any) => {
+      // 1. Search filter (Global search)
+      if (tableFilters.search) {
+        const searchLower = tableFilters.search.toLowerCase()
+        const tag = String(sheet.tag || "").toLowerCase()
+        const batch = String(sheet.batch_number || "").toLowerCase()
+        const product = String(sheet.product_type || "").toLowerCase()
+        const machine = machines.find((m: any) => m.id === sheet.machine_id)?.name?.toLowerCase() || ""
+
+        if (!tag.includes(searchLower) && !batch.includes(searchLower) && !product.includes(searchLower) && !machine.includes(searchLower)) return false
+      }
+
+      // 2. Specific filter fields
+      if (tableFilters.created_at) {
+        const filterDate = new Date(tableFilters.created_at)
+        const sheetDate = new Date(sheet.created_at)
+        if (filterDate.toDateString() !== sheetDate.toDateString()) return false
+      }
+
+      if (tableFilters.batch_number) {
+        const batchLower = tableFilters.batch_number.toLowerCase()
+        if (!String(sheet.batch_number || "").toLowerCase().includes(batchLower)) return false
+      }
+
+      if (tableFilters.product_type) {
+        const productLower = tableFilters.product_type.toLowerCase()
+        if (!String(sheet.product_type || "").toLowerCase().includes(productLower)) return false
+      }
+
+      // 3. Date Range filter
+      if (tableFilters.dateRange) {
+        const sheetDate = new Date(sheet.created_at)
+        if (tableFilters.dateRange.from) {
+          const from = new Date(tableFilters.dateRange.from)
+          from.setHours(0, 0, 0, 0)
+          if (sheetDate < from) return false
+        }
+        if (tableFilters.dateRange.to) {
+          const to = new Date(tableFilters.dateRange.to)
+          to.setHours(23, 59, 59, 999)
+          if (sheetDate > to) return false
+        }
+      }
+
+      return true
+    })
+  }, [sheets, tableFilters, machines])
 
   // Handle errors with toast notifications
   useEffect(() => {
@@ -168,7 +213,7 @@ export default function PalletiserSheetPage({ processId }: PalletiserSheetPagePr
             <div>
               <div className="flex items-center space-x-2">
                 <FormIdCopy
-                  displayId={sheet.tag}
+                  displayId={sheet.tag!}
                   actualId={sheet.id}
                   size="sm"
                 />
@@ -269,18 +314,16 @@ export default function PalletiserSheetPage({ processId }: PalletiserSheetPagePr
         return (
           <div className="flex space-x-2">
             <LoadingButton
-              
               size="sm"
               onClick={() => handleViewSheet(sheet)}
-              className="bg-[#006BC4] text-white border-0 rounded-full"
+              className="bg-[#006BC4] text-white rounded-full"
             >
               <Eye className="w-4 h-4" />
             </LoadingButton>
             <LoadingButton
-              
               size="sm"
               onClick={() => handleEditSheet(sheet)}
-              className="bg-[#A0CF06] text-[#211D1E] border-0 rounded-full"
+              className="bg-[#A0CF06] text-[#211D1E] rounded-full"
             >
               <Edit className="w-4 h-4" />
             </LoadingButton>
@@ -290,7 +333,7 @@ export default function PalletiserSheetPage({ processId }: PalletiserSheetPagePr
               onClick={() => handleDeleteSheet(sheet)}
               loading={operationLoading.delete}
               disabled={operationLoading.delete}
-              className=" from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white border-0 rounded-full"
+              className="rounded-full"
             >
               <Trash2 className="w-4 h-4" />
             </LoadingButton>
@@ -324,7 +367,7 @@ export default function PalletiserSheetPage({ processId }: PalletiserSheetPagePr
           </div>
           <LoadingButton
             onClick={handleAddSheet}
-            className="px-6 py-2 font-light"
+            className="bg-[#006BC4] text-white rounded-full px-6 font-light"
           >
             <Plus className="mr-2 h-4 w-4" />
             Add Palletiser Sheet
@@ -346,15 +389,14 @@ export default function PalletiserSheetPage({ processId }: PalletiserSheetPagePr
                   {/* show form tag / copy control for latest sheet */}
                   {latestSheet?.tag && (
                     <div className="ml-2">
-                      <FormIdCopy displayId={latestSheet.tag} actualId={latestSheet.id} size="sm" />
+                      <FormIdCopy displayId={latestSheet.tag!} actualId={latestSheet.id} size="sm" />
                     </div>
                   )}
-                  <Badge className=" from-blue-100 to-cyan-100 text-white font-light">Latest</Badge>
+                  <Badge className="bg-blue-100 text-blue-800 font-light">Latest</Badge>
                 </div>
                 <LoadingButton
-                  
                   onClick={() => handleViewSheet(latestSheet)}
-                  className=" from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full px-4 py-2 font-light text-sm"
+                  className="bg-[#006BC4] text-white rounded-full px-4 py-2 font-light text-sm"
                 >
                   <Eye className="mr-2 h-4 w-4" />
                   View Details
@@ -458,7 +500,7 @@ export default function PalletiserSheetPage({ processId }: PalletiserSheetPagePr
               {loading ? (
                 <ContentSkeleton sections={1} cardsPerSection={4} />
               ) : (
-                <DataTable columns={columns} data={sheets} showSearch={false} />
+                <DataTable columns={columns} data={filteredSheets} showSearch={false} />
               )}
             </div>
           </div>

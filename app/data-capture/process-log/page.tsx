@@ -34,15 +34,9 @@ export default function ProcessLogPage() {
   useEffect(() => {
     if (!isInitialized && !hasFetchedRef.current) {
       hasFetchedRef.current = true
-      dispatch(fetchSteriMilkProcessLogs())
+      dispatch(fetchSteriMilkProcessLogs({}))
     }
   }, [dispatch, isInitialized])
-
-  useEffect(() => {
-    if (isInitialized && Object.keys(tableFilters).length > 0) {
-      dispatch(fetchSteriMilkProcessLogs())
-    }
-  }, [dispatch, tableFilters, isInitialized])
 
   useEffect(() => {
     if (error) {
@@ -102,6 +96,61 @@ export default function ProcessLogPage() {
     return () => { mounted = false }
   }, [])
 
+  // Frontend Filtering Logic
+  const filteredLogs = useMemo(() => {
+    if (!logs) return []
+
+    return logs.filter((log: SteriMilkProcessLog) => {
+      // 1. Search filter (Global search)
+      if (tableFilters.search) {
+        const searchLower = tableFilters.search.toLowerCase()
+        const tag = String(log.tag || "").toLowerCase()
+        const approverName = (log.approver_id ? String(rolesMap[log.approver_id] || "") : "").toLowerCase()
+        const filmaticTag = (log.filmatic_form_id ? String(formMap[log.filmatic_form_id]?.tag || "") : "").toLowerCase()
+
+        if (!tag.includes(searchLower) &&
+          !approverName.includes(searchLower) &&
+          !filmaticTag.includes(searchLower)) return false
+      }
+
+      // 2. Specific filter fields
+      if (tableFilters.created_at) {
+        const filterDate = new Date(tableFilters.created_at)
+        const logDate = new Date(log.created_at!)
+        if (filterDate.toDateString() !== logDate.toDateString()) return false
+      }
+
+      if (tableFilters.approver_id) {
+        const approverLower = tableFilters.approver_id.toLowerCase()
+        const approverName = (log.approver_id ? (rolesMap[log.approver_id] || "") : "").toLowerCase()
+        if (!approverName.includes(approverLower)) return false
+      }
+
+      if (tableFilters.filmatic_form_id) {
+        const filmaticLower = tableFilters.filmatic_form_id.toLowerCase()
+        const filmaticTag = (log.filmatic_form_id ? (formMap[log.filmatic_form_id]?.tag || "") : "").toLowerCase()
+        if (!filmaticTag.includes(filmaticLower)) return false
+      }
+
+      // 3. Date Range filter
+      if (tableFilters.dateRange) {
+        const logDate = new Date(log.created_at!)
+        if (tableFilters.dateRange.from) {
+          const from = new Date(tableFilters.dateRange.from)
+          from.setHours(0, 0, 0, 0)
+          if (logDate < from) return false
+        }
+        if (tableFilters.dateRange.to) {
+          const to = new Date(tableFilters.dateRange.to)
+          to.setHours(23, 59, 59, 999)
+          if (logDate > to) return false
+        }
+      }
+
+      return true
+    })
+  }, [logs, tableFilters, rolesMap, formMap])
+
   const filterFields = useMemo(() => [
     { key: "created_at", label: "Date", type: "date" as const, placeholder: "Filter by date" },
     { key: "approver_id", label: "Approver", type: "text" as const, placeholder: "Filter by approver" },
@@ -156,7 +205,7 @@ export default function ProcessLogPage() {
             <div>
               <div className="flex items-center space-x-2">
                 <FormIdCopy
-                  displayId={log?.tag}
+                  displayId={log?.tag!}
                   actualId={log?.id}
                   size="sm"
                 />
@@ -181,7 +230,7 @@ export default function ProcessLogPage() {
         const batches = log.batch_id ? [log.batch_id] : []
         const totalBatches = batches.length
         const completedBatches = batches.filter((batch: any) =>
-          batch.filling_start && batch.sterilization_finish
+          batch.filling_start_details && batch.sterilization_finish_details
         ).length
 
         return (
@@ -206,7 +255,7 @@ export default function ProcessLogPage() {
           <div className="space-y-1">
             <p className="text-sm font-light">
               <FormIdCopy
-                displayId={form?.tag ?? undefined}
+                displayId={form?.tag! ?? undefined}
                 actualId={log?.filmatic_form_id}
                 size="sm"
               />
@@ -297,7 +346,7 @@ export default function ProcessLogPage() {
           </div>
           <LoadingButton
             onClick={handleAdd}
-            className="px-6 py-2 font-light"
+            className="bg-[#006BC4] text-white rounded-full px-6 py-2 font-light"
           >
             Add Process Log
           </LoadingButton>
@@ -317,9 +366,8 @@ export default function ProcessLogPage() {
                   <Badge className=" from-blue-100 to-cyan-100 text-white font-light">Latest</Badge>
                 </div>
                 <LoadingButton
-
                   onClick={() => handleView(latest)}
-                  className=" from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full px-4 py-2 font-light text-sm"
+                  className="bg-[#006BC4] text-white rounded-full px-4 py-2 font-light text-sm"
                 >
                   <Eye className="mr-2 h-4 w-4" />
                   View Details
@@ -335,7 +383,7 @@ export default function ProcessLogPage() {
                   </div>
                   <div className="flex items-center space-x-2">
                     <FormIdCopy
-                      displayId={latest?.tag}
+                      displayId={latest?.tag!}
                       actualId={latest?.id}
                       size="sm"
                     />
@@ -405,7 +453,7 @@ export default function ProcessLogPage() {
                     </div>
                   </div>
 
-                  <div className="p-4  from-blue-50 to-cyan-50 rounded-lg">
+                  <div className="p-4 bg-blue-50 rounded-lg">
                     <div className="flex items-center space-x-2 mb-3">
                       <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
                         <Clock className="h-4 w-4 text-blue-600" />
@@ -415,11 +463,11 @@ export default function ProcessLogPage() {
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-light text-gray-600">Filling Start</span>
-                        <span className="text-xs font-light">{latest.batch_id.filling_start ? 'Completed' : 'Pending'}</span>
+                        <span className="text-xs font-light">{latest.batch_id.filling_start_details ? 'Completed' : 'Pending'}</span>
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-light text-gray-600">Sterilization</span>
-                        <span className="text-xs font-light">{latest.batch_id.sterilization_start ? 'Completed' : 'Pending'}</span>
+                        <span className="text-xs font-light">{latest.batch_id.sterilization_start_details ? 'Completed' : 'Pending'}</span>
                       </div>
                     </div>
                   </div>
@@ -445,7 +493,7 @@ export default function ProcessLogPage() {
               {loading.fetch ? (
                 <ContentSkeleton sections={1} cardsPerSection={4} />
               ) : (
-                <DataTable columns={columns} data={logs} showSearch={false} />
+                <DataTable columns={columns} data={filteredLogs} showSearch={false} />
               )}
             </div>
           </div>

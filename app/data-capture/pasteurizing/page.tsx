@@ -45,97 +45,6 @@ export default function PasteurizingPage() {
   const getBMTFormById = (bmtId: string) => {
     return bmtForms.find((form: any) => form.id === bmtId)
   }
-  // Load pasteurizing forms and related data on initial mount
-  useEffect(() => {
-    if (!isInitialized && !hasFetchedRef.current) {
-      hasFetchedRef.current = true
-      dispatch(fetchPasteurizingForms())
-      dispatch(fetchStandardizingForms()) // Load standardizing forms for the form drawer
-      dispatch(fetchMachines({})) // Load machines for display
-      dispatch(fetchBMTControlForms()) // Load BMT forms for display
-      dispatch(fetchUsers({})) // Load users for operator information
-
-    }
-  }, [dispatch, isInitialized])
-
-  // Handle filter changes
-  useEffect(() => {
-    if (isInitialized && Object.keys(tableFilters).length > 0) {
-      dispatch(fetchPasteurizingForms())
-    }
-  }, [dispatch, tableFilters, isInitialized])
-
-  // Handle errors with toast notifications
-  useEffect(() => {
-    if (error) {
-      toast.error(error)
-      dispatch(clearError())
-    }
-  }, [error, dispatch])
-
-  // Drawer states
-  const [formDrawerOpen, setFormDrawerOpen] = useState(false)
-  const [viewDrawerOpen, setViewDrawerOpen] = useState(false)
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
-
-  // Selected form and mode
-  const [selectedForm, setSelectedForm] = useState<PasteurizingForm | null>(null)
-  const [formMode, setFormMode] = useState<"create" | "edit">("create")
-
-  // Filter fields configuration for Pasteurizing
-  const filterFields = useMemo(() => [
-    {
-      key: "created_at",
-      label: "Date",
-      type: "date" as const,
-      placeholder: "Filter by date"
-    },
-    {
-      key: "machine",
-      label: "Machine",
-      type: "text" as const,
-      placeholder: "Filter by machine"
-    },
-  ], [])
-
-  // Action handlers
-  const handleAddForm = () => {
-    setSelectedForm(null)
-    setFormMode("create")
-    setFormDrawerOpen(true)
-  }
-
-  const handleEditForm = (form: PasteurizingForm) => {
-    setSelectedForm(form)
-    setFormMode("edit")
-    setFormDrawerOpen(true)
-  }
-
-  const handleViewForm = (form: PasteurizingForm) => {
-    setSelectedForm(form)
-    setViewDrawerOpen(true)
-  }
-
-  const handleDeleteForm = (form: PasteurizingForm) => {
-    setSelectedForm(form)
-    setDeleteDialogOpen(true)
-  }
-
-  const confirmDelete = async () => {
-    if (!selectedForm) return
-
-    try {
-      await dispatch(deletePasteurizingForm(selectedForm.id)).unwrap()
-      toast.success('Pasteurizing Form deleted successfully')
-      setDeleteDialogOpen(false)
-      setSelectedForm(null)
-    } catch (error: any) {
-      toast.error(error || 'Failed to delete pasteurizing form')
-    }
-  }
-
-  // Get latest form for display
-  const latestForm = Array.isArray(forms) && forms.length > 0 ? forms[0] : null
 
   // Helper functions to get names from IDs
   const getMachineName = (form: any) => {
@@ -203,6 +112,132 @@ export default function PasteurizingPage() {
     // fallback
     return "N/A"
   }
+  // Load pasteurizing forms and related data on initial mount
+  useEffect(() => {
+    if (!isInitialized && !hasFetchedRef.current) {
+      hasFetchedRef.current = true
+      dispatch(fetchPasteurizingForms())
+      dispatch(fetchStandardizingForms()) // Load standardizing forms for the form drawer
+      dispatch(fetchMachines({})) // Load machines for display
+      dispatch(fetchBMTControlForms()) // Load BMT forms for display
+      dispatch(fetchUsers({})) // Load users for operator information
+    }
+  }, [dispatch, isInitialized])
+
+  // Drawer states
+  const [formDrawerOpen, setFormDrawerOpen] = useState(false)
+  const [viewDrawerOpen, setViewDrawerOpen] = useState(false)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+
+  // Selected form and mode
+  const [selectedForm, setSelectedForm] = useState<PasteurizingForm | null>(null)
+  const [formMode, setFormMode] = useState<"create" | "edit">("create")
+
+  // Frontend Filtering Logic
+  const filteredForms = useMemo(() => {
+    if (!forms) return []
+
+    return forms.filter((form: any) => {
+      // 1. Search filter (Global search)
+      if (tableFilters.search) {
+        const searchLower = tableFilters.search.toLowerCase()
+        const tag = (form.tag || "").toLowerCase()
+        const machineName = getMachineName(form).toLowerCase()
+        const bmtInfo = getBMTFormInfo(form)
+        const bmtTag = (getBMTFormById(form.bmt)?.tag || "").toLowerCase()
+
+        if (!tag.includes(searchLower) &&
+          !machineName.includes(searchLower) &&
+          !bmtTag.includes(searchLower)) return false
+      }
+
+      // 2. Specific filter fields
+      if (tableFilters.created_at) {
+        const filterDate = new Date(tableFilters.created_at)
+        const formDate = new Date(form.created_at)
+        if (filterDate.toDateString() !== formDate.toDateString()) return false
+      }
+
+      if (tableFilters.machine) {
+        const machineLower = tableFilters.machine.toLowerCase()
+        if (!getMachineName(form).toLowerCase().includes(machineLower)) return false
+      }
+
+      // 3. Date Range filter
+      if (tableFilters.dateRange) {
+        const formDate = new Date(form.created_at)
+        if (tableFilters.dateRange.from) {
+          const from = new Date(tableFilters.dateRange.from)
+          from.setHours(0, 0, 0, 0)
+          if (formDate < from) return false
+        }
+        if (tableFilters.dateRange.to) {
+          const to = new Date(tableFilters.dateRange.to)
+          to.setHours(23, 59, 59, 999)
+          if (formDate > to) return false
+        }
+      }
+
+      return true
+    })
+  }, [forms, tableFilters, machines, bmtForms])
+
+  // Filter fields configuration for Pasteurizing
+  const filterFields = useMemo(() => [
+    {
+      key: "created_at",
+      label: "Date",
+      type: "date" as const,
+      placeholder: "Filter by date"
+    },
+    {
+      key: "machine",
+      label: "Machine",
+      type: "text" as const,
+      placeholder: "Filter by machine"
+    },
+  ], [])
+
+  // Action handlers
+  const handleAddForm = () => {
+    setSelectedForm(null)
+    setFormMode("create")
+    setFormDrawerOpen(true)
+  }
+
+  const handleEditForm = (form: PasteurizingForm) => {
+    setSelectedForm(form)
+    setFormMode("edit")
+    setFormDrawerOpen(true)
+  }
+
+  const handleViewForm = (form: PasteurizingForm) => {
+    setSelectedForm(form)
+    setViewDrawerOpen(true)
+  }
+
+  const handleDeleteForm = (form: PasteurizingForm) => {
+    setSelectedForm(form)
+    setDeleteDialogOpen(true)
+  }
+
+  const confirmDelete = async () => {
+    if (!selectedForm) return
+
+    try {
+      await dispatch(deletePasteurizingForm(selectedForm.id)).unwrap()
+      toast.success('Pasteurizing Form deleted successfully')
+      setDeleteDialogOpen(false)
+      setSelectedForm(null)
+    } catch (error: any) {
+      toast.error(error || 'Failed to delete pasteurizing form')
+    }
+  }
+
+  // Get latest form for display
+  const latestForm = Array.isArray(forms) && forms.length > 0 ? forms[0] : null
+
+
 
   // Table columns with actions
   const columns = [
@@ -220,7 +255,7 @@ export default function PasteurizingPage() {
             <div>
               <div className="flex items-center space-x-2">
                 <FormIdCopy
-                  displayId={form.tag}
+                  displayId={form.tag!}
                   actualId={form.id}
                   size="sm"
                 />
@@ -479,7 +514,7 @@ export default function PasteurizingPage() {
                   </div>
                   <div className="flex items-center space-x-2">
                     <FormIdCopy
-                      displayId={latestForm?.tag}
+                      displayId={latestForm?.tag!}
                       actualId={latestForm.id}
                       size="sm"
                     />
@@ -538,7 +573,7 @@ export default function PasteurizingPage() {
                       <span className="text-xs font-light text-gray-600">BMT Form</span>
                       <div className="flex items-center space-x-2">
                         <FormIdCopy
-                          displayId={getBMTFormById(latestForm.bmt)?.tag}
+                          displayId={getBMTFormById(latestForm.bmt)?.tag!}
                           actualId={latestForm.bmt}
                           size="sm"
                         />
@@ -595,7 +630,7 @@ export default function PasteurizingPage() {
               {loading ? (
                 <ContentSkeleton sections={1} cardsPerSection={4} />
               ) : (
-                <DataTable columns={columns} data={forms} showSearch={false} />
+                <DataTable columns={columns} data={filteredForms} showSearch={false} />
               )}
             </div>
           </div>

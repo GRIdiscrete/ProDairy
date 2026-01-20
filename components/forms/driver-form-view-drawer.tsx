@@ -153,16 +153,17 @@ export function DriverFormViewDrawer({
   const isLoading = loading || operationLoading.delete
 
   const handleExportCSV = () => {
+    if (!driverForm) return
     try {
       const legacyProducts = (driverForm as any).collected_products || []
       const newProducts = (driverForm as any).drivers_form_collected_products || []
       const allProducts = [...legacyProducts, ...newProducts]
 
       // Get driver information
-      const driverId = typeof driverForm.driver === 'string' ? driverForm.driver : (driverForm as any).driver_id
+      const driverId = driverForm && (typeof driverForm.driver === 'string' ? driverForm.driver : (driverForm as any).driver_id)
       const driverUser = users.find(user => user.id === driverId)
       const driverName = driverUser ? `${driverUser.first_name} ${driverUser.last_name}` :
-        ((driverForm as any).drivers_driver_fkey ?
+        (driverForm && (driverForm as any).drivers_driver_fkey ?
           `${(driverForm as any).drivers_driver_fkey.first_name} ${(driverForm as any).drivers_driver_fkey.last_name}` :
           'Unknown Driver')
 
@@ -210,9 +211,8 @@ export function DriverFormViewDrawer({
           // Add a row for each test
           productTests.forEach((test: any) => {
             csvData.push([
-              driverForm.tag || driverForm.id,
               driverName,
-              driverForm.tanker || 'N/A',
+              (driverForm.tanker as any)?.reg_number || (typeof driverForm.tanker === 'string' ? driverForm.tanker : 'N/A'),
               new Date(driverForm.start_date).toLocaleDateString(),
               new Date(driverForm.end_date).toLocaleDateString(),
               driverForm.delivered ? 'Yes' : 'No',
@@ -236,9 +236,9 @@ export function DriverFormViewDrawer({
         } else {
           // Add a row for product without tests
           csvData.push([
-            driverForm.tag || driverForm.id,
+            driverForm.tag || driverForm.id || "",
             driverName,
-            driverForm.tanker || 'N/A',
+            (driverForm.tanker as any)?.reg_number || (typeof driverForm.tanker === 'string' ? driverForm.tanker : 'N/A'),
             new Date(driverForm.start_date).toLocaleDateString(),
             new Date(driverForm.end_date).toLocaleDateString(),
             driverForm.delivered ? 'Yes' : 'No',
@@ -271,7 +271,7 @@ export function DriverFormViewDrawer({
       const link = document.createElement('a')
       const url = URL.createObjectURL(blob)
       link.setAttribute('href', url)
-      link.setAttribute('download', `milk-test-report-${driverForm.tag || driverForm.id}-${new Date().toISOString().split('T')[0]}.csv`)
+      link.setAttribute('download', `milk-test-report-${driverForm.tag || driverForm.id || ""}-${new Date().toISOString().split('T')[0]}.csv`)
       link.style.visibility = 'hidden'
       document.body.appendChild(link)
       link.click()
@@ -374,8 +374,8 @@ export function DriverFormViewDrawer({
                         <div className="space-y-3">
                           <div className="flex items-start gap-4">
                             <FormIdCopy
-                              displayId={driverForm.tag}
-                              actualId={driverForm.id}
+                              displayId={driverForm.tag || driverForm.id || ""}
+                              actualId={driverForm.tag || driverForm.id || ""}
                               size="md"
                             />
                           </div>
@@ -439,7 +439,7 @@ export function DriverFormViewDrawer({
                           <div className="space-y-1">
                             <div className="text-xs text-gray-500 flex items-center gap-1"><Truck className="h-3 w-3" />Tanker</div>
                             <div className="text-sm font-light">
-                              {driverForm.tanker ?? 'N/A'}
+                              {(driverForm.tanker as any)?.reg_number || (typeof driverForm.tanker === 'string' ? driverForm.tanker : 'N/A')}
                             </div>
                           </div>
                           <div className="space-y-1">
@@ -776,7 +776,6 @@ export function DriverFormViewDrawer({
           // driversFormId={driverForm?.id || ""}
           collectedProductId={selectedProductForLab?.id || ""}
           collectedProduct={selectedProductForLab}
-          productName={selectedProductForLab?.raw_material_name || selectedProductForLab?.unit_of_measure || selectedProductForLab?.name || ""}
           mode={labMode}
           existingId={labExistingId}
           existingData={selectedTestForLab}

@@ -23,16 +23,16 @@ interface StandardizingFormViewDrawerProps {
   onDelete?: () => void
 }
 
-export function StandardizingFormViewDrawer({ 
-  open, 
-  onOpenChange, 
+export function StandardizingFormViewDrawer({
+  open,
+  onOpenChange,
   form,
   onEdit,
   onDelete
 }: StandardizingFormViewDrawerProps) {
   const [isAnimating, setIsAnimating] = useState(false)
   const [animationProgress, setAnimationProgress] = useState(0)
-  
+
   // Get users and BMT forms from state
   const { items: users } = useAppSelector((state) => state.users)
   const { forms: bmtForms } = useAppSelector((state) => state.bmtControlForms)
@@ -51,7 +51,7 @@ export function StandardizingFormViewDrawer({
   const startAnimation = () => {
     setIsAnimating(true)
     setAnimationProgress(0)
-    
+
     const interval = setInterval(() => {
       setAnimationProgress(prev => {
         if (prev >= 100) {
@@ -123,15 +123,15 @@ export function StandardizingFormViewDrawer({
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center space-x-2">
               <h2 className="text-xl font-light">Standardizing Form</h2>
-              <FormIdCopy 
-                displayId={form?.tag}
-                actualId={form.id}
-                size="md"
+              <FormIdCopy
+                displayId={form.tag || "N/A"}
+                actualId={form.tag || ""}
+                size="sm"
               />
             </div>
             <div className="flex items-center space-x-2">
               <LoadingButton
-                
+
                 size="sm"
                 onClick={onEdit}
                 className="bg-[#A0CF06] text-[#211D1E] border-0 rounded-full"
@@ -151,7 +151,7 @@ export function StandardizingFormViewDrawer({
           </div>
 
           {/* Visual Standardizing Process Animation */}
-       
+
 
           {/* Form Details Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -166,9 +166,9 @@ export function StandardizingFormViewDrawer({
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-light text-gray-600">Form ID</span>
-                  <FormIdCopy 
-                    displayId={form?.tag}
-                    actualId={form.id}
+                  <FormIdCopy
+                    displayId={form.tag || "N/A"}
+                    actualId={form.tag || ""}
                     size="sm"
                   />
                 </div>
@@ -178,9 +178,9 @@ export function StandardizingFormViewDrawer({
                     (() => {
                       const bmtForm = getBMTFormById(form.bmt_id)
                       return bmtForm ? (
-                        <FormIdCopy 
-                          displayId={bmtForm?.tag}
-                          actualId={form.bmt_id}
+                        <FormIdCopy
+                          displayId={bmtForm.tag || "N/A"}
+                          actualId={bmtForm.tag || ""}
                           size="sm"
                         />
                       ) : (
@@ -196,10 +196,10 @@ export function StandardizingFormViewDrawer({
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-light text-gray-600">Created</span>
                   <span className="text-sm font-light">
-                    {new Date(form.created_at).toLocaleDateString('en-GB', { 
-                      day: 'numeric', 
-                      month: 'long', 
-                      year: 'numeric' 
+                    {new Date(form.created_at).toLocaleDateString('en-GB', {
+                      day: 'numeric',
+                      month: 'long',
+                      year: 'numeric'
                     })}
                   </span>
                 </div>
@@ -216,10 +216,10 @@ export function StandardizingFormViewDrawer({
                       (() => {
                         const operatorUser = getUserById(form.operator_id)
                         return operatorUser ? (
-                          <UserAvatar 
-                            user={operatorUser} 
-                            size="md" 
-                            showName={true} 
+                          <UserAvatar
+                            user={operatorUser}
+                            size="md"
+                            showName={true}
                             showEmail={true}
                             showDropdown={true}
                           />
@@ -265,9 +265,9 @@ export function StandardizingFormViewDrawer({
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-light text-gray-600">BMT Form ID</span>
-                      <FormIdCopy 
-                        displayId={bmtForm?.tag}
-                        actualId={form.bmt_id}
+                      <FormIdCopy
+                        displayId={bmtForm.tag || "N/A"}
+                        actualId={bmtForm.tag || ""}
                         size="sm"
                       />
                     </div>
@@ -282,10 +282,10 @@ export function StandardizingFormViewDrawer({
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-light text-gray-600">BMT Created</span>
                       <span className="text-sm font-light">
-                        {new Date(bmtForm.created_at).toLocaleDateString('en-GB', { 
-                          day: 'numeric', 
-                          month: 'short', 
-                          year: 'numeric' 
+                        {new Date(bmtForm.created_at).toLocaleDateString('en-GB', {
+                          day: 'numeric',
+                          month: 'short',
+                          year: 'numeric'
                         })}
                       </span>
                     </div>
@@ -352,7 +352,7 @@ export function StandardizingFormViewDrawer({
             </div>
 
             {/* Cream Information */}
-          
+
           </div>
 
           {/* Record Information */}

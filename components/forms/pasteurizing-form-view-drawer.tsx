@@ -56,7 +56,7 @@ export function PasteurizingFormViewDrawer({
             {onEdit && (
               <Button
                 onClick={onEdit}
-                
+
                 size="sm"
                 className="bg-[#A0CF06] text-[#211D1E] rounded-full"
               >
@@ -114,8 +114,8 @@ export function PasteurizingFormViewDrawer({
                 <div>
                   <span className="text-xs font-light text-gray-500">Form ID</span>
                   <FormIdCopy
-                    displayId={form?.tag}
-                    actualId={form.id}
+                    displayId={form.tag || "N/A"}
+                    actualId={form.tag || ""}
                     size="sm"
                   />
                 </div>
@@ -166,8 +166,8 @@ export function PasteurizingFormViewDrawer({
                   <div className="flex items-center justify-between">
                     <p className="text-sm font-light">
                       {(() => {
-                        const machine = machines.find((m:any) => m.id === form.machine)
-                        return machine ? machine.name : (form.machine?.slice(0,8) || 'N/A')
+                        const machine = machines.find((m: any) => m.id === form.machine)
+                        return machine ? machine.name : (form.machine?.slice(0, 8) || 'N/A')
                       })()}
                     </p>
                     <button type="button" onClick={() => setMachineOpen(v => !v)} className="p-1 rounded-full hover:bg-gray-100">
@@ -175,7 +175,7 @@ export function PasteurizingFormViewDrawer({
                     </button>
                   </div>
                   {machineOpen && (() => {
-                    const m = machines.find((m:any) => m.id === form.machine)
+                    const m = machines.find((m: any) => m.id === form.machine)
                     if (!m) return null
                     return (
                       <div className="mt-2 p-3 border rounded bg-gray-50 text-sm">
@@ -218,8 +218,8 @@ export function PasteurizingFormViewDrawer({
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-light text-gray-600">BMT Form ID</span>
                     <FormIdCopy
-                      displayId={bmtForm?.tag}
-                      actualId={form.bmt_id}
+                      displayId={bmtForm.tag || "N/A"}
+                      actualId={bmtForm.tag || bmtForm.id || ""}
                       size="sm"
                     />
                   </div>

@@ -231,8 +231,8 @@ export function ProductIncubationDrawer({
         await dispatch(updateProductIncubationAction({
           ...payload,
           id: incubation.id,
-          incubation_tracking_form_batch: {...payload.incubation_tracking_form_batch, id: incubation.batch.id, },
-          
+          incubation_tracking_form_batch: { ...payload.incubation_tracking_form_batch, id: incubation.batch.id, },
+
         })).unwrap()
         toast.success("Product Incubation updated successfully")
       } else {
@@ -362,13 +362,16 @@ export function ProductIncubationDrawer({
                             <SelectValue placeholder="Select production plan" />
                           </SelectTrigger>
                           <SelectContent>
-                            {productionPlans.length === 0 ? (
-                              <SelectItem value="">{productionPlanLoading.fetch ? "Loading..." : "No plans available"}</SelectItem>
-                            ) : productionPlans.map((p: any) => (
+                            {productionPlans.map((p: any) => (
                               <SelectItem key={p.id} value={p.id}>
                                 {p.tag || p.name || p.id.slice(0, 8)}
                               </SelectItem>
                             ))}
+                            {productionPlans.length === 0 && (
+                              <div className="p-2 text-sm text-gray-500 text-center">
+                                {productionPlanLoading.fetch ? "Loading..." : "No plans available"}
+                              </div>
+                            )}
                           </SelectContent>
                         </Select>
                       </div>
@@ -604,7 +607,7 @@ export function ProductIncubationDrawer({
           <div className="flex items-center gap-2">
             <Button
               type="button"
-              
+
               onClick={() => onOpenChange(false)}
               className="flex items-center gap-2"
             >

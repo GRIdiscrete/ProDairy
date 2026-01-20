@@ -22,9 +22,9 @@ interface SterilisedMilkProcessViewDrawerProps {
   formMap?: Record<string, { tag?: string }>
 }
 
-export function SterilisedMilkProcessViewDrawer({ 
-  open, 
-  onOpenChange, 
+export function SterilisedMilkProcessViewDrawer({
+  open,
+  onOpenChange,
   process,
   processDetails,
   onEdit,
@@ -106,7 +106,7 @@ export function SterilisedMilkProcessViewDrawer({
             {onEdit && (
               <Button
                 onClick={onEdit}
-                
+
                 size="sm"
                 className=" bg-[#006BC4] text-white rounded-full"
               >
@@ -185,7 +185,7 @@ export function SterilisedMilkProcessViewDrawer({
                   <p className="text-sm font-light">
                     {process.filmatic_form_id ? (
                       <span className="inline-flex items-center space-x-2">
-                        <FormIdCopy displayId={formTag} actualId={process.filmatic_form_id} size="sm" />
+                        <FormIdCopy displayId={formTag || 'N/A'} actualId={process.filmatic_form_id || ''} size="sm" />
                       </span>
                     ) : "Not linked"}
                   </p>

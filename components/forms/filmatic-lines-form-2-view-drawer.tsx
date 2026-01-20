@@ -20,9 +20,9 @@ interface FilmaticLinesForm2ViewDrawerProps {
   onEdit?: () => void
 }
 
-export function FilmaticLinesForm2ViewDrawer({ 
-  open, 
-  onOpenChange, 
+export function FilmaticLinesForm2ViewDrawer({
+  open,
+  onOpenChange,
   form,
   onEdit
 }: FilmaticLinesForm2ViewDrawerProps) {
@@ -50,7 +50,7 @@ export function FilmaticLinesForm2ViewDrawer({
             {onEdit && (
               <Button
                 onClick={onEdit}
-                
+
                 size="sm"
                 className=" bg-[#006BC4] text-white rounded-full"
               >
@@ -108,7 +108,7 @@ export function FilmaticLinesForm2ViewDrawer({
                 <div>
                   <span className="text-xs font-light text-gray-500">Form</span>
                   <div className="mt-1">
-                    {form.tag && form.id ? <FormIdCopy displayId={form.tag} actualId={form.id} size="sm" /> : <p className="text-sm font-light">{form.id || 'N/A'}</p>}
+                    {form.tag ? <FormIdCopy displayId={form.tag || "N/A"} actualId={form.tag || ""} size="sm" /> : <p className="text-sm font-light">{form.tag || 'N/A'}</p>}
                   </div>
                 </div>
                 <div>
@@ -178,8 +178,8 @@ export function FilmaticLinesForm2ViewDrawer({
                     <span className="text-xs font-light text-gray-500">Manager</span>
                     <div className="mt-1">
                       {(() => {
-                        const managerUser = form.groups ? users.find((u:any) => u.id === form.groups?.manager_id) : null
-                        return managerUser ? <UserAvatar user={managerUser} size="md" showName={true} showEmail={true} showDropdown={true} /> : <p className="text-sm font-light">{form.groups?.manager_id?.slice(0,8) || 'N/A'}</p>
+                        const managerUser = form.groups ? users.find((u: any) => u.id === form.groups?.manager_id) : null
+                        return managerUser ? <UserAvatar user={managerUser} size="md" showName={true} showEmail={true} showDropdown={true} /> : <p className="text-sm font-light">{form.groups?.manager_id?.slice(0, 8) || 'N/A'}</p>
                       })()}
                     </div>
                   </div>
@@ -195,8 +195,8 @@ export function FilmaticLinesForm2ViewDrawer({
                       <p className="text-sm font-light"><span className="font-medium">Members:</span> {form.groups.group_a.length}</p>
                       <div className="mt-2 flex flex-wrap gap-2">
                         {form.groups.group_a.slice(0, 8).map((memberId: string, idx: number) => {
-                          const user = users.find((u:any) => u.id === memberId)
-                          return user ? <div key={idx}><UserAvatar user={user} size="md" showName={true} showEmail={false} showDropdown={true} /></div> : <span key={idx} className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">{memberId.slice(0,8)}</span>
+                          const user = users.find((u: any) => u.id === memberId)
+                          return user ? <div key={idx}><UserAvatar user={user} size="md" showName={true} showEmail={false} showDropdown={true} /></div> : <span key={idx} className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">{memberId.slice(0, 8)}</span>
                         })}
                         {form.groups.group_a.length > 8 && <span className="text-xs text-gray-500">+{form.groups.group_a.length - 8} more</span>}
                       </div>
@@ -275,11 +275,11 @@ export function FilmaticLinesForm2ViewDrawer({
                     </div>
                     <div className="pl-4 space-y-2">
                       <p className="text-sm font-light"><span className="font-medium">Operator:</span> {(() => {
-                        const op = users.find((u:any) => u.id === shift.operator_id)
-                        return op ? <UserAvatar user={op} size="md" showName={true} showEmail={true} showDropdown={true} /> : (shift.operator_id ? shift.operator_id.slice(0,8) : 'N/A')
+                        const op = users.find((u: any) => u.id === shift.operator_id)
+                        return op ? <UserAvatar user={op} size="md" showName={true} showEmail={true} showDropdown={true} /> : (shift.operator_id ? shift.operator_id.slice(0, 8) : 'N/A')
                       })()}</p>
                       <p className="text-sm font-light"><span className="font-medium">Details Count:</span> {shift.filmatic_line_form_2_day_shift_details?.length || 0}</p>
-                      
+
                       {shift.filmatic_line_form_2_day_shift_details && shift.filmatic_line_form_2_day_shift_details.length > 0 && (
                         <div className="mt-3">
                           <h5 className="text-xs font-medium text-gray-700 mb-2">Production Details:</h5>
@@ -350,11 +350,11 @@ export function FilmaticLinesForm2ViewDrawer({
                     </div>
                     <div className="pl-4 space-y-2">
                       <p className="text-sm font-light"><span className="font-medium">Operator:</span> {(() => {
-                        const op = users.find((u:any) => u.id === shift.operator_id)
-                        return op ? <UserAvatar user={op} size="md" showName={true} showEmail={true} showDropdown={true} /> : (shift.operator_id ? shift.operator_id.slice(0,8) : 'N/A')
+                        const op = users.find((u: any) => u.id === shift.operator_id)
+                        return op ? <UserAvatar user={op} size="md" showName={true} showEmail={true} showDropdown={true} /> : (shift.operator_id ? shift.operator_id.slice(0, 8) : 'N/A')
                       })()}</p>
                       <p className="text-sm font-light"><span className="font-medium">Details Count:</span> {shift.filmatic_line_form_2_night_shift_details?.length || 0}</p>
-                      
+
                       {shift.filmatic_line_form_2_night_shift_details && shift.filmatic_line_form_2_night_shift_details.length > 0 && (
                         <div className="mt-3">
                           <h5 className="text-xs font-medium text-gray-700 mb-2">Production Details:</h5>

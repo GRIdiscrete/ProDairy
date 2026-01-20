@@ -9,6 +9,7 @@ export interface FilmaticLinesProductionSheet {
   date: string
   shift: string
   product: string
+  tag: string
   details: string | null
   filmatic_lines_production_sheet_details_fkey?: FilmaticLinesProductionSheetDetail | null
   filmatic_lines_production_sheet_approved_by_fkey?: {
@@ -32,6 +33,7 @@ export interface CreateFilmaticLinesProductionSheetRequest {
   date: string
   shift: string
   product: string
+  tag: string
 }
 
 export interface UpdateFilmaticLinesProductionSheetRequest {
@@ -40,6 +42,7 @@ export interface UpdateFilmaticLinesProductionSheetRequest {
   date: string
   shift: string
   product: string
+  tag: string
 }
 
 export interface FilmaticLinesProductionSheetDetail {

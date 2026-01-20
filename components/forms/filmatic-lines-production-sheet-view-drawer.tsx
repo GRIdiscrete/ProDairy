@@ -7,12 +7,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { CopyButton } from "@/components/ui/copy-button"
-import { 
-  Package, 
-  Calendar, 
-  User, 
-  Building, 
-  Clock, 
+import {
+  Package,
+  Calendar,
+  User,
+  Building,
+  Clock,
   Hash,
   Edit,
   ArrowRight,
@@ -26,6 +26,7 @@ import {
   Droplets
 } from "lucide-react"
 import { FilmaticLinesProductionSheet } from "@/lib/api/filmatic-lines"
+import { FormIdCopy } from "@/components/ui/form-id-copy"
 
 interface FilmaticLinesProductionSheetViewDrawerProps {
   open: boolean
@@ -34,11 +35,11 @@ interface FilmaticLinesProductionSheetViewDrawerProps {
   onEdit: () => void
 }
 
-export function FilmaticLinesProductionSheetViewDrawer({ 
-  open, 
-  onOpenChange, 
+export function FilmaticLinesProductionSheetViewDrawer({
+  open,
+  onOpenChange,
   sheet,
-  onEdit 
+  onEdit
 }: FilmaticLinesProductionSheetViewDrawerProps) {
   if (!sheet) return null
 
@@ -99,7 +100,7 @@ export function FilmaticLinesProductionSheetViewDrawer({
                     <Factory className="w-5 h-5 text-gray-600" />
                   </div>
                   <div>
-                    <CardTitle className="text-lg font-light">Sheet #{sheet.id?.slice(0, 8)}</CardTitle>
+                    <CardTitle className="text-lg font-light">Sheet Details</CardTitle>
                     <div className="flex items-center space-x-2 mt-1">
                       <Badge className="bg-blue-100 text-blue-800 font-light">
                         {sheet.product}
@@ -107,12 +108,13 @@ export function FilmaticLinesProductionSheetViewDrawer({
                       <Badge className="bg-green-100 text-green-800 font-light">
                         {sheet.shift}
                       </Badge>
+                      <FormIdCopy displayId={sheet.tag || sheet.id} actualId={sheet.id} size="sm" />
                     </div>
                   </div>
                 </div>
                 <Button
                   onClick={onEdit}
-                  
+
                   size="sm"
                   className=" bg-[#006BC4] text-white rounded-full"
                 >
@@ -129,10 +131,10 @@ export function FilmaticLinesProductionSheetViewDrawer({
                     <span className="text-sm font-light text-gray-600">Production Date</span>
                   </div>
                   <p className="text-sm font-light">
-                    {new Date(sheet.date).toLocaleDateString('en-GB', { 
-                      day: 'numeric', 
-                      month: 'long', 
-                      year: 'numeric' 
+                    {new Date(sheet.date).toLocaleDateString('en-GB', {
+                      day: 'numeric',
+                      month: 'long',
+                      year: 'numeric'
                     })}
                   </p>
                 </div>

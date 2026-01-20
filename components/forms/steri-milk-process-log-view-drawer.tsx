@@ -28,9 +28,9 @@ interface SteriMilkProcessLogViewDrawerProps {
   formMap?: Record<string, { tag?: string }>
 }
 
-export function SteriMilkProcessLogViewDrawer({ 
-  open, 
-  onOpenChange, 
+export function SteriMilkProcessLogViewDrawer({
+  open,
+  onOpenChange,
   log,
   onEdit,
   formMap
@@ -117,12 +117,12 @@ export function SteriMilkProcessLogViewDrawer({
         try {
           if (filmaticLinesForm1Api.getForm) {
             const resp = await filmaticLinesForm1Api.getForm(log.filmatic_form_id)
-            const form = resp?.data ?? resp
-            if (mounted) setFilmaticFormTag(form?.tag ?? form?.name ?? null)
+            const form = resp
+            if (mounted) setFilmaticFormTag(form?.tag ?? null)
           } else {
             const all = await filmaticLinesForm1Api.getForms()
             const form = (all || []).find((f: any) => f.id === log.filmatic_form_id)
-            if (mounted) setFilmaticFormTag(form?.tag ?? form?.name ?? null)
+            if (mounted) setFilmaticFormTag(form?.tag ?? null)
           }
         } catch {
           if (mounted) setFilmaticFormTag(null)
@@ -182,7 +182,7 @@ export function SteriMilkProcessLogViewDrawer({
                   <>
                     <Button
                       onClick={() => setShowTestReportForm(true)}
-                      
+
                       size="sm"
                       className={`border-0 rounded-full ${hasTest ? " from-green-500 to-emerald-500 text-white" : " from-blue-500 to-cyan-500 text-white"}`}
                     >
@@ -191,7 +191,7 @@ export function SteriMilkProcessLogViewDrawer({
                     </Button>
                     <Button
                       onClick={() => setShowPostTestForm(true)}
-                      
+
                       size="sm"
                       className={`border-0 rounded-full ${hasPost ? "bg-[#A0D001] text-white" : "bg-[#0068BD] text-white"}`}
                     >
@@ -204,7 +204,7 @@ export function SteriMilkProcessLogViewDrawer({
               {onEdit && (
                 <Button
                   onClick={onEdit}
-                  
+
                   size="sm"
                   className=" from-green-500 to-emerald-500 text-white border-0 rounded-full"
                 >
@@ -263,169 +263,169 @@ export function SteriMilkProcessLogViewDrawer({
                 </div>
               </div>
 
-          {/* Log Information */}
-          <Card className="shadow-none border border-gray-200 rounded-lg">
-            <CardHeader className="pb-4">
-              <div className="flex items-center space-x-2">
-                <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
-                  <FileText className="h-4 w-4 text-blue-600" />
-                </div>
-                <CardTitle className="text-base font-light">Log Information</CardTitle>
-              </div>
-            </CardHeader>
-
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <span className="text-xs font-light text-gray-500">Log ID</span>
-                  <div className="mt-1">
-                    <FormIdCopy displayId={log.tag || 'N/A'} actualId={log.id} size="sm" />
-                  </div>
-                </div>
-
-                <div>
-                  <span className="text-xs font-light text-gray-500">Form</span>
-                  <p className="text-sm font-light">
-                    {filmaticFormTag ?? (log.filmatic_form_id ? `Form #${String(log.filmatic_form_id).slice(0, 8)}` : "Not linked")}
-                  </p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <span className="text-xs font-light text-gray-500">Updated At</span>
-                  <p className="text-sm font-light">{log.updated_at ? format(new Date(log.updated_at), "PPP 'at' p") : "N/A"}</p>
-                </div>
-                <div>
-                  <span className="text-xs font-light text-gray-500">Approver</span>
-                  <p className="text-sm font-light">{approverRoleName ?? (log.approver_id ? `Approver #${String(log.approver_id).slice(0, 8)}` : "Not assigned")}</p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <span className="text-xs font-light text-gray-500">Filmatic Form ID</span>
-                  <p className="text-sm font-light">{log.filmatic_form_id ? `Form #${String(log.filmatic_form_id).slice(0, 8)}` : "Not linked"}</p>
-                </div>
-                <div>
-                  <span className="text-xs font-light text-gray-500">Batch</span>
-                  <p className="text-sm font-light">{batch ? `#${batch.batch_number}` : "No batch"}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Batch Information (single batch_id) */}
-          {batch && (
-            <Card className="shadow-none border border-gray-200 rounded-lg">
-              <CardHeader className="pb-4">
-                <div className="flex items-center space-x-2">
-                  <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
-                    <Package className="h-4 w-4 text-blue-600" />
-                  </div>
-                  <CardTitle className="text-base font-light">Batch Information</CardTitle>
-                </div>
-              </CardHeader>
-
-              <CardContent className="space-y-6">
-                <div className="space-y-2">
-                  <h4 className="text-sm font-medium">Batch Details</h4>
-                  <div className="grid grid-cols-2 gap-4 pl-4">
-                    <div>
-                      <p className="text-sm font-light"><span className="font-medium">Batch ID:</span> {batch.id ?? "—"}</p>
+              {/* Log Information */}
+              <Card className="shadow-none border border-gray-200 rounded-lg">
+                <CardHeader className="pb-4">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
+                      <FileText className="h-4 w-4 text-blue-600" />
                     </div>
+                    <CardTitle className="text-base font-light">Log Information</CardTitle>
+                  </div>
+                </CardHeader>
+
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <p className="text-sm font-light"><span className="font-medium">Batch Number:</span> #{batch.batch_number ?? "—"}</p>
+                      <span className="text-xs font-light text-gray-500">Log ID</span>
+                      <div className="mt-1">
+                        <FormIdCopy displayId={log.tag || 'N/A'} actualId={log.tag || ''} size="sm" />
+                      </div>
                     </div>
+
                     <div>
-                      <p className="text-sm font-light"><span className="font-medium">Date:</span> {batch.date ?? "—"}</p>
+                      <span className="text-xs font-light text-gray-500">Form</span>
+                      <p className="text-sm font-light">
+                        {filmaticFormTag ?? (log.filmatic_form_id ? `Form #${String(log.filmatic_form_id).slice(0, 8)}` : "Not linked")}
+                      </p>
                     </div>
                   </div>
-                </div>
 
-                <Separator />
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <span className="text-xs font-light text-gray-500">Updated At</span>
+                      <p className="text-sm font-light">{log.updated_at ? format(new Date(log.updated_at), "PPP 'at' p") : "N/A"}</p>
+                    </div>
+                    <div>
+                      <span className="text-xs font-light text-gray-500">Approver</span>
+                      <p className="text-sm font-light">{approverRoleName ?? (log.approver_id ? `Approver #${String(log.approver_id).slice(0, 8)}` : "Not assigned")}</p>
+                    </div>
+                  </div>
 
-                <div className="space-y-2">
-                  <h4 className="text-sm font-medium">Process Times & Readings</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg">
-                    {detailItems.map(item => {
-                      // compute safe display values: fallback may be a primitive or an object { time, temperature, pressure }
-                      const fb = item.fallback as any
-                      const fbIsObj = fb && typeof fb === "object"
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <span className="text-xs font-light text-gray-500">Filmatic Form ID</span>
+                      <p className="text-sm font-light">{log.filmatic_form_id ? `Form #${String(log.filmatic_form_id).slice(0, 8)}` : "Not linked"}</p>
+                    </div>
+                    <div>
+                      <span className="text-xs font-light text-gray-500">Batch</span>
+                      <p className="text-sm font-light">{batch ? `#${batch.batch_number}` : "No batch"}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
 
-                      const timeVal = item.detail?.time ?? (fbIsObj ? fb.time : fb) ?? "N/A"
+              {/* Batch Information (single batch_id) */}
+              {batch && (
+                <Card className="shadow-none border border-gray-200 rounded-lg">
+                  <CardHeader className="pb-4">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
+                        <Package className="h-4 w-4 text-blue-600" />
+                      </div>
+                      <CardTitle className="text-base font-light">Batch Information</CardTitle>
+                    </div>
+                  </CardHeader>
 
-                      const tempRaw = item.detail?.temperature ?? (fbIsObj ? fb.temperature : null)
-                      const tempVal = tempRaw != null ? `${tempRaw}°C` : "N/A"
-
-                      const pressureRaw = item.detail?.pressure ?? (fbIsObj ? fb.pressure : null)
-                      const pressureVal = pressureRaw != null ? `${pressureRaw} Bar` : "N/A"
-
-                      return (
-                        <div key={String(item.key)} className="bg-white p-3 rounded-md shadow-sm border border-gray-100">
-                          <h4 className="text-sm font-medium text-gray-700 mb-2 flex items-center space-x-2">
-                            <Clock className="h-4 w-4 text-gray-500" />
-                            <span>{item.key}</span>
-                          </h4>
-                          <div className="space-y-2 text-sm text-gray-600">
-                            <div><span className="font-medium">Time:</span> {timeVal}</div>
-                            <div><span className="font-medium">Temp:</span> {tempVal}</div>
-                            <div><span className="font-medium">Pressure:</span> {pressureVal}</div>
-                          </div>
+                  <CardContent className="space-y-6">
+                    <div className="space-y-2">
+                      <h4 className="text-sm font-medium">Batch Details</h4>
+                      <div className="grid grid-cols-2 gap-4 pl-4">
+                        <div>
+                          <p className="text-sm font-light"><span className="font-medium">Batch ID:</span> {batch.id ?? "—"}</p>
                         </div>
-                      )
-                    })}
+                        <div>
+                          <p className="text-sm font-light"><span className="font-medium">Batch Number:</span> #{batch.batch_number ?? "—"}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-light"><span className="font-medium">Date:</span> {batch.date ?? "—"}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <Separator />
+
+                    <div className="space-y-2">
+                      <h4 className="text-sm font-medium">Process Times & Readings</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg">
+                        {detailItems.map(item => {
+                          // compute safe display values: fallback may be a primitive or an object { time, temperature, pressure }
+                          const fb = item.fallback as any
+                          const fbIsObj = fb && typeof fb === "object"
+
+                          const timeVal = item.detail?.time ?? (fbIsObj ? fb.time : fb) ?? "N/A"
+
+                          const tempRaw = item.detail?.temperature ?? (fbIsObj ? fb.temperature : null)
+                          const tempVal = tempRaw != null ? `${tempRaw}°C` : "N/A"
+
+                          const pressureRaw = item.detail?.pressure ?? (fbIsObj ? fb.pressure : null)
+                          const pressureVal = pressureRaw != null ? `${pressureRaw} Bar` : "N/A"
+
+                          return (
+                            <div key={String(item.key)} className="bg-white p-3 rounded-md shadow-sm border border-gray-100">
+                              <h4 className="text-sm font-medium text-gray-700 mb-2 flex items-center space-x-2">
+                                <Clock className="h-4 w-4 text-gray-500" />
+                                <span>{item.key}</span>
+                              </h4>
+                              <div className="space-y-2 text-sm text-gray-600">
+                                <div><span className="font-medium">Time:</span> {timeVal}</div>
+                                <div><span className="font-medium">Temp:</span> {tempVal}</div>
+                                <div><span className="font-medium">Pressure:</span> {pressureVal}</div>
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+
+                    <Separator />
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Approval Status */}
+              <Card className="shadow-none border border-gray-200 rounded-lg">
+                <CardHeader className="pb-4">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center">
+                      <CheckCircle className="h-4 w-4 text-green-600" />
+                    </div>
+                    <CardTitle className="text-base font-light">Approval Status</CardTitle>
                   </div>
-                </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-light">Status</span>
+                    <Badge className={log.approved ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"}>
+                      {log.approved ? 'Approved' : 'Pending Approval'}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-light">Approver</span>
+                    <span className="text-sm font-light">
+                      {approverRoleName ? approverRoleName : (log.approver_id ? `Approver #${String(log.approver_id).slice(0, 8)}` : "Not assigned")}
+                    </span>
+                  </div>
+                </CardContent>
+              </Card>
 
-                <Separator />
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Approval Status */}
-          <Card className="shadow-none border border-gray-200 rounded-lg">
-            <CardHeader className="pb-4">
-              <div className="flex items-center space-x-2">
-                <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center">
-                  <CheckCircle className="h-4 w-4 text-green-600" />
-                </div>
-                <CardTitle className="text-base font-light">Approval Status</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-light">Status</span>
-                <Badge className={log.approved ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"}>
-                  {log.approved ? 'Approved' : 'Pending Approval'}
-                </Badge>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-light">Approver</span>
-                <span className="text-sm font-light">
-                  {approverRoleName ? approverRoleName : (log.approver_id ? `Approver #${String(log.approver_id).slice(0,8)}` : "Not assigned")}
-                </span>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Log Metadata */}
-          <Card className="shadow-none border border-gray-200 rounded-lg">
-            <CardContent className="py-4">
-              <div className="grid grid-cols-2 gap-4 text-xs text-muted-foreground">
-                <div>
-                  <p><span className="font-medium">Created:</span> {log.created_at ? format(new Date(log.created_at), "PPP 'at' p") : "N/A"}</p>
-                </div>
-                <div>
-                  <p><span className="font-medium">Updated:</span> {log.updated_at ? format(new Date(log.updated_at), "PPP 'at' p") : "N/A"}</p>
-                </div>
-              </div>
-              <div className="mt-2 flex items-center space-x-2">
-                <Clock className="h-3 w-3 text-green-600" />
-                <span className="text-xs text-green-600 font-medium">Latest Steri Milk Process Log</span>
-              </div>
-            </CardContent>
-          </Card>
+              {/* Log Metadata */}
+              <Card className="shadow-none border border-gray-200 rounded-lg">
+                <CardContent className="py-4">
+                  <div className="grid grid-cols-2 gap-4 text-xs text-muted-foreground">
+                    <div>
+                      <p><span className="font-medium">Created:</span> {log.created_at ? format(new Date(log.created_at), "PPP 'at' p") : "N/A"}</p>
+                    </div>
+                    <div>
+                      <p><span className="font-medium">Updated:</span> {log.updated_at ? format(new Date(log.updated_at), "PPP 'at' p") : "N/A"}</p>
+                    </div>
+                  </div>
+                  <div className="mt-2 flex items-center space-x-2">
+                    <Clock className="h-3 w-3 text-green-600" />
+                    <span className="text-xs text-green-600 font-medium">Latest Steri Milk Process Log</span>
+                  </div>
+                </CardContent>
+              </Card>
             </TabsContent>
 
             {/* Test Report Tab */}
@@ -439,357 +439,357 @@ export function SteriMilkProcessLogViewDrawer({
                 // Filter test reports that match the current batch number
                 const batchNumber = batch?.batch_number
                 const filteredReports = testReports.filter((r: any) => r.batch_number === batchNumber)
-                
+
                 return filteredReports.length > 0 ? (
                   <div className="space-y-6">
                     {filteredReports.map((report: any) => (
                       <div key={report.id}>
-                      {/* Report Header */}
-                      <Card className="shadow-none border border-gray-200 rounded-lg">
-                        <CardHeader>
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <CardTitle className="text-lg font-medium">Mixing & Pasteurizing Test Report</CardTitle>
-                              <p className="text-sm text-gray-500 mt-1">Created: {format(new Date(report.created_at), "PPP 'at' p")}</p>
-                            </div>
-                            <Button
-                              onClick={() => setShowTestReportForm(true)}
-                              size="sm"
-                              
-                              className="rounded-full"
-                            >
-                              <Edit className="h-4 w-4 mr-1" />
-                              Edit Report
-                            </Button>
-                          </div>
-                        </CardHeader>
-                      </Card>
+                        {/* Report Header */}
+                        <Card className="shadow-none border border-gray-200 rounded-lg">
+                          <CardHeader>
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <CardTitle className="text-lg font-medium">Mixing & Pasteurizing Test Report</CardTitle>
+                                <p className="text-sm text-gray-500 mt-1">Created: {format(new Date(report.created_at), "PPP 'at' p")}</p>
+                              </div>
+                              <Button
+                                onClick={() => setShowTestReportForm(true)}
+                                size="sm"
 
-                      {/* Basic Information */}
-                      <Card className="shadow-none border border-gray-200 rounded-lg mt-4">
-                        <CardHeader className="pb-4">
-                          <CardTitle className="text-base font-light">Basic Information</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                            <div>
-                              <span className="text-xs font-light text-gray-500">Issue Date</span>
-                              <p className="text-sm font-light">{report.issue_date || 'N/A'}</p>
+                                className="rounded-full"
+                              >
+                                <Edit className="h-4 w-4 mr-1" />
+                                Edit Report
+                              </Button>
                             </div>
-                            <div>
-                              <span className="text-xs font-light text-gray-500">Date of Production</span>
-                              <p className="text-sm font-light">{report.date_of_production || 'N/A'}</p>
-                            </div>
-                            <div>
-                              <span className="text-xs font-light text-gray-500">Batch Number</span>
-                              <p className="text-sm font-light">#{report.batch_number || 'N/A'}</p>
-                            </div>
-                            <div>
-                              <span className="text-xs font-light text-gray-500">Variety</span>
-                              <p className="text-sm font-light">{report.variety || 'N/A'}</p>
-                            </div>
-                            <div>
-                              <span className="text-xs font-light text-gray-500">Approved By</span>
-                              <p className="text-sm font-light">{report.approved_by ? `#${String(report.approved_by).slice(0, 8)}` : 'N/A'}</p>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
+                          </CardHeader>
+                        </Card>
 
-                      {/* Raw Milk Silos */}
-                      {report.raw_milk_silos && report.raw_milk_silos.length > 0 && (
+                        {/* Basic Information */}
                         <Card className="shadow-none border border-gray-200 rounded-lg mt-4">
                           <CardHeader className="pb-4">
-                            <CardTitle className="text-base font-light">Raw Milk Silos</CardTitle>
+                            <CardTitle className="text-base font-light">Basic Information</CardTitle>
                           </CardHeader>
-                          <CardContent>
-                            {report.raw_milk_silos.map((silo: any, index: number) => (
-                              <div key={index} className="space-y-4">
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                  <div>
-                                    <span className="text-xs font-light text-gray-500">Tank</span>
-                                    <p className="text-sm font-light">{silo.tank ? `#${String(silo.tank).slice(0, 8)}` : 'N/A'}</p>
-                                  </div>
-                                  <div>
-                                    <span className="text-xs font-light text-gray-500">Time</span>
-                                    <p className="text-sm font-light">{silo.time || 'N/A'}</p>
-                                  </div>
-                                  <div>
-                                    <span className="text-xs font-light text-gray-500">Temperature</span>
-                                    <p className="text-sm font-light">{silo.temperature ? `${silo.temperature}°C` : 'N/A'}</p>
-                                  </div>
-                                  <div>
-                                    <span className="text-xs font-light text-gray-500">Alcohol</span>
-                                    <p className="text-sm font-light">{silo.alcohol || 'N/A'}</p>
-                                  </div>
-                                  <div>
-                                    <span className="text-xs font-light text-gray-500">Res</span>
-                                    <p className="text-sm font-light">{silo.res || 'N/A'}</p>
-                                  </div>
-                                  <div>
-                                    <span className="text-xs font-light text-gray-500">COB</span>
-                                    <p className="text-sm font-light">{silo.cob ? 'Yes' : 'No'}</p>
-                                  </div>
-                                  <div>
-                                    <span className="text-xs font-light text-gray-500">pH</span>
-                                    <p className="text-sm font-light">{silo.ph || 'N/A'}</p>
-                                  </div>
-                                  <div>
-                                    <span className="text-xs font-light text-gray-500">Fat</span>
-                                    <p className="text-sm font-light">{silo.fat ? `${silo.fat}%` : 'N/A'}</p>
-                                  </div>
-                                  <div>
-                                    <span className="text-xs font-light text-gray-500">LR/SNF</span>
-                                    <p className="text-sm font-light">{silo.lr_snf || 'N/A'}</p>
-                                  </div>
-                                  <div>
-                                    <span className="text-xs font-light text-gray-500">Acidity</span>
-                                    <p className="text-sm font-light">{silo.acidity || 'N/A'}</p>
-                                  </div>
-                                  <div className="col-span-2">
-                                    <span className="text-xs font-light text-gray-500">Remarks</span>
-                                    <p className="text-sm font-light">{silo.remarks || 'N/A'}</p>
-                                  </div>
-                                </div>
+                          <CardContent className="space-y-4">
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                              <div>
+                                <span className="text-xs font-light text-gray-500">Issue Date</span>
+                                <p className="text-sm font-light">{report.issue_date || 'N/A'}</p>
                               </div>
-                            ))}
+                              <div>
+                                <span className="text-xs font-light text-gray-500">Date of Production</span>
+                                <p className="text-sm font-light">{report.date_of_production || 'N/A'}</p>
+                              </div>
+                              <div>
+                                <span className="text-xs font-light text-gray-500">Batch Number</span>
+                                <p className="text-sm font-light">#{report.batch_number || 'N/A'}</p>
+                              </div>
+                              <div>
+                                <span className="text-xs font-light text-gray-500">Variety</span>
+                                <p className="text-sm font-light">{report.variety || 'N/A'}</p>
+                              </div>
+                              <div>
+                                <span className="text-xs font-light text-gray-500">Approved By</span>
+                                <p className="text-sm font-light">{report.approved_by ? `#${String(report.approved_by).slice(0, 8)}` : 'N/A'}</p>
+                              </div>
+                            </div>
                           </CardContent>
                         </Card>
-                      )}
 
-                      {/* Other Tests */}
-                      {report.other_tests && report.other_tests.length > 0 && (
-                        <Card className="shadow-none border border-gray-200 rounded-lg mt-4">
-                          <CardHeader className="pb-4">
-                            <CardTitle className="text-base font-light">Other Tests</CardTitle>
-                          </CardHeader>
-                          <CardContent>
-                            {report.other_tests.map((test: any, index: number) => (
-                              <div key={index} className="space-y-4">
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                  <div className="col-span-2">
-                                    <span className="text-xs font-light text-gray-500">Sample Details</span>
-                                    <p className="text-sm font-light">{test.sample_details || 'N/A'}</p>
-                                  </div>
-                                  <div>
-                                    <span className="text-xs font-light text-gray-500">pH</span>
-                                    <p className="text-sm font-light">{test.ph || 'N/A'}</p>
-                                  </div>
-                                  <div>
-                                    <span className="text-xs font-light text-gray-500">Caustic</span>
-                                    <p className="text-sm font-light">{test.caustic || 'N/A'}</p>
-                                  </div>
-                                  <div>
-                                    <span className="text-xs font-light text-gray-500">Acid</span>
-                                    <p className="text-sm font-light">{test.acid || 'N/A'}</p>
-                                  </div>
-                                  <div>
-                                    <span className="text-xs font-light text-gray-500">Chlorine</span>
-                                    <p className="text-sm font-light">{test.chlorine || 'N/A'}</p>
-                                  </div>
-                                  <div>
-                                    <span className="text-xs font-light text-gray-500">HD</span>
-                                    <p className="text-sm font-light">{test.hd || 'N/A'}</p>
-                                  </div>
-                                  <div>
-                                    <span className="text-xs font-light text-gray-500">TDS</span>
-                                    <p className="text-sm font-light">{test.tds || 'N/A'}</p>
-                                  </div>
-                                  <div>
-                                    <span className="text-xs font-light text-gray-500">Hydrogen Peroxide</span>
-                                    <p className="text-sm font-light">{test.hydrogen_peroxide || 'N/A'}</p>
-                                  </div>
-                                  <div className="col-span-2">
-                                    <span className="text-xs font-light text-gray-500">Remarks</span>
-                                    <p className="text-sm font-light">{test.remarks || 'N/A'}</p>
+                        {/* Raw Milk Silos */}
+                        {report.raw_milk_silos && report.raw_milk_silos.length > 0 && (
+                          <Card className="shadow-none border border-gray-200 rounded-lg mt-4">
+                            <CardHeader className="pb-4">
+                              <CardTitle className="text-base font-light">Raw Milk Silos</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                              {report.raw_milk_silos.map((silo: any, index: number) => (
+                                <div key={index} className="space-y-4">
+                                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                    <div>
+                                      <span className="text-xs font-light text-gray-500">Tank</span>
+                                      <p className="text-sm font-light">{silo.tank ? `#${String(silo.tank).slice(0, 8)}` : 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                      <span className="text-xs font-light text-gray-500">Time</span>
+                                      <p className="text-sm font-light">{silo.time || 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                      <span className="text-xs font-light text-gray-500">Temperature</span>
+                                      <p className="text-sm font-light">{silo.temperature ? `${silo.temperature}°C` : 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                      <span className="text-xs font-light text-gray-500">Alcohol</span>
+                                      <p className="text-sm font-light">{silo.alcohol || 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                      <span className="text-xs font-light text-gray-500">Res</span>
+                                      <p className="text-sm font-light">{silo.res || 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                      <span className="text-xs font-light text-gray-500">COB</span>
+                                      <p className="text-sm font-light">{silo.cob ? 'Yes' : 'No'}</p>
+                                    </div>
+                                    <div>
+                                      <span className="text-xs font-light text-gray-500">pH</span>
+                                      <p className="text-sm font-light">{silo.ph || 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                      <span className="text-xs font-light text-gray-500">Fat</span>
+                                      <p className="text-sm font-light">{silo.fat ? `${silo.fat}%` : 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                      <span className="text-xs font-light text-gray-500">LR/SNF</span>
+                                      <p className="text-sm font-light">{silo.lr_snf || 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                      <span className="text-xs font-light text-gray-500">Acidity</span>
+                                      <p className="text-sm font-light">{silo.acidity || 'N/A'}</p>
+                                    </div>
+                                    <div className="col-span-2">
+                                      <span className="text-xs font-light text-gray-500">Remarks</span>
+                                      <p className="text-sm font-light">{silo.remarks || 'N/A'}</p>
+                                    </div>
                                   </div>
                                 </div>
-                              </div>
-                            ))}
-                          </CardContent>
-                        </Card>
-                      )}
+                              ))}
+                            </CardContent>
+                          </Card>
+                        )}
 
-                      {/* Standardisation & Pasteurisation */}
-                      {report.standardisation_and_pasteurisation && report.standardisation_and_pasteurisation.length > 0 && (
-                        <Card className="shadow-none border border-gray-200 rounded-lg mt-4">
-                          <CardHeader className="pb-4">
-                            <CardTitle className="text-base font-light">Standardisation & Pasteurisation</CardTitle>
-                          </CardHeader>
-                          <CardContent>
-                            {report.standardisation_and_pasteurisation.map((std: any, index: number) => (
-                              <div key={index} className="space-y-4">
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                  <div>
-                                    <span className="text-xs font-light text-gray-500">Tank</span>
-                                    <p className="text-sm font-light">{std.tank ? `#${String(std.tank).slice(0, 8)}` : 'N/A'}</p>
-                                  </div>
-                                  <div>
-                                    <span className="text-xs font-light text-gray-500">Batch</span>
-                                    <p className="text-sm font-light">#{std.batch || 'N/A'}</p>
-                                  </div>
-                                  <div>
-                                    <span className="text-xs font-light text-gray-500">Time</span>
-                                    <p className="text-sm font-light">{std.time || 'N/A'}</p>
-                                  </div>
-                                  <div>
-                                    <span className="text-xs font-light text-gray-500">Temperature</span>
-                                    <p className="text-sm font-light">{std.temperature ? `${std.temperature}°C` : 'N/A'}</p>
-                                  </div>
-                                  <div>
-                                    <span className="text-xs font-light text-gray-500">OT</span>
-                                    <p className="text-sm font-light">{std.ot || 'N/A'}</p>
-                                  </div>
-                                  <div>
-                                    <span className="text-xs font-light text-gray-500">Alcohol</span>
-                                    <p className="text-sm font-light">{std.alcohol || 'N/A'}</p>
-                                  </div>
-                                  <div>
-                                    <span className="text-xs font-light text-gray-500">Phosphatase</span>
-                                    <p className="text-sm font-light">{std.phosphatase || 'N/A'}</p>
-                                  </div>
-                                  <div>
-                                    <span className="text-xs font-light text-gray-500">pH</span>
-                                    <p className="text-sm font-light">{std.ph || 'N/A'}</p>
-                                  </div>
-                                  <div>
-                                    <span className="text-xs font-light text-gray-500">COB</span>
-                                    <p className="text-sm font-light">{std.cob ? 'Yes' : 'No'}</p>
-                                  </div>
-                                  <div>
-                                    <span className="text-xs font-light text-gray-500">Fat</span>
-                                    <p className="text-sm font-light">{std.fat ? `${std.fat}%` : 'N/A'}</p>
-                                  </div>
-                                  <div>
-                                    <span className="text-xs font-light text-gray-500">CI/SI</span>
-                                    <p className="text-sm font-light">{std.ci_si || 'N/A'}</p>
-                                  </div>
-                                  <div>
-                                    <span className="text-xs font-light text-gray-500">LR/SNF</span>
-                                    <p className="text-sm font-light">{std.lr_snf || 'N/A'}</p>
-                                  </div>
-                                  <div>
-                                    <span className="text-xs font-light text-gray-500">Acidity</span>
-                                    <p className="text-sm font-light">{std.acidity || 'N/A'}</p>
-                                  </div>
-                                  <div>
-                                    <span className="text-xs font-light text-gray-500">Analyst</span>
-                                    <p className="text-sm font-light">{std.analyst ? `#${String(std.analyst).slice(0, 8)}` : 'N/A'}</p>
-                                  </div>
-                                  <div className="col-span-2">
-                                    <span className="text-xs font-light text-gray-500">Remarks</span>
-                                    <p className="text-sm font-light">{std.remarks || 'N/A'}</p>
+                        {/* Other Tests */}
+                        {report.other_tests && report.other_tests.length > 0 && (
+                          <Card className="shadow-none border border-gray-200 rounded-lg mt-4">
+                            <CardHeader className="pb-4">
+                              <CardTitle className="text-base font-light">Other Tests</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                              {report.other_tests.map((test: any, index: number) => (
+                                <div key={index} className="space-y-4">
+                                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                    <div className="col-span-2">
+                                      <span className="text-xs font-light text-gray-500">Sample Details</span>
+                                      <p className="text-sm font-light">{test.sample_details || 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                      <span className="text-xs font-light text-gray-500">pH</span>
+                                      <p className="text-sm font-light">{test.ph || 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                      <span className="text-xs font-light text-gray-500">Caustic</span>
+                                      <p className="text-sm font-light">{test.caustic || 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                      <span className="text-xs font-light text-gray-500">Acid</span>
+                                      <p className="text-sm font-light">{test.acid || 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                      <span className="text-xs font-light text-gray-500">Chlorine</span>
+                                      <p className="text-sm font-light">{test.chlorine || 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                      <span className="text-xs font-light text-gray-500">HD</span>
+                                      <p className="text-sm font-light">{test.hd || 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                      <span className="text-xs font-light text-gray-500">TDS</span>
+                                      <p className="text-sm font-light">{test.tds || 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                      <span className="text-xs font-light text-gray-500">Hydrogen Peroxide</span>
+                                      <p className="text-sm font-light">{test.hydrogen_peroxide || 'N/A'}</p>
+                                    </div>
+                                    <div className="col-span-2">
+                                      <span className="text-xs font-light text-gray-500">Remarks</span>
+                                      <p className="text-sm font-light">{test.remarks || 'N/A'}</p>
+                                    </div>
                                   </div>
                                 </div>
-                              </div>
-                            ))}
-                          </CardContent>
-                        </Card>
-                      )}
+                              ))}
+                            </CardContent>
+                          </Card>
+                        )}
 
-                      {/* UHT Steri Milk */}
-                      {report.uht_steri_milk && report.uht_steri_milk.length > 0 && (
-                        <Card className="shadow-none border border-gray-200 rounded-lg mt-4">
-                          <CardHeader className="pb-4">
-                            <CardTitle className="text-base font-light">UHT Steri Milk</CardTitle>
-                          </CardHeader>
-                          <CardContent>
-                            {report.uht_steri_milk.map((uht: any, index: number) => (
-                              <div key={index} className="space-y-4">
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                  <div>
-                                    <span className="text-xs font-light text-gray-500">Time</span>
-                                    <p className="text-sm font-light">{uht.time || 'N/A'}</p>
-                                  </div>
-                                  <div>
-                                    <span className="text-xs font-light text-gray-500">Batch</span>
-                                    <p className="text-sm font-light">{uht.batch || 'N/A'}</p>
-                                  </div>
-                                  <div>
-                                    <span className="text-xs font-light text-gray-500">Temperature</span>
-                                    <p className="text-sm font-light">{uht.temperature ? `${uht.temperature}°C` : 'N/A'}</p>
-                                  </div>
-                                  <div>
-                                    <span className="text-xs font-light text-gray-500">OT</span>
-                                    <p className="text-sm font-light">{uht.ot || 'N/A'}</p>
-                                  </div>
-                                  <div>
-                                    <span className="text-xs font-light text-gray-500">Alc</span>
-                                    <p className="text-sm font-light">{uht.alc || 'N/A'}</p>
-                                  </div>
-                                  <div>
-                                    <span className="text-xs font-light text-gray-500">Res</span>
-                                    <p className="text-sm font-light">{uht.res || 'N/A'}</p>
-                                  </div>
-                                  <div>
-                                    <span className="text-xs font-light text-gray-500">COB</span>
-                                    <p className="text-sm font-light">{uht.cob ? 'Yes' : 'No'}</p>
-                                  </div>
-                                  <div>
-                                    <span className="text-xs font-light text-gray-500">pH</span>
-                                    <p className="text-sm font-light">{uht.ph || 'N/A'}</p>
-                                  </div>
-                                  <div>
-                                    <span className="text-xs font-light text-gray-500">Fat</span>
-                                    <p className="text-sm font-light">{uht.fat ? `${uht.fat}%` : 'N/A'}</p>
-                                  </div>
-                                  <div>
-                                    <span className="text-xs font-light text-gray-500">LR/SNF</span>
-                                    <p className="text-sm font-light">{uht.lr_snf || 'N/A'}</p>
-                                  </div>
-                                  <div>
-                                    <span className="text-xs font-light text-gray-500">CI/SI</span>
-                                    <p className="text-sm font-light">{uht.ci_si || 'N/A'}</p>
-                                  </div>
-                                  <div>
-                                    <span className="text-xs font-light text-gray-500">Total Solids</span>
-                                    <p className="text-sm font-light">{uht.total_solids || 'N/A'}</p>
-                                  </div>
-                                  <div>
-                                    <span className="text-xs font-light text-gray-500">Acidity</span>
-                                    <p className="text-sm font-light">{uht.acidity || 'N/A'}</p>
-                                  </div>
-                                  <div>
-                                    <span className="text-xs font-light text-gray-500">Coffee</span>
-                                    <p className="text-sm font-light">{uht.coffee || 'N/A'}</p>
-                                  </div>
-                                  <div>
-                                    <span className="text-xs font-light text-gray-500">H2O2/Turbidity</span>
-                                    <p className="text-sm font-light">{uht.hydrogen_peroxide_or_turbidity || 'N/A'}</p>
-                                  </div>
-                                  <div>
-                                    <span className="text-xs font-light text-gray-500">Analyst</span>
-                                    <p className="text-sm font-light">{uht.analyst ? `#${String(uht.analyst).slice(0, 8)}` : 'N/A'}</p>
-                                  </div>
-                                  <div className="col-span-2">
-                                    <span className="text-xs font-light text-gray-500">Remarks</span>
-                                    <p className="text-sm font-light">{uht.remarks || 'N/A'}</p>
+                        {/* Standardisation & Pasteurisation */}
+                        {report.standardisation_and_pasteurisation && report.standardisation_and_pasteurisation.length > 0 && (
+                          <Card className="shadow-none border border-gray-200 rounded-lg mt-4">
+                            <CardHeader className="pb-4">
+                              <CardTitle className="text-base font-light">Standardisation & Pasteurisation</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                              {report.standardisation_and_pasteurisation.map((std: any, index: number) => (
+                                <div key={index} className="space-y-4">
+                                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                    <div>
+                                      <span className="text-xs font-light text-gray-500">Tank</span>
+                                      <p className="text-sm font-light">{std.tank ? `#${String(std.tank).slice(0, 8)}` : 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                      <span className="text-xs font-light text-gray-500">Batch</span>
+                                      <p className="text-sm font-light">#{std.batch || 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                      <span className="text-xs font-light text-gray-500">Time</span>
+                                      <p className="text-sm font-light">{std.time || 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                      <span className="text-xs font-light text-gray-500">Temperature</span>
+                                      <p className="text-sm font-light">{std.temperature ? `${std.temperature}°C` : 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                      <span className="text-xs font-light text-gray-500">OT</span>
+                                      <p className="text-sm font-light">{std.ot || 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                      <span className="text-xs font-light text-gray-500">Alcohol</span>
+                                      <p className="text-sm font-light">{std.alcohol || 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                      <span className="text-xs font-light text-gray-500">Phosphatase</span>
+                                      <p className="text-sm font-light">{std.phosphatase || 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                      <span className="text-xs font-light text-gray-500">pH</span>
+                                      <p className="text-sm font-light">{std.ph || 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                      <span className="text-xs font-light text-gray-500">COB</span>
+                                      <p className="text-sm font-light">{std.cob ? 'Yes' : 'No'}</p>
+                                    </div>
+                                    <div>
+                                      <span className="text-xs font-light text-gray-500">Fat</span>
+                                      <p className="text-sm font-light">{std.fat ? `${std.fat}%` : 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                      <span className="text-xs font-light text-gray-500">CI/SI</span>
+                                      <p className="text-sm font-light">{std.ci_si || 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                      <span className="text-xs font-light text-gray-500">LR/SNF</span>
+                                      <p className="text-sm font-light">{std.lr_snf || 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                      <span className="text-xs font-light text-gray-500">Acidity</span>
+                                      <p className="text-sm font-light">{std.acidity || 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                      <span className="text-xs font-light text-gray-500">Analyst</span>
+                                      <p className="text-sm font-light">{std.analyst ? `#${String(std.analyst).slice(0, 8)}` : 'N/A'}</p>
+                                    </div>
+                                    <div className="col-span-2">
+                                      <span className="text-xs font-light text-gray-500">Remarks</span>
+                                      <p className="text-sm font-light">{std.remarks || 'N/A'}</p>
+                                    </div>
                                   </div>
                                 </div>
-                              </div>
-                            ))}
-                          </CardContent>
-                        </Card>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-12 text-gray-500">
-                  <Beaker className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                  <p className="text-base font-medium">No Test Report Created</p>
-                  <p className="text-sm text-gray-400 mt-2">Create a mixing & pasteurizing test report to view details here</p>
-                  <Button
-                    onClick={() => setShowTestReportForm(true)}
-                    size="sm"
-                    className="mt-4  text-white border-0 rounded-full"
-                  >
-                    <Plus className="h-4 w-4 mr-1" />
-                    Create Test Report
-                  </Button>
-                </div>
-              )
-            })()}
+                              ))}
+                            </CardContent>
+                          </Card>
+                        )}
+
+                        {/* UHT Steri Milk */}
+                        {report.uht_steri_milk && report.uht_steri_milk.length > 0 && (
+                          <Card className="shadow-none border border-gray-200 rounded-lg mt-4">
+                            <CardHeader className="pb-4">
+                              <CardTitle className="text-base font-light">UHT Steri Milk</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                              {report.uht_steri_milk.map((uht: any, index: number) => (
+                                <div key={index} className="space-y-4">
+                                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                    <div>
+                                      <span className="text-xs font-light text-gray-500">Time</span>
+                                      <p className="text-sm font-light">{uht.time || 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                      <span className="text-xs font-light text-gray-500">Batch</span>
+                                      <p className="text-sm font-light">{uht.batch || 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                      <span className="text-xs font-light text-gray-500">Temperature</span>
+                                      <p className="text-sm font-light">{uht.temperature ? `${uht.temperature}°C` : 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                      <span className="text-xs font-light text-gray-500">OT</span>
+                                      <p className="text-sm font-light">{uht.ot || 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                      <span className="text-xs font-light text-gray-500">Alc</span>
+                                      <p className="text-sm font-light">{uht.alc || 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                      <span className="text-xs font-light text-gray-500">Res</span>
+                                      <p className="text-sm font-light">{uht.res || 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                      <span className="text-xs font-light text-gray-500">COB</span>
+                                      <p className="text-sm font-light">{uht.cob ? 'Yes' : 'No'}</p>
+                                    </div>
+                                    <div>
+                                      <span className="text-xs font-light text-gray-500">pH</span>
+                                      <p className="text-sm font-light">{uht.ph || 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                      <span className="text-xs font-light text-gray-500">Fat</span>
+                                      <p className="text-sm font-light">{uht.fat ? `${uht.fat}%` : 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                      <span className="text-xs font-light text-gray-500">LR/SNF</span>
+                                      <p className="text-sm font-light">{uht.lr_snf || 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                      <span className="text-xs font-light text-gray-500">CI/SI</span>
+                                      <p className="text-sm font-light">{uht.ci_si || 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                      <span className="text-xs font-light text-gray-500">Total Solids</span>
+                                      <p className="text-sm font-light">{uht.total_solids || 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                      <span className="text-xs font-light text-gray-500">Acidity</span>
+                                      <p className="text-sm font-light">{uht.acidity || 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                      <span className="text-xs font-light text-gray-500">Coffee</span>
+                                      <p className="text-sm font-light">{uht.coffee || 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                      <span className="text-xs font-light text-gray-500">H2O2/Turbidity</span>
+                                      <p className="text-sm font-light">{uht.hydrogen_peroxide_or_turbidity || 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                      <span className="text-xs font-light text-gray-500">Analyst</span>
+                                      <p className="text-sm font-light">{uht.analyst ? `#${String(uht.analyst).slice(0, 8)}` : 'N/A'}</p>
+                                    </div>
+                                    <div className="col-span-2">
+                                      <span className="text-xs font-light text-gray-500">Remarks</span>
+                                      <p className="text-sm font-light">{uht.remarks || 'N/A'}</p>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </CardContent>
+                          </Card>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12 text-gray-500">
+                    <Beaker className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                    <p className="text-base font-medium">No Test Report Created</p>
+                    <p className="text-sm text-gray-400 mt-2">Create a mixing & pasteurizing test report to view details here</p>
+                    <Button
+                      onClick={() => setShowTestReportForm(true)}
+                      size="sm"
+                      className="mt-4  text-white border-0 rounded-full"
+                    >
+                      <Plus className="h-4 w-4 mr-1" />
+                      Create Test Report
+                    </Button>
+                  </div>
+                )
+              })()}
             </TabsContent>
 
             {/* Post Test Tab */}
@@ -803,13 +803,13 @@ export function SteriMilkProcessLogViewDrawer({
                 // Filter post tests that match the current batch number
                 const batchNumber = batch?.batch_number
                 const filteredTests = postTests.filter((t: any) => t.batch_number === batchNumber)
-                
+
                 return filteredTests.length > 0 ? (
                   <div className="space-y-6">
                     {filteredTests.map((test: any) => {
                       // Find the scientist user
                       const scientist = users.find(u => u.id === test.scientist_id)
-                      
+
                       return (
                         <div key={test.id}>
                           {/* Test Header */}
@@ -820,7 +820,7 @@ export function SteriMilkProcessLogViewDrawer({
                                   <div className="flex items-center space-x-3">
                                     <CardTitle className="text-lg font-medium">Post Autoclave Test</CardTitle>
                                     {test.tag && (
-                                      <Badge  className="font-mono text-xs">
+                                      <Badge className="font-mono text-xs">
                                         {test.tag}
                                       </Badge>
                                     )}
@@ -840,7 +840,7 @@ export function SteriMilkProcessLogViewDrawer({
                                 <Button
                                   onClick={() => setShowPostTestForm(true)}
                                   size="sm"
-                                  
+
                                   className="rounded-full"
                                 >
                                   <Edit className="h-4 w-4 mr-1" />
@@ -865,7 +865,7 @@ export function SteriMilkProcessLogViewDrawer({
                                 <div>
                                   <span className="text-xs font-light text-gray-500">Test ID</span>
                                   <div className="mt-1">
-                                    <FormIdCopy displayId={test.tag || 'N/A'} actualId={test.id} size="sm" />
+                                    <FormIdCopy displayId={(test as any).tag || 'N/A'} actualId={(test as any).tag || ''} size="sm" />
                                   </div>
                                 </div>
                                 <div>
@@ -893,7 +893,7 @@ export function SteriMilkProcessLogViewDrawer({
                               <div>
                                 <span className="text-xs font-light text-gray-500 block mb-2">Scientist</span>
                                 {scientist ? (
-                                  <UserAvatar 
+                                  <UserAvatar
                                     user={{
                                       id: scientist.id,
                                       first_name: scientist.first_name,
