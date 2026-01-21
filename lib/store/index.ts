@@ -47,6 +47,7 @@ import qaRejectNoteSlice from "./slices/qaRejectNoteSlice"
 import collectionVoucherReducer from "./slices/collectionVoucherSlice"
 import forgotPasswordReducer from "./slices/forgotPasswordSlice"
 import rawMilkTestBeforeIntakeReducer from "./slices/rawMilkTestBeforeIntakeSlice"
+import notificationsReducer from "./slices/notificationsSlice"
 export const store = configureStore({
   reducer: {
     forgotPassword: forgotPasswordReducer,
@@ -96,6 +97,7 @@ export const store = configureStore({
     qaCorrectiveActions: qaCorrectiveActionReducer,
     collectionVoucher: collectionVoucherReducer,
     rawMilkTestBeforeIntake: rawMilkTestBeforeIntakeReducer,
+    notifications: notificationsReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

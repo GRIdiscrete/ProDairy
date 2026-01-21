@@ -1,14 +1,17 @@
 "use client"
 
-import { useEffect, useMemo, useState, Suspense } from 'react'
-import { getNotifications, getModuleNotifications, humanizeModule, type NotificationItem } from '@/lib/api/notifications'
+import { useEffect, useMemo, Suspense } from 'react'
+import { humanizeModule, moduleToRoute, type NotificationItem } from '@/lib/api/notifications'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import { Button } from '@/components/ui/button'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { formatDistanceToNow, parseISO, isValid } from 'date-fns'
 import { Bell, ExternalLink } from 'lucide-react'
 import { NotificationsLayout } from '@/components/layout/notifications-layout'
 import { unstable_noStore as noStore } from 'next/cache'
+import { useAppDispatch, useAppSelector } from '@/lib/store'
+import { fetchNotifications, fetchModuleNotifications, setPage, setLimit, setModuleFilter } from '@/lib/store/slices/notificationsSlice'
 
 export const dynamic = 'force-dynamic'
 
@@ -16,7 +19,7 @@ export const dynamic = 'force-dynamic'
 noStore()
 
 // --- Add moduleToRoute mapping helper ---
-function moduleToRoute(module: string, formId?: string): string | null {
+function moduleToRouteLocal(module: string, formId?: string): string | null {
   // Hardcoded formId for routes that require it
   const hardcodedId = "a4de97cc-e132-431e-a0a7-5c5e85e53d11";
   const map: Record<string, (id?: string) => string> = {
@@ -100,33 +103,23 @@ const moduleLabels: Record<string, string> = {
 function NotificationsContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const [items, setItems] = useState<NotificationItem[]>([])
-  const [page, setPage] = useState(1)
-  const [limit, setLimit] = useState(20)
-  const [moduleFilter, setModuleFilter] = useState<string | undefined>(undefined)
-  const [loading, setLoading] = useState(false)
+  const dispatch = useAppDispatch()
+
+  // Get state from Redux
+  const { items, loading, page, limit, moduleFilter } = useAppSelector((state) => state.notifications)
 
   useEffect(() => {
     const m = searchParams?.get('module') || undefined
-    setModuleFilter(m)
-  }, [searchParams])
+    dispatch(setModuleFilter(m))
+  }, [searchParams, dispatch])
 
   useEffect(() => {
-    let cancelled = false
-    const load = async () => {
-      setLoading(true)
-      try {
-        const data = moduleFilter
-          ? await getModuleNotifications(moduleFilter, { page, limit })
-          : await getNotifications({ page, limit })
-        if (!cancelled) setItems(data)
-      } finally {
-        if (!cancelled) setLoading(false)
-      }
+    if (moduleFilter) {
+      dispatch(fetchModuleNotifications({ module: moduleFilter, params: { page, limit } }))
+    } else {
+      dispatch(fetchNotifications({ page, limit }))
     }
-    load()
-    return () => { cancelled = true }
-  }, [page, limit, moduleFilter])
+  }, [page, limit, moduleFilter, dispatch])
 
   // Unique modules for sidebar
   const uniqueModules = useMemo(() => {
@@ -134,21 +127,33 @@ function NotificationsContent() {
     return Array.from(set)
   }, [items])
 
+  // Group notifications by module
+  const groupedNotifications = useMemo(() => {
+    const groups: Record<string, NotificationItem[]> = {}
+    items.forEach(item => {
+      if (!groups[item.module]) {
+        groups[item.module] = []
+      }
+      groups[item.module].push(item)
+    })
+    return groups
+  }, [items])
+
   // --- Design: Sidebar + Recent notifications ---
   return (
-    <NotificationsLayout title="Notifications" subtitle="View all system notifications">
+    <NotificationsLayout title="Recent Notifications" subtitle="Stay updated with system activities">
       <div className="flex flex-col md:flex-row gap-6">
         {/* Left: Modules sidebar */}
         <aside className="w-full md:w-64 shrink-0">
-          <div className="bg-white border border-zinc-200 rounded-lg p-4">
-            <div className="font-semibold text-zinc-700 mb-2 text-sm">Modules</div>
-            <ul className="space-y-1">
+          <div className="bg-white border border-zinc-200 rounded-lg p-4 shadow-sm">
+            <div className="font-semibold text-zinc-700 mb-3 text-sm">Filter by Module</div>
+            <ul className="space-y-1.5">
               <li>
                 <Button
                   variant={!moduleFilter ? "default" : "outline"}
                   size="sm"
                   className="w-full justify-start"
-                  onClick={() => setModuleFilter(undefined)}
+                  onClick={() => dispatch(setModuleFilter(undefined))}
                 >
                   All Modules
                 </Button>
@@ -158,8 +163,8 @@ function NotificationsContent() {
                   <Button
                     variant={moduleFilter === mod ? "default" : "outline"}
                     size="sm"
-                    className="w-full justify-start"
-                    onClick={() => setModuleFilter(mod)}
+                    className="w-full justify-start text-xs"
+                    onClick={() => dispatch(setModuleFilter(mod))}
                   >
                     {moduleLabels[mod] || humanizeModule(mod)}
                   </Button>
@@ -168,85 +173,123 @@ function NotificationsContent() {
             </ul>
           </div>
         </aside>
-        {/* Right: Recent notifications */}
+        {/* Right: Grouped notifications */}
         <main className="flex-1">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg font-light flex items-center gap-2">
-                <Bell className="h-5 w-5 text-blue-600" />
-                Recent Notifications
-                {items.length > 0 && (
-                  <span className="text-sm font-normal text-zinc-500">
-                    ({items.length} notification{items.length !== 1 ? 's' : ''})
-                  </span>
-                )}
+          <Card className="shadow-md">
+            <CardHeader className="border-b bg-gradient-to-r from-blue-50 to-white">
+              <CardTitle className="text-xl font-semibold flex items-center gap-3">
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <Bell className="h-5 w-5 text-blue-600" />
+                </div>
+                <div className="flex-1">
+                  <div>Recent Notifications</div>
+                  {items.length > 0 && (
+                    <div className="text-sm font-normal text-zinc-500 mt-0.5">
+                      {items.length} notification{items.length !== 1 ? 's' : ''} across {Object.keys(groupedNotifications).length} module{Object.keys(groupedNotifications).length !== 1 ? 's' : ''}
+                    </div>
+                  )}
+                </div>
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-6">
               {loading ? (
-                <div className="p-6 text-sm text-zinc-500 text-center">
-                  <div className="flex items-center justify-center gap-2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                    Loading notifications...
+                <div className="p-12 text-sm text-zinc-500 text-center">
+                  <div className="flex flex-col items-center justify-center gap-3">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                    <p>Loading notifications...</p>
                   </div>
                 </div>
               ) : items.length === 0 ? (
-                <div className="p-6 text-sm text-zinc-500 text-center">
-                  <Bell className="h-8 w-8 text-zinc-300 mx-auto mb-2" />
-                  <p>No notifications found</p>
+                <div className="p-12 text-sm text-zinc-500 text-center">
+                  <Bell className="h-12 w-12 text-zinc-300 mx-auto mb-3" />
+                  <p className="text-base font-medium text-zinc-700">No notifications found</p>
                   {moduleFilter && (
-                    <p className="text-xs mt-1">
+                    <p className="text-xs mt-2">
                       Try selecting a different module or view all notifications
                     </p>
                   )}
                 </div>
               ) : (
-                <ul className="divide-y">
-                  {items.map(n => {
-                    const d = typeof n.created_at === 'string' ? parseISO(n.created_at) : new Date(n.created_at)
-                    const when = isValid(d) ? formatDistanceToNow(d, { addSuffix: true }) : ''
-                    const label = `${moduleLabels[n.module] || humanizeModule(n.module)} · ${n.action}`
-                    return (
-                      <li key={n.id} className="py-3">
-                        <button
-                          className="w-full text-left hover:bg-blue-50 px-2 py-3 rounded-md transition-colors flex items-center gap-3"
-                          onClick={() => {
-                            const href = moduleToRoute(n.module, n.form_id)
-                            if (href) router.push(href)
-                          }}
-                        >
-                          <div className="flex items-center gap-3 w-full">
-                            <Bell className="h-5 w-5 text-blue-600" />
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2">
-                                <span className="font-medium text-zinc-900">{moduleLabels[n.module] || humanizeModule(n.module)}</span>
-                                <span className="text-xs text-zinc-500">{n.action}</span>
-                              </div>
-                              <div className="text-xs text-zinc-500">{when}</div>
+                <Accordion type="multiple" className="space-y-3">
+                  {Object.entries(groupedNotifications).map(([module, notifications]) => (
+                    <AccordionItem
+                      key={module}
+                      value={module}
+                      className="border border-zinc-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow"
+                    >
+                      <AccordionTrigger className="px-4 py-3 hover:bg-zinc-50 hover:no-underline">
+                        <div className="flex items-center gap-3 w-full">
+                          <div className="flex items-center gap-3 flex-1">
+                            <div className="p-2 bg-blue-50 rounded-md">
+                              <Bell className="h-4 w-4 text-blue-600" />
                             </div>
-                            <ExternalLink className="h-4 w-4 text-zinc-400" />
+                            <div className="text-left">
+                              <div className="font-semibold text-zinc-900">
+                                {moduleLabels[module] || humanizeModule(module)}
+                              </div>
+                              <div className="text-xs text-zinc-500 mt-0.5">
+                                {notifications.length} notification{notifications.length !== 1 ? 's' : ''}
+                              </div>
+                            </div>
                           </div>
-                        </button>
-                      </li>
-                    )
-                  })}
-                </ul>
+                          <div className="px-2.5 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-semibold">
+                            {notifications.length}
+                          </div>
+                        </div>
+                      </AccordionTrigger>
+                      <AccordionContent className="px-4 pb-3">
+                        <ul className="space-y-2 mt-2">
+                          {notifications.map(n => {
+                            const d = typeof n.created_at === 'string' ? parseISO(n.created_at) : new Date(n.created_at)
+                            const when = isValid(d) ? formatDistanceToNow(d, { addSuffix: true }) : ''
+                            return (
+                              <li key={n.id}>
+                                <button
+                                  className="w-full text-left hover:bg-blue-50 p-3 rounded-md transition-all border border-transparent hover:border-blue-200 flex items-start gap-3 group"
+                                  onClick={() => {
+                                    const href = moduleToRouteLocal(n.module, n.form_id)
+                                    if (href) router.push(href)
+                                  }}
+                                >
+                                  <div className="flex-1">
+                                    <div className="flex items-center gap-2 mb-1">
+                                      <span className="font-medium text-zinc-900 group-hover:text-blue-600 transition-colors">
+                                        {n.action}
+                                      </span>
+                                      <span className="text-xs px-2 py-0.5 bg-zinc-100 text-zinc-600 rounded-full">
+                                        {when}
+                                      </span>
+                                    </div>
+                                    <div className="text-xs text-zinc-500">
+                                      Form ID: {n.form_id.substring(0, 8)}...
+                                    </div>
+                                  </div>
+                                  <ExternalLink className="h-4 w-4 text-zinc-400 group-hover:text-blue-600 transition-colors mt-0.5" />
+                                </button>
+                              </li>
+                            )
+                          })}
+                        </ul>
+                      </AccordionContent>
+                    </AccordionItem>
+                  ))}
+                </Accordion>
               )}
               {/* Pagination */}
               <div className="flex items-center justify-between mt-6 pt-4 border-t">
                 <Button
-                  
+                  variant="outline"
                   disabled={page <= 1}
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  onClick={() => dispatch(setPage(Math.max(1, page - 1)))}
                 >
                   Previous
                 </Button>
-                <div className="text-xs text-zinc-500">
+                <div className="text-sm text-zinc-600 font-medium">
                   Page {page}
                 </div>
                 <Button
-                  
-                  onClick={() => setPage((p) => p + 1)}
+                  variant="outline"
+                  onClick={() => dispatch(setPage(page + 1))}
                   disabled={items.length < limit}
                 >
                   Next

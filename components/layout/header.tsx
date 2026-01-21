@@ -33,6 +33,7 @@ import { logoutUser } from "@/lib/store/slices/authSlice"
 import { motion, AnimatePresence } from "framer-motion"
 import { useTablet } from "@/hooks/use-tablet"
 import { getRecentNotifications, humanizeModule, moduleToRoute, type NotificationItem } from "@/lib/api/notifications"
+import { fetchRecentNotifications } from "@/lib/store/slices/notificationsSlice"
 import { formatDistanceToNow, parseISO, isValid } from "date-fns"
 import cityTimezones from 'city-timezones'
 import axios from 'axios'
@@ -56,7 +57,7 @@ export function Header({ title = "Dashboard", subtitle = "Welcome back!", onOpen
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   const { isTablet, isLandscape } = useTablet()
-  const [notifications, setNotifications] = useState<NotificationItem[]>([])
+  const notifications = useAppSelector((state) => state.notifications.recentItems)
   const [notifOpen, setNotifOpen] = useState(false)
 
   // Weather/location state
@@ -94,9 +95,9 @@ export function Header({ title = "Dashboard", subtitle = "Welcome back!", onOpen
   }, [])
 
   useEffect(() => {
-    // prefetch notifications on mount
-    getRecentNotifications(8).then(setNotifications).catch(() => setNotifications([]))
-  }, [])
+    // Fetch notifications using Redux
+    dispatch(fetchRecentNotifications(8))
+  }, [dispatch])
   // const accessibleModules = useAccessibleModules() // Removed - no longer using permissions
 
   // Prevent hydration mismatch
@@ -171,14 +172,14 @@ export function Header({ title = "Dashboard", subtitle = "Welcome back!", onOpen
       return match
         ? match
         : {
-            id: sw.key,
-            name: sw.label,
-            icon: Users,
-            path: "/",
-            emoji: "🧑‍💻",
-            description: "",
-            module: sw.key
-          }
+          id: sw.key,
+          name: sw.label,
+          icon: Users,
+          path: "/",
+          emoji: "🧑‍💻",
+          description: "",
+          module: sw.key
+        }
     })
 
   // Comprehensive route list for search
@@ -234,9 +235,9 @@ export function Header({ title = "Dashboard", subtitle = "Welcome back!", onOpen
   // Filter routes based on search query only (permissions removed)
   const filteredRoutes = useMemo(() => {
     if (!searchQuery.trim()) return allRoutes.slice(0, 10) // Show first 10 by default
-    
+
     const query = searchQuery.toLowerCase()
-    return allRoutes.filter(route => 
+    return allRoutes.filter(route =>
       route.title.toLowerCase().includes(query) ||
       route.description.toLowerCase().includes(query) ||
       route.category.toLowerCase().includes(query) ||
@@ -347,8 +348,8 @@ export function Header({ title = "Dashboard", subtitle = "Welcome back!", onOpen
           )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button 
-                variant="ghost" 
+              <Button
+                variant="ghost"
                 className="flex items-center gap-2 px-3 py-2 hover:bg-zinc-100"
               >
                 <div className="flex items-center gap-2">
@@ -372,11 +373,10 @@ export function Header({ title = "Dashboard", subtitle = "Welcome back!", onOpen
                 <DropdownMenuItem
                   key={dashboard.id}
                   onClick={() => handleDashboardSwitch(dashboard.path)}
-                  className={`cursor-pointer p-3 ${
-                    currentDashboard.id === dashboard.id 
-                      ? "bg-blue-50 text-blue-900" 
-                      : "hover:bg-zinc-50"
-                  }`}
+                  className={`cursor-pointer p-3 ${currentDashboard.id === dashboard.id
+                    ? "bg-blue-50 text-blue-900"
+                    : "hover:bg-zinc-50"
+                    }`}
                 >
                   <div className="flex items-center gap-3">
                     <span className="text-xl">{dashboard.emoji}</span>
@@ -402,7 +402,7 @@ export function Header({ title = "Dashboard", subtitle = "Welcome back!", onOpen
             <Popover open={searchOpen} onOpenChange={setSearchOpen}>
               <PopoverTrigger asChild>
                 <Button
-                  
+
                   role="combobox"
                   aria-expanded={searchOpen}
                   className="w-full justify-start text-left font-normal h-10 bg-transparent hover:bg-transparent border border-gray-300 hover:border-gray-400 focus:border-[#006BC4] shadow-none hover:shadow-none focus:shadow-none"
@@ -505,14 +505,14 @@ export function Header({ title = "Dashboard", subtitle = "Welcome back!", onOpen
                 <div className="p-4 text-sm text-zinc-500">No recent notifications</div>
               ) : (
                 <div className="max-h-80 overflow-y-auto">
-                  {notifications.slice(0,8).map((n, idx) => {
+                  {notifications.slice(0, 8).map((n, idx) => {
                     const d = typeof n.created_at === 'string' ? parseISO(n.created_at) : new Date(n.created_at)
                     const when = isValid(d) ? formatDistanceToNow(d, { addSuffix: true }) : ''
                     const label = `${humanizeModule(n.module)} · ${n.action}`
                     const ActionIcon = (n.action === 'created' ? Plus : n.action === 'updated' ? Pencil : Trash2)
                     const color = n.action === 'created' ? 'text-green-600 bg-green-50' : n.action === 'updated' ? 'text-amber-600 bg-amber-50' : 'text-red-600 bg-red-50'
                     return (
-                      <DropdownMenuItem key={n.id} className={`p-0 border-b border-zinc-200 ${idx === Math.min(notifications.length,8)-1 ? 'last:border-0' : ''}`}>
+                      <DropdownMenuItem key={n.id} className={`p-0 border-b border-zinc-200 ${idx === Math.min(notifications.length, 8) - 1 ? 'last:border-0' : ''}`}>
                         <button
                           className="w-full text-left px-3 py-2 hover:bg-zinc-50"
                           onClick={() => {
@@ -547,13 +547,13 @@ export function Header({ title = "Dashboard", subtitle = "Welcome back!", onOpen
                 {isClient && (
                   <>
                     <Avatar className="h-8 w-8 ring-1 ring-zinc-200">
-                      <AvatarImage 
-                        src={user?.avatar || undefined} 
-                        alt={profile ? `${profile.first_name} ${profile.last_name}` : "User"} 
+                      <AvatarImage
+                        src={user?.avatar || undefined}
+                        alt={profile ? `${profile.first_name} ${profile.last_name}` : "User"}
                       />
                       <AvatarFallback className="text-[10px] font-light bg-gray-100 text-gray-600">
-                        {profile && profile.first_name && profile.last_name 
-                          ? `${profile.first_name[0]}${profile.last_name[0]}` 
+                        {profile && profile.first_name && profile.last_name
+                          ? `${profile.first_name[0]}${profile.last_name[0]}`
                           : "U"
                         }
                       </AvatarFallback>
@@ -574,7 +574,7 @@ export function Header({ title = "Dashboard", subtitle = "Welcome back!", onOpen
             <DropdownMenuContent align="end" className="w-56" sideOffset={6}>
               <DropdownMenuLabel className="font-light">My Account</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem 
+              <DropdownMenuItem
                 className="cursor-pointer"
                 onClick={() => router.push('/profile')}
               >
@@ -639,7 +639,7 @@ export function Header({ title = "Dashboard", subtitle = "Welcome back!", onOpen
                   ))}
                 </div>
               </div>
-              
+
               {/* Mobile Search */}
               <div className="space-y-2">
                 <p className="text-xs font-medium text-zinc-500 uppercase tracking-wide">Search Pages</p>
@@ -647,7 +647,7 @@ export function Header({ title = "Dashboard", subtitle = "Welcome back!", onOpen
                   {filteredRoutes.slice(0, 8).map((route) => (
                     <Button
                       key={route.path}
-                      
+
                       onClick={() => {
                         handleRouteSelect(route.path)
                         setMobileSearchOpen(false)
