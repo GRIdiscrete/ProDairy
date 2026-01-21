@@ -490,6 +490,7 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
                               </Select>
                             )}
                           />
+                          {getErrorMsg(errors.source_destination_details?.[index]?.source_silo_details?.name)}
                         </div>
 
                         <div className="grid grid-cols-2 gap-2">
@@ -598,6 +599,7 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
                               </Select>
                             )}
                           />
+                          {getErrorMsg(errors.source_destination_details?.[index]?.source_silo_details?.product)}
                         </div>
                       </div>
 
@@ -630,6 +632,7 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
                               </Select>
                             )}
                           />
+                          {getErrorMsg(errors.source_destination_details?.[index]?.destination_silo_details?.name)}
                         </div>
 
                         <div className="grid grid-cols-2 gap-2">
@@ -738,6 +741,7 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
                               </Select>
                             )}
                           />
+                          {getErrorMsg(errors.source_destination_details?.[index]?.destination_silo_details?.product)}
                         </div>
                       </div>
                     </div>

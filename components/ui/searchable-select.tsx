@@ -1,10 +1,12 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
-import { Check, ChevronsUpDown, Search, X } from "lucide-react"
+import React from "react"
+
+import { useState, useEffect, useRef, useCallback } from "react"
+import { Check, ChevronsUpDown, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+
 import { Badge } from "@/components/ui/badge"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
@@ -29,6 +31,7 @@ interface SearchableSelectProps {
   loading?: boolean
   multiple?: boolean
   maxDisplayItems?: number
+  modal?: boolean
 }
 
 export function SearchableSelect({
@@ -44,26 +47,13 @@ export function SearchableSelect({
   loading = false,
   multiple = false,
   maxDisplayItems = 3,
+  modal = true,
 }: SearchableSelectProps) {
   const [open, setOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedOptions, setSelectedOptions] = useState<SearchableSelectOption[]>([])
   const searchTimeoutRef = useRef<NodeJS.Timeout>()
-  const listRef = useRef<HTMLDivElement>(null)
 
-  // Ensure proper scroll behavior on mount
-  useEffect(() => {
-    if (open && listRef.current) {
-      const listElement = listRef.current
-      // Force scroll container to be focusable and scrollable
-      listElement.style.overflow = 'auto'
-      listElement.style.overflowX = 'hidden'
-      listElement.style.overflowY = 'auto'
-      listElement.style.WebkitOverflowScrolling = 'touch'
-      listElement.style.touchAction = 'pan-y'
-      listElement.tabIndex = 0
-    }
-  }, [open])
 
   // Filter options based on search term
   const filteredOptions = (options || []).filter(option =>
@@ -136,7 +126,7 @@ export function SearchableSelect({
   }
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={setOpen} modal={modal}>
       <PopoverTrigger asChild>
         <Button
 
@@ -185,70 +175,55 @@ export function SearchableSelect({
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-full p-0" align="start">
+      <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
         <Command>
-          <div className="flex items-center border-b px-3">
-            <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
-            <Input
-              placeholder={searchPlaceholder}
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="flex h-10 w-full bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 "
-            />
-          </div>
-          <div
-            ref={listRef}
-            className="max-h-[300px] overflow-y-auto overflow-x-hidden overscroll-contain"
-            style={{
-              WebkitOverflowScrolling: 'touch',
-              scrollBehavior: 'smooth',
-              touchAction: 'pan-y',
-              overscrollBehavior: 'contain'
-            }}
-            tabIndex={0}
-          >
-            <CommandList className="max-h-full overflow-visible">
-              {loading ? (
-                <div className="py-6 text-center text-sm text-muted-foreground">
-                  Loading...
-                </div>
-              ) : filteredOptions.length === 0 ? (
-                <CommandEmpty>{emptyMessage}</CommandEmpty>
-              ) : (
-                <CommandGroup>
-                  {filteredOptions.map((option) => {
-                    const isSelected = multiple
-                      ? Array.isArray(value) && value.includes(option.value)
-                      : value === option.value
+          <CommandInput
+            placeholder={searchPlaceholder}
+            value={searchTerm}
+            onValueChange={setSearchTerm}
+            className="h-9"
+          />
+          <CommandList>
+            {loading ? (
+              <div className="py-6 text-center text-sm text-muted-foreground">
+                Loading...
+              </div>
+            ) : filteredOptions.length === 0 ? (
+              <CommandEmpty>{emptyMessage}</CommandEmpty>
+            ) : (
+              <CommandGroup>
+                {filteredOptions.map((option) => {
+                  const isSelected = multiple
+                    ? Array.isArray(value) && value.includes(option.value)
+                    : value === option.value
 
-                    return (
-                      <CommandItem
-                        key={option.value}
-                        value={option.value}
-                        onSelect={() => handleSelect(option.value)}
-                        disabled={option.disabled}
-                        className="cursor-pointer"
-                      >
-                        <div className="flex items-center justify-between w-full">
-                          <div className="flex flex-col">
-                            <span className="font-normal">{option.label || 'Unknown'}</span>
-                            {option.description && (
-                              <span className="text-sm text-muted-foreground">
-                                {option.description}
-                              </span>
-                            )}
-                          </div>
-                          {isSelected && (
-                            <Check className="ml-2 h-4 w-4" />
+                  return (
+                    <CommandItem
+                      key={option.value}
+                      value={option.value}
+                      onSelect={() => handleSelect(option.value)}
+                      disabled={option.disabled}
+                      className="cursor-pointer"
+                    >
+                      <div className="flex items-center justify-between w-full">
+                        <div className="flex flex-col">
+                          <span className="font-normal">{option.label || 'Unknown'}</span>
+                          {option.description && (
+                            <span className="text-sm text-muted-foreground">
+                              {option.description}
+                            </span>
                           )}
                         </div>
-                      </CommandItem>
-                    )
-                  })}
-                </CommandGroup>
-              )}
-            </CommandList>
-          </div>
+                        {isSelected && (
+                          <Check className="ml-2 h-4 w-4" />
+                        )}
+                      </div>
+                    </CommandItem>
+                  )
+                })}
+              </CommandGroup>
+            )}
+          </CommandList>
         </Command>
       </PopoverContent>
     </Popover>
@@ -264,6 +239,7 @@ interface EntitySearchableSelectProps {
   className?: string
   onSearch?: (searchTerm: string) => void
   loading?: boolean
+  modal?: boolean
 }
 
 export function SiloSearchableSelect({
@@ -274,6 +250,7 @@ export function SiloSearchableSelect({
   className,
   onSearch,
   loading = false,
+  modal = true,
 }: EntitySearchableSelectProps) {
   const [silos, setSilos] = useState<SearchableSelectOption[]>([])
 
@@ -296,6 +273,7 @@ export function SiloSearchableSelect({
       className={className}
       onSearch={handleSearch}
       loading={loading}
+      modal={modal}
     />
   )
 }
@@ -308,6 +286,7 @@ export function UserSearchableSelect({
   className,
   onSearch,
   loading = false,
+  modal = true,
 }: EntitySearchableSelectProps) {
   const [users, setUsers] = useState<SearchableSelectOption[]>([])
 
@@ -330,6 +309,7 @@ export function UserSearchableSelect({
       className={className}
       onSearch={handleSearch}
       loading={loading}
+      modal={modal}
     />
   )
 }
@@ -342,6 +322,7 @@ export function MachineSearchableSelect({
   className,
   onSearch,
   loading = false,
+  modal = true,
 }: EntitySearchableSelectProps) {
   const [machines, setMachines] = useState<SearchableSelectOption[]>([])
 
@@ -364,6 +345,7 @@ export function MachineSearchableSelect({
       className={className}
       onSearch={handleSearch}
       loading={loading}
+      modal={modal}
     />
   )
 }

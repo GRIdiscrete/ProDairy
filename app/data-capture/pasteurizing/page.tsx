@@ -30,6 +30,8 @@ import { FormIdCopy } from "@/components/ui/form-id-copy"
 import { fetchUsers } from "@/lib/store/slices/usersSlice"
 import { UserAvatar } from "@/components/ui/user-avatar"
 import { useRouter, useSearchParams } from "next/navigation"
+// import { watch } from "fs"
+import { SearchableSelect, SearchableSelectOption } from "@/components/ui/searchable-select"
 
 export default function PasteurizingPage() {
   const dispatch = useAppDispatch()
@@ -181,6 +183,12 @@ export default function PasteurizingPage() {
       return true
     })
   }, [forms, tableFilters, machines, bmtForms])
+
+  const machineOptions: SearchableSelectOption[] = machines.map(machine => ({
+    value: machine.id,
+    label: (machine.name as string) || "Unknown Machine",
+    description: `${machine.category} - ${machine.location}`
+  }))
 
   // Filter fields configuration for Pasteurizing
   const filterFields = useMemo(() => [
@@ -472,6 +480,7 @@ export default function PasteurizingPage() {
             <h1 className="text-3xl font-light text-foreground">Pasteurizing</h1>
             <p className="text-sm font-light text-muted-foreground">Manage milk pasteurizing forms and process control</p>
           </div>
+
           <LoadingButton
             onClick={handleAddForm}
             className="bg-[#006BC4] text-white rounded-full px-6 py-2 font-light"
