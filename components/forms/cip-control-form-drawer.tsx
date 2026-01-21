@@ -58,6 +58,7 @@ interface CIPControlFormDrawerProps {
 export function CIPControlFormDrawer({ open, onOpenChange, form, mode }: CIPControlFormDrawerProps) {
   const dispatch = useAppDispatch()
   const { operationLoading } = useAppSelector((state) => state.cipControlForms)
+  const { user } = useAppSelector((state) => state.auth)
 
   // State for searchable selects
   const [machines, setMachines] = useState<SearchableSelectOption[]>([])
@@ -77,32 +78,32 @@ export function CIPControlFormDrawer({ open, onOpenChange, form, mode }: CIPCont
       setLoadingSilos(true)
       setLoadingUsers(true)
       setLoadingRoles(true)
-      
+
       const [machinesResponse, silosResponse, usersResponse, rolesResponse] = await Promise.all([
         machineApi.getMachines(),
         siloApi.getSilos(),
         usersApi.getUsers(),
         rolesApi.getRoles()
       ])
-      
+
       setMachines(machinesResponse.data?.map(machine => ({
         value: machine.id,
         label: machine.name,
         description: `${machine.location} • ${machine.category} • ${machine.serial_number}`
       })) || [])
-      
+
       setSilos(silosResponse.data?.map(silo => ({
         value: silo.id,
         label: silo.name,
         description: `${silo.location} • ${silo.category} • ${silo.capacity}L capacity`
       })) || [])
-      
+
       setUsers(usersResponse.data?.map(user => ({
         value: user.id,
         label: `${user.first_name} ${user.last_name}`,
         description: `${user.department} • ${user.email}`
       })) || [])
-      
+
       setRoles(rolesResponse.data?.map(role => ({
         value: role.id,
         label: role.role_name,
@@ -208,13 +209,13 @@ export function CIPControlFormDrawer({ open, onOpenChange, form, mode }: CIPCont
       machine_or_silo: "",
       machine_id: null as any,
       silo_id: null as any,
-      operator_id: "",
+      operator_id: user?.id || "",
       date: "",
       caustic_solution_strength: undefined,
       acid_solution_strength: undefined,
       rinse_water_test: "",
       approver: "",
-      analyzer: "",
+      analyzer: user?.id || "",
       checked_by: "",
       stages: [],
     },
@@ -288,19 +289,29 @@ export function CIPControlFormDrawer({ open, onOpenChange, form, mode }: CIPCont
     if (open && form && mode === "edit") {
       const formData = form as any
       const machineOrSilo = formData.machine_or_silo || ""
-      
+
+      // Extract actual IDs from nested objects
+      // machine_id and silo_id can be either strings or objects with id property
+      const machineId = typeof formData.machine_id === 'object' && formData.machine_id !== null
+        ? formData.machine_id.id
+        : formData.machine_id
+
+      const siloId = typeof formData.silo_id === 'object' && formData.silo_id !== null
+        ? formData.silo_id.id
+        : formData.silo_id
+
       // Determine CIP type from form data
-      if (formData.machine_id) {
+      if (machineId) {
         setCipType('machine')
-      } else if (formData.silo_id) {
+      } else if (siloId) {
         setCipType('silo')
       }
-      
+
       reset({
         status: form.status || "",
         machine_or_silo: machineOrSilo,
-        machine_id: form.machine_id || null as any,
-        silo_id: formData.silo_id || null as any,
+        machine_id: machineId || null as any,
+        silo_id: siloId || null as any,
         operator_id: form.operator_id || "",
         date: form.date || "",
         caustic_solution_strength: form.caustic_solution_strength || undefined,
@@ -323,18 +334,18 @@ export function CIPControlFormDrawer({ open, onOpenChange, form, mode }: CIPCont
         machine_or_silo: "",
         machine_id: null as any,
         silo_id: null as any,
-        operator_id: "",
+        operator_id: user?.id || "",
         date: "",
         caustic_solution_strength: undefined,
         acid_solution_strength: undefined,
         rinse_water_test: "",
         approver: "",
-        analyzer: "",
+        analyzer: user?.id || "",
         checked_by: "",
         stages: [],
       })
     }
-  }, [open, form, mode, reset])
+  }, [open, form, mode, reset, user])
 
   // Load initial data when drawer opens
   useEffect(() => {
@@ -382,10 +393,10 @@ export function CIPControlFormDrawer({ open, onOpenChange, form, mode }: CIPCont
                   />
                   {errors.status && <p className="text-sm text-red-500">{errors.status.message}</p>}
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label htmlFor="cip_type">CIP Type *</Label>
-                  <Select 
+                  <Select
                     onValueChange={(val) => {
                       setCipType(val as 'machine' | 'silo')
                       // Clear the other field when switching
@@ -394,7 +405,7 @@ export function CIPControlFormDrawer({ open, onOpenChange, form, mode }: CIPCont
                       } else {
                         setValue('machine_id', null as any)
                       }
-                    }} 
+                    }}
                     value={cipType}
                   >
                     <SelectTrigger className="w-full rounded-full border-gray-200">
@@ -407,7 +418,7 @@ export function CIPControlFormDrawer({ open, onOpenChange, form, mode }: CIPCont
                   </Select>
                 </div>
               </div>
-              
+
               <div className="grid grid-cols-2 gap-4">
                 {cipType === 'machine' ? (
                   <div className="space-y-2">
@@ -466,7 +477,7 @@ export function CIPControlFormDrawer({ open, onOpenChange, form, mode }: CIPCont
                     {errors.silo_id && <p className="text-sm text-red-500">{errors.silo_id.message}</p>}
                   </div>
                 )}
-                
+
                 <div className="space-y-2">
                   <Label htmlFor="operator_id">Operator *</Label>
                   <Controller
@@ -489,7 +500,7 @@ export function CIPControlFormDrawer({ open, onOpenChange, form, mode }: CIPCont
                   {errors.operator_id && <p className="text-sm text-red-500">{errors.operator_id.message}</p>}
                 </div>
               </div>
-              
+
               <div className="space-y-2">
                 <Controller
                   name="date"
@@ -645,7 +656,7 @@ export function CIPControlFormDrawer({ open, onOpenChange, form, mode }: CIPCont
                 <h3 className="text-lg font-light text-gray-900">CIP Stages</h3>
                 <Button
                   type="button"
-                  
+
                   size="sm"
                   onClick={() => append({ stage: "", start_time: "", stop_time: "" })}
                   className=" bg-[#006BC4] text-white rounded-full"
@@ -654,7 +665,7 @@ export function CIPControlFormDrawer({ open, onOpenChange, form, mode }: CIPCont
                   Add Stage
                 </Button>
               </div>
-              
+
               {fields.length === 0 ? (
                 <div className="text-center py-8 bg-gray-50 rounded-lg">
                   <Clock className="w-12 h-12 mx-auto text-gray-400 mb-2" />
@@ -742,11 +753,11 @@ export function CIPControlFormDrawer({ open, onOpenChange, form, mode }: CIPCont
             </div>
 
             <div className="flex justify-end space-x-2 pt-4 border-t bg-white sticky bottom-0 pb-6">
-              <LoadingButton type="button"  onClick={() => onOpenChange(false)}>
+              <LoadingButton type="button" onClick={() => onOpenChange(false)}>
                 Cancel
               </LoadingButton>
-              <LoadingButton 
-                type="submit" 
+              <LoadingButton
+                type="submit"
                 loading={mode === "create" ? operationLoading.create : operationLoading.update}
                 loadingText={mode === "create" ? "Creating..." : "Updating..."}
               >

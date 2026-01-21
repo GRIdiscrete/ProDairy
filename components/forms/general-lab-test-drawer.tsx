@@ -34,6 +34,7 @@ const RESAZURIN_COLORS = [
 export function GeneralLabTestDrawer({ open, onOpenChange, test, mode }: { open: boolean, onOpenChange: (open: boolean) => void, test?: GeneralLabTest | null, mode: "create" | "edit" }) {
   const dispatch = useAppDispatch()
   const { operationLoading } = useAppSelector((state) => state.generalLabTests)
+  const { user } = useAppSelector((state) => state.auth)
   const [silos, setSilos] = useState<any[]>([])
   const [users, setUsers] = useState<any[]>([])
   const [loadingSilos, setLoadingSilos] = useState(false)
@@ -66,11 +67,21 @@ export function GeneralLabTestDrawer({ open, onOpenChange, test, mode }: { open:
 
   useEffect(() => {
     if (open && test && mode === "edit") {
-      reset(test)
+      // Extract actual ID from nested source_silo object
+      const sourceSiloId = typeof test.source_silo === 'object' && test.source_silo !== null
+        ? (test.source_silo as any).id
+        : test.source_silo
+
+      reset({
+        ...test,
+        source_silo: sourceSiloId
+      })
     } else if (open && mode === "create") {
-      reset({})
+      reset({
+        analyst: user?.id || ""
+      })
     }
-  }, [open, test, mode, reset])
+  }, [open, test, mode, reset, user])
 
   const onSubmit = async (data: GeneralLabTest) => {
     try {
@@ -252,9 +263,9 @@ export function GeneralLabTestDrawer({ open, onOpenChange, test, mode }: { open:
                 </div>
                 <div className="space-y-2">
                   <Label className="mb-2">Resazurin</Label>
-                  <Controller 
-                    name="resazurin" 
-                    control={control} 
+                  <Controller
+                    name="resazurin"
+                    control={control}
                     render={({ field }) => (
                       <Select value={field.value} onValueChange={field.onChange}>
                         <SelectTrigger className="w-full">
@@ -531,11 +542,11 @@ export function GeneralLabTestDrawer({ open, onOpenChange, test, mode }: { open:
             </div>
 
             <div className="flex justify-end space-x-2 pt-4">
-              <LoadingButton type="button"  onClick={() => onOpenChange(false)}>
+              <LoadingButton type="button" onClick={() => onOpenChange(false)}>
                 Cancel
               </LoadingButton>
-              <LoadingButton 
-                type="submit" 
+              <LoadingButton
+                type="submit"
                 loading={mode === "create" ? operationLoading.create : operationLoading.update}
                 loadingText={mode === "create" ? "Creating..." : "Updating..."}
               >
