@@ -7,19 +7,19 @@ export const apiRequest = async <T>(
   options: RequestInit = {}
 ): Promise<T> => {
   const url = `${API_CONFIG.BASE_URL}${endpoint}`
-  
+
   // Get authentication state directly from cookies instead of Redux store
   const cookies = CookieManager.getAuthCookies()
   const { accessToken } = cookies
   //
-  console.log('API Request Debug:', {
-    url,
-    endpoint,
-    cookiesRetrieved: !!cookies,
-    accessToken: accessToken ? `${accessToken.substring(0, 20)}...` : 'null',
-    hasToken: !!accessToken
-  })
-  
+  // console.log('API Request Debug:', {
+  //   url,
+  //   endpoint,
+  //   cookiesRetrieved: !!cookies,
+  //   accessToken: accessToken ? `${accessToken.substring(0, 20)}...` : 'null',
+  //   hasToken: !!accessToken
+  // })
+
   const config: RequestInit = {
     mode: 'cors',
     // credentials: 'include',
@@ -30,21 +30,21 @@ export const apiRequest = async <T>(
     },
     ...options,
   }
-  
+
   //console the config
-  console.log('token iri', accessToken)
-  
+  // console.log('token iri', accessToken)
+
   // Add Authorization header if we have a token from cookies
   if (accessToken) {
     config.headers = {
       ...config.headers,
       'Authorization': `Bearer ${accessToken}`,
     }
-    console.log('Added Authorization header with token from cookies')
+    // console.log('Added Authorization header with token from cookies')
   } else {
-    console.log('No Authorization header added: no token found in cookies')
+    // console.log('No Authorization header added: no token found in cookies')
   }
-  
+
   // Add additional CORS headers for greatssystems.co.zw domain
   if (url.includes('greatssystems.co.zw')) {
     config.headers = {
@@ -55,13 +55,13 @@ export const apiRequest = async <T>(
   }
 
   const response = await authenticatedFetch(url, config)
-  
+
   if (!response.ok) {
     // Handle authentication errors specifically
     if (response.status === 401 || response.status === 403) {
       await handleAuthError(response)
     }
-    
+
     let errorBody: any = null
     try {
       errorBody = await response.json()
@@ -73,12 +73,12 @@ export const apiRequest = async <T>(
     err.statusCode = response.status  // Add statusCode for compatibility
     err.body = errorBody
     err.url = url
-    
+
     // If we have error body with message, use it
     if (errorBody && errorBody.message) {
       err.message = errorBody.message
     }
-    
+
     throw err
   }
 
