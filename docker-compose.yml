@@ -1,0 +1,18 @@
+# docker-compose.local.yml
+services:
+  app:
+    build: .
+    ports:
+      - "3003:3003"
+    environment:
+      - ENV=${ENV}
+      - PORT=${PORT}
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - SUPABASE_JWT_SECRET=${SUPABASE_JWT_SECRET}
+      - SUPABASE_REST_URL=${SUPABASE_REST_URL}
+      - SECRET_KEY=${SECRET_KEY}
+    env_file:
+      - .env  # Production environment file
+    restart: unless-stopped
