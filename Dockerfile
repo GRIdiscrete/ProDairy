@@ -1,22 +1,25 @@
 # Dockerfile
 FROM node:20-alpine
 
+# Install yarn
+RUN apk add --no-cache yarn
+
 WORKDIR /app
 
-# Copy package files first
+# Copy package files
 COPY package*.json ./
+COPY yarn.lock ./
 
-# Install all dependencies (including dev dependencies)
-RUN npm i --force
+# Install dependencies with yarn
+RUN yarn install --frozen-lockfile
 
 # Copy all source code
 COPY . .
 
 # Build the application
-RUN npm run build
+RUN yarn build
 
-# Expose port 3003
 EXPOSE 3000
 
 # Start the application
-CMD ["node", "dist/main.js"]
+CMD ["yarn", "start"]
