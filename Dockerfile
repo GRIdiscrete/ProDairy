@@ -16,7 +16,7 @@ COPY . .
 RUN npm run build
 
 # Expose port 3003
-EXPOSE 3003
+EXPOSE 3000
 
 # Start the application
 CMD ["node", "dist/main.js"]
