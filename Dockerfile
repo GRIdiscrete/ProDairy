@@ -1,25 +1,20 @@
 # Dockerfile
 FROM node:20-alpine
 
-# Install yarn
-RUN apk add --no-cache yarn
-
 WORKDIR /app
 
 # Copy package files
 COPY package*.json ./
-COPY yarn.lock ./
 
-# Install dependencies with yarn
-RUN yarn install --frozen-lockfile
-
+# Install dependencies
+RUN npm i --force
 # Copy all source code
 COPY . .
 
 # Build the application
-RUN yarn build
+RUN npm run build
 
 EXPOSE 3000
 
 # Start the application
-CMD ["yarn", "start"]
+CMD ["npm","run", "start"]
