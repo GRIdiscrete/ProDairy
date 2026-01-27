@@ -23,7 +23,12 @@ import {
 
 const driversNavigation = [
   { name: "Dashboard", href: "/drivers", icon: LayoutDashboard },
-  { name: "Driver Forms", href: "/drivers/forms", icon: FileText },
+  // { name: "Driver Forms", href: "/drivers/forms", icon: FileText },
+  {
+    name: "Collection Vouchers",
+    href: "/drivers/collection-vouchers",
+    icon: FileText,
+  },
   { name: "Driver Tools", href: "/drivers/tools", icon: Wrench },
 ]
 
@@ -57,7 +62,7 @@ export function MobileDriversLayout({ children, title, subtitle }: MobileDrivers
             {subtitle && <p className="text-xs text-gray-500 font-light">{subtitle}</p>}
           </div>
         </div>
-        
+
         <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
           <SheetTrigger asChild>
             <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-full hover:bg-gray-100">
@@ -95,8 +100,8 @@ export function MobileDriversLayout({ children, title, subtitle }: MobileDrivers
               >
                 <div className={cn(
                   "p-2 rounded-lg transition-all duration-200",
-                  isActive 
-                    ? "bg-blue-100" 
+                  isActive
+                    ? "bg-blue-100"
                     : "hover:bg-gray-100"
                 )}>
                   <Icon className={cn("h-5 w-5", isActive && "text-blue-600")} />
@@ -105,7 +110,7 @@ export function MobileDriversLayout({ children, title, subtitle }: MobileDrivers
                 {isActive && (
                   <motion.div
                     layoutId="mobile-active-indicator"
-                    className="absolute bottom-0 left-1/2 h-1 w-8 -translate-x-1/2 rounded-full bg-gradient-to-r from-blue-500 to-blue-600"
+                    className="absolute bottom-0 left-1/2 h-1 w-8 -translate-x-1/2 rounded-full  from-blue-500 to-blue-600"
                   />
                 )}
               </Link>
@@ -165,8 +170,8 @@ function MobileDriversSidebar({ onClose }: { onClose: () => void }) {
                 >
                   <div className={cn(
                     "w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200",
-                    isActive 
-                      ? "bg-blue-100" 
+                    isActive
+                      ? "bg-blue-100"
                       : "bg-gray-100"
                   )}>
                     <Icon className={cn("h-4 w-4", isActive ? "text-blue-600" : "text-gray-600")} />

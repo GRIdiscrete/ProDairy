@@ -41,8 +41,16 @@ import rawMilkResultSlipsReducer from "./slices/rawMilkResultSlipSlice"
 import productIncubationReducer from "./slices/productIncubationSlice"
 import uhtQualityCheckReducer from "./slices/uhtQualityCheckSlice"
 import qaCorrectiveActionReducer from "./slices/qaCorrectiveActionSlice"
+import generalLabTestSlice from "./slices/generalLabTestSlice"
+import qaReleaseNoteSlice from "./slices/qaReleaseNoteSlice"
+import qaRejectNoteSlice from "./slices/qaRejectNoteSlice"
+import collectionVoucherReducer from "./slices/collectionVoucherSlice"
+import forgotPasswordReducer from "./slices/forgotPasswordSlice"
+import rawMilkTestBeforeIntakeReducer from "./slices/rawMilkTestBeforeIntakeSlice"
+import notificationsReducer from "./slices/notificationsSlice"
 export const store = configureStore({
   reducer: {
+    forgotPassword: forgotPasswordReducer,
     dashboard: dashboardReducer,
     production: productionReducer,
     laboratory: laboratoryReducer,
@@ -52,6 +60,9 @@ export const store = configureStore({
     roles: rolesReducer,
     users: usersReducer,
     silo: siloReducer,
+    qaReleaseNotes: qaReleaseNoteSlice,
+    qaRejectNotes: qaRejectNoteSlice,
+    generalLabTests: generalLabTestSlice,
     rawMaterial: rawMaterialReducer,
     process: processReducer,
     productionPlan: productionPlanReducer,
@@ -84,6 +95,9 @@ export const store = configureStore({
     productIncubations: productIncubationReducer,
     uhtQualityChecks: uhtQualityCheckReducer,
     qaCorrectiveActions: qaCorrectiveActionReducer,
+    collectionVoucher: collectionVoucherReducer,
+    rawMilkTestBeforeIntake: rawMilkTestBeforeIntakeReducer,
+    notifications: notificationsReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

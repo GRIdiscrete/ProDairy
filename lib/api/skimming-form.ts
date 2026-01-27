@@ -49,7 +49,6 @@ export interface CreateSkimmingFormRequest {
   bmt_id: string
   raw_milk: {
     quantity: number
-    raw_milk_form_id: string
     fat: number
     unit_of_measure: string
     source_silo_id: string

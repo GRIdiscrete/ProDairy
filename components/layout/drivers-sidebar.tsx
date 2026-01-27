@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import Image from "next/image"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { useState } from "react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -17,18 +17,24 @@ import { useAppSelector } from "@/lib/store"
 
 const driversNavigation = [
   { name: "Dashboard", href: "/drivers", icon: LayoutDashboard, current: false },
+  // {
+  //   name: "Driver Forms",
+  //   href: "/drivers/forms",
+  //   icon: FileText,
+  //   current: false,
+  // }
   {
-    name: "Driver Forms",
-    href: "/drivers/forms",
+    name: "Collection Vouchers",
+    href: "/drivers/collection-vouchers",
     icon: FileText,
     current: false,
-  },
-  {
-    name: "Driver Tools",
-    href: "/drivers/tools",
-    icon: Wrench,
-    current: false,
-  },
+  }
+  // {
+  //   name: "Driver Tools",
+  //   href: "/drivers/tools",
+  //   icon: Wrench,
+  //   current: false,
+  // },
 ]
 
 interface DriversSidebarProps {
@@ -39,6 +45,7 @@ interface DriversSidebarProps {
 export function DriversSidebar({ collapsed = false, onToggle }: DriversSidebarProps) {
   const pathname = usePathname()
   const { user, profile } = useAppSelector((state) => state.auth)
+  const router = useRouter()
 
   // Layout widths
   const openWidth = 272
@@ -73,7 +80,7 @@ export function DriversSidebar({ collapsed = false, onToggle }: DriversSidebarPr
       <div className="relative flex h-16 items-center justify-between border-b border-zinc-200 px-3">
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-x-0 -bottom-px h-[1px] bg-gradient-to-r from-blue-300 via-zinc-200 to-lime-300"
+          ="pointer-events-none absolute inset-x-0 -bottom-px h-[1px] bg-gradient-to-r from-blue-300 via-zinc-200 to-lime-300"
         />
         <div className={cn("flex items-center gap-3", collapsed && "w-full justify-center")}>
           {/* Logo */}
@@ -132,7 +139,11 @@ export function DriversSidebar({ collapsed = false, onToggle }: DriversSidebarPr
       <nav className="flex-1 overflow-y-auto px-3 py-3">
         <ul className="space-y-1">
           {driversNavigation.map((item) => {
-            const isActive = pathname === item.href || pathname.startsWith(item.href + "/")
+            // For Dashboard (/drivers), only match exact path
+            // For other routes, match if path starts with the href
+            const isActive = item.href === "/drivers"
+              ? pathname === item.href
+              : pathname === item.href || pathname.startsWith(item.href + "/")
 
             return (
               <li key={item.name} className="relative">
@@ -170,7 +181,9 @@ export function DriversSidebar({ collapsed = false, onToggle }: DriversSidebarPr
       </nav>
 
       {/* Footer / Profile */}
-      <div className="border-t border-zinc-200 p-3">
+      <div
+        onClick={() => router.push('/profile')}
+        className="border-t border-zinc-200 p-3 cursor-pointer">
         <div className={cn("flex items-center gap-3", collapsed && "justify-center")}>
           <div className="relative h-9 w-9 overflow-hidden rounded-full ring-1 ring-zinc-200">
             <Image src="/placeholder-user.jpg" alt="User avatar" fill className="object-cover" />
@@ -185,11 +198,11 @@ export function DriversSidebar({ collapsed = false, onToggle }: DriversSidebarPr
                 className="min-w-0"
               >
                 <p className="truncate text-sm font-light text-zinc-900">
-                  {profile?.first_name && profile?.last_name 
-                    ? `${profile.first_name} ${profile.last_name}` 
-                    : user?.first_name && user?.last_name 
-                    ? `${user.first_name} ${user.last_name}` 
-                    : 'Driver User'
+                  {profile?.first_name && profile?.last_name
+                    ? `${profile.first_name} ${profile.last_name}`
+                    : user?.first_name && user?.last_name
+                      ? `${user.first_name} ${user.last_name}`
+                      : 'Driver User'
                   }
                 </p>
                 <p className="truncate text-xs font-extralight tracking-wide text-zinc-500">

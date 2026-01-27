@@ -31,7 +31,7 @@ export function NotificationsSidebar({ collapsed, onToggle }: NotificationsSideb
   // Available modules for filtering
   const modules = [
     { id: 'all', name: 'All Modules', icon: Bell, color: 'text-blue-600', count: 0 },
-    { id: 'admin', name: 'Admin', icon: Info, color: 'text-purple-600', count: 0 },
+    { id: 'admin', name: 'Admin', icon: Info, color: 'text-blue-600', count: 0 },
     { id: 'data-capture', name: 'Data Capture', icon: CheckCircle, color: 'text-green-600', count: 0 },
     { id: 'drivers', name: 'Drivers', icon: AlertCircle, color: 'text-orange-600', count: 0 },
     { id: 'tools', name: 'Tools', icon: Clock, color: 'text-cyan-600', count: 0 },

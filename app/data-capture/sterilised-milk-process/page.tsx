@@ -154,8 +154,8 @@ export default function SterilisedMilkProcessPage() {
         
         return (
           <div className="flex items-start space-x-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center">
-              <Milk className="w-4 h-4 text-white" />
+            <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
+              <Milk className="w-4 h-4 text-gray-600" />
             </div>
             <div className="flex-1">
               <div className="flex items-center space-x-2 mb-2">
@@ -171,7 +171,7 @@ export default function SterilisedMilkProcessPage() {
                 <div className="mt-2 p-3 bg-gray-50 rounded-lg border">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-xs font-medium text-gray-600">Process Parameters Preview</span>
-                    <Badge variant="outline" className="text-xs">Latest</Badge>
+                    <Badge  className="text-xs">Latest</Badge>
                   </div>
                   <div className="grid grid-cols-2 gap-2 text-xs">
                     <div>
@@ -196,7 +196,7 @@ export default function SterilisedMilkProcessPage() {
                 <div className="mt-2 p-3 bg-gray-50 rounded-lg border border-dashed">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-xs font-medium text-gray-600">Process Parameters</span>
-                    <Badge variant="outline" className="text-xs text-gray-500">No Details</Badge>
+                    <Badge  className="text-xs text-gray-500">No Details</Badge>
                   </div>
                   <p className="text-xs text-gray-500">No process details available for this process.</p>
                 </div>
@@ -234,7 +234,7 @@ export default function SterilisedMilkProcessPage() {
         return (
           <div className="space-y-1">
             <p className="text-sm font-medium">{getPersonName(approvedBy)}</p>
-            <Badge variant="outline" className="text-xs">
+            <Badge  className="text-xs">
               Approved
             </Badge>
           </div>
@@ -265,10 +265,10 @@ export default function SterilisedMilkProcessPage() {
         const process = row.original
         return (
           <div className="flex space-x-2">
-            <LoadingButton variant="outline" size="sm" onClick={() => handleViewProcess(process)}>
+            <LoadingButton  size="sm" onClick={() => handleViewProcess(process)}>
               <Eye className="w-4 h-4" />
             </LoadingButton>
-            <LoadingButton variant="outline" size="sm" onClick={() => handleEditProcess(process)}>
+            <LoadingButton  size="sm" onClick={() => handleEditProcess(process)}>
               <Edit className="w-4 h-4" />
             </LoadingButton>
             <LoadingButton 
@@ -313,8 +313,8 @@ export default function SterilisedMilkProcessPage() {
               <CardHeader className="pb-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center">
-                      <Milk className="w-5 h-5 text-white" />
+                    <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center">
+                      <Milk className="w-5 h-5 text-gray-600" />
                     </div>
                     <div>
                       <CardTitle className="text-lg font-medium">Current Sterilised Milk Process</CardTitle>
@@ -373,7 +373,7 @@ export default function SterilisedMilkProcessPage() {
                   <div className="mt-4 p-4 bg-gray-50 rounded-lg border">
                     <div className="flex items-center justify-between mb-3">
                       <h4 className="text-sm font-medium">Process Parameters</h4>
-                      <Badge variant="outline" className="text-xs">Latest</Badge>
+                      <Badge  className="text-xs">Latest</Badge>
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
                       <div>
@@ -399,7 +399,7 @@ export default function SterilisedMilkProcessPage() {
                 <div className="flex items-center justify-between pt-4 border-t">
                   <div className="flex items-center space-x-2">
                     <Button
-                      variant="outline"
+                      
                       size="sm"
                       onClick={() => handleViewProcess(latestProcess)}
                       className="text-green-600 border-green-200 hover:bg-green-50"
@@ -408,7 +408,7 @@ export default function SterilisedMilkProcessPage() {
                       View Details
                     </Button>
                     <Button
-                      variant="outline"
+                      
                       size="sm"
                       onClick={() => handleEditProcess(latestProcess)}
                       className="text-blue-600 border-blue-200 hover:bg-blue-50"
@@ -494,7 +494,7 @@ export default function SterilisedMilkProcessPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Avg Parameters</CardTitle>
-              <Milk className="h-4 w-4 text-purple-600" />
+              <Milk className="h-4 w-4 text-blue-600" />
             </CardHeader>
             <CardContent>
               {operationLoading.fetch ? (
@@ -504,7 +504,7 @@ export default function SterilisedMilkProcessPage() {
                 </div>
               ) : (
                 <>
-                  <div className="text-2xl font-bold text-purple-600">
+                  <div className="text-2xl font-bold text-blue-600">
                     {(processes || []).length ? Math.round((processes || []).filter((process: any) => process.sterilised_milk_process_details_fkey).length / processes.length) : 0}
                   </div>
                   <p className="text-xs text-muted-foreground">Per process</p>

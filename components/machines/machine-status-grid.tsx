@@ -57,7 +57,7 @@ export function MachineStatusGrid() {
               <SelectItem value="warehouse-02">Warehouse 02</SelectItem>
             </SelectContent>
           </Select>
-          <Button variant="outline" size="sm">
+          <Button  size="sm">
             Real-time View
           </Button>
         </div>

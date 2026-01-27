@@ -35,7 +35,7 @@ export interface Envelope<T> { statusCode: number; message: string; data: T }
 
 export const filmaticLinesGroupsApi = {
   getGroups: async () => apiRequest<Envelope<FilmaticLinesGroup[]>>(`/filmatic-lines-group`, { method: "GET" }),
-  updateGroup: async (id: string, body: FilmaticLinesGroupUpdateRequest) => apiRequest<Envelope<FilmaticLinesGroup>>(`/filmatic-lines-group/${id}`, {
+  updateGroup: async (id: string, body: FilmaticLinesGroupUpdateRequest) => apiRequest<Envelope<FilmaticLinesGroup>>(`/filmatic-lines-group`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),

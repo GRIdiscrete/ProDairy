@@ -177,7 +177,7 @@ export function MachineFormDrawer({ open, onOpenChange, machine, mode }: Machine
             <div className="flex justify-end space-x-2 pt-4">
               <LoadingButton
                 type="button"
-                variant="outline"
+                
                 onClick={() => onOpenChange(false)}
                 disabled={operationLoading.create || operationLoading.update}
               >
@@ -187,7 +187,7 @@ export function MachineFormDrawer({ open, onOpenChange, machine, mode }: Machine
                 type="submit"
                 loading={operationLoading.create || operationLoading.update}
                 disabled={operationLoading.create || operationLoading.update}
-                className="bg-gradient-to-r from-gray-500 to-gray-700 hover:from-gray-600 hover:to-gray-800 text-white border-0 rounded-full px-6 py-2 font-light"
+                className=" bg-[#006BC4] text-white rounded-full px-6 py-2 font-light"
               >
                 {mode === "create" ? "Create Machine" : "Update Machine"}
               </LoadingButton>

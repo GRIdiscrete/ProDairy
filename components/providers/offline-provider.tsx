@@ -9,6 +9,7 @@ import { useAppDispatch } from '@/lib/store'
 export function OfflineProvider({ children }: { children: React.ReactNode }) {
   const [showSyncModal, setShowSyncModal] = useState(false)
   const [pendingCount, setPendingCount] = useState(0)
+  const [pendingDispatch, setPendingDispatch] = useState<any | undefined>(undefined)
   const dispatch = useAppDispatch()
 
   useEffect(() => {
@@ -21,6 +22,7 @@ export function OfflineProvider({ children }: { children: React.ReactNode }) {
     // Listen for sync modal events
     const handleShowSyncModal = (event: CustomEvent) => {
       setPendingCount(event.detail.pendingCount)
+      setPendingDispatch(event.detail.dispatch || undefined)
       setShowSyncModal(true)
     }
 
@@ -52,6 +54,7 @@ export function OfflineProvider({ children }: { children: React.ReactNode }) {
         open={showSyncModal}
         onOpenChange={setShowSyncModal}
         pendingCount={pendingCount}
+        dispatch={pendingDispatch || dispatch}
       />
     </>
   )

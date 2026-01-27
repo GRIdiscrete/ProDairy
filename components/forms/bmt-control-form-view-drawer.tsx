@@ -1,23 +1,29 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { formatTimeForDisplay } from "@/lib/utils/time-formatter"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { LoadingButton } from "@/components/ui/loading-button"
 import { CopyButton } from "@/components/ui/copy-button"
 import { AnimatedSiloTransfer } from "@/components/ui/animated-silo-transfer"
-import { Edit, Beaker, Droplets, Users, Clock, BarChart3, ArrowRight, Play, RotateCcw, FileText, Package, TrendingUp } from "lucide-react"
+import { Edit, Beaker, Droplets, Users, Clock, BarChart3, ArrowRight, Play, RotateCcw, FileText, Package, TrendingUp, User } from "lucide-react"
 import { format } from "date-fns"
+import { useAppDispatch, useAppSelector } from "@/lib/store"
+import { fetchUsers } from "@/lib/store/slices/usersSlice"
+import { siloApi } from "@/lib/api/silo"
+import { UserAvatar } from "@/components/ui/user-avatar"
+import { FormIdCopy } from "@/components/ui/form-id-copy"
 
 // Helper function to safely extract and format time from datetime strings
 const formatTimeOnly = (dateTimeString: string | null | undefined): string => {
   if (!dateTimeString) return 'N/A'
-  
+
   try {
     // Handle different datetime formats
     let timeString = ''
-    
+
     if (dateTimeString.includes('T')) {
       // ISO format: "2025-01-06T12:00:00.000000+00"
       timeString = dateTimeString.split('T')[1]?.substring(0, 5) || ''
@@ -36,7 +42,7 @@ const formatTimeOnly = (dateTimeString: string | null | undefined): string => {
         return 'Invalid Time'
       }
     }
-    
+
     return timeString || 'N/A'
   } catch (error) {
     console.error('Error formatting time:', error, dateTimeString)
@@ -54,17 +60,129 @@ interface BMTControlFormViewDrawerProps {
 }
 
 export function BMTControlFormViewDrawer({ open, onClose, form, onEdit }: BMTControlFormViewDrawerProps) {
+  const dispatch = useAppDispatch()
+  const { items: users } = useAppSelector((state) => state.users)
+
   const [isAnimating, setIsAnimating] = useState(false)
   const [animationProgress, setAnimationProgress] = useState(0)
+  const [silos, setSilos] = useState<any[]>([])
+  const [loadingSilos, setLoadingSilos] = useState(false)
 
-  if (!form) return null
+  // Helper function to format time display - handles multiple formats
+  const formatTimeForDisplay = (timeString: string | undefined): string => {
+    if (!timeString) return 'N/A'
+
+    try {
+      // Handle different time formats
+      if (timeString.match(/^\d{2}:\d{2}$/)) {
+        // Already in HH:MM format
+        return timeString
+      } else if (timeString.match(/^\d{2}:\d{2}:\d{2}/)) {
+        // Handle HH:MM:SS or HH:MM:SS.microseconds format
+        return timeString.substring(0, 5) // Extract HH:MM
+      } else if (timeString.includes('T')) {
+        // ISO timestamp format
+        return timeString.split('T')[1]?.substring(0, 5) || 'N/A'
+      } else if (timeString.includes(' ')) {
+        // Space-separated datetime
+        return timeString.split(' ')[1]?.substring(0, 5) || 'N/A'
+      } else {
+        // Try to parse as date
+        const date = new Date(timeString)
+        if (isNaN(date.getTime())) {
+          return timeString // Return original if can't parse
+        }
+        return format(date, 'HH:mm')
+      }
+    } catch (error) {
+      return timeString || 'N/A'
+    }
+  }
+
+  // Load users and silos when drawer opens
+  useEffect(() => {
+    if (open) {
+      // Load users if not already loaded
+      if (users.length === 0) {
+        dispatch(fetchUsers({}))
+      }
+
+      // Load silos
+      loadSilos()
+    }
+  }, [open, dispatch, users.length])
+
+  const loadSilos = async () => {
+    try {
+      setLoadingSilos(true)
+      const response = await siloApi.getSilos()
+      setSilos(response.data || [])
+    } catch (error) {
+      console.error('Error loading silos:', error)
+    } finally {
+      setLoadingSilos(false)
+    }
+  }
+
+  // Helper functions
+  const getSiloById = (siloId: string | string[]) => {
+    if (!siloId) return null
+    const id = Array.isArray(siloId) ? siloId[0] : siloId
+    return silos.find((silo: any) => silo.id === id)
+  }
+
+  const getUserById = (userId: string) => {
+    return users.find((user: any) => user.id === userId)
+  }
+
+  const generateBMTFormId = (createdAt: string) => {
+    if (!createdAt) return 'bmt-000-00-00-0000'
+
+    try {
+      const date = new Date(createdAt)
+      const dayNumber = Math.floor(Math.random() * 999) + 1
+      const month = (date.getMonth() + 1).toString().padStart(2, '0')
+      const day = date.getDate().toString().padStart(2, '0')
+      const year = date.getFullYear()
+
+      return `bmt-${dayNumber.toString().padStart(3, '0')}-${month}-${day}-${year}`
+    } catch (error) {
+      return 'bmt-000-00-00-0000'
+    }
+  }
+
+  // Helper: get all source silos from form.bmt_control_form_source_silo
+  const getSourceSilos = () => {
+    if (!form) return [];
+    if (Array.isArray((form as any).bmt_control_form_source_silo)) {
+      return (form as any).bmt_control_form_source_silo;
+    }
+    return [];
+  };
+
+  // Helper: get destination silo from form.destination_silo
+  const getDestinationSilo = () => {
+    if (!form) return null;
+    if ((form as any).destination_silo) {
+      return (form as any).destination_silo;
+    }
+    return null;
+  };
+
+  if (!form) return null;
+
+  const sourceSilos = getSourceSilos();
+  const destinationSiloObj = getDestinationSilo();
+
+  const dispatchUser = getUserById((form as any).dispatch_operator_id || form.llm_operator_id)
+  const receiverUser = getUserById((form as any).receiver_operator_id || form.dpp_operator_id)
 
   const volumeDifference = (form.flow_meter_end_reading || 0) - (form.flow_meter_start_reading || 0)
 
   const startAnimation = () => {
     setIsAnimating(true)
     setAnimationProgress(0)
-    
+
     const interval = setInterval(() => {
       setAnimationProgress(prev => {
         if (prev >= 100) {
@@ -90,14 +208,19 @@ export function BMTControlFormViewDrawer({ open, onClose, form, onEdit }: BMTCon
             <Beaker className="w-5 h-5" />
             BMT Control Form Details
           </SheetTitle>
-          <SheetDescription className="text-sm font-light">
-            Complete information about the bulk milk transfer control form record
+          <SheetDescription className="text-sm font-light flex items-center gap-2">
+            <span>Complete information about the bulk milk transfer control form record</span>
+            <FormIdCopy
+              displayId={form.tag || "N/A"}
+              actualId={form.tag || ""}
+              size="lg"
+            />
           </SheetDescription>
         </SheetHeader>
 
         <div className="flex-1 overflow-y-auto p-6">
           {/* Process Overview */}
-          <div className="mb-8 p-6 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg">
+          <div className="mb-8 p-6 bg-blue-50 rounded-lg">
             <h3 className="text-lg font-light text-gray-900 mb-4">Process Overview</h3>
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center space-x-2">
@@ -113,7 +236,7 @@ export function BMTControlFormViewDrawer({ open, onClose, form, onEdit }: BMTCon
                 </div>
                 <div className="flex items-center space-x-2">
                   <span className="text-sm font-medium text-green-600">BMT Transfer</span>
-                  <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-2 py-1 rounded-full text-xs font-medium shadow-lg">
+                  <div className=" bg-gray-100 text-gray-600 px-2 py-1 rounded-full text-xs font-medium shadow-lg">
                     Current Step
                   </div>
                 </div>
@@ -135,10 +258,10 @@ export function BMTControlFormViewDrawer({ open, onClose, form, onEdit }: BMTCon
             </div>
             <div className="flex items-center space-x-2">
               <LoadingButton
-                variant="outline"
+
                 size="sm"
                 onClick={onEdit}
-                className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 rounded-full"
+                className="bg-[#A0CF06] text-[#211D1E] rounded-full"
               >
                 <Edit className="w-4 h-4 mr-2" />
                 Edit
@@ -146,195 +269,246 @@ export function BMTControlFormViewDrawer({ open, onClose, form, onEdit }: BMTCon
             </div>
           </div>
 
-          {/* Transfer Details */}
-          <div className="p-6 bg-white border border-gray-200 rounded-lg">
-            <div className="flex items-center space-x-2 mb-4">
-              <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
-                <Beaker className="w-4 h-4 text-blue-600" />
-              </div>
-              <h3 className="text-lg font-light">Transfer Details</h3>
-            </div>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-light text-gray-600">Product</span>
-                <span className="text-sm font-light text-blue-600">{form.product}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-light text-gray-600">Volume</span>
-                <span className="text-sm font-light text-green-600">{form.volume}L</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-light text-gray-600">Source Silo</span>
-                <span className="text-sm font-light">{form.bmt_control_form_source_silo_id_fkey?.name || 'N/A'}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-light text-gray-600">Destination Silo</span>
-                <span className="text-sm font-light">{form.bmt_control_form_destination_silo_id_fkey?.name || 'N/A'}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Animated Silo Transfer Visualization */}
-          {form.bmt_control_form_source_silo_id_fkey && form.bmt_control_form_destination_silo_id_fkey && (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-gray-900">Milk Transfer Visualization</h3>
-                <div className="flex space-x-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={startAnimation}
-                    disabled={isAnimating}
-                    className="flex items-center space-x-1"
-                  >
-                    <Play className="w-4 h-4" />
-                    <span>Demo Transfer</span>
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={resetAnimation}
-                    className="flex items-center space-x-1"
-                  >
-                    <RotateCcw className="w-4 h-4" />
-                    <span>Reset</span>
-                  </Button>
-                </div>
-              </div>
-              
-              <AnimatedSiloTransfer
-                sourceSilo={{
-                  id: form.bmt_control_form_source_silo_id_fkey.id,
-                  name: form.bmt_control_form_source_silo_id_fkey.name,
-                  capacity: form.bmt_control_form_source_silo_id_fkey.capacity,
-                  currentVolume: form.bmt_control_form_source_silo_id_fkey.milk_volume - (isAnimating ? (animationProgress / 100) * form.volume : form.volume),
-                  location: form.bmt_control_form_source_silo_id_fkey.location,
-                  category: form.bmt_control_form_source_silo_id_fkey.category
-                }}
-                destinationSilo={{
-                  id: form.bmt_control_form_destination_silo_id_fkey.id,
-                  name: form.bmt_control_form_destination_silo_id_fkey.name,
-                  capacity: form.bmt_control_form_destination_silo_id_fkey.capacity,
-                  currentVolume: form.bmt_control_form_destination_silo_id_fkey.milk_volume + (isAnimating ? (animationProgress / 100) * form.volume : form.volume),
-                  location: form.bmt_control_form_destination_silo_id_fkey.location,
-                  category: form.bmt_control_form_destination_silo_id_fkey.category
-                }}
-                transferVolume={form.volume}
-                isTransferring={isAnimating}
-                transferProgress={animationProgress}
+          {/* Form Information */}
+          <div className="mb-6 flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <FormIdCopy
+                displayId={form.tag || "N/A"}
+                actualId={form.tag || ""}
+                size="sm"
               />
             </div>
-          )}
-
-          {/* Flow Meter Readings */}
-          <div className="p-6 bg-white border border-gray-200 rounded-lg">
-            <div className="flex items-center space-x-2 mb-4">
-              <div className="w-6 h-6 rounded-full bg-orange-100 flex items-center justify-center">
-                <BarChart3 className="w-4 h-4 text-orange-600" />
-              </div>
-              <h3 className="text-lg font-light">Flow Meter Readings</h3>
+            <div className="flex items-center space-x-2">
+              <Badge className="bg-blue-100 text-blue-800 font-light">
+                Status: {(form as any).status || 'Draft'}
+              </Badge>
             </div>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-light text-gray-600">Start Reading</span>
-                <span className="text-sm font-light text-blue-600">{form.flow_meter_start_reading}</span>
+          </div>
+
+          {/* Basic Information Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Transfer Details */}
+            <div className="p-6 bg-white border border-gray-200 rounded-lg">
+              <div className="flex items-center space-x-2 mb-4">
+                <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
+                  <Beaker className="w-4 h-4 text-blue-600" />
+                </div>
+                <h3 className="text-lg font-light">Transfer Details</h3>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-light text-gray-600">End Reading</span>
-                <span className="text-sm font-light text-green-600">{form.flow_meter_end_reading}</span>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-light text-gray-600">Product</span>
+                  <span className="text-sm font-light text-blue-600">{form.product}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-light text-gray-600">Volume</span>
+                  <span className="text-sm font-light text-green-600">{form.volume || 'N/A'}L</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-light text-gray-600">Tag</span>
+                  <span className="text-sm font-light">{(form as any).tag || 'N/A'}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-light text-gray-600">Received Bottles</span>
+                  <span className="text-sm font-light">{(form as any).received_bottles || 'N/A'}</span>
+                </div>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-light text-gray-600">Volume Difference</span>
-                <span className={`text-sm font-light ${volumeDifference > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  {volumeDifference > 0 ? '+' : ''}{volumeDifference}
-                </span>
+            </div>
+
+            {/* Movement Timeline */}
+            <div className="p-6 bg-white border border-gray-200 rounded-lg">
+              <div className="flex items-center space-x-2 mb-4">
+                <div className="w-6 h-6 rounded-full bg-indigo-100 flex items-center justify-center">
+                  <Clock className="w-4 h-4 text-indigo-600" />
+                </div>
+                <h3 className="text-lg font-light">Movement Timeline</h3>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-light text-gray-600">Start Time</span>
-                <span className="text-sm font-light">
-                  {formatTimeOnly(form.flow_meter_start)}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-light text-gray-600">End Time</span>
-                <span className="text-sm font-light">
-                  {formatTimeOnly(form.flow_meter_end)}
-                </span>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-light text-gray-600">Movement Start</span>
+                  <span className="text-sm font-light">
+                    {formatTimeForDisplay(form?.movement_start || undefined)}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-light text-gray-600">Movement End</span>
+                  <span className="text-sm font-light">
+                    {formatTimeForDisplay(form?.movement_end || undefined)}
+                  </span>
+                </div>
+                {form.movement_start && form.movement_end && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-light text-gray-600">Total Duration</span>
+                    <span className="text-sm font-light text-indigo-600">
+                      {(() => {
+                        try {
+                          const startDate = new Date(form.movement_start)
+                          const endDate = new Date(form.movement_end)
+                          if (!isNaN(startDate.getTime()) && !isNaN(endDate.getTime())) {
+                            return Math.round((endDate.getTime() - startDate.getTime()) / (1000 * 60)) + ' minutes'
+                          }
+                          return 'N/A'
+                        } catch (error) {
+                          return 'N/A'
+                        }
+                      })()}
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
 
-          {/* Movement Timeline */}
-          <div className="p-6 bg-white border border-gray-200 rounded-lg">
-            <div className="flex items-center space-x-2 mb-4">
-              <div className="w-6 h-6 rounded-full bg-indigo-100 flex items-center justify-center">
-                <Clock className="w-4 h-4 text-indigo-600" />
+          {/* Transfer Pairs Information */}
+          <div className="space-y-6">
+            <div className="flex items-center space-x-2">
+              <div className="w-8 h-8 rounded-full bg-[#006BC4] text-white flex items-center justify-center shadow-sm">
+                <BarChart3 className="w-4 h-4" />
               </div>
-              <h3 className="text-lg font-light">Movement Timeline</h3>
+              <h3 className="text-xl font-light text-gray-900">Transfer Pairs & Readings</h3>
             </div>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-light text-gray-600">Movement Start</span>
-                <span className="text-sm font-light">
-                  {formatTimeOnly(form.movement_start)}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-light text-gray-600">Movement End</span>
-                <span className="text-sm font-light">
-                  {formatTimeOnly(form.movement_end)}
-                </span>
-              </div>
-              {form.movement_start && form.movement_end && (
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-light text-gray-600">Total Duration</span>
-                  <span className="text-sm font-light text-indigo-600">
-                    {(() => {
-                      try {
-                        const startDate = new Date(form.movement_start)
-                        const endDate = new Date(form.movement_end)
-                        if (!isNaN(startDate.getTime()) && !isNaN(endDate.getTime())) {
-                          return Math.round((endDate.getTime() - startDate.getTime()) / (1000 * 60)) + ' minutes'
-                        }
-                        return 'N/A'
-                      } catch (error) {
-                        return 'N/A'
-                      }
-                    })()}
-                  </span>
+
+            <div className="space-y-4">
+              {sourceSilos.length > 0 ? (
+                sourceSilos.map((source: any, idx: number) => {
+                  const dest = (form as any).bmt_control_form_destination_silo?.[idx] || (form as any).bmt_control_form_destination_silo?.[0]
+
+                  return (
+                    <div key={idx} className="border border-gray-200 rounded-xl bg-white shadow-sm overflow-hidden">
+                      <div className="bg-gray-50/50 p-3 border-b flex items-center justify-between">
+                        <span className="text-sm font-medium text-gray-700">Pair #{idx + 1}</span>
+                        <Badge variant="outline" className="bg-white font-normal text-xs">
+                          {source.product || form.product}
+                        </Badge>
+                      </div>
+
+                      <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-6 relative">
+                        {/* Source Silo Column */}
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-2 mb-1">
+                            <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
+                              <span className="text-[10px] font-bold text-blue-600">S</span>
+                            </div>
+                            <span className="text-xs font-bold uppercase text-gray-500 tracking-wider">Source</span>
+                          </div>
+                          <div className="space-y-2 pl-8">
+                            <div className="flex justify-between items-center">
+                              <p className="text-sm font-medium text-gray-900">{source.name}</p>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                              <div className="space-y-0.5">
+                                <p className="text-[10px] text-gray-400 font-medium">START READING</p>
+                                <p className="text-sm font-light text-blue-600">{source.flow_meter_start_reading || '0'} L</p>
+                                <p className="text-[10px] text-gray-400">{formatTimeOnly(source.flow_meter_start)}</p>
+                              </div>
+                              <div className="space-y-0.5">
+                                <p className="text-[10px] text-gray-400 font-medium">END READING</p>
+                                <p className="text-sm font-light text-blue-600">{source.flow_meter_end_reading || '0'} L</p>
+                                <p className="text-[10px] text-gray-400">{formatTimeOnly(source.flow_meter_end)}</p>
+                              </div>
+                            </div>
+                            <div className="pt-1">
+                              <p className="text-[10px] text-gray-400 font-medium uppercase">Requested Volume</p>
+                              <p className="text-sm font-medium text-gray-700">{source.source_silo_quantity_requested || '0'} L</p>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Visual Connector Arrow (Desktop only) */}
+                        <div className="hidden md:flex absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-gray-50 border border-gray-200 items-center justify-center z-10 shadow-sm">
+                          <ArrowRight className="w-4 h-4 text-gray-400" />
+                        </div>
+
+                        {/* Destination Silo Column */}
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-2 mb-1">
+                            <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center">
+                              <span className="text-[10px] font-bold text-green-600">D</span>
+                            </div>
+                            <span className="text-xs font-bold uppercase text-gray-500 tracking-wider">Destination</span>
+                          </div>
+                          {dest ? (
+                            <div className="space-y-2 pl-8">
+                              <div className="flex justify-between items-center">
+                                <p className="text-sm font-medium text-gray-900">{dest.name}</p>
+                              </div>
+                              <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-0.5">
+                                  <p className="text-[10px] text-gray-400 font-medium">START READING</p>
+                                  <p className="text-sm font-light text-green-600">{dest.flow_meter_start_reading || '0'} L</p>
+                                  <p className="text-[10px] text-gray-400">{formatTimeOnly(dest.flow_meter_start)}</p>
+                                </div>
+                                <div className="space-y-0.5">
+                                  <p className="text-[10px] text-gray-400 font-medium">END READING</p>
+                                  <p className="text-sm font-light text-green-600">{dest.flow_meter_end_reading || '0'} L</p>
+                                  <p className="text-[10px] text-gray-400">{formatTimeOnly(dest.flow_meter_end)}</p>
+                                </div>
+                              </div>
+                              <div className="pt-1">
+                                <p className="text-[10px] text-gray-400 font-medium uppercase">Quantity Received</p>
+                                <p className="text-sm font-medium text-gray-700">{dest.quantity_received || '0'} L</p>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="pl-8 flex items-center h-full">
+                              <p className="text-sm italic text-gray-400 font-light">No paired destination data</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })
+              ) : (
+                <div className="text-center p-8 border-2 border-dashed border-gray-200 rounded-xl bg-gray-50/30">
+                  <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-3">
+                    <Package className="w-6 h-6 text-gray-300" />
+                  </div>
+                  <p className="text-sm text-gray-500 font-light italic">No transfer pairs recorded for this form</p>
                 </div>
               )}
             </div>
           </div>
 
+
           {/* Operator Information */}
-          <div className="p-6 bg-white border border-gray-200 rounded-lg">
-            <div className="flex items-center space-x-2 mb-4">
-              <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center">
-                <Users className="w-4 h-4 text-purple-600" />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Dispatch Operator */}
+            <div className="p-6 bg-white border border-gray-200 rounded-lg">
+              <div className="flex items-center space-x-2 mb-4">
+                <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
+                  <User className="h-4 w-4 text-blue-600" />
+                </div>
+                <h3 className="text-lg font-light">Dispatch Operator</h3>
               </div>
-              <h3 className="text-lg font-light">Operator Information</h3>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-light text-gray-600">LLM Operator</span>
-                  <span className="text-sm font-light">
-                    {form.bmt_control_form_llm_operator_id_fkey 
-                      ? `${form.bmt_control_form_llm_operator_id_fkey.first_name} ${form.bmt_control_form_llm_operator_id_fkey.last_name}`
-                      : form.llm_operator_id
-                    }
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-light text-gray-600">Department</span>
-                  <span className="text-sm font-light">
-                    {form.bmt_control_form_llm_operator_id_fkey?.department || 'N/A'}
-                  </span>
-                </div>
+              <div className="space-y-4">
+                {dispatchUser ? (
+                  <UserAvatar
+                    user={dispatchUser}
+                    size="lg"
+                    showName={true}
+                    showEmail={true}
+                    showDropdown={true}
+                  />
+                ) : (
+                  <div className="text-sm text-gray-500">
+                    {(form as any).dispatch_operator_id || form.llm_operator_id
+                      ? `User not found (${((form as any).dispatch_operator_id || form.llm_operator_id).slice(0, 8)}...)`
+                      : 'No operator assigned'}
+                  </div>
+                )}
+
                 <div className="space-y-2">
-                  <span className="text-sm font-light text-gray-600">LLM Signature</span>
-                  {form.llm_signature ? (
+                  <span className="text-sm font-light text-gray-600">Dispatch Signature</span>
+                  {(form as any).dispatch_operator_signature ? (
+                    <div className="border border-gray-200 rounded-lg p-2 bg-gray-50">
+                      <img
+                        src={base64ToPngDataUrl((form as any).dispatch_operator_signature)}
+                        alt="Dispatch signature"
+                        className="w-full h-20 object-contain"
+                      />
+                    </div>
+                  ) : form.llm_signature ? (
                     <div className="border border-gray-200 rounded-lg p-2 bg-gray-50">
                       <img
                         src={base64ToPngDataUrl(form.llm_signature)}
@@ -349,26 +523,44 @@ export function BMTControlFormViewDrawer({ open, onClose, form, onEdit }: BMTCon
                   )}
                 </div>
               </div>
-              
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-light text-gray-600">DPP Operator</span>
-                  <span className="text-sm font-light">
-                    {form.bmt_control_form_dpp_operator_id_fkey 
-                      ? `${form.bmt_control_form_dpp_operator_id_fkey.first_name} ${form.bmt_control_form_dpp_operator_id_fkey.last_name}`
-                      : form.dpp_operator_id
-                    }
-                  </span>
+            </div>
+
+            {/* Receiver Operator */}
+            <div className="p-6 bg-white border border-gray-200 rounded-lg">
+              <div className="flex items-center space-x-2 mb-4">
+                <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center">
+                  <User className="h-4 w-4 text-green-600" />
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-light text-gray-600">Department</span>
-                  <span className="text-sm font-light">
-                    {form.bmt_control_form_dpp_operator_id_fkey?.department || 'N/A'}
-                  </span>
-                </div>
+                <h3 className="text-lg font-light">Receiver Operator</h3>
+              </div>
+              <div className="space-y-4">
+                {receiverUser ? (
+                  <UserAvatar
+                    user={receiverUser}
+                    size="lg"
+                    showName={true}
+                    showEmail={true}
+                    showDropdown={true}
+                  />
+                ) : (
+                  <div className="text-sm text-gray-500">
+                    {(form as any).receiver_operator_id || form.dpp_operator_id
+                      ? `User not found (${((form as any).receiver_operator_id || form.dpp_operator_id).slice(0, 8)}...)`
+                      : 'No operator assigned'}
+                  </div>
+                )}
+
                 <div className="space-y-2">
-                  <span className="text-sm font-light text-gray-600">DPP Signature</span>
-                  {form.dpp_signature ? (
+                  <span className="text-sm font-light text-gray-600">Receiver Signature</span>
+                  {(form as any).receiver_operator_signature ? (
+                    <div className="border border-gray-200 rounded-lg p-2 bg-gray-50">
+                      <img
+                        src={base64ToPngDataUrl((form as any).receiver_operator_signature)}
+                        alt="Receiver signature"
+                        className="w-full h-20 object-contain"
+                      />
+                    </div>
+                  ) : form.dpp_signature ? (
                     <div className="border border-gray-200 rounded-lg p-2 bg-gray-50">
                       <img
                         src={base64ToPngDataUrl(form.dpp_signature)}
@@ -388,8 +580,22 @@ export function BMTControlFormViewDrawer({ open, onClose, form, onEdit }: BMTCon
 
           {/* Record Information */}
           <div className="p-6 bg-white border border-gray-200 rounded-lg">
-            <h3 className="text-lg font-light mb-4">Record Information</h3>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="flex items-center space-x-2 mb-4">
+              <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center">
+                <FileText className="w-4 h-4 text-gray-600" />
+              </div>
+              <h3 className="text-lg font-light">Record Information</h3>
+            </div>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-light text-gray-600">Form ID</span>
+                <div className="flex items-center space-x-2">
+                  <Badge className="font-mono">
+                    {form?.tag}
+                  </Badge>
+                  <CopyButton text={form.id || ''} />
+                </div>
+              </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm font-light text-gray-600">Created</span>
                 <span className="text-sm font-light">

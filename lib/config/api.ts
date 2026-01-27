@@ -1,12 +1,12 @@
 export const API_CONFIG = {
-  BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL || 'https://ckwkcg0o80cckkg0oog8okk8.greatssystems.co.zw',
+  BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL || 'https://dms.prodairyims.co.zw/api',
   ENDPOINTS: {
     USER_ROLES: '/user-roles',
     USERS: '/user',
     AUTH: '/auth',
     MACHINES: '/machine',
     SILOS: '/silo',
-    SUPPLIERS: '/supplier',
+    SUPPLIERS: '/supplier-2',
     RAW_MATERIALS: '/raw-material',
     PROCESSES: '/process',
     PRODUCTION_PLANS: '/production-plan',

@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit"
-import { pasteurizingApi, PasteurizingForm, CreatePasteurizingFormRequest } from "@/lib/api/pasteurizing"
+import { pasteurizingApi, PasteurizingForm, CreatePasteurizingFormRequest, UpdatePasteurizingFormRequest } from "@/lib/api/pasteurizing"
 
 interface PasteurizingState {
   forms: PasteurizingForm[]
@@ -68,7 +68,7 @@ export const createPasteurizingForm = createAsyncThunk(
 
 export const updatePasteurizingForm = createAsyncThunk(
   "pasteurizing/updateForm",
-  async ({ id, formData }: { id: string; formData: Partial<CreatePasteurizingFormRequest> }, { rejectWithValue }) => {
+  async ({ id, formData }: { id: string; formData: UpdatePasteurizingFormRequest }, { rejectWithValue }) => {
     try {
       const response = await pasteurizingApi.update(id, formData)
       return response.data

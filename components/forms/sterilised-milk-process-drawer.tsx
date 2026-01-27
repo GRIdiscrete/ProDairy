@@ -264,7 +264,7 @@ export function SterilisedMilkProcessDrawer({
   }
 
   const ProcessOverview = () => (
-    <div className="mb-8 p-6 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg">
+    <div className="mb-8 p-6  from-blue-50 to-cyan-50 rounded-lg">
       <h3 className="text-lg font-light text-gray-900 mb-4">Process Overview</h3>
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center space-x-2">
@@ -280,7 +280,7 @@ export function SterilisedMilkProcessDrawer({
           </div>
           <div className="flex items-center space-x-2">
             <span className="text-sm font-medium text-blue-600">Process Log</span>
-            <div className="bg-gradient-to-r from-blue-500 to-cyan-600 text-white px-2 py-1 rounded-full text-xs font-medium shadow-lg">
+            <div className=" bg-gray-100 text-gray-600 px-2 py-1 rounded-full text-xs font-medium shadow-lg">
               Current Step
             </div>
           </div>
@@ -370,11 +370,11 @@ export function SterilisedMilkProcessDrawer({
                     </div>
                   )}
                   <div className="flex items-center gap-2">
-                    <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={() => setApproverSignatureOpen(true)}>
+                    <Button type="button"  size="sm" className="rounded-full" onClick={() => setApproverSignatureOpen(true)}>
                       Add Signature
                     </Button>
                     {field.value && (
-                      <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={() => setApproverSignatureViewOpen(true)}>
+                      <Button type="button"  size="sm" className="rounded-full" onClick={() => setApproverSignatureViewOpen(true)}>
                         View Signature
                       </Button>
                     )}
@@ -433,11 +433,11 @@ export function SterilisedMilkProcessDrawer({
                     </div>
                   )}
                   <div className="flex items-center gap-2">
-                    <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={() => setOperatorSignatureOpen(true)}>
+                    <Button type="button"  size="sm" className="rounded-full" onClick={() => setOperatorSignatureOpen(true)}>
                       Add Signature
                     </Button>
                     {safeValue && (
-                      <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={() => setOperatorSignatureViewOpen(true)}>
+                      <Button type="button"  size="sm" className="rounded-full" onClick={() => setOperatorSignatureViewOpen(true)}>
                         View Signature
                       </Button>
                     )}
@@ -496,11 +496,11 @@ export function SterilisedMilkProcessDrawer({
                     </div>
                   )}
                   <div className="flex items-center gap-2">
-                    <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={() => setSupervisorSignatureOpen(true)}>
+                    <Button type="button"  size="sm" className="rounded-full" onClick={() => setSupervisorSignatureOpen(true)}>
                       Add Signature
                     </Button>
                     {safeValue && (
-                      <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={() => setSupervisorSignatureViewOpen(true)}>
+                      <Button type="button"  size="sm" className="rounded-full" onClick={() => setSupervisorSignatureViewOpen(true)}>
                         View Signature
                       </Button>
                     )}
@@ -882,7 +882,7 @@ export function SterilisedMilkProcessDrawer({
 
         <div className="flex items-center justify-between p-6 pt-0 border-t bg-white">
           <Button
-            variant="outline"
+            
             onClick={handleBack}
             disabled={currentStep === 1}
             className="flex items-center gap-2"

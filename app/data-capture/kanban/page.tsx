@@ -81,8 +81,8 @@ export default function KanbanPage() {
       id: "packaging",
       title: "Packaging",
       description: "Filling and packaging operations",
-      color: "bg-purple-500",
-      bgColor: "bg-purple-50",
+      color: "bg-blue-500",
+      bgColor: "bg-blue-50",
       cards: [
         {
           id: "4",
@@ -230,15 +230,15 @@ export default function KanbanPage() {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm">
+            <Button  size="sm">
               <Download className="h-4 w-4 mr-2" />
               Export
             </Button>
-            <Button variant="outline" size="sm">
+            <Button  size="sm">
               <Upload className="h-4 w-4 mr-2" />
               Import
             </Button>
-            <Button variant="outline" size="sm">
+            <Button  size="sm">
               <Settings className="h-4 w-4 mr-2" />
               Settings
             </Button>
@@ -309,13 +309,13 @@ export default function KanbanPage() {
                 className="pl-8 w-64"
               />
             </div>
-            <Button variant="outline" size="sm">
+            <Button  size="sm">
               <Filter className="h-4 w-4 mr-2" />
               Filters
             </Button>
           </div>
           <div className="flex items-center space-x-2">
-            <Button variant="outline" size="sm">
+            <Button  size="sm">
               <RefreshCw className="h-4 w-4 mr-2" />
               Refresh
             </Button>

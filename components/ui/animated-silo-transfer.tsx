@@ -66,9 +66,9 @@ export function AnimatedSiloTransfer({
       case 'processing tanks':
         return 'from-green-400 to-green-600'
       case 'storage tanks':
-        return 'from-purple-400 to-purple-600'
+        return 'from-gray-400 to-gray-600'
       default:
-        return 'from-cyan-400 to-cyan-600'
+        return 'from-blue-300 to-blue-500'
     }
   }
 
@@ -87,7 +87,7 @@ export function AnimatedSiloTransfer({
             <Droplets className="w-5 h-5 text-blue-600" />
             <span>Milk Transfer Visualization</span>
             {isTransferring && (
-              <Badge variant="outline" className="animate-pulse">
+              <Badge  className="animate-pulse">
                 Transferring...
               </Badge>
             )}
@@ -119,15 +119,15 @@ export function AnimatedSiloTransfer({
                       >
                         {/* Multiple wave layers for realistic liquid effect */}
                         <div className="absolute inset-0 opacity-20">
-                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent animate-wave" style={{ animationDuration: '3s' }}></div>
+                          <div className="absolute inset-0  from-transparent via-white to-transparent animate-wave" style={{ animationDuration: '3s' }}></div>
                           <div className="absolute inset-0 bg-gradient-to-l from-transparent via-white to-transparent animate-wave-reverse" style={{ animationDelay: '1s', animationDuration: '2.5s' }}></div>
-                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent animate-wave" style={{ animationDelay: '2s', animationDuration: '4s' }}></div>
+                          <div className="absolute inset-0  from-transparent via-white to-transparent animate-wave" style={{ animationDelay: '2s', animationDuration: '4s' }}></div>
                         </div>
                         
                         {/* Liquid surface with enhanced 3D effect */}
                         <div className="absolute top-0 left-0 right-0 h-3 liquid-surface">
                           <div className="absolute inset-0 bg-gradient-to-b from-white to-transparent opacity-60"></div>
-                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-30 animate-wave" style={{ animationDuration: '2s' }}></div>
+                          <div className="absolute inset-0  from-transparent via-white to-transparent opacity-30 animate-wave" style={{ animationDuration: '2s' }}></div>
                         </div>
                         
                         {/* Liquid bubbles effect */}
@@ -138,7 +138,7 @@ export function AnimatedSiloTransfer({
                         </div>
                         
                         {/* Liquid shimmer effect */}
-                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-15 animate-pulse"></div>
+                        <div className="absolute inset-0  from-transparent via-white to-transparent opacity-15 animate-pulse"></div>
                       </div>
                       
                       {/* Volume indicator with 3D effect */}
@@ -155,7 +155,7 @@ export function AnimatedSiloTransfer({
                     <div className="absolute top-0 right-0 w-4 h-40 bg-gradient-to-b from-gray-200 to-gray-300 rounded-r-lg transform rotate-y-12 origin-left"></div>
                     
                     {/* Top face for 3D effect */}
-                    <div className="absolute top-0 left-0 w-32 h-4 bg-gradient-to-r from-gray-100 to-gray-200 rounded-t-lg transform rotate-x-12 origin-bottom"></div>
+                    <div className="absolute top-0 left-0 w-32 h-4  from-gray-100 to-gray-200 rounded-t-lg transform rotate-x-12 origin-bottom"></div>
                   </div>
                 </div>
                 
@@ -195,7 +195,7 @@ export function AnimatedSiloTransfer({
                 
                 {/* Transfer volume indicator with 3D effect */}
                 <div className="absolute -top-10 left-1/2 transform -translate-x-1/2">
-                  <div className="bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800 px-3 py-2 rounded-full text-sm font-semibold shadow-lg border border-blue-300">
+                  <div className=" from-blue-100 to-blue-200 text-blue-800 px-3 py-2 rounded-full text-sm font-semibold shadow-lg border border-blue-300">
                     {transferVolume}L
                   </div>
                 </div>
@@ -205,7 +205,7 @@ export function AnimatedSiloTransfer({
               {isTransferring && (
                 <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
                   <div 
-                    className="h-full bg-gradient-to-r from-blue-500 to-green-500 transition-all duration-1000 ease-out"
+                    className="h-full  from-blue-500 to-green-500 transition-all duration-1000 ease-out"
                     style={{ width: `${transferProgress}%` }}
                   />
                 </div>
@@ -255,15 +255,15 @@ export function AnimatedSiloTransfer({
                       >
                         {/* Multiple wave layers for realistic liquid effect */}
                         <div className="absolute inset-0 opacity-20">
-                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent animate-wave" style={{ animationDuration: '3s' }}></div>
+                          <div className="absolute inset-0  from-transparent via-white to-transparent animate-wave" style={{ animationDuration: '3s' }}></div>
                           <div className="absolute inset-0 bg-gradient-to-l from-transparent via-white to-transparent animate-wave-reverse" style={{ animationDelay: '1s', animationDuration: '2.5s' }}></div>
-                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent animate-wave" style={{ animationDelay: '2s', animationDuration: '4s' }}></div>
+                          <div className="absolute inset-0  from-transparent via-white to-transparent animate-wave" style={{ animationDelay: '2s', animationDuration: '4s' }}></div>
                         </div>
                         
                         {/* Liquid surface with enhanced 3D effect */}
                         <div className="absolute top-0 left-0 right-0 h-3 liquid-surface">
                           <div className="absolute inset-0 bg-gradient-to-b from-white to-transparent opacity-60"></div>
-                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-30 animate-wave" style={{ animationDuration: '2s' }}></div>
+                          <div className="absolute inset-0  from-transparent via-white to-transparent opacity-30 animate-wave" style={{ animationDuration: '2s' }}></div>
                         </div>
                         
                         {/* Liquid bubbles effect */}
@@ -274,7 +274,7 @@ export function AnimatedSiloTransfer({
                         </div>
                         
                         {/* Liquid shimmer effect */}
-                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-15 animate-pulse"></div>
+                        <div className="absolute inset-0  from-transparent via-white to-transparent opacity-15 animate-pulse"></div>
                       </div>
                       
                       {/* Volume indicator with 3D effect */}
@@ -291,7 +291,7 @@ export function AnimatedSiloTransfer({
                     <div className="absolute top-0 right-0 w-4 h-40 bg-gradient-to-b from-gray-200 to-gray-300 rounded-r-lg transform rotate-y-12 origin-left"></div>
                     
                     {/* Top face for 3D effect */}
-                    <div className="absolute top-0 left-0 w-32 h-4 bg-gradient-to-r from-gray-100 to-gray-200 rounded-t-lg transform rotate-x-12 origin-bottom"></div>
+                    <div className="absolute top-0 left-0 w-32 h-4  from-gray-100 to-gray-200 rounded-t-lg transform rotate-x-12 origin-bottom"></div>
                   </div>
                 </div>
                 

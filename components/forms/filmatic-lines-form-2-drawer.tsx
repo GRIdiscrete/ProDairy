@@ -8,6 +8,7 @@ import { FilmaticLinesForm2, filmaticLinesForm2Api, CreateFilmaticLinesForm2Requ
 import { BMTControlForm, bmtControlFormApi } from "@/lib/api/bmt-control-form"
 import { FilmaticLinesGroup, filmaticLinesGroupsApi } from "@/lib/api/filmatic-lines-groups"
 import { useAuth } from "@/hooks/use-auth"
+import { useAppDispatch } from "@/lib/store"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -19,7 +20,9 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Switch } from "@/components/ui/switch"
 import { ArrowRight, Factory, Beaker, FileText, Package, Clock, Sun, Moon, Users, Plus, Trash2, ChevronLeft, ChevronRight } from "lucide-react"
+import { fetchFilmaticLinesForm2s } from "@/lib/store/slices/filmaticLinesForm2Slice"
 
 interface FilmaticLinesForm2DrawerProps {
   open: boolean
@@ -42,7 +45,7 @@ const NIGHT_SHIFT_TIMES = [
 
 // Process Overview Component
 const ProcessOverview = () => (
-  <div className="mb-8 p-6 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg">
+  <div className="mb-8 p-6  from-blue-50 to-cyan-50 rounded-lg">
     <h3 className="text-lg font-light text-gray-900 mb-4">Process Overview</h3>
     <div className="flex items-center justify-between mb-4">
       <div className="flex items-center space-x-2">
@@ -58,7 +61,7 @@ const ProcessOverview = () => (
         </div>
         <div className="flex items-center space-x-2">
           <span className="text-sm font-medium text-blue-600">Filmatic Lines</span>
-          <div className="bg-gradient-to-r from-blue-500 to-cyan-600 text-white px-2 py-1 rounded-full text-xs font-medium shadow-lg">
+          <div className=" bg-gray-100 text-gray-600 px-2 py-1 rounded-full text-xs font-medium shadow-lg">
             Current Step
           </div>
         </div>
@@ -87,16 +90,14 @@ const groupSelectionSchema = yup.object({
 // Step 3: Basic Information Schema (conditional validation based on shift) - Form 2 has no holding_tank_bmt
 const createBasicInfoSchema = (selectedShift: string) => yup.object({
   date: yup.string().required("Date is required"),
-  ...(selectedShift === "day_shift" && {
-    day_shift_opening_bottles: yup.number().required("Day shift opening bottles is required").min(0, "Must be positive"),
-    day_shift_closing_bottles: yup.number().required("Day shift closing bottles is required").min(0, "Must be positive"),
-    day_shift_waste_bottles: yup.number().required("Day shift waste bottles is required").min(0, "Must be positive"),
-  }),
-  ...(selectedShift === "night_shift" && {
-    night_shift_opening_bottles: yup.number().required("Night shift opening bottles is required").min(0, "Must be positive"),
-    night_shift_closing_bottles: yup.number().required("Night shift closing bottles is required").min(0, "Must be positive"),
-    night_shift_waste_bottles: yup.number().required("Night shift waste bottles is required").min(0, "Must be positive"),
-  }),
+  approved: yup.boolean().default(false),
+  day_shift_opening_bottles: yup.number().required("Day shift opening bottles is required").min(0, "Must be positive"),
+  // closing and waste are optional (no longer required)
+  day_shift_closing_bottles: yup.number().min(0, "Must be positive").nullable(),
+  day_shift_waste_bottles: yup.number().min(0, "Must be positive").nullable(),
+  night_shift_opening_bottles: yup.number().required("Night shift opening bottles is required").min(0, "Must be positive"),
+  night_shift_closing_bottles: yup.number().min(0, "Must be positive").nullable(),
+  night_shift_waste_bottles: yup.number().min(0, "Must be positive").nullable(),
 })
 
 // Step 4: Shift Details Schema (Form 2 specific - only 6 stoppage fields)
@@ -116,6 +117,7 @@ const shiftDetailsSchema = yup.object({
 
 type BasicInfoFormData = {
   date: string
+  approved?: boolean
   day_shift_opening_bottles?: number
   day_shift_closing_bottles?: number
   night_shift_opening_bottles?: number
@@ -126,9 +128,11 @@ type BasicInfoFormData = {
 type ShiftSelectionFormData = yup.InferType<typeof shiftSelectionSchema>
 type GroupSelectionFormData = yup.InferType<typeof groupSelectionSchema>
 type ShiftDetailsFormData = {
-  supervisor_approve?: boolean
-  operator_id?: string
+  id?: string
+  supervisor_approve: boolean | undefined
+  operator_id: string | undefined
   details?: Array<{
+    id?: string
     time?: string
     pallets?: number
     target?: number
@@ -146,6 +150,7 @@ export function FilmaticLinesForm2Drawer({
 }: FilmaticLinesForm2DrawerProps) {
   const { user } = useAuth()
   const [loading, setLoading] = useState({ create: false })
+  const dispatch = useAppDispatch()
   
   const [currentStep, setCurrentStep] = useState(1)
   const [bmtForms, setBmtForms] = useState<BMTControlForm[]>([])
@@ -184,9 +189,9 @@ export function FilmaticLinesForm2Drawer({
   const selectedGroupData = useMemo(() => {
     if (!selectedGroup || !filmaticGroups.length) return null
     const firstGroup = filmaticGroups[0] // Using first group record as specified
-    if (selectedGroup === "group_a") return { members: firstGroup.group_a, manager_id: firstGroup.manager_id }
-    if (selectedGroup === "group_b") return { members: firstGroup.group_b, manager_id: firstGroup.manager_id }
-    if (selectedGroup === "group_c") return { members: firstGroup.group_c, manager_id: firstGroup.manager_id }
+    if (selectedGroup === "group_a") return { id: firstGroup.id, members: firstGroup.group_a, manager_id: firstGroup.manager_id }
+    if (selectedGroup === "group_b") return { id: firstGroup.id, members: firstGroup.group_b, manager_id: firstGroup.manager_id }
+    if (selectedGroup === "group_c") return { id: firstGroup.id, members: firstGroup.group_c, manager_id: firstGroup.manager_id }
     return null
   }, [selectedGroup, filmaticGroups])
 
@@ -201,18 +206,17 @@ export function FilmaticLinesForm2Drawer({
     resolver: yupResolver(basicInfoSchema),
     defaultValues: {
       date: "",
+      approved: false,
       day_shift_opening_bottles: undefined,
       day_shift_closing_bottles: undefined,
       night_shift_opening_bottles: undefined,
       night_shift_closing_bottles: undefined,
-      day_shift_waste_bottles: undefined,
-      night_shift_waste_bottles: undefined,
     },
   })
 
   // Step 4: Shift details form with array fields (Form 2 stoppage fields)
   const shiftDetailsForm = useForm<ShiftDetailsFormData>({
-    resolver: yupResolver(shiftDetailsSchema),
+    resolver: yupResolver(shiftDetailsSchema) as any,
     defaultValues: {
       supervisor_approve: false,
       operator_id: user?.id || "",
@@ -222,6 +226,12 @@ export function FilmaticLinesForm2Drawer({
         target: undefined,
         setbacks: "",
         stoppage_time: {
+          capper_1_hours: undefined,
+          capper_2_hours: undefined,
+          sleever_1_hours: undefined,
+          sleever_2_hours: undefined,
+          shrink_1_hours: undefined,
+          shrink_2_hours: undefined,
           capper_1: undefined,
           capper_2: undefined,
           sleever_1: undefined,
@@ -291,59 +301,109 @@ export function FilmaticLinesForm2Drawer({
         // Populate forms with existing data for edit mode
         console.log("Edit mode - populating form data:", form)
         
-        // Populate basic info form
+        // Populate basic info form using server values
         basicInfoForm.reset({
           date: form.date || "",
-          day_shift_opening_bottles: undefined,
-          day_shift_closing_bottles: undefined,
-          night_shift_opening_bottles: undefined,
-          night_shift_closing_bottles: undefined,
-          day_shift_waste_bottles: undefined,
-          night_shift_waste_bottles: undefined,
+          approved: !!form.approved,
+          day_shift_opening_bottles: (form as any).day_shift_opening_bottles ?? undefined,
+          day_shift_closing_bottles: (form as any).day_shift_closing_bottles ?? undefined,
+          day_shift_waste_bottles: (form as any).day_shift_waste_bottles ?? undefined,
+          night_shift_opening_bottles: (form as any).night_shift_opening_bottles ?? undefined,
+          night_shift_closing_bottles: (form as any).night_shift_closing_bottles ?? undefined,
+          night_shift_waste_bottles: (form as any).night_shift_waste_bottles ?? undefined,
         })
 
-        // Determine shift type based on existing data
+        // Determine shift type based on existing data (support API array shape and legacy)
         let shiftType = ""
-        if (form.filmatic_line_form_2_day_shift && form.filmatic_line_form_2_day_shift.length > 0) {
-          shiftType = "day_shift"
-        } else if (form.filmatic_line_form_2_night_shift && form.filmatic_line_form_2_night_shift.length > 0) {
-          shiftType = "night_shift"
-        }
+        const hasDayArray = Array.isArray((form as any).filmatic_line_form_2_day_shift) && (form as any).filmatic_line_form_2_day_shift.length > 0
+        const hasNightArray = Array.isArray((form as any).filmatic_line_form_2_night_shift) && (form as any).filmatic_line_form_2_night_shift.length > 0
+        const hasLegacyDay = (form as any).day_shift && Object.keys((form as any).day_shift).length > 0
+        const hasLegacyNight = (form as any).night_shift && Object.keys((form as any).night_shift).length > 0
 
-        shiftSelectionForm.reset({
-          shift_type: shiftType,
-        })
+        if (hasDayArray || hasLegacyDay) shiftType = "day_shift"
+        else if (hasNightArray || hasLegacyNight) shiftType = "night_shift"
+
+        shiftSelectionForm.reset({ shift_type: shiftType })
 
         // Determine group selection based on existing data
         let selectedGroupType = ""
-        if (form.groups) {
-          if (form.groups.group_a && form.groups.group_a.length > 0) selectedGroupType = "group_a"
-          else if (form.groups.group_b && form.groups.group_b.length > 0) selectedGroupType = "group_b"
-          else if (form.groups.group_c && form.groups.group_c.length > 0) selectedGroupType = "group_c"
+        if ((form as any).groups) {
+          if ((form as any).groups.group_a && (form as any).groups.group_a.length > 0) selectedGroupType = "group_a"
+          else if ((form as any).groups.group_b && (form as any).groups.group_b.length > 0) selectedGroupType = "group_b"
+          else if ((form as any).groups.group_c && (form as any).groups.group_c.length > 0) selectedGroupType = "group_c"
         }
+        groupSelectionForm.reset({ selected_group: selectedGroupType })
 
-        groupSelectionForm.reset({
-          selected_group: selectedGroupType,
-        })
+        // prefill details from detected shift (support both shapes)
+        try {
+          let shiftEntry: any = null
+
+          if (shiftType === "day_shift") {
+            if (hasDayArray) shiftEntry = (form as any).filmatic_line_form_2_day_shift[0] || null
+            else shiftEntry = (form as any).day_shift || null
+          } else if (shiftType === "night_shift") {
+            if (hasNightArray) shiftEntry = (form as any).filmatic_line_form_2_night_shift[0] || null
+            else shiftEntry = (form as any).night_shift || null
+          }
+
+          if (shiftEntry) {
+            const detailsKey = shiftType === "day_shift" ? "filmatic_line_form_2_day_shift_details" : "filmatic_line_form_2_night_shift_details"
+            const stoppageKey = shiftType === "day_shift" ? "filmatic_line_form_2_day_shift_details_stoppage_time" : "filmatic_line_form_2_night_shift_details_stoppage_time"
+            const details = shiftEntry[detailsKey] || []
+            
+            const mapped = details.map((d: any) => {
+              const stoppageArray = d[stoppageKey] || []
+              const stoppage = stoppageArray[0] || {}
+              
+              return {
+                id: d.id,
+                time: d.time?.split(' ')[1]?.slice(0, 5) || '',
+                pallets: d.pallets ?? undefined,
+                target: d.target ?? undefined,
+                setbacks: d.setbacks || '',
+                stoppage_time: {
+                  id: stoppage.id,
+                  capper_1_hours: stoppage.capper_1_hours ?? stoppage.capper_1 ?? undefined,
+                  capper_2_hours: stoppage.capper_2_hours ?? stoppage.capper_2 ?? undefined,
+                  sleever_1_hours: stoppage.sleever_1_hours ?? stoppage.sleever_1 ?? undefined,
+                  sleever_2_hours: stoppage.sleever_2_hours ?? stoppage.sleever_2 ?? undefined,
+                  shrink_1_hours: stoppage.shrink_1_hours ?? stoppage.shrink_1 ?? undefined,
+                  shrink_2_hours: stoppage.shrink_2_hours ?? stoppage.shrink_2 ?? undefined,
+                  capper_1: stoppage.capper_1 ?? undefined,
+                  capper_2: stoppage.capper_2 ?? undefined,
+                  sleever_1: stoppage.sleever_1 ?? undefined,
+                  sleever_2: stoppage.sleever_2 ?? undefined,
+                  shrink_1: stoppage.shrink_1 ?? undefined,
+                  shrink_2: stoppage.shrink_2 ?? undefined,
+                }
+              }
+            })
+            
+            shiftDetailsForm.reset({
+              supervisor_approve: shiftEntry?.supervisor_approve ?? false,
+              operator_id: shiftEntry?.operator_id ?? user?.id ?? '',
+              details: mapped.length ? mapped : shiftDetailsForm.getValues().details
+            })
+          }
+        } catch (err) {
+          console.error("Error pre-filling shift details:", err)
+        }
 
         setCurrentStep(1)
       } else {
         // Reset all forms to clean defaults
         basicInfoForm.reset({
           date: "",
+          approved: false,
           day_shift_opening_bottles: undefined,
           day_shift_closing_bottles: undefined,
+          day_shift_waste_bottles: undefined,
           night_shift_opening_bottles: undefined,
           night_shift_closing_bottles: undefined,
-          day_shift_waste_bottles: undefined,
           night_shift_waste_bottles: undefined,
         })
-        shiftSelectionForm.reset({
-          shift_type: "",
-        })
-        groupSelectionForm.reset({
-          selected_group: "",
-        })
+        shiftSelectionForm.reset({ shift_type: "" })
+        groupSelectionForm.reset({ selected_group: "" })
         shiftDetailsForm.reset({
           supervisor_approve: false,
           operator_id: user?.id || "",
@@ -353,6 +413,12 @@ export function FilmaticLinesForm2Drawer({
             target: undefined,
             setbacks: "",
             stoppage_time: {
+              capper_1_hours: undefined,
+              capper_2_hours: undefined,
+              sleever_1_hours: undefined,
+              sleever_2_hours: undefined,
+              shrink_1_hours: undefined,
+              shrink_2_hours: undefined,
               capper_1: undefined,
               capper_2: undefined,
               sleever_1: undefined,
@@ -393,19 +459,19 @@ export function FilmaticLinesForm2Drawer({
       console.log("Group data:", groupData)
       
       const formData: CreateFilmaticLinesForm2Request = {
-        approved: true,
+        approved: !!basicInfo.approved,
         process_id: processId || "",
         date: basicInfo.date,
-        // Add bottle counts based on selected shift
+        // Add bottle counts based on selected shift (only include selected shift fields)
         ...(shiftType === "day_shift" && {
-          day_shift_opening_bottles: basicInfo.day_shift_opening_bottles || 0,
-          day_shift_closing_bottles: basicInfo.day_shift_closing_bottles || 0,
-          day_shift_waste_bottles: basicInfo.day_shift_waste_bottles || 0,
+          day_shift_opening_bottles: basicInfo.day_shift_opening_bottles ?? 0,
+          day_shift_closing_bottles: basicInfo.day_shift_closing_bottles ?? undefined,
+          day_shift_waste_bottles: basicInfo.day_shift_waste_bottles ?? undefined,
         }),
         ...(shiftType === "night_shift" && {
-          night_shift_opening_bottles: basicInfo.night_shift_opening_bottles || 0,
-          night_shift_closing_bottles: basicInfo.night_shift_closing_bottles || 0,
-          night_shift_waste_bottles: basicInfo.night_shift_waste_bottles || 0,
+          night_shift_opening_bottles: basicInfo.night_shift_opening_bottles ?? 0,
+          night_shift_closing_bottles: basicInfo.night_shift_closing_bottles ?? undefined,
+          night_shift_waste_bottles: basicInfo.night_shift_waste_bottles ?? undefined,
         }),
         groups: selectedGroupData ? {
           [groupData.selected_group]: selectedGroupData.members,
@@ -416,48 +482,82 @@ export function FilmaticLinesForm2Drawer({
       // Add shift data based on selection
       if (shiftType === "day_shift") {
         formData.day_shift = {
+          ...(mode === "edit" && form?.filmatic_line_form_2_day_shift?.[0]?.id ? { id: form.filmatic_line_form_2_day_shift[0].id } : {}),
           supervisor_approve: data.supervisor_approve || false,
           operator_id: data.operator_id || user?.id || "",
-          details: data.details?.map(detail => ({
+          details: data.details?.map((detail: any) => ({
+            ...(detail.id ? { id: detail.id } : {}),
             time: detail.time || "",
             pallets: detail.pallets || 0,
             target: detail.target || 0,
             setbacks: detail.setbacks || "",
             stoppage_time: [{
-              capper_1: detail.stoppage_time?.capper_1,
-              capper_2: detail.stoppage_time?.capper_2,
-              sleever_1: detail.stoppage_time?.sleever_1,
-              sleever_2: detail.stoppage_time?.sleever_2,
-              shrink_1: detail.stoppage_time?.shrink_1,
-              shrink_2: detail.stoppage_time?.shrink_2,
+              ...((detail.stoppage_time as any)?.id ? { id: (detail.stoppage_time as any).id } : {}),
+              capper_1_hours: detail.stoppage_time?.capper_1_hours ?? detail.stoppage_time?.capper_1 ?? null,
+              capper_2_hours: detail.stoppage_time?.capper_2_hours ?? detail.stoppage_time?.capper_2 ?? null,
+              sleever_1_hours: detail.stoppage_time?.sleever_1_hours ?? detail.stoppage_time?.sleever_1 ?? null,
+              sleever_2_hours: detail.stoppage_time?.sleever_2_hours ?? detail.stoppage_time?.sleever_2 ?? null,
+              shrink_1_hours: detail.stoppage_time?.shrink_1_hours ?? detail.stoppage_time?.shrink_1 ?? null,
+              shrink_2_hours: detail.stoppage_time?.shrink_2_hours ?? detail.stoppage_time?.shrink_2 ?? null,
+              capper_1: detail.stoppage_time?.capper_1 ?? null,
+              capper_2: detail.stoppage_time?.capper_2 ?? null,
+              sleever_1: detail.stoppage_time?.sleever_1 ?? null,
+              sleever_2: detail.stoppage_time?.sleever_2 ?? null,
+              shrink_1: detail.stoppage_time?.shrink_1 ?? null,
+              shrink_2: detail.stoppage_time?.shrink_2 ?? null,
             }]
           })) || []
         }
+        // Ensure night shift is not sent
       } else if (shiftType === "night_shift") {
         formData.night_shift = {
+          ...(mode === "edit" && form?.filmatic_line_form_2_night_shift?.[0]?.id ? { id: form.filmatic_line_form_2_night_shift[0].id } : {}),
           supervisor_approve: data.supervisor_approve || false,
           operator_id: data.operator_id || user?.id || "",
-          details: data.details?.map(detail => ({
+          details: data.details?.map((detail: any) => ({
+            ...(detail.id ? { id: detail.id } : {}),
             time: detail.time || "",
             pallets: detail.pallets || 0,
             target: detail.target || 0,
             setbacks: detail.setbacks || "",
             stoppage_time: [{
-              capper_1: detail.stoppage_time?.capper_1,
-              capper_2: detail.stoppage_time?.capper_2,
-              sleever_1: detail.stoppage_time?.sleever_1,
-              sleever_2: detail.stoppage_time?.sleever_2,
-              shrink_1: detail.stoppage_time?.shrink_1,
-              shrink_2: detail.stoppage_time?.shrink_2,
+              ...((detail.stoppage_time as any)?.id ? { id: (detail.stoppage_time as any).id } : {}),
+              capper_1_hours: detail.stoppage_time?.capper_1_hours ?? detail.stoppage_time?.capper_1 ?? null,
+              capper_2_hours: detail.stoppage_time?.capper_2_hours ?? detail.stoppage_time?.capper_2 ?? null,
+              sleever_1_hours: detail.stoppage_time?.sleever_1_hours ?? detail.stoppage_time?.sleever_1 ?? null,
+              sleever_2_hours: detail.stoppage_time?.sleever_2_hours ?? detail.stoppage_time?.sleever_2 ?? null,
+              shrink_1_hours: detail.stoppage_time?.shrink_1_hours ?? detail.stoppage_time?.shrink_1 ?? null,
+              shrink_2_hours: detail.stoppage_time?.shrink_2_hours ?? detail.stoppage_time?.shrink_2 ?? null,
+              capper_1: detail.stoppage_time?.capper_1 ?? null,
+              capper_2: detail.stoppage_time?.capper_2 ?? null,
+              sleever_1: detail.stoppage_time?.sleever_1 ?? null,
+              sleever_2: detail.stoppage_time?.sleever_2 ?? null,
+              shrink_1: detail.stoppage_time?.shrink_1 ?? null,
+              shrink_2: detail.stoppage_time?.shrink_2 ?? null,
             }]
           })) || []
         }
+        // Ensure day shift is not sent
       }
 
       console.log("Final form data:", formData)
-      await filmaticLinesForm2Api.createForm(formData)
-      toast.success("Filmatic Lines Form 2 created successfully")
-      
+      if (mode === "edit" && form?.id) {
+        const updatePayload: any = { ...formData }
+        if (form.id) updatePayload.id = form.id
+        await filmaticLinesForm2Api.updateForm?.(form.id, updatePayload) ?? await filmaticLinesForm2Api.createForm(formData)
+        toast.success("Filmatic Lines Form 2 updated successfully")
+      } else {
+        await filmaticLinesForm2Api.createForm(formData)
+        toast.success("Filmatic Lines Form 2 created successfully")
+      }
+
+      // Refresh list so the page updates immediately
+      try {
+        await dispatch(fetchFilmaticLinesForm2s()).unwrap()
+      } catch (e) {
+        console.warn("Failed to refresh Filmatic Lines Form 2 list:", e)
+      }
+
       onOpenChange(false)
     } catch (error: any) {
       toast.error(error?.message || "Failed to create Filmatic Lines Form 2")
@@ -478,7 +578,9 @@ export function FilmaticLinesForm2Drawer({
     } else if (currentStep === 2) {
       groupSelectionForm.handleSubmit(handleGroupSelectionSubmit)()
     } else if (currentStep === 3) {
-      basicInfoForm.handleSubmit(handleBasicInfoSubmit)()
+      // allow navigating to Shift Details from Basic Info without blocking on validation
+      // form will still be validated on final submit
+      setCurrentStep(4)
     }
   }
 
@@ -506,7 +608,7 @@ export function FilmaticLinesForm2Drawer({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-full sm:max-w-4xl overflow-y-auto">
+      <SheetContent className="w-full sm:max-w-4xl overflow-y-auto bg-white">
         <SheetHeader>
           <SheetTitle className="text-2xl font-light">
             {mode === "edit" ? "Edit" : "Create"} Filmatic Lines Form 2
@@ -669,6 +771,23 @@ export function FilmaticLinesForm2Drawer({
                   )}
                 </div>
 
+                {/* Approval toggle (like Filmatic 1) */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="approved">Approved</Label>
+                    <Controller
+                      name="approved"
+                      control={basicInfoForm.control}
+                      render={({ field }) => (
+                        <Switch
+                          checked={!!field.value}
+                          onCheckedChange={(v) => field.onChange(!!v)}
+                        />
+                      )}
+                    />
+                  </div>
+                </div>
+
                 {/* Show shift-specific fields based on selected shift */}
                 {selectedShift === "day_shift" && (
                   <>
@@ -684,7 +803,7 @@ export function FilmaticLinesForm2Drawer({
                               type="number"
                               placeholder="Enter opening bottles"
                               className="rounded-full border-gray-200"
-                              value={String(field.value || "")}
+                              value={field.value ?? ''}
                               onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
                               onBlur={field.onBlur}
                               name={field.name}
@@ -697,7 +816,7 @@ export function FilmaticLinesForm2Drawer({
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="day_shift_closing_bottles">Day Shift Closing Bottles *</Label>
+                        <Label htmlFor="day_shift_closing_bottles">Day Shift Closing Bottles</Label>
                         <Controller
                           name="day_shift_closing_bottles"
                           control={basicInfoForm.control}
@@ -707,7 +826,7 @@ export function FilmaticLinesForm2Drawer({
                               type="number"
                               placeholder="Enter closing bottles"
                               className="rounded-full border-gray-200"
-                              value={String(field.value || "")}
+                              value={field.value ?? ''}
                               onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
                               onBlur={field.onBlur}
                               name={field.name}
@@ -721,7 +840,7 @@ export function FilmaticLinesForm2Drawer({
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="day_shift_waste_bottles">Day Shift Waste Bottles *</Label>
+                      <Label htmlFor="day_shift_waste_bottles">Day Shift Waste Bottles</Label>
                       <Controller
                         name="day_shift_waste_bottles"
                         control={basicInfoForm.control}
@@ -731,7 +850,7 @@ export function FilmaticLinesForm2Drawer({
                             type="number"
                             placeholder="Enter waste bottles"
                             className="rounded-full border-gray-200"
-                            value={String(field.value || "")}
+                            value={field.value ?? ''}
                             onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
                             onBlur={field.onBlur}
                             name={field.name}
@@ -759,7 +878,7 @@ export function FilmaticLinesForm2Drawer({
                               type="number"
                               placeholder="Enter opening bottles"
                               className="rounded-full border-gray-200"
-                              value={String(field.value || "")}
+                              value={field.value ?? ''}
                               onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
                               onBlur={field.onBlur}
                               name={field.name}
@@ -772,7 +891,7 @@ export function FilmaticLinesForm2Drawer({
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="night_shift_closing_bottles">Night Shift Closing Bottles *</Label>
+                        <Label htmlFor="night_shift_closing_bottles">Night Shift Closing Bottles</Label>
                         <Controller
                           name="night_shift_closing_bottles"
                           control={basicInfoForm.control}
@@ -782,7 +901,7 @@ export function FilmaticLinesForm2Drawer({
                               type="number"
                               placeholder="Enter closing bottles"
                               className="rounded-full border-gray-200"
-                              value={String(field.value || "")}
+                              value={field.value ?? ''}
                               onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
                               onBlur={field.onBlur}
                               name={field.name}
@@ -796,7 +915,7 @@ export function FilmaticLinesForm2Drawer({
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="night_shift_waste_bottles">Night Shift Waste Bottles *</Label>
+                      <Label htmlFor="night_shift_waste_bottles">Night Shift Waste Bottles</Label>
                       <Controller
                         name="night_shift_waste_bottles"
                         control={basicInfoForm.control}
@@ -806,7 +925,7 @@ export function FilmaticLinesForm2Drawer({
                             type="number"
                             placeholder="Enter waste bottles"
                             className="rounded-full border-gray-200"
-                            value={String(field.value || "")}
+                            value={field.value ?? ''}
                             onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
                             onBlur={field.onBlur}
                             name={field.name}
@@ -833,160 +952,150 @@ export function FilmaticLinesForm2Drawer({
                 </div>
 
                 <div className="space-y-4">
-                  <div className="flex items-center space-x-2">
-                    <Controller
-                      name="supervisor_approve"
-                      control={shiftDetailsForm.control}
-                      render={({ field }) => (
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      )}
-                    />
-                    <Label>Supervisor Approval</Label>
+                  <div className="flex justify-between items-center">
+                    <Label>Production Details</Label>
+                    <Button
+                      type="button"
+                      
+                      size="sm"
+                      onClick={() => append({
+                        time: "",
+                        pallets: undefined,
+                        target: undefined,
+                        setbacks: "",
+                        stoppage_time: {
+                          capper_1_hours: undefined,
+                          capper_2_hours: undefined,
+                          sleever_1_hours: undefined,
+                          sleever_2_hours: undefined,
+                          shrink_1_hours: undefined,
+                          shrink_2_hours: undefined,
+                          capper_1: undefined,
+                          capper_2: undefined,
+                          sleever_1: undefined,
+                          sleever_2: undefined,
+                          shrink_1: undefined,
+                          shrink_2: undefined,
+                        }
+                      })}
+                    >
+                      <Plus className="h-4 w-4 mr-1" />
+                      Add Entry
+                    </Button>
                   </div>
 
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center">
-                      <Label>Production Details</Label>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => append({
-                          time: "",
-                          pallets: undefined,
-                          target: undefined,
-                          setbacks: "",
-                          stoppage_time: {
-                            capper_1: undefined,
-                            capper_2: undefined,
-                            sleever_1: undefined,
-                            sleever_2: undefined,
-                            shrink_1: undefined,
-                            shrink_2: undefined,
-                          }
-                        })}
-                      >
-                        <Plus className="h-4 w-4 mr-1" />
-                        Add Entry
-                      </Button>
-                    </div>
+                  {fields.map((field, index) => (
+                    <div key={field.id} className="p-4 border rounded-lg space-y-4">
+                      <div className="flex justify-between">
+                        <h4 className="font-medium">Entry {index + 1}</h4>
+                        {fields.length > 1 && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => remove(index)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
 
-                    {fields.map((field, index) => (
-                      <div key={field.id} className="p-4 border rounded-lg space-y-4">
-                        <div className="flex justify-between">
-                          <h4 className="font-medium">Entry {index + 1}</h4>
-                          {fields.length > 1 && (
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => remove(index)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          )}
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <Label>Time</Label>
-                            <Controller
-                              name={`details.${index}.time`}
-                              control={shiftDetailsForm.control}
-                              render={({ field }) => (
-                                <Select value={field.value} onValueChange={field.onChange}>
-                                  <SelectTrigger className="rounded-full border-gray-200">
-                                    <SelectValue placeholder="Select time" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {timeOptions.map(time => (
-                                      <SelectItem key={time} value={time}>{time}</SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              )}
-                            />
-                          </div>
-
-                          <div>
-                            <Label>Pallets</Label>
-                            <Controller
-                              name={`details.${index}.pallets`}
-                              control={shiftDetailsForm.control}
-                              render={({ field }) => (
-                                <Input 
-                                  type="number" 
-                                  placeholder="Enter pallets"
-                                  className="rounded-full border-gray-200"
-                                  value={String(field.value || "")}
-                                  onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
-                                />
-                              )}
-                            />
-                          </div>
-
-                          <div>
-                            <Label>Target</Label>
-                            <Controller
-                              name={`details.${index}.target`}
-                              control={shiftDetailsForm.control}
-                              render={({ field }) => (
-                                <Input 
-                                  type="number" 
-                                  placeholder="Enter target"
-                                  className="rounded-full border-gray-200"
-                                  value={String(field.value || "")}
-                                  onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
-                                />
-                              )}
-                            />
-                          </div>
-
-                          <div className="col-span-2">
-                            <Label>Setbacks</Label>
-                            <Controller
-                              name={`details.${index}.setbacks`}
-                              control={shiftDetailsForm.control}
-                              render={({ field }) => (
-                                <Textarea 
-                                  {...field} 
-                                  placeholder="Describe any setbacks"
-                                  className="border-gray-200"
-                                />
-                              )}
-                            />
-                          </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <Label>Time</Label>
+                          <Controller
+                            name={`details.${index}.time`}
+                            control={shiftDetailsForm.control}
+                            render={({ field }) => (
+                              <Select value={field.value} onValueChange={field.onChange}>
+                                <SelectTrigger className="rounded-full border-gray-200">
+                                  <SelectValue placeholder="Select time" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {timeOptions.map(time => (
+                                    <SelectItem key={time} value={time}>{time}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            )}
+                          />
                         </div>
 
                         <div>
-                          <Label className="mb-2 block">Stoppage Time (minutes)</Label>
-                          <div className="grid grid-cols-2 gap-2">
-                            {["capper_1", "capper_2", "sleever_1", "sleever_2", "shrink_1", "shrink_2"].map(key => (
-                              <div key={key} className="flex items-center gap-2">
-                                <Label className="text-xs w-20">{key.replace('_', ' ')}</Label>
-                                <Controller
-                                  name={`details.${index}.stoppage_time.${key}`}
-                                  control={shiftDetailsForm.control}
-                                  render={({ field }) => (
-                                    <Input
-                                      type="number"
-                                      placeholder="0"
-                                      className="text-xs h-8 rounded-full border-gray-200"
-                                      value={String(field.value || "")}
-                                      onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
-                                    />
-                                  )}
-                                />
-                              </div>
-                            ))}
-                          </div>
+                          <Label>Pallets</Label>
+                          <Controller
+                            name={`details.${index}.pallets`}
+                            control={shiftDetailsForm.control}
+                            render={({ field }) => (
+                              <Input 
+                                type="number" 
+                                placeholder="Enter pallets"
+                                className="rounded-full border-gray-200"
+                                value={field.value ?? ''}
+                                onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+                              />
+                            )}
+                          />
+                        </div>
+
+                        <div>
+                          <Label>Target</Label>
+                          <Controller
+                            name={`details.${index}.target`}
+                            control={shiftDetailsForm.control}
+                            render={({ field }) => (
+                              <Input 
+                                type="number" 
+                                placeholder="Enter target"
+                                className="rounded-full border-gray-200"
+                                value={field.value ?? ''}
+                                onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+                              />
+                            )}
+                          />
+                        </div>
+
+                        <div className="col-span-2">
+                          <Label>Setbacks</Label>
+                          <Controller
+                            name={`details.${index}.setbacks`}
+                            control={shiftDetailsForm.control}
+                            render={({ field }) => (
+                              <Textarea 
+                                {...field} 
+                                placeholder="Describe any setbacks"
+                                className="border-gray-200"
+                              />
+                            )}
+                          />
                         </div>
                       </div>
-                    ))}
-                  </div>
+
+                      <div>
+                        <Label className="mb-2 block">Stoppage Time (hours / minutes)</Label>
+                        <div className="grid grid-cols-2 gap-2">
+                          {["capper_1_hours", "capper_2_hours", "sleever_1_hours", "sleever_2_hours", "shrink_1_hours", "shrink_2_hours", "capper_1", "capper_2", "sleever_1", "sleever_2", "shrink_1", "shrink_2"].map(key => (
+                            <div key={key} className="flex items-center gap-2">
+                              <Label className="text-xs w-20">{key.replace('_', ' ')}</Label>
+                              <Controller
+                                name={`details.${index}.stoppage_time.${key}`}
+                                control={shiftDetailsForm.control}
+                                render={({ field }) => (
+                                  <Input
+                                    type="number"
+                                    placeholder="0"
+                                    className="text-xs h-8 rounded-full border-gray-200"
+                                    value={field.value ?? ''}
+                                    onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+                                  />
+                                )}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
@@ -996,7 +1105,7 @@ export function FilmaticLinesForm2Drawer({
           <div className="flex justify-between items-center p-6 border-t">
             <Button
               type="button"
-              variant="outline"
+              
               onClick={handleBack}
               disabled={currentStep === 1}
               className="flex items-center space-x-2"
@@ -1024,7 +1133,7 @@ export function FilmaticLinesForm2Drawer({
               <Button
                 type="button"
                 onClick={handleNext}
-                className="flex items-center space-x-2 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600"
+                className="flex items-center space-x-2  from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600"
               >
                 <span>Next</span>
                 <ChevronRight className="w-4 h-4" />
@@ -1034,9 +1143,11 @@ export function FilmaticLinesForm2Drawer({
                 type="button"
                 onClick={shiftDetailsForm.handleSubmit(handleShiftDetailsSubmit)}
                 disabled={loading.create}
-                className="flex items-center space-x-2 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600"
+                className="flex items-center space-x-2  from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600"
               >
-                {loading.create ? "Creating..." : "Create Form"}
+                {loading.create
+                  ? (mode === "edit" ? "Updating..." : "Creating...")
+                  : (mode === "edit" ? "Update Form" : "Create Form")}
               </Button>
             )}
           </div>

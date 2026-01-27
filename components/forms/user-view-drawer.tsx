@@ -18,22 +18,17 @@ interface UserViewDrawerProps {
 export function UserViewDrawer({ open, onClose, user, onEdit }: UserViewDrawerProps) {
   if (!user) return null
 
-  const getRoleColor = (roleId: string) => {
-    const role = roleId?.toLowerCase()
-    switch (role) {
-      case 'admin':
-      case 'administrator':
-        return 'bg-purple-100 text-purple-800'
-      case 'manager':
-        return 'bg-blue-100 text-blue-800'
-      case 'operator':
-      case 'editor':
-        return 'bg-green-100 text-green-800'
-      case 'technician':
-        return 'bg-orange-100 text-orange-800'
-      default:
-        return 'bg-gray-100 text-gray-800'
-    }
+  const getRoleColor = (roleName: string) => {
+    if (!roleName) return 'bg-gray-100 text-gray-800'
+    const role = roleName.toLowerCase()
+
+    if (role.includes('admin')) return 'bg-blue-100 text-blue-800'
+    if (role.includes('manager') || role.includes('supervisor')) return 'bg-purple-100 text-purple-800'
+    if (role.includes('technician') || role.includes('quality')) return 'bg-orange-100 text-orange-800'
+    if (role.includes('driver')) return 'bg-yellow-100 text-yellow-800'
+    if (role.includes('operator')) return 'bg-green-100 text-green-800'
+
+    return 'bg-gray-100 text-gray-800'
   }
 
   const formatDate = (dateString: string) => {
@@ -50,10 +45,10 @@ export function UserViewDrawer({ open, onClose, user, onEdit }: UserViewDrawerPr
                 <User className="w-6 h-6" />
                 {`${user.first_name} ${user.last_name}`.trim()}
               </SheetTitle>
-           
+
             </div>
             <Button
-              variant="outline"
+
               size="sm"
               onClick={(e) => {
                 e.stopPropagation()
@@ -73,7 +68,7 @@ export function UserViewDrawer({ open, onClose, user, onEdit }: UserViewDrawerPr
           <Card>
             <CardContent className="p-6">
               <div className="flex items-start gap-4">
-                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary/10 to-primary/20 flex items-center justify-center flex-shrink-0">
+                <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
                   <User className="w-8 h-8 text-primary" />
                 </div>
                 <div className="flex-1 min-w-0">
@@ -92,12 +87,17 @@ export function UserViewDrawer({ open, onClose, user, onEdit }: UserViewDrawerPr
                         <span className="font-medium">{user.department}</span>
                       </div>
                     )}
-                    {/* {user.role_id && (
+                    {user.users_role_id_fkey?.role_name && (
+                      <Badge className={getRoleColor(user.users_role_id_fkey.role_name)}>
+                        {user.users_role_id_fkey.role_name}
+                      </Badge>
+                    )}
+                    {user.phone_number && (
                       <div className="flex items-center text-sm bg-muted/50 px-3 py-1 rounded-md">
-                        <Shield className="w-4 h-4 mr-2 text-muted-foreground" />
-                        <span className="font-medium">{user.role_id}</span>
+                        <User className="w-4 h-4 mr-2 text-muted-foreground" />
+                        <span className="font-medium">{user.phone_number}</span>
                       </div>
-                    )} */}
+                    )}
                   </div>
                 </div>
               </div>
@@ -152,6 +152,29 @@ export function UserViewDrawer({ open, onClose, user, onEdit }: UserViewDrawerPr
               </div>
             </CardContent>
           </Card>
+
+          {/* Permissions / Views */}
+          {user.users_role_id_fkey?.views && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Shield className="w-5 h-5" />
+                  Permissions & Access
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap gap-2">
+                  {user.users_role_id_fkey.views.map((view) => (
+                    <Badge key={view} variant="outline" className="capitalize">
+                      {view.replace(/_/g, ' ')}
+                    </Badge>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Additional details like operations could go here if needed as seen in the json response */}
         </div>
       </SheetContent>
     </Sheet>

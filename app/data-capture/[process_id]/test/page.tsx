@@ -23,6 +23,7 @@ import { toast } from "sonner"
 import { TableFilters } from "@/lib/types"
 import { UHTQualityCheckAfterIncubation } from "@/lib/api/data-capture-forms"
 import ContentSkeleton from "@/components/ui/content-skeleton"
+import { useRouter, useSearchParams } from "next/navigation"
 
 interface UHTQualityCheckPageProps {
   params: {
@@ -33,11 +34,12 @@ interface UHTQualityCheckPageProps {
 export default function UHTQualityCheckPage({ params }: UHTQualityCheckPageProps) {
   const dispatch = useAppDispatch()
   const { qualityChecks, loading, error, operationLoading, isInitialized } = useAppSelector((state) => state.uhtQualityChecks)
-  
+  const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+
   const [tableFilters, setTableFilters] = useState<TableFilters>({})
   const hasFetchedRef = useRef(false)
   
-  // Load UHT quality checks on initial mount
+  // Load Incubation quality  checks on initial mount
   useEffect(() => {
     if (!isInitialized && !hasFetchedRef.current) {
       hasFetchedRef.current = true
@@ -123,7 +125,7 @@ export default function UHTQualityCheckPage({ params }: UHTQualityCheckPageProps
       setDeleteDialogOpen(false)
       setSelectedQualityCheck(null)
     } catch (error: any) {
-      toast.error(error || 'Failed to delete UHT quality check')
+      toast.error(error || 'Failed to delete Incubation quality  check')
     }
   }
 
@@ -139,8 +141,8 @@ export default function UHTQualityCheckPage({ params }: UHTQualityCheckPageProps
         const qualityCheck = row.original
         return (
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center">
-              <TestTube className="w-4 h-4 text-white" />
+            <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
+              <TestTube className="w-4 h-4 text-gray-600" />
             </div>
             <div>
               <div className="flex items-center space-x-2">
@@ -159,6 +161,10 @@ export default function UHTQualityCheckPage({ params }: UHTQualityCheckPageProps
       header: "Product",
       cell: ({ row }: any) => {
         const qualityCheck = row.original
+        const productName = typeof qualityCheck.product === 'object' && qualityCheck.product?.name 
+          ? qualityCheck.product.name 
+          : (typeof qualityCheck.product === 'string' ? qualityCheck.product : 'N/A')
+        
         return (
           <div className="space-y-2">
             <div className="flex items-center space-x-2">
@@ -173,7 +179,7 @@ export default function UHTQualityCheckPage({ params }: UHTQualityCheckPageProps
               <div className="flex items-center justify-between">
                 <span className="text-xs text-gray-500">Product</span>
                 <span className="text-xs font-light">
-                  {qualityCheck.product && qualityCheck.product.length > 20 ? 'N/A' : (qualityCheck.product || 'N/A')}
+                  {productName}
                 </span>
               </div>
               <div className="flex items-center justify-between">
@@ -221,9 +227,9 @@ export default function UHTQualityCheckPage({ params }: UHTQualityCheckPageProps
         const qualityCheck = row.original
         return (
           <div className="space-y-2">
-            <div className="flex items-center space-x-2">
-              <div className="w-5 h-5 rounded-full bg-purple-100 flex items-center justify-center">
-                <TestTube className="h-3 w-3 text-purple-600" />
+            <div className="flex items-center space-x-3">
+              <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center">
+                <TestTube className="h-3 w-3 text-blue-600" />
               </div>
               <p className="text-sm font-light">
                 pH Values
@@ -314,18 +320,18 @@ export default function UHTQualityCheckPage({ params }: UHTQualityCheckPageProps
         return (
           <div className="flex space-x-2">
             <LoadingButton 
-              variant="outline" 
+               
               size="sm" 
               onClick={() => handleViewQualityCheck(qualityCheck)}
-              className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full"
+              className="bg-[#006BC4] text-white rounded-full"
             >
               <Eye className="w-4 h-4" />
             </LoadingButton>
             <LoadingButton 
-              variant="outline" 
+               
               size="sm" 
               onClick={() => handleEditQualityCheck(qualityCheck)}
-              className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 rounded-full"
+              className="bg-[#A0CF06] text-[#211D1E] rounded-full"
             >
               <Edit className="w-4 h-4" />
             </LoadingButton>
@@ -335,7 +341,7 @@ export default function UHTQualityCheckPage({ params }: UHTQualityCheckPageProps
               onClick={() => handleDeleteQualityCheck(qualityCheck)}
               loading={operationLoading.delete}
               disabled={operationLoading.delete}
-              className="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white border-0 rounded-full"
+              className="rounded-full"
             >
               <Trash2 className="w-4 h-4" />
             </LoadingButton>
@@ -345,18 +351,33 @@ export default function UHTQualityCheckPage({ params }: UHTQualityCheckPageProps
     },
   ], [operationLoading.delete])
 
+  // --- Helper: open view drawer if form_id query param is present ---
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!isInitialized || !qualityChecks || qualityChecks.length === 0) return;
+    const formId = searchParams?.get("form_id");
+    if (formId) {
+      const foundQualityCheck = qualityChecks.find((qc: any) => String(qc.id) === String(formId));
+      if (foundQualityCheck) {
+        setSelectedQualityCheck(foundQualityCheck);
+        setViewDrawerOpen(true);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isInitialized, qualityChecks]);
+
   return (
-    <DataCaptureDashboardLayout title="Incubation Test" subtitle="UHT quality check after incubation process control and monitoring">
+    <DataCaptureDashboardLayout title="Incubation Test" subtitle="Incubation quality  check after incubation process control and monitoring">
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-light text-foreground">Incubation Test</h1>
-            <p className="text-sm font-light text-muted-foreground">Manage UHT quality check forms and process control</p>
-            <p className="text-xs text-gray-500 mt-1">Process ID: {params.process_id}</p>
+            <p className="text-sm font-light text-muted-foreground">Manage Incubation quality  check forms and process control</p>
+            {/* <p className="text-xs text-gray-500 mt-1">Process ID: {params.process_id}</p> */}
           </div>
           <LoadingButton 
             onClick={handleAddQualityCheck}
-            className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 rounded-full px-6 py-2 font-light"
+            className="bg-[#006BC4] text-white rounded-full px-6 py-2 font-light"
           >
             <Plus className="mr-2 h-4 w-4" />
             Add Quality Check
@@ -371,16 +392,16 @@ export default function UHTQualityCheckPage({ params }: UHTQualityCheckPageProps
             <div className="p-6 pb-0">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2 text-lg font-light">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center">
-                    <TestTube className="h-4 w-4 text-white" />
+                  <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+                    <TestTube className="h-4 w-4 text-gray-600" />
                   </div>
                   <span>Current Quality Check Process</span>
-                  <Badge className="bg-gradient-to-r from-green-100 to-emerald-100 text-green-800 font-light">Latest</Badge>
+                  <Badge className=" text-white font-light">Latest</Badge>
                 </div>
                 <LoadingButton 
-                  variant="outline" 
+                   
                   onClick={() => handleViewQualityCheck(latestQualityCheck)}
-                  className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 rounded-full px-4 py-2 font-light text-sm"
+                  className="bg-[#006BC4] text-white rounded-full px-4 py-2 font-light text-sm"
                 >
                   <Eye className="mr-2 h-4 w-4" />
                   View Details
@@ -395,7 +416,9 @@ export default function UHTQualityCheckPage({ params }: UHTQualityCheckPageProps
                     <p className="text-sm font-light text-gray-600">Product</p>
                   </div>
                   <p className="text-lg font-light text-green-600">
-                    {latestQualityCheck.product && latestQualityCheck.product.length > 20 ? 'N/A' : (latestQualityCheck.product || 'N/A')}
+                    {typeof latestQualityCheck.product === 'object' && latestQualityCheck.product?.name 
+                      ? latestQualityCheck.product.name 
+                      : (typeof latestQualityCheck.product === 'string' ? latestQualityCheck.product : 'N/A')}
                   </p>
                 </div>
                 <div className="space-y-2">
@@ -420,17 +443,17 @@ export default function UHTQualityCheckPage({ params }: UHTQualityCheckPageProps
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center space-x-2">
-                    <TestTube className="h-4 w-4 text-purple-500" />
+                    <TestTube className="h-4 w-4 text-blue-500" />
                     <p className="text-sm font-light text-gray-600">pH (0 days)</p>
                   </div>
-                  <p className="text-lg font-light text-purple-600">
+                  <p className="text-lg font-light text-blue-600">
                     {latestQualityCheck.ph_0_days}
                   </p>
                 </div>
               </div>
               
               {/* Process Overview */}
-              <div className="mt-6 p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg">
+              <div className="mt-6 p-4  from-green-50 to-emerald-50 rounded-lg">
                 <div className="flex items-center space-x-2 mb-3">
                   <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center">
                     <TestTube className="h-4 w-4 text-green-600" />
@@ -446,8 +469,8 @@ export default function UHTQualityCheckPage({ params }: UHTQualityCheckPageProps
                   </div>
                   <ArrowRight className="w-4 h-4 text-gray-400" />
                   <div className="flex items-center space-x-2">
-                    <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center">
-                      <Beaker className="h-4 w-4 text-purple-600" />
+                    <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
+                      <Beaker className="h-4 w-4 text-blue-600" />
                     </div>
                     <span className="text-sm font-light">Incubation</span>
                   </div>
@@ -458,7 +481,7 @@ export default function UHTQualityCheckPage({ params }: UHTQualityCheckPageProps
                     </div>
                     <div className="flex items-center space-x-2">
                       <span className="text-sm font-medium text-green-600">Test</span>
-                      <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-2 py-1 rounded-full text-xs font-medium shadow-lg">
+                      <div className=" from-green-500 to-emerald-600 text-white px-2 py-1 rounded-full text-xs font-medium shadow-lg">
                         Current Step
                       </div>
                     </div>
@@ -473,14 +496,14 @@ export default function UHTQualityCheckPage({ params }: UHTQualityCheckPageProps
         {!loading && (
           <div className="border border-gray-200 rounded-lg bg-white">
             <div className="p-6 pb-0">
-              <div className="text-lg font-light">UHT Quality Checks</div>
+              <div className="text-lg font-light">Incubation Tests</div>
             </div>
             <div className="p-6 space-y-4">
             <DataTableFilters
               filters={tableFilters}
               onFiltersChange={setTableFilters}
               onSearch={(searchTerm) => setTableFilters(prev => ({ ...prev, search: searchTerm }))}
-              searchPlaceholder="Search UHT quality checks..."
+              searchPlaceholder="Search Incubation quality  checks..."
               filterFields={filterFields}
             />
             
@@ -518,7 +541,7 @@ export default function UHTQualityCheckPage({ params }: UHTQualityCheckPageProps
           open={deleteDialogOpen}
           onOpenChange={setDeleteDialogOpen}
           title="Delete Incubation Test"
-          description={`Are you sure you want to delete this UHT quality check? This action cannot be undone and may affect production tracking.`}
+          description={`Are you sure you want to delete this Incubation quality  check? This action cannot be undone and may affect production tracking.`}
           onConfirm={confirmDelete}
           loading={operationLoading.delete}
         />

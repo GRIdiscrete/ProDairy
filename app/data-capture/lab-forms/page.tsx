@@ -152,7 +152,7 @@ export default function LabFormsPage() {
 
             {/* Action Buttons */}
             <div className="flex justify-end space-x-2">
-              <Button variant="outline">
+              <Button >
                 Save Draft
               </Button>
               <Button>
@@ -226,7 +226,7 @@ export default function LabFormsPage() {
                     }>
                       {test.status}
                     </Badge>
-                    <Button variant="outline" size="sm">
+                    <Button  size="sm">
                       View Details
                     </Button>
                   </div>

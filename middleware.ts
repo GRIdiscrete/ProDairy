@@ -6,7 +6,7 @@ export function middleware(request: NextRequest) {
   const accessToken = request.cookies.get('access_token')?.value
   const userData = request.cookies.get('user_data')?.value
   const authHeader = request.headers.get('authorization')
-  
+
   const isAuthenticated = accessToken || userData || authHeader
 
   // Debug logging (only in development)
@@ -27,7 +27,9 @@ export function middleware(request: NextRequest) {
   }
 
   // If trying to access protected routes without authentication, redirect to login
-  if (!isAuthenticated && request.nextUrl.pathname !== '/login') {
+  const isPublicRoute = request.nextUrl.pathname === '/login' || request.nextUrl.pathname.startsWith('/forgot-password')
+
+  if (!isAuthenticated && !isPublicRoute) {
     console.log('Middleware - Redirecting unauthenticated user to login')
     return NextResponse.redirect(new URL('/login', request.url))
   }

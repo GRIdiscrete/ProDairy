@@ -7,12 +7,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { CopyButton } from "@/components/ui/copy-button"
-import { 
-  Package, 
-  Calendar, 
-  User, 
-  Building, 
-  Clock, 
+import {
+  Package,
+  Calendar,
+  User,
+  Building,
+  Clock,
   Hash,
   Edit,
   ArrowRight,
@@ -26,6 +26,7 @@ import {
   Droplets
 } from "lucide-react"
 import { FilmaticLinesProductionSheet } from "@/lib/api/filmatic-lines"
+import { FormIdCopy } from "@/components/ui/form-id-copy"
 
 interface FilmaticLinesProductionSheetViewDrawerProps {
   open: boolean
@@ -34,11 +35,11 @@ interface FilmaticLinesProductionSheetViewDrawerProps {
   onEdit: () => void
 }
 
-export function FilmaticLinesProductionSheetViewDrawer({ 
-  open, 
-  onOpenChange, 
+export function FilmaticLinesProductionSheetViewDrawer({
+  open,
+  onOpenChange,
   sheet,
-  onEdit 
+  onEdit
 }: FilmaticLinesProductionSheetViewDrawerProps) {
   if (!sheet) return null
 
@@ -59,7 +60,7 @@ export function FilmaticLinesProductionSheetViewDrawer({
 
         <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-white">
           {/* Process Overview */}
-          <div className="mb-8 p-6 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg">
+          <div className="mb-8 p-6  from-blue-50 to-cyan-50 rounded-lg">
             <h3 className="text-lg font-light text-gray-900 mb-4">Process Overview</h3>
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center space-x-2">
@@ -75,7 +76,7 @@ export function FilmaticLinesProductionSheetViewDrawer({
                 </div>
                 <div className="flex items-center space-x-2">
                   <span className="text-sm font-medium text-blue-600">Filmatic Lines</span>
-                  <div className="bg-gradient-to-r from-blue-500 to-cyan-600 text-white px-2 py-1 rounded-full text-xs font-medium shadow-lg">
+                  <div className=" bg-gray-100 text-gray-600 px-2 py-1 rounded-full text-xs font-medium shadow-lg">
                     Current Step
                   </div>
                 </div>
@@ -91,15 +92,15 @@ export function FilmaticLinesProductionSheetViewDrawer({
           </div>
 
           {/* Sheet Overview */}
-          <Card className="border-l-4 border-l-blue-500 shadow-none">
+          <Card className="border-l-4 border-l-[#006BC4] shadow-none">
             <CardHeader className="pb-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center">
-                    <Factory className="w-5 h-5 text-white" />
+                  <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center">
+                    <Factory className="w-5 h-5 text-gray-600" />
                   </div>
                   <div>
-                    <CardTitle className="text-lg font-light">Sheet #{sheet.id?.slice(0, 8)}</CardTitle>
+                    <CardTitle className="text-lg font-light">Sheet Details</CardTitle>
                     <div className="flex items-center space-x-2 mt-1">
                       <Badge className="bg-blue-100 text-blue-800 font-light">
                         {sheet.product}
@@ -107,14 +108,15 @@ export function FilmaticLinesProductionSheetViewDrawer({
                       <Badge className="bg-green-100 text-green-800 font-light">
                         {sheet.shift}
                       </Badge>
+                      <FormIdCopy displayId={sheet.tag || sheet.id} actualId={sheet.id} size="sm" />
                     </div>
                   </div>
                 </div>
                 <Button
                   onClick={onEdit}
-                  variant="outline"
+
                   size="sm"
-                  className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 rounded-full"
+                  className=" bg-[#006BC4] text-white rounded-full"
                 >
                   <Edit className="w-4 h-4 mr-2" />
                   Edit
@@ -129,10 +131,10 @@ export function FilmaticLinesProductionSheetViewDrawer({
                     <span className="text-sm font-light text-gray-600">Production Date</span>
                   </div>
                   <p className="text-sm font-light">
-                    {new Date(sheet.date).toLocaleDateString('en-GB', { 
-                      day: 'numeric', 
-                      month: 'long', 
-                      year: 'numeric' 
+                    {new Date(sheet.date).toLocaleDateString('en-GB', {
+                      day: 'numeric',
+                      month: 'long',
+                      year: 'numeric'
                     })}
                   </p>
                 </div>
@@ -154,8 +156,8 @@ export function FilmaticLinesProductionSheetViewDrawer({
             <Card className="shadow-none">
               <CardHeader className="pb-4">
                 <div className="flex items-center space-x-2">
-                  <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center">
-                    <User className="h-4 w-4 text-purple-600" />
+                  <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
+                    <User className="h-4 w-4 text-blue-600" />
                   </div>
                   <CardTitle className="text-base font-light">Approval Information</CardTitle>
                 </div>

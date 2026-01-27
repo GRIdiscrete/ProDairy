@@ -65,7 +65,7 @@ const formTypeConfig = {
   "lab-forms": {
     name: "Lab Tests",
     description: "Laboratory test forms",
-    color: "bg-purple-100 text-purple-800",
+    color: "bg-blue-100 text-blue-800",
     icon: "🧪"
   },
   "operator-forms": {
@@ -89,7 +89,7 @@ const formTypeConfig = {
   "palletiser-sheet": {
     name: "Palletizer",
     description: "Palletizing operations",
-    color: "bg-indigo-100 text-indigo-800",
+    color: "bg-blue-100 text-blue-800",
     icon: "🏭"
   }
 }
@@ -150,7 +150,7 @@ export function FormsDashboard({
       case "error":
         return <Badge className="bg-red-100 text-red-800 border-red-200">Error</Badge>
       default:
-        return <Badge variant="outline">Pending</Badge>
+        return <Badge >Pending</Badge>
     }
   }
 
@@ -430,7 +430,7 @@ function FormList({
               </div>
               <div className="flex items-center space-x-2">
                 <Button
-                  variant="outline"
+                  
                   size="sm"
                   onClick={(e) => {
                     e.stopPropagation()
@@ -440,7 +440,7 @@ function FormList({
                   <Eye className="h-4 w-4" />
                 </Button>
                 <Button
-                  variant="outline"
+                  
                   size="sm"
                   onClick={(e) => {
                     e.stopPropagation()

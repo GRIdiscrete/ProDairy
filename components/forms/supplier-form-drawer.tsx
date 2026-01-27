@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useForm, Controller } from "react-hook-form"
+import { useForm, Controller, useFieldArray } from "react-hook-form"
 import { yupResolver } from "@hookform/resolvers/yup"
 import * as yup from "yup"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
@@ -9,6 +9,7 @@ import { LoadingButton } from "@/components/ui/loading-button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Trash2, PlusCircle, Package } from "lucide-react"
 import { useAppDispatch, useAppSelector } from "@/lib/store"
 import { createSupplier, updateSupplier } from "@/lib/store/slices/supplierSlice"
 import { toast } from "sonner"
@@ -17,12 +18,23 @@ import type { Supplier } from "@/lib/types"
 const supplierSchema = yup.object({
   first_name: yup.string().required("First name is required"),
   last_name: yup.string().required("Last name is required"),
+  company_name: yup.string().nullable(),
   email: yup.string().email("Invalid email").required("Email is required"),
   phone_number: yup.string().required("Phone number is required"),
   physical_address: yup.string().required("Physical address is required"),
   raw_product: yup.string().required("Raw product is required"),
-  volume_supplied: yup.number().required("Volume supplied is required").min(0, "Volume supplied cannot be negative"),
-  volume_rejected: yup.number().required("Volume rejected is required").min(0, "Volume rejected cannot be negative"),
+  number_of_tanks: yup.number().nullable().transform((v) => (v === "" || isNaN(v) ? null : v)),
+  volume_supplied: yup.number().nullable().transform((v) => (v === "" || isNaN(v) ? null : v)),
+  volume_rejected: yup.number().nullable().transform((v) => (v === "" || isNaN(v) ? null : v)),
+  tanks: yup.array().of(
+    yup.object({
+      id: yup.string().optional(),
+      code: yup.string().required("Tank code is required"),
+      name: yup.string().required("Tank name is required"),
+      capacity: yup.number().required("Capacity is required").min(0),
+      quantity: yup.number().nullable().transform((v) => (v === "" || isNaN(v) ? null : v)),
+    })
+  ).optional(),
 })
 
 type SupplierFormData = yup.InferType<typeof supplierSchema>
@@ -49,13 +61,21 @@ export function SupplierFormDrawer({ open, onOpenChange, supplier, mode }: Suppl
     defaultValues: {
       first_name: "",
       last_name: "",
+      company_name: "",
       email: "",
       phone_number: "",
       physical_address: "",
       raw_product: "",
+      number_of_tanks: 0,
       volume_supplied: 0,
       volume_rejected: 0,
+      tanks: [],
     },
+  })
+
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: "tanks",
   })
 
   const onSubmit = async (data: SupplierFormData) => {
@@ -63,7 +83,8 @@ export function SupplierFormDrawer({ open, onOpenChange, supplier, mode }: Suppl
       console.log('Form data submitted:', data)
 
       if (mode === "create") {
-        const result = await dispatch(createSupplier(data)).unwrap()
+        const { tanks, ...createData } = data
+        const result = await dispatch(createSupplier(createData)).unwrap()
         toast.success('Supplier created successfully')
       } else if (supplier) {
         const result = await dispatch(updateSupplier({
@@ -87,23 +108,35 @@ export function SupplierFormDrawer({ open, onOpenChange, supplier, mode }: Suppl
       reset({
         first_name: supplier.first_name || "",
         last_name: supplier.last_name || "",
+        company_name: supplier.company_name || "",
         email: supplier.email || "",
         phone_number: supplier.phone_number || "",
         physical_address: supplier.physical_address || "",
         raw_product: supplier.raw_product || "",
+        number_of_tanks: supplier.number_of_tanks || 0,
         volume_supplied: supplier.volume_supplied || 0,
         volume_rejected: supplier.volume_rejected || 0,
+        tanks: supplier.suppliers_tanks?.map(t => ({
+          id: t.id,
+          code: t.code,
+          name: t.name,
+          capacity: t.capacity,
+          quantity: t.quantity,
+        })) || [],
       })
     } else if (open && mode === "create") {
       reset({
         first_name: "",
         last_name: "",
+        company_name: "",
         email: "",
         phone_number: "",
         physical_address: "",
         raw_product: "",
+        number_of_tanks: 0,
         volume_supplied: 0,
         volume_rejected: 0,
+        tanks: [],
       })
     }
   }, [open, supplier, mode, reset])
@@ -154,6 +187,22 @@ export function SupplierFormDrawer({ open, onOpenChange, supplier, mode }: Suppl
                   />
                   {errors.last_name && <p className="text-sm text-red-500">{errors.last_name.message}</p>}
                 </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="company_name">Company Name</Label>
+                <Controller
+                  name="company_name"
+                  control={control}
+                  render={({ field }) => (
+                    <Input
+                      id="company_name"
+                      {...field}
+                      value={field.value || ""}
+                      placeholder="Enter company name"
+                    />
+                  )}
+                />
+                {errors.company_name && <p className="text-sm text-red-500">{errors.company_name.message}</p>}
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -230,54 +279,177 @@ export function SupplierFormDrawer({ open, onOpenChange, supplier, mode }: Suppl
                 />
                 {errors.raw_product && <p className="text-sm text-red-500">{errors.raw_product.message}</p>}
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="volume_supplied">Volume Supplied (L) *</Label>
-                  <Controller
-                    name="volume_supplied"
-                    control={control}
-                    render={({ field }) => (
-                      <Input
-                        id="volume_supplied"
-                        type="number"
-                        step="0.01"
-                        {...field}
-                        value={field.value || ""}
-                        onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                        placeholder="Enter volume supplied in liters"
-                      />
-                    )}
-                  />
-                  {errors.volume_supplied && <p className="text-sm text-red-500">{errors.volume_supplied.message}</p>}
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="volume_rejected">Volume Rejected (L) *</Label>
-                  <Controller
-                    name="volume_rejected"
-                    control={control}
-                    render={({ field }) => (
-                      <Input
-                        id="volume_rejected"
-                        type="number"
-                        step="0.01"
-                        {...field}
-                        value={field.value || ""}
-                        onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                        placeholder="Enter volume rejected"
-                      />
-                    )}
-                  />
-                  {errors.volume_rejected && <p className="text-sm text-red-500">{errors.volume_rejected.message}</p>}
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="number_of_tanks">Number of Tanks</Label>
+                <Controller
+                  name="number_of_tanks"
+                  control={control}
+                  render={({ field }) => (
+                    <Input
+                      id="number_of_tanks"
+                      type="number"
+                      {...field}
+                      value={field.value ?? ""}
+                      onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                      placeholder="Enter number of tanks"
+                    />
+                  )}
+                />
+                {errors.number_of_tanks && <p className="text-sm text-red-500">{errors.number_of_tanks.message}</p>}
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="volume_supplied">Volume Supplied (L) *</Label>
+                <Controller
+                  name="volume_supplied"
+                  control={control}
+                  render={({ field }) => (
+                    <Input
+                      id="volume_supplied"
+                      type="number"
+                      step="0.01"
+                      {...field}
+                      value={field.value || ""}
+                      onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                      placeholder="Enter volume supplied in liters"
+                    />
+                  )}
+                />
+                {errors.volume_supplied && <p className="text-sm text-red-500">{errors.volume_supplied.message}</p>}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="volume_rejected">Volume Rejected (L) *</Label>
+                <Controller
+                  name="volume_rejected"
+                  control={control}
+                  render={({ field }) => (
+                    <Input
+                      id="volume_rejected"
+                      type="number"
+                      step="0.01"
+                      {...field}
+                      value={field.value || ""}
+                      onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                      placeholder="Enter volume rejected"
+                    />
+                  )}
+                />
               </div>
             </div>
 
+            {/* Tanks Management - Only shown in Edit Mode */}
+            {mode === "edit" && (
+              <div className="space-y-4 pt-4 border-t">
+                <div className="flex items-center justify-between border-b pb-2">
+                  <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                    <Package className="w-5 h-5 mr-2" />
+                    Supplier Tanks
+                  </h3>
+                  <LoadingButton
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => append({ code: "", name: "", capacity: 0, quantity: 0 })}
+                  >
+                    <PlusCircle className="w-4 h-4 mr-2" />
+                    Add Tank
+                  </LoadingButton>
+                </div>
+
+                <div className="space-y-4">
+                  {fields.map((field, index) => (
+                    <div key={field.id} className="p-4 border rounded-lg bg-gray-50 space-y-4 relative">
+                      <button
+                        type="button"
+                        onClick={() => remove(index)}
+                        className="absolute top-2 right-2 text-gray-400 hover:text-red-500 transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+
+                      <div className="grid grid-cols-2 gap-4 pt-2">
+                        <div className="space-y-2">
+                          <Label>Tank Code *</Label>
+                          <Controller
+                            name={`tanks.${index}.code`}
+                            control={control}
+                            render={({ field }) => (
+                              <Input {...field} placeholder="e.g. TANK-001" />
+                            )}
+                          />
+                          {errors.tanks?.[index]?.code && (
+                            <p className="text-sm text-red-500">{errors.tanks[index].code.message}</p>
+                          )}
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Tank Name *</Label>
+                          <Controller
+                            name={`tanks.${index}.name`}
+                            control={control}
+                            render={({ field }) => (
+                              <Input {...field} placeholder="e.g. Main Milk Tank" />
+                            )}
+                          />
+                          {errors.tanks?.[index]?.name && (
+                            <p className="text-sm text-red-500">{errors.tanks[index].name.message}</p>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label>Capacity (L) *</Label>
+                          <Controller
+                            name={`tanks.${index}.capacity`}
+                            control={control}
+                            render={({ field }) => (
+                              <Input
+                                type="number"
+                                {...field}
+                                onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                                placeholder="20000"
+                              />
+                            )}
+                          />
+                          {errors.tanks?.[index]?.capacity && (
+                            <p className="text-sm text-red-500">{errors.tanks[index].capacity.message}</p>
+                          )}
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Quantity (L)</Label>
+                          <Controller
+                            name={`tanks.${index}.quantity`}
+                            control={control}
+                            render={({ field }) => (
+                              <Input
+                                type="number"
+                                {...field}
+                                value={field.value ?? ""}
+                                onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                                placeholder="0"
+                              />
+                            )}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  {fields.length === 0 && (
+                    <p className="text-sm text-gray-500 text-center py-4 border-2 border-dashed rounded-lg">
+                      No tanks added yet. Click "Add Tank" to manage supplier tanks.
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+
             <div className="flex justify-end space-x-2 pt-4">
-              <LoadingButton type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              <LoadingButton type="button" onClick={() => onOpenChange(false)}>
                 Cancel
               </LoadingButton>
-              <LoadingButton 
-                type="submit" 
+              <LoadingButton
+                type="submit"
                 loading={mode === "create" ? operationLoading.create : operationLoading.update}
                 loadingText={mode === "create" ? "Creating..." : "Updating..."}
               >

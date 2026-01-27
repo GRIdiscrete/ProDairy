@@ -18,15 +18,14 @@ import { TableFilters } from "@/lib/types"
 import { AdminDashboardLayout } from "@/components/layout/admin-dashboard-layout"
 import { PermissionGuard } from "@/components/auth/permission-guard"
 import { PermissionButton } from "@/components/ui/permission-table-actions"
-import { PermissionTableActions } from "@/components/ui/permission-table-actions"
 
 export default function MachinesPage() {
   const dispatch = useAppDispatch()
   const { machines, loading, error, operationLoading } = useAppSelector((state) => state.machine)
-  
+
   const [tableFilters, setTableFilters] = useState<TableFilters>({})
   const hasFetchedRef = useRef(false)
-  
+
   // Load machines on component mount and when filters change
   useEffect(() => {
     if (!hasFetchedRef.current) {
@@ -34,7 +33,7 @@ export default function MachinesPage() {
     }
     dispatch(fetchMachines({ filters: tableFilters }))
   }, [dispatch, tableFilters])
-  
+
   // Handle errors with toast notifications
   useEffect(() => {
     if (error) {
@@ -42,12 +41,12 @@ export default function MachinesPage() {
       dispatch(clearError())
     }
   }, [error, dispatch])
-  
+
   // Drawer states
   const [formDrawerOpen, setFormDrawerOpen] = useState(false)
   const [viewDrawerOpen, setViewDrawerOpen] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
-  
+
   // Selected machine and mode
   const [selectedMachine, setSelectedMachine] = useState<any>(null)
   const [formMode, setFormMode] = useState<"create" | "edit">("create")
@@ -110,6 +109,30 @@ export default function MachinesPage() {
     }
   ], [])
 
+  // Client-side filtering
+  const filteredMachines = useMemo(() => {
+    return (machines || []).filter(machine => {
+      // Search filter
+      if (tableFilters.search) {
+        const search = tableFilters.search.toLowerCase()
+        const name = (machine.name || "").toLowerCase()
+        const serialNumber = (machine.serial_number || "").toLowerCase()
+        if (!name.includes(search) && !serialNumber.includes(search)) return false
+      }
+      // Name filter
+      if (tableFilters.name && !machine.name?.toLowerCase().includes(tableFilters.name.toLowerCase())) return false
+      // Serial number filter
+      if (tableFilters.serial_number && !machine.serial_number?.toLowerCase().includes(tableFilters.serial_number.toLowerCase())) return false
+      // Category filter
+      if (tableFilters.category && machine.category !== tableFilters.category) return false
+      // Location filter
+      if (tableFilters.location && !machine.location?.toLowerCase().includes(tableFilters.location.toLowerCase())) return false
+      // Status filter
+      if (tableFilters.status && machine.status !== tableFilters.status) return false
+      return true
+    })
+  }, [machines, tableFilters])
+
   // Action handlers
   const handleAddMachine = () => {
     setSelectedMachine(null)
@@ -135,7 +158,7 @@ export default function MachinesPage() {
 
   const confirmDelete = async () => {
     if (!selectedMachine) return
-    
+
     try {
       await dispatch(deleteMachine(selectedMachine.id)).unwrap()
       toast.success('Machine deleted successfully')
@@ -165,8 +188,8 @@ export default function MachinesPage() {
         }
         return (
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-gray-500 to-gray-700 flex items-center justify-center">
-              <Settings className="w-4 h-4 text-white" />
+            <div className="w-8 h-8 rounded-lg bg-gray-100 text-gray-600 flex items-center justify-center">
+              <Settings className="w-4 h-4" />
             </div>
             <div>
               <div className="flex items-center space-x-2">
@@ -211,13 +234,34 @@ export default function MachinesPage() {
       cell: ({ row }: any) => {
         const machine = row.original
         return (
-          <PermissionTableActions
-            feature="machine_item"
-            onView={() => handleViewMachine(machine)}
-            onEdit={() => handleEditMachine(machine)}
-            onDelete={() => handleDeleteMachine(machine)}
-            showDropdown={true}
-          />
+          <div className="flex space-x-2">
+            <LoadingButton
+
+              size="sm"
+              onClick={() => handleViewMachine(machine)}
+              className="bg-[#006BC4] text-white border-0 rounded-full"
+            >
+              <Eye className="w-4 h-4" />
+            </LoadingButton>
+            <LoadingButton
+
+              size="sm"
+              onClick={() => handleEditMachine(machine)}
+              className="bg-[#A0CF06] text-[#211D1E] border-0 rounded-full"
+            >
+              <Edit className="w-4 h-4" />
+            </LoadingButton>
+            <LoadingButton
+              variant="destructive"
+              size="sm"
+              onClick={() => handleDeleteMachine(machine)}
+              loading={operationLoading.delete}
+              disabled={operationLoading.delete}
+              className="bg-red-600 hover:bg-red-700 text-white border-0 rounded-full"
+            >
+              <Trash2 className="w-4 h-4" />
+            </LoadingButton>
+          </div>
         )
       },
     },
@@ -226,161 +270,161 @@ export default function MachinesPage() {
   return (
     <PermissionGuard requiredView="machine_tab">
       <AdminDashboardLayout title="Machine Configuration" subtitle="Manage and configure production machines">
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-light text-foreground">Machine Configuration</h1>
-            <p className="text-sm font-light text-muted-foreground">Manage and configure production machines</p>
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-light text-foreground">Machine Configuration</h1>
+              <p className="text-sm font-light text-muted-foreground">Manage and configure production machines</p>
+            </div>
+            <PermissionButton
+              feature="machine_item"
+              permission="create"
+              onClick={handleAddMachine}
+              className=" from-gray-500 to-gray-700 hover:from-gray-600 hover:to-gray-800 text-white border-0 rounded-full px-6 py-2 font-light"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Add Machine
+            </PermissionButton>
           </div>
-          <PermissionButton
-            feature="machine_item"
-            permission="create"
-            onClick={handleAddMachine}
-            className="bg-gradient-to-r from-gray-500 to-gray-700 hover:from-gray-600 hover:to-gray-800 text-white border-0 rounded-full px-6 py-2 font-light"
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Add Machine
-          </PermissionButton>
-        </div>
 
-        {/* Counter Widgets with Icons */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-white border border-gray-200 rounded-lg p-6">
-            <div className="flex flex-row items-center justify-between mb-4">
-              <h3 className="text-sm text-gray-600">Total Machines</h3>
-              <Cpu className="h-4 w-4 text-muted-foreground" />
-            </div>
-            {operationLoading.fetch ? (
-              <div className="animate-pulse">
-                <div className="h-8 bg-gray-200 rounded w-16 mb-2"></div>
-                <div className="h-3 bg-gray-200 rounded w-24"></div>
+          {/* Counter Widgets with Icons */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="bg-white border border-gray-200 rounded-lg p-6">
+              <div className="flex flex-row items-center justify-between mb-4">
+                <h3 className="text-sm text-gray-600">Total Machines</h3>
+                <Cpu className="h-4 w-4 text-muted-foreground" />
               </div>
-            ) : (
-              <>
-                <div className="text-3xl text-gray-900">{machines.length}</div>
-                <p className="text-xs text-gray-500 mt-1">Active in system</p>
-              </>
-            )}
-          </div>
-          <div className="bg-white border border-gray-200 rounded-lg p-6">
-            <div className="flex flex-row items-center justify-between mb-4">
-              <h3 className="text-sm text-gray-600">Active</h3>
-              <Activity className="h-4 w-4 text-green-600" />
-            </div>
-            {operationLoading.fetch ? (
-              <div className="animate-pulse">
-                <div className="h-8 bg-gray-200 rounded w-16 mb-2"></div>
-                <div className="h-3 bg-gray-200 rounded w-32"></div>
-              </div>
-            ) : (
-              <>
-                <div className="text-3xl text-green-600">
-                  {machines.filter((m) => m.status === "active").length}
+              {operationLoading.fetch ? (
+                <div className="animate-pulse">
+                  <div className="h-8 bg-gray-200 rounded w-16 mb-2"></div>
+                  <div className="h-3 bg-gray-200 rounded w-24"></div>
                 </div>
-                <p className="text-xs text-gray-500 mt-1">Currently active</p>
-              </>
-            )}
-          </div>
-          <div className="bg-white border border-gray-200 rounded-lg p-6">
-            <div className="flex flex-row items-center justify-between mb-4">
-              <h3 className="text-sm text-gray-600">Maintenance</h3>
-              <Wrench className="h-4 w-4 text-yellow-600" />
+              ) : (
+                <>
+                  <div className="text-3xl text-gray-900">{machines.length}</div>
+                  <p className="text-xs text-gray-500 mt-1">Active in system</p>
+                </>
+              )}
             </div>
-            {operationLoading.fetch ? (
-              <div className="animate-pulse">
-                <div className="h-8 bg-gray-200 rounded w-16 mb-2"></div>
-                <div className="h-3 bg-gray-200 rounded w-32"></div>
+            <div className="bg-white border border-gray-200 rounded-lg p-6">
+              <div className="flex flex-row items-center justify-between mb-4">
+                <h3 className="text-sm text-gray-600">Active</h3>
+                <Activity className="h-4 w-4 text-green-600" />
               </div>
-            ) : (
-              <>
-                <div className="text-3xl text-yellow-600">
-                  {machines.filter((m) => m.status === "maintenance").length}
+              {operationLoading.fetch ? (
+                <div className="animate-pulse">
+                  <div className="h-8 bg-gray-200 rounded w-16 mb-2"></div>
+                  <div className="h-3 bg-gray-200 rounded w-32"></div>
                 </div>
-                <p className="text-xs text-gray-500 mt-1">Under maintenance</p>
-              </>
-            )}
-          </div>
-          <div className="bg-white border border-gray-200 rounded-lg p-6">
-            <div className="flex flex-row items-center justify-between mb-4">
-              <h3 className="text-sm text-gray-600">Inactive</h3>
-              <Gauge className="h-4 w-4 text-red-600" />
+              ) : (
+                <>
+                  <div className="text-3xl text-green-600">
+                    {machines.filter((m) => m.status === "active").length}
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">Currently active</p>
+                </>
+              )}
             </div>
-            {operationLoading.fetch ? (
-              <div className="animate-pulse">
-                <div className="h-8 bg-gray-200 rounded w-16 mb-2"></div>
-                <div className="h-3 bg-gray-200 rounded w-32"></div>
+            <div className="bg-white border border-gray-200 rounded-lg p-6">
+              <div className="flex flex-row items-center justify-between mb-4">
+                <h3 className="text-sm text-gray-600">Maintenance</h3>
+                <Wrench className="h-4 w-4 text-yellow-600" />
               </div>
-            ) : (
-              <>
-                <div className="text-3xl text-red-600">
-                  {machines.filter((m) => m.status === "inactive" || m.status === "offline").length}
+              {operationLoading.fetch ? (
+                <div className="animate-pulse">
+                  <div className="h-8 bg-gray-200 rounded w-16 mb-2"></div>
+                  <div className="h-3 bg-gray-200 rounded w-32"></div>
                 </div>
-                <p className="text-xs text-gray-500 mt-1">Not operational</p>
-              </>
-            )}
+              ) : (
+                <>
+                  <div className="text-3xl text-yellow-600">
+                    {machines.filter((m) => m.status === "maintenance").length}
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">Under maintenance</p>
+                </>
+              )}
+            </div>
+            <div className="bg-white border border-gray-200 rounded-lg p-6">
+              <div className="flex flex-row items-center justify-between mb-4">
+                <h3 className="text-sm text-gray-600">Inactive</h3>
+                <Gauge className="h-4 w-4 text-red-600" />
+              </div>
+              {operationLoading.fetch ? (
+                <div className="animate-pulse">
+                  <div className="h-8 bg-gray-200 rounded w-16 mb-2"></div>
+                  <div className="h-3 bg-gray-200 rounded w-32"></div>
+                </div>
+              ) : (
+                <>
+                  <div className="text-3xl text-red-600">
+                    {machines.filter((m) => m.status === "inactive" || m.status === "offline").length}
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">Not operational</p>
+                </>
+              )}
+            </div>
           </div>
-        </div>
 
-        <div className="border border-gray-200 rounded-lg bg-white">
-          <div className="p-6 pb-0">
-            <div className="text-lg font-light">Machines</div>
-          </div>
-          <div className="p-6 space-y-4">
-            <DataTableFilters
-              filters={tableFilters}
-              onFiltersChange={setTableFilters}
-              onSearch={(searchTerm) => setTableFilters(prev => ({ ...prev, search: searchTerm }))}
-              searchPlaceholder="Search machines..."
-              filterFields={filterFields}
-            />
-            
-            {loading ? (
-              <div className="flex items-center justify-center h-64">
-                <div className="flex flex-col items-center space-y-4">
-                  <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-                  <p className="text-muted-foreground">Loading machines...</p>
-                </div>
-              </div>
-            ) : (
-              <DataTable
-                columns={columns}
-                data={machines}
-                showSearch={false}
+          <div className="border border-gray-200 rounded-lg bg-white">
+            <div className="p-6 pb-0">
+              <div className="text-lg font-light">Machines</div>
+            </div>
+            <div className="p-6 space-y-4">
+              <DataTableFilters
+                filters={tableFilters}
+                onFiltersChange={setTableFilters}
+                onSearch={(searchTerm) => setTableFilters(prev => ({ ...prev, search: searchTerm }))}
+                searchPlaceholder="Search machines..."
+                filterFields={filterFields}
               />
-            )}
+
+              {loading ? (
+                <div className="flex items-center justify-center h-64">
+                  <div className="flex flex-col items-center space-y-4">
+                    <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                    <p className="text-muted-foreground">Loading machines...</p>
+                  </div>
+                </div>
+              ) : (
+                <DataTable
+                  columns={columns}
+                  data={filteredMachines}
+                  showSearch={false}
+                />
+              )}
+            </div>
           </div>
+
+          {/* Form Drawer */}
+          <MachineFormDrawer
+            open={formDrawerOpen}
+            onOpenChange={setFormDrawerOpen}
+            machine={selectedMachine}
+            mode={formMode}
+          />
+
+          {/* View Drawer */}
+          <MachineViewDrawer
+            open={viewDrawerOpen}
+            onClose={() => setViewDrawerOpen(false)}
+            machine={selectedMachine}
+            onEdit={() => {
+              setViewDrawerOpen(false)
+              handleEditMachine(selectedMachine)
+            }}
+          />
+
+          {/* Delete Confirmation Dialog */}
+          <DeleteConfirmationDialog
+            open={deleteDialogOpen}
+            onOpenChange={setDeleteDialogOpen}
+            title="Delete Machine"
+            description={`Are you sure you want to delete ${selectedMachine?.name}? This action cannot be undone and may affect production processes.`}
+            onConfirm={confirmDelete}
+            loading={operationLoading.delete}
+          />
         </div>
-
-        {/* Form Drawer */}
-        <MachineFormDrawer 
-          open={formDrawerOpen} 
-          onOpenChange={setFormDrawerOpen} 
-          machine={selectedMachine}
-          mode={formMode} 
-        />
-
-        {/* View Drawer */}
-        <MachineViewDrawer
-          open={viewDrawerOpen}
-          onClose={() => setViewDrawerOpen(false)}
-          machine={selectedMachine}
-          onEdit={() => {
-            setViewDrawerOpen(false)
-            handleEditMachine(selectedMachine)
-          }}
-        />
-
-        {/* Delete Confirmation Dialog */}
-        <DeleteConfirmationDialog
-          open={deleteDialogOpen}
-          onOpenChange={setDeleteDialogOpen}
-          title="Delete Machine"
-          description={`Are you sure you want to delete ${selectedMachine?.name}? This action cannot be undone and may affect production processes.`}
-          onConfirm={confirmDelete}
-          loading={operationLoading.delete}
-        />
-      </div>
-    </AdminDashboardLayout>
+      </AdminDashboardLayout>
     </PermissionGuard>
   )
 }

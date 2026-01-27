@@ -34,6 +34,7 @@ export interface PasteurizingForm {
   fat: number
   production_?: string | null
   cream_index?: number | null
+  tag?: string
   steri_milk_pasteurizing_form_production: Production[]
   // Related data from API response (for backward compatibility)
   steri_milk_pasteurizing_form_operator_fkey?: any
@@ -95,18 +96,8 @@ export interface CreatePasteurizingFormRequest {
   bmt: string
   fat: number
   cream_index?: number
-  production_: {
-    process_id: string
-    output_target_value: number
-    ouput_target_units: string
-    temp_hot_water: number
-    temp_product_out: number
-    temp_product_pasteurisation: number
-    total_homogenisation_pressure: number
-    homogenisation_pressure_stage_1: number
-    homogenisation_pressure_stage_2: number
-    time: string
-  }[]
+  tag?: string
+  steri_milk_pasteurizing_form_production: Omit<Production, 'id' | 'created_at' | 'updated_at' | 'steri_milk_pasteurizing_form_id'>[]
 }
 
 export interface UpdatePasteurizingFormRequest {
@@ -123,18 +114,8 @@ export interface UpdatePasteurizingFormRequest {
   bmt?: string
   fat?: number
   cream_index?: number
-  production_?: {
-    process_id: string
-    output_target_value: number
-    ouput_target_units: string
-    temp_hot_water: number
-    temp_product_out: number
-    temp_product_pasteurisation: number
-    total_homogenisation_pressure: number
-    homogenisation_pressure_stage_1: number
-    homogenisation_pressure_stage_2: number
-    time: string
-  }[]
+  tag?: string
+  steri_milk_pasteurizing_form_production?: (Omit<Production, 'created_at' | 'updated_at' | 'steri_milk_pasteurizing_form_id'> & { id: string })[]
 }
 
 export interface PasteurizingFormResponse {
@@ -149,7 +130,7 @@ export interface PasteurizingFormsResponse {
   data: PasteurizingForm[]
 }
 
-const BASE_URL = "https://ckwkcg0o80cckkg0oog8okk8.greatssystems.co.zw"
+const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "https://dms.prodairyims.co.zw/api"
 
 export const pasteurizingApi = {
   // Get all pasteurizing forms

@@ -156,7 +156,7 @@ export function DeviceFormDrawer({ open, onOpenChange, device, mode }: DeviceFor
             </div>
 
             <div className="flex justify-end space-x-2 pt-4">
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              <Button type="button"  onClick={() => onOpenChange(false)}>
                 Cancel
               </Button>
               <Button type="submit" disabled={loading}>

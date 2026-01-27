@@ -18,7 +18,7 @@ export function SupplierDirectoryTable({ suppliers, loading }: SupplierDirectory
         const supplier = row.original as Supplier
         return (
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-blue-500 rounded-lg flex items-center justify-center text-white font-semibold">
+          <div className="w-10 h-10 bg-[#0068BD] rounded-lg flex items-center justify-center text-white font-semibold">
             {supplier.name.charAt(0)}
           </div>
           <div>

@@ -133,7 +133,7 @@ export function FilmaticLinesGroupsKanban({ groupData, onSave, onOpenSettings, l
           <div className="flex items-center gap-2">
             <div className="text-xs text-gray-500">Drag operators between groups</div>
             <Button
-              variant="outline"
+              
               size="sm"
               onClick={onOpenSettings}
               className="rounded-full"

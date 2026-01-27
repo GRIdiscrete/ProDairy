@@ -8,6 +8,7 @@ export interface FilmaticLinesForm2 {
   approved: boolean | null
   process_id: string | null
   date: string
+  tag?: string
   day_shift_opening_bottles?: number
   day_shift_closing_bottles?: number
   night_shift_opening_bottles?: number
@@ -69,6 +70,12 @@ export interface FilmaticLinesForm2NightShiftDetails {
 
 export interface FilmaticLinesForm2StoppageTime {
   id?: string
+  capper_1_hours?: number
+  capper_2_hours?: number
+  sleever_1_hours?: number
+  sleever_2_hours?: number
+  shrink_1_hours?: number
+  shrink_2_hours?: number
   capper_1?: number
   capper_2?: number
   sleever_1?: number
@@ -161,7 +168,7 @@ export const filmaticLinesForm2Api = {
 
   // Update form
   updateForm: async (id: string, data: Partial<CreateFilmaticLinesForm2Request>) => {
-    return apiRequest<FilmaticLinesForm2>(`/filmatic-lines-form-2/${id}`, {
+    return apiRequest<FilmaticLinesForm2>(`/filmatic-lines-form-2`, {
       method: 'PATCH',
       body: JSON.stringify(data),
     })

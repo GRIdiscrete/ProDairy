@@ -1,10 +1,12 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
-import { Check, ChevronsUpDown, Search, X } from "lucide-react"
+import React from "react"
+
+import { useState, useEffect, useRef, useCallback } from "react"
+import { Check, ChevronsUpDown, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+
 import { Badge } from "@/components/ui/badge"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
@@ -29,6 +31,7 @@ interface SearchableSelectProps {
   loading?: boolean
   multiple?: boolean
   maxDisplayItems?: number
+  modal?: boolean
 }
 
 export function SearchableSelect({
@@ -44,11 +47,13 @@ export function SearchableSelect({
   loading = false,
   multiple = false,
   maxDisplayItems = 3,
+  modal = true,
 }: SearchableSelectProps) {
   const [open, setOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedOptions, setSelectedOptions] = useState<SearchableSelectOption[]>([])
   const searchTimeoutRef = useRef<NodeJS.Timeout>()
+
 
   // Filter options based on search term
   const filteredOptions = (options || []).filter(option =>
@@ -121,14 +126,14 @@ export function SearchableSelect({
   }
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={setOpen} modal={modal}>
       <PopoverTrigger asChild>
         <Button
-          variant="outline"
+
           role="combobox"
           aria-expanded={open}
           className={cn(
-            "w-full justify-between h-12 border border-gray-300 hover:border-gray-400 focus:border-blue-500 shadow-none hover:shadow-none focus:shadow-none",
+            "w-full justify-between h-12 bg-transparent hover:bg-transparent border border-gray-300 hover:border-gray-400 focus:border-[#006BC4] shadow-none hover:shadow-none focus:shadow-none text-gray-900",
             !selectedOptions.length && "text-muted-foreground",
             className
           )}
@@ -170,17 +175,14 @@ export function SearchableSelect({
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-full p-0" align="start">
+      <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
         <Command>
-          <div className="flex items-center border-b px-3">
-            <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
-            <Input
-              placeholder={searchPlaceholder}
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="flex h-10 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 border-0 focus-visible:ring-0"
-            />
-          </div>
+          <CommandInput
+            placeholder={searchPlaceholder}
+            value={searchTerm}
+            onValueChange={setSearchTerm}
+            className="h-9"
+          />
           <CommandList>
             {loading ? (
               <div className="py-6 text-center text-sm text-muted-foreground">
@@ -237,6 +239,7 @@ interface EntitySearchableSelectProps {
   className?: string
   onSearch?: (searchTerm: string) => void
   loading?: boolean
+  modal?: boolean
 }
 
 export function SiloSearchableSelect({
@@ -247,6 +250,7 @@ export function SiloSearchableSelect({
   className,
   onSearch,
   loading = false,
+  modal = true,
 }: EntitySearchableSelectProps) {
   const [silos, setSilos] = useState<SearchableSelectOption[]>([])
 
@@ -269,6 +273,7 @@ export function SiloSearchableSelect({
       className={className}
       onSearch={handleSearch}
       loading={loading}
+      modal={modal}
     />
   )
 }
@@ -281,6 +286,7 @@ export function UserSearchableSelect({
   className,
   onSearch,
   loading = false,
+  modal = true,
 }: EntitySearchableSelectProps) {
   const [users, setUsers] = useState<SearchableSelectOption[]>([])
 
@@ -303,6 +309,7 @@ export function UserSearchableSelect({
       className={className}
       onSearch={handleSearch}
       loading={loading}
+      modal={modal}
     />
   )
 }
@@ -315,6 +322,7 @@ export function MachineSearchableSelect({
   className,
   onSearch,
   loading = false,
+  modal = true,
 }: EntitySearchableSelectProps) {
   const [machines, setMachines] = useState<SearchableSelectOption[]>([])
 
@@ -337,6 +345,7 @@ export function MachineSearchableSelect({
       className={className}
       onSearch={handleSearch}
       loading={loading}
+      modal={modal}
     />
   )
 }

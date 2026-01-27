@@ -10,6 +10,10 @@ import { Beaker, Package, User, Droplets, Clock, Calendar, FileText, Edit, Trash
 import { format } from "date-fns"
 import type { StandardizingForm } from "@/lib/api/standardizing"
 import { base64ToPngDataUrl } from "@/lib/utils/signature"
+import { FormIdCopy } from "@/components/ui/form-id-copy"
+import { UserAvatar } from "@/components/ui/user-avatar"
+import { generateStandardizingFormId, generateBMTFormId } from "@/lib/utils/form-id-generator"
+import { useAppSelector } from "@/lib/store"
 
 interface StandardizingFormViewDrawerProps {
   open: boolean
@@ -19,9 +23,9 @@ interface StandardizingFormViewDrawerProps {
   onDelete?: () => void
 }
 
-export function StandardizingFormViewDrawer({ 
-  open, 
-  onOpenChange, 
+export function StandardizingFormViewDrawer({
+  open,
+  onOpenChange,
   form,
   onEdit,
   onDelete
@@ -29,12 +33,25 @@ export function StandardizingFormViewDrawer({
   const [isAnimating, setIsAnimating] = useState(false)
   const [animationProgress, setAnimationProgress] = useState(0)
 
+  // Get users and BMT forms from state
+  const { items: users } = useAppSelector((state) => state.users)
+  const { forms: bmtForms } = useAppSelector((state) => state.bmtControlForms)
+
+  // Helper functions
+  const getUserById = (userId: string) => {
+    return users.find((user: any) => user.id === userId)
+  }
+
+  const getBMTFormById = (bmtId: string) => {
+    return bmtForms.find((form: any) => form.id === bmtId)
+  }
+
   if (!form) return null
 
   const startAnimation = () => {
     setIsAnimating(true)
     setAnimationProgress(0)
-    
+
     const interval = setInterval(() => {
       setAnimationProgress(prev => {
         if (prev >= 100) {
@@ -71,7 +88,7 @@ export function StandardizingFormViewDrawer({
 
         <div className="flex-1 overflow-y-auto p-6">
           {/* Process Overview */}
-          <div className="mb-8 p-6 bg-gradient-to-r from-orange-50 to-red-50 rounded-lg">
+          <div className="mb-8 p-6  from-orange-50 to-red-50 rounded-lg">
             <h3 className="text-lg font-light text-gray-900 mb-4">Process Overview</h3>
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center space-x-2">
@@ -87,7 +104,7 @@ export function StandardizingFormViewDrawer({
                 </div>
                 <div className="flex items-center space-x-2">
                   <span className="text-sm font-medium text-orange-600">Standardizing</span>
-                  <div className="bg-gradient-to-r from-orange-500 to-red-600 text-white px-2 py-1 rounded-full text-xs font-medium shadow-lg">
+                  <div className="  to-red-600 text-white px-2 py-1 rounded-full text-xs font-medium shadow-lg">
                     Current Step
                   </div>
                 </div>
@@ -105,24 +122,27 @@ export function StandardizingFormViewDrawer({
           {/* Action Buttons */}
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center space-x-2">
-              <h2 className="text-xl font-light">Form #{form.id.slice(0, 8)}</h2>
-              <CopyButton text={form.id} />
+              <h2 className="text-xl font-light">Standardizing Form</h2>
+              <FormIdCopy
+                displayId={form.tag || "N/A"}
+                actualId={form.tag || ""}
+                size="sm"
+              />
             </div>
             <div className="flex items-center space-x-2">
               <LoadingButton
-                variant="outline"
+
                 size="sm"
                 onClick={onEdit}
-                className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 rounded-full"
+                className="bg-[#A0CF06] text-[#211D1E] border-0 rounded-full"
               >
                 <Edit className="w-4 h-4 mr-2" />
                 Edit
               </LoadingButton>
               <LoadingButton
-                variant="outline"
+                variant="destructive"
                 size="sm"
                 onClick={onDelete}
-                className="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white border-0 rounded-full"
               >
                 <Trash2 className="w-4 h-4 mr-2" />
                 Delete
@@ -131,7 +151,7 @@ export function StandardizingFormViewDrawer({
           </div>
 
           {/* Visual Standardizing Process Animation */}
-       
+
 
           {/* Form Details Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -146,27 +166,40 @@ export function StandardizingFormViewDrawer({
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-light text-gray-600">Form ID</span>
-                  <div className="flex items-center space-x-2">
-                    <span className="text-sm font-light">#{form.id.slice(0, 8)}</span>
-                    <CopyButton text={form.id} />
-                  </div>
+                  <FormIdCopy
+                    displayId={form.tag || "N/A"}
+                    actualId={form.tag || ""}
+                    size="sm"
+                  />
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-light text-gray-600">BMT ID</span>
-                  <div className="flex items-center space-x-2">
-                    <span className="text-sm font-light">
-                      {form.bmt_id ? `#${form.bmt_id.slice(0, 8)}` : 'Not specified'}
-                    </span>
-                    {form.bmt_id && <CopyButton text={form.bmt_id} />}
-                  </div>
+                  <span className="text-sm font-light text-gray-600">BMT Form</span>
+                  {form.bmt_id ? (
+                    (() => {
+                      const bmtForm = getBMTFormById(form.bmt_id)
+                      return bmtForm ? (
+                        <FormIdCopy
+                          displayId={bmtForm.tag || "N/A"}
+                          actualId={bmtForm.tag || ""}
+                          size="sm"
+                        />
+                      ) : (
+                        <div className="flex items-center space-x-2">
+                          <span className="text-sm font-light">#{form.bmt_id.slice(0, 8)}</span>
+                        </div>
+                      )
+                    })()
+                  ) : (
+                    <span className="text-sm font-light text-gray-400">Not specified</span>
+                  )}
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-light text-gray-600">Created</span>
                   <span className="text-sm font-light">
-                    {new Date(form.created_at).toLocaleDateString('en-GB', { 
-                      day: 'numeric', 
-                      month: 'long', 
-                      year: 'numeric' 
+                    {new Date(form.created_at).toLocaleDateString('en-GB', {
+                      day: 'numeric',
+                      month: 'long',
+                      year: 'numeric'
                     })}
                   </span>
                 </div>
@@ -179,7 +212,24 @@ export function StandardizingFormViewDrawer({
                 <div className="space-y-2 pt-2">
                   <span className="text-sm font-light text-gray-600">Operator</span>
                   <div className="text-sm font-light">
-                    {form.operator_id ? `ID: ${form.operator_id.slice(0, 8)}` : 'Not specified'}
+                    {form.operator_id ? (
+                      (() => {
+                        const operatorUser = getUserById(form.operator_id)
+                        return operatorUser ? (
+                          <UserAvatar
+                            user={operatorUser}
+                            size="md"
+                            showName={true}
+                            showEmail={true}
+                            showDropdown={true}
+                          />
+                        ) : (
+                          <div className="text-xs text-gray-400">Unknown operator ({form.operator_id.slice(0, 8)})</div>
+                        )
+                      })()
+                    ) : (
+                      <div className="text-xs text-gray-400">Not specified</div>
+                    )}
                   </div>
                 </div>
                 <div className="space-y-2 pt-2">
@@ -202,43 +252,48 @@ export function StandardizingFormViewDrawer({
             </div>
 
             {/* BMT Form Details */}
-            {form.standardizing_form_bmt_id_fkey && (
-              <div className="p-6 bg-white border border-gray-200 rounded-lg">
-                <div className="flex items-center space-x-2 mb-4">
-                  <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
-                    <Package className="w-4 h-4 text-blue-600" />
+            {form.bmt_id && (() => {
+              const bmtForm = getBMTFormById(form.bmt_id)
+              return bmtForm ? (
+                <div className="p-6 bg-white border border-gray-200 rounded-lg">
+                  <div className="flex items-center space-x-2 mb-4">
+                    <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
+                      <Package className="w-4 h-4 text-blue-600" />
+                    </div>
+                    <h3 className="text-lg font-light">BMT Form Details</h3>
                   </div>
-                  <h3 className="text-lg font-light">BMT Form</h3>
-                </div>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-light text-gray-600">Form ID</span>
-                    <div className="flex items-center space-x-2">
-                      <span className="text-sm font-light">#{form.bmt_id.slice(0, 8)}</span>
-                      <CopyButton text={form.bmt_id} />
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-light text-gray-600">BMT Form ID</span>
+                      <FormIdCopy
+                        displayId={bmtForm.tag || "N/A"}
+                        actualId={bmtForm.tag || ""}
+                        size="sm"
+                      />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-light text-gray-600">Volume</span>
+                      <span className="text-sm font-light">{bmtForm.volume}L</span>
+                    </div>
+                    {/* <div className="flex items-center justify-between">
+                      <span className="text-sm font-light text-gray-600">Product</span>
+                      <span className="text-sm font-light text-blue-600">{bmtForm.product}</span>
+                    </div> */}
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-light text-gray-600">BMT Created</span>
+                      <span className="text-sm font-light">
+                        {new Date(bmtForm.created_at).toLocaleDateString('en-GB', {
+                          day: 'numeric',
+                          month: 'short',
+                          year: 'numeric'
+                        })}
+                      </span>
                     </div>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-light text-gray-600">Volume</span>
-                    <span className="text-sm font-light">{form.standardizing_form_bmt_id_fkey.volume}L</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-light text-gray-600">Product</span>
-                    <span className="text-sm font-light text-blue-600">{form.standardizing_form_bmt_id_fkey.product}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-light text-gray-600">Created</span>
-                    <span className="text-sm font-light">
-                      {new Date(form.standardizing_form_bmt_id_fkey.created_at).toLocaleDateString('en-GB', { 
-                        day: 'numeric', 
-                        month: 'short', 
-                        year: 'numeric' 
-                      })}
-                    </span>
-                  </div>
                 </div>
-              </div>
-            )}
+              ) : null
+            })()}
+
 
             {/* Raw Milk Information */}
 
@@ -297,7 +352,7 @@ export function StandardizingFormViewDrawer({
             </div>
 
             {/* Cream Information */}
-          
+
           </div>
 
           {/* Record Information */}

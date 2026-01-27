@@ -304,7 +304,7 @@ export default function FormsExamplePage() {
           </div>
           <div className="flex items-center space-x-2">
             <Badge className="bg-green-100 text-green-800">Live Demo</Badge>
-            <Badge variant="outline">v2.0</Badge>
+            <Badge >v2.0</Badge>
           </div>
         </div>
 
@@ -400,7 +400,7 @@ export default function FormsExamplePage() {
               </div>
               <div className="space-y-2">
                 <div className="flex items-center space-x-2">
-                  <Shield className="h-5 w-5 text-purple-600" />
+                  <Shield className="h-5 w-5 text-blue-600" />
                   <h3 className="font-medium">Role-Based Permissions</h3>
                 </div>
                 <p className="text-sm text-muted-foreground">

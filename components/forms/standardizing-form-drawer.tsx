@@ -31,7 +31,8 @@ import {
 import { useAppDispatch, useAppSelector } from "@/lib/store"
 import { 
   createStandardizingForm, 
-  updateStandardizingForm
+  updateStandardizingForm,
+  fetchStandardizingForms
 } from "@/lib/store/slices/standardizingSlice"
 import { 
   fetchBMTControlForms 
@@ -42,10 +43,11 @@ import { toast } from "sonner"
 import { SignatureModal } from "@/components/ui/signature-modal"
 import { SignatureViewer } from "@/components/ui/signature-viewer"
 import { base64ToPngDataUrl, normalizeDataUrlToBase64 } from "@/lib/utils/signature"
+import { generateBMTFormId } from "@/lib/utils/form-id-generator"
 
 // Process Overview Component
 const ProcessOverview = () => (
-  <div className="mb-8 p-6 bg-gradient-to-r from-orange-50 to-red-50 rounded-lg">
+  <div className="mb-8 p-6  from-orange-50 to-red-50 rounded-lg">
     <h3 className="text-lg font-light text-gray-900 mb-4">Process Overview</h3>
     <div className="flex items-center justify-between mb-4">
       <div className="flex items-center space-x-2">
@@ -61,7 +63,7 @@ const ProcessOverview = () => (
         </div>
         <div className="flex items-center space-x-2">
           <span className="text-sm font-medium text-orange-600">Standardizing</span>
-          <div className="bg-gradient-to-r from-orange-500 to-red-600 text-white px-2 py-1 rounded-full text-xs font-medium shadow-lg">
+          <div className="  to-red-600 text-white px-2 py-1 rounded-full text-xs font-medium shadow-lg">
             Current Step
           </div>
         </div>
@@ -186,22 +188,40 @@ export function StandardizingFormDrawer({
       const formData: any = {
         id: mode === "edit" && form ? form.id : crypto.randomUUID(),
         operator_id: user.id, // Use actual user ID from auth state
+        
         ...data,
+        skim:{
+          quantity: data.skim?.quantity,
+          resulting_fat: data.skim?.resulting_fat,
+          id:form?.skim_milk
+        },
         operator_signature: normalizeDataUrlToBase64(data.operator_signature),
       }
 
       if (mode === "edit" && form) {
         await dispatch(updateStandardizingForm(formData)).unwrap()
+        // refresh list after successful update
+        await dispatch(fetchStandardizingForms()).unwrap()
         toast.success("Form updated successfully")
       } else {
         await dispatch(createStandardizingForm(formData)).unwrap()
+        // refresh list after successful create
+        await dispatch(fetchStandardizingForms()).unwrap()
         toast.success("Form created successfully")
       }
 
       onOpenChange(false)
     } catch (error: any) {
-      toast.error(error || "Failed to save form")
+      const msg = typeof error === "string" ? error : (error?.message ?? "Failed to save form")
+      toast.error(msg)
     }
+  }
+
+  const onInvalid = (errors: any) => {
+    const errorMessages = Object.values(errors).map((err: any) => err.message).filter(Boolean)
+    toast.error(`Please check the following fields: ${errorMessages.join(', ')}`, {
+      style: { background: '#ef4444', color: 'white' }
+    })
   }
 
   const renderForm = () => {
@@ -246,12 +266,34 @@ export function StandardizingFormDrawer({
                         .filter(bmtForm => bmtForm.id) // Filter out forms without ID
                         .map(bmtForm => ({
                           value: bmtForm.id!,
-                          label: `#${bmtForm.id!.slice(0, 8)}`,
-                          description: `${bmtForm.volume}L • ${bmtForm.product} • ${bmtForm.created_at ? new Date(bmtForm.created_at).toLocaleDateString() : 'No date'}`
+                          label: bmtForm?.tag,
+                          description: `${bmtForm.volume ?? 0}L • ${bmtForm.product} • ${bmtForm.created_at ? new Date(bmtForm.created_at).toLocaleDateString() : 'No date'}`
                         }))}
                       value={field.value}
                       onValueChange={field.onChange}
-                      placeholder="Search and select BMT form"
+                      onSearch={(searchTerm) => {
+                        // Check if user pasted an actual BMT ID (UUID format)
+                        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+                        if (uuidRegex.test(searchTerm)) {
+                          // Find the BMT form with this actual ID
+                          const foundForm = bmtForms.find(form => form.id === searchTerm)
+                          if (foundForm) {
+                            field.onChange(foundForm.id)
+                            return
+                          }
+                        }
+                        
+                        // Check if user pasted a partial ID (first 8 chars)
+                        if (searchTerm.length >= 8 && searchTerm.match(/^[0-9a-f-]+$/i)) {
+                          const foundForm = bmtForms.find(form => form.id?.startsWith(searchTerm.replace(/-/g, '')))
+                          if (foundForm) {
+                            field.onChange(foundForm.id)
+                            return
+                          }
+                        }
+                      }}
+                      placeholder="Search BMT forms or paste BMT ID"
+                      searchPlaceholder="Search by generated ID or paste actual BMT ID..."
                       loading={loadingBmtForms}
                     />
                   )}
@@ -276,11 +318,11 @@ export function StandardizingFormDrawer({
                         </div>
                       )}
                       <div className="flex items-center gap-2">
-                        <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={() => setSignatureOpen(true)}>
+                        <Button type="button"  size="sm" className="rounded-full" onClick={() => setSignatureOpen(true)}>
                           Add Signature
                         </Button>
                         {field.value && (
-                          <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={() => setSignatureViewOpen(true)}>
+                          <Button type="button"  size="sm" className="rounded-full" onClick={() => setSignatureViewOpen(true)}>
                             View Signature
                           </Button>
                         )}
@@ -305,7 +347,7 @@ export function StandardizingFormDrawer({
               <p className="text-sm font-light text-gray-600 mt-2">Enter the skim milk quantity and resulting fat content</p>
             </div>
             
-            <div className="border border-gray-200 rounded-lg bg-white border-l-4 border-l-blue-500 p-4">
+            <div className="border border-gray-200 rounded-lg bg-white border-l-4 border-l-[#006BC4] p-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="skim.quantity">Quantity (L) *</Label>
@@ -318,9 +360,18 @@ export function StandardizingFormDrawer({
                         type="number"
                         step="0.1"
                         placeholder="Enter quantity"
-                        {...field}
-                        value={field.value || ""}
-                        onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
+                        value={field.value === undefined ? "" : field.value.toString()}
+                        onChange={(e) => {
+                          const value = e.target.value
+                          if (value === "" || value === "-") {
+                            field.onChange(undefined)
+                          } else {
+                            const numValue = parseFloat(value)
+                            field.onChange(isNaN(numValue) ? undefined : numValue)
+                          }
+                        }}
+                        onBlur={field.onBlur}
+                        name={field.name}
                       />
                     )}
                   />
@@ -342,9 +393,18 @@ export function StandardizingFormDrawer({
                         type="number"
                         step="0.1"
                         placeholder="Enter resulting fat content"
-                        {...field}
-                        value={field.value || ""}
-                        onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
+                        value={field.value === undefined ? "" : field.value.toString()}
+                        onChange={(e) => {
+                          const value = e.target.value
+                          if (value === "" || value === "-") {
+                            field.onChange(undefined)
+                          } else {
+                            const numValue = parseFloat(value)
+                            field.onChange(isNaN(numValue) ? undefined : numValue)
+                          }
+                        }}
+                        onBlur={field.onBlur}
+                        name={field.name}
                       />
                     )}
                   />
@@ -376,7 +436,7 @@ export function StandardizingFormDrawer({
         </SheetHeader>
 
         <div className="flex-1 overflow-y-auto">
-          <form onSubmit={formHook.handleSubmit(handleSubmit)}>
+          <form onSubmit={formHook.handleSubmit(handleSubmit, onInvalid)}>
             {renderForm()}
             
             <div className="flex items-center justify-end p-6 border-t">

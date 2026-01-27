@@ -348,7 +348,7 @@ export function ProcessKanban({ processId, className }: ProcessKanbanProps) {
       case "error":
         return <Badge className="bg-red-100 text-red-800 border-red-200 text-xs">Error</Badge>
       default:
-        return <Badge variant="outline" className="text-xs">Pending</Badge>
+        return <Badge  className="text-xs">Pending</Badge>
     }
   }
 
@@ -440,7 +440,7 @@ export function ProcessKanban({ processId, className }: ProcessKanbanProps) {
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <Badge variant="outline" className="text-xs bg-gray-100 text-gray-600 font-light">
+                      <Badge  className="text-xs bg-gray-100 text-gray-600 font-light">
                         {stage.forms.length}
                       </Badge>
                       <ArrowRight className="h-3 w-3 text-gray-400" />

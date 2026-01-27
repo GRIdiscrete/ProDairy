@@ -1,50 +1,145 @@
 "use client"
 
 import { useState, useEffect, useRef, useMemo } from "react"
-import { DataCaptureDashboardLayout } from "@/components/layout/data-capture-dashboard-layout"
 import { LoadingButton } from "@/components/ui/loading-button"
 import { DataTable } from "@/components/ui/data-table"
 import { DataTableFilters } from "@/components/ui/data-table-filters"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Eye, Edit, Trash2, Beaker, TrendingUp, FileText, Clock, Package, Truck } from "lucide-react"
-import { CopyButton } from "@/components/ui/copy-button"
+import { Plus, Eye, Edit, Trash2, Beaker, TrendingUp, Clock, User, Download } from "lucide-react"
 import { BMTControlFormDrawer } from "@/components/forms/bmt-control-form-drawer"
 import { BMTControlFormViewDrawer } from "@/components/forms/bmt-control-form-view-drawer"
 import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-dialog"
 import { useAppDispatch, useAppSelector } from "@/lib/store"
-import { 
-  fetchBMTControlForms, 
+import {
+  fetchBMTControlForms,
   deleteBMTControlFormAction,
   clearError
 } from "@/lib/store/slices/bmtControlFormSlice"
+import { fetchUsers } from "@/lib/store/slices/usersSlice"
 import { toast } from "sonner"
 import { TableFilters } from "@/lib/types"
 import { BMTControlForm } from "@/lib/api/bmt-control-form"
 import ContentSkeleton from "@/components/ui/content-skeleton"
 import { ToolsDashboardLayout } from "@/components/layout/tools-dashboard-layout"
+import { siloApi } from "@/lib/api/silo"
+import { UserAvatar } from "@/components/ui/user-avatar"
+import { FormIdCopy } from "@/components/ui/form-id-copy"
 
 export default function BMTControlFormPage() {
   const dispatch = useAppDispatch()
   const { forms, loading, error, operationLoading, isInitialized } = useAppSelector((state) => state.bmtControlForms)
-  
+  const { items: users, loading: usersLoading, isInitialized: usersInitialized } = useAppSelector((state) => state.users)
+
   const [tableFilters, setTableFilters] = useState<TableFilters>({})
   const hasFetchedRef = useRef(false)
-  
+
+  // State for silos
+  const [silos, setSilos] = useState<any[]>([])
+  const [loadingSilos, setLoadingSilos] = useState(false)
+
+  // Load initial data
+  const loadInitialData = async () => {
+    try {
+      setLoadingSilos(true)
+      const silosResponse = await siloApi.getSilos()
+      setSilos(silosResponse.data || [])
+    } catch (error) {
+      console.error('Error loading initial data:', error)
+      toast.error('Failed to load data')
+    } finally {
+      setLoadingSilos(false)
+    }
+  }
+
+  // Helper function to get user by ID
+  const getUserById = (userId: string) => {
+    return users.find((user: any) => user.id === userId)
+  }
+
+  // Helper to get user name by ID
+  const getUserNameById = (userId: string) => {
+    const user = getUserById(userId)
+    return user ? `${user.first_name || ""} ${user.last_name || ""}`.trim() || user.email || user.id : userId || ""
+  }
+
+  // Helper to get silo name by ID
+  const getSiloNameById = (siloId: string) => {
+    const silo = silos.find((s: any) => s.id === siloId)
+    return silo ? silo.name : siloId || ""
+  }
+
   // Load BMT control forms on initial mount
   useEffect(() => {
     if (!isInitialized && !hasFetchedRef.current) {
       hasFetchedRef.current = true
       dispatch(fetchBMTControlForms())
+      loadInitialData()
     }
   }, [dispatch, isInitialized])
-  
-  // Handle filter changes
+
+  // Initialize users on component mount
   useEffect(() => {
-    if (isInitialized && Object.keys(tableFilters).length > 0) {
-      dispatch(fetchBMTControlForms())
+    if (!usersInitialized || users.length === 0) {
+      dispatch(fetchUsers({}))
     }
-  }, [dispatch, tableFilters, isInitialized])
-  
+  }, [dispatch, usersInitialized, users.length])
+
+  // Frontend Filtering Logic
+  const filteredForms = useMemo(() => {
+    if (!forms) return [];
+
+    return forms.filter((form: BMTControlForm) => {
+      // 1. Search filter (by tag)
+      if (tableFilters.search) {
+        const searchLower = tableFilters.search.toLowerCase();
+        const tag = (form.tag || "").toLowerCase();
+        if (!tag.includes(searchLower)) return false;
+      }
+
+      // 2. Product filter
+      if (tableFilters.product && tableFilters.product !== "all") {
+        if (form.product !== tableFilters.product) return false;
+      }
+
+      // 3. Source Silo filter
+      if (tableFilters.source_silo_id) {
+        const sourceSiloMatch = (form as any).bmt_control_form_source_silo?.some(
+          (s: any) => (s.name || "").toLowerCase().includes(tableFilters.source_silo_id.toLowerCase())
+        );
+        if (!sourceSiloMatch) return false;
+      }
+
+      // 4. Destination Silo filter
+      if (tableFilters.destination_silo_id) {
+        const destSiloMatch = (form as any).bmt_control_form_destination_silo?.some(
+          (s: any) => (s.name || "").toLowerCase().includes(tableFilters.destination_silo_id.toLowerCase())
+        );
+        if (!destSiloMatch) return false;
+      }
+
+      // 5. Date Range filter
+      if (tableFilters.dateRange) {
+        const formDate = form.created_at ? new Date(form.created_at) : null;
+        if (formDate) {
+          if (tableFilters.dateRange.from) {
+            const from = new Date(tableFilters.dateRange.from);
+            from.setHours(0, 0, 0, 0);
+            if (formDate < from) return false;
+          }
+          if (tableFilters.dateRange.to) {
+            const to = new Date(tableFilters.dateRange.to);
+            to.setHours(23, 59, 59, 999);
+            if (formDate > to) return false;
+          }
+        } else if (tableFilters.dateRange.from || tableFilters.dateRange.to) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  }, [forms, tableFilters]);
+
   // Handle errors with toast notifications
   useEffect(() => {
     if (error) {
@@ -52,12 +147,12 @@ export default function BMTControlFormPage() {
       dispatch(clearError())
     }
   }, [error, dispatch])
-  
+
   // Drawer states
   const [formDrawerOpen, setFormDrawerOpen] = useState(false)
   const [viewDrawerOpen, setViewDrawerOpen] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
-  
+
   // Selected form and mode
   const [selectedForm, setSelectedForm] = useState<BMTControlForm | null>(null)
   const [formMode, setFormMode] = useState<"create" | "edit">("create")
@@ -83,7 +178,7 @@ export default function BMTControlFormPage() {
       placeholder: "Filter by source silo"
     },
     {
-      key: "destination_silo_id", 
+      key: "destination_silo_id",
       label: "Destination Silo",
       type: "text" as const,
       placeholder: "Filter by destination silo"
@@ -104,15 +199,6 @@ export default function BMTControlFormPage() {
   }
 
   const handleEditForm = (form: BMTControlForm) => {
-    // Debug: Log the form being passed to edit
-    console.log('handleEditForm - Form object:', form)
-    console.log('handleEditForm - Form ID:', form.id)
-    console.log('handleEditForm - Form ID type:', typeof form.id)
-    console.log('handleEditForm - Form ID === undefined:', form.id === undefined)
-    console.log('handleEditForm - Form ID === null:', form.id === null)
-    console.log('handleEditForm - Form keys:', Object.keys(form))
-    console.log('handleEditForm - Form values:', Object.values(form))
-    
     setSelectedForm(form)
     setFormMode("edit")
     setFormDrawerOpen(true)
@@ -130,7 +216,7 @@ export default function BMTControlFormPage() {
 
   const confirmDelete = async () => {
     if (!selectedForm) return
-    
+
     try {
       await dispatch(deleteBMTControlFormAction(selectedForm.id!)).unwrap()
       toast.success('BMT Control Form deleted successfully')
@@ -141,33 +227,64 @@ export default function BMTControlFormPage() {
     }
   }
 
-  // Table columns with actions
+  // CSV Export Handler
+  const handleExportCSV = () => {
+    if (!filteredForms || filteredForms.length === 0) {
+      toast.error("No forms to export")
+      return
+    }
+
+    const headers = [
+      "Tag", "Product", "Volume (L)", "Movement Start", "Movement End",
+      "Status", "Dispatch Operator", "Receiver Operator", "Created At"
+    ]
+
+    const rows = filteredForms.map((form: any) => [
+      form.tag,
+      form.product,
+      form.volume ?? "",
+      form.movement_start ? new Date(form.movement_start).toLocaleString() : "",
+      form.movement_end ? new Date(form.movement_end).toLocaleString() : "",
+      form.status,
+      getUserNameById(form.dispatch_operator_id || form.llm_operator_id),
+      getUserNameById(form.receiver_operator_id || form.dpp_operator_id),
+      form.created_at ? new Date(form.created_at).toLocaleString() : ""
+    ])
+
+    const csvContent = [
+      headers.join(","),
+      ...rows.map(row => row.map(val => `"${String(val).replace(/"/g, '""')}"`).join(","))
+    ].join("\r\n")
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement("a")
+    link.href = url
+    link.setAttribute("download", "bmt_control_forms.csv")
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+  }
+
+  // Table columns
   const columns = [
     {
-      accessorKey: "product",
-      header: "BMT Form",
+      accessorKey: "tag",
+      header: "Form ID",
       cell: ({ row }: any) => {
         const form = row.original
         return (
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center">
-              <Beaker className="w-4 h-4 text-white" />
-            </div>
-            <div>
-              <div className="flex items-center space-x-2">
-                <span className="font-light">{form.product}</span>
-                <Badge className="bg-blue-100 text-blue-800 font-light">{form.volume}L</Badge>
-              </div>
-              <p className="text-sm text-gray-500 mt-1">
-                {form.bmt_control_form_source_silo_id_fkey?.name || 'Source Silo'} → {form.bmt_control_form_destination_silo_id_fkey?.name || 'Destination Silo'}
-              </p>
-            </div>
-          </div>
+          <FormIdCopy
+            displayId={form.tag}
+            actualId={form.tag}
+            size="sm"
+          />
         )
       },
     },
     {
-      accessorKey: "movement_details",
+      accessorKey: "volume",
       header: "Movement",
       cell: ({ row }: any) => {
         const form = row.original
@@ -175,7 +292,7 @@ export default function BMTControlFormPage() {
           <div className="space-y-1">
             <p className="text-sm font-light">Vol: {form.volume}L</p>
             <p className="text-xs text-gray-500">
-              {form.movement_start ? new Date(form.movement_start).toLocaleTimeString() : 'N/A'} - 
+              {form.movement_start ? new Date(form.movement_start).toLocaleTimeString() : 'N/A'} -
               {form.movement_end ? new Date(form.movement_end).toLocaleTimeString() : 'N/A'}
             </p>
           </div>
@@ -183,22 +300,9 @@ export default function BMTControlFormPage() {
       },
     },
     {
-      accessorKey: "flow_readings",
-      header: "Flow Readings",
-      cell: ({ row }: any) => {
-        const form = row.original
-        const difference = (form.flow_meter_end_reading || 0) - (form.flow_meter_start_reading || 0)
-        return (
-          <div className="space-y-1">
-            <p className="text-sm font-light">
-              {form.flow_meter_start_reading} → {form.flow_meter_end_reading}
-            </p>
-            <Badge variant={difference > 0 ? "default" : "secondary"} className="text-xs">
-              Δ {difference}
-            </Badge>
-          </div>
-        )
-      },
+      accessorKey: "product",
+      header: "Product",
+      cell: ({ row }: any) => <span className="text-sm font-light">{row.original.product}</span>,
     },
     {
       accessorKey: "created_at",
@@ -210,7 +314,7 @@ export default function BMTControlFormPage() {
             <p className="text-sm font-light">
               {form.created_at ? new Date(form.created_at).toLocaleDateString() : 'N/A'}
             </p>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-gray-500 italic">
               {form.updated_at ? `Updated: ${new Date(form.updated_at).toLocaleDateString()}` : 'Never updated'}
             </p>
           </div>
@@ -224,29 +328,27 @@ export default function BMTControlFormPage() {
         const form = row.original
         return (
           <div className="flex space-x-2">
-            <LoadingButton 
-              variant="outline" 
-              size="sm" 
+            <LoadingButton
+              size="sm"
               onClick={() => handleViewForm(form)}
-              className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full"
+              className="bg-[#006BC4] text-white border-0 rounded-full"
             >
               <Eye className="w-4 h-4" />
             </LoadingButton>
-            <LoadingButton 
-              variant="outline" 
-              size="sm" 
+            <LoadingButton
+              size="sm"
               onClick={() => handleEditForm(form)}
-              className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 rounded-full"
+              className="bg-[#A0CF06] text-[#211D1E] border-0 rounded-full"
             >
               <Edit className="w-4 h-4" />
             </LoadingButton>
-            <LoadingButton 
-              variant="destructive" 
-              size="sm" 
+            <LoadingButton
+              variant="destructive"
+              size="sm"
               onClick={() => handleDeleteForm(form)}
               loading={operationLoading.delete}
               disabled={operationLoading.delete}
-              className="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white border-0 rounded-full"
+              className="bg-red-600 hover:bg-red-700 text-white border-0 rounded-full"
             >
               <Trash2 className="w-4 h-4" />
             </LoadingButton>
@@ -256,7 +358,6 @@ export default function BMTControlFormPage() {
     },
   ]
 
-  // Get latest form for display
   const latestForm = Array.isArray(forms) && forms.length > 0 ? forms[0] : null
 
   return (
@@ -265,169 +366,132 @@ export default function BMTControlFormPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-light text-foreground">BMT Control Forms</h1>
-            <p className="text-sm font-light text-muted-foreground">Manage bulk milk transfer control forms</p>
+            <p className="text-sm font-light text-muted-foreground transition-all">Manage bulk milk transfer control forms</p>
           </div>
-          <LoadingButton 
-            onClick={handleAddForm}
-            className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full px-6 py-2 font-light"
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Add BMT Form
-          </LoadingButton>
+          <div className="flex gap-2">
+            <LoadingButton
+              onClick={handleExportCSV}
+              className="bg-[#A0D001] hover:bg-[#8AB801] text-white border-0 rounded-full px-6 py-2 font-light"
+            >
+              <Download className="mr-2 h-4 w-4" />
+              Export CSV
+            </LoadingButton>
+            <LoadingButton
+              onClick={handleAddForm}
+              className="bg-[#006BC4] text-white border-0 rounded-full px-6 py-2 font-light"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Add BMT Form
+            </LoadingButton>
+          </div>
         </div>
 
         {/* Current Form Details */}
-        {loading ? (
-          <ContentSkeleton sections={1} cardsPerSection={4} />
-        ) : latestForm ? (
-          <div className="border border-gray-200 rounded-lg bg-white border-l-4 border-l-blue-500">
-            <div className="p-6 pb-0">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2 text-lg font-light">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center">
-                    <Beaker className="h-4 w-4 text-white" />
+        {!loading && latestForm && (
+          <div className="border border-gray-200 rounded-lg bg-white border-l-4 border-l-[#006BC4] shadow-none overflow-hidden transition-all">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center">
+                    <Beaker className="h-5 w-5" />
                   </div>
-                  <span>Current BMT Control Form</span>
-                  <Badge className="bg-gradient-to-r from-blue-100 to-cyan-100 text-blue-800 font-light">Latest</Badge>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg font-medium">Latest BMT Form</span>
+                      <Badge variant="secondary" className="font-light bg-blue-50 text-blue-700 border-blue-100">Live</Badge>
+                    </div>
+                    <FormIdCopy displayId={latestForm.tag} actualId={latestForm.tag} size="sm" />
+                  </div>
                 </div>
-                <LoadingButton 
-                  variant="outline" 
+                <LoadingButton
                   onClick={() => handleViewForm(latestForm)}
-                  className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full px-4 py-2 font-light text-sm"
+                  variant="outline"
+                  className="rounded-full px-4 h-10"
                 >
                   <Eye className="mr-2 h-4 w-4" />
-                  View Details
+                  Detailed View
                 </LoadingButton>
               </div>
-            </div>
-            <div className="p-6">
+
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="space-y-2">
-                  <div className="flex items-center space-x-2">
-                    <Beaker className="h-4 w-4 text-blue-500" />
-                    <p className="text-sm font-light text-gray-600">Product</p>
-                  </div>
-                  <p className="text-lg font-light text-blue-600">{latestForm.product}</p>
+                <div className="p-4 bg-gray-50 rounded-xl space-y-1">
+                  <p className="text-xs font-medium uppercase text-gray-500">Product</p>
+                  <p className="text-xl font-light text-blue-600">{latestForm.product}</p>
                 </div>
-                <div className="space-y-2">
-                  <div className="flex items-center space-x-2">
-                    <TrendingUp className="h-4 w-4 text-green-500" />
-                    <p className="text-sm font-light text-gray-600">Volume</p>
-                  </div>
-                  <p className="text-lg font-light text-green-600">{latestForm.volume}L</p>
+                <div className="p-4 bg-gray-50 rounded-xl space-y-1">
+                  <p className="text-xs font-medium uppercase text-gray-500">Total Volume</p>
+                  <p className="text-xl font-light text-green-600">{latestForm.volume} L</p>
                 </div>
-                <div className="space-y-2">
-                  <div className="flex items-center space-x-2">
-                    <Clock className="h-4 w-4 text-gray-500" />
-                    <p className="text-sm font-light text-gray-600">Created</p>
-                  </div>
-                  <p className="text-lg font-light">{latestForm.created_at ? new Date(latestForm.created_at).toLocaleDateString('en-GB', { 
-                    day: 'numeric', 
-                    month: 'long', 
-                    year: 'numeric' 
-                  }) : 'N/A'}</p>
+                <div className="p-4 bg-gray-50 rounded-xl space-y-1">
+                  <p className="text-xs font-medium uppercase text-gray-500">Date Captured</p>
+                  <p className="text-xl font-light">{latestForm.created_at ? new Date(latestForm.created_at).toLocaleDateString('en-GB') : 'N/A'}</p>
                 </div>
               </div>
-              
-              {/* Source and Destination Silo Details */}
-              <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-4">
-                {/* Source Silo Details */}
-                {latestForm.bmt_control_form_source_silo_id_fkey && (
-                  <div className="p-4 bg-gray-50 rounded-lg">
-                    <div className="flex items-center space-x-2 mb-3">
-                      <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
-                        <Package className="h-4 w-4 text-blue-600" />
-                      </div>
-                      <h4 className="text-sm font-light text-gray-900">Source Silo</h4>
-                    </div>
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-light text-gray-600">Name</span>
-                        <span className="text-sm font-light text-blue-900">{latestForm.bmt_control_form_source_silo_id_fkey.name}</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-light text-gray-600">Capacity</span>
-                        <span className="text-sm font-light">{latestForm.bmt_control_form_source_silo_id_fkey.capacity?.toLocaleString()}L</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-light text-gray-600">Location</span>
-                        <span className="text-sm font-light">{latestForm.bmt_control_form_source_silo_id_fkey.location || 'N/A'}</span>
-                      </div>
-                    </div>
-                  </div>
-                )}
 
-                {/* Destination Silo Details */}
-                {latestForm.bmt_control_form_destination_silo_id_fkey && (
-                  <div className="p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg">
-                    <div className="flex items-center space-x-2 mb-3">
-                      <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
-                        <Package className="h-4 w-4 text-blue-600" />
-                      </div>
-                      <h4 className="text-sm font-light text-gray-900">Destination Silo</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+                {/* Dispatch */}
+                <div className="p-4 border rounded-xl bg-white shadow-none flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center">
+                      <User className="h-4 w-4" />
                     </div>
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-light text-gray-600">Name</span>
-                        <span className="text-sm font-light text-blue-900">{latestForm.bmt_control_form_destination_silo_id_fkey.name}</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-light text-gray-600">Capacity</span>
-                        <span className="text-sm font-light">{latestForm.bmt_control_form_destination_silo_id_fkey.capacity?.toLocaleString()}L</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-light text-gray-600">Location</span>
-                        <span className="text-sm font-light">{latestForm.bmt_control_form_destination_silo_id_fkey.location || 'N/A'}</span>
-                      </div>
+                    <div>
+                      <p className="text-[10px] font-bold uppercase text-gray-400">Dispatch Operator</p>
+                      <p className="text-sm font-medium">{getUserNameById((latestForm as any).dispatch_operator_id || latestForm.llm_operator_id) || "Unassigned"}</p>
                     </div>
                   </div>
-                )}
+                </div>
+                {/* Receiver */}
+                <div className="p-4 border rounded-xl bg-white shadow-sm flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 rounded-full bg-green-100 text-green-600 flex items-center justify-center">
+                      <User className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold uppercase text-gray-400">Receiver Operator</p>
+                      <p className="text-sm font-medium">{getUserNameById((latestForm as any).receiver_operator_id || latestForm.dpp_operator_id) || "Unassigned"}</p>
+                    </div>
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
-        ) : null}
-
-        {/* Data Table */}
-        {!loading && (
-          <div className="border border-gray-200 rounded-lg bg-white">
-            <div className="p-6 pb-0">
-              <div className="text-lg font-light">BMT Control Forms</div>
-            </div>
-            <div className="p-6 space-y-4">
-              <DataTableFilters
-                filters={tableFilters}
-                onFiltersChange={setTableFilters}
-                onSearch={(searchTerm) => setTableFilters(prev => ({ ...prev, search: searchTerm }))}
-                searchPlaceholder="Search BMT forms..."
-                filterFields={filterFields}
-              />
-              
-              {loading ? (
-                <ContentSkeleton sections={1} cardsPerSection={4} />
-              ) : (
-                <DataTable 
-                  columns={columns} 
-                  data={forms.map(form => ({
-                    ...form,
-                    id: undefined // Hide the ID from the data
-                  }))} 
-                  showSearch={false}
-                  searchKey="product"
-                />
-              )}
             </div>
           </div>
         )}
 
-        {/* Form Drawer */}
-        <BMTControlFormDrawer 
-          open={formDrawerOpen} 
-          onOpenChange={setFormDrawerOpen} 
+        {/* List Section */}
+        <div className="border border-gray-200 rounded-xl bg-white shadow-none">
+          <div className="p-6 border-b bg-gray-50/30">
+            <h2 className="text-lg font-medium text-gray-800">History & Records</h2>
+          </div>
+          <div className="p-6 space-y-4">
+            <DataTableFilters
+              filters={tableFilters}
+              onFiltersChange={setTableFilters}
+              searchPlaceholder="Search by tag (e.g. BMT-001)..."
+              filterFields={filterFields}
+            />
+
+            {loading ? (
+              <ContentSkeleton sections={1} cardsPerSection={5} />
+            ) : (
+              <DataTable
+                columns={columns}
+                data={filteredForms}
+                showSearch={false}
+                searchKey="tag"
+              />
+            )}
+          </div>
+        </div>
+
+        {/* Drawers */}
+        <BMTControlFormDrawer
+          open={formDrawerOpen}
+          onOpenChange={setFormDrawerOpen}
           form={selectedForm}
-          mode={formMode} 
+          mode={formMode}
         />
 
-        {/* View Drawer */}
         <BMTControlFormViewDrawer
           open={viewDrawerOpen}
           onClose={() => setViewDrawerOpen(false)}
@@ -438,12 +502,11 @@ export default function BMTControlFormPage() {
           }}
         />
 
-        {/* Delete Confirmation Dialog */}
         <DeleteConfirmationDialog
           open={deleteDialogOpen}
           onOpenChange={setDeleteDialogOpen}
           title="Delete BMT Control Form"
-          description={`Are you sure you want to delete this BMT control form? This action cannot be undone and may affect production tracking.`}
+          description="Are you sure you want to delete this form? This action cannot be undone."
           onConfirm={confirmDelete}
           loading={operationLoading.delete}
         />

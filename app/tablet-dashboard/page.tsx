@@ -31,9 +31,9 @@ const productionStages = [
   { id: 2, name: 'Standardizing', status: 'pending', icon: TrendingUp, color: 'bg-yellow-500' },
   { id: 3, name: 'Pasteurizing', status: 'pending', icon: Clock, color: 'bg-orange-500' },
   { id: 4, name: 'Filmatic Lines Form 1', status: 'pending', icon: ClipboardList, color: 'bg-green-500' },
-  { id: 5, name: 'Process Log', status: 'pending', icon: ClipboardList, color: 'bg-purple-500' },
-  { id: 6, name: 'Filmatic Lines 2', status: 'pending', icon: ClipboardList, color: 'bg-indigo-500' },
-  { id: 7, name: 'Palletizer', status: 'pending', icon: Package, color: 'bg-pink-500' },
+  { id: 5, name: 'Process Log', status: 'pending', icon: ClipboardList, color: 'bg-blue-500' },
+  { id: 6, name: 'Filmatic Lines 2', status: 'pending', icon: ClipboardList, color: 'bg-blue-500' },
+  { id: 7, name: 'Palletizer', status: 'pending', icon: Package, color: 'bg-[#A0D001]' },
   { id: 8, name: 'Incubation', status: 'pending', icon: Clock, color: 'bg-teal-500' },
   { id: 9, name: 'Test', status: 'pending', icon: CheckCircle, color: 'bg-red-500' },
   { id: 10, name: 'QA Corrective Measures', status: 'pending', icon: AlertCircle, color: 'bg-gray-500' },
@@ -44,7 +44,7 @@ const quickActions = [
   { name: 'Raw Milk Intake', icon: Package, href: '/data-capture/raw-milk-intake', color: 'bg-blue-500' },
   { name: 'Standardizing', icon: TrendingUp, href: '/data-capture/standardizing', color: 'bg-yellow-500' },
   { name: 'Pasteurizing', icon: Clock, href: '/data-capture/pasteurizing', color: 'bg-orange-500' },
-  { name: 'Process Log', icon: ClipboardList, href: '/data-capture/process-log', color: 'bg-purple-500' },
+  { name: 'Process Log', icon: ClipboardList, href: '/data-capture/process-log', color: 'bg-blue-500' },
   { name: 'Driver Forms', icon: Truck, href: '/drivers/forms', color: 'bg-green-500' },
   { name: 'Tools', icon: Wrench, href: '/tools', color: 'bg-gray-500' },
 ]
@@ -98,7 +98,7 @@ export default function TabletDashboard() {
               <Button
                 asChild
                 className="h-20 flex flex-col items-center space-y-2 bg-white hover:bg-gray-50 border border-gray-200 shadow-sm"
-                variant="outline"
+                
               >
                 <a href={action.href}>
                   <div className={`p-2 rounded-lg ${action.color}`}>
@@ -170,7 +170,7 @@ export default function TabletDashboard() {
             { title: 'Active Processes', value: '3', icon: Clock, color: 'text-blue-600' },
             { title: 'Completed Today', value: '12', icon: CheckCircle, color: 'text-green-600' },
             { title: 'Pending QA', value: '5', icon: AlertCircle, color: 'text-yellow-600' },
-            { title: 'Total Users', value: '24', icon: Users, color: 'text-purple-600' },
+            { title: 'Total Users', value: '24', icon: Users, color: 'text-blue-600' },
           ].map((stat, index) => (
             <motion.div
               key={stat.title}

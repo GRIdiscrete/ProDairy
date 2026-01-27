@@ -31,6 +31,7 @@ export interface StandardizingForm {
   raw_milk: RawMilk[]
   skim_milk: SkimMilk[]
   cream: Cream[]
+  tag?: string
   standardizing_form_operator_id_fkey?: any
   standardizing_form_bmt_id_fkey?: {
     id: string
@@ -74,7 +75,7 @@ export interface StandardizingFormsResponse {
   data: StandardizingForm[]
 }
 
-const BASE_URL = "https://ckwkcg0o80cckkg0oog8okk8.greatssystems.co.zw"
+const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "https://dms.prodairyims.co.zw/api"
 
 export const standardizingApi = {
   // Get all standardizing forms

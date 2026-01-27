@@ -146,7 +146,7 @@ export function EditProfileDrawer({ open, onOpenChange, profile, user }: EditPro
                   src={profileImage || user?.avatar || undefined} 
                   alt={`${profile.first_name} ${profile.last_name}`} 
                 />
-                <AvatarFallback className="text-xl font-semibold bg-gradient-to-br from-blue-500 to-purple-600 text-white">
+                <AvatarFallback className="text-xl font-semibold bg-gray-100 text-gray-600">
                   {profile.first_name?.[0] || ''}{profile.last_name?.[0] || ''}
                 </AvatarFallback>
               </Avatar>
@@ -155,7 +155,7 @@ export function EditProfileDrawer({ open, onOpenChange, profile, user }: EditPro
               <div className="absolute -bottom-2 -right-2">
                 <Label htmlFor="profile-image" className="cursor-pointer">
                   <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center hover:bg-blue-700 transition-colors shadow-lg">
-                    <Camera className="w-4 h-4 text-white" />
+                    <Camera className="w-4 h-4 text-gray-600" />
                   </div>
                 </Label>
                 <Input
@@ -202,7 +202,7 @@ export function EditProfileDrawer({ open, onOpenChange, profile, user }: EditPro
                 value={formData.first_name}
                 onChange={(e) => handleInputChange('first_name', e.target.value)}
                 placeholder="Enter first name"
-                className="border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                className="border-gray-300 focus:border-[#006BC4] focus:ring-[#006BC4]"
               />
             </div>
             
@@ -215,7 +215,7 @@ export function EditProfileDrawer({ open, onOpenChange, profile, user }: EditPro
                 value={formData.last_name}
                 onChange={(e) => handleInputChange('last_name', e.target.value)}
                 placeholder="Enter last name"
-                className="border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                className="border-gray-300 focus:border-[#006BC4] focus:ring-[#006BC4]"
               />
             </div>
           </div>
@@ -230,7 +230,7 @@ export function EditProfileDrawer({ open, onOpenChange, profile, user }: EditPro
               value={formData.email}
               onChange={(e) => handleInputChange('email', e.target.value)}
               placeholder="Enter email address"
-              className="border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+              className="border-gray-300 focus:border-[#006BC4] focus:ring-[#006BC4]"
             />
           </div>
 
@@ -244,7 +244,7 @@ export function EditProfileDrawer({ open, onOpenChange, profile, user }: EditPro
                 value={formData.department}
                 onChange={(e) => handleInputChange('department', e.target.value)}
                 placeholder="Enter department"
-                className="border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                className="border-gray-300 focus:border-[#006BC4] focus:ring-[#006BC4]"
               />
             </div>
             
@@ -257,7 +257,7 @@ export function EditProfileDrawer({ open, onOpenChange, profile, user }: EditPro
                 value={formData.phone}
                 onChange={(e) => handleInputChange('phone', e.target.value)}
                 placeholder="Enter phone number"
-                className="border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                className="border-gray-300 focus:border-[#006BC4] focus:ring-[#006BC4]"
               />
             </div>
           </div>
@@ -272,7 +272,7 @@ export function EditProfileDrawer({ open, onOpenChange, profile, user }: EditPro
               onChange={(e) => handleInputChange('bio', e.target.value)}
               placeholder="Tell us about yourself..."
               rows={3}
-              className="border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+              className="border-gray-300 focus:border-[#006BC4] focus:ring-[#006BC4]"
             />
           </div>
         </div>
@@ -330,7 +330,7 @@ export function EditProfileDrawer({ open, onOpenChange, profile, user }: EditPro
 
       <div className="flex justify-end space-x-2 pt-4">
         <Button
-          variant="outline"
+          
           onClick={handleReset}
           disabled={isLoading}
           className="border-gray-300 text-gray-700 hover:bg-gray-50"

@@ -7,7 +7,11 @@ import { Separator } from "@/components/ui/separator"
 import { FilmaticLinesForm2 } from "@/lib/api/filmatic-lines-form-2"
 import { format } from "date-fns"
 import { Button } from "@/components/ui/button"
-import { Beaker, FileText, CheckCircle, User, Package, ArrowRight, Hash, Clock, Sun, Moon, Factory } from "lucide-react"
+import { Beaker, FileText, CheckCircle, Package, ArrowRight, Clock, Sun, Moon, Factory } from "lucide-react"
+import { RootState, useAppSelector } from "@/lib/store"
+import { UserAvatar } from "@/components/ui/user-avatar"
+import { FormIdCopy } from "@/components/ui/form-id-copy"
+import { CopyButton } from "@/components/ui/copy-button"
 
 interface FilmaticLinesForm2ViewDrawerProps {
   open: boolean
@@ -16,12 +20,15 @@ interface FilmaticLinesForm2ViewDrawerProps {
   onEdit?: () => void
 }
 
-export function FilmaticLinesForm2ViewDrawer({ 
-  open, 
-  onOpenChange, 
+export function FilmaticLinesForm2ViewDrawer({
+  open,
+  onOpenChange,
   form,
   onEdit
 }: FilmaticLinesForm2ViewDrawerProps) {
+  const { items: users } = useAppSelector((state: RootState) => state.users)
+  const { forms: bmtForms } = useAppSelector((state: RootState) => state.bmtControlForms)
+
   if (!form) return null
 
   return (
@@ -43,9 +50,9 @@ export function FilmaticLinesForm2ViewDrawer({
             {onEdit && (
               <Button
                 onClick={onEdit}
-                variant="outline"
+
                 size="sm"
-                className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 rounded-full"
+                className=" bg-[#006BC4] text-white rounded-full"
               >
                 Edit
               </Button>
@@ -55,7 +62,7 @@ export function FilmaticLinesForm2ViewDrawer({
 
         <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-white">
           {/* Process Overview */}
-          <div className="mb-2 p-6 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg">
+          <div className="mb-2 p-6  from-blue-50 to-cyan-50 rounded-lg">
             <h3 className="text-lg font-light text-gray-900 mb-4">Process Overview</h3>
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center space-x-2">
@@ -71,7 +78,7 @@ export function FilmaticLinesForm2ViewDrawer({
                 </div>
                 <div className="flex items-center space-x-2">
                   <span className="text-sm font-medium text-blue-600">Filmatic Lines Form 2</span>
-                  <div className="bg-gradient-to-r from-blue-500 to-cyan-600 text-white px-2 py-1 rounded-full text-xs font-medium shadow-lg">
+                  <div className=" bg-gray-100 text-gray-600 px-2 py-1 rounded-full text-xs font-medium shadow-lg">
                     Current Step
                   </div>
                 </div>
@@ -99,8 +106,10 @@ export function FilmaticLinesForm2ViewDrawer({
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <span className="text-xs font-light text-gray-500">Form ID</span>
-                  <p className="text-sm font-light">{form.id}</p>
+                  <span className="text-xs font-light text-gray-500">Form</span>
+                  <div className="mt-1">
+                    {form.tag ? <FormIdCopy displayId={form.tag || "N/A"} actualId={form.tag || ""} size="sm" /> : <p className="text-sm font-light">{form.tag || 'N/A'}</p>}
+                  </div>
                 </div>
                 <div>
                   <span className="text-xs font-light text-gray-500">Created At</span>
@@ -133,6 +142,22 @@ export function FilmaticLinesForm2ViewDrawer({
                   </p>
                 </div>
               </div>
+
+              {/* Bottles Summary */}
+              <div className="mt-2 grid grid-cols-2 gap-4">
+                <div>
+                  <span className="text-xs font-light text-gray-500">Day — Opening / Closing / Waste</span>
+                  <p className="text-sm font-light mt-1">
+                    {form.day_shift_opening_bottles ?? '—'} / {form.day_shift_closing_bottles ?? '—'} / {form.day_shift_waste_bottles ?? '—'}
+                  </p>
+                </div>
+                <div>
+                  <span className="text-xs font-light text-gray-500">Night — Opening / Closing / Waste</span>
+                  <p className="text-sm font-light mt-1">
+                    {form.night_shift_opening_bottles ?? '—'} / {form.night_shift_closing_bottles ?? '—'} / {form.night_shift_waste_bottles ?? '—'}
+                  </p>
+                </div>
+              </div>
             </CardContent>
           </Card>
 
@@ -141,8 +166,8 @@ export function FilmaticLinesForm2ViewDrawer({
             <Card className="shadow-none border border-gray-200 rounded-lg">
               <CardHeader className="pb-4">
                 <div className="flex items-center space-x-2">
-                  <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center">
-                    <Package className="h-4 w-4 text-purple-600" />
+                  <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
+                    <Package className="h-4 w-4 text-blue-600" />
                   </div>
                   <CardTitle className="text-base font-light">Groups Information</CardTitle>
                 </div>
@@ -150,8 +175,13 @@ export function FilmaticLinesForm2ViewDrawer({
               <CardContent className="space-y-6">
                 <div className="grid grid-cols-1 gap-4">
                   <div>
-                    <span className="text-xs font-light text-gray-500">Manager ID</span>
-                    <p className="text-sm font-light">{form.groups.manager_id?.slice(0, 8) || 'N/A'}</p>
+                    <span className="text-xs font-light text-gray-500">Manager</span>
+                    <div className="mt-1">
+                      {(() => {
+                        const managerUser = form.groups ? users.find((u: any) => u.id === form.groups?.manager_id) : null
+                        return managerUser ? <UserAvatar user={managerUser} size="md" showName={true} showEmail={true} showDropdown={true} /> : <p className="text-sm font-light">{form.groups?.manager_id?.slice(0, 8) || 'N/A'}</p>
+                      })()}
+                    </div>
                   </div>
                 </div>
 
@@ -163,15 +193,12 @@ export function FilmaticLinesForm2ViewDrawer({
                     <h4 className="text-sm font-medium">Group A</h4>
                     <div className="pl-4">
                       <p className="text-sm font-light"><span className="font-medium">Members:</span> {form.groups.group_a.length}</p>
-                      <div className="mt-2 flex flex-wrap gap-1">
-                        {form.groups.group_a.slice(0, 3).map((member, index) => (
-                          <span key={index} className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                            {member.slice(0, 8)}
-                          </span>
-                        ))}
-                        {form.groups.group_a.length > 3 && (
-                          <span className="text-xs text-gray-500">+{form.groups.group_a.length - 3} more</span>
-                        )}
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {form.groups.group_a.slice(0, 8).map((memberId: string, idx: number) => {
+                          const user = users.find((u: any) => u.id === memberId)
+                          return user ? <div key={idx}><UserAvatar user={user} size="md" showName={true} showEmail={false} showDropdown={true} /></div> : <span key={idx} className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">{memberId.slice(0, 8)}</span>
+                        })}
+                        {form.groups.group_a.length > 8 && <span className="text-xs text-gray-500">+{form.groups.group_a.length - 8} more</span>}
                       </div>
                     </div>
                   </div>
@@ -210,7 +237,7 @@ export function FilmaticLinesForm2ViewDrawer({
                         <p className="text-sm font-light"><span className="font-medium">Members:</span> {form.groups.group_c.length}</p>
                         <div className="mt-2 flex flex-wrap gap-1">
                           {form.groups.group_c.slice(0, 3).map((member, index) => (
-                            <span key={index} className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded">
+                            <span key={index} className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
                               {member.slice(0, 8)}
                             </span>
                           ))}
@@ -247,9 +274,12 @@ export function FilmaticLinesForm2ViewDrawer({
                       </Badge>
                     </div>
                     <div className="pl-4 space-y-2">
-                      <p className="text-sm font-light"><span className="font-medium">Operator ID:</span> {shift.operator_id?.slice(0, 8) || 'N/A'}</p>
+                      <p className="text-sm font-light"><span className="font-medium">Operator:</span> {(() => {
+                        const op = users.find((u: any) => u.id === shift.operator_id)
+                        return op ? <UserAvatar user={op} size="md" showName={true} showEmail={true} showDropdown={true} /> : (shift.operator_id ? shift.operator_id.slice(0, 8) : 'N/A')
+                      })()}</p>
                       <p className="text-sm font-light"><span className="font-medium">Details Count:</span> {shift.filmatic_line_form_2_day_shift_details?.length || 0}</p>
-                      
+
                       {shift.filmatic_line_form_2_day_shift_details && shift.filmatic_line_form_2_day_shift_details.length > 0 && (
                         <div className="mt-3">
                           <h5 className="text-xs font-medium text-gray-700 mb-2">Production Details:</h5>
@@ -264,18 +294,23 @@ export function FilmaticLinesForm2ViewDrawer({
                                 </div>
                                 {detail.filmatic_line_form_2_day_shift_details_stoppage_time && detail.filmatic_line_form_2_day_shift_details_stoppage_time.length > 0 && (
                                   <div className="mt-2">
-                                    <strong>Stoppage Times (Form 2):</strong>
-                                    <div className="grid grid-cols-2 gap-1 mt-1">
-                                      {detail.filmatic_line_form_2_day_shift_details_stoppage_time.map((stoppage, stoppageIndex) => (
-                                        <div key={stoppageIndex} className="text-xs">
-                                          {Object.entries(stoppage).map(([key, value]) => (
-                                            value !== undefined && value !== 0 && (
-                                              <div key={key}>{key}: {value}min</div>
-                                            )
-                                          ))}
-                                        </div>
-                                      ))}
-                                    </div>
+                                    <h5 className="text-xs font-medium text-gray-700 mb-2">Stoppage Time:</h5>
+                                    {detail.filmatic_line_form_2_day_shift_details_stoppage_time.map((st: any, stIndex: number) => (
+                                      <div key={stIndex} className="grid grid-cols-2 gap-1 text-xs">
+                                        <div><span className="font-medium">Capper 1 Hours:</span> {st.capper_1_hours ?? '—'}</div>
+                                        <div><span className="font-medium">Capper 2 Hours:</span> {st.capper_2_hours ?? '—'}</div>
+                                        <div><span className="font-medium">Sleever 1 Hours:</span> {st.sleever_1_hours ?? '—'}</div>
+                                        <div><span className="font-medium">Sleever 2 Hours:</span> {st.sleever_2_hours ?? '—'}</div>
+                                        <div><span className="font-medium">Shrink 1 Hours:</span> {st.shrink_1_hours ?? '—'}</div>
+                                        <div><span className="font-medium">Shrink 2 Hours:</span> {st.shrink_2_hours ?? '—'}</div>
+                                        <div><span className="font-medium">Capper 1:</span> {st.capper_1 ?? '—'}</div>
+                                        <div><span className="font-medium">Capper 2:</span> {st.capper_2 ?? '—'}</div>
+                                        <div><span className="font-medium">Sleever 1:</span> {st.sleever_1 ?? '—'}</div>
+                                        <div><span className="font-medium">Sleever 2:</span> {st.sleever_2 ?? '—'}</div>
+                                        <div><span className="font-medium">Shrink 1:</span> {st.shrink_1 ?? '—'}</div>
+                                        <div><span className="font-medium">Shrink 2:</span> {st.shrink_2 ?? '—'}</div>
+                                      </div>
+                                    ))}
                                   </div>
                                 )}
                               </div>
@@ -314,9 +349,12 @@ export function FilmaticLinesForm2ViewDrawer({
                       </Badge>
                     </div>
                     <div className="pl-4 space-y-2">
-                      <p className="text-sm font-light"><span className="font-medium">Operator ID:</span> {shift.operator_id?.slice(0, 8) || 'N/A'}</p>
+                      <p className="text-sm font-light"><span className="font-medium">Operator:</span> {(() => {
+                        const op = users.find((u: any) => u.id === shift.operator_id)
+                        return op ? <UserAvatar user={op} size="md" showName={true} showEmail={true} showDropdown={true} /> : (shift.operator_id ? shift.operator_id.slice(0, 8) : 'N/A')
+                      })()}</p>
                       <p className="text-sm font-light"><span className="font-medium">Details Count:</span> {shift.filmatic_line_form_2_night_shift_details?.length || 0}</p>
-                      
+
                       {shift.filmatic_line_form_2_night_shift_details && shift.filmatic_line_form_2_night_shift_details.length > 0 && (
                         <div className="mt-3">
                           <h5 className="text-xs font-medium text-gray-700 mb-2">Production Details:</h5>
@@ -331,18 +369,23 @@ export function FilmaticLinesForm2ViewDrawer({
                                 </div>
                                 {detail.filmatic_line_form_2_night_shift_details_stoppage_time && detail.filmatic_line_form_2_night_shift_details_stoppage_time.length > 0 && (
                                   <div className="mt-2">
-                                    <strong>Stoppage Times (Form 2):</strong>
-                                    <div className="grid grid-cols-2 gap-1 mt-1">
-                                      {detail.filmatic_line_form_2_night_shift_details_stoppage_time.map((stoppage, stoppageIndex) => (
-                                        <div key={stoppageIndex} className="text-xs">
-                                          {Object.entries(stoppage).map(([key, value]) => (
-                                            value !== undefined && value !== 0 && (
-                                              <div key={key}>{key}: {value}min</div>
-                                            )
-                                          ))}
-                                        </div>
-                                      ))}
-                                    </div>
+                                    <h5 className="text-xs font-medium text-gray-700 mb-2">Stoppage Time:</h5>
+                                    {detail.filmatic_line_form_2_night_shift_details_stoppage_time.map((st: any, stIndex: number) => (
+                                      <div key={stIndex} className="grid grid-cols-2 gap-1 text-xs">
+                                        <div><span className="font-medium">Capper 1 Hours:</span> {st.capper_1_hours ?? '—'}</div>
+                                        <div><span className="font-medium">Capper 2 Hours:</span> {st.capper_2_hours ?? '—'}</div>
+                                        <div><span className="font-medium">Sleever 1 Hours:</span> {st.sleever_1_hours ?? '—'}</div>
+                                        <div><span className="font-medium">Sleever 2 Hours:</span> {st.sleever_2_hours ?? '—'}</div>
+                                        <div><span className="font-medium">Shrink 1 Hours:</span> {st.shrink_1_hours ?? '—'}</div>
+                                        <div><span className="font-medium">Shrink 2 Hours:</span> {st.shrink_2_hours ?? '—'}</div>
+                                        <div><span className="font-medium">Capper 1:</span> {st.capper_1 ?? '—'}</div>
+                                        <div><span className="font-medium">Capper 2:</span> {st.capper_2 ?? '—'}</div>
+                                        <div><span className="font-medium">Sleever 1:</span> {st.sleever_1 ?? '—'}</div>
+                                        <div><span className="font-medium">Sleever 2:</span> {st.sleever_2 ?? '—'}</div>
+                                        <div><span className="font-medium">Shrink 1:</span> {st.shrink_1 ?? '—'}</div>
+                                        <div><span className="font-medium">Shrink 2:</span> {st.shrink_2 ?? '—'}</div>
+                                      </div>
+                                    ))}
                                   </div>
                                 )}
                               </div>

@@ -78,7 +78,7 @@ export function ProductionReportTable() {
     {
       accessorKey: "machine",
       header: "Machine",
-      cell: ({ row }) => <Badge variant="outline">{row.getValue("machine")}</Badge>,
+      cell: ({ row }) => <Badge >{row.getValue("machine")}</Badge>,
     },
     {
       accessorKey: "itemName",

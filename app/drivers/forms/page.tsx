@@ -7,6 +7,10 @@ import { fetchDriverForms } from "@/lib/store/slices/driverFormSlice"
 import { fetchUsers } from "@/lib/store/slices/usersSlice"
 import { fetchRawMaterials } from "@/lib/store/slices/rawMaterialSlice"
 import { fetchSuppliers } from "@/lib/store/slices/supplierSlice"
+import { fetchTankers } from "@/lib/store/slices/tankerSlice"
+import { generateDriverFormId } from "@/lib/utils/form-id-generator"
+import { UserAvatar } from "@/components/ui/user-avatar"
+import { FormIdCopy } from "@/components/ui/form-id-copy"
 import { DriversDashboardLayout } from "@/components/layout/drivers-dashboard-layout"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
@@ -20,16 +24,123 @@ import { RawMilkIntakeLabTestDrawer } from "@/components/forms/raw-milk-intake-l
 import { fetchRawMilkIntakeLabTests } from "@/lib/store/slices/rawMilkIntakeLabTestSlice"
 import { LoadingButton } from "@/components/ui/loading-button"
 import { useOfflineData } from "@/hooks/use-offline-data"
+import { useNetworkStatus } from "@/hooks/use-network-status"
 import { DataSyncService } from "@/lib/offline/data-sync"
 import { OfflineDataService } from "@/lib/offline/database"
 import { LocalStorageService } from "@/lib/offline/local-storage-service"
 import { toast } from "sonner"
+import { SyncService } from "@/lib/offline/sync-service"
 import type { DriverForm } from "@/lib/types"
 import type { OfflineDriverForm } from "@/lib/offline/database"
 import { useIsMobile } from "@/hooks/use-mobile"
+import { Download as DownloadIcon } from "lucide-react"
+import { useRouter, useSearchParams } from "next/navigation"
+import { NetworkDebugPanel } from "@/components/debug/network-debug-panel"
 
 // Unified form type for display
 type UnifiedForm = DriverForm | OfflineDriverForm
+
+function exportDriverFormsToCSV(
+  forms: UnifiedForm[],
+  users: any[],
+  rawMaterials: any[],
+  suppliers: any[],
+  generateDriverFormId: (date: string) => string
+) {
+  // CSV headers include product-specific columns. Each product becomes its own row.
+  const headers = [
+    "Form ID",
+    "Driver Name",
+    "Driver Email",
+    "Collection Start",
+    "Collection End",
+    "Status",
+    "Created At",
+    // Product-specific columns
+    "Product Name",
+    "Product Qty",
+    "Unit of Measure",
+    "Collected Amount",
+    "Raw Material Name",
+    "Supplier Name",
+    "Supplier Email"
+  ]
+
+  const rows: any[] = []
+
+  forms.forEach(form => {
+    const driverId = form.driver_id || form.driver
+    const driverUser = users.find((u: any) => String(u.id) === String(driverId))
+    const driverName = driverUser ? `${driverUser.first_name} ${driverUser.last_name}` : "Unknown"
+    const driverEmail = driverUser ? driverUser.email : ""
+    const status = form.delivered ? "Delivered" : form.rejected ? "Rejected" : "Pending"
+    const products = form.drivers_form_collected_products || []
+
+    if (products.length === 0) {
+      // Emit a single row with empty product columns
+      rows.push([
+        form.tag || generateDriverFormId(form.created_at) || "",
+        driverName,
+        driverEmail,
+        form.start_date || "",
+        form.end_date || "",
+        status,
+        form.created_at || "",
+        "", // Product Name
+        "", // Product Qty
+        "", // Unit of Measure
+        "", // Collected Amount
+        "", // Raw Material Name
+        "", // Supplier Name
+        ""  // Supplier Email
+      ])
+    } else {
+      // Emit one row per collected product
+      products.forEach((p: any) => {
+        // Product name resolution: prefer explicit name, fallback to raw material lookup
+        const productName = p.name || p.product_name || (() => {
+          const rm = rawMaterials.find((r: any) => String(r.id) === String(p.raw_material_id || p.rawMaterialId || p.raw_material))
+          return rm ? (rm.name || rm.raw_material_name || "") : (p.raw_material_name || "")
+        })()
+
+        const qty = p.quantity ?? p.qty ?? ""
+        const unitOfMeasure = p.unit_of_measure ?? p.uom ?? p.unit ?? ""
+        const collectedAmount = p.collected_amount ?? p.collectedAmount ?? p.collected ?? ""
+
+        const rawMat = rawMaterials.find((r: any) => String(r.id) === String(p.raw_material_id || p.rawMaterialId || p.raw_material))
+        const rawMatName = rawMat ? (rawMat.name || rawMat.raw_material_name || "") : ""
+
+        const supplier = suppliers.find((s: any) => String(s.id) === String(p.supplier_id || p.supplier))
+        const supplierName = supplier ? (supplier?.first_name + " " + supplier?.last_name || "") : ""
+        const supplierEmail = supplier ? (supplier.email || supplier.contact_email || "") : (p.supplier_email || "")
+
+        rows.push([
+          form.tag || generateDriverFormId(form.created_at) || "",
+          driverName,
+          driverEmail,
+          form.start_date || "",
+          form.end_date || "",
+          status,
+          form.created_at || "",
+          productName,
+          qty,
+          unitOfMeasure,
+          collectedAmount,
+          rawMatName,
+          supplierName,
+          supplierEmail
+        ])
+      })
+    }
+  })
+
+  const csv =
+    [headers, ...rows]
+      .map(row => row.map(field => `"${String(field ?? "").replace(/"/g, '""')}"`).join(","))
+      .join("\r\n")
+  const blob = new Blob([csv], { type: "text/csv" })
+  return URL.createObjectURL(blob)
+}
 
 export default function DriverFormsPage() {
   const dispatch = useDispatch<AppDispatch>()
@@ -37,18 +148,20 @@ export default function DriverFormsPage() {
   const { items: users } = useSelector((state: RootState) => state.users)
   const { rawMaterials } = useSelector((state: RootState) => state.rawMaterial)
   const { suppliers } = useSelector((state: RootState) => state.supplier)
+
+  // Network status hook for reliable online/offline detection
+  const { isOnline, checkNetworkConnectivity, networkState } = useNetworkStatus()
   
   // Offline data hook
-  const { 
-    isOnline, 
-    drivers: offlineDrivers, 
-    rawMaterials: offlineRawMaterials, 
-    suppliers: offlineSuppliers, 
+  const {
+    drivers: offlineDrivers,
+    rawMaterials: offlineRawMaterials,
+    suppliers: offlineSuppliers,
     driverForms: offlineDriverForms,
     loading: offlineLoading,
-    refreshData 
+    refreshData
   } = useOfflineData()
-  
+
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
   const [isViewDrawerOpen, setIsViewDrawerOpen] = useState(false)
   const [isLabTestDrawerOpen, setIsLabTestDrawerOpen] = useState(false)
@@ -60,75 +173,203 @@ export default function DriverFormsPage() {
   const [statusFilter, setStatusFilter] = useState("all")
   const [currentPage, setCurrentPage] = useState(1)
   const [isLoadingData, setIsLoadingData] = useState(false)
+  const [syncingPending, setSyncingPending] = useState(false)
   const itemsPerPage = 10
   const isMobile = useIsMobile()
+  const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
 
-  // Helper function to get driver name from form
-  const getDriverName = (form: any) => {
-    if (isOnline) {
-      return form.drivers_driver_fkey ? 
-        `${form.drivers_driver_fkey.first_name} ${form.drivers_driver_fkey.last_name}` : 
-        'N/A'
-    } else {
-      return form.driver ? 
-        `${form.driver.first_name} ${form.driver.last_name}` : 
-        'N/A'
+  // Helper function to get driver info from form
+  const getDriverInfo = (form: any) => {
+    // Get driver ID from form
+    const driverId = typeof form.driver === 'string' ? form.driver : form.driver_id
+
+    // Find user in users state
+    const driverUser = displayUsers.find((user: any) => user.id === driverId)
+
+    if (driverUser) {
+      return {
+        name: `${driverUser.first_name} ${driverUser.last_name}`,
+        email: driverUser.email
+      }
+    }
+
+    // Fallback to legacy methods
+    if (form.drivers_driver_fkey) {
+      return {
+        name: `${form.drivers_driver_fkey.first_name} ${form.drivers_driver_fkey.last_name}`,
+        email: form.drivers_driver_fkey.email
+      }
+    }
+    if (form.driver && typeof form.driver === 'object') {
+      return {
+        name: `${form.driver.first_name} ${form.driver.last_name}`,
+        email: form.driver.email
+      }
+    }
+
+    return {
+      name: 'Unknown Driver',
+      email: null
     }
   }
 
+  // Helper function to get driver name (for backward compatibility)
+  const getDriverName = (form: any) => {
+    return getDriverInfo(form).name
+  }
+
   // Get offline data from localStorage (SSR-safe)
-  const [offlineData, setOfflineData] = useState({
-    drivers: typeof window !== 'undefined' ? LocalStorageService.getDrivers() : [],
-    rawMaterials: typeof window !== 'undefined' ? LocalStorageService.getRawMaterials() : [],
-    suppliers: typeof window !== 'undefined' ? LocalStorageService.getSuppliers() : [],
-    driverForms: typeof window !== 'undefined' ? LocalStorageService.getDriverForms() : []
+  const [offlineData, setOfflineData] = useState(() => {
+    if (typeof window === 'undefined') {
+      return {
+        drivers: [],
+        rawMaterials: [],
+        suppliers: [],
+        tankers: [],
+        driverForms: []
+      }
+    }
+    return {
+      drivers: LocalStorageService.getDrivers() || [],
+      rawMaterials: LocalStorageService.getRawMaterials() || [],
+      suppliers: LocalStorageService.getSuppliers() || [],
+      tankers: LocalStorageService.getTankers() || [],
+      driverForms: LocalStorageService.getDriverForms() || []
+    }
   })
 
   // Use offline data when offline, online data when online
-  const displayDriverForms = isOnline ? driverForms : offlineData.driverForms
-  const displayUsers = isOnline ? users : offlineData.drivers
-  const displayRawMaterials = isOnline ? rawMaterials : offlineData.rawMaterials
-  const displaySuppliers = isOnline ? suppliers : offlineData.suppliers
+  // FALLBACK: If online data is empty or failed, use offline data
+  const displayDriverForms = (isOnline && driverForms && driverForms.length > 0) 
+    ? driverForms 
+    : offlineData.driverForms
+  const displayUsers = (isOnline && users && users.length > 0) 
+    ? users 
+    : offlineData.drivers
+  const displayRawMaterials = (isOnline && rawMaterials && rawMaterials.length > 0) 
+    ? rawMaterials 
+    : offlineData.rawMaterials
+  const displaySuppliers = (isOnline && suppliers && suppliers.length > 0) 
+    ? suppliers 
+    : offlineData.suppliers
 
+  // Log what data source we're using
   useEffect(() => {
+    console.log('📊 Data Source Status:', {
+      isOnline,
+      usingOnlineForms: driverForms && driverForms.length > 0,
+      onlineFormsCount: driverForms?.length || 0,
+      offlineFormsCount: offlineData.driverForms?.length || 0,
+      displayFormsCount: displayDriverForms?.length || 0,
+      dataSource: (isOnline && driverForms && driverForms.length > 0) ? 'ONLINE' : 'OFFLINE (localStorage)'
+    })
+  }, [isOnline, driverForms, offlineData.driverForms, displayDriverForms])
+
+  // Load online data when online, refresh offline data when offline
+  useEffect(() => {
+    console.log('Network status changed on forms page:', { isOnline })
+    
+    // ALWAYS load offline data first as fallback
+    if (typeof window !== 'undefined') {
+      const offlineDrivers = LocalStorageService.getDrivers()
+      const offlineMaterials = LocalStorageService.getRawMaterials()
+      const offlineSuppliers = LocalStorageService.getSuppliers()
+      const offlineTankers = LocalStorageService.getTankers()
+      const offlineForms = LocalStorageService.getDriverForms()
+      
+      console.log('📦 Loaded localStorage data:', {
+        driversCount: offlineDrivers.length,
+        materialsCount: offlineMaterials.length,
+        suppliersCount: offlineSuppliers.length,
+        tankersCount: offlineTankers.length,
+        formsCount: offlineForms.length
+      })
+      
+      setOfflineData({
+        drivers: offlineDrivers,
+        rawMaterials: offlineMaterials,
+        suppliers: offlineSuppliers,
+        tankers: offlineTankers,
+        driverForms: offlineForms
+      })
+    }
+    
+    // Then try to fetch online data if online
     if (isOnline) {
+      console.log('🌐 Attempting to fetch online data...')
       dispatch(fetchDriverForms({}))
-    } else {
-      // When going offline, refresh offline data from localStorage (SSR-safe)
-      if (typeof window !== 'undefined') {
-        setOfflineData({
-          drivers: LocalStorageService.getDrivers(),
-          rawMaterials: LocalStorageService.getRawMaterials(),
-          suppliers: LocalStorageService.getSuppliers(),
-          driverForms: LocalStorageService.getDriverForms()
+        .catch(err => {
+          console.error('❌ Failed to fetch driver forms:', err)
+          toast.info('Using cached data - could not reach server')
         })
-      }
+      dispatch(fetchUsers({}))
+        .catch(err => console.error('❌ Failed to fetch users:', err))
+      dispatch(fetchRawMaterials({}))
+        .catch(err => console.error('❌ Failed to fetch materials:', err))
+      dispatch(fetchSuppliers({}))
+        .catch(err => console.error('❌ Failed to fetch suppliers:', err))
+      dispatch(fetchTankers({}))
+        .catch(err => console.error('❌ Failed to fetch tankers:', err))
     }
   }, [dispatch, isOnline])
 
   // Load all data for offline use
   const handleLoadData = async () => {
-    if (!isOnline) {
-      toast.error("You need to be online to load data")
-      return
-    }
-
     setIsLoadingData(true)
     try {
-      // Fetch all data from API
-      const [usersResult, materialsResult, suppliersResult, formsResult] = await Promise.all([
-        dispatch(fetchUsers({})),
-        dispatch(fetchRawMaterials({})),
-        dispatch(fetchSuppliers({})),
-        dispatch(fetchDriverForms({}))
+      console.log('🔄 Attempting to load data from server...')
+      
+      // Try to fetch all data from API
+      const [usersResult, materialsResult, suppliersResult, tankersResult, formsResult] = await Promise.all([
+        dispatch(fetchUsers({})).catch(err => {
+          console.error('Failed to fetch users:', err)
+          return { payload: [] }
+        }),
+        dispatch(fetchRawMaterials({})).catch(err => {
+          console.error('Failed to fetch materials:', err)
+          return { payload: [] }
+        }),
+        dispatch(fetchSuppliers({})).catch(err => {
+          console.error('Failed to fetch suppliers:', err)
+          return { payload: [] }
+        }),
+        dispatch(fetchTankers({})).catch(err => {
+          console.error('Failed to fetch tankers:', err)
+          return { payload: [] }
+        }),
+        dispatch(fetchDriverForms({})).catch(err => {
+          console.error('Failed to fetch forms:', err)
+          return { payload: [] }
+        })
       ])
+
+      // Check if we got any data
+      const hasOnlineData = 
+        (Array.isArray(usersResult.payload) && usersResult.payload.length > 0) ||
+        (Array.isArray(materialsResult.payload) && materialsResult.payload.length > 0) ||
+        (Array.isArray(suppliersResult.payload) && suppliersResult.payload.length > 0) ||
+        (Array.isArray(tankersResult.payload) && tankersResult.payload.length > 0) ||
+        (Array.isArray(formsResult.payload) && formsResult.payload.length > 0)
+
+      if (!hasOnlineData) {
+        throw new Error('No data received from server')
+      }
 
       // Save data to localStorage (SSR-safe)
       if (typeof window !== 'undefined') {
         LocalStorageService.saveDrivers(Array.isArray(usersResult.payload) ? usersResult.payload : [])
         LocalStorageService.saveRawMaterials(Array.isArray(materialsResult.payload) ? materialsResult.payload : [])
         LocalStorageService.saveSuppliers(Array.isArray(suppliersResult.payload) ? suppliersResult.payload : [])
+        LocalStorageService.saveTankers(Array.isArray(tankersResult.payload) ? tankersResult.payload : [])
         LocalStorageService.saveDriverForms(Array.isArray(formsResult.payload) ? formsResult.payload : [])
+        
+        console.log('✅ Saved to localStorage:', {
+          users: usersResult.payload?.length || 0,
+          materials: materialsResult.payload?.length || 0,
+          suppliers: suppliersResult.payload?.length || 0,
+          tankers: tankersResult.payload?.length || 0,
+          forms: formsResult.payload?.length || 0
+        })
       }
 
       // Update local state (SSR-safe)
@@ -137,16 +378,83 @@ export default function DriverFormsPage() {
           drivers: LocalStorageService.getDrivers(),
           rawMaterials: LocalStorageService.getRawMaterials(),
           suppliers: LocalStorageService.getSuppliers(),
+          tankers: LocalStorageService.getTankers(),
           driverForms: LocalStorageService.getDriverForms()
         })
       }
 
-      toast.success("All data loaded and stored offline successfully!")
+      toast.success("✅ All data loaded and cached successfully!")
     } catch (error) {
-      console.error('Error loading data:', error)
-      toast.error("Failed to load data. Please try again.")
+      console.error('❌ Error loading data:', error)
+      toast.error("⚠️ Could not load data from server. Using cached data if available.")
+      
+      // Even on error, refresh from localStorage
+      if (typeof window !== 'undefined') {
+        setOfflineData({
+          drivers: LocalStorageService.getDrivers(),
+          rawMaterials: LocalStorageService.getRawMaterials(),
+          suppliers: LocalStorageService.getSuppliers(),
+          tankers: LocalStorageService.getTankers(),
+          driverForms: LocalStorageService.getDriverForms()
+        })
+      }
     } finally {
       setIsLoadingData(false)
+    }
+  }
+
+  // Sync pending forms handler
+  const handleSyncPending = async () => {
+    // Double-check we're actually online
+    const actuallyOnline = await checkNetworkConnectivity()
+    if (!actuallyOnline) {
+      toast.error("You must be online to sync pending forms")
+      return
+    }
+    
+    try {
+      setSyncingPending(true)
+      
+      // Get pending forms count before sync
+      const pendingForms = LocalStorageService.getPendingDriverForms()
+      console.log(`Starting sync of ${pendingForms.length} pending forms...`)
+      
+      const result = await SyncService.syncAllPendingForms(dispatch)
+      
+      // Show detailed result
+      if (result.success > 0 && result.failed === 0) {
+        toast.success(`✅ Successfully synced ${result.success} form(s)`)
+      } else if (result.success > 0 && result.failed > 0) {
+        toast.warning(`⚠️ Synced ${result.success} form(s), ${result.failed} failed`)
+      } else if (result.failed > 0) {
+        toast.error(`❌ Failed to sync ${result.failed} form(s)`)
+      } else {
+        toast.info("No pending forms to sync")
+      }
+      
+      // refresh offline/local data views
+      await refreshData()
+      
+      // also refresh local offline snapshot (used when offline)
+      if (typeof window !== "undefined") {
+        setOfflineData({
+          drivers: LocalStorageService.getDrivers(),
+          rawMaterials: LocalStorageService.getRawMaterials(),
+          suppliers: LocalStorageService.getSuppliers(),
+          tankers: LocalStorageService.getTankers(),
+          driverForms: LocalStorageService.getDriverForms()
+        })
+      }
+      
+      // refresh server-side driver forms list
+      if (result.success > 0) {
+        dispatch(fetchDriverForms({}))
+      }
+    } catch (e) {
+      console.error("Sync pending error:", e)
+      toast.error("Failed to sync pending forms")
+    } finally {
+      setSyncingPending(false)
     }
   }
 
@@ -183,6 +491,20 @@ export default function DriverFormsPage() {
   }
 
   const getStatusBadge = (form: UnifiedForm) => {
+    // Check if form is pending sync
+    const isPending = 'sync_status' in form && form.sync_status === 'pending'
+    
+    if (isPending) {
+      return (
+        <Badge className="bg-orange-100 text-orange-800 border-orange-200">
+          <div className="flex items-center gap-1">
+            <WifiOff className="w-3 h-3" />
+            Pending Sync
+          </div>
+        </Badge>
+      )
+    }
+    
     if (form.delivered) {
       return (
         <Badge className="bg-green-100 text-green-800 border-green-200">
@@ -206,21 +528,41 @@ export default function DriverFormsPage() {
     }
   }
 
+  // Helper function to handle search input and mask form IDs
+  const handleSearchChange = (value: string) => {
+    // Check if the input looks like a database ID (long string)
+    if (value.length > 20 && !value.includes('-')) {
+      // Try to find a form with this ID and convert to display format
+      const matchingForm = displayDriverForms.find(form =>
+        form.id.toLowerCase().includes(value.toLowerCase())
+      )
+      if (matchingForm) {
+        const displayId = generateDriverFormId(matchingForm.created_at)
+        setSearchTerm(displayId)
+        return
+      }
+    }
+    setSearchTerm(value)
+  }
+
   // Filter and sort data
   const filteredForms = useMemo(() => {
     if (!displayDriverForms) return []
-    
+
     return displayDriverForms
       .filter((form) => {
         const driverName = getDriverName(form)
+        const formDisplayId = generateDriverFormId(form.created_at)
+
         const matchesSearch = form.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          driverName.toLowerCase().includes(searchTerm.toLowerCase())
-        
-        const matchesStatus = statusFilter === "all" || 
+          driverName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          formDisplayId.toLowerCase().includes(searchTerm.toLowerCase())
+
+        const matchesStatus = statusFilter === "all" ||
           (statusFilter === "delivered" && form.delivered) ||
           (statusFilter === "rejected" && form.rejected) ||
           (statusFilter === "pending" && !form.delivered && !form.rejected)
-        
+
         return matchesSearch && matchesStatus
       })
       .sort((a, b) => {
@@ -229,7 +571,7 @@ export default function DriverFormsPage() {
         const dateB = new Date(b.created_at).getTime()
         return dateB - dateA
       })
-  }, [displayDriverForms, searchTerm, statusFilter])
+  }, [displayDriverForms, searchTerm, statusFilter, generateDriverFormId])
 
   const paginatedForms = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage
@@ -244,30 +586,50 @@ export default function DriverFormsPage() {
       header: "Form ID",
       cell: ({ row }: any) => {
         const form = row.original as UnifiedForm
+        const formId = generateDriverFormId(form.created_at)
         return (
           <div className="flex items-center gap-3">
             <div className="h-9 w-9 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center">
               <Truck className="h-4 w-4 text-white" />
             </div>
-            <div>
-              <p className="font-light text-sm">#{form.id.slice(0, 8)}</p>
-              <p className="text-gray-500 text-xs font-light">Driver Form</p>
-            </div>
+            <FormIdCopy
+              displayId={form.tag}
+              actualId={form.id}
+              size="sm"
+            />
           </div>
         )
       },
     },
     {
-      accessorKey: "driver",
+      accessorKey: "driver_info",
       header: "Driver",
       cell: ({ row }: any) => {
-        const form = row.original as UnifiedForm
+        const form = row.original
+        const driverId = form.driver_id || form.driver
+        const driverUser = users.find((user: any) => user.id === driverId)
+
+        if (driverUser) {
+          return (
+            <UserAvatar
+              user={driverUser}
+              size="md"
+              showName={true}
+              showEmail={true}
+              showDropdown={true}
+            />
+          )
+        }
+
         return (
           <div className="flex items-center gap-2">
-            <User className="w-4 h-4 text-gray-500" />
-            <span className="text-sm font-light">
-              {getDriverName(form)}
-            </span>
+            <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
+              <User className="w-4 h-4 text-gray-500" />
+            </div>
+            <div>
+              <div className="text-sm font-light text-gray-400">Unknown Driver</div>
+              <div className="text-xs text-gray-500">No user data</div>
+            </div>
           </div>
         )
       },
@@ -326,29 +688,19 @@ export default function DriverFormsPage() {
         const form = row.original as UnifiedForm
         return (
           <div className="flex space-x-2">
-            <LoadingButton 
-              variant="outline" 
-              size="sm" 
+            <LoadingButton
+              size="sm"
               onClick={() => handleViewForm(form)}
-              className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full"
+              className="from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full"
             >
               <Eye className="w-4 h-4" />
             </LoadingButton>
-            <LoadingButton 
-              variant="outline" 
-              size="sm" 
+            <LoadingButton
+              size="sm"
               onClick={() => handleEditForm(form)}
-              className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 rounded-full"
+              className="from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 rounded-full"
             >
               <Settings className="w-4 h-4" />
-            </LoadingButton>
-            <LoadingButton 
-              variant="outline" 
-              size="sm" 
-              onClick={() => handleCreateLabTest(form)}
-              className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white border-0 rounded-full"
-            >
-              <Plus className="w-4 h-4" />
             </LoadingButton>
           </div>
         )
@@ -357,6 +709,32 @@ export default function DriverFormsPage() {
   ]
 
   const isLoading = operationLoading.fetch || offlineLoading
+
+  // Add this state for CSV URL
+  const [csvUrl, setCsvUrl] = useState<string | null>(null)
+
+  // Add this effect to update CSV when filteredForms changes
+  useEffect(() => {
+    if (csvUrl) URL.revokeObjectURL(csvUrl)
+    setCsvUrl(exportDriverFormsToCSV(filteredForms, displayUsers, displayRawMaterials, displaySuppliers, generateDriverFormId))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filteredForms, displayUsers, displayRawMaterials, displaySuppliers])
+
+  // --- Helper: open view drawer if form_id query param is present ---
+  useEffect(() => {
+    // Wait for forms to load and check for form_id param
+    if (typeof window === "undefined") return;
+    const formId = searchParams?.get("form_id");
+    if (formId && displayDriverForms && displayDriverForms.length > 0) {
+      const foundForm = displayDriverForms.find((form: UnifiedForm) => String(form.id) === String(formId));
+      if (foundForm) {
+        setViewingForm(foundForm);
+        setIsViewDrawerOpen(true);
+      }
+    }
+    // Only run once after forms load
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [displayDriverForms]);
 
   return (
     <DriversDashboardLayout title="Driver Forms" subtitle="Manage driver collection forms and deliveries">
@@ -371,13 +749,13 @@ export default function DriverFormsPage() {
           ) : (
             <>
               {/* Mobile/Tablet Filters */}
-              <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+              {/* <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                   <Input
                     placeholder="Search forms..."
                     value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onChange={(e) => handleSearchChange(e.target.value)}
                     className="pl-10 bg-white border-gray-200 rounded-full font-light"
                   />
                 </div>
@@ -393,47 +771,106 @@ export default function DriverFormsPage() {
                     <SelectItem value="pending">Pending</SelectItem>
                   </SelectContent>
                 </Select>
-              </div>
-              
+              </div> */}
+              <div></div>
+
               <div className="flex flex-col sm:flex-row gap-3">
-                {/* Online/Offline Status */}
+                {/* Data Source Indicator */}
                 <div className="flex items-center gap-2 px-3 py-2 rounded-full border border-gray-200 bg-white">
-                  {isOnline ? (
+                  {driverForms && driverForms.length > 0 ? (
                     <>
                       <Wifi className="h-4 w-4 text-green-600" />
-                      <span className="text-sm font-light text-green-600">Online</span>
+                      <span className="text-sm font-light text-green-600">Using Live Data</span>
+                      <span className="text-xs text-gray-500 ml-1">({driverForms.length} forms)</span>
+                    </>
+                  ) : offlineData.driverForms && offlineData.driverForms.length > 0 ? (
+                    <>
+                      <WifiOff className="h-4 w-4 text-orange-600" />
+                      <span className="text-sm font-light text-orange-600">Using Cached Data</span>
+                      <span className="text-xs text-gray-500 ml-1">({offlineData.driverForms.length} forms)</span>
                     </>
                   ) : (
                     <>
-                      <WifiOff className="h-4 w-4 text-orange-600" />
-                      <span className="text-sm font-light text-orange-600">Offline</span>
+                      <XCircle className="h-4 w-4 text-red-600" />
+                      <span className="text-sm font-light text-red-600">No Data Available</span>
+                      <span className="text-xs text-gray-500 ml-1">(Load data first)</span>
                     </>
                   )}
                 </div>
-
-                {/* Debug Info - Remove in production */}
-                {!isOnline && (
-                  <div className="text-xs text-gray-500">
-                    Offline Data: {offlineData.drivers.length} drivers, {offlineData.rawMaterials.length} materials, {offlineData.suppliers.length} suppliers, {offlineData.driverForms.length} forms
-                  </div>
-                )}
 
                 {/* Load Data Button */}
                 <LoadingButton
                   onClick={handleLoadData}
                   loading={isLoadingData}
-                  disabled={!isOnline}
-                  className="bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-600 hover:to-blue-800 text-white border-0 rounded-full px-6 py-2 font-light disabled:opacity-50"
+                  className="from-blue-500 to-blue-700 hover:from-blue-600 hover:to-blue-800 text-white border-0 rounded-full px-6 py-2 font-light"
                 >
                   <Download className="mr-2 h-4 w-4" />
-                  Load Data
+                  {driverForms && driverForms.length > 0 ? 'Refresh Data' : 'Load Data'}
                 </LoadingButton>
-
+                
+                {/* Manual Network Check Button */}
+                {/* <LoadingButton
+                  onClick={async () => {
+                    console.log('🔍 Manual network check triggered')
+                    console.log('Browser navigator.onLine:', navigator.onLine)
+                    console.log('react-use networkState:', networkState)
+                    
+                    // First check browser state
+                    if (!navigator.onLine) {
+                      toast.error("❌ Browser reports offline (airplane mode or disconnected)")
+                      return
+                    }
+                    
+                    // Then do actual connectivity test
+                    const online = await checkNetworkConnectivity()
+                    if (online) {
+                      toast.success("✅ Network connection is active and reachable")
+                    } else {
+                      toast.error("❌ No network connection detected (cannot reach server)")
+                    }
+                  }}
+                  className=" from-gray-400 to-gray-600 hover:from-gray-500 hover:to-gray-700 text-white border-0 rounded-full px-6 py-2 font-light"
+                >
+                  <Wifi className="mr-2 h-4 w-4" />
+                  Check Network
+                </LoadingButton> */}
+                
+                {/* Sync Pending Forms Button */}
+                <LoadingButton
+                  onClick={handleSyncPending}
+                  loading={syncingPending}
+                  disabled={!isOnline}
+                  className="from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white border-0 rounded-full px-6 py-2 font-light disabled:opacity-50"
+                >
+                  <Wifi className="mr-2 h-4 w-4" />
+                  Sync Pending ({(() => {
+                    const pendingCount = offlineData.driverForms.filter((f: any) => f.sync_status === 'pending').length
+                    return pendingCount
+                  })()})
+                </LoadingButton>
+                <div className="flex justify-end mb-2">
+                  {csvUrl && (
+                    <LoadingButton
+                      onClick={() => {
+                        const link = document.createElement('a');
+                        link.href = csvUrl;
+                        link.download = 'driver-forms.csv';
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                      }}
+                      className="bg-[#A0CF06] text-[#211D1E] border-0 rounded-full px-6 py-2 font-light"
+                    >
+                      <DownloadIcon className="w-4 h-4 mr-2" />
+                      Export CSV
+                    </LoadingButton>
+                  )}
+                </div>
                 {/* Create Form Button */}
-                <LoadingButton 
-                  onClick={handleAddForm} 
+                <LoadingButton
+                  onClick={handleAddForm}
                   loading={isLoading}
-                  className="bg-gradient-to-r from-gray-500 to-gray-700 hover:from-gray-600 hover:to-gray-800 text-white border-0 rounded-full px-6 py-2 font-light"
+                  className="from-gray-500 to-gray-700 hover:from-gray-600 hover:to-gray-800 text-white border-0 rounded-full px-6 py-2 font-light"
                 >
                   <Plus className="mr-2 h-4 w-4" />
                   Create Form
@@ -442,6 +879,9 @@ export default function DriverFormsPage() {
             </>
           )}
         </div>
+
+        {/* CSV Export Button (add next to columns button or above table) */}
+
 
         <div className="bg-white border border-gray-200 rounded-lg">
           <div className="p-6">
@@ -564,12 +1004,11 @@ export default function DriverFormsPage() {
                             <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center">
                               <Truck className="h-5 w-5 text-white" />
                             </div>
-                            <div>
-                              <p className="font-light">#{form.id.slice(0, 8)}</p>
-                              <p className="text-xs text-gray-500 font-light">
-                                {new Date(form.start_date).toLocaleDateString()} — {new Date(form.end_date).toLocaleDateString()}
-                              </p>
-                            </div>
+                            <FormIdCopy
+                              displayId={generateDriverFormId(form.created_at)}
+                              actualId={form.id}
+                              size="sm"
+                            />
                           </div>
                           {getStatusBadge(form)}
                         </div>
@@ -588,29 +1027,29 @@ export default function DriverFormsPage() {
                         </div>
 
                         <div className="mt-4 flex items-center justify-end gap-2">
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
+                          <Button
+                            
+                            size="sm"
                             onClick={() => handleViewForm(form)}
-                            className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full"
+                            className=" text-white border-0 rounded-full"
                           >
                             <Eye className="h-4 w-4 mr-1" />
                             View
                           </Button>
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
+                          <Button
+                            
+                            size="sm"
                             onClick={() => handleEditForm(form)}
-                            className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 rounded-full"
+                            className="bg-[#A0D001] hover:bg-[#8AB801] text-white border-0 rounded-full"
                           >
                             <Settings className="h-4 w-4 mr-1" />
                             Edit
                           </Button>
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
+                          <Button
+                            
+                            size="sm"
                             onClick={() => handleCreateLabTest(form)}
-                            className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white border-0 rounded-full"
+                            className="bg-[#A0D001] hover:bg-[#8AB801] text-white border-0 rounded-full"
                           >
                             <Plus className="h-4 w-4 mr-1" />
                             Test
@@ -630,7 +1069,7 @@ export default function DriverFormsPage() {
                             <Truck className="h-5 w-5 text-white" />
                           </div>
                           <div>
-                            <p className="font-light">#{form.id.slice(0, 8)}</p>
+                            <p className="font-light">{generateDriverFormId(form.created_at)}</p>
                             <p className="text-xs text-gray-500 font-light">
                               {new Date(form.start_date).toLocaleDateString()} — {new Date(form.end_date).toLocaleDateString()}
                             </p>
@@ -651,29 +1090,29 @@ export default function DriverFormsPage() {
                         </div>
                       </div>
                       <div className="mt-4 flex items-center justify-end gap-2">
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
+                        <Button
+                          
+                          size="sm"
                           onClick={() => handleViewForm(form)}
-                          className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full"
+                          className=" from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full"
                         >
                           <Eye className="h-4 w-4 mr-1" />
                           View
                         </Button>
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
+                        <Button
+                          
+                          size="sm"
                           onClick={() => handleEditForm(form)}
-                          className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 rounded-full"
+                          className=" from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 rounded-full"
                         >
                           <Settings className="h-4 w-4 mr-1" />
                           Edit
                         </Button>
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
+                        <Button
+                          
+                          size="sm"
                           onClick={() => handleCreateLabTest(form)}
-                          className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white border-0 rounded-full"
+                          className="bg-[#A0D001] hover:bg-[#8AB801] text-white border-0 rounded-full"
                         >
                           <Plus className="h-4 w-4 mr-1" />
                           Test
@@ -701,7 +1140,7 @@ export default function DriverFormsPage() {
                     </div>
                     <div className="flex items-center gap-2">
                       <Button
-                        variant="outline"
+                        
                         size="sm"
                         onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                         disabled={currentPage === 1}
@@ -713,7 +1152,7 @@ export default function DriverFormsPage() {
                         {currentPage} of {totalPages}
                       </span>
                       <Button
-                        variant="outline"
+                        
                         size="sm"
                         onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                         disabled={currentPage === totalPages}
@@ -729,10 +1168,10 @@ export default function DriverFormsPage() {
           </div>
         </div>
 
-        <DriverFormDrawer 
-          open={isDrawerOpen} 
-          onOpenChange={setIsDrawerOpen} 
-          driverForm={editingForm ?? undefined} 
+        <DriverFormDrawer
+          open={isDrawerOpen}
+          onOpenChange={setIsDrawerOpen}
+          driverForm={editingForm ?? undefined}
           mode={editingForm ? "edit" : "create"}
           onSuccess={() => {
             setIsDrawerOpen(false)
@@ -754,12 +1193,6 @@ export default function DriverFormsPage() {
           onOpenChange={setIsLabTestDrawerOpen}
           driversFormId={selectedFormForLabTest?.id || ""}
           mode={editingLabTest ? "edit" : "create"}
-          existingTest={editingLabTest}
-          onSuccess={() => {
-            setIsLabTestDrawerOpen(false)
-            setSelectedFormForLabTest(null)
-            setEditingLabTest(null)
-          }}
         />
       </div>
     </DriversDashboardLayout>

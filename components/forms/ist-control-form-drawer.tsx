@@ -47,7 +47,7 @@ const schema = yup.object({
 export function ISTControlFormDrawer({ open, onOpenChange, form, mode }: ISTControlFormDrawerProps) {
   const dispatch = useAppDispatch()
   const { operationLoading } = useAppSelector((state) => state.istControlForms)
-  
+
   // State for searchable select options
   const [users, setUsers] = useState<SearchableSelectOption[]>([])
   const [loadingUsers, setLoadingUsers] = useState(false)
@@ -73,7 +73,6 @@ export function ISTControlFormDrawer({ open, onOpenChange, form, mode }: ISTCont
 
   const onSubmit = async (data: ISTControlFormData) => {
     try {
-      console.log('Form data submitted:', data)
 
       if (mode === "create") {
         await dispatch(createISTControlFormAction(data)).unwrap()
@@ -100,6 +99,13 @@ export function ISTControlFormDrawer({ open, onOpenChange, form, mode }: ISTCont
     } catch (error: any) {
       toast.error(error || (mode === "create" ? 'Failed to create IST control form' : 'Failed to update IST control form'))
     }
+  }
+
+  const onInvalid = (errors: any) => {
+    const errorMessages = Object.values(errors).map((err: any) => err.message).filter(Boolean)
+    toast.error(`Please check the following fields: ${errorMessages.join(', ')}`, {
+      style: { background: '#ef4444', color: 'white' }
+    })
   }
 
   useEffect(() => {
@@ -133,7 +139,7 @@ export function ISTControlFormDrawer({ open, onOpenChange, form, mode }: ISTCont
     try {
       setLoadingUsers(true)
       const response = await usersApi.getUsers()
-      
+
       const userOptions: SearchableSelectOption[] = response.data?.map((user) => ({
         value: user.id,
         label: `${user.first_name} ${user.last_name}`,
@@ -143,7 +149,7 @@ export function ISTControlFormDrawer({ open, onOpenChange, form, mode }: ISTCont
           role: user.role_id
         }
       })) || []
-      
+
       setUsers(userOptions)
     } catch (error) {
       console.error('Error loading initial data:', error)
@@ -162,10 +168,9 @@ export function ISTControlFormDrawer({ open, onOpenChange, form, mode }: ISTCont
     setLoadingUsers(true)
     try {
       const response = await usersApi.getUsers({
-        filters: { search: searchTerm },
-        pagination: { page: 1, limit: 20 }
+        filters: { search: searchTerm }
       })
-      
+
       const userOptions: SearchableSelectOption[] = response.data?.map((user) => ({
         value: user.id,
         label: `${user.first_name} ${user.last_name}`,
@@ -175,7 +180,7 @@ export function ISTControlFormDrawer({ open, onOpenChange, form, mode }: ISTCont
           role: user.role_id
         }
       })) || []
-      
+
       setUsers(userOptions)
     } catch (error) {
       console.error('Error searching users:', error)
@@ -195,24 +200,24 @@ export function ISTControlFormDrawer({ open, onOpenChange, form, mode }: ISTCont
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="tablet-sheet-full p-0 bg-white">
-        <SheetHeader>
+        <SheetHeader className="p-6 pb-0">
           <SheetTitle>
             {mode === "create" ? "Create IST Control Form" : "Edit IST Control Form"}
           </SheetTitle>
           <SheetDescription>
-            {mode === "create" 
+            {mode === "create"
               ? "Create a new Item Stock Transfer control form to track item movements between warehouses."
               : "Update the existing IST control form with new information."
             }
           </SheetDescription>
         </SheetHeader>
-        
-        <div className="mt-6 p-6 bg-white">
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+
+        <div className="flex-1 overflow-y-auto p-6">
+          <form onSubmit={handleSubmit(onSubmit, onInvalid)} className="space-y-6">
             {/* Item Information */}
             <div className="space-y-4">
               <h3 className="text-lg font-light text-gray-900 border-b pb-2">Item Information</h3>
-              
+
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="item_code">Item Code *</Label>
@@ -270,7 +275,7 @@ export function ISTControlFormDrawer({ open, onOpenChange, form, mode }: ISTCont
             {/* Warehouse Information */}
             <div className="space-y-4">
               <h3 className="text-lg font-light text-gray-900 border-b pb-2">Warehouse Information</h3>
-              
+
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="from_warehouse">From Warehouse *</Label>
@@ -311,7 +316,7 @@ export function ISTControlFormDrawer({ open, onOpenChange, form, mode }: ISTCont
             {/* Personnel Information */}
             <div className="space-y-4">
               <h3 className="text-lg font-light text-gray-900 border-b pb-2">Personnel Information</h3>
-              
+
               <div className="space-y-4">
                 {/* Issued By and Received By in a row */}
                 <div className="grid grid-cols-2 gap-4">
@@ -386,11 +391,11 @@ export function ISTControlFormDrawer({ open, onOpenChange, form, mode }: ISTCont
             </div>
 
             <div className="flex justify-end space-x-2 pt-4">
-              <LoadingButton type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              <LoadingButton type="button" onClick={() => onOpenChange(false)}>
                 Cancel
               </LoadingButton>
-              <LoadingButton 
-                type="submit" 
+              <LoadingButton
+                type="submit"
                 loading={mode === "create" ? operationLoading.create : operationLoading.update}
                 loadingText={mode === "create" ? "Creating..." : "Updating..."}
               >

@@ -88,7 +88,7 @@ export function ProcessBoard({
       case "error":
         return <Badge className="bg-red-100 text-red-800 border-red-200 text-xs">Error</Badge>
       default:
-        return <Badge variant="outline" className="text-xs">Pending</Badge>
+        return <Badge  className="text-xs">Pending</Badge>
     }
   }
 
@@ -146,7 +146,7 @@ export function ProcessBoard({
                     </div>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <Badge variant="outline" className="text-xs">
+                    <Badge  className="text-xs">
                       {column.forms.length}
                     </Badge>
                     <Button
@@ -232,7 +232,7 @@ export function ProcessBoard({
                             {/* Action Buttons */}
                             <div className="flex items-center justify-end space-x-2 pt-2 border-t">
                               <Button
-                                variant="outline"
+                                
                                 size="sm"
                                 className="h-7 px-2 rounded-md"
                                 onClick={(e) => {
@@ -243,7 +243,7 @@ export function ProcessBoard({
                                 <Eye className="h-3 w-3" />
                               </Button>
                               <Button
-                                variant="outline"
+                                
                                 size="sm"
                                 className="h-7 px-2 rounded-md"
                                 onClick={(e) => {

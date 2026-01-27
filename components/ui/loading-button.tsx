@@ -9,17 +9,17 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700 transform hover:scale-105",
+        default: "bg-[#006BC4] text-white hover:bg-[#0056a0]",
         destructive:
-          "bg-gradient-to-r from-red-500 to-pink-500 text-white hover:from-red-600 hover:to-pink-600 transform hover:scale-105",
+          "bg-red-600 text-white hover:bg-red-700 rounded-full",
         outline:
-          "border-2 border-blue-500 bg-transparent text-blue-600 hover:bg-gradient-to-r hover:from-blue-500 hover:to-blue-600 hover:text-white transform hover:scale-105 transition-all duration-300",
+          "border-2 border-[#006BC4] bg-transparent text-blue-600 hover:bg-[#006BC4] hover:text-white transition-all duration-300",
         secondary:
-          "bg-gradient-to-r from-gray-500 to-slate-500 text-white hover:from-gray-600 hover:to-slate-600 transform hover:scale-105",
-        ghost: "hover:bg-gradient-to-r hover:from-blue-50 hover:to-blue-100 hover:text-blue-600 transition-all duration-300",
+          "bg-gray-500 text-white hover:bg-gray-600",
+        ghost: "hover:bg-blue-50 hover:text-blue-600 transition-all duration-300",
         link: "text-blue-600 underline-offset-4 hover:underline hover:text-blue-700 transition-colors duration-300",
-        gdairen: "bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700 transform hover:scale-105",
-        gdairenOutline: "border-2 border-blue-500 bg-transparent text-blue-600 hover:bg-gradient-to-r hover:from-blue-500 hover:to-blue-600 hover:text-white transform hover:scale-105 transition-all duration-300",
+        gdairen: "bg-[#006BC4] text-white hover:bg-[#0056a0]",
+        gdairenOutline: "border-2 border-[#006BC4] bg-transparent text-blue-600 hover:bg-[#006BC4] hover:text-white transition-all duration-300",
       },
       size: {
         default: "h-10 px-4 py-2",

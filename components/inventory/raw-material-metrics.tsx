@@ -21,7 +21,7 @@ export function RawMaterialMetrics() {
         unit="active items"
         icon={Package}
         change={{ value: 5.2, type: "increase" }}
-        className="bg-gradient-to-br from-blue-500/10 to-blue-600/10 border-blue-500/20"
+        className="bg-gradient-to-br from-blue-500/10 to-blue-600/10 border-[#006BC4]/20"
       />
 
       <MetricCard
@@ -30,7 +30,7 @@ export function RawMaterialMetrics() {
         unit="need reorder"
         icon={AlertTriangle}
         change={{ value: 3, type: "decrease" }}
-        className="bg-gradient-to-br from-orange-500/10 to-orange-600/10 border-orange-500/20"
+        className="bg-gradient-to-br /10 to-orange-600/10 border-orange-500/20"
       />
 
       <MetricCard

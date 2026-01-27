@@ -7,13 +7,13 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { QACorrectiveAction } from "@/lib/api/data-capture-forms"
-import { 
-  AlertTriangle, 
-  Calendar, 
-  User, 
-  FileText, 
-  TestTube, 
-  Package, 
+import {
+  AlertTriangle,
+  Calendar,
+  User,
+  FileText,
+  TestTube,
+  Package,
   TrendingUp,
   Clock,
   Beaker,
@@ -33,9 +33,9 @@ interface QACorrectiveActionViewDrawerProps {
   onEdit?: () => void
 }
 
-export function QACorrectiveActionViewDrawer({ 
-  open, 
-  onOpenChange, 
+export function QACorrectiveActionViewDrawer({
+  open,
+  onOpenChange,
   action,
   onEdit
 }: QACorrectiveActionViewDrawerProps) {
@@ -49,19 +49,14 @@ export function QACorrectiveActionViewDrawer({
         const { usersApi } = await import("@/lib/api/users")
         const usersData = await usersApi.getUsers()
         setUsers(Array.isArray(usersData) ? usersData : [])
-        
-        // Mock products - in real app, this would come from an API
-        setProducts([
-          { id: "a4de97cc-e132-431e-a0a7-5c5e85e53d11", name: "UHT Milk 1L" },
-          { id: "b5ef98dd-f243-542f-b1b8-6d6f96f64e22", name: "UHT Milk 500ml" },
-          { id: "c6fg99ee-g354-653g-c2c9-7e7g07g75f33", name: "UHT Milk 250ml" },
-        ])
+
+       
       } catch (error) {
         console.error("Error loading data:", error)
         setUsers([])
       }
     }
-    
+
     if (open && action) {
       loadData()
     }
@@ -79,7 +74,7 @@ export function QACorrectiveActionViewDrawer({
     return product ? product.name : 'Unknown Product'
   }
 
-  const details = action.qa_corrective_action_details_fkey
+  const details = action.qa_corrective_action_details
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -95,7 +90,7 @@ export function QACorrectiveActionViewDrawer({
 
         <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-white">
           {/* Process Overview */}
-          <div className="mb-8 p-6 bg-gradient-to-r from-red-50 to-orange-50 rounded-lg">
+          <div className="mb-8 p-6  from-red-50 to-orange-50 rounded-lg">
             <h3 className="text-lg font-light text-gray-900 mb-4">Process Overview</h3>
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center space-x-2">
@@ -111,7 +106,7 @@ export function QACorrectiveActionViewDrawer({
                 </div>
                 <div className="flex items-center space-x-2">
                   <span className="text-sm font-medium text-red-600">QA Corrective Action</span>
-                  <div className="bg-gradient-to-r from-red-500 to-orange-600 text-white px-2 py-1 rounded-full text-xs font-medium shadow-lg">
+                  <div className=" bg-gray-100 text-gray-600 px-2 py-1 rounded-full text-xs font-medium shadow-lg">
                     Current Step
                   </div>
                 </div>
@@ -131,8 +126,8 @@ export function QACorrectiveActionViewDrawer({
             <CardHeader className="pb-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-red-500 to-orange-600 flex items-center justify-center">
-                    <AlertTriangle className="w-5 h-5 text-white" />
+                  <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center">
+                    <AlertTriangle className="w-5 h-5 text-gray-600" />
                   </div>
                   <div>
                     <CardTitle className="text-lg font-light">QA Corrective Action</CardTitle>
@@ -148,9 +143,9 @@ export function QACorrectiveActionViewDrawer({
                 </div>
                 <Button
                   onClick={onEdit}
-                  variant="outline"
+                  
                   size="sm"
-                  className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 rounded-full"
+                  className=" bg-[#006BC4] text-white rounded-full"
                 >
                   <Edit className="w-4 h-4 mr-2" />
                   Edit
@@ -165,10 +160,10 @@ export function QACorrectiveActionViewDrawer({
                     <span className="text-sm font-light text-gray-600">Production Date</span>
                   </div>
                   <p className="text-sm font-light">
-                    {new Date(action.date_of_production).toLocaleDateString('en-GB', { 
-                      day: 'numeric', 
-                      month: 'long', 
-                      year: 'numeric' 
+                    {new Date(action.date_of_production).toLocaleDateString('en-GB', {
+                      day: 'numeric',
+                      month: 'long',
+                      year: 'numeric'
                     })}
                   </p>
                 </div>
@@ -178,10 +173,10 @@ export function QACorrectiveActionViewDrawer({
                     <span className="text-sm font-light text-gray-600">Analysis Date</span>
                   </div>
                   <p className="text-sm font-light">
-                    {new Date(action.date_analysed).toLocaleDateString('en-GB', { 
-                      day: 'numeric', 
-                      month: 'long', 
-                      year: 'numeric' 
+                    {new Date(action.date_analysed).toLocaleDateString('en-GB', {
+                      day: 'numeric',
+                      month: 'long',
+                      year: 'numeric'
                     })}
                   </p>
                 </div>
@@ -265,8 +260,8 @@ export function QACorrectiveActionViewDrawer({
             <Card className="shadow-none">
               <CardHeader className="pb-4">
                 <div className="flex items-center space-x-2">
-                  <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center">
-                    <TestTube className="h-4 w-4 text-purple-600" />
+                  <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
+                    <TestTube className="h-4 w-4 text-blue-600" />
                   </div>
                   <CardTitle className="text-base font-light">Test Results & Analysis</CardTitle>
                 </div>
@@ -275,7 +270,7 @@ export function QACorrectiveActionViewDrawer({
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-1">
                     <span className="text-xs font-light text-gray-500">pH Level (7 days @ 30°C)</span>
-                    <p className="text-lg font-medium text-purple-600">
+                    <p className="text-lg font-medium text-blue-600">
                       {details.ph_after_7_days_at_30_degrees}
                     </p>
                   </div>
@@ -306,7 +301,7 @@ export function QACorrectiveActionViewDrawer({
           )}
 
           {/* Summary */}
-          <Card className="bg-gradient-to-r from-gray-50 to-red-50 border-l-4 border-l-red-500">
+          <Card className=" from-gray-50 to-red-50 border-l-4 border-l-red-500">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -315,7 +310,7 @@ export function QACorrectiveActionViewDrawer({
                 </div>
                 <div className="text-right">
                   <h4 className="text-sm font-light text-gray-600">Status</h4>
-                  <Badge className="bg-gradient-to-r from-red-500 to-orange-500 text-white">
+                  <Badge className=" from-red-500 to-orange-500 text-white">
                     {details ? 'Completed' : 'Pending Details'}
                   </Badge>
                 </div>

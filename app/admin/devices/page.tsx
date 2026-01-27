@@ -72,7 +72,7 @@ export default function DevicesPage() {
     header: "Device Name",
     cell: ({ row }: any) => (
       <div className="flex items-center space-x-2">
-        <Cpu className="h-4 w-4 text-purple-500" />
+        <Cpu className="h-4 w-4 text-blue-500" />
         <span className="font-medium">{row.getValue("name")}</span>
       </div>
     ),
@@ -85,7 +85,7 @@ export default function DevicesPage() {
   {
     accessorKey: "type",
     header: "Type",
-    cell: ({ row }: any) => <Badge variant="outline">{row.getValue("type")}</Badge>,
+    cell: ({ row }: any) => <Badge >{row.getValue("type")}</Badge>,
   },
   {
     accessorKey: "status",
@@ -198,7 +198,7 @@ export default function DevicesPage() {
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center space-x-2">
-                <Cpu className="h-5 w-5 text-purple-500" />
+                <Cpu className="h-5 w-5 text-blue-500" />
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Total Devices</p>
                   <p className="text-2xl font-bold">24</p>

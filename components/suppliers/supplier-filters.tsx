@@ -52,12 +52,12 @@ export function SupplierFilters({ filters, onFiltersChange }: SupplierFiltersPro
           </SelectContent>
         </Select>
 
-        <Button variant="outline" className="border-gray-600 text-gray-300 hover:bg-gray-700 bg-transparent">
+        <Button  className="border-gray-600 text-gray-300 hover:bg-gray-700 bg-transparent">
           <Filter className="w-4 h-4 mr-2" />
           More Filters
         </Button>
 
-        <Button variant="outline" className="border-gray-600 text-gray-300 hover:bg-gray-700 bg-transparent">
+        <Button  className="border-gray-600 text-gray-300 hover:bg-gray-700 bg-transparent">
           <Download className="w-4 h-4 mr-2" />
           Export
         </Button>

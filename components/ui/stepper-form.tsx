@@ -261,7 +261,7 @@ export function StepperForm({
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               <span>{currentStepData.title}</span>
-              <Badge variant="outline">{currentStep + 1}/{totalSteps}</Badge>
+              <Badge >{currentStep + 1}/{totalSteps}</Badge>
             </CardTitle>
             {currentStepData.description && (
               <p className="text-sm text-gray-600">{currentStepData.description}</p>
@@ -278,7 +278,7 @@ export function StepperForm({
               <div className="flex items-center justify-between pt-6 border-t">
                 <Button
                   type="button"
-                  variant="outline"
+                  
                   onClick={currentStep === 0 ? onCancel : goToPrevStep}
                   disabled={loading}
                   className="flex items-center"

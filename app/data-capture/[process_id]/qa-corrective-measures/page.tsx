@@ -14,8 +14,8 @@ import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-di
 import { Skeleton } from "@/components/ui/skeleton"
 import { CopyButton } from "@/components/ui/copy-button"
 import { useAppDispatch, useAppSelector } from "@/lib/store"
-import { 
-  fetchQACorrectiveActions, 
+import {
+  fetchQACorrectiveActions,
   deleteQACorrectiveActionAction,
   clearError
 } from "@/lib/store/slices/qaCorrectiveActionSlice"
@@ -23,6 +23,7 @@ import { toast } from "sonner"
 import { TableFilters } from "@/lib/types"
 import { QACorrectiveAction } from "@/lib/api/data-capture-forms"
 import ContentSkeleton from "@/components/ui/content-skeleton"
+import { useRouter, useSearchParams } from "next/navigation"
 
 interface QACorrectiveMeasuresPageProps {
   params: {
@@ -33,10 +34,10 @@ interface QACorrectiveMeasuresPageProps {
 export default function QACorrectiveMeasuresPage({ params }: QACorrectiveMeasuresPageProps) {
   const dispatch = useAppDispatch()
   const { actions, loading, error, operationLoading, isInitialized } = useAppSelector((state) => state.qaCorrectiveActions)
-  
+
   const [tableFilters, setTableFilters] = useState<TableFilters>({})
   const hasFetchedRef = useRef(false)
-  
+
   // Load QA corrective actions on initial mount
   useEffect(() => {
     if (!isInitialized && !hasFetchedRef.current) {
@@ -44,14 +45,59 @@ export default function QACorrectiveMeasuresPage({ params }: QACorrectiveMeasure
       dispatch(fetchQACorrectiveActions())
     }
   }, [dispatch, isInitialized])
-  
-  // Handle filter changes
-  useEffect(() => {
-    if (isInitialized && Object.keys(tableFilters).length > 0) {
-      dispatch(fetchQACorrectiveActions())
-    }
-  }, [dispatch, tableFilters, isInitialized])
-  
+
+  // Frontend Filtering Logic
+  const filteredActions = useMemo(() => {
+    if (!Array.isArray(actions)) return []
+
+    return actions.filter((action: any) => {
+      // 1. Search filter (Global search)
+      if (tableFilters.search) {
+        const searchLower = tableFilters.search.toLowerCase()
+        const batch = String(action.batch_number || "").toLowerCase()
+        const issue = String(action.issue || "").toLowerCase()
+        const decision = String(action.qa_decision || "").toLowerCase()
+        const tag = String(action.tag || "").toLowerCase()
+
+        if (!batch.includes(searchLower) && !issue.includes(searchLower) && !decision.includes(searchLower) && !tag.includes(searchLower)) return false
+      }
+
+      // 2. Specific filter fields
+      if (tableFilters.created_at) {
+        const filterDate = new Date(tableFilters.created_at)
+        const actionDate = new Date(action.created_at)
+        if (filterDate.toDateString() !== actionDate.toDateString()) return false
+      }
+
+      if (tableFilters.batch_number) {
+        const batchLower = tableFilters.batch_number.toLowerCase()
+        if (!String(action.batch_number || "").toLowerCase().includes(batchLower)) return false
+      }
+
+      if (tableFilters.qa_decision) {
+        const decisionLower = tableFilters.qa_decision.toLowerCase()
+        if (!String(action.qa_decision || "").toLowerCase().includes(decisionLower)) return false
+      }
+
+      // 3. Date Range filter
+      if (tableFilters.dateRange) {
+        const actionDate = new Date(action.created_at)
+        if (tableFilters.dateRange.from) {
+          const from = new Date(tableFilters.dateRange.from)
+          from.setHours(0, 0, 0, 0)
+          if (actionDate < from) return false
+        }
+        if (tableFilters.dateRange.to) {
+          const to = new Date(tableFilters.dateRange.to)
+          to.setHours(23, 59, 59, 999)
+          if (actionDate > to) return false
+        }
+      }
+
+      return true
+    })
+  }, [actions, tableFilters])
+
   // Handle errors with toast notifications
   useEffect(() => {
     if (error) {
@@ -59,15 +105,32 @@ export default function QACorrectiveMeasuresPage({ params }: QACorrectiveMeasure
       dispatch(clearError())
     }
   }, [error, dispatch])
-  
+
   // Drawer states
   const [formDrawerOpen, setFormDrawerOpen] = useState(false)
-  const [viewDrawerOpen, setViewDrawerOpen] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
-  
+
   // Selected action and mode
   const [selectedAction, setSelectedAction] = useState<QACorrectiveAction | null>(null)
   const [formMode, setFormMode] = useState<"create" | "edit">("create")
+  const [forms, setForms] = useState<any[]>([])
+  const [viewDrawerOpen, setViewDrawerOpen] = useState(false)
+  const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+
+  // --- Helper: open view drawer if form_id query param is present ---
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!isInitialized || !actions || actions.length === 0) return;
+    const formId = searchParams?.get("form_id");
+    if (formId) {
+      const foundAction = actions.find((action: any) => String(action.id) === String(formId));
+      if (foundAction) {
+        setSelectedAction(foundAction);
+        setViewDrawerOpen(true);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isInitialized, actions]);
 
   // Filter fields configuration for QA Corrective Actions
   const filterFields = useMemo(() => [
@@ -116,7 +179,7 @@ export default function QACorrectiveMeasuresPage({ params }: QACorrectiveMeasure
 
   const confirmDelete = async () => {
     if (!selectedAction) return
-    
+
     try {
       await dispatch(deleteQACorrectiveActionAction(selectedAction.id!)).unwrap()
       toast.success('QA Corrective Action deleted successfully')
@@ -139,12 +202,13 @@ export default function QACorrectiveMeasuresPage({ params }: QACorrectiveMeasure
         const action = row.original
         return (
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-red-500 to-orange-600 flex items-center justify-center">
-              <AlertTriangle className="w-4 h-4 text-white" />
+            <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
+              <AlertTriangle className="w-4 h-4 text-gray-600" />
             </div>
             <div>
               <div className="flex items-center space-x-2">
-                <Badge className="bg-red-100 text-red-800 font-light">Batch #{action.batch_number || 'N/A'}</Badge>
+                <FormIdCopy displayId={action.tag!} actualId={action.id} size="sm" />
+                <Badge className="bg-red-100 text-red-800 font-light ml-2">Batch #{action.batch_number || 'N/A'}</Badge>
               </div>
               <p className="text-sm text-gray-500 mt-1">
                 {action.created_at ? new Date(action.created_at).toLocaleDateString() : 'N/A'}
@@ -237,9 +301,9 @@ export default function QACorrectiveMeasuresPage({ params }: QACorrectiveMeasure
         const details = action.qa_corrective_action_details_fkey
         return (
           <div className="space-y-2">
-            <div className="flex items-center space-x-2">
-              <div className="w-5 h-5 rounded-full bg-purple-100 flex items-center justify-center">
-                <FileText className="h-3 w-3 text-purple-600" />
+            <div className="flex items-center space-x-3">
+              <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center">
+                <FileText className="h-3 w-3 text-blue-600" />
               </div>
               <p className="text-sm font-light">
                 Test Results
@@ -289,29 +353,27 @@ export default function QACorrectiveMeasuresPage({ params }: QACorrectiveMeasure
         const action = row.original
         return (
           <div className="flex space-x-2">
-            <LoadingButton 
-              variant="outline" 
-              size="sm" 
+            <LoadingButton
+              size="sm"
               onClick={() => handleViewAction(action)}
-              className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full"
+              className="bg-[#006BC4] text-white rounded-full"
             >
               <Eye className="w-4 h-4" />
             </LoadingButton>
-            <LoadingButton 
-              variant="outline" 
-              size="sm" 
+            <LoadingButton
+              size="sm"
               onClick={() => handleEditAction(action)}
-              className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 rounded-full"
+              className="bg-[#A0CF06] text-[#211D1E] rounded-full"
             >
               <Edit className="w-4 h-4" />
             </LoadingButton>
-            <LoadingButton 
-              variant="destructive" 
-              size="sm" 
+            <LoadingButton
+              variant="destructive"
+              size="sm"
               onClick={() => handleDeleteAction(action)}
               loading={operationLoading.delete}
               disabled={operationLoading.delete}
-              className="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white border-0 rounded-full"
+              className="rounded-full"
             >
               <Trash2 className="w-4 h-4" />
             </LoadingButton>
@@ -329,9 +391,9 @@ export default function QACorrectiveMeasuresPage({ params }: QACorrectiveMeasure
             <h1 className="text-3xl font-light text-foreground">QA Corrective Measures</h1>
             <p className="text-sm font-light text-muted-foreground">Manage quality assurance corrective actions and measures</p>
           </div>
-          <LoadingButton 
+          <LoadingButton
             onClick={handleAddAction}
-            className="bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 text-white border-0 rounded-full px-6 py-2 font-light"
+            className="bg-[#006BC4] text-white rounded-full px-6 py-2 font-light"
           >
             <Plus className="mr-2 h-4 w-4" />
             Add QA Corrective Action
@@ -346,16 +408,20 @@ export default function QACorrectiveMeasuresPage({ params }: QACorrectiveMeasure
             <div className="p-6 pb-0">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2 text-lg font-light">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-red-500 to-orange-600 flex items-center justify-center">
-                    <AlertTriangle className="h-4 w-4 text-white" />
+                  <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+                    <AlertTriangle className="h-4 w-4 text-gray-600" />
                   </div>
                   <span>Latest QA Corrective Action</span>
-                  <Badge className="bg-gradient-to-r from-red-100 to-orange-100 text-red-800 font-light">Latest</Badge>
+                  {latestAction?.tag && (
+                    <div className="ml-2">
+                      <FormIdCopy displayId={latestAction.tag!} actualId={latestAction.id} size="sm" />
+                    </div>
+                  )}
+                  <Badge className="bg-blue-100 text-blue-800 font-light">Latest</Badge>
                 </div>
-                <LoadingButton 
-                  variant="outline" 
+                <LoadingButton
                   onClick={() => handleViewAction(latestAction)}
-                  className="bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 text-white border-0 rounded-full px-4 py-2 font-light text-sm"
+                  className="bg-[#006BC4] text-white rounded-full px-4 py-2 font-light text-sm"
                 >
                   <Eye className="mr-2 h-4 w-4" />
                   View Details
@@ -392,7 +458,7 @@ export default function QACorrectiveMeasuresPage({ params }: QACorrectiveMeasure
                   </p>
                 </div>
               </div>
-              
+
               {/* Timeline and Details in Row */}
               <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {/* Timeline Details */}
@@ -421,7 +487,7 @@ export default function QACorrectiveMeasuresPage({ params }: QACorrectiveMeasure
 
                 {/* Test Results Summary */}
                 {latestAction.qa_corrective_action_details_fkey && (
-                  <div className="p-4 bg-gradient-to-r from-red-50 to-orange-50 rounded-lg">
+                  <div className="p-4 bg-red-50 rounded-lg">
                     <div className="flex items-center space-x-2 mb-3">
                       <div className="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center">
                         <FileText className="h-4 w-4 text-red-600" />
@@ -460,27 +526,27 @@ export default function QACorrectiveMeasuresPage({ params }: QACorrectiveMeasure
               <div className="text-lg font-light">QA Corrective Actions</div>
             </div>
             <div className="p-6 space-y-4">
-            <DataTableFilters
-              filters={tableFilters}
-              onFiltersChange={setTableFilters}
-              onSearch={(searchTerm) => setTableFilters(prev => ({ ...prev, search: searchTerm }))}
-              searchPlaceholder="Search QA corrective actions..."
-              filterFields={filterFields}
-            />
-            
-            {loading ? (
-              <ContentSkeleton sections={1} cardsPerSection={4} />
-            ) : (
-              <DataTable columns={columns} data={actions} showSearch={false} />
-            )}
+              <DataTableFilters
+                filters={tableFilters}
+                onFiltersChange={setTableFilters}
+                onSearch={(searchTerm) => setTableFilters(prev => ({ ...prev, search: searchTerm }))}
+                searchPlaceholder="Search QA corrective actions..."
+                filterFields={filterFields}
+              />
+
+              {loading ? (
+                <ContentSkeleton sections={1} cardsPerSection={4} />
+              ) : (
+                <DataTable columns={columns} data={filteredActions} showSearch={false} />
+              )}
             </div>
           </div>
         )}
 
         {/* Form Drawer */}
-        <QACorrectiveActionDrawer 
-          open={formDrawerOpen} 
-          onOpenChange={setFormDrawerOpen} 
+        <QACorrectiveActionDrawer
+          open={formDrawerOpen}
+          onOpenChange={setFormDrawerOpen}
           action={selectedAction}
           mode={formMode}
           processId={params.process_id}

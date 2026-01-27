@@ -17,24 +17,22 @@ import { toast } from "sonner"
 import { TableFilters } from "@/lib/types"
 import { AdminDashboardLayout } from "@/components/layout/admin-dashboard-layout"
 import { PermissionGuard } from "@/components/auth/permission-guard"
-import { PermissionButton } from "@/components/ui/permission-table-actions"
-import { PermissionTableActions } from "@/components/ui/permission-table-actions"
 
 export default function SilosPage() {
   const dispatch = useAppDispatch()
   const { silos, loading, error, operationLoading } = useAppSelector((state) => state.silo)
-  
+
   const [tableFilters, setTableFilters] = useState<TableFilters>({})
   const hasFetchedRef = useRef(false)
-  
-  // Load silos on component mount and when filters change
+
+  // Load silos once on mount
   useEffect(() => {
     if (!hasFetchedRef.current) {
       hasFetchedRef.current = true
+      dispatch(fetchSilos({}))
     }
-    dispatch(fetchSilos({ filters: tableFilters }))
-  }, [dispatch, tableFilters])
-  
+  }, [dispatch])
+
   // Handle errors with toast notifications
   useEffect(() => {
     if (error) {
@@ -42,12 +40,12 @@ export default function SilosPage() {
       dispatch(clearError())
     }
   }, [error, dispatch])
-  
+
   // Drawer states
   const [formDrawerOpen, setFormDrawerOpen] = useState(false)
   const [viewDrawerOpen, setViewDrawerOpen] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
-  
+
   // Selected silo and mode
   const [selectedSilo, setSelectedSilo] = useState<any>(null)
   const [formMode, setFormMode] = useState<"create" | "edit">("create")
@@ -113,6 +111,30 @@ export default function SilosPage() {
     }
   ], [])
 
+  // Client-side filtering
+  const filteredSilos = useMemo(() => {
+    return (silos || []).filter(silo => {
+      // Search filter
+      if (tableFilters.search) {
+        const search = tableFilters.search.toLowerCase()
+        const name = (silo.name || "").toLowerCase()
+        const serialNumber = (silo.serial_number || "").toLowerCase()
+        if (!name.includes(search) && !serialNumber.includes(search)) return false
+      }
+      // Name filter
+      if (tableFilters.name && !silo.name?.toLowerCase().includes(tableFilters.name.toLowerCase())) return false
+      // Serial number filter
+      if (tableFilters.serial_number && !silo.serial_number?.toLowerCase().includes(tableFilters.serial_number.toLowerCase())) return false
+      // Category filter
+      if (tableFilters.category && silo.category !== tableFilters.category) return false
+      // Location filter
+      if (tableFilters.location && !silo.location?.toLowerCase().includes(tableFilters.location.toLowerCase())) return false
+      // Status filter
+      if (tableFilters.status && silo.status !== tableFilters.status) return false
+      return true
+    })
+  }, [silos, tableFilters])
+
   // Action handlers
   const handleAddSilo = () => {
     setSelectedSilo(null)
@@ -138,7 +160,7 @@ export default function SilosPage() {
 
   const confirmDelete = async () => {
     if (!selectedSilo) return
-    
+
     try {
       await dispatch(deleteSilo(selectedSilo.id)).unwrap()
       toast.success('Silo deleted successfully')
@@ -168,8 +190,8 @@ export default function SilosPage() {
         }
         return (
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-gray-500 to-gray-700 flex items-center justify-center">
-              <Database className="w-4 h-4 text-white" />
+            <div className="w-8 h-8 rounded-lg bg-gray-100 text-gray-600 flex items-center justify-center">
+              <Database className="w-4 h-4" />
             </div>
             <div>
               <div className="flex items-center space-x-2">
@@ -205,11 +227,11 @@ export default function SilosPage() {
           <div className="space-y-1">
             <div className="flex items-center space-x-2">
               <span className="text-sm font-light">{silo.capacity.toLocaleString()}L</span>
-              <Badge variant="outline" className={fillPercentage > 80 ? "text-red-600" : fillPercentage > 60 ? "text-yellow-600" : "text-green-600"}>
+              <Badge className={fillPercentage > 80 ? "text-white" : fillPercentage > 60 ? "text-white" : "text-white"}>
                 {fillPercentage.toFixed(1)}%
               </Badge>
             </div>
-            <p className="text-xs text-gray-500">Current: {silo.milk_volume.toLocaleString()}L</p>
+            <p className="text-xs text-gray-500">Current: {silo?.milk_volume?.toLocaleString()}L</p>
           </div>
         )
       },
@@ -233,13 +255,34 @@ export default function SilosPage() {
       cell: ({ row }: any) => {
         const silo = row.original
         return (
-          <PermissionTableActions
-            feature="silo_item"
-            onView={() => handleViewSilo(silo)}
-            onEdit={() => handleEditSilo(silo)}
-            onDelete={() => handleDeleteSilo(silo)}
-            showDropdown={true}
-          />
+          <div className="flex space-x-2">
+            <LoadingButton
+
+              size="sm"
+              onClick={() => handleViewSilo(silo)}
+              className="bg-[#006BC4] text-white border-0 rounded-full"
+            >
+              <Eye className="w-4 h-4" />
+            </LoadingButton>
+            <LoadingButton
+
+              size="sm"
+              onClick={() => handleEditSilo(silo)}
+              className="bg-[#A0CF06] text-[#211D1E] border-0 rounded-full"
+            >
+              <Edit className="w-4 h-4" />
+            </LoadingButton>
+            <LoadingButton
+              variant="destructive"
+              size="sm"
+              onClick={() => handleDeleteSilo(silo)}
+              loading={operationLoading.delete}
+              disabled={operationLoading.delete}
+              className="bg-red-600 hover:bg-red-700 text-white border-0 rounded-full"
+            >
+              <Trash2 className="w-4 h-4" />
+            </LoadingButton>
+          </div>
         )
       },
     },
@@ -248,169 +291,167 @@ export default function SilosPage() {
   return (
     <PermissionGuard requiredView="silo_tab">
       <AdminDashboardLayout title="Silo Configuration" subtitle="Manage and configure storage silos">
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-light text-foreground">Silo Configuration</h1>
-            <p className="text-sm font-light text-muted-foreground">Manage and configure storage silos</p>
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-light text-foreground">Silo Configuration</h1>
+              <p className="text-sm font-light text-muted-foreground">Manage and configure storage silos</p>
+            </div>
+            <LoadingButton
+              onClick={handleAddSilo}
+              className="bg-[#006BC4] text-white border-0 rounded-full px-6 py-2 font-light"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Add Silo
+            </LoadingButton>
           </div>
-          <PermissionButton
-            feature="silo_item"
-            permission="create"
-            onClick={handleAddSilo}
-            className="bg-gradient-to-r from-gray-500 to-gray-700 hover:from-gray-600 hover:to-gray-800 text-white border-0 rounded-full px-6 py-2 font-light"
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Add Silo
-          </PermissionButton>
-        </div>
 
-        {/* Counter Widgets with Icons */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-white border border-gray-200 rounded-lg p-6">
-            <div className="flex flex-row items-center justify-between mb-4">
-              <h3 className="text-sm text-gray-600">Total Silos</h3>
-              <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
-                <Database className="h-4 w-4 text-gray-500" />
-              </div>
-            </div>
-            {operationLoading.fetch ? (
-              <div className="animate-pulse">
-                <div className="h-8 bg-gray-200 rounded w-16 mb-2"></div>
-                <div className="h-3 bg-gray-200 rounded w-24"></div>
-              </div>
-            ) : (
-              <>
-                <div className="text-3xl text-gray-900">{silos.length}</div>
-                <p className="text-xs text-gray-500 mt-1">Active in system</p>
-              </>
-            )}
-          </div>
-          <div className="bg-white border border-gray-200 rounded-lg p-6">
-            <div className="flex flex-row items-center justify-between mb-4">
-              <h3 className="text-sm text-gray-600">Active</h3>
-              <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
-                <Activity className="h-4 w-4 text-green-600" />
-              </div>
-            </div>
-            {operationLoading.fetch ? (
-              <div className="animate-pulse">
-                <div className="h-8 bg-gray-200 rounded w-16 mb-2"></div>
-                <div className="h-3 bg-gray-200 rounded w-32"></div>
-              </div>
-            ) : (
-              <>
-                <div className="text-3xl text-green-600">
-                  {silos.filter((s) => s.status === "active").length}
+          {/* Counter Widgets with Icons */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="bg-white border border-gray-200 rounded-lg p-6">
+              <div className="flex flex-row items-center justify-between mb-4">
+                <h3 className="text-sm text-gray-600">Total Silos</h3>
+                <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+                  <Database className="h-4 w-4 text-gray-500" />
                 </div>
-                <p className="text-xs text-gray-500 mt-1">Currently active</p>
-              </>
-            )}
-          </div>
-          <div className="bg-white border border-gray-200 rounded-lg p-6">
-            <div className="flex flex-row items-center justify-between mb-4">
-              <h3 className="text-sm text-gray-600">Total Capacity</h3>
-              <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
-                <Gauge className="h-4 w-4 text-blue-600" />
               </div>
-            </div>
-            {operationLoading.fetch ? (
-              <div className="animate-pulse">
-                <div className="h-8 bg-gray-200 rounded w-16 mb-2"></div>
-                <div className="h-3 bg-gray-200 rounded w-32"></div>
-              </div>
-            ) : (
-              <>
-                <div className="text-3xl text-blue-600">
-                  {silos.reduce((total, s) => total + s.capacity, 0).toLocaleString()}L
+              {operationLoading.fetch ? (
+                <div className="animate-pulse">
+                  <div className="h-8 bg-gray-200 rounded w-16 mb-2"></div>
+                  <div className="h-3 bg-gray-200 rounded w-24"></div>
                 </div>
-                <p className="text-xs text-gray-500 mt-1">Storage capacity</p>
-              </>
-            )}
-          </div>
-          <div className="bg-white border border-gray-200 rounded-lg p-6">
-            <div className="flex flex-row items-center justify-between mb-4">
-              <h3 className="text-sm text-gray-600">Current Volume</h3>
-              <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center">
-                <Wrench className="h-4 w-4 text-purple-600" />
-              </div>
+              ) : (
+                <>
+                  <div className="text-3xl text-gray-900">{silos.length}</div>
+                  <p className="text-xs text-gray-500 mt-1">Active in system</p>
+                </>
+              )}
             </div>
-            {operationLoading.fetch ? (
-              <div className="animate-pulse">
-                <div className="h-8 bg-gray-200 rounded w-16 mb-2"></div>
-                <div className="h-3 bg-gray-200 rounded w-32"></div>
-              </div>
-            ) : (
-              <>
-                <div className="text-3xl text-purple-600">
-                  {silos.reduce((total, s) => total + s.milk_volume, 0).toLocaleString()}L
+            <div className="bg-white border border-gray-200 rounded-lg p-6">
+              <div className="flex flex-row items-center justify-between mb-4">
+                <h3 className="text-sm text-gray-600">Active</h3>
+                <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
+                  <Activity className="h-4 w-4 text-green-600" />
                 </div>
-                <p className="text-xs text-gray-500 mt-1">Milk stored</p>
-              </>
-            )}
+              </div>
+              {operationLoading.fetch ? (
+                <div className="animate-pulse">
+                  <div className="h-8 bg-gray-200 rounded w-16 mb-2"></div>
+                  <div className="h-3 bg-gray-200 rounded w-32"></div>
+                </div>
+              ) : (
+                <>
+                  <div className="text-3xl text-green-600">
+                    {silos.filter((s) => s.status === "active").length}
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">Currently active</p>
+                </>
+              )}
+            </div>
+            <div className="bg-white border border-gray-200 rounded-lg p-6">
+              <div className="flex flex-row items-center justify-between mb-4">
+                <h3 className="text-sm text-gray-600">Total Capacity</h3>
+                <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+                  <Gauge className="h-4 w-4 text-blue-600" />
+                </div>
+              </div>
+              {operationLoading.fetch ? (
+                <div className="animate-pulse">
+                  <div className="h-8 bg-gray-200 rounded w-16 mb-2"></div>
+                  <div className="h-3 bg-gray-200 rounded w-32"></div>
+                </div>
+              ) : (
+                <>
+                  <div className="text-3xl text-blue-600">
+                    {silos.reduce((total, s) => total + s.capacity, 0).toLocaleString()}L
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">Storage capacity</p>
+                </>
+              )}
+            </div>
+            <div className="bg-white border border-gray-200 rounded-lg p-6">
+              <div className="flex flex-row items-center justify-between mb-4">
+                <h3 className="text-sm text-gray-600">Current Volume</h3>
+                <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+                  <Wrench className="h-4 w-4 text-blue-600" />
+                </div>
+              </div>
+              {operationLoading.fetch ? (
+                <div className="animate-pulse">
+                  <div className="h-8 bg-gray-200 rounded w-16 mb-2"></div>
+                  <div className="h-3 bg-gray-200 rounded w-32"></div>
+                </div>
+              ) : (
+                <>
+                  <div className="text-3xl text-blue-600">
+                    {silos.reduce((total, s) => total + s.milk_volume, 0).toLocaleString()}L
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">Milk stored</p>
+                </>
+              )}
+            </div>
           </div>
-        </div>
 
-        <div className="border border-gray-200 rounded-lg bg-white">
-          <div className="p-6 pb-0">
-            <div className="text-lg font-light">Silos</div>
-          </div>
-          <div className="p-6 space-y-4">
-            <DataTableFilters
-              filters={tableFilters}
-              onFiltersChange={setTableFilters}
-              onSearch={(searchTerm) => setTableFilters(prev => ({ ...prev, search: searchTerm }))}
-              searchPlaceholder="Search silos..."
-              filterFields={filterFields}
-            />
-            
-            {loading ? (
-              <div className="flex items-center justify-center h-64">
-                <div className="flex flex-col items-center space-y-4">
-                  <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-                  <p className="text-muted-foreground">Loading silos...</p>
-                </div>
-              </div>
-            ) : (
-              <DataTable
-                columns={columns}
-                data={silos}
-                showSearch={false}
+          <div className="border border-gray-200 rounded-lg bg-white">
+            <div className="p-6 pb-0">
+              <div className="text-lg font-light">Silos</div>
+            </div>
+            <div className="p-6 space-y-4">
+              <DataTableFilters
+                filters={tableFilters}
+                onFiltersChange={setTableFilters}
+                onSearch={(searchTerm) => setTableFilters(prev => ({ ...prev, search: searchTerm }))}
+                searchPlaceholder="Search silos..."
+                filterFields={filterFields}
               />
-            )}
+
+              {loading ? (
+                <div className="flex items-center justify-center h-64">
+                  <div className="flex flex-col items-center space-y-4">
+                    <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                    <p className="text-muted-foreground">Loading silos...</p>
+                  </div>
+                </div>
+              ) : (
+                <DataTable
+                  columns={columns}
+                  data={filteredSilos}
+                  showSearch={false}
+                />
+              )}
+            </div>
           </div>
+
+          {/* Form Drawer */}
+          <SiloFormDrawer
+            open={formDrawerOpen}
+            onOpenChange={setFormDrawerOpen}
+            silo={selectedSilo}
+            mode={formMode}
+          />
+
+          {/* View Drawer */}
+          <SiloViewDrawer
+            open={viewDrawerOpen}
+            onClose={() => setViewDrawerOpen(false)}
+            silo={selectedSilo}
+            onEdit={() => {
+              setViewDrawerOpen(false)
+              handleEditSilo(selectedSilo)
+            }}
+          />
+
+          {/* Delete Confirmation Dialog */}
+          <DeleteConfirmationDialog
+            open={deleteDialogOpen}
+            onOpenChange={setDeleteDialogOpen}
+            title="Delete Silo"
+            description={`Are you sure you want to delete ${selectedSilo?.name}? This action cannot be undone and may affect milk storage capacity.`}
+            onConfirm={confirmDelete}
+            loading={operationLoading.delete}
+          />
         </div>
-
-        {/* Form Drawer */}
-        <SiloFormDrawer 
-          open={formDrawerOpen} 
-          onOpenChange={setFormDrawerOpen} 
-          silo={selectedSilo}
-          mode={formMode} 
-        />
-
-        {/* View Drawer */}
-        <SiloViewDrawer
-          open={viewDrawerOpen}
-          onClose={() => setViewDrawerOpen(false)}
-          silo={selectedSilo}
-          onEdit={() => {
-            setViewDrawerOpen(false)
-            handleEditSilo(selectedSilo)
-          }}
-        />
-
-        {/* Delete Confirmation Dialog */}
-        <DeleteConfirmationDialog
-          open={deleteDialogOpen}
-          onOpenChange={setDeleteDialogOpen}
-          title="Delete Silo"
-          description={`Are you sure you want to delete ${selectedSilo?.name}? This action cannot be undone and may affect milk storage capacity.`}
-          onConfirm={confirmDelete}
-          loading={operationLoading.delete}
-        />
-      </div>
-    </AdminDashboardLayout>
+      </AdminDashboardLayout>
     </PermissionGuard>
   )
 }

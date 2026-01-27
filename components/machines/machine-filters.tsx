@@ -79,15 +79,15 @@ export function MachineFilters() {
 
           {/* Action Buttons */}
           <div className="flex items-center space-x-2 ml-auto">
-            <Button variant="outline" size="sm">
+            <Button  size="sm">
               <Filter className="mr-2 h-4 w-4" />
               Advanced
             </Button>
-            <Button variant="outline" size="sm">
+            <Button  size="sm">
               <Download className="mr-2 h-4 w-4" />
               Export
             </Button>
-            <Button variant="outline" size="sm">
+            <Button  size="sm">
               <Settings className="mr-2 h-4 w-4" />
               Bulk Actions
             </Button>

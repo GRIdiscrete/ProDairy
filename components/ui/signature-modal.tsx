@@ -60,11 +60,11 @@ export const SignatureModal: React.FC<SignatureModalProps> = ({
             />
           </div>
           <div className="flex-shrink-0 flex items-center justify-between p-4 border-t bg-white">
-            <Button type="button" variant="outline" onClick={handleClear} className="rounded-full">
+            <Button type="button"  onClick={handleClear} className="rounded-full">
               Clear
             </Button>
             <div className="flex items-center gap-2">
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="rounded-full">
+              <Button type="button"  onClick={() => onOpenChange(false)} className="rounded-full">
                 Cancel
               </Button>
               <Button type="button" onClick={handleSave} disabled={isEmpty} className="rounded-full">

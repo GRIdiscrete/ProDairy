@@ -33,13 +33,17 @@ import { logoutUser } from "@/lib/store/slices/authSlice"
 import { motion, AnimatePresence } from "framer-motion"
 import { useTablet } from "@/hooks/use-tablet"
 import { getRecentNotifications, humanizeModule, moduleToRoute, type NotificationItem } from "@/lib/api/notifications"
+import { fetchRecentNotifications } from "@/lib/store/slices/notificationsSlice"
 import { formatDistanceToNow, parseISO, isValid } from "date-fns"
+import cityTimezones from 'city-timezones'
+import axios from 'axios'
 // import { useAccessibleModules } from "@/hooks/use-permissions" // Removed - no longer using permissions
 
 interface HeaderProps {
   title?: string
   subtitle?: string
   onOpenSidebar?: () => void
+  allowedSwitches?: Array<{ key: string, label: string, perm?: string, path?: string }> // path is optional for compatibility
 }
 
 export function Header({ title = "Dashboard", subtitle = "Welcome back!", onOpenSidebar }: HeaderProps) {
@@ -53,13 +57,47 @@ export function Header({ title = "Dashboard", subtitle = "Welcome back!", onOpen
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   const { isTablet, isLandscape } = useTablet()
-  const [notifications, setNotifications] = useState<NotificationItem[]>([])
+  const notifications = useAppSelector((state) => state.notifications.recentItems)
   const [notifOpen, setNotifOpen] = useState(false)
 
+  // Weather/location state
+  const [weather, setWeather] = useState<{ temp: string; city: string } | null>(null)
+
+  // Get user's location and weather
   useEffect(() => {
-    // prefetch notifications on mount
-    getRecentNotifications(8).then(setNotifications).catch(() => setNotifications([]))
+    if (typeof window !== "undefined" && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(async (pos) => {
+        const { latitude, longitude } = pos.coords
+        try {
+          // Get city using reverse geocoding (OpenStreetMap Nominatim - free)
+          const geoRes = await axios.get(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=10&addressdetails=1`)
+          const city = geoRes.data?.address?.city || geoRes.data?.address?.town || geoRes.data?.address?.village || geoRes.data?.display_name?.split(',')[0] || "Unknown Location"
+
+          // Get weather using Open-Meteo (free API, no key required)
+          const weatherRes = await axios.get(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true&temperature_unit=celsius`)
+          const temp = weatherRes.data.current_weather?.temperature
+
+          setWeather({
+            temp: temp !== undefined ? `${Math.round(temp)}°C` : "--",
+            city,
+          })
+        } catch (error) {
+          console.error('Error fetching weather/location:', error)
+          setWeather({ temp: "--", city: "Detecting location..." })
+        }
+      }, (error) => {
+        console.error('Geolocation error:', error)
+        setWeather({ temp: "--", city: "Detecting location..." })
+      })
+    } else {
+      setWeather({ temp: "--", city: "Geolocation not supported" })
+    }
   }, [])
+
+  useEffect(() => {
+    // Fetch notifications using Redux
+    dispatch(fetchRecentNotifications(8))
+  }, [dispatch])
   // const accessibleModules = useAccessibleModules() // Removed - no longer using permissions
 
   // Prevent hydration mismatch
@@ -112,8 +150,37 @@ export function Header({ title = "Dashboard", subtitle = "Welcome back!", onOpen
     }
   ]
 
-  // Show all dashboards (permissions removed)
-  const dashboards = allDashboards
+  // Dashboard permission mapping
+  const dashboardSwitchPermissions = [
+    { key: "admin", label: "Admin Dashboard", perm: "admin_panel" },
+    { key: "drivers", label: "Driver Dashboard", perm: "driver_ui" },
+    { key: "data-capture", label: "Production Processes", perm: "data_capture_module" },
+    { key: "tools", label: "Tools", perm: "settings" },
+  ]
+
+  // Get allowed views from user profile
+  const allowedViews: string[] =
+    profile?.users_role_id_fkey?.views && Array.isArray(profile.users_role_id_fkey.views)
+      ? profile.users_role_id_fkey.views
+      : []
+
+  // Filter dashboards based on permissions
+  const dashboards = dashboardSwitchPermissions
+    .filter(sw => allowedViews.includes(sw.perm))
+    .map(sw => {
+      const match = allDashboards.find(d => d.id === sw.key)
+      return match
+        ? match
+        : {
+          id: sw.key,
+          name: sw.label,
+          icon: Users,
+          path: "/",
+          emoji: "🧑‍💻",
+          description: "",
+          module: sw.key
+        }
+    })
 
   // Comprehensive route list for search
   const allRoutes = [
@@ -168,9 +235,9 @@ export function Header({ title = "Dashboard", subtitle = "Welcome back!", onOpen
   // Filter routes based on search query only (permissions removed)
   const filteredRoutes = useMemo(() => {
     if (!searchQuery.trim()) return allRoutes.slice(0, 10) // Show first 10 by default
-    
+
     const query = searchQuery.toLowerCase()
-    return allRoutes.filter(route => 
+    return allRoutes.filter(route =>
       route.title.toLowerCase().includes(query) ||
       route.description.toLowerCase().includes(query) ||
       route.category.toLowerCase().includes(query) ||
@@ -178,23 +245,23 @@ export function Header({ title = "Dashboard", subtitle = "Welcome back!", onOpen
     )
   }, [searchQuery])
 
-  // Get current dashboard based on pathname
+  // Get current dashboard based on pathname, but only from dashboards list
   const getCurrentDashboard = () => {
-    if (pathname.startsWith("/admin")) {
-      return dashboards.find(d => d.id === "admin") || dashboards[0]
+    // If dashboards is empty, return a safe fallback
+    if (!dashboards || dashboards.length === 0) {
+      return {
+        id: "none",
+        name: "Dashboard",
+        icon: Users,
+        path: "/",
+        emoji: "🧑‍💻",
+        description: "",
+        module: "none"
+      }
     }
-    if (pathname.startsWith("/drivers")) {
-      return dashboards.find(d => d.id === "drivers") || dashboards[0]
-    }
-    if (pathname.startsWith("/data-capture")) {
-      return dashboards.find(d => d.id === "data-capture") || dashboards[0]
-    }
-    if (pathname.startsWith("/tools")) {
-      return dashboards.find(d => d.id === "tools") || dashboards[0]
-    }
-    return dashboards[0] // Default to first dashboard
+    const found = dashboards.find(d => pathname.startsWith(d.path))
+    return found || dashboards[0]
   }
-
   const currentDashboard = getCurrentDashboard()
 
   const handleDashboardSwitch = (dashboardPath: string) => {
@@ -205,6 +272,56 @@ export function Header({ title = "Dashboard", subtitle = "Welcome back!", onOpen
     router.push(routePath)
     setSearchOpen(false)
     setSearchQuery("")
+  }
+
+  // --- Add moduleToRoute mapping helper ---
+  function moduleToRoute(module: string, formId?: string): string | null {
+    // Hardcoded formId for routes that require it
+    const hardcodedId = "a4de97cc-e132-431e-a0a7-5c5e85e53d11";
+    const map: Record<string, (id?: string) => string> = {
+      // Drivers
+      "drivers_form": (id) => `/drivers/forms${id ? `?form_id=${formId}` : ""}`,
+
+      // Tools
+      "bmt_control_form": (id) => `/tools/bmt-control-form${id ? `?form_id=${formId}` : ""}`,
+      "cip_control_form": (id) => `/tools/cip-control-form${id ? `?form_id=${formId}` : ""}`,
+      "ist_control_form": (id) => `/tools/ist-control-form${id ? `?form_id=${formId}` : ""}`,
+      "general_lab_test": (id) => `/tools/general-lab-test${id ? `?form_id=${formId}` : ""}`,
+
+      // Admin
+      "production_plan": (id) => `/admin/production-plan${id ? `?form_id=${formId}` : ""}`,
+      "process": (id) => `/admin/processes${id ? `?form_id=${formId}` : ""}`,
+      "filmatic_line_groups_2": (id) => `/admin/filmatic-lines-groups${id ? `?form_id=${formId}` : ""}`,
+      "silo": (id) => `/admin/silos${id ? `?form_id=${formId}` : ""}`,
+
+      // Data Capture - no formId in URL, now append formId as query param
+      "raw-milk-intake": (id) => `/data-capture/raw-milk-intake${id ? `?form_id=${formId}` : ""}`,
+      "raw_milk_intake_lab_test": (id) => `/data-capture/raw-milk-intake${id ? `?form_id=${formId}` : ""}`,
+      "raw_milk_intake_form": (id) => `/data-capture/raw-milk-intake${id ? `?form_id=${formId}` : ""}`,
+      "raw_milk_result_slip": (id) => `/data-capture/raw-milk-intake${id ? `?form_id=${formId}` : ""}`,
+      "standardizing_form": (id) => `/data-capture/standardizing${id ? `?form_id=${formId}` : ""}`,
+      "standardizing_form_no_skim": (id) => `/data-capture/standardizing${id ? `?form_id=${formId}` : ""}`,
+
+      // Data Capture - with formId in URL (use formId from notification, fallback to hardcodedId)
+      "steri_milk_pasteurizing_form": (id) => `/data-capture/${id || hardcodedId}/pasteurizing`,
+      "lab_test_mixing_and_pasteurizing": (id) => `/data-capture/${id || hardcodedId}/pasteurizing`,
+      "filmatic_line_form_1": (id) => `/data-capture/${id || hardcodedId}/filmatic-lines${id ? `?form_id=${formId}` : ""}`,
+      "steri_milk_process_log": (id) => `/data-capture/${id || hardcodedId}/process-log${id ? `?form_id=${formId}` : ""}`,
+      "lab_test_post_process": (id) => `/data-capture/${id || hardcodedId}/process-log${id ? `?form_id=${formId}` : ""}`,
+      "steri_milk_test_report": (id) => `/data-capture/${id || hardcodedId}/process-log${id ? `?form_id=${formId}` : ""}`,
+      "filmatic_line_form_2": (id) => `/data-capture/${id || hardcodedId}/filmatic-lines-2${id ? `?form_id=${formId}` : ""}`,
+      "palletiser_sheet": (id) => `/data-capture/${id || hardcodedId}/palletiser-sheet${id ? `?form_id=${formId}` : ""}`,
+      "incubation_tracking_form": (id) => `/data-capture/${id || hardcodedId}/incubation${id ? `?form_id=${formId}` : ""}`,
+      "uht_quality_check_after_incubation": (id) => `/data-capture/${id || hardcodedId}/test${id ? `?form_id=${formId}` : ""}`,
+      "qa_corrective_action": (id) => `/data-capture/${id || hardcodedId}/qa-corrective-measures${id ? `?form_id=${formId}` : ""}`,
+      "qa_release_note": (id) => `/data-capture/${id || hardcodedId}/dispatch${id ? `?form_id=${formId}` : ""}`,
+      "qa_reject_note": (id) => `/data-capture/${id || hardcodedId}/dispatch${id ? `?form_id=${formId}` : ""}`,
+    }
+
+    if (map[module]) {
+      return map[module](formId)
+    }
+    return null
   }
 
   return (
@@ -231,12 +348,12 @@ export function Header({ title = "Dashboard", subtitle = "Welcome back!", onOpen
           )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button 
-                variant="ghost" 
+              <Button
+                variant="ghost"
                 className="flex items-center gap-2 px-3 py-2 hover:bg-zinc-100"
               >
                 <div className="flex items-center gap-2">
-                  <span className="text-lg">{currentDashboard.emoji}</span>
+                  <span className="text-lg">{currentDashboard.emoji || "🧑‍💻"}</span>
                   <div className="hidden md:block text-left">
                     <p className="text-sm font-medium text-zinc-900">
                       {currentDashboard.name}
@@ -256,11 +373,10 @@ export function Header({ title = "Dashboard", subtitle = "Welcome back!", onOpen
                 <DropdownMenuItem
                   key={dashboard.id}
                   onClick={() => handleDashboardSwitch(dashboard.path)}
-                  className={`cursor-pointer p-3 ${
-                    currentDashboard.id === dashboard.id 
-                      ? "bg-blue-50 text-blue-900" 
-                      : "hover:bg-zinc-50"
-                  }`}
+                  className={`cursor-pointer p-3 ${currentDashboard.id === dashboard.id
+                    ? "bg-blue-50 text-blue-900"
+                    : "hover:bg-zinc-50"
+                    }`}
                 >
                   <div className="flex items-center gap-3">
                     <span className="text-xl">{dashboard.emoji}</span>
@@ -286,10 +402,10 @@ export function Header({ title = "Dashboard", subtitle = "Welcome back!", onOpen
             <Popover open={searchOpen} onOpenChange={setSearchOpen}>
               <PopoverTrigger asChild>
                 <Button
-                  variant="outline"
+
                   role="combobox"
                   aria-expanded={searchOpen}
-                  className="w-full justify-start text-left font-normal h-10 border-zinc-200 bg-white hover:bg-zinc-50 focus:border-lime-400 focus:ring-2 focus:ring-blue-500/30"
+                  className="w-full justify-start text-left font-normal h-10 bg-transparent hover:bg-transparent border border-gray-300 hover:border-gray-400 focus:border-[#006BC4] shadow-none hover:shadow-none focus:shadow-none"
                 >
                   <Search className="mr-2 h-4 w-4 text-zinc-400" />
                   <span className="text-zinc-400">
@@ -354,9 +470,9 @@ export function Header({ title = "Dashboard", subtitle = "Welcome back!", onOpen
           {/* Location chip */}
           <div className="hidden items-center gap-2 rounded-full border border-zinc-200 bg-white/70 px-3 py-1 text-xs font-light text-zinc-600 md:flex">
             <MapPin className="h-3.5 w-3.5 text-blue-600" />
-            <span className="tabular-nums">42°C</span>
+            <span className="tabular-nums">{weather?.temp ?? "--"}</span>
             <span className="text-zinc-400">•</span>
-            <span>Harare</span>
+            <span>{weather?.city ?? "Detecting location..."}</span>
           </div>
 
           {/* Notifications */}
@@ -389,14 +505,14 @@ export function Header({ title = "Dashboard", subtitle = "Welcome back!", onOpen
                 <div className="p-4 text-sm text-zinc-500">No recent notifications</div>
               ) : (
                 <div className="max-h-80 overflow-y-auto">
-                  {notifications.slice(0,8).map((n, idx) => {
+                  {notifications.slice(0, 8).map((n, idx) => {
                     const d = typeof n.created_at === 'string' ? parseISO(n.created_at) : new Date(n.created_at)
                     const when = isValid(d) ? formatDistanceToNow(d, { addSuffix: true }) : ''
                     const label = `${humanizeModule(n.module)} · ${n.action}`
                     const ActionIcon = (n.action === 'created' ? Plus : n.action === 'updated' ? Pencil : Trash2)
                     const color = n.action === 'created' ? 'text-green-600 bg-green-50' : n.action === 'updated' ? 'text-amber-600 bg-amber-50' : 'text-red-600 bg-red-50'
                     return (
-                      <DropdownMenuItem key={n.id} className={`p-0 border-b border-zinc-200 ${idx === Math.min(notifications.length,8)-1 ? 'last:border-0' : ''}`}>
+                      <DropdownMenuItem key={n.id} className={`p-0 border-b border-zinc-200 ${idx === Math.min(notifications.length, 8) - 1 ? 'last:border-0' : ''}`}>
                         <button
                           className="w-full text-left px-3 py-2 hover:bg-zinc-50"
                           onClick={() => {
@@ -431,13 +547,13 @@ export function Header({ title = "Dashboard", subtitle = "Welcome back!", onOpen
                 {isClient && (
                   <>
                     <Avatar className="h-8 w-8 ring-1 ring-zinc-200">
-                      <AvatarImage 
-                        src={user?.avatar || undefined} 
-                        alt={profile ? `${profile.first_name} ${profile.last_name}` : "User"} 
+                      <AvatarImage
+                        src={user?.avatar || undefined}
+                        alt={profile ? `${profile.first_name} ${profile.last_name}` : "User"}
                       />
-                      <AvatarFallback className="text-[10px] font-light bg-gradient-to-br from-blue-500 to-purple-600 text-white">
-                        {profile && profile.first_name && profile.last_name 
-                          ? `${profile.first_name[0]}${profile.last_name[0]}` 
+                      <AvatarFallback className="text-[10px] font-light bg-gray-100 text-gray-600">
+                        {profile && profile.first_name && profile.last_name
+                          ? `${profile.first_name[0]}${profile.last_name[0]}`
                           : "U"
                         }
                       </AvatarFallback>
@@ -458,21 +574,21 @@ export function Header({ title = "Dashboard", subtitle = "Welcome back!", onOpen
             <DropdownMenuContent align="end" className="w-56" sideOffset={6}>
               <DropdownMenuLabel className="font-light">My Account</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem 
+              <DropdownMenuItem
                 className="cursor-pointer"
                 onClick={() => router.push('/profile')}
               >
                 <User className="mr-2 h-4 w-4" />
                 Profile
               </DropdownMenuItem>
-              <DropdownMenuItem className="cursor-pointer">
+              {/* <DropdownMenuItem className="cursor-pointer">
                 <Settings className="mr-2 h-4 w-4" />
                 Settings
-              </DropdownMenuItem>
-              <DropdownMenuItem className="cursor-pointer">
+              </DropdownMenuItem> */}
+              {/* <DropdownMenuItem className="cursor-pointer">
                 <HelpCircle className="mr-2 h-4 w-4" />
                 Support
-              </DropdownMenuItem>
+              </DropdownMenuItem> */}
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={handleLogout}
@@ -523,7 +639,7 @@ export function Header({ title = "Dashboard", subtitle = "Welcome back!", onOpen
                   ))}
                 </div>
               </div>
-              
+
               {/* Mobile Search */}
               <div className="space-y-2">
                 <p className="text-xs font-medium text-zinc-500 uppercase tracking-wide">Search Pages</p>
@@ -531,7 +647,7 @@ export function Header({ title = "Dashboard", subtitle = "Welcome back!", onOpen
                   {filteredRoutes.slice(0, 8).map((route) => (
                     <Button
                       key={route.path}
-                      variant="outline"
+
                       onClick={() => {
                         handleRouteSelect(route.path)
                         setMobileSearchOpen(false)

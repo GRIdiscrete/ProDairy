@@ -15,6 +15,7 @@ export interface CreateDriverFormRequest {
   drivers_form_collected_products: DriverFormCollectedProduct[]
   delivered: boolean
   rejected: boolean
+  tanker:string
 }
 
 export interface UpdateDriverFormRequest {
@@ -26,6 +27,7 @@ export interface UpdateDriverFormRequest {
   delivered: boolean
   rejected: boolean
   updated_at: string
+  tanker: string
 }
 
 export const driverFormApi = {
@@ -49,6 +51,7 @@ export const driverFormApi = {
       end_date: formData.end_date,
       delivered: formData.delivered,
       rejected: formData.rejected,
+      tanker: formData.tanker,
       drivers_form_collected_products: formData.drivers_form_collected_products,
     }
     
@@ -68,6 +71,7 @@ export const driverFormApi = {
       delivered: formData.delivered,
       rejected: formData.rejected,
       updated_at: formData.updated_at,
+      tanker: formData.tanker,
       drivers_form_collected_products: formData.drivers_form_collected_products,
     }
     

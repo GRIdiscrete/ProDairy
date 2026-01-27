@@ -103,7 +103,7 @@ export function QualityTestsTable() {
     {
       accessorKey: "batchId",
       header: "Batch ID",
-      cell: ({ row }) => <Badge variant="outline">{row.getValue("batchId")}</Badge>,
+      cell: ({ row }) => <Badge >{row.getValue("batchId")}</Badge>,
     },
     {
       accessorKey: "testType",

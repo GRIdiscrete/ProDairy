@@ -5,15 +5,23 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Package, User, Building2, ArrowRight, Calendar, Hash } from "lucide-react"
 import type { ISTControlForm } from "@/lib/api/data-capture-forms"
+import { UserAvatar } from "@/components/ui/user-avatar"
 
 interface ISTControlFormViewDrawerProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   form: ISTControlForm | null
+  users?: any[]
 }
 
-export function ISTControlFormViewDrawer({ open, onOpenChange, form }: ISTControlFormViewDrawerProps) {
+export function ISTControlFormViewDrawer({ open, onOpenChange, form, users = [] }: ISTControlFormViewDrawerProps) {
   if (!form) return null
+
+  // Helper function to get user by ID
+  const getUserById = (userId: string) => {
+    if (!users || !Array.isArray(users)) return null
+    return users.find((user: any) => user.id === userId)
+  }
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -83,38 +91,53 @@ export function ISTControlFormViewDrawer({ open, onOpenChange, form }: ISTContro
           {/* Personnel Information */}
           <div className="p-6 bg-white border border-gray-200 rounded-lg mb-6">
             <div className="flex items-center space-x-2 mb-4">
-              <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center">
-                <User className="w-4 h-4 text-purple-600" />
+              <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
+                <User className="w-4 h-4 text-blue-600" />
               </div>
               <h3 className="text-lg font-light">Personnel Information</h3>
             </div>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-light text-gray-600">Issued By</span>
-                <span className="text-sm font-light">
-                  {form.ist_control_form_issued_by_fkey
-                    ? `${form.ist_control_form_issued_by_fkey.first_name} ${form.ist_control_form_issued_by_fkey.last_name}`
-                    : `User: ${form.issued_by?.slice(0, 8)}...`
-                  }
-                </span>
+            <div className="space-y-4">
+              <div>
+                <span className="text-sm font-light text-gray-600 block mb-2">Issued By</span>
+                {form.ist_control_form_issued_by_fkey || getUserById(form.issued_by) ? (
+                  <UserAvatar 
+                    user={form.ist_control_form_issued_by_fkey || getUserById(form.issued_by)} 
+                    size="md" 
+                    showName={true} 
+                    showEmail={true}
+                    showDropdown={true}
+                  />
+                ) : (
+                  <span className="text-sm font-light text-gray-500">User not found</span>
+                )}
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-light text-gray-600">Received By</span>
-                <span className="text-sm font-light">
-                  {form.ist_control_form_received_by_fkey
-                    ? `${form.ist_control_form_received_by_fkey.first_name} ${form.ist_control_form_received_by_fkey.last_name}`
-                    : `User: ${form.received_by?.slice(0, 8)}...`
-                  }
-                </span>
+              <div>
+                <span className="text-sm font-light text-gray-600 block mb-2">Received By</span>
+                {form.ist_control_form_received_by_fkey || getUserById(form.received_by) ? (
+                  <UserAvatar 
+                    user={form.ist_control_form_received_by_fkey || getUserById(form.received_by)} 
+                    size="md" 
+                    showName={true} 
+                    showEmail={true}
+                    showDropdown={true}
+                  />
+                ) : (
+                  <span className="text-sm font-light text-gray-500">User not found</span>
+                )}
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-light text-gray-600">Approver</span>
-                <span className="text-sm font-light">
-                  {form.ist_control_form_approver_fkey
-                    ? `${form.ist_control_form_approver_fkey.first_name} ${form.ist_control_form_approver_fkey.last_name}`
-                    : `User: ${form.approver?.slice(0, 8)}...`
-                  }
-                </span>
+              <div>
+                <span className="text-sm font-light text-gray-600 block mb-2">Approver</span>
+                {form.ist_control_form_approver_fkey || getUserById(form.approver) ? (
+                  <UserAvatar 
+                    user={form.ist_control_form_approver_fkey || getUserById(form.approver)} 
+                    size="md" 
+                    showName={true} 
+                    showEmail={true}
+                    showDropdown={true}
+                  />
+                ) : (
+                  <span className="text-sm font-light text-gray-500">User not found</span>
+                )}
               </div>
             </div>
           </div>

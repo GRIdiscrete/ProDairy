@@ -1,8 +1,9 @@
 "use client"
 
+import dynamic from "next/dynamic"
 import Link from "next/link"
 import Image from "next/image"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { useState, useMemo } from "react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -20,10 +21,52 @@ import {
   History,
   Truck,
   User,
+  Layers,
+  Calendar,
+  Store,
+  Database,
 } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { useFilteredNavigation } from "@/hooks/use-permissions"
 import { useAppSelector } from "@/lib/store"
+
+// Dynamic import to avoid hydration mismatch
+const AdminSidebarContent = dynamic(() => Promise.resolve(AdminSidebarComponent), {
+  ssr: false,
+  loading: () => (
+    <div className="w-80 min-h-screen border-r border-zinc-200 bg-white/80 backdrop-blur-xl">
+      <div className="h-16 border-b border-zinc-200 px-3 flex items-center">
+        <div className="h-10 w-10 bg-zinc-100 rounded animate-pulse" />
+      </div>
+      <div className="p-3 border-t border-zinc-200">
+        <div className="flex items-center gap-3">
+          <div className="h-9 w-9 bg-zinc-100 rounded-full animate-pulse" />
+          <div className="space-y-1">
+            <div className="h-4 w-24 bg-zinc-100 rounded animate-pulse" />
+            <div className="h-3 w-32 bg-zinc-100 rounded animate-pulse" />
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+})
+
+const navPermissionMap: Record<string, string> = {
+  "/admin": "dashboard",
+  "/admin/users": "user_tab",
+  "/admin/roles": "role_tab",
+  "/admin/machines": "machine_tab",
+  "/admin/silos": "silo_tab",
+  "/admin/devices": "devices_tab",
+  "/admin/materials": "settings", // or another relevant permission
+  "/admin/tankers": "driver_ui",
+  "/admin/suppliers": "supplier_tab",
+  "/admin/processes": "process_tab",
+  "/admin/filmatic-lines-groups": "bmt", // or another relevant permission
+  "/admin/production-plan": "production_dashboard",
+  "/admin/audit": "admin_panel",
+  "/profile": "settings", // or another relevant permission
+}
 
 const adminNavigation = [
   { name: "Dashboard", href: "/admin", icon: LayoutDashboard, current: false },
@@ -48,19 +91,19 @@ const adminNavigation = [
   {
     name: "Silos",
     href: "/admin/silos",
-    icon: Package,
+    icon: Database,
     current: false,
   },
-  {
-    name: "Devices",
-    href: "/admin/devices",
-    icon: Settings,
-    current: false,
-  },
+  // {
+  //   name: "Devices",
+  //   href: "/admin/devices",
+  //   icon: Settings,
+  //   current: false,
+  // },
   {
     name: "Materials",
     href: "/admin/materials",
-    icon: Package,
+    icon: Layers,
     current: false,
   },
   {
@@ -84,20 +127,26 @@ const adminNavigation = [
   {
     name: "Production Plan",
     href: "/admin/production-plan",
-    icon: FileText,
+    icon: Calendar,
     current: false,
   },
   {
-    name: "Audit Trail",
-    href: "/admin/audit",
-    icon: History,
+    name: "Suppliers",
+    href: "/admin/suppliers",
+    icon: Store,
     current: false,
-    children: [
-      { name: "Users", href: "/admin/audit/users" },
-      { name: "Processes", href: "/admin/audit/processes" },
-      { name: "System-wide", href: "/admin/audit/system" },
-    ],
   },
+  // {
+  //   name: "Audit Trail",
+  //   href: "/admin/audit",
+  //   icon: History,
+  //   current: false,
+  //   children: [
+  //     { name: "Users", href: "/admin/audit/users" },
+  //     { name: "Processes", href: "/admin/audit/processes" },
+  //     { name: "System-wide", href: "/admin/audit/system" },
+  //   ],
+  // },
   {
     name: "Profile",
     href: "/profile",
@@ -111,19 +160,38 @@ interface AdminSidebarProps {
   onToggle?: () => void
 }
 
-export function AdminSidebar({ collapsed = false, onToggle }: AdminSidebarProps) {
+function AdminSidebarComponent({ collapsed = false, onToggle }: AdminSidebarProps) {
   const pathname = usePathname()
   const { user, profile } = useAppSelector((state) => state.auth)
   const [openDropdowns, setOpenDropdowns] = useState<string[]>([])
-  
-  // For now, show all navigation items (permissions removed for dashboard view role)
-  const filteredNavigation = adminNavigation
+  const router = useRouter()
 
-  const toggleDropdown = (itemName: string) => {
-    setOpenDropdowns((prev) =>
-      prev.includes(itemName) ? prev.filter((n) => n !== itemName) : [...prev, itemName]
-    )
-  }
+  // Get allowed views from user profile
+  const allowedViews: string[] =
+    profile?.users_role_id_fkey?.views && Array.isArray(profile.users_role_id_fkey.views)
+      ? profile.users_role_id_fkey.views
+      : []
+
+  // Filter navigation based on permissions, but always show "Profile"
+  const filteredNavigation = adminNavigation.filter((item) => {
+    if (item.href === "/profile") return true // Always show Profile
+    const permKey = navPermissionMap[item.href]
+    if (!permKey) return true
+    return allowedViews.includes(permKey)
+  }).map(item => {
+    // For dropdowns, filter children as well
+    if (item.children) {
+      const filteredChildren = item.children.filter(child => {
+        const permKey = navPermissionMap[child.href]
+        if (!permKey) return true
+        return allowedViews.includes(permKey)
+      })
+      // Hide parent if no children are visible
+      if (filteredChildren.length === 0) return null
+      return { ...item, children: filteredChildren }
+    }
+    return item
+  }).filter(Boolean)
 
   // Layout widths (ensure logo never clipped)
   const openWidth = 272
@@ -162,7 +230,7 @@ export function AdminSidebar({ collapsed = false, onToggle }: AdminSidebarProps)
       <div className="relative flex h-16 items-center justify-between border-b border-zinc-200 px-3">
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-x-0 -bottom-px h-[1px] bg-gradient-to-r from-blue-300 via-zinc-200 to-lime-300"
+          className="pointer-events-none absolute inset-x-0 -bottom-px h-[1px]  from-blue-300 via-zinc-200 to-lime-300"
         />
         <div className={cn("flex items-center gap-3", collapsed && "w-full justify-center")}>
           {/* Logo: ensure visibility when collapsed */}
@@ -235,7 +303,7 @@ export function AdminSidebar({ collapsed = false, onToggle }: AdminSidebarProps)
                       className={cn(
                         "group flex w-full items-center rounded-xl px-2.5 py-2 text-sm transition-all",
                         isActive
-                          ? "bg-gradient-to-r from-blue-50 to-lime-50 text-zinc-900 ring-1 ring-inset ring-blue-200/50"
+                          ? " from-blue-50 to-lime-50 text-zinc-900 ring-1 ring-inset ring-blue-200/50"
                           : "text-zinc-700 hover:bg-zinc-50"
                       )}
                     >
@@ -297,7 +365,7 @@ export function AdminSidebar({ collapsed = false, onToggle }: AdminSidebarProps)
                     className={cn(
                       "group flex items-center rounded-xl px-2.5 py-2 text-sm transition-all",
                       isActive
-                        ? "bg-gradient-to-r from-blue-50 to-lime-50 text-zinc-900 ring-1 ring-inset ring-blue-200/50"
+                        ? " from-blue-50 to-lime-50 text-zinc-900 ring-1 ring-inset ring-blue-200/50"
                         : "text-zinc-700 hover:bg-zinc-50"
                     )}
                   >
@@ -327,7 +395,8 @@ export function AdminSidebar({ collapsed = false, onToggle }: AdminSidebarProps)
       </nav>
 
       {/* Footer / Profile */}
-      <div className="border-t border-zinc-200 p-3">
+      <div onClick={() => router.push('/profile')}
+        className="border-t border-zinc-200 p-3 cursor-pointer">
         <div className={cn("flex items-center gap-3", collapsed && "justify-center")}>
           <div className="relative h-9 w-9 overflow-hidden rounded-full ring-1 ring-zinc-200">
             <Image src="/placeholder-user.jpg" alt="User avatar" fill className="object-cover" />
@@ -342,11 +411,11 @@ export function AdminSidebar({ collapsed = false, onToggle }: AdminSidebarProps)
                 className="min-w-0"
               >
                 <p className="truncate text-sm font-light text-zinc-900">
-                  {profile?.first_name && profile?.last_name 
-                    ? `${profile.first_name} ${profile.last_name}` 
-                    : user?.first_name && user?.last_name 
-                    ? `${user.first_name} ${user.last_name}` 
-                    : 'Admin User'
+                  {profile?.first_name && profile?.last_name
+                    ? `${profile.first_name} ${profile.last_name}`
+                    : user?.first_name && user?.last_name
+                      ? `${user.first_name} ${user.last_name}`
+                      : 'Admin User'
                   }
                 </p>
                 <p className="truncate text-xs font-extralight tracking-wide text-zinc-500">
@@ -359,6 +428,10 @@ export function AdminSidebar({ collapsed = false, onToggle }: AdminSidebarProps)
       </div>
     </motion.aside>
   )
+}
+
+export function AdminSidebar(props: AdminSidebarProps) {
+  return <AdminSidebarContent {...props} />
 }
 
 

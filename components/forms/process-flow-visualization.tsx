@@ -78,7 +78,7 @@ export function ProcessFlowVisualization({
       case "error":
         return <Badge className="bg-red-100 text-red-800 border-red-200">Error</Badge>
       default:
-        return <Badge variant="outline">Pending</Badge>
+        return <Badge >Pending</Badge>
     }
   }
 

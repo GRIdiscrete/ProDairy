@@ -18,8 +18,8 @@ export function StandardizingTable({ forms, onView, onEdit, onDelete, operationL
         <div key={form.id} className="border border-gray-200 rounded-lg bg-white border-l-4 border-l-orange-500 p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center">
-                <Beaker className="w-6 h-6 text-white" />
+              <div className="w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center">
+                <Beaker className="w-6 h-6 text-gray-600" />
               </div>
               <div>
                 <div className="flex items-center space-x-2">
@@ -35,18 +35,18 @@ export function StandardizingTable({ forms, onView, onEdit, onDelete, operationL
             </div>
             <div className="flex space-x-2">
               <LoadingButton
-                variant="outline"
+                
                 size="sm"
                 onClick={() => onView(form)}
-                className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full"
+                className="bg-[#006BC4] text-white rounded-full"
               >
                 <Eye className="w-4 h-4" />
               </LoadingButton>
               <LoadingButton
-                variant="outline"
+                
                 size="sm"
                 onClick={() => onEdit(form)}
-                className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 rounded-full"
+                className="bg-[#A0CF06] text-[#211D1E] rounded-full"
               >
                 <Edit className="w-4 h-4" />
               </LoadingButton>
@@ -56,7 +56,7 @@ export function StandardizingTable({ forms, onView, onEdit, onDelete, operationL
                 onClick={() => onDelete(form)}
                 loading={operationLoading.delete}
                 disabled={operationLoading.delete}
-                className="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white border-0 rounded-full"
+                className="bg-red-600 hover:bg-red-700 text-white border-0 rounded-full"
               >
                 <Trash2 className="w-4 h-4" />
               </LoadingButton>

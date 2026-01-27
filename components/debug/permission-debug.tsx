@@ -55,7 +55,7 @@ export function PermissionDebug() {
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg">Permission Debug Information</CardTitle>
           <Button
-            variant="outline"
+            
             size="sm"
             onClick={() => setIsVisible(!isVisible)}
           >

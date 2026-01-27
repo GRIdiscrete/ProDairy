@@ -162,14 +162,14 @@ export default function FlexOneSteriliserProcessPage() {
         const waterStreamsCount = waterStreams.filter((stream: any) => stream.flex_1_steriliser_process_id === process.id).length
         return (
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center">
-              <Thermometer className="w-4 h-4 text-white" />
+            <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
+              <Thermometer className="w-4 h-4 text-gray-600" />
             </div>
             <div>
               <div className="flex items-center space-x-2">
                 <span className="font-medium">Flex 1 Steriliser</span>
                 <Badge className="bg-blue-100 text-blue-800">{productsCount} products</Badge>
-                <Badge className="bg-cyan-100 text-cyan-800">{waterStreamsCount} streams</Badge>
+                <Badge className="bg-blue-100 text-blue-800">{waterStreamsCount} streams</Badge>
               </div>
               <p className="text-sm text-gray-500 mt-1">
                 {process.product_being_processed || "Unknown Product"}
@@ -251,10 +251,10 @@ export default function FlexOneSteriliserProcessPage() {
         const process = row.original
         return (
           <div className="flex space-x-2">
-            <LoadingButton variant="outline" size="sm" onClick={() => handleViewProcess(process)}>
+            <LoadingButton  size="sm" onClick={() => handleViewProcess(process)}>
               <Eye className="w-4 h-4" />
             </LoadingButton>
-            <LoadingButton variant="outline" size="sm" onClick={() => handleEditProcess(process)}>
+            <LoadingButton  size="sm" onClick={() => handleEditProcess(process)}>
               <Edit className="w-4 h-4" />
             </LoadingButton>
             <LoadingButton 
@@ -354,7 +354,7 @@ export default function FlexOneSteriliserProcessPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Water Streams</CardTitle>
-              <Droplets className="h-4 w-4 text-purple-600" />
+              <Droplets className="h-4 w-4 text-blue-600" />
             </CardHeader>
             <CardContent>
               {operationLoading.fetch ? (
@@ -364,7 +364,7 @@ export default function FlexOneSteriliserProcessPage() {
                 </div>
               ) : (
                 <>
-                  <div className="text-2xl font-bold text-purple-600">
+                  <div className="text-2xl font-bold text-blue-600">
                     {(waterStreams || []).length}
                   </div>
                   <p className="text-xs text-muted-foreground">Water stream records</p>

@@ -57,7 +57,7 @@ const tabletModules = [
     name: 'Tools',
     icon: Wrench,
     path: '/tools',
-    color: 'bg-purple-500',
+    color: 'bg-blue-500',
   },
 ]
 
@@ -103,7 +103,7 @@ export function TabletDashboardLayout({
             <Button
               onClick={() => setIsModuleSelectorOpen(true)}
               className="w-full h-14 text-lg font-medium rounded-xl mb-2"
-              variant="outline"
+              
             >
               <div className="flex items-center justify-between w-full">
                 <div className="flex items-center space-x-3">

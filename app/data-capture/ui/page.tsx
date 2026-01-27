@@ -155,7 +155,7 @@ export default function DataCapturerUIPage() {
 
             {/* Action Buttons */}
             <div className="flex justify-end space-x-2">
-              <Button variant="outline">
+              <Button >
                 <Trash2 className="mr-2 h-4 w-4" />
                 Clear Form
               </Button>
@@ -223,7 +223,7 @@ export default function DataCapturerUIPage() {
                     }`}>
                       {entry.status}
                     </span>
-                    <Button variant="outline" size="sm">
+                    <Button  size="sm">
                       Edit
                     </Button>
                   </div>

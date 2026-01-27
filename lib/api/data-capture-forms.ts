@@ -19,6 +19,7 @@ export interface BMTControlForm {
   dpp_signature: string
   product: string
   updated_at?: string
+  tag?: string
   // Relationship data
   bmt_control_form_source_silo_id_fkey?: {
     id: string
@@ -73,7 +74,19 @@ export interface CIPControlForm {
   id?: string
   created_at?: string
   status: string
-  machine_id: string
+  machine_id: {
+    id: string
+    tag?: string | null
+    name: string
+    status: string
+    category: string
+    location: string
+    counter_id?: string | null
+    created_at: string
+    updated_at: string
+    cases_packed?: number | null
+    serial_number: string
+  }
   operator_id: string
   date: string
   approver: string
@@ -83,7 +96,10 @@ export interface CIPControlForm {
   rinse_water_test: string
   checked_by: string
   updated_at?: string
+  stage?: string | null
+  tag?: string
   // Relationship data
+  cip_control_form_stages?: CIPControlFormStages[]
   cip_control_form_machine_id_fkey?: {
     id: string
     name: string
@@ -147,16 +163,11 @@ export interface CIPControlForm {
 export interface CIPControlFormStages {
   id?: string
   created_at?: string
-  cip_control_form_id: string
-  stage_name: string
+  cip_control_form_id?: string
+  stage: string
   start_time: string
-  end_time: string
-  temperature: number
-  pressure: number
-  flow_rate: number
-  concentration: number
-  notes?: string
-  updated_at?: string
+  stop_time: string
+  updated_at?: string | null
 }
 
 // Drivers Form Types
@@ -354,6 +365,7 @@ export interface ISTControlForm {
   from_warehouse: string
   to_warehouse: string
   updated_at?: string
+  tag?: string
   // Relationship data
   ist_control_form_issued_by_fkey?: {
     id: string
@@ -416,6 +428,9 @@ export interface PalletiserSheet {
   batch_number: number
   product_type: string
   approved_by: string
+  tag?: string
+  // Details array (new payload shape)
+  palletiser_sheet_details?: PalletiserSheetDetails[]
   // Relationship data
   palletiser_sheet_approved_by_fkey?: {
     id: string
@@ -498,6 +513,7 @@ export interface SterilisedMilkProcess {
   supervisor_signature: string
   details?: string | null
   filmatic_form_id?: string
+  tag?: string
   // Relationship data
   sterilised_milk_process_details_fkey?: SterilisedMilkProcessDetails
   sterilised_milk_process_approved_by_fkey?: {
@@ -588,11 +604,11 @@ export const getBMTControlForms = async () => {
   return Array.isArray(res) ? (res as BMTControlForm[]) : ((res?.data ?? []) as BMTControlForm[])
 }
 export const getBMTControlForm = (id: string) => apiRequest<BMTControlForm>(`/bmt-control-form/${id}`)
-export const createBMTControlForm = (data: Omit<BMTControlForm, 'id' | 'created_at' | 'updated_at'>) => 
+export const createBMTControlForm = (data: Omit<BMTControlForm, 'id' | 'created_at' | 'updated_at'>) =>
   apiRequest<BMTControlForm>('/bmt-control-form', { method: 'POST', body: JSON.stringify(data) })
-export const updateBMTControlForm = (data: BMTControlForm) => 
+export const updateBMTControlForm = (data: BMTControlForm) =>
   apiRequest<BMTControlForm>('/bmt-control-form', { method: 'PATCH', body: JSON.stringify(data) })
-export const deleteBMTControlForm = (id: string) => 
+export const deleteBMTControlForm = (id: string) =>
   apiRequest<void>(`/bmt-control-form/${id}`, { method: 'DELETE' })
 
 // CIP Control Form APIs
@@ -601,61 +617,61 @@ export const getCIPControlForms = async () => {
   return Array.isArray(res) ? (res as CIPControlForm[]) : ((res?.data ?? []) as CIPControlForm[])
 }
 export const getCIPControlForm = (id: string) => apiRequest<CIPControlForm>(`/cip-control-form/${id}`)
-export const createCIPControlForm = (data: Omit<CIPControlForm, 'id' | 'created_at' | 'updated_at'>) => 
+export const createCIPControlForm = (data: Omit<CIPControlForm, 'id' | 'created_at' | 'updated_at'>) =>
   apiRequest<CIPControlForm>('/cip-control-form', { method: 'POST', body: JSON.stringify(data) })
-export const updateCIPControlForm = (data: CIPControlForm) => 
+export const updateCIPControlForm = (data: CIPControlForm) =>
   apiRequest<CIPControlForm>('/cip-control-form', { method: 'PATCH', body: JSON.stringify(data) })
-export const deleteCIPControlForm = (id: string) => 
+export const deleteCIPControlForm = (id: string) =>
   apiRequest<void>(`/cip-control-form/${id}`, { method: 'DELETE' })
 
 // CIP Control Form Stages APIs
 export const getCIPControlFormStages = () => apiRequest<CIPControlFormStages[]>('/cip-control-form/stages')
 export const getCIPControlFormStage = (id: string) => apiRequest<CIPControlFormStages>(`/cip-control-form/stages/${id}`)
-export const createCIPControlFormStage = (data: Omit<CIPControlFormStages, 'id' | 'created_at' | 'updated_at'>) => 
+export const createCIPControlFormStage = (data: Omit<CIPControlFormStages, 'id' | 'created_at' | 'updated_at'>) =>
   apiRequest<CIPControlFormStages>('/cip-control-form/stages', { method: 'POST', body: JSON.stringify(data) })
-export const updateCIPControlFormStage = (data: CIPControlFormStages) => 
+export const updateCIPControlFormStage = (data: CIPControlFormStages) =>
   apiRequest<CIPControlFormStages>('/cip-control-form/stages', { method: 'PATCH', body: JSON.stringify(data) })
-export const deleteCIPControlFormStage = (id: string) => 
+export const deleteCIPControlFormStage = (id: string) =>
   apiRequest<void>(`/cip-control-form/stages/${id}`, { method: 'DELETE' })
 
 // Drivers Form APIs
 export const getDriversForms = () => apiRequest<DriversForm[]>('/drivers-form')
 export const getDriversForm = (id: string) => apiRequest<DriversForm>(`/drivers-form/${id}`)
-export const createDriversForm = (data: Omit<DriversForm, 'id' | 'created_at' | 'updated_at'>) => 
+export const createDriversForm = (data: Omit<DriversForm, 'id' | 'created_at' | 'updated_at'>) =>
   apiRequest<DriversForm>('/drivers-form', { method: 'POST', body: JSON.stringify(data) })
-export const updateDriversForm = (data: DriversForm) => 
+export const updateDriversForm = (data: DriversForm) =>
   apiRequest<DriversForm>('/drivers-form', { method: 'PATCH', body: JSON.stringify(data) })
-export const deleteDriversForm = (id: string) => 
+export const deleteDriversForm = (id: string) =>
   apiRequest<void>(`/drivers-form/${id}`, { method: 'DELETE' })
 
 // Filler Log 2 APIs
 export const getFillerLog2s = () => apiRequest<FillerLog2[]>('/filler-log-2')
 export const getFillerLog2 = (id: string) => apiRequest<FillerLog2>(`/filler-log-2/${id}`)
-export const createFillerLog2 = (data: Omit<FillerLog2, 'id' | 'created_at' | 'updated_at'>) => 
+export const createFillerLog2 = (data: Omit<FillerLog2, 'id' | 'created_at' | 'updated_at'>) =>
   apiRequest<FillerLog2>('/filler-log-2', { method: 'POST', body: JSON.stringify(data) })
-export const updateFillerLog2 = (data: FillerLog2) => 
+export const updateFillerLog2 = (data: FillerLog2) =>
   apiRequest<FillerLog2>('/filler-log-2', { method: 'PATCH', body: JSON.stringify(data) })
-export const deleteFillerLog2 = (id: string) => 
+export const deleteFillerLog2 = (id: string) =>
   apiRequest<void>(`/filler-log-2/${id}`, { method: 'DELETE' })
 
 // Filler Log 2 Process Control APIs
 export const getFillerLog2ProcessControls = () => apiRequest<FillerLog2ProcessControl[]>('/filler-log-2/process-control')
 export const getFillerLog2ProcessControl = (id: string) => apiRequest<FillerLog2ProcessControl>(`/filler-log-2/process-control/${id}`)
-export const createFillerLog2ProcessControl = (data: Omit<FillerLog2ProcessControl, 'id' | 'created_at' | 'updated_at'>) => 
+export const createFillerLog2ProcessControl = (data: Omit<FillerLog2ProcessControl, 'id' | 'created_at' | 'updated_at'>) =>
   apiRequest<FillerLog2ProcessControl>('/filler-log-2/process-control', { method: 'POST', body: JSON.stringify(data) })
-export const updateFillerLog2ProcessControl = (data: FillerLog2ProcessControl) => 
+export const updateFillerLog2ProcessControl = (data: FillerLog2ProcessControl) =>
   apiRequest<FillerLog2ProcessControl>('/filler-log-2/process-control', { method: 'PATCH', body: JSON.stringify(data) })
-export const deleteFillerLog2ProcessControl = (id: string) => 
+export const deleteFillerLog2ProcessControl = (id: string) =>
   apiRequest<void>(`/filler-log-2/process-control/${id}`, { method: 'DELETE' })
 
 // Filler Log 2 Process Control Parameters APIs
 export const getFillerLog2ProcessControlParameters = () => apiRequest<FillerLog2ProcessControlParameters[]>('/filler-log-2/process-control/parameters')
 export const getFillerLog2ProcessControlParameter = (id: string) => apiRequest<FillerLog2ProcessControlParameters>(`/filler-log-2/process-control/parameters/${id}`)
-export const createFillerLog2ProcessControlParameter = (data: Omit<FillerLog2ProcessControlParameters, 'id' | 'created_at' | 'updated_at'>) => 
+export const createFillerLog2ProcessControlParameter = (data: Omit<FillerLog2ProcessControlParameters, 'id' | 'created_at' | 'updated_at'>) =>
   apiRequest<FillerLog2ProcessControlParameters>('/filler-log-2/process-control/parameters', { method: 'POST', body: JSON.stringify(data) })
-export const updateFillerLog2ProcessControlParameter = (data: FillerLog2ProcessControlParameters) => 
+export const updateFillerLog2ProcessControlParameter = (data: FillerLog2ProcessControlParameters) =>
   apiRequest<FillerLog2ProcessControlParameters>('/filler-log-2/process-control/parameters', { method: 'PATCH', body: JSON.stringify(data) })
-export const deleteFillerLog2ProcessControlParameter = (id: string) => 
+export const deleteFillerLog2ProcessControlParameter = (id: string) =>
   apiRequest<void>(`/filler-log-2/process-control/parameters/${id}`, { method: 'DELETE' })
 
 // Continue with remaining APIs...
@@ -666,31 +682,31 @@ export const deleteFillerLog2ProcessControlParameter = (id: string) =>
 // Package Integrity APIs
 export const getFillerLog2PackageIntegrities = () => apiRequest<FillerLog2PackageIntegrity[]>('/filler-log-2/package-integrity')
 export const getFillerLog2PackageIntegrity = (id: string) => apiRequest<FillerLog2PackageIntegrity>(`/filler-log-2/package-integrity/${id}`)
-export const createFillerLog2PackageIntegrity = (data: Omit<FillerLog2PackageIntegrity, 'id' | 'created_at' | 'updated_at'>) => 
+export const createFillerLog2PackageIntegrity = (data: Omit<FillerLog2PackageIntegrity, 'id' | 'created_at' | 'updated_at'>) =>
   apiRequest<FillerLog2PackageIntegrity>('/filler-log-2/package-integrity', { method: 'POST', body: JSON.stringify(data) })
-export const updateFillerLog2PackageIntegrity = (data: FillerLog2PackageIntegrity) => 
+export const updateFillerLog2PackageIntegrity = (data: FillerLog2PackageIntegrity) =>
   apiRequest<FillerLog2PackageIntegrity>('/filler-log-2/package-integrity', { method: 'PATCH', body: JSON.stringify(data) })
-export const deleteFillerLog2PackageIntegrity = (id: string) => 
+export const deleteFillerLog2PackageIntegrity = (id: string) =>
   apiRequest<void>(`/filler-log-2/package-integrity/${id}`, { method: 'DELETE' })
 
 // Package Integrity Parameters APIs
 export const getFillerLog2PackageIntegrityParameters = () => apiRequest<FillerLog2PackageIntegrityParameters[]>('/filler-log-2/package-integrity/parameters')
 export const getFillerLog2PackageIntegrityParameter = (id: string) => apiRequest<FillerLog2PackageIntegrityParameters>(`/filler-log-2/package-integrity/parameters/${id}`)
-export const createFillerLog2PackageIntegrityParameter = (data: Omit<FillerLog2PackageIntegrityParameters, 'id' | 'created_at' | 'updated_at'>) => 
+export const createFillerLog2PackageIntegrityParameter = (data: Omit<FillerLog2PackageIntegrityParameters, 'id' | 'created_at' | 'updated_at'>) =>
   apiRequest<FillerLog2PackageIntegrityParameters>('/filler-log-2/package-integrity/parameters', { method: 'POST', body: JSON.stringify(data) })
-export const updateFillerLog2PackageIntegrityParameter = (data: FillerLog2PackageIntegrityParameters) => 
+export const updateFillerLog2PackageIntegrityParameter = (data: FillerLog2PackageIntegrityParameters) =>
   apiRequest<FillerLog2PackageIntegrityParameters>('/filler-log-2/package-integrity/parameters', { method: 'PATCH', body: JSON.stringify(data) })
-export const deleteFillerLog2PackageIntegrityParameter = (id: string) => 
+export const deleteFillerLog2PackageIntegrityParameter = (id: string) =>
   apiRequest<void>(`/filler-log-2/package-integrity/parameters/${id}`, { method: 'DELETE' })
 
 // Flex One Sterilizer Process APIs
 export const getFlexOneSterilizerProcesses = () => apiRequest<FlexOneSterilizerProcess[]>('/flex-one-sterilizer-process')
 export const getFlexOneSterilizerProcess = (id: string) => apiRequest<FlexOneSterilizerProcess>(`/flex-one-sterilizer-process/${id}`)
-export const createFlexOneSterilizerProcess = (data: Omit<FlexOneSterilizerProcess, 'id' | 'created_at' | 'updated_at'>) => 
+export const createFlexOneSterilizerProcess = (data: Omit<FlexOneSterilizerProcess, 'id' | 'created_at' | 'updated_at'>) =>
   apiRequest<FlexOneSterilizerProcess>('/flex-one-sterilizer-process', { method: 'POST', body: JSON.stringify(data) })
-export const updateFlexOneSterilizerProcess = (data: FlexOneSterilizerProcess) => 
+export const updateFlexOneSterilizerProcess = (data: FlexOneSterilizerProcess) =>
   apiRequest<FlexOneSterilizerProcess>('/flex-one-sterilizer-process', { method: 'PATCH', body: JSON.stringify(data) })
-export const deleteFlexOneSterilizerProcess = (id: string) => 
+export const deleteFlexOneSterilizerProcess = (id: string) =>
   apiRequest<void>(`/flex-one-sterilizer-process/${id}`, { method: 'DELETE' })
 
 // IST Control Form APIs
@@ -710,17 +726,17 @@ export const updateISTControlForm = async (data: ISTControlForm) => {
   const res = await apiRequest<any>('/ist-control-form', { method: 'PATCH', body: JSON.stringify(data) })
   return Array.isArray(res) ? (res[0] as ISTControlForm) : ((res?.data ?? null) as ISTControlForm)
 }
-export const deleteISTControlForm = (id: string) => 
+export const deleteISTControlForm = (id: string) =>
   apiRequest<void>(`/ist-control-form/${id}`, { method: 'DELETE' })
 
 // Legacy IST Form APIs (keeping for backward compatibility)
 export const getISTForms = () => apiRequest<ISTForm[]>('/ist-control-form')
 export const getISTForm = (id: string) => apiRequest<ISTForm>(`/ist-control-form/${id}`)
-export const createISTForm = (data: Omit<ISTForm, 'id' | 'created_at' | 'updated_at'>) => 
+export const createISTForm = (data: Omit<ISTForm, 'id' | 'created_at' | 'updated_at'>) =>
   apiRequest<ISTForm>('/ist-control-form', { method: 'POST', body: JSON.stringify(data) })
-export const updateISTForm = (data: ISTForm) => 
+export const updateISTForm = (data: ISTForm) =>
   apiRequest<ISTForm>('/ist-control-form', { method: 'PATCH', body: JSON.stringify(data) })
-export const deleteISTForm = (id: string) => 
+export const deleteISTForm = (id: string) =>
   apiRequest<void>(`/ist-control-form/${id}`, { method: 'DELETE' })
 
 // Palletiser Sheet APIs
@@ -745,11 +761,11 @@ export const getPalletiserSheet = async (id: string) => {
   }
 }
 
-export const createPalletiserSheet = (data: Omit<PalletiserSheet, 'id' | 'created_at' | 'updated_at'>) => 
+export const createPalletiserSheet = (data: Omit<PalletiserSheet, 'id' | 'created_at' | 'updated_at'>) =>
   apiRequest<PalletiserSheet>('/palletiser-sheet', { method: 'POST', body: JSON.stringify(data) })
-export const updatePalletiserSheet = (data: PalletiserSheet) => 
+export const updatePalletiserSheet = (data: PalletiserSheet) =>
   apiRequest<PalletiserSheet>('/palletiser-sheet', { method: 'PATCH', body: JSON.stringify(data) })
-export const deletePalletiserSheet = (id: string) => 
+export const deletePalletiserSheet = (id: string) =>
   apiRequest<void>(`/palletiser-sheet/${id}`, { method: 'DELETE' })
 
 // Palletiser Sheet Details APIs
@@ -763,11 +779,11 @@ export const getPalletiserSheetDetails = async () => {
   }
 }
 
-export const createPalletiserSheetDetails = (data: Omit<PalletiserSheetDetails, 'id' | 'created_at' | 'updated_at'>) => 
+export const createPalletiserSheetDetails = (data: Omit<PalletiserSheetDetails, 'id' | 'created_at' | 'updated_at'>) =>
   apiRequest<PalletiserSheetDetails>('/palletiser-sheet-details', { method: 'POST', body: JSON.stringify(data) })
-export const updatePalletiserSheetDetails = (data: PalletiserSheetDetails) => 
+export const updatePalletiserSheetDetails = (data: PalletiserSheetDetails) =>
   apiRequest<PalletiserSheetDetails>('/palletiser-sheet-details', { method: 'PATCH', body: JSON.stringify(data) })
-export const deletePalletiserSheetDetails = (id: string) => 
+export const deletePalletiserSheetDetails = (id: string) =>
   apiRequest<void>(`/palletiser-sheet-details/${id}`, { method: 'DELETE' })
 
 // Sterilised Milk Process APIs
@@ -943,11 +959,11 @@ export const getFlexOneSteriliserProcess = async (id: string) => {
   }
 }
 
-export const createFlexOneSteriliserProcess = (data: Omit<FlexOneSteriliserProcess, 'id' | 'created_at' | 'updated_at'>) => 
+export const createFlexOneSteriliserProcess = (data: Omit<FlexOneSteriliserProcess, 'id' | 'created_at' | 'updated_at'>) =>
   apiRequest<FlexOneSteriliserProcess>('/flex-one-sterilizer-process', { method: 'POST', body: JSON.stringify(data) })
-export const updateFlexOneSteriliserProcess = (data: FlexOneSteriliserProcess) => 
+export const updateFlexOneSteriliserProcess = (data: FlexOneSteriliserProcess) =>
   apiRequest<FlexOneSteriliserProcess>('/flex-one-sterilizer-process', { method: 'PATCH', body: JSON.stringify(data) })
-export const deleteFlexOneSteriliserProcess = (id: string) => 
+export const deleteFlexOneSteriliserProcess = (id: string) =>
   apiRequest<void>(`/flex-one-sterilizer-process/${id}`, { method: 'DELETE' })
 
 // Flex 1 Steriliser Process Product APIs
@@ -961,11 +977,11 @@ export const getFlexOneSteriliserProcessProducts = async () => {
   }
 }
 
-export const createFlexOneSteriliserProcessProduct = (data: Omit<FlexOneSteriliserProcessProduct, 'id' | 'created_at' | 'updated_at'>) => 
+export const createFlexOneSteriliserProcessProduct = (data: Omit<FlexOneSteriliserProcessProduct, 'id' | 'created_at' | 'updated_at'>) =>
   apiRequest<FlexOneSteriliserProcessProduct>('/flex-one-sterilizer-process/product', { method: 'POST', body: JSON.stringify(data) })
-export const updateFlexOneSteriliserProcessProduct = (data: FlexOneSteriliserProcessProduct) => 
+export const updateFlexOneSteriliserProcessProduct = (data: FlexOneSteriliserProcessProduct) =>
   apiRequest<FlexOneSteriliserProcessProduct>('/flex-one-sterilizer-process/product', { method: 'PATCH', body: JSON.stringify(data) })
-export const deleteFlexOneSteriliserProcessProduct = (id: string) => 
+export const deleteFlexOneSteriliserProcessProduct = (id: string) =>
   apiRequest<void>(`/flex-one-sterilizer-process/product/${id}`, { method: 'DELETE' })
 
 // Flex 1 Steriliser Process Water Stream APIs
@@ -979,11 +995,11 @@ export const getFlexOneSteriliserProcessWaterStreams = async () => {
   }
 }
 
-export const createFlexOneSteriliserProcessWaterStream = (data: Omit<FlexOneSteriliserProcessWaterStream, 'id' | 'created_at' | 'updated_at'>) => 
+export const createFlexOneSteriliserProcessWaterStream = (data: Omit<FlexOneSteriliserProcessWaterStream, 'id' | 'created_at' | 'updated_at'>) =>
   apiRequest<FlexOneSteriliserProcessWaterStream>('/flex-one-sterilizer-process/water-stream', { method: 'POST', body: JSON.stringify(data) })
-export const updateFlexOneSteriliserProcessWaterStream = (data: FlexOneSteriliserProcessWaterStream) => 
+export const updateFlexOneSteriliserProcessWaterStream = (data: FlexOneSteriliserProcessWaterStream) =>
   apiRequest<FlexOneSteriliserProcessWaterStream>('/flex-one-sterilizer-process/water-stream', { method: 'PATCH', body: JSON.stringify(data) })
-export const deleteFlexOneSteriliserProcessWaterStream = (id: string) => 
+export const deleteFlexOneSteriliserProcessWaterStream = (id: string) =>
   apiRequest<void>(`/flex-one-sterilizer-process/water-stream/${id}`, { method: 'DELETE' })
 
 // Filler Log 2 Types
@@ -1111,11 +1127,11 @@ export interface FillerLog2StripSplice {
 }
 
 // Filler Log 2 Package Integrity Parameters APIs
-export const createFillerLog2PackageIntegrityParameters = (data: Omit<FillerLog2PackageIntegrityParameters, 'id' | 'created_at' | 'updated_at'>) => 
+export const createFillerLog2PackageIntegrityParameters = (data: Omit<FillerLog2PackageIntegrityParameters, 'id' | 'created_at' | 'updated_at'>) =>
   apiRequest<FillerLog2PackageIntegrityParameters>('/filler-log-2/package-integrity/parameters', { method: 'POST', body: JSON.stringify(data) })
-export const updateFillerLog2PackageIntegrityParameters = (data: FillerLog2PackageIntegrityParameters) => 
+export const updateFillerLog2PackageIntegrityParameters = (data: FillerLog2PackageIntegrityParameters) =>
   apiRequest<FillerLog2PackageIntegrityParameters>('/filler-log-2/package-integrity/parameters', { method: 'PATCH', body: JSON.stringify(data) })
-export const deleteFillerLog2PackageIntegrityParameters = (id: string) => 
+export const deleteFillerLog2PackageIntegrityParameters = (id: string) =>
   apiRequest<void>(`/filler-log-2/package-integrity/parameters/${id}`, { method: 'DELETE' })
 
 // Filler Log 2 PM Splice APIs
@@ -1129,14 +1145,14 @@ export const getFillerLog2PMSplices = async () => {
   }
 }
 
-export const getFillerLog2PMSplice = (id: string) => 
+export const getFillerLog2PMSplice = (id: string) =>
   apiRequest<FillerLog2PMSplice>(`/filler-log-2/pm-splice/${id}`, { method: 'GET' })
 
-export const createFillerLog2PMSplice = (data: Omit<FillerLog2PMSplice, 'id' | 'created_at' | 'updated_at'>) => 
+export const createFillerLog2PMSplice = (data: Omit<FillerLog2PMSplice, 'id' | 'created_at' | 'updated_at'>) =>
   apiRequest<FillerLog2PMSplice>('/filler-log-2/pm-splice', { method: 'POST', body: JSON.stringify(data) })
-export const updateFillerLog2PMSplice = (data: FillerLog2PMSplice) => 
+export const updateFillerLog2PMSplice = (data: FillerLog2PMSplice) =>
   apiRequest<FillerLog2PMSplice>('/filler-log-2/pm-splice', { method: 'PATCH', body: JSON.stringify(data) })
-export const deleteFillerLog2PMSplice = (id: string) => 
+export const deleteFillerLog2PMSplice = (id: string) =>
   apiRequest<void>(`/filler-log-2/pm-splice/${id}`, { method: 'DELETE' })
 
 // Filler Log 2 Prep and Sterilization APIs
@@ -1150,14 +1166,14 @@ export const getFillerLog2PrepAndSterilizations = async () => {
   }
 }
 
-export const getFillerLog2PrepAndSterilization = (id: string) => 
+export const getFillerLog2PrepAndSterilization = (id: string) =>
   apiRequest<FillerLog2PrepAndSterilization>(`/filler-log-2/prep-and-sterilization/${id}`, { method: 'GET' })
 
-export const createFillerLog2PrepAndSterilization = (data: Omit<FillerLog2PrepAndSterilization, 'id' | 'created_at' | 'updated_at'>) => 
+export const createFillerLog2PrepAndSterilization = (data: Omit<FillerLog2PrepAndSterilization, 'id' | 'created_at' | 'updated_at'>) =>
   apiRequest<FillerLog2PrepAndSterilization>('/filler-log-2/prep-and-sterilization', { method: 'POST', body: JSON.stringify(data) })
-export const updateFillerLog2PrepAndSterilization = (data: FillerLog2PrepAndSterilization) => 
+export const updateFillerLog2PrepAndSterilization = (data: FillerLog2PrepAndSterilization) =>
   apiRequest<FillerLog2PrepAndSterilization>('/filler-log-2/prep-and-sterilization', { method: 'PATCH', body: JSON.stringify(data) })
-export const deleteFillerLog2PrepAndSterilization = (id: string) => 
+export const deleteFillerLog2PrepAndSterilization = (id: string) =>
   apiRequest<void>(`/filler-log-2/prep-and-sterilization/${id}`, { method: 'DELETE' })
 
 // Filler Log 2 Stoppages Log APIs
@@ -1171,14 +1187,14 @@ export const getFillerLog2StoppagesLogs = async () => {
   }
 }
 
-export const getFillerLog2StoppagesLog = (id: string) => 
+export const getFillerLog2StoppagesLog = (id: string) =>
   apiRequest<FillerLog2StoppagesLog>(`/filler-log-2/stoppages-log/${id}`, { method: 'GET' })
 
-export const createFillerLog2StoppagesLog = (data: Omit<FillerLog2StoppagesLog, 'id' | 'created_at' | 'updated_at'>) => 
+export const createFillerLog2StoppagesLog = (data: Omit<FillerLog2StoppagesLog, 'id' | 'created_at' | 'updated_at'>) =>
   apiRequest<FillerLog2StoppagesLog>('/filler-log-2/stoppages-log', { method: 'POST', body: JSON.stringify(data) })
-export const updateFillerLog2StoppagesLog = (data: FillerLog2StoppagesLog) => 
+export const updateFillerLog2StoppagesLog = (data: FillerLog2StoppagesLog) =>
   apiRequest<FillerLog2StoppagesLog>('/filler-log-2/stoppages-log', { method: 'PATCH', body: JSON.stringify(data) })
-export const deleteFillerLog2StoppagesLog = (id: string) => 
+export const deleteFillerLog2StoppagesLog = (id: string) =>
   apiRequest<void>(`/filler-log-2/stoppages-log/${id}`, { method: 'DELETE' })
 
 // Filler Log 2 Strip Splice APIs
@@ -1192,50 +1208,81 @@ export const getFillerLog2StripSplices = async () => {
   }
 }
 
-export const getFillerLog2StripSplice = (id: string) => 
+export const getFillerLog2StripSplice = (id: string) =>
   apiRequest<FillerLog2StripSplice>(`/filler-log-2/strip-splice/${id}`, { method: 'GET' })
 
-export const createFillerLog2StripSplice = (data: Omit<FillerLog2StripSplice, 'id' | 'created_at' | 'updated_at'>) => 
+export const createFillerLog2StripSplice = (data: Omit<FillerLog2StripSplice, 'id' | 'created_at' | 'updated_at'>) =>
   apiRequest<FillerLog2StripSplice>('/filler-log-2/strip-splice', { method: 'POST', body: JSON.stringify(data) })
-export const updateFillerLog2StripSplice = (data: FillerLog2StripSplice) => 
+export const updateFillerLog2StripSplice = (data: FillerLog2StripSplice) =>
   apiRequest<FillerLog2StripSplice>('/filler-log-2/strip-splice', { method: 'PATCH', body: JSON.stringify(data) })
-export const deleteFillerLog2StripSplice = (id: string) => 
+export const deleteFillerLog2StripSplice = (id: string) =>
   apiRequest<void>(`/filler-log-2/strip-splice/${id}`, { method: 'DELETE' })
 
 // Product Incubation APIs
+// export interface ProductIncubation {
+// //   id?: string
+// //   created_at?: string
+// //   updated_at?: string
+// //   approved_by: string
+// //   batch: string
+// //   product_description: string
+// //   mnf: string
+// //   bb: string
+// //   bn: number
+// //   incubation_days: number
+// //   date_in: string
+// //   expected_date_out: string
+// //   actual_date_out: string
+// //   // Relationship data
+// //   product_incubation_approved_by_fkey?: {
+// //     id: string
+// //     views: string[]
+// //     role_name: string
+// //     created_at: string
+// //     updated_at: string
+// //     role_operations: string[]
+// //     user_operations: string[]
+// //     devices_operations: string[]
+// //     process_operations: string[]
+// //     supplier_operations: string[]
+// //     silo_item_operations: string[]
+// //     machine_item_operations: string[]
+// //   }
+// // }
+
 export interface ProductIncubation {
-  id?: string
-  created_at?: string
-  updated_at?: string
-  approved_by: string
-  product_description: string
-  mnf: string
-  bb: string
-  bn: number
-  incubation_days: number
-  date_in: string
-  expected_date_out: string
-  actual_date_out: string
-  // Relationship data
-  product_incubation_approved_by_fkey?: {
-    id: string
-    views: string[]
-    role_name: string
-    created_at: string
-    updated_at: string
-    role_operations: string[]
-    user_operations: string[]
-    devices_operations: string[]
-    process_operations: string[]
-    supplier_operations: string[]
-    silo_item_operations: string[]
-    machine_item_operations: string[]
-  }
+  id: string;
+  created_at: string;
+  updated_at: string;
+  production_plan_id: string;
+  batch: Batch;
+  status: string;
+  tag: string;
 }
+
+export interface Batch {
+  id: string;
+  days: number;
+  event: string;
+  basket: string;
+  defects: string;
+  time_in: string;
+  created_at: string;
+  updated_at: string | null;
+  approver_id: string;
+  batch_number: number;
+  scientist_id: string;
+  actual_time_out: string;
+  best_before_date: string;
+  manufacture_date: string;
+  expected_time_out: string;
+  incubation_tracking_form_id: string | null;
+}
+
 
 export const getProductIncubations = async () => {
   try {
-    const res = await apiRequest<any>('/product-incubation')
+    const res = await apiRequest<any>('/incubation-tracking-form')
     return Array.isArray(res) ? (res as ProductIncubation[]) : ((res?.data ?? []) as ProductIncubation[])
   } catch (error: any) {
     console.error('Error fetching product incubations:', error)
@@ -1243,12 +1290,12 @@ export const getProductIncubations = async () => {
   }
 }
 
-export const createProductIncubation = (data: Omit<ProductIncubation, 'id' | 'created_at' | 'updated_at'>) => 
-  apiRequest<ProductIncubation>('/product-incubation', { method: 'POST', body: JSON.stringify(data) })
-export const updateProductIncubation = (data: ProductIncubation) => 
-  apiRequest<ProductIncubation>('/product-incubation', { method: 'PATCH', body: JSON.stringify(data) })
-export const deleteProductIncubation = (id: string) => 
-  apiRequest<void>(`/product-incubation/${id}`, { method: 'DELETE' })
+export const createProductIncubation = (data: Omit<ProductIncubation, 'id' | 'created_at' | 'updated_at'>) =>
+  apiRequest<ProductIncubation>('/incubation-tracking-form', { method: 'POST', body: JSON.stringify(data) })
+export const updateProductIncubation = (data: any) =>
+  apiRequest<ProductIncubation>('/incubation-tracking-form', { method: 'PATCH', body: JSON.stringify(data) })
+export const deleteProductIncubation = (id: string) =>
+  apiRequest<void>(`/incubation-tracking-form/${id}`, { method: 'DELETE' })
 
 // Incubation Test After Incubation APIs
 export interface UHTQualityCheckAfterIncubation {
@@ -1258,10 +1305,13 @@ export interface UHTQualityCheckAfterIncubation {
   date_of_production: string
   date_analysed: string
   batch_number: string
-  product: string
+  product: string | { id: string; tag?: string | null; name: string; created_at?: string; updated_at?: string; raw_material_ids?: string[] }
   checked_by: string
   ph_0_days: number
   details?: string | null
+  tag?: string | null
+  // NEW: nested incubation_details payload accepted by backend
+  incubation_details?: UHTQualityCheckAfterIncubationDetails | null
   // Relationship data
   uht_qa_check_after_incubation_details_fkey?: {
     id: string
@@ -1323,27 +1373,27 @@ export interface UHTQualityCheckAfterIncubationDetails {
 
 export const getUHTQualityCheckAfterIncubations = async () => {
   try {
-    const res = await apiRequest<any>('/uht-quality-check-after-incubation')
+    const res = await apiRequest<any>('/quality-check-after-incubation')
     return Array.isArray(res) ? (res as UHTQualityCheckAfterIncubation[]) : ((res?.data ?? []) as UHTQualityCheckAfterIncubation[])
   } catch (error: any) {
-    console.error('Error fetching UHT quality check after incubations:', error)
+    console.error('Error fetching Incubation quality  check after incubations:', error)
     return []
   }
 }
 
-export const createUHTQualityCheckAfterIncubation = (data: Omit<UHTQualityCheckAfterIncubation, 'id' | 'created_at' | 'updated_at' | 'details'>) => 
-  apiRequest<UHTQualityCheckAfterIncubation>('/uht-quality-check-after-incubation', { method: 'POST', body: JSON.stringify(data) })
-export const updateUHTQualityCheckAfterIncubation = (data: UHTQualityCheckAfterIncubation) => 
-  apiRequest<UHTQualityCheckAfterIncubation>('/uht-quality-check-after-incubation', { method: 'PATCH', body: JSON.stringify(data) })
-export const deleteUHTQualityCheckAfterIncubation = (id: string) => 
-  apiRequest<void>(`/uht-quality-check-after-incubation/${id}`, { method: 'DELETE' })
+export const createUHTQualityCheckAfterIncubation = (data: Omit<UHTQualityCheckAfterIncubation, 'id' | 'created_at' | 'updated_at' | 'details'>) =>
+  apiRequest<UHTQualityCheckAfterIncubation>('/quality-check-after-incubation', { method: 'POST', body: JSON.stringify(data) })
+export const updateUHTQualityCheckAfterIncubation = (data: UHTQualityCheckAfterIncubation) =>
+  apiRequest<UHTQualityCheckAfterIncubation>('/quality-check-after-incubation', { method: 'PATCH', body: JSON.stringify(data) })
+export const deleteUHTQualityCheckAfterIncubation = (id: string) =>
+  apiRequest<void>(`/quality-check-after-incubation/${id}`, { method: 'DELETE' })
 
-export const createUHTQualityCheckAfterIncubationDetails = (data: Omit<UHTQualityCheckAfterIncubationDetails, 'id' | 'created_at' | 'updated_at'>) => 
-  apiRequest<UHTQualityCheckAfterIncubationDetails>('/uht-quality-check-after-incubation-details', { method: 'POST', body: JSON.stringify(data) })
-export const updateUHTQualityCheckAfterIncubationDetails = (data: UHTQualityCheckAfterIncubationDetails) => 
-  apiRequest<UHTQualityCheckAfterIncubationDetails>('/uht-quality-check-after-incubation-details', { method: 'PATCH', body: JSON.stringify(data) })
-export const deleteUHTQualityCheckAfterIncubationDetails = (id: string) => 
-  apiRequest<void>(`/uht-quality-check-after-incubation-details/${id}`, { method: 'DELETE' })
+export const createUHTQualityCheckAfterIncubationDetails = (data: Omit<UHTQualityCheckAfterIncubationDetails, 'id' | 'created_at' | 'updated_at'>) =>
+  apiRequest<UHTQualityCheckAfterIncubationDetails>('/quality-check-after-incubation-details', { method: 'POST', body: JSON.stringify(data) })
+export const updateUHTQualityCheckAfterIncubationDetails = (data: UHTQualityCheckAfterIncubationDetails) =>
+  apiRequest<UHTQualityCheckAfterIncubationDetails>('/quality-check-after-incubation-details', { method: 'PATCH', body: JSON.stringify(data) })
+export const deleteUHTQualityCheckAfterIncubationDetails = (id: string) =>
+  apiRequest<void>(`/quality-check-after-incubation-details/${id}`, { method: 'DELETE' })
 
 // QA Corrective Action Types
 export interface QACorrectiveAction {
@@ -1360,7 +1410,8 @@ export interface QACorrectiveAction {
   qa_decision: string
   details?: string
   // Relationship data
-  qa_corrective_action_details_fkey?: QACorrectiveActionDetails
+  qa_corrective_action_details?: QACorrectiveActionDetails
+
 }
 
 export interface QACorrectiveActionDetails {
@@ -1384,20 +1435,25 @@ export const getQACorrectiveActions = async () => {
   }
 }
 
-export const createQACorrectiveAction = (data: Omit<QACorrectiveAction, 'id' | 'created_at' | 'updated_at' | 'details'>) => 
-  apiRequest<QACorrectiveAction>('/qa-corrective-action', { method: 'POST', body: JSON.stringify(data) })
+export const createQACorrectiveAction = async (payload: Partial<QACorrectiveAction>) => {
+  const res = await apiRequest<{ statusCode: number; message: string; data: QACorrectiveAction }>(`/qa-corrective-action`, {
+    method: "POST",
+    body: JSON.stringify(payload)
+  })
+  return res.data
+}
 
-export const updateQACorrectiveAction = (data: QACorrectiveAction) => 
-  apiRequest<QACorrectiveAction>('/qa-corrective-action', { method: 'PATCH', body: JSON.stringify(data) })
+export const updateQACorrectiveAction = async (payload: Partial<QACorrectiveAction>) => {
+  const res = await apiRequest<{ statusCode: number; message: string; data: QACorrectiveAction }>(`/qa-corrective-action`, {
+    method: "PATCH",
+    body: JSON.stringify(payload)
+  })
+  return res.data
+}
 
-export const deleteQACorrectiveAction = (id: string) => 
-  apiRequest<void>(`/qa-corrective-action/${id}`, { method: 'DELETE' })
-
-export const createQACorrectiveActionDetails = (data: Omit<QACorrectiveActionDetails, 'id' | 'created_at' | 'updated_at'>) => 
-  apiRequest<QACorrectiveActionDetails>('/qa-corrective-action-details', { method: 'POST', body: JSON.stringify(data) })
-
-export const updateQACorrectiveActionDetails = (data: QACorrectiveActionDetails) => 
-  apiRequest<QACorrectiveActionDetails>('/qa-corrective-action-details', { method: 'PATCH', body: JSON.stringify(data) })
-
-export const deleteQACorrectiveActionDetails = (id: string) => 
-  apiRequest<void>(`/qa-corrective-action-details/${id}`, { method: 'DELETE' })
+export const deleteQACorrectiveAction = async (id: string) => {
+  const res = await apiRequest<{ statusCode: number; message: string; data: null }>(`/qa-corrective-action/${id}`, {
+    method: "DELETE"
+  })
+  return res.data
+}

@@ -11,6 +11,7 @@ interface FilmaticLinesProductionSheetState {
     delete: boolean
   }
   error: string | null
+  isInitialized: boolean
 }
 
 const initialState: FilmaticLinesProductionSheetState = {
@@ -23,6 +24,7 @@ const initialState: FilmaticLinesProductionSheetState = {
     delete: false,
   },
   error: null,
+  isInitialized: false,
 }
 
 // Async thunks
@@ -31,7 +33,7 @@ export const fetchFilmaticLinesProductionSheets = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const response = await filmaticLinesApi.getProductionSheets()
-      return response.data
+      return response
     } catch (error: any) {
       return rejectWithValue(error.message || 'Failed to fetch production sheets')
     }
@@ -43,7 +45,7 @@ export const fetchFilmaticLinesProductionSheet = createAsyncThunk(
   async (id: string, { rejectWithValue }) => {
     try {
       const response = await filmaticLinesApi.getProductionSheet(id)
-      return response.data
+      return response
     } catch (error: any) {
       return rejectWithValue(error.message || 'Failed to fetch production sheet')
     }
@@ -55,7 +57,7 @@ export const createFilmaticLinesProductionSheet = createAsyncThunk(
   async (data: CreateFilmaticLinesProductionSheetRequest, { rejectWithValue }) => {
     try {
       const response = await filmaticLinesApi.createProductionSheet(data)
-      return response.data
+      return response
     } catch (error: any) {
       return rejectWithValue(error.message || 'Failed to create production sheet')
     }
@@ -67,7 +69,7 @@ export const updateFilmaticLinesProductionSheet = createAsyncThunk(
   async (data: UpdateFilmaticLinesProductionSheetRequest, { rejectWithValue }) => {
     try {
       const response = await filmaticLinesApi.updateProductionSheet(data)
-      return response.data
+      return response
     } catch (error: any) {
       return rejectWithValue(error.message || 'Failed to update production sheet')
     }
@@ -107,10 +109,12 @@ const filmaticLinesProductionSheetSlice = createSlice({
       .addCase(fetchFilmaticLinesProductionSheets.fulfilled, (state, action) => {
         state.loading.fetch = false
         state.sheets = action.payload
+        state.isInitialized = true
       })
       .addCase(fetchFilmaticLinesProductionSheets.rejected, (state, action) => {
         state.loading.fetch = false
         state.error = action.payload as string
+        state.isInitialized = true
       })
       // Fetch single sheet
       .addCase(fetchFilmaticLinesProductionSheet.pending, (state) => {

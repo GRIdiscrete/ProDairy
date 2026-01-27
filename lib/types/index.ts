@@ -9,9 +9,49 @@ export interface User {
   password?: string
   created_at: string
   updated_at: string
+  phone_number?: string | null
+  users_role_id_fkey?: UserRoleFkey
+}
+
+export interface UserRoleFkey {
+  id: string
+  role_name: string
+  created_at: string
+  updated_at: string | null
+  views: string[]
+  bmt_operations: string[]
+  role_operations: string[]
+  user_operations: string[]
+  devices_operations: string[]
+  process_operations: string[]
+  dispatch_operations: string[]
+  supplier_operations: string[]
+  silo_item_operations: string[]
+  incubation_operations: string[]
+  machine_item_operations: string[]
+  pasteurizing_operations: string[]
+  production_plan_operations: string[]
+  raw_milk_intake_operations: string[]
+  raw_milk_lab_test_operations: string[]
+  filmatic_operation_operations: string[]
+  incubation_lab_test_operations: string[]
+  raw_product_collection_operations: string[]
+  steri_process_operation_operations: string[]
+  before_and_after_autoclave_lab_test_operations: string[]
 }
 
 export type UserRole = "admin" | "manager" | "operator" | "lab_technician" | "quality_control"
+
+export interface SupplierTank {
+  id: string
+  code: string
+  name: string
+  capacity: number
+  quantity: number | null
+  supplier: string
+  created_at: string
+  updated_at: string | null
+}
 
 export interface Supplier {
   id: string
@@ -22,9 +62,14 @@ export interface Supplier {
   phone_number: string
   physical_address: string
   raw_product: string
-  volume_supplied: number
-  volume_rejected: number
+  company_name: string | null
+  number_of_tanks: number | null
+  tank_id?: string | null
+  volume_supplied: number | null
+  volume_rejected: number | null
   updated_at: string
+  suppliers_tanks?: SupplierTank[]
+  tanks?: Partial<SupplierTank>[]
 }
 
 export interface Vehicle {
@@ -127,6 +172,40 @@ export interface ProductionPlan {
   }
 }
 
+// New Tanker Interface
+export interface Tanker {
+  id: string
+  age: number
+  mileage: number
+  capacity: number
+  condition: string
+  driver_id: string
+  created_at: string
+  reg_number: string
+  updated_at: string | null
+  compartments: number
+}
+
+// New Raw Milk Intake Lab Test Interface
+export interface RawMilkIntakeLabTest {
+  id: string
+  cob: boolean | null
+  tag: string | null
+  date: string
+  alcohol: number | null
+  remarks: string | null
+  accepted: boolean
+  no_water: string | null
+  no_starch: string | null
+  created_at: string
+  updated_at: string | null
+  bacteria_load: string | null
+  organol_eptic: string
+  milk_freshness: string | null
+  drivers_form_id: string | null
+  collected_product_id: string
+}
+
 // New Driver Form Types
 export interface DriverFormCollectedProduct {
   id?: string
@@ -139,6 +218,8 @@ export interface DriverFormCollectedProduct {
   unit_of_measure: string
   e_sign_supplier: string
   e_sign_driver: string
+  tanker_compartment?: number
+  raw_milk_intake_lab_test: RawMilkIntakeLabTest[]
 }
 
 export interface DriverForm {
@@ -147,12 +228,14 @@ export interface DriverForm {
   driver: string
   start_date: string
   end_date: string
+  tanker: Tanker
+  tag: string
   collected_products?: any[] | null
   collected_products_?: string | null
   drivers_form_collected_products: DriverFormCollectedProduct[]
   delivered: boolean
   rejected: boolean
-  updated_at: string
+  updated_at: string | null
   drivers_driver_fkey?: UserEntity
 }
 
@@ -296,4 +379,166 @@ export interface TableFilters {
 export interface SortConfig {
   key: string
   direction: "asc" | "desc"
+}
+
+// Raw Milk Collection Voucher Types
+export interface CollectionVoucherDetails {
+  id?: string
+  created_at?: string
+  updated_at?: string
+  raw_milk_collection_voucher_id?: string
+  temperature: number
+  dip_reading: number
+  meter_start: number
+  meter_finish: number
+  volume: number
+  dairy_total: number
+  farmer_tank_number: number[]
+  truck_compartment_number: number
+  route_total: number
+}
+
+export interface CollectionVoucherLabTest {
+  id?: string
+  created_at?: string
+  updated_at?: string
+  raw_milk_collection_voucher_id?: string
+  ot_result?: string
+  cob_result?: boolean
+  organoleptic?: string
+  alcohol?: string
+}
+
+export interface CollectionVoucher {
+  id: string
+  created_at: string
+  updated_at: string
+  driver: string
+  date: string
+  route: string
+  farmer: string | Supplier
+  number_of_compartments: number
+  details: string | CollectionVoucherDetails[]
+  raw_milk_collection_voucher_details: CollectionVoucherDetails[]
+  truck_number: string
+  time_in: string
+  time_out: string
+  lab_test: string | CollectionVoucherLabTest[]
+  raw_milk_collection_voucher_lab_test: CollectionVoucherLabTest[]
+  remark: string
+  driver_signature: string
+  tag?: string
+}
+
+export interface LabTest2 {
+  id?: string
+  alcohol?: string
+  ot_result?: string
+  cob_result?: boolean
+  organoleptic?: string
+  created_at?: string
+  updated_at?: string | null
+  raw_milk_collection_voucher_2_details_farmer_tank_id?: string
+}
+
+export interface FarmerTank {
+  id?: string
+  volume?: number
+  dairy_total?: number
+  dip_reading?: number
+  meter_start?: number
+  temperature?: number
+  meter_finish?: number
+  supplier_tank_id?: string
+  truck_compartment_number?: number
+  raw_milk_collection_voucher_2_details_id?: string
+  lab_test?: LabTest2 | null
+  created_at?: string
+  updated_at?: string | null
+  scientist_lab_test?: string | null
+}
+
+export interface CollectionVoucherDetails2 {
+  id?: string
+  created_at?: string
+  updated_at?: string | null
+  supplier_tanks?: string | null
+  raw_milk_collection_voucher_2_id?: string
+  raw_milk_collection_voucher_2_details_farmer_tank: FarmerTank[]
+}
+
+export interface CollectionVoucher2 {
+  id: string
+  created_at: string
+  updated_at: string | null
+  driver: string
+  date: string
+  route: string
+  supplier: string | Supplier
+  truck_number: string
+  time_in: string
+  time_out: string
+  remark: string
+  driver_signature: string
+  tag: string
+  details?: string | null
+  ot_result?: string | null
+  cob_result?: boolean | null
+  lab_test?: any | null
+  number_of_compartments?: number | null
+  route_total?: number | null
+  raw_milk_collection_voucher_2_details: CollectionVoucherDetails2[]
+}
+export interface RawMilkResultSlipBeforeIntakeLabTest {
+  id: string
+  ot: string
+  ph: number | null
+  cob: boolean | null
+  fat: number | null
+  fpd: number | null
+  scc: number | null
+  pass: boolean
+  time: string
+  lr_snf: string | null
+  remark: string | null
+  starch: boolean | null
+  alcohol: number | null
+  density: number | null
+  protein: number | null
+  accepted: boolean
+  resazurin: string | null
+  created_at: string
+  updated_at: string | null
+  antibiotics: boolean | null
+  temperature: number | null
+  total_solids: number | null
+  titratable_acidity: number | null
+  raw_milk_result_slip_before_intake_id: string
+}
+
+export interface RawMilkResultSlipBeforeIntake {
+  id: string
+  created_at: string
+  updated_at: string | null
+  date: string
+  time_in: string
+  time_out: string
+  approved_by: string
+  approver_signature: string
+  analyst: string
+  results_collected_by: string
+  tag: string
+  lab_test: RawMilkResultSlipBeforeIntakeLabTest
+  truck_compartment_number: number
+  voucher_id: string
+}
+
+export interface UntestedCompartment {
+  voucher_id: string
+  voucher_created_at: string
+  farmer_tank: string
+  truck_compartment_number: number
+  driver_first_name: string
+  driver_last_name: string
+  truck_number: string
 }

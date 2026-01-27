@@ -7,61 +7,150 @@ import { LoadingButton } from "@/components/ui/loading-button"
 import { DataTable } from "@/components/ui/data-table"
 import { DataTableFilters } from "@/components/ui/data-table-filters"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Eye, Edit, Trash2, Droplets, TrendingUp, FileText, Clock, Truck, Package } from "lucide-react"
+import { Plus, Eye, Edit, Trash2, Droplets, TrendingUp, FileText, Clock, Truck, Package, User } from "lucide-react"
 import { RawMilkIntakeFormDrawer } from "@/components/forms/raw-milk-intake-form-drawer"
 import { RawMilkIntakeFormViewDrawer } from "@/components/forms/raw-milk-intake-form-view-drawer"
 import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-dialog"
 import { Skeleton } from "@/components/ui/skeleton"
 import { CopyButton } from "@/components/ui/copy-button"
+import { UserAvatar } from "@/components/ui/user-avatar"
+import { FormIdCopy } from "@/components/ui/form-id-copy"
+import { generateRawMilkIntakeFormId } from "@/lib/utils/form-id-generator"
 import { useAppDispatch, useAppSelector } from "@/lib/store"
-import { 
-  fetchRawMilkIntakeForms, 
+import type { RootState } from "@/lib/store"
+import {
+  fetchRawMilkIntakeForms,
   deleteRawMilkIntakeForm,
   clearError
 } from "@/lib/store/slices/rawMilkIntakeSlice"
+import { fetchUsers } from "@/lib/store/slices/usersSlice"
+import { fetchSilos } from "@/lib/store/slices/siloSlice"
+import { fetchCollectionVouchers } from "@/lib/store/slices/collectionVoucherSlice"
+import { fetchSuppliers } from "@/lib/store/slices/supplierSlice"
 import { toast } from "sonner"
 import { TableFilters } from "@/lib/types"
 import { RawMilkIntakeForm } from "@/lib/api/raw-milk-intake"
 import ContentSkeleton from "@/components/ui/content-skeleton"
+import { useRouter, useSearchParams } from "next/navigation"
 
 export default function RawMilkIntakePage() {
   const dispatch = useAppDispatch()
-  const { forms, loading, error, operationLoading, isInitialized } = useAppSelector((state) => state.rawMilkIntake)
-  
+  const {
+    rawMilkIntakeForms,
+    operationLoading,
+    error
+  } = useAppSelector((state) => state.rawMilkIntake)
+  const { items: users } = useAppSelector((state: RootState) => state.users)
+  const { silos } = useAppSelector((state: RootState) => state.silo)
+  const { collectionVouchers } = useAppSelector((state: RootState) => state.collectionVoucher)
+  const { suppliers } = useAppSelector((state: RootState) => state.supplier)
+
   const [tableFilters, setTableFilters] = useState<TableFilters>({})
   const hasFetchedRef = useRef(false)
-  
-  // Load raw milk intake forms on initial mount
+  const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+
+  // Helper function to get silo by ID
+  const getSiloById = (siloId: string) => {
+    return silos.find((silo: any) => silo.id === siloId)
+  }
+
+  //get silo by name 
+  const getSiloByName = (name: string) => {
+    return silos.find((silo: any) => silo.name === name)
+  }
+
+  // Helper function to get collection voucher by ID
+  const getCollectionVoucherById = (voucherId: any) => {
+    // If voucherId is already an object (populated), use it
+    if (typeof voucherId === 'object' && voucherId !== null) {
+      return voucherId
+    }
+    // Otherwise look it up in the store
+    return collectionVouchers.find((voucher: any) => voucher.id === voucherId)
+  }
+
+
+  // Load raw milk intake forms and related data on initial mount
   useEffect(() => {
-    if (!isInitialized && !hasFetchedRef.current) {
+    if (!hasFetchedRef.current) {
       hasFetchedRef.current = true
       dispatch(fetchRawMilkIntakeForms())
+      dispatch(fetchUsers({})) // Load users for operator information
+      dispatch(fetchSilos({})) // Load silos for destination information
+      dispatch(fetchCollectionVouchers({}))
+      dispatch(fetchSuppliers({})) // Load suppliers for sample information
     }
-  }, [dispatch, isInitialized])
-  
-  // Handle filter changes
-  useEffect(() => {
-    if (isInitialized && Object.keys(tableFilters).length > 0) {
-      dispatch(fetchRawMilkIntakeForms())
-    }
-  }, [dispatch, tableFilters, isInitialized])
-  
-  // Handle errors with toast notifications
-  useEffect(() => {
-    if (error) {
-      toast.error(error)
-      dispatch(clearError())
-    }
-  }, [error, dispatch])
-  
+  }, [dispatch])
+
   // Drawer states
   const [formDrawerOpen, setFormDrawerOpen] = useState(false)
   const [viewDrawerOpen, setViewDrawerOpen] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
-  
+
   // Selected form and mode
   const [selectedForm, setSelectedForm] = useState<RawMilkIntakeForm | null>(null)
   const [formMode, setFormMode] = useState<"create" | "edit">("create")
+
+  // Frontend Filtering Logic
+  const filteredForms = useMemo(() => {
+    if (!rawMilkIntakeForms) return []
+
+    return rawMilkIntakeForms.filter((form: RawMilkIntakeForm) => {
+      // 1. Search filter (Global search)
+      if (tableFilters.search) {
+        const searchLower = tableFilters.search.toLowerCase()
+        const tag = (form.tag || "").toLowerCase()
+        const siloName = (form.destination_silo_name || "").toLowerCase()
+        const voucher = getCollectionVoucherById(form.collection_voucher_id)
+        const voucherTag = (voucher?.tag || "").toLowerCase()
+
+        if (!tag.includes(searchLower) &&
+          !siloName.includes(searchLower) &&
+          !voucherTag.includes(searchLower)) return false
+      }
+
+      // 2. Specific filter fields
+      if (tableFilters.date) {
+        const filterDate = new Date(tableFilters.date)
+        const formDate = new Date(form.date)
+        if (filterDate.toDateString() !== formDate.toDateString()) return false
+      }
+
+      if (tableFilters.destination_silo_name) {
+        const siloLower = tableFilters.destination_silo_name.toLowerCase()
+        if (!(form.destination_silo_name || "").toLowerCase().includes(siloLower)) return false
+      }
+
+      if (tableFilters.collection_voucher_id) {
+        const voucherLower = tableFilters.collection_voucher_id.toLowerCase()
+        const voucher = getCollectionVoucherById(form.collection_voucher_id)
+        const voucherTag = (voucher?.tag || "").toLowerCase()
+        if (!voucherTag.includes(voucherLower)) return false
+      }
+
+      if (tableFilters.tag) {
+        const tagLower = tableFilters.tag.toLowerCase()
+        if (!(form.tag || "").toLowerCase().includes(tagLower)) return false
+      }
+
+      // 3. Date Range filter
+      if (tableFilters.dateRange) {
+        const formDate = new Date(form.date)
+        if (tableFilters.dateRange.from) {
+          const from = new Date(tableFilters.dateRange.from)
+          from.setHours(0, 0, 0, 0)
+          if (formDate < from) return false
+        }
+        if (tableFilters.dateRange.to) {
+          const to = new Date(tableFilters.dateRange.to)
+          to.setHours(23, 59, 59, 999)
+          if (formDate > to) return false
+        }
+      }
+
+      return true
+    })
+  }, [rawMilkIntakeForms, tableFilters, collectionVouchers, silos])
 
   // Filter fields configuration for Raw Milk Intake
   const filterFields = useMemo(() => [
@@ -72,22 +161,22 @@ export default function RawMilkIntakePage() {
       placeholder: "Filter by date"
     },
     {
-      key: "destination_silo_id",
+      key: "destination_silo_name",
       label: "Destination Silo",
       type: "text" as const,
       placeholder: "Filter by destination silo"
     },
     {
-      key: "drivers_form_id",
-      label: "Driver Form ID",
+      key: "collection_voucher_id",
+      label: "Collection Voucher ID",
       type: "text" as const,
-      placeholder: "Filter by driver form"
+      placeholder: "Filter by collection voucher"
     },
     {
-      key: "operator_signature",
-      label: "Operator",
+      key: "tag",
+      label: "Intake Tag",
       type: "text" as const,
-      placeholder: "Filter by operator"
+      placeholder: "Filter by intake tag"
     }
   ], [])
 
@@ -116,7 +205,7 @@ export default function RawMilkIntakePage() {
 
   const confirmDelete = async () => {
     if (!selectedForm) return
-    
+
     try {
       await dispatch(deleteRawMilkIntakeForm(selectedForm.id)).unwrap()
       toast.success('Raw Milk Intake Form deleted successfully')
@@ -128,7 +217,7 @@ export default function RawMilkIntakePage() {
   }
 
   // Get latest form for display
-  const latestForm = Array.isArray(forms) && forms.length > 0 ? forms[0] : null
+  const latestForm = Array.isArray(rawMilkIntakeForms) && rawMilkIntakeForms.length > 0 ? rawMilkIntakeForms[0] : null
 
   // Table columns with actions
   const columns = [
@@ -137,19 +226,27 @@ export default function RawMilkIntakePage() {
       header: "Form",
       cell: ({ row }: any) => {
         const form = row.original
+
+
         return (
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center">
-              <Droplets className="w-4 h-4 text-white" />
+            <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
+              <Droplets className="w-4 h-4 text-gray-600" />
             </div>
             <div>
-              <div className="flex items-center space-x-2">
-                <span className="font-light">#{form.id.slice(0, 8)}</span>
-                <Badge className="bg-blue-100 text-blue-800 font-light">{form.quantity_received}L</Badge>
+              <FormIdCopy
+                displayId={form.tag}
+                actualId={form.id}
+                size="sm"
+              />
+              <div className="flex items-center space-x-2 mt-1">
+                <Badge className="bg-blue-100 text-blue-800 font-light">
+                  {form.quantity_received != null
+                    ? Number(form.quantity_received).toFixed(4)
+                    : "0.0000"}L
+                </Badge>
+
               </div>
-              <p className="text-sm text-gray-500 mt-1">
-                {new Date(form.date).toLocaleDateString()} • {form.samples_collected?.length || 0} samples
-              </p>
             </div>
           </div>
         )
@@ -157,39 +254,75 @@ export default function RawMilkIntakePage() {
     },
     {
       accessorKey: "driver_info",
-      header: "Driver Form",
+      header: "Collection Voucher",
       cell: ({ row }: any) => {
         const form = row.original
-        const driverForm = form.raw_milk_intake_form_drivers_form_id_fkey
+        const voucherId = form.collection_voucher_id
+        const voucher = getCollectionVoucherById(voucherId)
+
         return (
           <div className="space-y-2">
             <div className="flex items-center space-x-2">
               <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center">
                 <Truck className="w-3 h-3 text-blue-600" />
               </div>
-              <span className="text-sm font-light">Driver Form</span>
+              <span className="text-sm font-light">Collection Voucher</span>
             </div>
-            {driverForm ? (
+            {voucher ? (
               <div className="space-y-1">
-                <p className="text-xs text-gray-500">
-                  {new Date(driverForm.start_date).toLocaleDateString('en-GB', { 
-                    day: 'numeric', 
-                    month: 'short', 
-                    year: 'numeric' 
-                  })}
-                </p>
-                <div className="flex items-center space-x-2">
-                  <Badge className={`text-xs ${driverForm.delivered ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
-                    {driverForm.delivered ? 'Delivered' : 'Pending'}
+                <FormIdCopy
+                  displayId={voucher?.tag}
+                  actualId={voucher?.id || voucherId}
+                  size="sm"
+                />
+                <div className="flex items-center gap-2 mt-1">
+                  <Badge variant="outline" className="text-[10px] font-normal">
+                    Comp #{form.truck_compartment_number}
                   </Badge>
-                  {driverForm.rejected && (
-                    <Badge className="text-xs bg-red-100 text-red-800">Rejected</Badge>
-                  )}
                 </div>
               </div>
             ) : (
-              <p className="text-xs text-gray-400">No details</p>
+              <div className="space-y-1">
+                <p className="text-xs text-gray-400">Voucher ID: {voucherId?.slice(0, 8)}...</p>
+                <Badge variant="outline" className="text-[10px] font-normal">
+                  Comp #{form.truck_compartment_number}
+                </Badge>
+              </div>
             )}
+          </div>
+        )
+      },
+    },
+    {
+      accessorKey: "operator_info",
+      header: "Operator",
+      cell: ({ row }: any) => {
+        const form = row.original
+        const operatorId = form.operator_id
+        const operatorUser = users.find((user: any) => user.id === operatorId)
+
+        if (operatorUser) {
+          return (
+            <UserAvatar
+              user={operatorUser}
+              size="md"
+              showName={true}
+              showEmail={true}
+              showDropdown={true}
+            />
+          )
+        }
+
+        // Show unknown operator when no user match found
+        return (
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
+              <User className="w-4 h-4 text-gray-500" />
+            </div>
+            <div>
+              <div className="text-sm font-light text-gray-400">Unknown Operator</div>
+              <div className="text-xs text-gray-500">No user data</div>
+            </div>
           </div>
         )
       },
@@ -199,38 +332,38 @@ export default function RawMilkIntakePage() {
       header: "Destination Silo",
       cell: ({ row }: any) => {
         const form = row.original
-        const silo = form.raw_milk_intake_form_destination_silo_id_fkey
+        const silo = getSiloByName(form.destination_silo_name) || form.destination_silo_name
+        const siloName = silo?.name ?? form.destination_silo_name ?? 'Unknown Silo'
+
         return (
           <div className="space-y-2">
             <div className="flex items-center space-x-2">
               <div className="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center">
                 <Package className="w-3 h-3 text-green-600" />
               </div>
-              <p className="text-sm font-light">
-                {silo ? silo.name : `Silo #${form.destination_silo_id.slice(0, 8)}`}
-              </p>
+              <p className="text-sm font-light">{siloName}</p>
             </div>
-            {silo ? (
+            {silo && typeof silo === 'object' && 'capacity' in silo ? (
               <div className="space-y-1">
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-gray-500">Capacity</span>
-                  <span className="text-xs font-light">{silo.capacity.toLocaleString()}L</span>
+                  <span className="text-xs font-light">{silo?.capacity?.toLocaleString()}L</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-gray-500">Current</span>
-                  <span className="text-xs font-light text-green-600">{silo.milk_volume.toLocaleString()}L</span>
+                  <span className="text-xs font-light text-green-600">{silo?.milk_volume?.toLocaleString()}L</span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-1.5">
-                  <div 
-                    className="bg-gradient-to-r from-blue-500 to-cyan-500 h-1.5 rounded-full"
-                    style={{ 
-                      width: `${Math.min((silo.milk_volume / silo.capacity) * 100, 100)}%` 
+                  <div
+                    className=" from-blue-500 to-cyan-500 h-1.5 rounded-full"
+                    style={{
+                      width: `${Math.min((silo.milk_volume / silo.capacity) * 100, 100)}%`
                     }}
                   ></div>
                 </div>
               </div>
             ) : (
-              <p className="text-xs text-gray-400">No details</p>
+              <p className="text-xs text-gray-400">No capacity details</p>
             )}
           </div>
         )
@@ -260,29 +393,29 @@ export default function RawMilkIntakePage() {
         const form = row.original
         return (
           <div className="flex space-x-2">
-            <LoadingButton 
-              variant="outline" 
-              size="sm" 
+            <LoadingButton
+
+              size="sm"
               onClick={() => handleViewForm(form)}
-              className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full"
+              className="bg-[#006BC4] text-white border-0 rounded-full"
             >
               <Eye className="w-4 h-4" />
             </LoadingButton>
-            <LoadingButton 
-              variant="outline" 
-              size="sm" 
+            <LoadingButton
+
+              size="sm"
               onClick={() => handleEditForm(form)}
-              className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 rounded-full"
+              className="bg-[#A0CF06] text-[#211D1E] border-0 rounded-full"
             >
               <Edit className="w-4 h-4" />
             </LoadingButton>
-            <LoadingButton 
-              variant="destructive" 
-              size="sm" 
+            <LoadingButton
+              className=" text-white rounded-full"
+              variant="destructive"
+              size="sm"
               onClick={() => handleDeleteForm(form)}
               loading={operationLoading.delete}
               disabled={operationLoading.delete}
-              className="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white border-0 rounded-full"
             >
               <Trash2 className="w-4 h-4" />
             </LoadingButton>
@@ -292,6 +425,20 @@ export default function RawMilkIntakePage() {
     },
   ]
 
+  // --- Helper: open view drawer if form_id query param is present ---
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const formId = searchParams?.get("form_id");
+    if (formId && rawMilkIntakeForms && rawMilkIntakeForms.length > 0) {
+      const foundForm = rawMilkIntakeForms.find((form: any) => String(form.id) === String(formId));
+      if (foundForm) {
+        setSelectedForm(foundForm);
+        setViewDrawerOpen(true);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rawMilkIntakeForms]);
+
   return (
     <DataCaptureDashboardLayout title="Raw Milk Intake" subtitle="Raw milk intake control and monitoring">
       <div className="space-y-6">
@@ -300,9 +447,9 @@ export default function RawMilkIntakePage() {
             <h1 className="text-3xl font-light text-foreground">Raw Milk Intake</h1>
             <p className="text-sm font-light text-muted-foreground">Manage raw milk intake forms and samples</p>
           </div>
-          <LoadingButton 
+          <LoadingButton
             onClick={handleAddForm}
-            className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full px-6 py-2 font-light"
+            className="bg-[#006BC4] text-white px-6 py-2 rounded-full"
           >
             <Plus className="mr-2 h-4 w-4" />
             Add Intake Form
@@ -310,23 +457,22 @@ export default function RawMilkIntakePage() {
         </div>
 
         {/* Current Form Details */}
-        {loading ? (
+        {operationLoading.fetch ? (
           <ContentSkeleton sections={1} cardsPerSection={4} />
         ) : latestForm ? (
-          <div className="border border-gray-200 rounded-lg bg-white border-l-4 border-l-blue-500">
+          <div className="border border-gray-200 rounded-lg bg-white border-l-4 border-l-[#006BC4]">
             <div className="p-6 pb-0">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2 text-lg font-light">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center">
-                    <Droplets className="h-4 w-4 text-white" />
+                  <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+                    <Droplets className="h-4 w-4 text-gray-600" />
                   </div>
                   <span>Current Raw Milk Intake</span>
-                  <Badge className="bg-gradient-to-r from-blue-100 to-cyan-100 text-blue-800 font-light">Latest</Badge>
+                  <Badge className=" from-blue-100 to-cyan-100 text-white font-light">Latest</Badge>
                 </div>
-                <LoadingButton 
-                  variant="outline" 
+                <LoadingButton
                   onClick={() => handleViewForm(latestForm)}
-                  className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full px-4 py-2 font-light text-sm"
+                  className="bg-[#006BC4] text-white rounded-full px-4 py-2 text-sm"
                 >
                   <Eye className="mr-2 h-4 w-4" />
                   View Details
@@ -340,161 +486,194 @@ export default function RawMilkIntakePage() {
                     <FileText className="h-4 w-4 text-gray-500" />
                     <p className="text-sm font-light text-gray-600">Form ID</p>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <p className="text-lg font-light">#{latestForm.id.slice(0, 8)}</p>
-                    <CopyButton text={latestForm.id} />
-                  </div>
+                  <FormIdCopy
+                    displayId={latestForm?.tag}
+                    actualId={latestForm.id}
+                    size="md"
+                  />
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center space-x-2">
                     <Droplets className="h-4 w-4 text-blue-500" />
                     <p className="text-sm font-light text-gray-600">Quantity Received</p>
                   </div>
-                  <p className="text-lg font-light text-blue-600">{latestForm.quantity_received}L</p>
+                  <p className="text-lg font-light text-blue-600">
+                    {latestForm.quantity_received != null
+                      ? Number(latestForm.quantity_received).toFixed(4)
+                      : "0.0000"}L
+                  </p>
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center space-x-2">
                     <Clock className="h-4 w-4 text-gray-500" />
                     <p className="text-sm font-light text-gray-600">Date</p>
                   </div>
-                  <p className="text-lg font-light">{new Date(latestForm.date).toLocaleDateString('en-GB', { 
-                    day: 'numeric', 
-                    month: 'long', 
-                    year: 'numeric' 
+                  <p className="text-lg font-light">{new Date(latestForm.date).toLocaleDateString('en-GB', {
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric'
                   })}</p>
                 </div>
-                <div className="space-y-2">
-                  <div className="flex items-center space-x-2">
-                    <TrendingUp className="h-4 w-4 text-green-500" />
-                    <p className="text-sm font-light text-gray-600">Samples</p>
-                  </div>
-                  <p className="text-lg font-light text-green-600">{latestForm.samples_collected?.length || 0} samples</p>
-                </div>
+
               </div>
-              
-              {/* Driver Form and Silo Details in Row */}
-              <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-4">
-                {/* Driver Form Details */}
-                {latestForm.raw_milk_intake_form_drivers_form_id_fkey && (
+
+              {/* Driver Form, Operator, and Silo Details */}
+              <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-4">
+                {/* Collection Voucher Details */}
+                {latestForm?.collection_voucher_id && (
                   <div className="p-4 bg-gray-50 rounded-lg">
                     <div className="flex items-center space-x-2 mb-3">
                       <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
                         <Truck className="h-4 w-4 text-blue-600" />
                       </div>
-                      <h4 className="text-sm font-light text-gray-900">Driver Form</h4>
+                      <h4 className="text-sm font-light text-gray-900">Collection Voucher</h4>
                     </div>
                     <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-light text-gray-600">Form ID</span>
-                        <div className="flex items-center space-x-2">
-                          <span className="text-xs font-light">#{latestForm.drivers_form_id.slice(0, 8)}</span>
-                          <CopyButton text={latestForm.drivers_form_id} />
-                        </div>
+                      {(() => {
+                        const voucher = getCollectionVoucherById(latestForm.collection_voucher_id)
+
+                        return voucher ? (
+                          <div className="space-y-1">
+                            <FormIdCopy
+                              displayId={voucher?.tag}
+                              actualId={voucher.id}
+                              size="sm"
+                            />
+                            <div className="text-xs text-gray-500">
+                              Compartment: {latestForm.truck_compartment_number}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              Route: {voucher.route}
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="space-y-1">
+                            <div className="flex items-center space-x-2">
+                              <span className="text-xs font-light">#{latestForm.collection_voucher_id.slice(0, 8)}</span>
+                              <CopyButton text={latestForm.collection_voucher_id} />
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              Compartment: {latestForm.truck_compartment_number}
+                            </div>
+                          </div>
+                        )
+                      })()}
+                    </div>
+                  </div>
+                )}
+
+                {/* Operator Details */}
+                {latestForm?.operator_id && (
+                  <div className="p-4 bg-blue-50 rounded-lg">
+                    <div className="flex items-center space-x-2 mb-3">
+                      <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
+                        <User className="h-4 w-4 text-blue-600" />
                       </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-light text-gray-600">Start Date</span>
-                        <span className="text-xs font-light">
-                          {new Date(latestForm.raw_milk_intake_form_drivers_form_id_fkey.start_date).toLocaleDateString('en-GB', { 
-                            day: 'numeric', 
-                            month: 'short', 
-                            year: 'numeric' 
-                          })}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-light text-gray-600">Status</span>
-                        <Badge className={`text-xs ${latestForm.raw_milk_intake_form_drivers_form_id_fkey.delivered ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
-                          {latestForm.raw_milk_intake_form_drivers_form_id_fkey.delivered ? 'Delivered' : 'Pending'}
-                        </Badge>
-                      </div>
+                      <h4 className="text-sm font-light text-gray-900">Operator</h4>
+                    </div>
+                    <div className="space-y-2">
+                      {(() => {
+                        const operatorUser = users.find((user: any) => user.id === latestForm.operator_id)
+
+                        return operatorUser ? (
+                          <UserAvatar
+                            user={operatorUser}
+                            size="md"
+                            showName={true}
+                            showEmail={true}
+                            showDropdown={true}
+                          />
+                        ) : (
+                          <div className="text-xs text-gray-400">Unknown operator</div>
+                        )
+                      })()}
                     </div>
                   </div>
                 )}
 
                 {/* Silo Details */}
-                {latestForm.raw_milk_intake_form_destination_silo_id_fkey && (
-                  <div className="p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg">
+                {latestForm?.destination_silo_name && (
+                  <div className="p-4  from-green-50 to-emerald-50 rounded-lg">
                     <div className="flex items-center space-x-2 mb-3">
-                      <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
-                        <Package className="h-4 w-4 text-blue-600" />
+                      <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center">
+                        <Package className="h-4 w-4 text-green-600" />
                       </div>
                       <h4 className="text-sm font-light text-gray-900">Destination Silo</h4>
                     </div>
                     <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-light text-gray-600">Name</span>
-                        <span className="text-xs font-light text-blue-900">{latestForm.raw_milk_intake_form_destination_silo_id_fkey.name}</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-light text-gray-600">Capacity</span>
-                        <span className="text-xs font-light">{latestForm.raw_milk_intake_form_destination_silo_id_fkey.capacity.toLocaleString()}L</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-light text-gray-600">Current Volume</span>
-                        <span className="text-xs font-light text-green-600">{latestForm.raw_milk_intake_form_destination_silo_id_fkey.milk_volume.toLocaleString()}L</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-light text-gray-600">Expected New</span>
-                        <span className="text-xs font-light text-orange-600">
-                          {(latestForm.raw_milk_intake_form_destination_silo_id_fkey.milk_volume + latestForm.quantity_received).toLocaleString()}L
-                        </span>
-                      </div>
-                      
-                      {/* Capacity Bar */}
-                      <div className="mt-2">
-                        <div className="flex justify-between text-xs font-light text-gray-600 mb-1">
-                          <span>Usage</span>
-                          <span>{Math.round((latestForm.raw_milk_intake_form_destination_silo_id_fkey.milk_volume / latestForm.raw_milk_intake_form_destination_silo_id_fkey.capacity) * 100)}%</span>
-                        </div>
-                        <div className="w-full bg-gray-200 rounded-full h-1.5">
-                          <div 
-                            className="bg-gradient-to-r from-blue-500 to-cyan-500 h-1.5 rounded-full transition-all duration-300"
-                            style={{ 
-                              width: `${Math.min((latestForm.raw_milk_intake_form_destination_silo_id_fkey.milk_volume / latestForm.raw_milk_intake_form_destination_silo_id_fkey.capacity) * 100, 100)}%` 
-                            }}
-                          ></div>
-                        </div>
-                      </div>
+                      {(() => {
+                        const silo = getSiloByName(latestForm.destination_silo_name)
+
+                        return silo ? (
+                          <>
+                            <div className="text-sm font-light text-green-900">{silo.name}</div>
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs text-gray-600">Capacity</span>
+                              <span className="text-xs font-light">{silo.capacity?.toLocaleString()}L</span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs text-gray-600">Current</span>
+                              <span className="text-xs font-light text-green-600">{silo.milk_volume?.toLocaleString()}L</span>
+                            </div>
+                            <div className="w-full bg-gray-200 rounded-full h-1.5 mt-2">
+                              <div
+                                className=" from-green-500 to-emerald-500 h-1.5 rounded-full"
+                                style={{
+                                  width: `${Math.min((silo.milk_volume / silo.capacity) * 100, 100)}%`
+                                }}
+                              ></div>
+                            </div>
+                          </>
+                        ) : (
+                          <div className="flex items-center space-x-2">
+                            <span className="text-xs font-light">{latestForm.destination_silo_name}</span>
+                          </div>
+                        )
+                      })()}
                     </div>
                   </div>
                 )}
-                </div>
+              </div>
 
-                </div>
-                </div>
+            </div>
+          </div>
         ) : null}
 
 
         {/* Data Table */}
-        {!loading && (
+        {!operationLoading.fetch && (
           <div className="border border-gray-200 rounded-lg bg-white">
             <div className="p-6 pb-0">
               <div className="text-lg font-light">Raw Milk Intake Forms</div>
             </div>
             <div className="p-6 space-y-4">
-            <DataTableFilters
-              filters={tableFilters}
-              onFiltersChange={setTableFilters}
-              onSearch={(searchTerm) => setTableFilters(prev => ({ ...prev, search: searchTerm }))}
-              searchPlaceholder="Search intake forms..."
-              filterFields={filterFields}
-            />
-            
-            {loading ? (
-              <ContentSkeleton sections={1} cardsPerSection={4} />
-            ) : (
-              <DataTable columns={columns} data={forms} showSearch={false} />
-            )}
+              <DataTableFilters
+                filters={tableFilters}
+                onFiltersChange={setTableFilters}
+                onSearch={(searchTerm) => setTableFilters(prev => ({ ...prev, search: searchTerm }))}
+                searchPlaceholder="Search intake forms..."
+                filterFields={filterFields}
+              />
+
+              {operationLoading.fetch ? (
+                <ContentSkeleton sections={1} cardsPerSection={4} />
+              ) : (
+                <DataTable
+                  columns={columns}
+                  showSearch={false}
+                  data={filteredForms}
+                />
+              )}
             </div>
           </div>
         )}
 
         {/* Form Drawer */}
-        <RawMilkIntakeFormDrawer 
-          open={formDrawerOpen} 
-          onOpenChange={setFormDrawerOpen} 
+        <RawMilkIntakeFormDrawer
+          open={formDrawerOpen}
+          onOpenChange={setFormDrawerOpen}
           form={selectedForm}
-          mode={formMode} 
+          mode={formMode}
         />
 
         {/* View Drawer */}

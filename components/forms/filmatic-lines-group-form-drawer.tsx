@@ -141,7 +141,7 @@ export function FilmaticLinesGroupFormDrawer({ open, onOpenChange }: Props) {
                 </div>
               </div>
               <div className="flex items-center justify-between pt-4 border-t">
-                <LoadingButton variant="outline" onClick={() => setCurrentStep(1)} className="rounded-full">Back</LoadingButton>
+                <LoadingButton  onClick={() => setCurrentStep(1)} className="rounded-full">Back</LoadingButton>
                 <LoadingButton onClick={submitStep2} disabled={operationLoading.update} className="rounded-full">Save Group</LoadingButton>
               </div>
             </div>

@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Beaker, TrendingUp, Clock } from "lucide-react"
 import { SkimmingForm } from "@/lib/api/skimming-form"
+import { RootState, useAppSelector } from "@/lib/store"
 
 interface SkimmingFormViewDrawerProps {
   open: boolean
@@ -14,11 +15,11 @@ interface SkimmingFormViewDrawerProps {
   onEdit?: () => void
 }
 
-export function SkimmingFormViewDrawer({ 
-  open, 
-  onOpenChange, 
-  form, 
-  onEdit 
+export function SkimmingFormViewDrawer({
+  open,
+  onOpenChange,
+  form,
+  onEdit
 }: SkimmingFormViewDrawerProps) {
   if (!form) return null
 
@@ -29,6 +30,19 @@ export function SkimmingFormViewDrawer({
   const totalRawMilk = rawMilkData ? rawMilkData.quantity || 0 : 0
   const totalSkimMilk = skimMilkData ? skimMilkData.quantity || 0 : 0
   const totalCream = creamData ? creamData.quantity || 0 : 0
+  const { forms: bmtForms } = useAppSelector((state: RootState) => state.bmtControlForms)
+
+
+
+
+
+
+  const getBMTFormById = (bmtId: string) => {
+    return bmtForms.find((form: any) => form.id === bmtId)
+  }
+
+  //get machine by machine id
+ 
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -51,7 +65,7 @@ export function SkimmingFormViewDrawer({
               <div className="flex items-center justify-between">
                 <span className="text-sm font-light text-gray-600">Form ID</span>
                 <div className="flex items-center space-x-2">
-                  <span className="text-sm font-light">#{form.id.slice(0, 8)}</span>
+                  <span className="text-sm font-light">{form?.tag}</span>
                   <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
                     <Clock className="h-3 w-3" />
                   </Button>
@@ -61,7 +75,7 @@ export function SkimmingFormViewDrawer({
                 <span className="text-sm font-light text-gray-600">BMT ID</span>
                 <div className="flex items-center space-x-2">
                   <span className="text-sm font-light">
-                    {form.bmt_id ? `#${form.bmt_id.slice(0, 8)}` : 'Not specified'}
+                    {getBMTFormById(form.bmt_id)?.tag}
                   </span>
                   {form.bmt_id && (
                     <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
@@ -73,10 +87,10 @@ export function SkimmingFormViewDrawer({
               <div className="flex items-center justify-between">
                 <span className="text-sm font-light text-gray-600">Created</span>
                 <span className="text-sm font-light">
-                  {new Date(form.created_at).toLocaleDateString('en-GB', { 
-                    day: 'numeric', 
-                    month: 'long', 
-                    year: 'numeric' 
+                  {new Date(form.created_at).toLocaleDateString('en-GB', {
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric'
                   })}
                 </span>
               </div>
@@ -146,17 +160,17 @@ export function SkimmingFormViewDrawer({
                 <div className="mt-4">
                   <p className="text-xs font-light text-gray-600 mb-2">Raw Milk Details:</p>
                   <div className="space-y-2">
-                      <div className="flex items-center justify-between text-xs bg-orange-50 p-2 rounded">
-                        <span className="font-light">Raw Milk Entry</span>
-                        <div className="flex items-center space-x-2">
-                          <Badge className="text-xs bg-orange-100 text-orange-800">
-                            {rawMilkData.quantity || 0}L
-                          </Badge>
-                          <Badge className="text-xs bg-yellow-100 text-yellow-800">
-                            {rawMilkData.fat || 0}% fat
-                          </Badge>
-                        </div>
+                    <div className="flex items-center justify-between text-xs bg-orange-50 p-2 rounded">
+                      <span className="font-light">Raw Milk Entry</span>
+                      <div className="flex items-center space-x-2">
+                        <Badge className="text-xs bg-orange-100 text-orange-800">
+                          {rawMilkData.quantity || 0}L
+                        </Badge>
+                        <Badge className="text-xs bg-yellow-100 text-yellow-800">
+                          {rawMilkData.fat || 0}% fat
+                        </Badge>
                       </div>
+                    </div>
                   </div>
                 </div>
               ) : (
@@ -261,7 +275,7 @@ export function SkimmingFormViewDrawer({
                           {creamData.fat || 0}% fat
                         </Badge>
                         {creamData.transfer_start && creamData.transfer_end && (
-                          <Badge className="text-xs bg-purple-100 text-purple-800">
+                          <Badge className="text-xs bg-blue-100 text-blue-800">
                             {Math.round((new Date(creamData.transfer_end).getTime() - new Date(creamData.transfer_start).getTime()) / (1000 * 60))}min
                           </Badge>
                         )}
@@ -284,10 +298,10 @@ export function SkimmingFormViewDrawer({
               <div className="flex items-center justify-between">
                 <span className="text-sm font-light text-gray-600">Created</span>
                 <span className="text-sm font-light">
-                  {new Date(form.created_at).toLocaleDateString('en-GB', { 
-                    day: 'numeric', 
-                    month: 'long', 
-                    year: 'numeric' 
+                  {new Date(form.created_at).toLocaleDateString('en-GB', {
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric'
                   })}
                 </span>
               </div>
@@ -295,10 +309,10 @@ export function SkimmingFormViewDrawer({
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-light text-gray-600">Updated</span>
                   <span className="text-sm font-light">
-                    {new Date(form.updated_at).toLocaleDateString('en-GB', { 
-                      day: 'numeric', 
-                      month: 'long', 
-                      year: 'numeric' 
+                    {new Date(form.updated_at).toLocaleDateString('en-GB', {
+                      day: 'numeric',
+                      month: 'long',
+                      year: 'numeric'
                     })}
                   </span>
                 </div>
@@ -310,7 +324,7 @@ export function SkimmingFormViewDrawer({
         {/* Action Buttons */}
         <div className="p-6 border-t bg-gray-50">
           <div className="flex justify-end space-x-3">
-            <Button variant="outline" onClick={() => onOpenChange(false)}>
+            <Button  onClick={() => onOpenChange(false)}>
               Close
             </Button>
             {onEdit && (

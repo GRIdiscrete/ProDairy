@@ -6,6 +6,7 @@ import {
   deleteQACorrectiveAction,
   QACorrectiveAction
 } from '@/lib/api/data-capture-forms'
+import { apiRequest } from '@/lib/utils/api-request'
 
 interface QACorrectiveActionState {
   actions: QACorrectiveAction[]
@@ -50,8 +51,8 @@ export const fetchQACorrectiveActions = createAsyncThunk(
         return state.qaCorrectiveActions.actions
       }
       
-      const actions = await getQACorrectiveActions()
-      return actions
+      const res = await apiRequest<any>('/qa-corrective-action', { method: 'GET' })
+      return res.data || []
     } catch (error: any) {
       const errorMessage = error?.response?.data?.message || error.message || 'Failed to fetch QA corrective actions'
       return rejectWithValue(errorMessage)
@@ -154,7 +155,7 @@ const qaCorrectiveActionSlice = createSlice({
       .addCase(updateQACorrectiveActionAction.fulfilled, (state, action) => {
         state.operationLoading.update = false
         if (action.payload) {
-          const index = state.actions.findIndex(action => action.id === action.payload.id)
+          const index = state.actions.findIndex(item => item.id === action.payload.id)
           if (index !== -1) {
             state.actions[index] = action.payload
           }
@@ -177,7 +178,7 @@ const qaCorrectiveActionSlice = createSlice({
       })
       .addCase(deleteQACorrectiveActionAction.fulfilled, (state, action) => {
         state.operationLoading.delete = false
-        state.actions = state.actions.filter(action => action.id !== action.payload)
+        state.actions = state.actions.filter(item => item.id !== action.payload)
         if (state.currentAction?.id === action.payload) {
           state.currentAction = null
         }
