@@ -33,40 +33,24 @@ export interface FilmaticLinesForm1 {
   day_shift_foiled_bottles?: number | null
   night_shift_foiled_bottles?: number | null
   transferrable_milk?: number | null
-  filmatic_line_form_1_day_shift: FilmaticLinesForm1DayShift[]
-  filmatic_line_form_1_night_shift: FilmaticLinesForm1NightShift[]
+  day_shift_id?: FilmaticLinesForm1Shift | null
+  night_shift_id?: FilmaticLinesForm1Shift | null
 }
 
-export interface FilmaticLinesForm1DayShift {
+export interface FilmaticLinesForm1Shift {
   id?: string
   supervisor_approve: boolean | null
   operator_id: string
-  filmatic_line_form_1_day_shift_details: FilmaticLinesForm1DayShiftDetail[]
+  shift_details: FilmaticLinesForm1ShiftDetail | null
 }
 
-export interface FilmaticLinesForm1NightShift {
-  id?: string
-  supervisor_approve: boolean | null
-  operator_id: string
-  filmatic_line_form_1_night_shift_details: FilmaticLinesForm1NightShiftDetail[]
-}
-
-export interface FilmaticLinesForm1DayShiftDetail {
+export interface FilmaticLinesForm1ShiftDetail {
   id?: string
   time: string
-  pallets: number
   target: number
-  setbacks: string
-  filmatic_line_form_1_day_shift_details_stoppage_time: FilmaticLinesForm1StoppageTime[]
-}
-
-export interface FilmaticLinesForm1NightShiftDetail {
-  id?: string
-  time: string
   pallets: number
-  target: number
   setbacks: string
-  filmatic_line_form_1_night_shift_details_stoppage_time: FilmaticLinesForm1StoppageTime[]
+  stoppage_time_id: FilmaticLinesForm1StoppageTime | null
 }
 
 export interface FilmaticLinesForm1StoppageTime {
@@ -93,25 +77,31 @@ export interface CreateFilmaticLinesForm1Request {
   process_id: string
   date: string
   holding_tank_bmt: string
-  day_shift_opening_bottles?: number
-  day_shift_closing_bottles?: number
-  night_shift_opening_bottles?: number
-  night_shift_closing_bottles?: number
-  day_shift_waste_bottles?: number
-  night_shift_waste_bottles?: number
+  day_shift_opening_bottles?: number | null
+  day_shift_closing_bottles?: number | null
+  night_shift_opening_bottles?: number | null
+  night_shift_closing_bottles?: number | null
+  day_shift_waste_bottles?: number | null
+  night_shift_waste_bottles?: number | null
   groups?: {
+    id?: string
     group_a?: string[]
+    group_b?: string[]
+    group_c?: string[]
     manager_id?: string
   }
   day_shift?: {
+    id?: string
     supervisor_approve: boolean
     operator_id: string
-    details: Array<{
+    shift_details: {
+      id?: string
       time: string
       pallets: number
       target: number
       setbacks: string
-      stoppage_time: Array<{
+      stoppage_time_id: {
+        id?: string
         product_1?: number
         product_2?: number
         filler_1?: number
@@ -126,18 +116,21 @@ export interface CreateFilmaticLinesForm1Request {
         product_2_hours?: number
         filler_1_hours?: number
         filler_2_hours?: number
-      }>
-    }>
-  }
+      }
+    }
+  } | null
   night_shift?: {
+    id?: string
     supervisor_approve: boolean
     operator_id: string
-    details: Array<{
+    shift_details: {
+      id?: string
       time: string
       pallets: number
       target: number
       setbacks: string
-      stoppage_time: Array<{
+      stoppage_time_id: {
+        id?: string
         product_1?: number
         product_2?: number
         filler_1?: number
@@ -148,16 +141,20 @@ export interface CreateFilmaticLinesForm1Request {
         sleever_2?: number
         shrink_1?: number
         shrink_2?: number
-      }>
-    }>
-  }
+        product_1_hours?: number
+        product_2_hours?: number
+        filler_1_hours?: number
+        filler_2_hours?: number
+      }
+    }
+  } | null
 }
 
 // API Functions
 export const filmaticLinesForm1Api = {
   // Get all forms
   getForms: async () => {
-    const response = await apiRequest<{statusCode: number, message: string, data: FilmaticLinesForm1[]}>('/filmatic-lines-form-1', {
+    const response = await apiRequest<{ statusCode: number, message: string, data: FilmaticLinesForm1[] }>('/filmatic-lines-form-1', {
       method: 'GET',
     })
     return response.data

@@ -87,10 +87,10 @@ export function SteriMilkProcessLogDrawer({
   const autoFillNextStep = (sourceField: string, targetField: string) => {
     const [sourceSection, sourceKey] = sourceField.split('.') as [keyof ProcessDetailsFormData, 'time' | 'temperature' | 'pressure']
     const [targetSection, targetKey] = targetField.split('.') as [keyof ProcessDetailsFormData, 'time' | 'temperature' | 'pressure']
-    
+
     const sourceValue = watchAllFields[sourceSection]?.[sourceKey]
     const targetValue = watchAllFields[targetSection]?.[targetKey]
-    
+
     if (hasValue(sourceValue) && !hasValue(targetValue)) {
       processDetailsForm.setValue(targetField as any, sourceValue, { shouldValidate: false, shouldDirty: false })
     }
@@ -107,7 +107,7 @@ export function SteriMilkProcessLogDrawer({
           autoFillNextStep('heating_finish_details.pressure', 'sterilization_start_details.pressure')
         }, 300) // Small delay to ensure value is set
       }
-      
+
       // Sterilization Finish -> Pre Cooling Start
       if (name?.startsWith('sterilization_finish_details')) {
         setTimeout(() => {
@@ -116,7 +116,7 @@ export function SteriMilkProcessLogDrawer({
           autoFillNextStep('sterilization_finish_details.pressure', 'pre_cooling_start_details.pressure')
         }, 300)
       }
-      
+
       // Pre Cooling Finish -> Cooling 1 Start
       if (name?.startsWith('pre_cooling_finish_details')) {
         setTimeout(() => {
@@ -125,7 +125,7 @@ export function SteriMilkProcessLogDrawer({
           autoFillNextStep('pre_cooling_finish_details.pressure', 'cooling_1_start_details.pressure')
         }, 300)
       }
-      
+
       // Cooling 1 Finish -> Cooling 2 Start
       if (name?.startsWith('cooling_1_finish_details')) {
         setTimeout(() => {
@@ -135,7 +135,7 @@ export function SteriMilkProcessLogDrawer({
         }, 300)
       }
     })
-    
+
     return () => subscription.unsubscribe()
   }, [watchAllFields])
 
@@ -394,7 +394,7 @@ export function SteriMilkProcessLogDrawer({
           let tz = "+00"
           if (tzMatch) {
             tz = tzMatch[1] === "Z" ? "+00" : tzMatch[1].replace(":", "")
-            if (/^[+-]\d{4}$/.test(tz)) tz = tz.slice(0,3)
+            if (/^[+-]\d{4}$/.test(tz)) tz = tz.slice(0, 3)
           }
           const timeMatch = val.match(/(\d{1,2}):(\d{2})(?::(\d{2}))?/)
           if (timeMatch) {
@@ -415,7 +415,7 @@ export function SteriMilkProcessLogDrawer({
         try {
           const s = String(val)
           const m = s.match(/(\d{1,2}):(\d{2})/)
-          if (m) return `${m[1].padStart(2,"0")}:${m[2]}:00+00`
+          if (m) return `${m[1].padStart(2, "0")}:${m[2]}:00+00`
         } catch { /* fallthrough */ }
         return null
       }
@@ -424,7 +424,7 @@ export function SteriMilkProcessLogDrawer({
       const formData: any = {
         approved: basicInfo.approved || false,
         approver_id: basicInfo.approver_id || "",
-        filmatic_form_id: basicInfo.filmatic_form_id || "",
+        filmatic_form_id: basicInfo.filmatic_form_id || null,
         batch: {
           // date should be YYYY-MM-DD or null
           date: basicInfo.date ? basicInfo.date : null,
@@ -507,7 +507,7 @@ export function SteriMilkProcessLogDrawer({
             id: log.id,
             approved: formData.approved,
             approver_id: formData.approver_id,
-            filmatic_form_id: formData.filmatic_form_id,
+            filmatic_form_id: formData.filmatic_form_id || null,
             batch: { id: batchId, ...formData.batch }
           }
         })).unwrap()
@@ -576,7 +576,7 @@ export function SteriMilkProcessLogDrawer({
 
         <div className="flex items-center justify-between p-6 pt-0 border-t bg-white">
           <Button
-            
+
             onClick={handleBack}
             disabled={currentStep === 1}
             className="flex items-center gap-2"
