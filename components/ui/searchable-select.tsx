@@ -2,8 +2,8 @@
 
 import React from "react"
 
-import { useState, useEffect, useRef, useCallback } from "react"
-import { Check, ChevronsUpDown, X } from "lucide-react"
+import { useState, useEffect, useRef, useCallback, useMemo } from "react"
+import { Check, ChevronsUpDown, X, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 
@@ -20,8 +20,8 @@ export interface SearchableSelectOption {
 
 interface SearchableSelectProps {
   options?: SearchableSelectOption[]
-  value?: string
-  onValueChange: (value: string) => void
+  value?: string | string[]
+  onValueChange: (value: any) => void
   placeholder?: string
   searchPlaceholder?: string
   emptyMessage?: string
@@ -56,10 +56,13 @@ export function SearchableSelect({
 
 
   // Filter options based on search term
-  const filteredOptions = (options || []).filter(option =>
-    (option.label || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (option.description || '').toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  const filteredOptions = useMemo(() => {
+    if (!searchTerm) return options || []
+    return (options || []).filter(option =>
+      (option.label || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (option.description || '').toLowerCase().includes(searchTerm.toLowerCase())
+    )
+  }, [options, searchTerm])
 
   // Handle search with debouncing
   useEffect(() => {
@@ -68,10 +71,10 @@ export function SearchableSelect({
     }
 
     searchTimeoutRef.current = setTimeout(() => {
-      if (onSearch && searchTerm) {
+      if (onSearch) {
         onSearch(searchTerm)
       }
-    }, 300)
+    }, 400)
 
     return () => {
       if (searchTimeoutRef.current) {
@@ -176,53 +179,51 @@ export function SearchableSelect({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
-        <Command>
+        <Command shouldFilter={false}>
           <CommandInput
             placeholder={searchPlaceholder}
             value={searchTerm}
             onValueChange={setSearchTerm}
             className="h-9"
           />
-          <CommandList>
-            {loading ? (
-              <div className="py-6 text-center text-sm text-muted-foreground">
-                Loading...
-              </div>
-            ) : filteredOptions.length === 0 ? (
-              <CommandEmpty>{emptyMessage}</CommandEmpty>
-            ) : (
-              <CommandGroup>
-                {filteredOptions.map((option) => {
-                  const isSelected = multiple
-                    ? Array.isArray(value) && value.includes(option.value)
-                    : value === option.value
+          <CommandList className="max-h-[300px] overflow-y-auto">
+            {filteredOptions.length === 0 && !loading && (
+              <CommandEmpty className="py-6 text-center text-sm text-muted-foreground">
+                {emptyMessage}
+              </CommandEmpty>
+            )}
 
-                  return (
-                    <CommandItem
-                      key={option.value}
-                      value={option.value}
-                      onSelect={() => handleSelect(option.value)}
-                      disabled={option.disabled}
-                      className="cursor-pointer"
-                    >
-                      <div className="flex items-center justify-between w-full">
-                        <div className="flex flex-col">
-                          <span className="font-normal">{option.label || 'Unknown'}</span>
-                          {option.description && (
-                            <span className="text-sm text-muted-foreground">
-                              {option.description}
-                            </span>
-                          )}
-                        </div>
-                        {isSelected && (
-                          <Check className="ml-2 h-4 w-4" />
+            <CommandGroup>
+              {filteredOptions.map((option) => {
+                const isSelected = multiple
+                  ? Array.isArray(value) && value.includes(option.value)
+                  : value === option.value
+
+                return (
+                  <CommandItem
+                    key={option.value}
+                    value={option.value}
+                    onSelect={() => handleSelect(option.value)}
+                    disabled={option.disabled}
+                    className="cursor-pointer"
+                  >
+                    <div className="flex items-center justify-between w-full">
+                      <div className="flex flex-col">
+                        <span className="font-normal">{option.label || 'Unknown'}</span>
+                        {option.description && (
+                          <span className="text-sm text-muted-foreground">
+                            {option.description}
+                          </span>
                         )}
                       </div>
-                    </CommandItem>
-                  )
-                })}
-              </CommandGroup>
-            )}
+                      {isSelected && (
+                        <Check className="ml-2 h-4 w-4" />
+                      )}
+                    </div>
+                  </CommandItem>
+                )
+              })}
+            </CommandGroup>
           </CommandList>
         </Command>
       </PopoverContent>
@@ -232,8 +233,8 @@ export function SearchableSelect({
 
 // Specialized components for different entity types
 interface EntitySearchableSelectProps {
-  value?: string
-  onValueChange: (value: string) => void
+  value?: string | string[]
+  onValueChange: (value: any) => void
   placeholder?: string
   disabled?: boolean
   className?: string

@@ -137,7 +137,7 @@ export const authApi = {
 
   sendOtp: async (phone: string): Promise<SendOtpResponse> => {
     // The user provided API example:
-    // POST https://dms.prodairyims.co.zw/api/auth/send-otp/%2B263772440088
+    // POST http://213.136.80.168:3003/api/auth/send-otp/%2B263772440088
     // We need to encode the phone number component
     const encodedPhone = encodeURIComponent(phone);
     return apiRequest<SendOtpResponse>(`${API_CONFIG.ENDPOINTS.AUTH}/send-otp/${encodedPhone}`, {
