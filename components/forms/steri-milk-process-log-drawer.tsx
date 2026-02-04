@@ -420,6 +420,25 @@ export function SteriMilkProcessLogDrawer({
         return null
       }
 
+      // Helper to build detail object with IDs for update mode
+      const buildDetailObject = (detailData: any, existingDetail: any) => {
+        const detailObj: any = {
+          time: convertTimeToBackend(detailData?.time),
+          temperature: parseFloat(detailData?.temperature),
+          pressure: parseFloat(detailData?.pressure)
+        }
+
+        // On update, include the ID if it exists
+        if (mode === "edit" && existingDetail?.id) {
+          detailObj.id = existingDetail.id
+        }
+
+        return detailObj
+      }
+
+      // Get existing batch data for update mode
+      const existingBatch = mode === "edit" && log ? (log as any).batch_id : null
+
       // Build payload that matches your API examples: no simple process times, only details
       const formData: any = {
         approved: basicInfo.approved || false,
@@ -430,71 +449,58 @@ export function SteriMilkProcessLogDrawer({
           date: basicInfo.date ? basicInfo.date : null,
           batch_number: basicInfo.batch_number ? Number(basicInfo.batch_number) : 1, // Parse to number for backend
           // only include *_details objects (formatted times)
-          filling_start_details: {
-            time: convertTimeToBackend(data.filling_start_details?.time),
-            temperature: parseFloat(data.filling_start_details?.temperature),
-            pressure: parseFloat(data.filling_start_details?.pressure)
-          },
-          autoclave_start_details: {
-            time: convertTimeToBackend(data.autoclave_start_details?.time),
-            temperature: parseFloat(data.autoclave_start_details?.temperature),
-            pressure: parseFloat(data.autoclave_start_details?.pressure)
-          },
-          heating_start_details: {
-            time: convertTimeToBackend(data.heating_start_details?.time),
-            temperature: parseFloat(data.heating_start_details?.temperature),
-            pressure: parseFloat(data.heating_start_details?.pressure)
-          },
-          heating_finish_details: {
-            time: convertTimeToBackend(data.heating_finish_details?.time),
-            temperature: parseFloat(data.heating_finish_details?.temperature),
-            pressure: parseFloat(data.heating_finish_details?.pressure)
-          },
-          sterilization_start_details: {
-            time: convertTimeToBackend(data.sterilization_start_details?.time),
-            temperature: parseFloat(data.sterilization_start_details?.temperature),
-            pressure: parseFloat(data.sterilization_start_details?.pressure)
-          },
-          sterilization_after_5_details: {
-            time: convertTimeToBackend(data.sterilization_after_5_details?.time),
-            temperature: parseFloat(data.sterilization_after_5_details?.temperature),
-            pressure: parseFloat(data.sterilization_after_5_details?.pressure)
-          },
-          sterilization_finish_details: {
-            time: convertTimeToBackend(data.sterilization_finish_details?.time),
-            temperature: parseFloat(data.sterilization_finish_details?.temperature),
-            pressure: parseFloat(data.sterilization_finish_details?.pressure)
-          },
-          pre_cooling_start_details: {
-            time: convertTimeToBackend(data.pre_cooling_start_details?.time),
-            temperature: parseFloat(data.pre_cooling_start_details?.temperature),
-            pressure: parseFloat(data.pre_cooling_start_details?.pressure)
-          },
-          pre_cooling_finish_details: {
-            time: convertTimeToBackend(data.pre_cooling_finish_details?.time),
-            temperature: parseFloat(data.pre_cooling_finish_details?.temperature),
-            pressure: parseFloat(data.pre_cooling_finish_details?.pressure)
-          },
-          cooling_1_start_details: {
-            time: convertTimeToBackend(data.cooling_1_start_details?.time),
-            temperature: parseFloat(data.cooling_1_start_details?.temperature),
-            pressure: parseFloat(data.cooling_1_start_details?.pressure)
-          },
-          cooling_1_finish_details: {
-            time: convertTimeToBackend(data.cooling_1_finish_details?.time),
-            temperature: parseFloat(data.cooling_1_finish_details?.temperature),
-            pressure: parseFloat(data.cooling_1_finish_details?.pressure)
-          },
-          cooling_2_start_details: {
-            time: convertTimeToBackend(data.cooling_2_start_details?.time),
-            temperature: parseFloat(data.cooling_2_start_details?.temperature),
-            pressure: parseFloat(data.cooling_2_start_details?.pressure)
-          },
-          cooling_2_finish_details: {
-            time: convertTimeToBackend(data.cooling_2_finish_details?.time),
-            temperature: parseFloat(data.cooling_2_finish_details?.temperature),
-            pressure: parseFloat(data.cooling_2_finish_details?.pressure)
-          }
+          filling_start_details: buildDetailObject(
+            data.filling_start_details,
+            existingBatch?.filling_start_details
+          ),
+          autoclave_start_details: buildDetailObject(
+            data.autoclave_start_details,
+            existingBatch?.autoclave_start_details
+          ),
+          heating_start_details: buildDetailObject(
+            data.heating_start_details,
+            existingBatch?.heating_start_details
+          ),
+          heating_finish_details: buildDetailObject(
+            data.heating_finish_details,
+            existingBatch?.heating_finish_details
+          ),
+          sterilization_start_details: buildDetailObject(
+            data.sterilization_start_details,
+            existingBatch?.sterilization_start_details
+          ),
+          sterilization_after_5_details: buildDetailObject(
+            data.sterilization_after_5_details,
+            existingBatch?.sterilization_after_5_details
+          ),
+          sterilization_finish_details: buildDetailObject(
+            data.sterilization_finish_details,
+            existingBatch?.sterilization_finish_details
+          ),
+          pre_cooling_start_details: buildDetailObject(
+            data.pre_cooling_start_details,
+            existingBatch?.pre_cooling_start_details
+          ),
+          pre_cooling_finish_details: buildDetailObject(
+            data.pre_cooling_finish_details,
+            existingBatch?.pre_cooling_finish_details
+          ),
+          cooling_1_start_details: buildDetailObject(
+            data.cooling_1_start_details,
+            existingBatch?.cooling_1_start_details
+          ),
+          cooling_1_finish_details: buildDetailObject(
+            data.cooling_1_finish_details,
+            existingBatch?.cooling_1_finish_details
+          ),
+          cooling_2_start_details: buildDetailObject(
+            data.cooling_2_start_details,
+            existingBatch?.cooling_2_start_details
+          ),
+          cooling_2_finish_details: buildDetailObject(
+            data.cooling_2_finish_details,
+            existingBatch?.cooling_2_finish_details
+          )
         }
       }
 
