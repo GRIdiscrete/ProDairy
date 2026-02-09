@@ -58,7 +58,7 @@ export interface SteriMilkProcessLog {
   updated_at?: string | null
   approved: boolean
   approver_id: string
-  filmatic_form_id: string
+  filmatic_form_id: string | null
   tag?: string           // <- new field returned by API
   batch_id?: Batch | null // <- API returns a single batch object or null
 }
@@ -67,7 +67,7 @@ export interface SteriMilkProcessLog {
 export interface CreateSteriMilkProcessLogRequest {
   approved: boolean
   approver_id: string
-  filmatic_form_id: string
+  filmatic_form_id: string | null
   batch: Batch
   id?: string
 }

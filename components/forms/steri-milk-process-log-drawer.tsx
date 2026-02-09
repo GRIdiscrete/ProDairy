@@ -87,10 +87,10 @@ export function SteriMilkProcessLogDrawer({
   const autoFillNextStep = (sourceField: string, targetField: string) => {
     const [sourceSection, sourceKey] = sourceField.split('.') as [keyof ProcessDetailsFormData, 'time' | 'temperature' | 'pressure']
     const [targetSection, targetKey] = targetField.split('.') as [keyof ProcessDetailsFormData, 'time' | 'temperature' | 'pressure']
-    
+
     const sourceValue = watchAllFields[sourceSection]?.[sourceKey]
     const targetValue = watchAllFields[targetSection]?.[targetKey]
-    
+
     if (hasValue(sourceValue) && !hasValue(targetValue)) {
       processDetailsForm.setValue(targetField as any, sourceValue, { shouldValidate: false, shouldDirty: false })
     }
@@ -107,7 +107,7 @@ export function SteriMilkProcessLogDrawer({
           autoFillNextStep('heating_finish_details.pressure', 'sterilization_start_details.pressure')
         }, 300) // Small delay to ensure value is set
       }
-      
+
       // Sterilization Finish -> Pre Cooling Start
       if (name?.startsWith('sterilization_finish_details')) {
         setTimeout(() => {
@@ -116,7 +116,7 @@ export function SteriMilkProcessLogDrawer({
           autoFillNextStep('sterilization_finish_details.pressure', 'pre_cooling_start_details.pressure')
         }, 300)
       }
-      
+
       // Pre Cooling Finish -> Cooling 1 Start
       if (name?.startsWith('pre_cooling_finish_details')) {
         setTimeout(() => {
@@ -125,7 +125,7 @@ export function SteriMilkProcessLogDrawer({
           autoFillNextStep('pre_cooling_finish_details.pressure', 'cooling_1_start_details.pressure')
         }, 300)
       }
-      
+
       // Cooling 1 Finish -> Cooling 2 Start
       if (name?.startsWith('cooling_1_finish_details')) {
         setTimeout(() => {
@@ -135,7 +135,7 @@ export function SteriMilkProcessLogDrawer({
         }, 300)
       }
     })
-    
+
     return () => subscription.unsubscribe()
   }, [watchAllFields])
 
@@ -394,7 +394,7 @@ export function SteriMilkProcessLogDrawer({
           let tz = "+00"
           if (tzMatch) {
             tz = tzMatch[1] === "Z" ? "+00" : tzMatch[1].replace(":", "")
-            if (/^[+-]\d{4}$/.test(tz)) tz = tz.slice(0,3)
+            if (/^[+-]\d{4}$/.test(tz)) tz = tz.slice(0, 3)
           }
           const timeMatch = val.match(/(\d{1,2}):(\d{2})(?::(\d{2}))?/)
           if (timeMatch) {
@@ -415,86 +415,92 @@ export function SteriMilkProcessLogDrawer({
         try {
           const s = String(val)
           const m = s.match(/(\d{1,2}):(\d{2})/)
-          if (m) return `${m[1].padStart(2,"0")}:${m[2]}:00+00`
+          if (m) return `${m[1].padStart(2, "0")}:${m[2]}:00+00`
         } catch { /* fallthrough */ }
         return null
       }
+
+      // Helper to build detail object with IDs for update mode
+      const buildDetailObject = (detailData: any, existingDetail: any) => {
+        const detailObj: any = {
+          time: convertTimeToBackend(detailData?.time),
+          temperature: parseFloat(detailData?.temperature),
+          pressure: parseFloat(detailData?.pressure)
+        }
+
+        // On update, include the ID if it exists
+        if (mode === "edit" && existingDetail?.id) {
+          detailObj.id = existingDetail.id
+        }
+
+        return detailObj
+      }
+
+      // Get existing batch data for update mode
+      const existingBatch = mode === "edit" && log ? (log as any).batch_id : null
 
       // Build payload that matches your API examples: no simple process times, only details
       const formData: any = {
         approved: basicInfo.approved || false,
         approver_id: basicInfo.approver_id || "",
-        filmatic_form_id: basicInfo.filmatic_form_id || "",
+        filmatic_form_id: basicInfo.filmatic_form_id || null,
         batch: {
           // date should be YYYY-MM-DD or null
           date: basicInfo.date ? basicInfo.date : null,
           batch_number: basicInfo.batch_number ? Number(basicInfo.batch_number) : 1, // Parse to number for backend
           // only include *_details objects (formatted times)
-          filling_start_details: {
-            time: convertTimeToBackend(data.filling_start_details?.time),
-            temperature: parseFloat(data.filling_start_details?.temperature),
-            pressure: parseFloat(data.filling_start_details?.pressure)
-          },
-          autoclave_start_details: {
-            time: convertTimeToBackend(data.autoclave_start_details?.time),
-            temperature: parseFloat(data.autoclave_start_details?.temperature),
-            pressure: parseFloat(data.autoclave_start_details?.pressure)
-          },
-          heating_start_details: {
-            time: convertTimeToBackend(data.heating_start_details?.time),
-            temperature: parseFloat(data.heating_start_details?.temperature),
-            pressure: parseFloat(data.heating_start_details?.pressure)
-          },
-          heating_finish_details: {
-            time: convertTimeToBackend(data.heating_finish_details?.time),
-            temperature: parseFloat(data.heating_finish_details?.temperature),
-            pressure: parseFloat(data.heating_finish_details?.pressure)
-          },
-          sterilization_start_details: {
-            time: convertTimeToBackend(data.sterilization_start_details?.time),
-            temperature: parseFloat(data.sterilization_start_details?.temperature),
-            pressure: parseFloat(data.sterilization_start_details?.pressure)
-          },
-          sterilization_after_5_details: {
-            time: convertTimeToBackend(data.sterilization_after_5_details?.time),
-            temperature: parseFloat(data.sterilization_after_5_details?.temperature),
-            pressure: parseFloat(data.sterilization_after_5_details?.pressure)
-          },
-          sterilization_finish_details: {
-            time: convertTimeToBackend(data.sterilization_finish_details?.time),
-            temperature: parseFloat(data.sterilization_finish_details?.temperature),
-            pressure: parseFloat(data.sterilization_finish_details?.pressure)
-          },
-          pre_cooling_start_details: {
-            time: convertTimeToBackend(data.pre_cooling_start_details?.time),
-            temperature: parseFloat(data.pre_cooling_start_details?.temperature),
-            pressure: parseFloat(data.pre_cooling_start_details?.pressure)
-          },
-          pre_cooling_finish_details: {
-            time: convertTimeToBackend(data.pre_cooling_finish_details?.time),
-            temperature: parseFloat(data.pre_cooling_finish_details?.temperature),
-            pressure: parseFloat(data.pre_cooling_finish_details?.pressure)
-          },
-          cooling_1_start_details: {
-            time: convertTimeToBackend(data.cooling_1_start_details?.time),
-            temperature: parseFloat(data.cooling_1_start_details?.temperature),
-            pressure: parseFloat(data.cooling_1_start_details?.pressure)
-          },
-          cooling_1_finish_details: {
-            time: convertTimeToBackend(data.cooling_1_finish_details?.time),
-            temperature: parseFloat(data.cooling_1_finish_details?.temperature),
-            pressure: parseFloat(data.cooling_1_finish_details?.pressure)
-          },
-          cooling_2_start_details: {
-            time: convertTimeToBackend(data.cooling_2_start_details?.time),
-            temperature: parseFloat(data.cooling_2_start_details?.temperature),
-            pressure: parseFloat(data.cooling_2_start_details?.pressure)
-          },
-          cooling_2_finish_details: {
-            time: convertTimeToBackend(data.cooling_2_finish_details?.time),
-            temperature: parseFloat(data.cooling_2_finish_details?.temperature),
-            pressure: parseFloat(data.cooling_2_finish_details?.pressure)
-          }
+          filling_start_details: buildDetailObject(
+            data.filling_start_details,
+            existingBatch?.filling_start_details
+          ),
+          autoclave_start_details: buildDetailObject(
+            data.autoclave_start_details,
+            existingBatch?.autoclave_start_details
+          ),
+          heating_start_details: buildDetailObject(
+            data.heating_start_details,
+            existingBatch?.heating_start_details
+          ),
+          heating_finish_details: buildDetailObject(
+            data.heating_finish_details,
+            existingBatch?.heating_finish_details
+          ),
+          sterilization_start_details: buildDetailObject(
+            data.sterilization_start_details,
+            existingBatch?.sterilization_start_details
+          ),
+          sterilization_after_5_details: buildDetailObject(
+            data.sterilization_after_5_details,
+            existingBatch?.sterilization_after_5_details
+          ),
+          sterilization_finish_details: buildDetailObject(
+            data.sterilization_finish_details,
+            existingBatch?.sterilization_finish_details
+          ),
+          pre_cooling_start_details: buildDetailObject(
+            data.pre_cooling_start_details,
+            existingBatch?.pre_cooling_start_details
+          ),
+          pre_cooling_finish_details: buildDetailObject(
+            data.pre_cooling_finish_details,
+            existingBatch?.pre_cooling_finish_details
+          ),
+          cooling_1_start_details: buildDetailObject(
+            data.cooling_1_start_details,
+            existingBatch?.cooling_1_start_details
+          ),
+          cooling_1_finish_details: buildDetailObject(
+            data.cooling_1_finish_details,
+            existingBatch?.cooling_1_finish_details
+          ),
+          cooling_2_start_details: buildDetailObject(
+            data.cooling_2_start_details,
+            existingBatch?.cooling_2_start_details
+          ),
+          cooling_2_finish_details: buildDetailObject(
+            data.cooling_2_finish_details,
+            existingBatch?.cooling_2_finish_details
+          )
         }
       }
 
@@ -507,7 +513,7 @@ export function SteriMilkProcessLogDrawer({
             id: log.id,
             approved: formData.approved,
             approver_id: formData.approver_id,
-            filmatic_form_id: formData.filmatic_form_id,
+            filmatic_form_id: formData.filmatic_form_id || null,
             batch: { id: batchId, ...formData.batch }
           }
         })).unwrap()
@@ -576,7 +582,7 @@ export function SteriMilkProcessLogDrawer({
 
         <div className="flex items-center justify-between p-6 pt-0 border-t bg-white">
           <Button
-            
+
             onClick={handleBack}
             disabled={currentStep === 1}
             className="flex items-center gap-2"
