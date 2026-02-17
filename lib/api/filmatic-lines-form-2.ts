@@ -9,12 +9,13 @@ export interface FilmaticLinesForm2 {
   process_id: string | null
   date: string
   tag?: string
-  day_shift_opening_bottles?: number
-  day_shift_closing_bottles?: number
-  night_shift_opening_bottles?: number
-  night_shift_closing_bottles?: number
-  day_shift_waste_bottles?: number
-  night_shift_waste_bottles?: number
+  holding_tank_bmt?: string | null
+  day_shift_opening_bottles?: number | null
+  day_shift_closing_bottles?: number | null
+  night_shift_opening_bottles?: number | null
+  night_shift_closing_bottles?: number | null
+  day_shift_waste_bottles?: number | null
+  night_shift_waste_bottles?: number | null
   groups?: {
     id?: string
     group_a?: string[]
@@ -24,8 +25,69 @@ export interface FilmaticLinesForm2 {
     created_at?: string
     updated_at?: string
   } | null
-  filmatic_line_form_2_day_shift: FilmaticLinesForm2DayShift[]
-  filmatic_line_form_2_night_shift: FilmaticLinesForm2NightShift[]
+  // Actual API returns objects, not arrays
+  day_shift_id?: {
+    id?: string
+    operator_id: string
+    supervisor_approve: boolean
+    shift_details?: {
+      id?: string
+      time: string
+      target: number
+      pallets: number
+      setbacks: string
+      stoppage_time_id?: {
+        id?: string
+        capper_1?: number | null
+        capper_2?: number | null
+        sleever_1?: number | null
+        sleever_2?: number | null
+        shrink_1?: number | null
+        shrink_2?: number | null
+        capper_1_hours?: number | null
+        capper_2_hours?: number | null
+        sleever_1_hours?: number | null
+        sleever_2_hours?: number | null
+        shrink_1_hours?: number | null
+        shrink_2_hours?: number | null
+      } | null
+    } | null
+  } | null
+  night_shift_id?: {
+    id?: string
+    operator_id: string
+    supervisor_approve: boolean
+    shift_details?: {
+      id?: string
+      time: string
+      target: number
+      pallets: number
+      setbacks: string
+      stoppage_time_id?: {
+        id?: string
+        capper_1?: number | null
+        capper_2?: number | null
+        sleever_1?: number | null
+        sleever_2?: number | null
+        shrink_1?: number | null
+        shrink_2?: number | null
+        capper_1_hours?: number | null
+        capper_2_hours?: number | null
+        sleever_1_hours?: number | null
+        sleever_2_hours?: number | null
+        shrink_1_hours?: number | null
+        shrink_2_hours?: number | null
+      } | null
+    } | null
+  } | null
+  operator?: string | null
+  updated_by?: string | null
+  approver?: string | null
+  // Legacy fields for backward compatibility
+  day_shift?: any | null
+  night_shift?: any | null
+  filmatic_line_form_2_day_shift?: any[]
+  filmatic_line_form_2_night_shift?: any[]
 }
 
 export interface FilmaticLinesForm2DayShift {
@@ -145,7 +207,7 @@ export interface CreateFilmaticLinesForm2Request {
 export const filmaticLinesForm2Api = {
   // Get all forms
   getForms: async () => {
-    const response = await apiRequest<{statusCode: number, message: string, data: FilmaticLinesForm2[]}>('/filmatic-lines-form-2', {
+    const response = await apiRequest<{ statusCode: number, message: string, data: FilmaticLinesForm2[] }>('/filmatic-lines-form-2', {
       method: 'GET',
     })
     return response.data

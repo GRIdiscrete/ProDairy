@@ -15,7 +15,6 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { CopyButton } from "@/components/ui/copy-button"
 import { UserAvatar } from "@/components/ui/user-avatar"
 import { FormIdCopy } from "@/components/ui/form-id-copy"
-import { generateRawMilkIntakeFormId } from "@/lib/utils/form-id-generator"
 import { useAppDispatch, useAppSelector } from "@/lib/store"
 import type { RootState } from "@/lib/store"
 import {
@@ -25,8 +24,6 @@ import {
 } from "@/lib/store/slices/rawMilkIntakeSlice"
 import { fetchUsers } from "@/lib/store/slices/usersSlice"
 import { fetchSilos } from "@/lib/store/slices/siloSlice"
-import { fetchCollectionVouchers } from "@/lib/store/slices/collectionVoucherSlice"
-import { fetchSuppliers } from "@/lib/store/slices/supplierSlice"
 import { toast } from "sonner"
 import { TableFilters } from "@/lib/types"
 import { RawMilkIntakeForm } from "@/lib/api/raw-milk-intake"
@@ -42,33 +39,15 @@ export default function RawMilkIntakePage() {
   } = useAppSelector((state) => state.rawMilkIntake)
   const { items: users } = useAppSelector((state: RootState) => state.users)
   const { silos } = useAppSelector((state: RootState) => state.silo)
-  const { collectionVouchers } = useAppSelector((state: RootState) => state.collectionVoucher)
-  const { suppliers } = useAppSelector((state: RootState) => state.supplier)
 
   const [tableFilters, setTableFilters] = useState<TableFilters>({})
   const hasFetchedRef = useRef(false)
   const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
 
-  // Helper function to get silo by ID
-  const getSiloById = (siloId: string) => {
-    return silos.find((silo: any) => silo.id === siloId)
-  }
-
-  //get silo by name 
+  // Helper function to get silo by name
   const getSiloByName = (name: string) => {
     return silos.find((silo: any) => silo.name === name)
   }
-
-  // Helper function to get collection voucher by ID
-  const getCollectionVoucherById = (voucherId: any) => {
-    // If voucherId is already an object (populated), use it
-    if (typeof voucherId === 'object' && voucherId !== null) {
-      return voucherId
-    }
-    // Otherwise look it up in the store
-    return collectionVouchers.find((voucher: any) => voucher.id === voucherId)
-  }
-
 
   // Load raw milk intake forms and related data on initial mount
   useEffect(() => {
@@ -77,8 +56,6 @@ export default function RawMilkIntakePage() {
       dispatch(fetchRawMilkIntakeForms())
       dispatch(fetchUsers({})) // Load users for operator information
       dispatch(fetchSilos({})) // Load silos for destination information
-      dispatch(fetchCollectionVouchers({}))
-      dispatch(fetchSuppliers({})) // Load suppliers for sample information
     }
   }, [dispatch])
 
@@ -100,32 +77,18 @@ export default function RawMilkIntakePage() {
       if (tableFilters.search) {
         const searchLower = tableFilters.search.toLowerCase()
         const tag = (form.tag || "").toLowerCase()
-        const siloName = (form.destination_silo_name || "").toLowerCase()
-        const voucher = getCollectionVoucherById(form.collection_voucher_id)
-        const voucherTag = (voucher?.tag || "").toLowerCase()
+        const truck = (form.truck || "").toLowerCase()
+        const siloNames = form.details.map(d => (d.silo_name || "").toLowerCase()).join(" ")
 
         if (!tag.includes(searchLower) &&
-          !siloName.includes(searchLower) &&
-          !voucherTag.includes(searchLower)) return false
+          !truck.includes(searchLower) &&
+          !siloNames.includes(searchLower)) return false
       }
 
       // 2. Specific filter fields
-      if (tableFilters.date) {
-        const filterDate = new Date(tableFilters.date)
-        const formDate = new Date(form.date)
-        if (filterDate.toDateString() !== formDate.toDateString()) return false
-      }
-
-      if (tableFilters.destination_silo_name) {
-        const siloLower = tableFilters.destination_silo_name.toLowerCase()
-        if (!(form.destination_silo_name || "").toLowerCase().includes(siloLower)) return false
-      }
-
-      if (tableFilters.collection_voucher_id) {
-        const voucherLower = tableFilters.collection_voucher_id.toLowerCase()
-        const voucher = getCollectionVoucherById(form.collection_voucher_id)
-        const voucherTag = (voucher?.tag || "").toLowerCase()
-        if (!voucherTag.includes(voucherLower)) return false
+      if (tableFilters.truck) {
+        const truckLower = tableFilters.truck.toLowerCase()
+        if (!(form.truck || "").toLowerCase().includes(truckLower)) return false
       }
 
       if (tableFilters.tag) {
@@ -135,7 +98,7 @@ export default function RawMilkIntakePage() {
 
       // 3. Date Range filter
       if (tableFilters.dateRange) {
-        const formDate = new Date(form.date)
+        const formDate = new Date(form.created_at)
         if (tableFilters.dateRange.from) {
           const from = new Date(tableFilters.dateRange.from)
           from.setHours(0, 0, 0, 0)
@@ -150,27 +113,15 @@ export default function RawMilkIntakePage() {
 
       return true
     })
-  }, [rawMilkIntakeForms, tableFilters, collectionVouchers, silos])
+  }, [rawMilkIntakeForms, tableFilters, silos])
 
   // Filter fields configuration for Raw Milk Intake
   const filterFields = useMemo(() => [
     {
-      key: "date",
-      label: "Date",
-      type: "date" as const,
-      placeholder: "Filter by date"
-    },
-    {
-      key: "destination_silo_name",
-      label: "Destination Silo",
+      key: "truck",
+      label: "Truck",
       type: "text" as const,
-      placeholder: "Filter by destination silo"
-    },
-    {
-      key: "collection_voucher_id",
-      label: "Collection Voucher ID",
-      type: "text" as const,
-      placeholder: "Filter by collection voucher"
+      placeholder: "Filter by truck"
     },
     {
       key: "tag",
@@ -219,6 +170,11 @@ export default function RawMilkIntakePage() {
   // Get latest form for display
   const latestForm = Array.isArray(rawMilkIntakeForms) && rawMilkIntakeForms.length > 0 ? rawMilkIntakeForms[0] : null
 
+  // Calculate total quantity from details
+  const getTotalQuantity = (form: RawMilkIntakeForm) => {
+    return form.details.reduce((sum, detail) => sum + (detail.quantity || 0), 0)
+  }
+
   // Table columns with actions
   const columns = [
     {
@@ -226,7 +182,7 @@ export default function RawMilkIntakePage() {
       header: "Form",
       cell: ({ row }: any) => {
         const form = row.original
-
+        const totalQuantity = getTotalQuantity(form)
 
         return (
           <div className="flex items-center space-x-3">
@@ -241,11 +197,11 @@ export default function RawMilkIntakePage() {
               />
               <div className="flex items-center space-x-2 mt-1">
                 <Badge className="bg-blue-100 text-blue-800 font-light">
-                  {form.quantity_received != null
-                    ? Number(form.quantity_received).toFixed(4)
-                    : "0.0000"}L
+                  {totalQuantity.toFixed(2)}L
                 </Badge>
-
+                <Badge variant="outline" className="text-[10px]">
+                  {form.details.length} compartment(s)
+                </Badge>
               </div>
             </div>
           </div>
@@ -253,12 +209,10 @@ export default function RawMilkIntakePage() {
       },
     },
     {
-      accessorKey: "driver_info",
-      header: "Collection Voucher",
+      accessorKey: "truck_info",
+      header: "Truck",
       cell: ({ row }: any) => {
         const form = row.original
-        const voucherId = form.collection_voucher_id
-        const voucher = getCollectionVoucherById(voucherId)
 
         return (
           <div className="space-y-2">
@@ -266,29 +220,15 @@ export default function RawMilkIntakePage() {
               <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center">
                 <Truck className="w-3 h-3 text-blue-600" />
               </div>
-              <span className="text-sm font-light">Collection Voucher</span>
+              <span className="text-sm font-light">{form.truck}</span>
             </div>
-            {voucher ? (
-              <div className="space-y-1">
-                <FormIdCopy
-                  displayId={voucher?.tag}
-                  actualId={voucher?.id || voucherId}
-                  size="sm"
-                />
-                <div className="flex items-center gap-2 mt-1">
-                  <Badge variant="outline" className="text-[10px] font-normal">
-                    Comp #{form.truck_compartment_number}
-                  </Badge>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-1">
-                <p className="text-xs text-gray-400">Voucher ID: {voucherId?.slice(0, 8)}...</p>
-                <Badge variant="outline" className="text-[10px] font-normal">
-                  Comp #{form.truck_compartment_number}
+            <div className="flex items-center gap-2 flex-wrap">
+              {form.details.map((detail: any, idx: number) => (
+                <Badge key={idx} variant="outline" className="text-[10px] font-normal">
+                  Comp #{detail.truck_compartment_number}
                 </Badge>
-              </div>
-            )}
+              ))}
+            </div>
           </div>
         )
       },
@@ -298,7 +238,7 @@ export default function RawMilkIntakePage() {
       header: "Operator",
       cell: ({ row }: any) => {
         const form = row.original
-        const operatorId = form.operator_id
+        const operatorId = form.operator
         const operatorUser = users.find((user: any) => user.id === operatorId)
 
         if (operatorUser) {
@@ -329,42 +269,55 @@ export default function RawMilkIntakePage() {
     },
     {
       accessorKey: "destination",
-      header: "Destination Silo",
+      header: "Destination Silos",
       cell: ({ row }: any) => {
         const form = row.original
-        const silo = getSiloByName(form.destination_silo_name) || form.destination_silo_name
-        const siloName = silo?.name ?? form.destination_silo_name ?? 'Unknown Silo'
+        const uniqueSilos = [...new Set(form.details.map((d: any) => d.silo_name))] as string[]
 
         return (
           <div className="space-y-2">
-            <div className="flex items-center space-x-2">
-              <div className="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center">
-                <Package className="w-3 h-3 text-green-600" />
-              </div>
-              <p className="text-sm font-light">{siloName}</p>
-            </div>
-            {silo && typeof silo === 'object' && 'capacity' in silo ? (
-              <div className="space-y-1">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-gray-500">Capacity</span>
-                  <span className="text-xs font-light">{silo?.capacity?.toLocaleString()}L</span>
+            {uniqueSilos.map((siloName, idx: number) => {
+              const silo = getSiloByName(siloName)
+              const detailsForSilo = form.details.filter((d: any) => d.silo_name === siloName)
+              const totalForSilo = detailsForSilo.reduce((sum: number, d: any) => sum + d.quantity, 0)
+
+              return (
+                <div key={idx} className="flex items-center space-x-2">
+                  <div className="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center">
+                    <Package className="w-3 h-3 text-green-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-light">{siloName}</p>
+                    <p className="text-xs text-gray-500">{totalForSilo.toFixed(2)}L</p>
+                  </div>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-gray-500">Current</span>
-                  <span className="text-xs font-light text-green-600">{silo?.milk_volume?.toLocaleString()}L</span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-1.5">
-                  <div
-                    className=" from-blue-500 to-cyan-500 h-1.5 rounded-full"
-                    style={{
-                      width: `${Math.min((silo.milk_volume / silo.capacity) * 100, 100)}%`
-                    }}
-                  ></div>
-                </div>
-              </div>
-            ) : (
-              <p className="text-xs text-gray-400">No capacity details</p>
-            )}
+              )
+            })}
+          </div>
+        )
+      },
+    },
+    {
+      accessorKey: "status",
+      header: "Status",
+      cell: ({ row }: any) => {
+        const form = row.original
+        const statuses = [...new Set(form.details.map((d: any) => d.status))] as string[]
+
+        return (
+          <div className="flex flex-col gap-1">
+            {statuses.map((status, idx: number) => (
+              <Badge
+                key={idx}
+                className={
+                  status === "final" ? "bg-green-100 text-green-800" :
+                    status === "pending" ? "bg-yellow-100 text-yellow-800" :
+                      "bg-gray-100 text-gray-800"
+                }
+              >
+                {status}
+              </Badge>
+            ))}
           </div>
         )
       },
@@ -445,7 +398,7 @@ export default function RawMilkIntakePage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-light text-foreground">Raw Milk Intake</h1>
-            <p className="text-sm font-light text-muted-foreground">Manage raw milk intake forms and samples</p>
+            <p className="text-sm font-light text-muted-foreground">Manage raw milk intake forms</p>
           </div>
           <LoadingButton
             onClick={handleAddForm}
@@ -484,7 +437,7 @@ export default function RawMilkIntakePage() {
                 <div className="space-y-2">
                   <div className="flex items-center space-x-2">
                     <FileText className="h-4 w-4 text-gray-500" />
-                    <p className="text-sm font-light text-gray-600">Form ID</p>
+                    <p className="text-sm font-light text-gray-600">Form Tag</p>
                   </div>
                   <FormIdCopy
                     displayId={latestForm?.tag}
@@ -494,21 +447,28 @@ export default function RawMilkIntakePage() {
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center space-x-2">
-                    <Droplets className="h-4 w-4 text-blue-500" />
-                    <p className="text-sm font-light text-gray-600">Quantity Received</p>
+                    <Truck className="h-4 w-4 text-blue-500" />
+                    <p className="text-sm font-light text-gray-600">Truck</p>
                   </div>
                   <p className="text-lg font-light text-blue-600">
-                    {latestForm.quantity_received != null
-                      ? Number(latestForm.quantity_received).toFixed(4)
-                      : "0.0000"}L
+                    {latestForm.truck}
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <Droplets className="h-4 w-4 text-blue-500" />
+                    <p className="text-sm font-light text-gray-600">Total Quantity</p>
+                  </div>
+                  <p className="text-lg font-light text-blue-600">
+                    {getTotalQuantity(latestForm).toFixed(2)}L
                   </p>
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center space-x-2">
                     <Clock className="h-4 w-4 text-gray-500" />
-                    <p className="text-sm font-light text-gray-600">Date</p>
+                    <p className="text-sm font-light text-gray-600">Created</p>
                   </div>
-                  <p className="text-lg font-light">{new Date(latestForm.date).toLocaleDateString('en-GB', {
+                  <p className="text-lg font-light">{new Date(latestForm.created_at).toLocaleDateString('en-GB', {
                     day: 'numeric',
                     month: 'long',
                     year: 'numeric'
@@ -517,53 +477,10 @@ export default function RawMilkIntakePage() {
 
               </div>
 
-              {/* Driver Form, Operator, and Silo Details */}
-              <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-4">
-                {/* Collection Voucher Details */}
-                {latestForm?.collection_voucher_id && (
-                  <div className="p-4 bg-gray-50 rounded-lg">
-                    <div className="flex items-center space-x-2 mb-3">
-                      <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
-                        <Truck className="h-4 w-4 text-blue-600" />
-                      </div>
-                      <h4 className="text-sm font-light text-gray-900">Collection Voucher</h4>
-                    </div>
-                    <div className="space-y-2">
-                      {(() => {
-                        const voucher = getCollectionVoucherById(latestForm.collection_voucher_id)
-
-                        return voucher ? (
-                          <div className="space-y-1">
-                            <FormIdCopy
-                              displayId={voucher?.tag}
-                              actualId={voucher.id}
-                              size="sm"
-                            />
-                            <div className="text-xs text-gray-500">
-                              Compartment: {latestForm.truck_compartment_number}
-                            </div>
-                            <div className="text-xs text-gray-500">
-                              Route: {voucher.route}
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="space-y-1">
-                            <div className="flex items-center space-x-2">
-                              <span className="text-xs font-light">#{latestForm.collection_voucher_id.slice(0, 8)}</span>
-                              <CopyButton text={latestForm.collection_voucher_id} />
-                            </div>
-                            <div className="text-xs text-gray-500">
-                              Compartment: {latestForm.truck_compartment_number}
-                            </div>
-                          </div>
-                        )
-                      })()}
-                    </div>
-                  </div>
-                )}
-
+              {/* Operator and Compartments */}
+              <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {/* Operator Details */}
-                {latestForm?.operator_id && (
+                {latestForm?.operator && (
                   <div className="p-4 bg-blue-50 rounded-lg">
                     <div className="flex items-center space-x-2 mb-3">
                       <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
@@ -573,7 +490,7 @@ export default function RawMilkIntakePage() {
                     </div>
                     <div className="space-y-2">
                       {(() => {
-                        const operatorUser = users.find((user: any) => user.id === latestForm.operator_id)
+                        const operatorUser = users.find((user: any) => user.id === latestForm.operator)
 
                         return operatorUser ? (
                           <UserAvatar
@@ -591,48 +508,23 @@ export default function RawMilkIntakePage() {
                   </div>
                 )}
 
-                {/* Silo Details */}
-                {latestForm?.destination_silo_name && (
-                  <div className="p-4  from-green-50 to-emerald-50 rounded-lg">
-                    <div className="flex items-center space-x-2 mb-3">
-                      <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center">
-                        <Package className="h-4 w-4 text-green-600" />
-                      </div>
-                      <h4 className="text-sm font-light text-gray-900">Destination Silo</h4>
+                {/* Compartments Summary */}
+                <div className="p-4 from-green-50 to-emerald-50 rounded-lg">
+                  <div className="flex items-center space-x-2 mb-3">
+                    <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center">
+                      <Package className="h-4 w-4 text-green-600" />
                     </div>
-                    <div className="space-y-2">
-                      {(() => {
-                        const silo = getSiloByName(latestForm.destination_silo_name)
-
-                        return silo ? (
-                          <>
-                            <div className="text-sm font-light text-green-900">{silo.name}</div>
-                            <div className="flex items-center justify-between">
-                              <span className="text-xs text-gray-600">Capacity</span>
-                              <span className="text-xs font-light">{silo.capacity?.toLocaleString()}L</span>
-                            </div>
-                            <div className="flex items-center justify-between">
-                              <span className="text-xs text-gray-600">Current</span>
-                              <span className="text-xs font-light text-green-600">{silo.milk_volume?.toLocaleString()}L</span>
-                            </div>
-                            <div className="w-full bg-gray-200 rounded-full h-1.5 mt-2">
-                              <div
-                                className=" from-green-500 to-emerald-500 h-1.5 rounded-full"
-                                style={{
-                                  width: `${Math.min((silo.milk_volume / silo.capacity) * 100, 100)}%`
-                                }}
-                              ></div>
-                            </div>
-                          </>
-                        ) : (
-                          <div className="flex items-center space-x-2">
-                            <span className="text-xs font-light">{latestForm.destination_silo_name}</span>
-                          </div>
-                        )
-                      })()}
-                    </div>
+                    <h4 className="text-sm font-light text-gray-900">Compartments</h4>
                   </div>
-                )}
+                  <div className="space-y-2">
+                    {latestForm.details.map((detail, idx) => (
+                      <div key={idx} className="flex items-center justify-between">
+                        <span className="text-xs text-gray-600">Comp #{detail.truck_compartment_number}</span>
+                        <span className="text-xs font-light">{detail.quantity}L → {detail.silo_name}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
 
             </div>

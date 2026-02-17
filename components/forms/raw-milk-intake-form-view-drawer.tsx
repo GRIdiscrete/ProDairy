@@ -12,15 +12,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useAppDispatch, useAppSelector } from "@/lib/store"
 import type { RootState } from "@/lib/store"
 import { fetchRawMilkResultSlips, deleteRawMilkResultSlip } from "@/lib/store/slices/rawMilkResultSlipSlice"
-import { fetchSuppliers } from "@/lib/store/slices/supplierSlice"
-import { fetchCollectionVouchers } from "@/lib/store/slices/collectionVoucherSlice"
-import { generateRawMilkIntakeFormId } from "@/lib/utils/form-id-generator"
 import { FormIdCopy } from "@/components/ui/form-id-copy"
 import { UserAvatar } from "@/components/ui/user-avatar"
-import { SupplierAvatar } from "@/components/ui/supplier-avatar"
 import { RawMilkResultSlipDrawer } from "@/components/forms/raw-milk-result-slip-drawer"
 import type { RawMilkIntakeForm } from "@/lib/api/raw-milk-intake"
-import { base64ToPngDataUrl } from "@/lib/utils/signature"
 
 interface RawMilkIntakeFormViewDrawerProps {
   open: boolean
@@ -37,80 +32,25 @@ export function RawMilkIntakeFormViewDrawer({
   onEdit,
   onDelete
 }: RawMilkIntakeFormViewDrawerProps) {
-  const [isAnimating, setIsAnimating] = useState(false)
-  const [animationProgress, setAnimationProgress] = useState(0)
   const [activeTab, setActiveTab] = useState<string>("details")
   const dispatch = useAppDispatch()
   const { slips, isInitialized, operationLoading } = useAppSelector((s) => (s as any).rawMilkResultSlips)
   const { items: users } = useAppSelector((state: RootState) => state.users)
   const { silos } = useAppSelector((state: RootState) => state.silo)
-  const { collectionVouchers } = useAppSelector((state: RootState) => state.collectionVoucher)
-  const { suppliers } = useAppSelector((state: RootState) => state.supplier)
   const [resultSlipDrawerOpen, setResultSlipDrawerOpen] = useState(false)
   const [resultSlipMode, setResultSlipMode] = useState<"create" | "edit">("create")
   const [resultSlipExistingId, setResultSlipExistingId] = useState<string | undefined>(undefined)
-
-  // Helper function to get silo by ID
-  const getSiloById = (siloId: string) => {
-    return silos.find((silo: any) => silo.id === siloId)
-  }
 
   // Helper function to get silo by name
   const getSiloByName = (siloName: string) => {
     return silos.find((silo: any) => silo.name === siloName)
   }
 
-  // Helper function to get collection voucher by ID
-  const getCollectionVoucherById = (voucherId: any) => {
-    // If voucherId is already an object (populated), use it
-    if (typeof voucherId === 'object' && voucherId !== null) {
-      return voucherId
-    }
-    // Otherwise look it up in the store
-    return collectionVouchers.find((voucher: any) => voucher.id === voucherId)
-  }
-
-  // Helper function to get driver info from collection voucher
-  const getDriverInfoFromVoucher = (voucher: any) => {
-    if (!voucher) return null
-
-    // If driver is already populate object
-    if (voucher.driver && typeof voucher.driver === 'object') {
-      const driverUser = voucher.driver
-      return {
-        name: `${driverUser.first_name} ${driverUser.last_name}`,
-        email: driverUser.email,
-        user: driverUser
-      }
-    }
-
-    // specific lookup if just ID
-    const driverId = voucher.driver
-    const driverUser = users.find((user: any) => user.id === driverId)
-
-    if (driverUser) {
-      return {
-        name: `${driverUser.first_name} ${driverUser.last_name}`,
-        email: driverUser.email,
-        user: driverUser
-      }
-    }
-
-    return null
-  }
-
   useEffect(() => {
     if (open && !isInitialized) {
       dispatch(fetchRawMilkResultSlips())
-      dispatch(fetchCollectionVouchers({}))
-      dispatch(fetchSuppliers({})) // Load suppliers for sample information
     }
   }, [open, isInitialized, dispatch])
-
-  // Helper function to get supplier by ID
-  const getSupplierById = (supplierId: string) => {
-    return suppliers.find((supplier: any) => supplier.id === supplierId)
-  }
 
   const currentResultSlip = useMemo(() => {
     if (!form) return null
@@ -119,26 +59,8 @@ export function RawMilkIntakeFormViewDrawer({
 
   if (!form) return null
 
-  const startAnimation = () => {
-    setIsAnimating(true)
-    setAnimationProgress(0)
-
-    const interval = setInterval(() => {
-      setAnimationProgress(prev => {
-        if (prev >= 100) {
-          clearInterval(interval)
-          setIsAnimating(false)
-          return 100
-        }
-        return prev + 2
-      })
-    }, 50)
-  }
-
-  const resetAnimation = () => {
-    setIsAnimating(false)
-    setAnimationProgress(0)
-  }
+  // Calculate total quantity from all details
+  const totalQuantity = form.details.reduce((sum, detail) => sum + (detail.quantity || 0), 0)
 
   const handleExportLabTestCSV = () => {
     if (!currentResultSlip) return
@@ -173,7 +95,7 @@ export function RawMilkIntakeFormViewDrawer({
       "Density (g/ml)": detail.density || '',
       "Antibiotics": detail.antibiotics ? 'Yes' : 'No',
       "Starch": detail.starch ? 'Yes' : 'No',
-      "Silo": getSiloById(detail.silo)?.name || detail.silo || '',
+      "Silo": getSiloByName(detail.silo)?.name || detail.silo || '',
       "Remark": detail.remark || ''
     }))
 
@@ -282,37 +204,47 @@ export function RawMilkIntakeFormViewDrawer({
                     </div>
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-light text-gray-600">Form ID</span>
+                        <span className="text-sm font-light text-gray-600">Form Tag</span>
                         <FormIdCopy
-                          displayId={(form as any).tag || "N/A"}
-                          actualId={(form as any).tag || ""}
+                          displayId={form.tag || "N/A"}
+                          actualId={form.id || ""}
                           size="sm"
                         />
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-light text-gray-600">Date</span>
+                        <span className="text-sm font-light text-gray-600">Truck</span>
+                        <span className="text-sm font-light text-blue-600">{form.truck}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-light text-gray-600">Total Quantity</span>
+                        <span className="text-sm font-light text-blue-600">{totalQuantity.toFixed(2)}L</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-light text-gray-600">Compartments</span>
+                        <Badge variant="outline" className="font-light">{form.details.length}</Badge>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-light text-gray-600">Created</span>
                         <span className="text-sm font-light">
-                          {new Date(form.date).toLocaleDateString('en-GB', {
+                          {new Date(form.created_at).toLocaleDateString('en-GB', {
                             day: 'numeric',
                             month: 'long',
                             year: 'numeric'
                           })}
                         </span>
                       </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-light text-gray-600">Quantity Received</span>
-                        <span className="text-sm font-light text-blue-600">{form.quantity_received}L</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-light text-gray-600">Compartment</span>
-                        <Badge variant="outline" className="font-light">#{form.truck_compartment_number}</Badge>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-light text-gray-600">Samples</span>
-                        <span className="text-sm font-light text-green-600">
-                          {(form as any).raw_milk_intake_form_samples?.length || 0} samples
-                        </span>
-                      </div>
+                      {form.updated_at && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-light text-gray-600">Last Updated</span>
+                          <span className="text-sm font-light">
+                            {new Date(form.updated_at).toLocaleDateString('en-GB', {
+                              day: 'numeric',
+                              month: 'long',
+                              year: 'numeric'
+                            })}
+                          </span>
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -326,206 +258,140 @@ export function RawMilkIntakeFormViewDrawer({
                     </div>
                     <div className="space-y-3">
                       {(() => {
-                        const operatorUser = users.find((user: any) => user.id === form.operator_id)
+                        const operatorUser = users.find((user: any) => user.id === form.operator)
 
                         if (operatorUser) {
                           return (
-                            <div className="space-y-3">
-                              <UserAvatar
-                                user={operatorUser}
-                                size="lg"
-                                showName={true}
-                                showEmail={true}
-                                showDropdown={true}
-                              />
-                              {form.operator_signature && (
-                                <div className="space-y-2">
-                                  <span className="text-sm font-light text-gray-600">Digital Signature</span>
-                                  <div className="border border-gray-200 rounded-md p-2 bg-white">
-                                    <img
-                                      src={base64ToPngDataUrl(form.operator_signature)}
-                                      alt="Operator signature"
-                                      className="h-16 max-w-full object-contain"
-                                    />
-                                  </div>
-                                </div>
-                              )}
-                              {form.driver_signature && (
-                                <div className="space-y-2">
-                                  <span className="text-sm font-light text-gray-600">Driver Signature</span>
-                                  <div className="border border-gray-200 rounded-md p-2 bg-white">
-                                    <img
-                                      src={base64ToPngDataUrl(form.driver_signature)}
-                                      alt="Driver signature"
-                                      className="h-16 max-w-full object-contain"
-                                    />
-                                  </div>
-                                </div>
-                              )}
-                            </div>
+                            <UserAvatar
+                              user={operatorUser}
+                              size="lg"
+                              showName={true}
+                              showEmail={true}
+                              showDropdown={true}
+                            />
                           )
                         }
 
                         return (
-                          <div className="space-y-3">
-                            <div className="text-sm text-gray-500">
-                              <p>No operator user data available</p>
-                            </div>
-                            {form.operator_signature && (
-                              <div className="space-y-2">
-                                <span className="text-sm font-light text-gray-600">Digital Signature</span>
-                                <div className="border border-gray-200 rounded-md p-2 bg-white">
-                                  <img
-                                    src={base64ToPngDataUrl(form.operator_signature)}
-                                    alt="Operator signature"
-                                    className="h-16 max-w-full object-contain"
-                                  />
-                                </div>
-                              </div>
-                            )}
+                          <div className="text-sm text-gray-500">
+                            <p>Operator ID: {form.operator}</p>
+                            <p className="text-xs text-gray-400 mt-1">User details not available</p>
                           </div>
                         )
                       })()}
                     </div>
                   </div>
+                </div>
 
-                  {/* Collection Voucher Details */}
-                  {form.collection_voucher_id && (
-                    <div className="p-6 bg-white border border-gray-200 rounded-lg">
-                      <div className="flex items-center space-x-2 mb-4">
-                        <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
-                          <Truck className="w-4 h-4 text-blue-600" />
-                        </div>
-                        <h3 className="text-lg font-light">Collection Voucher</h3>
-                      </div>
-                      <div className="space-y-3">
-                        {(() => {
-                          const voucher = getCollectionVoucherById(form.collection_voucher_id)
-                          const driverInfo = getDriverInfoFromVoucher(voucher)
+                {/* Compartment Details */}
+                <div className="mt-6 p-6 bg-white border border-gray-200 rounded-lg">
+                  <div className="flex items-center space-x-2 mb-4">
+                    <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center">
+                      <Package className="w-4 h-4 text-green-600" />
+                    </div>
+                    <h3 className="text-lg font-light">Compartment Details</h3>
+                  </div>
+                  <div className="space-y-4">
+                    {form.details.map((detail, idx) => {
+                      const silo = getSiloByName(detail.silo_name)
 
-                          if (voucher) {
-                            return (
-                              <>
-                                <div className="flex items-center justify-between">
-                                  <span className="text-sm font-light text-gray-600">Voucher Tag</span>
-                                  <FormIdCopy
-                                    displayId={(voucher as any).tag || "N/A"}
-                                    actualId={(voucher as any).tag || ""}
-                                    size="sm"
-                                  />
-                                </div>
-                                {driverInfo && (
-                                  <div className="space-y-2">
-                                    <span className="text-sm font-light text-gray-600">Driver</span>
-                                    <UserAvatar
-                                      user={driverInfo.user}
-                                      size="md"
-                                      showName={true}
-                                      showEmail={true}
-                                    />
-                                  </div>
+                      return (
+                        <div key={detail.id} className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center space-x-2">
+                              <Badge variant="outline" className="text-xs">
+                                Compartment #{detail.truck_compartment_number}
+                              </Badge>
+                              <Badge
+                                className={
+                                  detail.status === "final" ? "bg-green-100 text-green-800" :
+                                    detail.status === "pending" ? "bg-yellow-100 text-yellow-800" :
+                                      "bg-gray-100 text-gray-800"
+                                }
+                              >
+                                {detail.status}
+                              </Badge>
+                            </div>
+                            <span className="text-sm font-light text-blue-600">{detail.quantity}L</span>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-3 mb-3">
+                            <div>
+                              <span className="text-xs text-gray-500">Destination Silo</span>
+                              <p className="text-sm font-light text-green-600">{detail.silo_name}</p>
+                              {silo && (
+                                <p className="text-xs text-gray-500">
+                                  Capacity: {silo.capacity?.toLocaleString()}L
+                                </p>
+                              )}
+                            </div>
+                            <div>
+                              <span className="text-xs text-gray-500">Quantity</span>
+                              <p className="text-sm font-light">{detail.quantity}L</p>
+                            </div>
+                          </div>
+
+                          <div className="border-t border-gray-200 pt-3 mt-3">
+                            <h4 className="text-xs font-medium text-gray-700 mb-2">Flow Meter Readings</h4>
+                            <div className="grid grid-cols-2 gap-3">
+                              <div>
+                                <span className="text-xs text-gray-500">Start Time</span>
+                                <p className="text-sm font-light">
+                                  {new Date(detail.flow_meter_start).toLocaleString('en-GB', {
+                                    day: '2-digit',
+                                    month: 'short',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                  })}
+                                </p>
+                                <p className="text-xs text-gray-600 mt-1">
+                                  Reading: {detail.flow_meter_start_reading}
+                                </p>
+                              </div>
+                              <div>
+                                <span className="text-xs text-gray-500">End Time</span>
+                                <p className="text-sm font-light">
+                                  {new Date(detail.flow_meter_end).toLocaleString('en-GB', {
+                                    day: '2-digit',
+                                    month: 'short',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                  })}
+                                </p>
+                                <p className="text-xs text-gray-600 mt-1">
+                                  Reading: {detail.flow_meter_end_reading}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+
+                          {detail.created_at && (
+                            <div className="border-t border-gray-200 pt-3 mt-3">
+                              <div className="flex items-center justify-between text-xs text-gray-500">
+                                <span>Created: {new Date(detail.created_at).toLocaleDateString()}</span>
+                                {detail.updated_at && (
+                                  <span>Updated: {new Date(detail.updated_at).toLocaleDateString()}</span>
                                 )}
-                                <div className="flex items-center justify-between">
-                                  <span className="text-sm font-light text-gray-600">Date</span>
-                                  <span className="text-sm font-light">
-                                    {new Date(voucher.date).toLocaleDateString('en-GB', {
-                                      day: 'numeric',
-                                      month: 'short',
-                                      year: 'numeric'
-                                    })}
-                                  </span>
-                                </div>
-                                <div className="flex items-center justify-between">
-                                  <span className="text-sm font-light text-gray-600">Route</span>
-                                  <Badge className="text-xs bg-gray-100 text-gray-800">
-                                    {voucher.route || 'N/A'}
-                                  </Badge>
-                                </div>
-                                <div className="flex items-center justify-between">
-                                  <span className="text-sm font-light text-gray-600">Truck Number</span>
-                                  <span className="text-sm font-light">{voucher.truck_number?.reg_number || voucher.truck_number || 'N/A'}</span>
-                                </div>
-                              </>
-                            )
-                          } else {
-                            const voucherId = form.collection_voucher_id;
-                            return (
-                              <div className="flex items-center justify-between">
-                                <span className="text-sm font-light text-gray-600">Voucher ID</span>
-                                <div className="flex items-center space-x-2">
-                                  <span className="text-sm font-light">#{typeof voucherId === 'string' ? voucherId.slice(0, 8) : 'Unknown'}</span>
-                                  {typeof voucherId === 'string' && <CopyButton text={voucherId} />}
-                                </div>
                               </div>
-                            )
-                          }
-                        })()}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Destination Silo Details */}
-                  {form.destination_silo_name && (
-                    <div className="p-6 bg-white border border-gray-200 rounded-lg">
-                      <div className="flex items-center space-x-2 mb-4">
-                        <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center">
-                          <Package className="w-4 h-4 text-green-600" />
+                            </div>
+                          )}
                         </div>
-                        <h3 className="text-lg font-light">Destination Silo</h3>
-                      </div>
-                      <div className="space-y-3">
-                        {(() => {
-                          const silo = getSiloByName(form.destination_silo_name)
-
-                          if (silo) {
-                            return (
-                              <>
-                                <div className="flex items-center justify-between">
-                                  <span className="text-sm font-light text-gray-600">Silo Name</span>
-                                  <span className="text-sm font-light text-green-600">{silo.name}</span>
-                                </div>
-                                <div className="flex items-center justify-between">
-                                  <span className="text-sm font-light text-gray-600">Capacity</span>
-                                  <span className="text-sm font-light text-gray-900">{silo.capacity?.toLocaleString()}L</span>
-                                </div>
-                                <div className="flex items-center justify-between">
-                                  <span className="text-sm font-light text-gray-600">Current Volume</span>
-                                  <span className="text-sm font-light text-blue-600">{silo.milk_volume?.toLocaleString()}L</span>
-                                </div>
-                                <div className="space-y-1.5">
-                                  <div className="flex items-center justify-between text-xs text-gray-500">
-                                    <span>Utilization</span>
-                                    <span>{Math.round((silo.milk_volume / silo.capacity) * 100)}%</span>
-                                  </div>
-                                  <div className="w-full bg-gray-100 rounded-full h-2">
-                                    <div
-                                      className="bg-blue-600 h-2 rounded-full transition-all duration-500"
-                                      style={{ width: `${Math.min((silo.milk_volume / silo.capacity) * 100, 100)}%` }}
-                                    ></div>
-                                  </div>
-                                </div>
-                              </>
-                            )
-                          } else {
-                            return (
-                              <div className="flex items-center justify-between">
-                                <span className="text-sm font-light text-gray-600">Silo Name</span>
-                                <span className="text-sm font-light text-gray-900">{form.destination_silo_name}</span>
-                              </div>
-                            )
-                          }
-                        })()}
-                      </div>
-                    </div>
-                  )}
-
-
+                      )
+                    })}
+                  </div>
                 </div>
 
                 {/* Record Information */}
                 <div className="mt-6 p-6 bg-white border border-gray-200 rounded-lg">
                   <h3 className="text-lg font-light mb-4">Record Information</h3>
                   <div className="grid grid-cols-2 gap-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-light text-gray-600">Record ID</span>
+                      <div className="flex items-center space-x-2">
+                        <span className="text-xs font-mono text-gray-500">{form.id.slice(0, 8)}...</span>
+                        <CopyButton text={form.id} />
+                      </div>
+                    </div>
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-light text-gray-600">Created</span>
                       <span className="text-sm font-light">
@@ -538,6 +404,12 @@ export function RawMilkIntakeFormViewDrawer({
                         {form.updated_at ? format(new Date(form.updated_at), 'PPP') : 'Never'}
                       </span>
                     </div>
+                    {form.updated_by && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-light text-gray-600">Updated By</span>
+                        <span className="text-xs font-mono text-gray-500">{form.updated_by.slice(0, 8)}...</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </TabsContent>

@@ -34,12 +34,12 @@ interface FilmaticLinesForm2DrawerProps {
 
 // Time options for shifts
 const DAY_SHIFT_TIMES = [
-  "08:00", "09:00", "10:00", "11:00", "12:00", 
+  "08:00", "09:00", "10:00", "11:00", "12:00",
   "13:00", "14:00", "15:00", "16:00", "17:00", "18:00"
 ]
 
 const NIGHT_SHIFT_TIMES = [
-  "19:00", "20:00", "21:00", "22:00", "23:00", 
+  "19:00", "20:00", "21:00", "22:00", "23:00",
   "00:00", "01:00", "02:00", "03:00", "04:00", "05:00", "06:00"
 ]
 
@@ -141,17 +141,17 @@ type ShiftDetailsFormData = {
   }>
 }
 
-export function FilmaticLinesForm2Drawer({ 
-  open, 
-  onOpenChange, 
-  form, 
+export function FilmaticLinesForm2Drawer({
+  open,
+  onOpenChange,
+  form,
   mode = "create",
   processId
 }: FilmaticLinesForm2DrawerProps) {
   const { user } = useAuth()
   const [loading, setLoading] = useState({ create: false })
   const dispatch = useAppDispatch()
-  
+
   const [currentStep, setCurrentStep] = useState(1)
   const [bmtForms, setBmtForms] = useState<BMTControlForm[]>([])
   const [filmaticGroups, setFilmaticGroups] = useState<FilmaticLinesGroup[]>([])
@@ -179,7 +179,7 @@ export function FilmaticLinesForm2Drawer({
   // Get selected shift and group
   const selectedShift = shiftSelectionForm.watch("shift_type")
   const selectedGroup = groupSelectionForm.watch("selected_group")
-  
+
   // Create dynamic schema based on selected shift
   const basicInfoSchema = useMemo(() => {
     return createBasicInfoSchema(selectedShift || "")
@@ -254,11 +254,11 @@ export function FilmaticLinesForm2Drawer({
   useEffect(() => {
     const loadData = async () => {
       if (!open) return
-      
+
       setLoadingBmtForms(true)
       setLoadingGroups(true)
       setLoadingUsers(true)
-      
+
       try {
         // Load BMT Control forms
         try {
@@ -300,7 +300,7 @@ export function FilmaticLinesForm2Drawer({
       if (mode === "edit" && form) {
         // Populate forms with existing data for edit mode
         console.log("Edit mode - populating form data:", form)
-        
+
         // Populate basic info form using server values
         basicInfoForm.reset({
           date: form.date || "",
@@ -313,15 +313,18 @@ export function FilmaticLinesForm2Drawer({
           night_shift_waste_bottles: (form as any).night_shift_waste_bottles ?? undefined,
         })
 
-        // Determine shift type based on existing data (support API array shape and legacy)
+
+        // Determine shift type based on existing data (support new API structure)
         let shiftType = ""
+        const hasDayObject = !!(form as any).day_shift_id
+        const hasNightObject = !!(form as any).night_shift_id
         const hasDayArray = Array.isArray((form as any).filmatic_line_form_2_day_shift) && (form as any).filmatic_line_form_2_day_shift.length > 0
         const hasNightArray = Array.isArray((form as any).filmatic_line_form_2_night_shift) && (form as any).filmatic_line_form_2_night_shift.length > 0
         const hasLegacyDay = (form as any).day_shift && Object.keys((form as any).day_shift).length > 0
         const hasLegacyNight = (form as any).night_shift && Object.keys((form as any).night_shift).length > 0
 
-        if (hasDayArray || hasLegacyDay) shiftType = "day_shift"
-        else if (hasNightArray || hasLegacyNight) shiftType = "night_shift"
+        if (hasDayObject || hasDayArray || hasLegacyDay) shiftType = "day_shift"
+        else if (hasNightObject || hasNightArray || hasLegacyNight) shiftType = "night_shift"
 
         shiftSelectionForm.reset({ shift_type: shiftType })
 
@@ -334,41 +337,40 @@ export function FilmaticLinesForm2Drawer({
         }
         groupSelectionForm.reset({ selected_group: selectedGroupType })
 
-        // prefill details from detected shift (support both shapes)
+        // prefill details from detected shift (support new API object structure, arrays, and legacy)
         try {
           let shiftEntry: any = null
 
           if (shiftType === "day_shift") {
-            if (hasDayArray) shiftEntry = (form as any).filmatic_line_form_2_day_shift[0] || null
+            if (hasDayObject) shiftEntry = (form as any).day_shift_id
+            else if (hasDayArray) shiftEntry = (form as any).filmatic_line_form_2_day_shift[0] || null
             else shiftEntry = (form as any).day_shift || null
           } else if (shiftType === "night_shift") {
-            if (hasNightArray) shiftEntry = (form as any).filmatic_line_form_2_night_shift[0] || null
+            if (hasNightObject) shiftEntry = (form as any).night_shift_id
+            else if (hasNightArray) shiftEntry = (form as any).filmatic_line_form_2_night_shift[0] || null
             else shiftEntry = (form as any).night_shift || null
           }
 
           if (shiftEntry) {
-            const detailsKey = shiftType === "day_shift" ? "filmatic_line_form_2_day_shift_details" : "filmatic_line_form_2_night_shift_details"
-            const stoppageKey = shiftType === "day_shift" ? "filmatic_line_form_2_day_shift_details_stoppage_time" : "filmatic_line_form_2_night_shift_details_stoppage_time"
-            const details = shiftEntry[detailsKey] || []
-            
-            const mapped = details.map((d: any) => {
-              const stoppageArray = d[stoppageKey] || []
-              const stoppage = stoppageArray[0] || {}
-              
-              return {
-                id: d.id,
-                time: d.time?.split(' ')[1]?.slice(0, 5) || '',
-                pallets: d.pallets ?? undefined,
-                target: d.target ?? undefined,
-                setbacks: d.setbacks || '',
+            // New API structure: shift_details is an object with nested stoppage_time_id
+            if (shiftEntry.shift_details) {
+              const detail = shiftEntry.shift_details
+              const stoppage = detail.stoppage_time_id || {}
+
+              const mapped = [{
+                id: detail.id,
+                time: detail.time?.split(' ')[1]?.slice(0, 5) || detail.time || '',
+                pallets: detail.pallets ?? undefined,
+                target: detail.target ?? undefined,
+                setbacks: detail.setbacks || '',
                 stoppage_time: {
                   id: stoppage.id,
-                  capper_1_hours: stoppage.capper_1_hours ?? stoppage.capper_1 ?? undefined,
-                  capper_2_hours: stoppage.capper_2_hours ?? stoppage.capper_2 ?? undefined,
-                  sleever_1_hours: stoppage.sleever_1_hours ?? stoppage.sleever_1 ?? undefined,
-                  sleever_2_hours: stoppage.sleever_2_hours ?? stoppage.sleever_2 ?? undefined,
-                  shrink_1_hours: stoppage.shrink_1_hours ?? stoppage.shrink_1 ?? undefined,
-                  shrink_2_hours: stoppage.shrink_2_hours ?? stoppage.shrink_2 ?? undefined,
+                  capper_1_hours: stoppage.capper_1_hours ?? undefined,
+                  capper_2_hours: stoppage.capper_2_hours ?? undefined,
+                  sleever_1_hours: stoppage.sleever_1_hours ?? undefined,
+                  sleever_2_hours: stoppage.sleever_2_hours ?? undefined,
+                  shrink_1_hours: stoppage.shrink_1_hours ?? undefined,
+                  shrink_2_hours: stoppage.shrink_2_hours ?? undefined,
                   capper_1: stoppage.capper_1 ?? undefined,
                   capper_2: stoppage.capper_2 ?? undefined,
                   sleever_1: stoppage.sleever_1 ?? undefined,
@@ -376,18 +378,59 @@ export function FilmaticLinesForm2Drawer({
                   shrink_1: stoppage.shrink_1 ?? undefined,
                   shrink_2: stoppage.shrink_2 ?? undefined,
                 }
-              }
-            })
-            
-            shiftDetailsForm.reset({
-              supervisor_approve: shiftEntry?.supervisor_approve ?? false,
-              operator_id: shiftEntry?.operator_id ?? user?.id ?? '',
-              details: mapped.length ? mapped : shiftDetailsForm.getValues().details
-            })
+              }]
+
+              shiftDetailsForm.reset({
+                supervisor_approve: shiftEntry?.supervisor_approve ?? false,
+                operator_id: shiftEntry?.operator_id ?? user?.id ?? '',
+                details: mapped
+              })
+            }
+            // Legacy array structure: shift_details is an array
+            else {
+              const detailsKey = shiftType === "day_shift" ? "filmatic_line_form_2_day_shift_details" : "filmatic_line_form_2_night_shift_details"
+              const stoppageKey = shiftType === "day_shift" ? "filmatic_line_form_2_day_shift_details_stoppage_time" : "filmatic_line_form_2_night_shift_details_stoppage_time"
+              const details = shiftEntry[detailsKey] || []
+
+              const mapped = details.map((d: any) => {
+                const stoppageArray = d[stoppageKey] || []
+                const stoppage = stoppageArray[0] || {}
+
+                return {
+                  id: d.id,
+                  time: d.time?.split(' ')[1]?.slice(0, 5) || '',
+                  pallets: d.pallets ?? undefined,
+                  target: d.target ?? undefined,
+                  setbacks: d.setbacks || '',
+                  stoppage_time: {
+                    id: stoppage.id,
+                    capper_1_hours: stoppage.capper_1_hours ?? stoppage.capper_1 ?? undefined,
+                    capper_2_hours: stoppage.capper_2_hours ?? stoppage.capper_2 ?? undefined,
+                    sleever_1_hours: stoppage.sleever_1_hours ?? stoppage.sleever_1 ?? undefined,
+                    sleever_2_hours: stoppage.sleever_2_hours ?? stoppage.sleever_2 ?? undefined,
+                    shrink_1_hours: stoppage.shrink_1_hours ?? stoppage.shrink_1 ?? undefined,
+                    shrink_2_hours: stoppage.shrink_2_hours ?? stoppage.shrink_2 ?? undefined,
+                    capper_1: stoppage.capper_1 ?? undefined,
+                    capper_2: stoppage.capper_2 ?? undefined,
+                    sleever_1: stoppage.sleever_1 ?? undefined,
+                    sleever_2: stoppage.sleever_2 ?? undefined,
+                    shrink_1: stoppage.shrink_1 ?? undefined,
+                    shrink_2: stoppage.shrink_2 ?? undefined,
+                  }
+                }
+              })
+
+              shiftDetailsForm.reset({
+                supervisor_approve: shiftEntry?.supervisor_approve ?? false,
+                operator_id: shiftEntry?.operator_id ?? user?.id ?? '',
+                details: mapped.length ? mapped : shiftDetailsForm.getValues().details
+              })
+            }
           }
         } catch (err) {
           console.error("Error pre-filling shift details:", err)
         }
+
 
         setCurrentStep(1)
       } else {
@@ -438,6 +481,11 @@ export function FilmaticLinesForm2Drawer({
   }
 
   const handleGroupSelectionSubmit = async (data: GroupSelectionFormData) => {
+    // Validate that selected group has members
+    if (!selectedGroupData || !selectedGroupData.members || selectedGroupData.members.length === 0) {
+      toast.error("Selected group has no members. Please select a group with at least one member.")
+      return
+    }
     setCurrentStep(3)
   }
 
@@ -449,15 +497,15 @@ export function FilmaticLinesForm2Drawer({
     try {
       setLoading({ create: true })
       console.log("Submitting form with data:", data)
-      
+
       const basicInfo = basicInfoForm.getValues()
       const shiftType = shiftSelectionForm.getValues().shift_type
       const groupData = groupSelectionForm.getValues()
-      
+
       console.log("Basic info:", basicInfo)
       console.log("Shift type:", shiftType)
       console.log("Group data:", groupData)
-      
+
       const formData: CreateFilmaticLinesForm2Request = {
         approved: !!basicInfo.approved,
         process_id: processId || "",
@@ -586,11 +634,11 @@ export function FilmaticLinesForm2Drawer({
 
   const handleBmtFormSearch = async (query: string) => {
     if (!query.trim()) return []
-    
+
     try {
       const bmtFormsResponse = await bmtControlFormApi.getAll()
       return (bmtFormsResponse || [])
-        .filter(bmtForm => 
+        .filter(bmtForm =>
           bmtForm.product?.toLowerCase().includes(query.toLowerCase()) ||
           bmtForm.id?.toLowerCase().includes(query.toLowerCase()) ||
           bmtForm.volume?.toString().includes(query)
@@ -616,9 +664,9 @@ export function FilmaticLinesForm2Drawer({
           <SheetDescription className="text-base font-light">
             Step {currentStep} of 4: {
               currentStep === 1 ? "Shift Selection" :
-              currentStep === 2 ? "Group Selection" :
-              currentStep === 3 ? "Basic Information" :
-              "Shift Details"
+                currentStep === 2 ? "Group Selection" :
+                  currentStep === 3 ? "Basic Information" :
+                    "Shift Details"
             }
           </SheetDescription>
         </SheetHeader>
@@ -634,7 +682,7 @@ export function FilmaticLinesForm2Drawer({
                   <h3 className="text-xl font-light text-gray-900">Shift Selection</h3>
                   <p className="text-sm font-light text-gray-600 mt-2">Choose which shift you are creating data for</p>
                 </div>
-                
+
                 <div className="space-y-4">
                   <Controller
                     name="shift_type"
@@ -657,7 +705,7 @@ export function FilmaticLinesForm2Drawer({
                             </div>
                           </Label>
                         </div>
-                        
+
                         <div className="flex items-center space-x-3 p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
                           <RadioGroupItem value="night_shift" id="night_shift" />
                           <Label htmlFor="night_shift" className="flex items-center space-x-3 cursor-pointer">
@@ -689,7 +737,7 @@ export function FilmaticLinesForm2Drawer({
                   <h3 className="text-xl font-light text-gray-900">Group Selection</h3>
                   <p className="text-sm font-light text-gray-600 mt-2">Select the group for this shift</p>
                 </div>
-                
+
                 {filmaticGroups.length > 0 ? (
                   <div className="space-y-4">
                     <Controller
@@ -956,7 +1004,7 @@ export function FilmaticLinesForm2Drawer({
                     <Label>Production Details</Label>
                     <Button
                       type="button"
-                      
+
                       size="sm"
                       onClick={() => append({
                         time: "",
@@ -1027,8 +1075,8 @@ export function FilmaticLinesForm2Drawer({
                             name={`details.${index}.pallets`}
                             control={shiftDetailsForm.control}
                             render={({ field }) => (
-                              <Input 
-                                type="number" 
+                              <Input
+                                type="number"
                                 placeholder="Enter pallets"
                                 className="rounded-full border-gray-200"
                                 value={field.value ?? ''}
@@ -1044,8 +1092,8 @@ export function FilmaticLinesForm2Drawer({
                             name={`details.${index}.target`}
                             control={shiftDetailsForm.control}
                             render={({ field }) => (
-                              <Input 
-                                type="number" 
+                              <Input
+                                type="number"
                                 placeholder="Enter target"
                                 className="rounded-full border-gray-200"
                                 value={field.value ?? ''}
@@ -1061,8 +1109,8 @@ export function FilmaticLinesForm2Drawer({
                             name={`details.${index}.setbacks`}
                             control={shiftDetailsForm.control}
                             render={({ field }) => (
-                              <Textarea 
-                                {...field} 
+                              <Textarea
+                                {...field}
                                 placeholder="Describe any setbacks"
                                 className="border-gray-200"
                               />
@@ -1105,7 +1153,7 @@ export function FilmaticLinesForm2Drawer({
           <div className="flex justify-between items-center p-6 border-t">
             <Button
               type="button"
-              
+
               onClick={handleBack}
               disabled={currentStep === 1}
               className="flex items-center space-x-2"
@@ -1118,13 +1166,12 @@ export function FilmaticLinesForm2Drawer({
               {[1, 2, 3, 4].map((step) => (
                 <div
                   key={step}
-                  className={`w-3 h-3 rounded-full ${
-                    step === currentStep
-                      ? "bg-blue-500"
-                      : step < currentStep
+                  className={`w-3 h-3 rounded-full ${step === currentStep
+                    ? "bg-blue-500"
+                    : step < currentStep
                       ? "bg-green-500"
                       : "bg-gray-300"
-                  }`}
+                    }`}
                 />
               ))}
             </div>

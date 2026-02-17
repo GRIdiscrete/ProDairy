@@ -289,7 +289,7 @@ export function FilmaticLinesForm1Drawer({
         holding_tank_bmt: (form as any).holding_tank_bmt || undefined,
         approved: !!(form as any).approved,
         status: "Ongoing",
-        transferrable_milk: undefined,
+        transferrable_milk: (form as any).transferrable_milk ?? undefined,
         // Day shift
         day_shift_opening_bottles: (form as any).day_shift_opening_bottles ?? undefined,
         day_shift_closing_bottles: (form as any).day_shift_closing_bottles ?? undefined,

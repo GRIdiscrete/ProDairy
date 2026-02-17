@@ -1,12 +1,12 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit'
-import { CreateRawMilkIntakeFormRequest, RawMilkIntakeForm, RawMilkIntakePendingVoucher, rawMilkIntakeApi } from '@/lib/api/raw-milk-intake'
+import { CreateRawMilkIntakeFormRequest, RawMilkIntakeForm, TruckPendingIntake, rawMilkIntakeApi } from '@/lib/api/raw-milk-intake'
 
 interface RawMilkIntakeState {
   rawMilkIntakeForms: RawMilkIntakeForm[]
-  pendingVouchers: RawMilkIntakePendingVoucher[]
+  trucks: TruckPendingIntake[]
   operationLoading: {
     fetch: boolean
-    fetchPending: boolean
+    fetchTrucks: boolean
     create: boolean
     update: boolean
     delete: boolean
@@ -17,10 +17,10 @@ interface RawMilkIntakeState {
 // Initial state
 const initialState: RawMilkIntakeState = {
   rawMilkIntakeForms: [],
-  pendingVouchers: [],
+  trucks: [],
   operationLoading: {
     fetch: false,
-    fetchPending: false,
+    fetchTrucks: false,
     create: false,
     update: false,
     delete: false
@@ -42,7 +42,21 @@ export const fetchRawMilkIntakeForms = createAsyncThunk(
   }
 )
 
-// Fetch pending vouchers
+// Fetch trucks pending intake
+export const fetchTrucks = createAsyncThunk(
+  'rawMilkIntake/fetchTrucks',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await rawMilkIntakeApi.getTrucks()
+      return response.data
+    } catch (error: any) {
+      console.error('Failed to fetch trucks:', error)
+      return rejectWithValue(error || { message: 'Failed to fetch trucks' })
+    }
+  }
+)
+
+// Legacy: Fetch pending vouchers (kept for backward compatibility)
 export const fetchPendingVouchers = createAsyncThunk(
   'rawMilkIntake/fetchPendingVouchers',
   async (_, { rejectWithValue }) => {
@@ -76,7 +90,7 @@ export const updateRawMilkIntakeForm = createAsyncThunk(
   async (formData: CreateRawMilkIntakeFormRequest, { rejectWithValue }) => {
     try {
       if (!formData.id) throw new Error('Form ID is required for update')
-      const response = await rawMilkIntakeApi.update(formData.id, formData)
+      const response = await rawMilkIntakeApi.update(formData)
       return response.data
     } catch (error: any) {
       console.error('Failed to update form:', error)
@@ -124,17 +138,17 @@ const rawMilkIntakeSlice = createSlice({
         state.error = action.payload
       })
 
-      // Fetch pending vouchers cases
-      .addCase(fetchPendingVouchers.pending, (state) => {
-        state.operationLoading.fetchPending = true
+      // Fetch trucks cases
+      .addCase(fetchTrucks.pending, (state) => {
+        state.operationLoading.fetchTrucks = true
       })
-      .addCase(fetchPendingVouchers.fulfilled, (state, action: PayloadAction<RawMilkIntakePendingVoucher[]>) => {
-        state.operationLoading.fetchPending = false
-        state.pendingVouchers = action.payload
+      .addCase(fetchTrucks.fulfilled, (state, action: PayloadAction<TruckPendingIntake[]>) => {
+        state.operationLoading.fetchTrucks = false
+        state.trucks = action.payload
         state.error = null
       })
-      .addCase(fetchPendingVouchers.rejected, (state, action) => {
-        state.operationLoading.fetchPending = false
+      .addCase(fetchTrucks.rejected, (state, action) => {
+        state.operationLoading.fetchTrucks = false
         state.error = action.payload
       })
 
