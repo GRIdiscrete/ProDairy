@@ -263,73 +263,33 @@ export function SteriMilkProcessLogDrawer({
           return ""
         }
 
-        // map time fields: prefer batch.*_details.time -> batch.* (object/string) -> ""
-        processDetailsForm.reset({
-          filling_start_details: {
-            time: normalizeTime(batch?.filling_start_details?.time ?? batch?.filling_start),
-            temperature: batch?.filling_start_details?.temperature ? String(batch.filling_start_details.temperature) : "",
-            pressure: batch?.filling_start_details?.pressure ? String(batch.filling_start_details.pressure) : ""
-          },
-          autoclave_start_details: {
-            time: normalizeTime(batch?.autoclave_start_details?.time ?? batch?.autoclave_start),
-            temperature: batch?.autoclave_start_details?.temperature ? String(batch.autoclave_start_details.temperature) : "",
-            pressure: batch?.autoclave_start_details?.pressure ? String(batch.autoclave_start_details.pressure) : ""
-          },
-          heating_start_details: {
-            time: normalizeTime(batch?.heating_start_details?.time ?? batch?.heating_start),
-            temperature: batch?.heating_start_details?.temperature ? String(batch.heating_start_details.temperature) : "",
-            pressure: batch?.heating_start_details?.pressure ? String(batch.heating_start_details.pressure) : ""
-          },
-          heating_finish_details: {
-            time: normalizeTime(batch?.heating_finish_details?.time ?? batch?.heating_finish),
-            temperature: batch?.heating_finish_details?.temperature ? String(batch.heating_finish_details.temperature) : "",
-            pressure: batch?.heating_finish_details?.pressure ? String(batch.heating_finish_details.pressure) : ""
-          },
-          sterilization_start_details: {
-            time: normalizeTime(batch?.sterilization_start_details?.time ?? batch?.sterilization_start),
-            temperature: batch?.sterilization_start_details?.temperature ? String(batch.sterilization_start_details.temperature) : "",
-            pressure: batch?.sterilization_start_details?.pressure ? String(batch.sterilization_start_details.pressure) : ""
-          },
-          sterilization_after_5_details: {
-            time: normalizeTime(batch?.sterilization_after_5_details?.time ?? batch?.sterilization_after_5),
-            temperature: batch?.sterilization_after_5_details?.temperature ? String(batch.sterilization_after_5_details.temperature) : "",
-            pressure: batch?.sterilization_after_5_details?.pressure ? String(batch.sterilization_after_5_details.pressure) : ""
-          },
-          sterilization_finish_details: {
-            time: normalizeTime(batch?.sterilization_finish_details?.time ?? batch?.sterilization_finish),
-            temperature: batch?.sterilization_finish_details?.temperature ? String(batch.sterilization_finish_details.temperature) : "",
-            pressure: batch?.sterilization_finish_details?.pressure ? String(batch.sterilization_finish_details.pressure) : ""
-          },
-          pre_cooling_start_details: {
-            time: normalizeTime(batch?.pre_cooling_start_details?.time ?? batch?.pre_cooling_start),
-            temperature: batch?.pre_cooling_start_details?.temperature ? String(batch.pre_cooling_start_details.temperature) : "",
-            pressure: batch?.pre_cooling_start_details?.pressure ? String(batch.pre_cooling_start_details.pressure) : ""
-          },
-          pre_cooling_finish_details: {
-            time: normalizeTime(batch?.pre_cooling_finish_details?.time ?? batch?.pre_cooling_finish),
-            temperature: batch?.pre_cooling_finish_details?.temperature ? String(batch.pre_cooling_finish_details.temperature) : "",
-            pressure: batch?.pre_cooling_finish_details?.pressure ? String(batch.pre_cooling_finish_details.pressure) : ""
-          },
-          cooling_1_start_details: {
-            time: normalizeTime(batch?.cooling_1_start_details?.time ?? batch?.cooling_1_start),
-            temperature: batch?.cooling_1_start_details?.temperature ? String(batch.cooling_1_start_details.temperature) : "",
-            pressure: batch?.cooling_1_start_details?.pressure ? String(batch.cooling_1_start_details.pressure) : ""
-          },
-          cooling_1_finish_details: {
-            time: normalizeTime(batch?.cooling_1_finish_details?.time ?? batch?.cooling_1_finish),
-            temperature: batch?.cooling_1_finish_details?.temperature ? String(batch.cooling_1_finish_details.temperature) : "",
-            pressure: batch?.cooling_1_finish_details?.pressure ? String(batch.cooling_1_finish_details.pressure) : ""
-          },
-          cooling_2_start_details: {
-            time: normalizeTime(batch?.cooling_2_start_details?.time ?? batch?.cooling_2_start),
-            temperature: batch?.cooling_2_start_details?.temperature ? String(batch.cooling_2_start_details.temperature) : "",
-            pressure: batch?.cooling_2_start_details?.pressure ? String(batch.cooling_2_start_details.pressure) : ""
-          },
-          cooling_2_finish_details: {
-            time: normalizeTime(batch?.cooling_2_finish_details?.time ?? batch?.cooling_2_finish),
-            temperature: batch?.cooling_2_finish_details?.temperature ? String(batch.cooling_2_finish_details.temperature) : "",
-            pressure: batch?.cooling_2_finish_details?.pressure ? String(batch.cooling_2_finish_details.pressure) : ""
+        // Helper to extract details preferring specific object or fallback
+        const getDetailValues = (baseKey: string) => {
+          // Check both "key_details" and "key"
+          const detail = batch?.[`${baseKey}_details`] || batch?.[baseKey]
+
+          return {
+            time: normalizeTime(detail?.time ?? detail),
+            temperature: detail?.temperature ? String(detail.temperature) : "",
+            pressure: detail?.pressure ? String(detail.pressure) : ""
           }
+        }
+
+        // map time fields
+        processDetailsForm.reset({
+          filling_start_details: getDetailValues('filling_start'),
+          autoclave_start_details: getDetailValues('autoclave_start'),
+          heating_start_details: getDetailValues('heating_start'),
+          heating_finish_details: getDetailValues('heating_finish'),
+          sterilization_start_details: getDetailValues('sterilization_start'),
+          sterilization_after_5_details: getDetailValues('sterilization_after_5'),
+          sterilization_finish_details: getDetailValues('sterilization_finish'),
+          pre_cooling_start_details: getDetailValues('pre_cooling_start'),
+          pre_cooling_finish_details: getDetailValues('pre_cooling_finish'),
+          cooling_1_start_details: getDetailValues('cooling_1_start'),
+          cooling_1_finish_details: getDetailValues('cooling_1_finish'),
+          cooling_2_start_details: getDetailValues('cooling_2_start'),
+          cooling_2_finish_details: getDetailValues('cooling_2_finish')
         })
 
         // set UI to first step
@@ -451,55 +411,55 @@ export function SteriMilkProcessLogDrawer({
           // only include *_details objects (formatted times)
           filling_start_details: buildDetailObject(
             data.filling_start_details,
-            existingBatch?.filling_start_details
+            existingBatch?.filling_start
           ),
           autoclave_start_details: buildDetailObject(
             data.autoclave_start_details,
-            existingBatch?.autoclave_start_details
+            existingBatch?.autoclave_start
           ),
           heating_start_details: buildDetailObject(
             data.heating_start_details,
-            existingBatch?.heating_start_details
+            existingBatch?.heating_start
           ),
           heating_finish_details: buildDetailObject(
             data.heating_finish_details,
-            existingBatch?.heating_finish_details
+            existingBatch?.heating_finish
           ),
           sterilization_start_details: buildDetailObject(
             data.sterilization_start_details,
-            existingBatch?.sterilization_start_details
+            existingBatch?.sterilization_start
           ),
           sterilization_after_5_details: buildDetailObject(
             data.sterilization_after_5_details,
-            existingBatch?.sterilization_after_5_details
+            existingBatch?.sterilization_after_5
           ),
           sterilization_finish_details: buildDetailObject(
             data.sterilization_finish_details,
-            existingBatch?.sterilization_finish_details
+            existingBatch?.sterilization_finish
           ),
           pre_cooling_start_details: buildDetailObject(
             data.pre_cooling_start_details,
-            existingBatch?.pre_cooling_start_details
+            existingBatch?.pre_cooling_start
           ),
           pre_cooling_finish_details: buildDetailObject(
             data.pre_cooling_finish_details,
-            existingBatch?.pre_cooling_finish_details
+            existingBatch?.pre_cooling_finish
           ),
           cooling_1_start_details: buildDetailObject(
             data.cooling_1_start_details,
-            existingBatch?.cooling_1_start_details
+            existingBatch?.cooling_1_start
           ),
           cooling_1_finish_details: buildDetailObject(
             data.cooling_1_finish_details,
-            existingBatch?.cooling_1_finish_details
+            existingBatch?.cooling_1_finish
           ),
           cooling_2_start_details: buildDetailObject(
             data.cooling_2_start_details,
-            existingBatch?.cooling_2_start_details
+            existingBatch?.cooling_2_start
           ),
           cooling_2_finish_details: buildDetailObject(
             data.cooling_2_finish_details,
-            existingBatch?.cooling_2_finish_details
+            existingBatch?.cooling_2_finish
           )
         }
       }
