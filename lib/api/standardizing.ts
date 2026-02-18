@@ -75,7 +75,7 @@ export interface StandardizingFormsResponse {
   data: StandardizingForm[]
 }
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL "
+const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL
 
 export const standardizingApi = {
   // Get all standardizing forms

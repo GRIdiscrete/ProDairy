@@ -1,5 +1,5 @@
 export const API_CONFIG = {
-  BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL ',
+  BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL,
   ENDPOINTS: {
     USER_ROLES: '/user-roles',
     USERS: '/user',
