@@ -30,13 +30,13 @@ export interface FilmaticLinesForm2 {
     id?: string
     operator_id: string
     supervisor_approve: boolean
-    shift_details?: {
+    shift_details?: Array<{
       id?: string
       time: string
       target: number
       pallets: number
       setbacks: string
-      stoppage_time_id?: {
+      stoppage_time?: Array<{
         id?: string
         capper_1?: number | null
         capper_2?: number | null
@@ -50,20 +50,20 @@ export interface FilmaticLinesForm2 {
         sleever_2_hours?: number | null
         shrink_1_hours?: number | null
         shrink_2_hours?: number | null
-      } | null
-    } | null
+      }> | null
+    }> | null
   } | null
   night_shift_id?: {
     id?: string
     operator_id: string
     supervisor_approve: boolean
-    shift_details?: {
+    shift_details?: Array<{
       id?: string
       time: string
       target: number
       pallets: number
       setbacks: string
-      stoppage_time_id?: {
+      stoppage_time?: Array<{
         id?: string
         capper_1?: number | null
         capper_2?: number | null
@@ -77,8 +77,8 @@ export interface FilmaticLinesForm2 {
         sleever_2_hours?: number | null
         shrink_1_hours?: number | null
         shrink_2_hours?: number | null
-      } | null
-    } | null
+      }> | null
+    }> | null
   } | null
   operator?: string | null
   updated_by?: string | null

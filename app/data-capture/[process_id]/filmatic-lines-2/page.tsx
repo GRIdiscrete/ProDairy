@@ -268,9 +268,9 @@ export default function FilmaticLines2Page() {
       accessorKey: "production_info",
       header: "Production Info",
       cell: ({ row }: any) => {
-        const form = row.original
-        const dayPallets = form.day_shift_id?.shift_details?.pallets || 0
-        const nightPallets = form.night_shift_id?.shift_details?.pallets || 0
+        const form = row.original as FilmaticLinesForm2
+        const dayPallets = form.day_shift_id?.shift_details?.reduce((acc, detail) => acc + (detail.pallets || 0), 0) || 0
+        const nightPallets = form.night_shift_id?.shift_details?.reduce((acc, detail) => acc + (detail.pallets || 0), 0) || 0
         const totalPallets = dayPallets + nightPallets
         return (
           <div className="flex flex-col text-xs font-light">
@@ -467,18 +467,18 @@ export default function FilmaticLines2Page() {
                   </div>
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-light text-gray-600">Day Shift Entries</span>
-                      <span className="text-xs font-light text-blue-600">{latestForm.filmatic_line_form_2_day_shift?.length || 0}</span>
+                      <span className="text-xs font-light text-gray-600">Day Shift Details</span>
+                      <span className="text-xs font-light text-blue-600">{latestForm.day_shift_id?.shift_details?.length || 0}</span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-light text-gray-600">Night Shift Entries</span>
-                      <span className="text-xs font-light text-blue-600">{latestForm.filmatic_line_form_2_night_shift?.length || 0}</span>
+                      <span className="text-xs font-light text-gray-600">Night Shift Details</span>
+                      <span className="text-xs font-light text-blue-600">{latestForm.night_shift_id?.shift_details?.length || 0}</span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-light text-gray-600">Total Details</span>
+                      <span className="text-xs font-light text-gray-600">Total Detailed Entries</span>
                       <span className="text-xs font-light text-green-600">
-                        {(latestForm.filmatic_line_form_2_day_shift?.reduce((acc: number, shift: any) => acc + (shift.filmatic_line_form_2_day_shift_details?.length || 0), 0) || 0) +
-                          (latestForm.filmatic_line_form_2_night_shift?.reduce((acc: number, shift: any) => acc + (shift.filmatic_line_form_2_night_shift_details?.length || 0), 0) || 0)}
+                        {(latestForm.day_shift_id?.shift_details?.length || 0) +
+                          (latestForm.night_shift_id?.shift_details?.length || 0)}
                       </span>
                     </div>
                   </div>

@@ -281,37 +281,65 @@ export function FilmaticLinesForm2ViewDrawer({
                       })()}
                     </p>
 
-                    {form.day_shift_id.shift_details ? (
-                      <div className="space-y-3">
+                    {form.day_shift_id.shift_details && form.day_shift_id.shift_details.length > 0 ? (
+                      <div className="space-y-4">
                         <h5 className="text-xs font-medium text-gray-700 mt-3">Production Details:</h5>
-                        <div className="bg-gray-50 p-3 rounded text-xs">
-                          <div className="grid grid-cols-2 gap-2">
-                            <span><strong>Time:</strong> {form.day_shift_id.shift_details.time}</span>
-                            <span><strong>Target:</strong> {form.day_shift_id.shift_details.target}</span>
-                            <span><strong>Pallets:</strong> {form.day_shift_id.shift_details.pallets}</span>
-                            <span><strong>Setbacks:</strong> {form.day_shift_id.shift_details.setbacks || 'None'}</span>
-                          </div>
-
-                          {form.day_shift_id.shift_details.stoppage_time_id && (
-                            <div className="mt-3">
-                              <h5 className="text-xs font-medium text-gray-700 mb-2">Stoppage Time:</h5>
-                              <div className="grid grid-cols-2 gap-1 text-xs">
-                                <div><span className="font-medium">Capper 1 Hours:</span> {form.day_shift_id.shift_details.stoppage_time_id.capper_1_hours ?? '—'}</div>
-                                <div><span className="font-medium">Capper 2 Hours:</span> {form.day_shift_id.shift_details.stoppage_time_id.capper_2_hours ?? '—'}</div>
-                                <div><span className="font-medium">Sleever 1 Hours:</span> {form.day_shift_id.shift_details.stoppage_time_id.sleever_1_hours ?? '—'}</div>
-                                <div><span className="font-medium">Sleever 2 Hours:</span> {form.day_shift_id.shift_details.stoppage_time_id.sleever_2_hours ?? '—'}</div>
-                                <div><span className="font-medium">Shrink 1 Hours:</span> {form.day_shift_id.shift_details.stoppage_time_id.shrink_1_hours ?? '—'}</div>
-                                <div><span className="font-medium">Shrink 2 Hours:</span> {form.day_shift_id.shift_details.stoppage_time_id.shrink_2_hours ?? '—'}</div>
-                                <div><span className="font-medium">Capper 1:</span> {form.day_shift_id.shift_details.stoppage_time_id.capper_1 ?? '—'}</div>
-                                <div><span className="font-medium">Capper 2:</span> {form.day_shift_id.shift_details.stoppage_time_id.capper_2 ?? '—'}</div>
-                                <div><span className="font-medium">Sleever 1:</span> {form.day_shift_id.shift_details.stoppage_time_id.sleever_1 ?? '—'}</div>
-                                <div><span className="font-medium">Sleever 2:</span> {form.day_shift_id.shift_details.stoppage_time_id.sleever_2 ?? '—'}</div>
-                                <div><span className="font-medium">Shrink 1:</span> {form.day_shift_id.shift_details.stoppage_time_id.shrink_1 ?? '—'}</div>
-                                <div><span className="font-medium">Shrink 2:</span> {form.day_shift_id.shift_details.stoppage_time_id.shrink_2 ?? '—'}</div>
+                        {form.day_shift_id.shift_details.map((detail, idx) => (
+                          <div key={detail.id || idx} className="bg-gray-50 p-4 rounded-lg border border-gray-100 text-xs">
+                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-3">
+                              <div className="space-y-1">
+                                <p className="text-gray-500 font-light">Time</p>
+                                <p className="font-medium">{detail.time || 'N/A'}</p>
+                              </div>
+                              <div className="space-y-1">
+                                <p className="text-gray-500 font-light">Target</p>
+                                <p className="font-medium">{detail.target}</p>
+                              </div>
+                              <div className="space-y-1">
+                                <p className="text-gray-500 font-light">Pallets</p>
+                                <p className="font-medium">{detail.pallets}</p>
+                              </div>
+                              <div className="space-y-1">
+                                <p className="text-gray-500 font-light">Setbacks</p>
+                                <p className="font-medium">{detail.setbacks || 'None'}</p>
                               </div>
                             </div>
-                          )}
-                        </div>
+
+                            {detail.stoppage_time && detail.stoppage_time.length > 0 && (
+                              <div className="mt-4 pt-4 border-t border-gray-200">
+                                <h6 className="text-[10px] uppercase tracking-wider font-semibold text-gray-400 mb-3">Stoppage Time Details</h6>
+                                {detail.stoppage_time.map((stoppage, sIdx) => (
+                                  <div key={stoppage.id || sIdx} className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-x-4 gap-y-3">
+                                    <div className="space-y-1">
+                                      <p className="text-gray-500 font-light">Capper 1</p>
+                                      <p className="font-medium">{stoppage.capper_1 ?? '—'} <span className="text-[10px] text-gray-400">({stoppage.capper_1_hours ?? 0}h)</span></p>
+                                    </div>
+                                    <div className="space-y-1">
+                                      <p className="text-gray-500 font-light">Capper 2</p>
+                                      <p className="font-medium">{stoppage.capper_2 ?? '—'} <span className="text-[10px] text-gray-400">({stoppage.capper_2_hours ?? 0}h)</span></p>
+                                    </div>
+                                    <div className="space-y-1">
+                                      <p className="text-gray-500 font-light">Sleever 1</p>
+                                      <p className="font-medium">{stoppage.sleever_1 ?? '—'} <span className="text-[10px] text-gray-400">({stoppage.sleever_1_hours ?? 0}h)</span></p>
+                                    </div>
+                                    <div className="space-y-1">
+                                      <p className="text-gray-500 font-light">Sleever 2</p>
+                                      <p className="font-medium">{stoppage.sleever_2 ?? '—'} <span className="text-[10px] text-gray-400">({stoppage.sleever_2_hours ?? 0}h)</span></p>
+                                    </div>
+                                    <div className="space-y-1">
+                                      <p className="text-gray-500 font-light">Shrink 1</p>
+                                      <p className="font-medium">{stoppage.shrink_1 ?? '—'} <span className="text-[10px] text-gray-400">({stoppage.shrink_1_hours ?? 0}h)</span></p>
+                                    </div>
+                                    <div className="space-y-1">
+                                      <p className="text-gray-500 font-light">Shrink 2</p>
+                                      <p className="font-medium">{stoppage.shrink_2 ?? '—'} <span className="text-[10px] text-gray-400">({stoppage.shrink_2_hours ?? 0}h)</span></p>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        ))}
                       </div>
                     ) : (
                       <p className="text-sm text-gray-500">No production details available</p>
@@ -352,37 +380,65 @@ export function FilmaticLinesForm2ViewDrawer({
                       })()}
                     </p>
 
-                    {form.night_shift_id.shift_details ? (
-                      <div className="space-y-3">
+                    {form.night_shift_id.shift_details && form.night_shift_id.shift_details.length > 0 ? (
+                      <div className="space-y-4">
                         <h5 className="text-xs font-medium text-gray-700 mt-3">Production Details:</h5>
-                        <div className="bg-gray-50 p-3 rounded text-xs">
-                          <div className="grid grid-cols-2 gap-2">
-                            <span><strong>Time:</strong> {form.night_shift_id.shift_details.time}</span>
-                            <span><strong>Target:</strong> {form.night_shift_id.shift_details.target}</span>
-                            <span><strong>Pallets:</strong> {form.night_shift_id.shift_details.pallets}</span>
-                            <span><strong>Setbacks:</strong> {form.night_shift_id.shift_details.setbacks || 'None'}</span>
-                          </div>
-
-                          {form.night_shift_id.shift_details.stoppage_time_id && (
-                            <div className="mt-3">
-                              <h5 className="text-xs font-medium text-gray-700 mb-2">Stoppage Time:</h5>
-                              <div className="grid grid-cols-2 gap-1 text-xs">
-                                <div><span className="font-medium">Capper 1 Hours:</span> {form.night_shift_id.shift_details.stoppage_time_id.capper_1_hours ?? '—'}</div>
-                                <div><span className="font-medium">Capper 2 Hours:</span> {form.night_shift_id.shift_details.stoppage_time_id.capper_2_hours ?? '—'}</div>
-                                <div><span className="font-medium">Sleever 1 Hours:</span> {form.night_shift_id.shift_details.stoppage_time_id.sleever_1_hours ?? '—'}</div>
-                                <div><span className="font-medium">Sleever 2 Hours:</span> {form.night_shift_id.shift_details.stoppage_time_id.sleever_2_hours ?? '—'}</div>
-                                <div><span className="font-medium">Shrink 1 Hours:</span> {form.night_shift_id.shift_details.stoppage_time_id.shrink_1_hours ?? '—'}</div>
-                                <div><span className="font-medium">Shrink 2 Hours:</span> {form.night_shift_id.shift_details.stoppage_time_id.shrink_2_hours ?? '—'}</div>
-                                <div><span className="font-medium">Capper 1:</span> {form.night_shift_id.shift_details.stoppage_time_id.capper_1 ?? '—'}</div>
-                                <div><span className="font-medium">Capper 2:</span> {form.night_shift_id.shift_details.stoppage_time_id.capper_2 ?? '—'}</div>
-                                <div><span className="font-medium">Sleever 1:</span> {form.night_shift_id.shift_details.stoppage_time_id.sleever_1 ?? '—'}</div>
-                                <div><span className="font-medium">Sleever 2:</span> {form.night_shift_id.shift_details.stoppage_time_id.sleever_2 ?? '—'}</div>
-                                <div><span className="font-medium">Shrink 1:</span> {form.night_shift_id.shift_details.stoppage_time_id.shrink_1 ?? '—'}</div>
-                                <div><span className="font-medium">Shrink 2:</span> {form.night_shift_id.shift_details.stoppage_time_id.shrink_2 ?? '—'}</div>
+                        {form.night_shift_id.shift_details.map((detail, idx) => (
+                          <div key={detail.id || idx} className="bg-gray-50 p-4 rounded-lg border border-gray-100 text-xs">
+                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-3">
+                              <div className="space-y-1">
+                                <p className="text-gray-500 font-light">Time</p>
+                                <p className="font-medium">{detail.time || 'N/A'}</p>
+                              </div>
+                              <div className="space-y-1">
+                                <p className="text-gray-500 font-light">Target</p>
+                                <p className="font-medium">{detail.target}</p>
+                              </div>
+                              <div className="space-y-1">
+                                <p className="text-gray-500 font-light">Pallets</p>
+                                <p className="font-medium">{detail.pallets}</p>
+                              </div>
+                              <div className="space-y-1">
+                                <p className="text-gray-500 font-light">Setbacks</p>
+                                <p className="font-medium">{detail.setbacks || 'None'}</p>
                               </div>
                             </div>
-                          )}
-                        </div>
+
+                            {detail.stoppage_time && detail.stoppage_time.length > 0 && (
+                              <div className="mt-4 pt-4 border-t border-gray-200">
+                                <h6 className="text-[10px] uppercase tracking-wider font-semibold text-gray-400 mb-3">Stoppage Time Details</h6>
+                                {detail.stoppage_time.map((stoppage, sIdx) => (
+                                  <div key={stoppage.id || sIdx} className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-x-4 gap-y-3">
+                                    <div className="space-y-1">
+                                      <p className="text-gray-500 font-light">Capper 1</p>
+                                      <p className="font-medium">{stoppage.capper_1 ?? '—'} <span className="text-[10px] text-gray-400">({stoppage.capper_1_hours ?? 0}h)</span></p>
+                                    </div>
+                                    <div className="space-y-1">
+                                      <p className="text-gray-500 font-light">Capper 2</p>
+                                      <p className="font-medium">{stoppage.capper_2 ?? '—'} <span className="text-[10px] text-gray-400">({stoppage.capper_2_hours ?? 0}h)</span></p>
+                                    </div>
+                                    <div className="space-y-1">
+                                      <p className="text-gray-500 font-light">Sleever 1</p>
+                                      <p className="font-medium">{stoppage.sleever_1 ?? '—'} <span className="text-[10px] text-gray-400">({stoppage.sleever_1_hours ?? 0}h)</span></p>
+                                    </div>
+                                    <div className="space-y-1">
+                                      <p className="text-gray-500 font-light">Sleever 2</p>
+                                      <p className="font-medium">{stoppage.sleever_2 ?? '—'} <span className="text-[10px] text-gray-400">({stoppage.sleever_2_hours ?? 0}h)</span></p>
+                                    </div>
+                                    <div className="space-y-1">
+                                      <p className="text-gray-500 font-light">Shrink 1</p>
+                                      <p className="font-medium">{stoppage.shrink_1 ?? '—'} <span className="text-[10px] text-gray-400">({stoppage.shrink_1_hours ?? 0}h)</span></p>
+                                    </div>
+                                    <div className="space-y-1">
+                                      <p className="text-gray-500 font-light">Shrink 2</p>
+                                      <p className="font-medium">{stoppage.shrink_2 ?? '—'} <span className="text-[10px] text-gray-400">({stoppage.shrink_2_hours ?? 0}h)</span></p>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        ))}
                       </div>
                     ) : (
                       <p className="text-sm text-gray-500">No production details available</p>

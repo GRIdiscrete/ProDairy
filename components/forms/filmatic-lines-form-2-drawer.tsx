@@ -352,10 +352,45 @@ export function FilmaticLinesForm2Drawer({
           }
 
           if (shiftEntry) {
-            // New API structure: shift_details is an object with nested stoppage_time_id
-            if (shiftEntry.shift_details) {
+            // New API structure: shift_details is an array with nested stoppage_time array
+            if (Array.isArray(shiftEntry.shift_details)) {
+              const mapped = shiftEntry.shift_details.map((detail: any) => {
+                const stoppage = (detail.stoppage_time && detail.stoppage_time.length > 0) ? detail.stoppage_time[0] : {}
+
+                return {
+                  id: detail.id,
+                  time: detail.time?.split(' ')[1]?.slice(0, 5) || detail.time || '',
+                  pallets: detail.pallets ?? undefined,
+                  target: detail.target ?? undefined,
+                  setbacks: detail.setbacks || '',
+                  stoppage_time: {
+                    id: stoppage.id,
+                    capper_1_hours: stoppage.capper_1_hours ?? undefined,
+                    capper_2_hours: stoppage.capper_2_hours ?? undefined,
+                    sleever_1_hours: stoppage.sleever_1_hours ?? undefined,
+                    sleever_2_hours: stoppage.sleever_2_hours ?? undefined,
+                    shrink_1_hours: stoppage.shrink_1_hours ?? undefined,
+                    shrink_2_hours: stoppage.shrink_2_hours ?? undefined,
+                    capper_1: stoppage.capper_1 ?? undefined,
+                    capper_2: stoppage.capper_2 ?? undefined,
+                    sleever_1: stoppage.sleever_1 ?? undefined,
+                    sleever_2: stoppage.sleever_2 ?? undefined,
+                    shrink_1: stoppage.shrink_1 ?? undefined,
+                    shrink_2: stoppage.shrink_2 ?? undefined,
+                  }
+                }
+              })
+
+              shiftDetailsForm.reset({
+                supervisor_approve: shiftEntry?.supervisor_approve ?? false,
+                operator_id: shiftEntry?.operator_id ?? user?.id ?? '',
+                details: mapped
+              })
+            }
+            // Legacy/Support (object structure)
+            else if (shiftEntry.shift_details && typeof shiftEntry.shift_details === 'object' && !Array.isArray(shiftEntry.shift_details)) {
               const detail = shiftEntry.shift_details
-              const stoppage = detail.stoppage_time_id || {}
+              const stoppageField = detail.stoppage_time_id || (Array.isArray(detail.stoppage_time) ? detail.stoppage_time[0] : (detail.stoppage_time || {}))
 
               const mapped = [{
                 id: detail.id,
@@ -364,19 +399,19 @@ export function FilmaticLinesForm2Drawer({
                 target: detail.target ?? undefined,
                 setbacks: detail.setbacks || '',
                 stoppage_time: {
-                  id: stoppage.id,
-                  capper_1_hours: stoppage.capper_1_hours ?? undefined,
-                  capper_2_hours: stoppage.capper_2_hours ?? undefined,
-                  sleever_1_hours: stoppage.sleever_1_hours ?? undefined,
-                  sleever_2_hours: stoppage.sleever_2_hours ?? undefined,
-                  shrink_1_hours: stoppage.shrink_1_hours ?? undefined,
-                  shrink_2_hours: stoppage.shrink_2_hours ?? undefined,
-                  capper_1: stoppage.capper_1 ?? undefined,
-                  capper_2: stoppage.capper_2 ?? undefined,
-                  sleever_1: stoppage.sleever_1 ?? undefined,
-                  sleever_2: stoppage.sleever_2 ?? undefined,
-                  shrink_1: stoppage.shrink_1 ?? undefined,
-                  shrink_2: stoppage.shrink_2 ?? undefined,
+                  id: stoppageField.id,
+                  capper_1_hours: stoppageField.capper_1_hours ?? undefined,
+                  capper_2_hours: stoppageField.capper_2_hours ?? undefined,
+                  sleever_1_hours: stoppageField.sleever_1_hours ?? undefined,
+                  sleever_2_hours: stoppageField.sleever_2_hours ?? undefined,
+                  shrink_1_hours: stoppageField.shrink_1_hours ?? undefined,
+                  shrink_2_hours: stoppageField.shrink_2_hours ?? undefined,
+                  capper_1: stoppageField.capper_1 ?? undefined,
+                  capper_2: stoppageField.capper_2 ?? undefined,
+                  sleever_1: stoppageField.sleever_1 ?? undefined,
+                  sleever_2: stoppageField.sleever_2 ?? undefined,
+                  shrink_1: stoppageField.shrink_1 ?? undefined,
+                  shrink_2: stoppageField.shrink_2 ?? undefined,
                 }
               }]
 
@@ -386,7 +421,7 @@ export function FilmaticLinesForm2Drawer({
                 details: mapped
               })
             }
-            // Legacy array structure: shift_details is an array
+            // Legacy array structure: shift_details is in legacy fields
             else {
               const detailsKey = shiftType === "day_shift" ? "filmatic_line_form_2_day_shift_details" : "filmatic_line_form_2_night_shift_details"
               const stoppageKey = shiftType === "day_shift" ? "filmatic_line_form_2_day_shift_details_stoppage_time" : "filmatic_line_form_2_night_shift_details_stoppage_time"
@@ -530,7 +565,7 @@ export function FilmaticLinesForm2Drawer({
       // Add shift data based on selection
       if (shiftType === "day_shift") {
         formData.day_shift_id = {
-          ...(mode === "edit" && form?.filmatic_line_form_2_day_shift?.[0]?.id ? { id: form.filmatic_line_form_2_day_shift[0].id } : {}),
+          ...(mode === "edit" && form?.day_shift_id?.id ? { id: form.day_shift_id.id } : {}),
           supervisor_approve: data.supervisor_approve || false,
           operator_id: data.operator_id || user?.id || "",
           shift_details: data.details?.map((detail: any) => ({
@@ -559,7 +594,7 @@ export function FilmaticLinesForm2Drawer({
         // Ensure night shift is not sent
       } else if (shiftType === "night_shift") {
         formData.night_shift_id = {
-          ...(mode === "edit" && form?.filmatic_line_form_2_night_shift?.[0]?.id ? { id: form.filmatic_line_form_2_night_shift[0].id } : {}),
+          ...(mode === "edit" && form?.night_shift_id?.id ? { id: form.night_shift_id.id } : {}),
           supervisor_approve: data.supervisor_approve || false,
           operator_id: data.operator_id || user?.id || "",
           shift_details: data.details?.map((detail: any) => ({
