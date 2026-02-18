@@ -165,39 +165,57 @@ export interface CreateFilmaticLinesForm2Request {
     group_c?: string[]
     manager_id?: string
   }
-  day_shift?: {
+  day_shift_id?: {
+    id?: string
     supervisor_approve: boolean
     operator_id: string
-    details: Array<{
+    shift_details: Array<{
+      id?: string
       time: string
       pallets: number
       target: number
       setbacks: string
       stoppage_time: Array<{
-        capper_1?: number
-        capper_2?: number
-        sleever_1?: number
-        sleever_2?: number
-        shrink_1?: number
-        shrink_2?: number
+        id?: string
+        capper_1_hours?: number | null
+        capper_2_hours?: number | null
+        sleever_1_hours?: number | null
+        sleever_2_hours?: number | null
+        shrink_1_hours?: number | null
+        shrink_2_hours?: number | null
+        capper_1?: number | null
+        capper_2?: number | null
+        sleever_1?: number | null
+        sleever_2?: number | null
+        shrink_1?: number | null
+        shrink_2?: number | null
       }>
     }>
   }
-  night_shift?: {
+  night_shift_id?: {
+    id?: string
     supervisor_approve: boolean
     operator_id: string
-    details: Array<{
+    shift_details: Array<{
+      id?: string
       time: string
       pallets: number
       target: number
       setbacks: string
       stoppage_time: Array<{
-        capper_1?: number
-        capper_2?: number
-        sleever_1?: number
-        sleever_2?: number
-        shrink_1?: number
-        shrink_2?: number
+        id?: string
+        capper_1_hours?: number | null
+        capper_2_hours?: number | null
+        sleever_1_hours?: number | null
+        sleever_2_hours?: number | null
+        shrink_1_hours?: number | null
+        shrink_2_hours?: number | null
+        capper_1?: number | null
+        capper_2?: number | null
+        sleever_1?: number | null
+        sleever_2?: number | null
+        shrink_1?: number | null
+        shrink_2?: number | null
       }>
     }>
   }

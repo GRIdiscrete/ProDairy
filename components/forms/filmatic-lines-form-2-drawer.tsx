@@ -529,13 +529,13 @@ export function FilmaticLinesForm2Drawer({
 
       // Add shift data based on selection
       if (shiftType === "day_shift") {
-        formData.day_shift = {
+        formData.day_shift_id = {
           ...(mode === "edit" && form?.filmatic_line_form_2_day_shift?.[0]?.id ? { id: form.filmatic_line_form_2_day_shift[0].id } : {}),
           supervisor_approve: data.supervisor_approve || false,
           operator_id: data.operator_id || user?.id || "",
-          details: data.details?.map((detail: any) => ({
+          shift_details: data.details?.map((detail: any) => ({
             ...(detail.id ? { id: detail.id } : {}),
-            time: detail.time || "",
+            time: detail.time ? `${basicInfo.date} ${detail.time}:00+00` : "",
             pallets: detail.pallets || 0,
             target: detail.target || 0,
             setbacks: detail.setbacks || "",
@@ -558,13 +558,13 @@ export function FilmaticLinesForm2Drawer({
         }
         // Ensure night shift is not sent
       } else if (shiftType === "night_shift") {
-        formData.night_shift = {
+        formData.night_shift_id = {
           ...(mode === "edit" && form?.filmatic_line_form_2_night_shift?.[0]?.id ? { id: form.filmatic_line_form_2_night_shift[0].id } : {}),
           supervisor_approve: data.supervisor_approve || false,
           operator_id: data.operator_id || user?.id || "",
-          details: data.details?.map((detail: any) => ({
+          shift_details: data.details?.map((detail: any) => ({
             ...(detail.id ? { id: detail.id } : {}),
-            time: detail.time || "",
+            time: detail.time ? `${basicInfo.date} ${detail.time}:00+00` : "",
             pallets: detail.pallets || 0,
             target: detail.target || 0,
             setbacks: detail.setbacks || "",
