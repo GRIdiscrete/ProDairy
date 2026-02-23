@@ -3,9 +3,10 @@
 import { useState, useEffect, useMemo } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import type { RootState, AppDispatch } from "@/lib/store"
-import { fetchCollectionVouchers } from "@/lib/store/slices/collectionVoucherSlice"
+import { fetchCollectionVouchers, createCollectionVoucher } from "@/lib/store/slices/collectionVoucherSlice"
 import { fetchUsers } from "@/lib/store/slices/usersSlice"
 import { fetchSuppliers } from "@/lib/store/slices/supplierSlice"
+import { fetchTankers } from "@/lib/store/slices/tankerSlice"
 import { DriversDashboardLayout } from "@/components/layout/drivers-dashboard-layout"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -28,6 +29,7 @@ export default function CollectionVouchersPage() {
     const { collectionVouchers, operationLoading } = useSelector((state: RootState) => state.collectionVoucher)
     const { items: users } = useSelector((state: RootState) => state.users)
     const { suppliers } = useSelector((state: RootState) => state.supplier)
+    const { items: tankers } = useSelector((state: RootState) => state.tankers)
 
     const { isOnline } = useNetworkStatus()
 
@@ -47,28 +49,34 @@ export default function CollectionVouchersPage() {
             return {
                 drivers: [],
                 suppliers: [],
+                tankers: [],
                 collectionVouchers: []
             }
         }
         return {
             drivers: LocalStorageService.getDrivers() || [],
             suppliers: LocalStorageService.getSuppliers() || [],
+            tankers: LocalStorageService.getTankers() || [],
             collectionVouchers: LocalStorageService.getCollectionVouchers() || []
         }
     })
 
-    // Use online data if available, fallback to offline
+    // Use online data if available, fallback to offline, then empty array
     const displayVouchers = (isOnline && collectionVouchers && collectionVouchers.length > 0)
         ? collectionVouchers
-        : offlineData.collectionVouchers
+        : (offlineData.collectionVouchers || [])
 
     const displayUsers = (isOnline && users && users.length > 0)
         ? users
-        : offlineData.drivers
+        : (offlineData.drivers || [])
 
     const displaySuppliers = (isOnline && suppliers && suppliers.length > 0)
         ? suppliers
-        : offlineData.suppliers
+        : (offlineData.suppliers || [])
+
+    const displayTankers = (isOnline && tankers && tankers.length > 0)
+        ? tankers
+        : (offlineData.tankers || [])
 
     // Load data on mount
     useEffect(() => {
@@ -77,6 +85,7 @@ export default function CollectionVouchersPage() {
             setOfflineData({
                 drivers: LocalStorageService.getDrivers(),
                 suppliers: LocalStorageService.getSuppliers(),
+                tankers: LocalStorageService.getTankers(),
                 collectionVouchers: LocalStorageService.getCollectionVouchers()
             })
         }
@@ -88,6 +97,7 @@ export default function CollectionVouchersPage() {
             })
             dispatch(fetchUsers({})).catch(() => { })
             dispatch(fetchSuppliers({})).catch(() => { })
+            dispatch(fetchTankers({})).catch(() => { })
         }
     }, [dispatch, isOnline])
 
@@ -151,13 +161,24 @@ export default function CollectionVouchersPage() {
 
             for (const voucher of pendingVouchers) {
                 try {
-                    // Try to create on server - you can enhance this with actual sync service
-                    console.log('Syncing voucher:', voucher)
-                    // await dispatch(createCollectionVoucher(voucher)).unwrap()
-                    // LocalStorageService.markCollectionVoucherAsSynced(voucher.id)
+                    // Strip local-only fields before sending to server
+                    const { sync_status, server_id, created_at, updated_at, ...serverPayload } = voucher
+                    // Also strip offline-generated id (starts with 'offline_')
+                    const payload = String(serverPayload.id || '').startsWith('offline_')
+                        ? (({ id, ...rest }) => rest)(serverPayload)
+                        : serverPayload
+
+                    // Create voucher on server
+                    const result = await dispatch(createCollectionVoucher(payload)).unwrap()
+
+                    // Mark as synced in local storage - handle different response structures
+                    const serverId = (result as any)?.id || result
+                    LocalStorageService.markCollectionVoucherAsSynced(voucher.id, serverId)
                     success++
                 } catch (error) {
                     console.error('Failed to sync voucher:', voucher.id, error)
+                    // Mark as failed
+                    LocalStorageService.markCollectionVoucherAsFailed(voucher.id)
                     failed++
                 }
             }
@@ -357,7 +378,7 @@ export default function CollectionVouchersPage() {
             header: "Driver",
             cell: ({ row }: any) => {
                 const voucher = row.original as CollectionVoucher2
-                const driverUser = displayUsers.find((user: any) => user.id === voucher.driver)
+                const driverUser = Array.isArray(displayUsers) ? displayUsers.find((user: any) => user.id === voucher.driver) : null
 
                 if (driverUser) {
                     return (

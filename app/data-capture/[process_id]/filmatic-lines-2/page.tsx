@@ -233,7 +233,7 @@ export default function FilmaticLines2Page() {
                 />
               </div>
               <p className="text-sm text-gray-500 mt-1">
-                {form.date ? new Date(form.date).toLocaleDateString() : 'N/A'}
+                {new Date(form.date).toLocaleDateString()}
               </p>
             </div>
           </div>
@@ -241,111 +241,60 @@ export default function FilmaticLines2Page() {
       },
     },
     {
-      accessorKey: "production_info",
-      header: "Production Info",
-      cell: ({ row }: any) => {
-        const form = row.original
-        const dayShiftCount = form.filmatic_line_form_2_day_shift?.length || 0
-        const nightShiftCount = form.filmatic_line_form_2_night_shift?.length || 0
-        return (
-          <div className="space-y-2">
-            <div className="flex items-center space-x-2">
-              <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center">
-                <Package className="w-3 h-3 text-blue-600" />
-              </div>
-              <span className="text-sm font-light">Production</span>
-            </div>
-            <div className="space-y-1">
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-gray-500">Day Shift</span>
-                <span className="text-xs font-light">{dayShiftCount} entries</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-gray-500">Night Shift</span>
-                <span className="text-xs font-light">{nightShiftCount} entries</span>
-              </div>
-            </div>
-          </div>
-        )
-      },
-    },
-    {
-      accessorKey: "groups_info",
-      header: "Groups",
-      cell: ({ row }: any) => {
-        const form = row.original
-        const groups = form.groups
-        return (
-          <div className="space-y-2">
-            <div className="flex items-center space-x-3">
-              <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center">
-                <TrendingUp className="w-3 h-3 text-blue-600" />
-              </div>
-              <span className="text-sm font-light">Groups</span>
-            </div>
-            <div className="space-y-1">
-              {groups ? (
-                <>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-gray-500">Group A</span>
-                    <span className="text-xs font-light">{groups.group_a?.length || 0} members</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-gray-500">Group B</span>
-                    <span className="text-xs font-light">{groups.group_b?.length || 0} members</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-gray-500">Group C</span>
-                    <span className="text-xs font-light">{groups.group_c?.length || 0} members</span>
-                  </div>
-                </>
-              ) : (
-                <div className="text-xs text-gray-400">No groups assigned</div>
-              )}
-            </div>
-          </div>
-        )
-      },
-    },
-    {
-      accessorKey: "shifts_info",
+      accessorKey: "shifts_present",
       header: "Shifts",
       cell: ({ row }: any) => {
         const form = row.original
-        const dayShiftHasData = form.filmatic_line_form_2_day_shift?.length > 0
-        const nightShiftHasData = form.filmatic_line_form_2_night_shift?.length > 0
-        const dayShiftApproved = dayShiftHasData && form.filmatic_line_form_2_day_shift.some((shift: any) => shift.supervisor_approve)
-        const nightShiftApproved = nightShiftHasData && form.filmatic_line_form_2_night_shift.some((shift: any) => shift.supervisor_approve)
-
+        const hasDay = !!form.day_shift_id
+        const hasNight = !!form.night_shift_id
         return (
-          <div className="space-y-2">
-            <div className="flex items-center space-x-2">
-              <div className="w-5 h-5 rounded-full bg-yellow-100 flex items-center justify-center">
-                <Sun className="h-3 w-3 text-yellow-600" />
-              </div>
-              <span className="text-sm font-light">Shifts</span>
-            </div>
-            <div className="space-y-1">
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-gray-500">Day</span>
-                <span className={`text-xs font-light ${dayShiftApproved ? 'text-green-600' :
-                  dayShiftHasData ? 'text-yellow-600' : 'text-gray-400'
-                  }`}>
-                  {dayShiftApproved ? 'Approved' : dayShiftHasData ? 'Pending' : 'No Data'}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-gray-500">Night</span>
-                <span className={`text-xs font-light ${nightShiftApproved ? 'text-green-600' :
-                  nightShiftHasData ? 'text-yellow-600' : 'text-gray-400'
-                  }`}>
-                  {nightShiftApproved ? 'Approved' : nightShiftHasData ? 'Pending' : 'No Data'}
-                </span>
-              </div>
+          <div className="flex space-x-1">
+            {hasDay && (
+              <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
+                <Sun className="w-3 h-3 mr-1" /> Day
+              </Badge>
+            )}
+            {hasNight && (
+              <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                <Moon className="w-3 h-3 mr-1" /> Night
+              </Badge>
+            )}
+            {!hasDay && !hasNight && <span className="text-gray-400">None</span>}
+          </div>
+        )
+      }
+    },
+    {
+      accessorKey: "production_info",
+      header: "Production Info",
+      cell: ({ row }: any) => {
+        const form = row.original as FilmaticLinesForm2
+        const dayPallets = form.day_shift_id?.shift_details?.reduce((acc, detail) => acc + (detail.pallets || 0), 0) || 0
+        const nightPallets = form.night_shift_id?.shift_details?.reduce((acc, detail) => acc + (detail.pallets || 0), 0) || 0
+        const totalPallets = dayPallets + nightPallets
+        return (
+          <div className="flex flex-col text-xs font-light">
+            <span className="text-gray-500">Total: {totalPallets} pallets</span>
+            <div className="flex items-center space-x-2 mt-1">
+              <span className="text-yellow-600 font-medium">{dayPallets}d</span>
+              <span className="text-gray-300">|</span>
+              <span className="text-blue-600 font-medium">{nightPallets}n</span>
             </div>
           </div>
         )
-      },
+      }
+    },
+    {
+      accessorKey: "approved",
+      header: "Status",
+      cell: ({ row }: any) => {
+        const form = row.original
+        return (
+          <Badge className={form.approved ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}>
+            {form.approved ? "Approved" : "Pending"}
+          </Badge>
+        )
+      }
     },
 
     {
@@ -518,18 +467,18 @@ export default function FilmaticLines2Page() {
                   </div>
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-light text-gray-600">Day Shift Entries</span>
-                      <span className="text-xs font-light text-blue-600">{latestForm.filmatic_line_form_2_day_shift?.length || 0}</span>
+                      <span className="text-xs font-light text-gray-600">Day Shift Details</span>
+                      <span className="text-xs font-light text-blue-600">{latestForm.day_shift_id?.shift_details?.length || 0}</span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-light text-gray-600">Night Shift Entries</span>
-                      <span className="text-xs font-light text-blue-600">{latestForm.filmatic_line_form_2_night_shift?.length || 0}</span>
+                      <span className="text-xs font-light text-gray-600">Night Shift Details</span>
+                      <span className="text-xs font-light text-blue-600">{latestForm.night_shift_id?.shift_details?.length || 0}</span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-light text-gray-600">Total Details</span>
+                      <span className="text-xs font-light text-gray-600">Total Detailed Entries</span>
                       <span className="text-xs font-light text-green-600">
-                        {(latestForm.filmatic_line_form_2_day_shift?.reduce((acc: number, shift: any) => acc + (shift.filmatic_line_form_2_day_shift_details?.length || 0), 0) || 0) +
-                          (latestForm.filmatic_line_form_2_night_shift?.reduce((acc: number, shift: any) => acc + (shift.filmatic_line_form_2_night_shift_details?.length || 0), 0) || 0)}
+                        {(latestForm.day_shift_id?.shift_details?.length || 0) +
+                          (latestForm.night_shift_id?.shift_details?.length || 0)}
                       </span>
                     </div>
                   </div>

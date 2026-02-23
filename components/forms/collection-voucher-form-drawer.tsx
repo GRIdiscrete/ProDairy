@@ -26,6 +26,7 @@ import { fetchSuppliers } from "@/lib/store/slices/supplierSlice"
 import { fetchTankers } from "@/lib/store/slices/tankerSlice"
 import { LoadingButton } from "@/components/ui/loading-button"
 import { LocalStorageService } from "@/lib/offline/local-storage-service"
+import { useNetworkStatus } from "@/hooks/use-network-status"
 import type { CollectionVoucher2, SupplierTank } from "@/lib/types"
 
 const collectionVoucherSchema = yup.object({
@@ -87,12 +88,30 @@ export function CollectionVoucherFormDrawer({
     const dispatch = useAppDispatch()
     const isMobile = useIsMobile()
     const isTablet = typeof window !== 'undefined' && window.innerWidth >= 768 && window.innerWidth < 1024
+    const { isOnline } = useNetworkStatus()
 
     const { operationLoading } = useAppSelector((state) => state.collectionVoucher)
     const { items: users } = useAppSelector((state) => state.users)
     const { suppliers } = useAppSelector((state) => state.supplier)
     const { items: tankers } = useAppSelector((state) => state.tankers)
     const { user } = useAppSelector((state) => state.auth)
+
+    // Offline data state
+    const [offlineData, setOfflineData] = useState(() => {
+        if (typeof window === 'undefined') {
+            return { drivers: [], suppliers: [], tankers: [] }
+        }
+        return {
+            drivers: LocalStorageService.getDrivers() || [],
+            suppliers: LocalStorageService.getSuppliers() || [],
+            tankers: LocalStorageService.getTankers() || []
+        }
+    })
+
+    // Use online data if available, fallback to offline
+    const displayUsers = (isOnline && users && users.length > 0) ? users : offlineData.drivers
+    const displaySuppliers = (isOnline && suppliers && suppliers.length > 0) ? suppliers : offlineData.suppliers
+    const displayTankers = (isOnline && tankers && tankers.length > 0) ? tankers : offlineData.tankers
 
     const {
         control,
@@ -132,10 +151,10 @@ export function CollectionVoucherFormDrawer({
     })
 
     const selectedTruckNumber = watch("truck_number")
-    const selectedTanker = tankers?.find((t: any) => t.reg_number === selectedTruckNumber)
+    const selectedTanker = displayTankers?.find((t: any) => t.reg_number === selectedTruckNumber)
     const compartmentCount = selectedTanker?.compartments || 0
     const selectedSupplierId = watch("supplier")
-    const selectedSupplier = suppliers?.find(s => s.id === selectedSupplierId)
+    const selectedSupplier = displaySuppliers?.find(s => s.id === selectedSupplierId)
     const supplierTankCount = selectedSupplier?.number_of_tanks || 0
 
     // Auto-sync tanks when supplier changes
@@ -146,7 +165,7 @@ export function CollectionVoucherFormDrawer({
             // Assuming one detail group for now
             const currentTanks = watch("details.0.supplier_tanks") || []
             if (currentTanks.length === 0 && tanks.length > 0) {
-                const newTanks = tanks.map((tank, i) => ({
+                const newTanks = tanks.map((tank: any, i: number) => ({
                     supplier_tank_id: tank.id,
                     truck_compartment_number: (i + 1) <= compartmentCount ? (i + 1) : 1,
                     temperature: "" as any,
@@ -170,11 +189,40 @@ export function CollectionVoucherFormDrawer({
     // Load required data
     useEffect(() => {
         if (open) {
-            dispatch(fetchUsers({})).catch(() => { })
-            dispatch(fetchSuppliers({})).catch(() => { })
-            dispatch(fetchTankers({})).catch(() => { })
+            // Load offline data first as fallback
+            if (typeof window !== 'undefined') {
+                setOfflineData({
+                    drivers: LocalStorageService.getDrivers() || [],
+                    suppliers: LocalStorageService.getSuppliers() || [],
+                    tankers: LocalStorageService.getTankers() || []
+                })
+            }
+
+            // Try to fetch online data if online
+            if (isOnline) {
+                dispatch(fetchUsers({})).then((result: any) => {
+                    if (result.payload && typeof window !== 'undefined') {
+                        LocalStorageService.saveDrivers(result.payload)
+                        setOfflineData(prev => ({ ...prev, drivers: result.payload }))
+                    }
+                }).catch(() => { })
+
+                dispatch(fetchSuppliers({})).then((result: any) => {
+                    if (result.payload && typeof window !== 'undefined') {
+                        LocalStorageService.saveSuppliers(result.payload)
+                        setOfflineData(prev => ({ ...prev, suppliers: result.payload }))
+                    }
+                }).catch(() => { })
+
+                dispatch(fetchTankers({})).then((result: any) => {
+                    if (result.payload && typeof window !== 'undefined') {
+                        LocalStorageService.saveTankers(result.payload)
+                        setOfflineData(prev => ({ ...prev, tankers: result.payload }))
+                    }
+                }).catch(() => { })
+            }
         }
-    }, [dispatch, open])
+    }, [dispatch, open, isOnline])
 
     // Reset form when voucher changes
     useEffect(() => {
@@ -379,7 +427,7 @@ export function CollectionVoucherFormDrawer({
                                                         <SelectValue placeholder="Select driver" />
                                                     </SelectTrigger>
                                                     <SelectContent>
-                                                        {users.map((user) => (
+                                                        {displayUsers.map((user) => (
                                                             <SelectItem key={user.id} value={user.id}>
                                                                 {user.first_name} {user.last_name}
                                                             </SelectItem>
@@ -434,10 +482,10 @@ export function CollectionVoucherFormDrawer({
                                                         <SelectValue placeholder="Select tanker" />
                                                     </SelectTrigger>
                                                     <SelectContent>
-                                                        {tankers.length === 0 ? (
+                                                        {displayTankers.length === 0 ? (
                                                             <SelectItem value="no-tankers" disabled>No tankers available</SelectItem>
                                                         ) : (
-                                                            tankers.map((tanker: any) => (
+                                                            displayTankers.map((tanker: any) => (
                                                                 <SelectItem key={tanker.id} value={tanker.reg_number}>
                                                                     <div className="flex flex-col">
                                                                         <span className="font-light">{tanker.reg_number}</span>
@@ -469,7 +517,7 @@ export function CollectionVoucherFormDrawer({
                                                     <SelectValue placeholder="Select supplier" />
                                                 </SelectTrigger>
                                                 <SelectContent>
-                                                    {suppliers.map((supplier) => (
+                                                    {displaySuppliers.map((supplier) => (
                                                         <SelectItem key={supplier.id} value={supplier.id}>
                                                             {supplier.first_name} {supplier.last_name}
                                                         </SelectItem>

@@ -7,45 +7,30 @@ import * as yup from "yup"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
-import { SearchableSelect, SearchableSelectOption } from "@/components/ui/searchable-select"
-import { DatePicker } from "@/components/ui/date-picker"
-import { SignatureModal } from "@/components/ui/signature-modal"
+import { SearchableSelect } from "@/components/ui/searchable-select"
+import { DateTimePicker } from "@/components/ui/date-time-picker"
 import {
-  Plus,
-  Trash2,
   Droplets,
   Truck,
   Package,
   Save,
-  X,
-  ChevronLeft,
-  ChevronRight,
   ArrowRight,
-  Beaker,
-  User
+  Beaker
 } from "lucide-react"
 import { useAppDispatch, useAppSelector } from "@/lib/store"
 import {
   createRawMilkIntakeForm,
   updateRawMilkIntakeForm,
   fetchRawMilkIntakeForms,
-  fetchPendingVouchers
+  fetchTrucks
 } from "@/lib/store/slices/rawMilkIntakeSlice"
-import {
-  fetchSuppliers
-} from "@/lib/store/slices/supplierSlice"
-import { RawMilkIntakeForm, CreateRawMilkIntakeFormRequest, RawMilkIntakePendingVoucher } from "@/lib/api/raw-milk-intake"
+import { RawMilkIntakeForm, CreateRawMilkIntakeFormRequest, RawMilkIntakeDetail } from "@/lib/api/raw-milk-intake"
 import { siloApi } from "@/lib/api/silo"
 import { toast } from "sonner"
-import { normalizeDataUrlToBase64, base64ToPngDataUrl } from "@/lib/utils/signature"
-import { SignatureViewer } from "@/components/ui/signature-viewer"
-import { generateDriverFormId } from "@/lib/utils/form-id-generator"
+import { SearchableSelectOption } from "@/components/ui/searchable-select"
 
 // Process Overview Component
 const ProcessOverview = () => (
@@ -56,7 +41,7 @@ const ProcessOverview = () => (
         <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
           <Truck className="w-4 h-4 text-blue-600" />
         </div>
-        <span className="text-sm font-light">Collection Vouchers</span>
+        <span className="text-sm font-light">Truck Arrival</span>
       </div>
       <ArrowRight className="w-4 h-4 text-gray-400" />
       <div className="flex items-center space-x-2">
@@ -88,18 +73,17 @@ const ProcessOverview = () => (
   </div>
 )
 
-// Combined Form Schema
+// Complete form schema with details
 const rawMilkIntakeFormSchema = yup.object({
-  date: yup.string().required("Date is required"),
-  collection_voucher_id: yup.string().required("Collection voucher is required"),
+  truck: yup.string().required("Truck selection is required"),
   truck_compartment_number: yup.number().required("Compartment number is required"),
-  destination_silo_name: yup.string().required("Destination silo name is required"),
-  operator_id: yup.string().required("Operator ID is required"),
-  operator_signature: yup.string().required("Operator signature is required"),
-  driver_signature: yup.string().required("Driver signature is required"),
+  silo_name: yup.string().required("Destination silo is required"),
+  flow_meter_start: yup.string().required("Flow meter start time is required"),
+  flow_meter_start_reading: yup.number().required("Flow meter start reading is required").min(0),
+  flow_meter_end: yup.string().required("Flow meter end time is required"),
+  flow_meter_end_reading: yup.number().required("Flow meter end reading is required").min(0),
+  quantity: yup.number().required("Quantity is required").min(0.1, "Quantity must be greater than 0"),
   status: yup.string().oneOf(["draft", "pending", "final"]).required("Status is required"),
-  quantity_received: yup.number().required("Quantity is required").min(0.1, "Quantity must be greater than 0"),
-  tag: yup.string().required("Tag is required"),
 })
 
 type RawMilkIntakeFormData = yup.InferType<typeof rawMilkIntakeFormSchema>
@@ -118,92 +102,52 @@ export function RawMilkIntakeFormDrawer({
   mode = "create"
 }: RawMilkIntakeFormDrawerProps) {
   const dispatch = useAppDispatch()
-  const { operationLoading, pendingVouchers } = useAppSelector((state) => state.rawMilkIntake)
-  const { suppliers } = useAppSelector((state) => state.supplier)
-  const { user, profile } = useAppSelector((state) => state.auth)
-
-  const [loadingVouchers, setLoadingVouchers] = useState(false)
+  const { operationLoading, trucks } = useAppSelector((state) => state.rawMilkIntake)
+  const { user } = useAppSelector((state) => state.auth)
 
   // State for searchable silos
   const [silos, setSilos] = useState<SearchableSelectOption[]>([])
   const [loadingSilos, setLoadingSilos] = useState(false)
 
-
   // Single form for all data
   const formHook = useForm<RawMilkIntakeFormData>({
     resolver: yupResolver(rawMilkIntakeFormSchema),
     defaultValues: {
-      date: new Date().toISOString().split('T')[0],
-      collection_voucher_id: "",
+      truck: "",
       truck_compartment_number: undefined,
-      destination_silo_name: "",
-      operator_id: user?.id || "",
-      operator_signature: "",
-      driver_signature: "",
+      silo_name: "",
+      flow_meter_start: "",
+      flow_meter_start_reading: undefined,
+      flow_meter_end: "",
+      flow_meter_end_reading: undefined,
+      quantity: undefined,
       status: "draft",
-      quantity_received: undefined,
-      tag: "",
     },
   })
-
-  const [signatureOpen, setSignatureOpen] = useState(false)
-  const [signatureViewOpen, setSignatureViewOpen] = useState(false)
-
 
   // Load initial data
   const loadInitialData = async () => {
     try {
-      setLoadingVouchers(true)
       setLoadingSilos(true)
 
-      // Load pending vouchers
-      await dispatch(fetchPendingVouchers()).unwrap()
-
-      // Load suppliers
-      if (suppliers.length === 0) {
-        await dispatch(fetchSuppliers({}))
-      }
+      // Load trucks
+      await dispatch(fetchTrucks()).unwrap()
 
       // Load silos
       const silosResponse = await siloApi.getSilos()
-
-      console.log('Silos response:', silosResponse)
       const silosData = silosResponse.data?.map(silo => ({
-        value: silo.id,
+        value: silo.name,
         label: silo.name,
         description: `${silo.location} • ${silo.category} • ${silo.capacity}L capacity`
       })) || []
-      console.log('Mapped silos:', silosData)
       setSilos(silosData)
     } catch (error) {
       console.error("Failed to load initial data:", error)
-      console.error("Error details:", error)
       toast.error("Failed to load form data")
     } finally {
-      setLoadingVouchers(false)
       setLoadingSilos(false)
     }
   }
-
-  // Handle silo search
-  const handleSiloSearch = async (searchTerm: string) => {
-    try {
-      setLoadingSilos(true)
-      const response = await siloApi.getSilos({
-        filters: { search: searchTerm }
-      })
-      setSilos(response.data?.map(silo => ({
-        value: silo.id,
-        label: silo.name,
-        description: `${silo.location} • ${silo.category} • ${silo.capacity}L capacity`
-      })) || [])
-    } catch (error) {
-      console.error("Error searching silos:", error)
-    } finally {
-      setLoadingSilos(false)
-    }
-  }
-
 
   // Load data when drawer opens
   useEffect(() => {
@@ -212,92 +156,80 @@ export function RawMilkIntakeFormDrawer({
     }
   }, [open, dispatch])
 
-  // Auto-populate operator fields when user changes
-  useEffect(() => {
-    if (user?.id) {
-      formHook.setValue("operator_id", user.id)
-      // If user has a saved signature, auto-populate it
-      // For now, we'll leave signature empty for manual entry
-      // In the future, this could be retrieved from user profile
-    }
-  }, [user, formHook])
-
   // Reset form when drawer opens/closes
   useEffect(() => {
     if (open) {
-      if (mode === "edit" && form) {
+      if (mode === "edit" && form && form.details && form.details.length > 0) {
+        const detail = form.details[0] // Use first detail for editing
         formHook.reset({
-          date: form.date,
-          collection_voucher_id: form.collection_voucher_id || "",
-          truck_compartment_number: form.truck_compartment_number,
-          destination_silo_name: form.destination_silo_name || "",
-          operator_id: form.operator_id || user?.id || "",
-          operator_signature: form.operator_signature,
-          driver_signature: form.driver_signature,
-          status: form.status === "Draft" ? "draft" : (form.status === "Pending" ? "pending" : (form.status === "Final" ? "final" : (form.status as any))),
-          quantity_received: form.quantity_received || undefined,
-          tag: form.tag || "",
+          truck: form.truck,
+          truck_compartment_number: detail.truck_compartment_number,
+          silo_name: detail.silo_name,
+          flow_meter_start: detail.flow_meter_start,
+          flow_meter_start_reading: detail.flow_meter_start_reading,
+          flow_meter_end: detail.flow_meter_end,
+          flow_meter_end_reading: detail.flow_meter_end_reading,
+          quantity: detail.quantity,
+          status: detail.status as any,
         })
       } else {
         formHook.reset({
-          date: new Date().toISOString().split('T')[0],
-          collection_voucher_id: "",
+          truck: "",
           truck_compartment_number: undefined,
-          destination_silo_name: "",
-          operator_id: user?.id || "",
-          operator_signature: "",
-          driver_signature: "",
+          silo_name: "",
+          flow_meter_start: "",
+          flow_meter_start_reading: undefined,
+          flow_meter_end: "",
+          flow_meter_end_reading: undefined,
+          quantity: undefined,
           status: "draft",
-          quantity_received: undefined,
-          tag: "",
         })
       }
     }
-  }, [open, mode, form, user])
+  }, [open, mode, form])
 
-  // Auto-populate from voucher selection
+  // Auto-populate compartment number from truck selection
   useEffect(() => {
     const subscription = formHook.watch((value, { name }) => {
-      if (name === "collection_voucher_id" && value.collection_voucher_id) {
-        const selectedVoucher = pendingVouchers.find(v => v.id === value.collection_voucher_id)
-        if (selectedVoucher) {
-          formHook.setValue("truck_compartment_number", selectedVoucher.truck_compartment_number)
-          formHook.setValue("driver_signature", selectedVoucher.driver_signature)
-
-          // Generate tag: RMI-compartment-DD-MM-YYYY
-          const date = new Date()
-          const day = String(date.getDate()).padStart(2, '0')
-          const month = String(date.getMonth() + 1).padStart(2, '0')
-          const year = date.getFullYear()
-          const newTag = `RMI-${selectedVoucher.truck_compartment_number}-${day}-${month}-${year}`
-          formHook.setValue("tag", newTag)
+      if (name === "truck" && value.truck) {
+        const selectedTruck = trucks.find(t =>
+          `${t.truck_number}-${t.truck_compartment_number}` === value.truck
+        )
+        if (selectedTruck) {
+          formHook.setValue("truck_compartment_number", selectedTruck.truck_compartment_number)
         }
       }
     })
     return () => subscription.unsubscribe()
-  }, [formHook.watch, pendingVouchers, formHook])
+  }, [formHook.watch, trucks, formHook])
 
   const handleSubmit = async (data: RawMilkIntakeFormData) => {
     try {
-      const normalizedOperatorSignature = normalizeDataUrlToBase64(data.operator_signature)
-      // driver_signature might already be base64 from the voucher, but we should normalize just in case it's a data URL
-      const normalizedDriverSignature = normalizeDataUrlToBase64(data.driver_signature)
-
-      const formData: CreateRawMilkIntakeFormRequest = {
-        collection_voucher_id: data.collection_voucher_id,
-        truck_compartment_number: data.truck_compartment_number,
-        operator_id: data.operator_id,
-        operator_signature: normalizedOperatorSignature,
-        driver_signature: normalizedDriverSignature,
-        date: data.date,
-        quantity_received: Number(data.quantity_received),
-        destination_silo_name: data.destination_silo_name,
-        status: data.status,
-        tag: data.tag,
-        updated_at: new Date().toISOString(),
+      if (!user?.id) {
+        toast.error("User not authenticated")
+        return
       }
 
-      console.log('Submitting form data:', formData)
+      // Extract truck number from combined selection
+      const truckNumber = data.truck.split('-')[0]
+
+      // Build detail object
+      const detail: Omit<RawMilkIntakeDetail, 'id' | 'created_at' | 'updated_at' | 'raw_milk_intake_form_2_id'> = {
+        truck_compartment_number: data.truck_compartment_number,
+        silo_name: data.silo_name,
+        flow_meter_start: data.flow_meter_start,
+        flow_meter_start_reading: data.flow_meter_start_reading,
+        flow_meter_end: data.flow_meter_end,
+        flow_meter_end_reading: data.flow_meter_end_reading,
+        quantity: data.quantity,
+        status: data.status,
+      }
+
+      const formData: CreateRawMilkIntakeFormRequest = {
+        operator: user.id,
+        truck: truckNumber,
+        details: [detail],
+      }
 
       if (mode === "edit" && form) {
         await dispatch(updateRawMilkIntakeForm({
@@ -327,38 +259,74 @@ export function RawMilkIntakeFormDrawer({
     })
   }
 
+  // Get truck options
+  const truckOptions = trucks.map(truck => ({
+    value: `${truck.truck_number}-${truck.truck_compartment_number}`,
+    label: `${truck.truck_number} - Compartment ${truck.truck_compartment_number}`,
+    description: `Volume: ${truck.total_compartment_volume}L • ${truck.voucher_contributions.length} voucher(s)`
+  }))
+
   const renderForm = () => (
     <div className="space-y-6 p-6">
       <ProcessOverview />
 
       <div className="space-y-6">
-        {/* Basic Information Section */}
+        {/* Truck Selection */}
         <div className="space-y-4">
           <div className="text-center mb-6">
-            <h3 className="text-xl font-light text-gray-900">Basic Information</h3>
-            <p className="text-sm font-light text-gray-600 mt-2">Enter the basic raw milk intake details</p>
+            <h3 className="text-xl font-light text-gray-900">Truck Information</h3>
+            <p className="text-sm font-light text-gray-600 mt-2">Select the truck compartment for intake</p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="truck">Truck & Compartment *</Label>
+            <Controller
+              name="truck"
+              control={formHook.control}
+              render={({ field }) => (
+                <SearchableSelect
+                  options={truckOptions}
+                  value={field.value}
+                  onValueChange={field.onChange}
+                  placeholder="Search and select truck compartment"
+                  loading={operationLoading.fetchTrucks}
+                />
+              )}
+            />
+            {formHook.formState.errors.truck && (
+              <p className="text-sm text-red-500">{formHook.formState.errors.truck.message}</p>
+            )}
+          </div>
+        </div>
+
+        {/* Intake Details */}
+        <div className="space-y-4">
+          <div className="text-center mb-6">
+            <h3 className="text-xl font-light text-gray-900">Intake Details</h3>
+            <p className="text-sm font-light text-gray-600 mt-2">Enter flow meter readings and destination</p>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
+              <Label htmlFor="silo_name">Destination Silo *</Label>
               <Controller
-                name="date"
+                name="silo_name"
                 control={formHook.control}
                 render={({ field }) => (
-                  <DatePicker
-                    label="Date *"
+                  <SearchableSelect
+                    options={silos}
                     value={field.value}
-                    onChange={field.onChange}
-                    placeholder="Select date"
-                    error={!!formHook.formState.errors.date}
-                    disabled={false}
+                    onValueChange={field.onChange}
+                    placeholder="Select destination silo"
+                    loading={loadingSilos}
                   />
                 )}
               />
-              {formHook.formState.errors.date && (
-                <p className="text-sm text-red-500">{formHook.formState.errors.date.message}</p>
+              {formHook.formState.errors.silo_name && (
+                <p className="text-sm text-red-500">{formHook.formState.errors.silo_name.message}</p>
               )}
             </div>
+
             <div className="space-y-2">
               <Label htmlFor="status">Status *</Label>
               <Controller
@@ -385,194 +353,100 @@ export function RawMilkIntakeFormDrawer({
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="collection_voucher_id">Collection Voucher *</Label>
+              <Label htmlFor="flow_meter_start">Flow Meter Start Time *</Label>
               <Controller
-                name="collection_voucher_id"
+                name="flow_meter_start"
                 control={formHook.control}
                 render={({ field }) => (
-                  <SearchableSelect
-                    options={pendingVouchers.map(voucher => ({
-                      value: voucher.id,
-                      label: voucher?.tag ?? 'N/A',
-                      description: `${new Date(voucher.date).toLocaleDateString()} • Route: ${voucher.route} • Driver: ${voucher.driver_first_name} ${voucher.driver_last_name}`
-                    }))}
-                    value={field.value}
-                    onValueChange={field.onChange}
-                    placeholder="Search and select collection voucher"
-                    loading={loadingVouchers}
+                  <Input
+                    type="datetime-local"
+                    {...field}
                   />
                 )}
               />
-              {formHook.formState.errors.collection_voucher_id && (
-                <p className="text-sm text-red-500">{formHook.formState.errors.collection_voucher_id.message}</p>
+              {formHook.formState.errors.flow_meter_start && (
+                <p className="text-sm text-red-500">{formHook.formState.errors.flow_meter_start.message}</p>
               )}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="destination_silo_name">Destination Silo *</Label>
+              <Label htmlFor="flow_meter_start_reading">Start Reading *</Label>
               <Controller
-                name="destination_silo_name"
+                name="flow_meter_start_reading"
                 control={formHook.control}
                 render={({ field }) => (
-                  <SearchableSelect
-                    options={silos.map(silo => ({
-                      value: silo.label, // Use silo name as value
-                      label: silo.label,
-                      description: silo.description
-                    }))}
-                    value={field.value}
-                    onValueChange={field.onChange}
-                    placeholder="Select destination silo"
-                    searchPlaceholder="Search silos..."
-                    emptyMessage="No silos found"
-                    loading={loadingSilos}
-                    onSearch={handleSiloSearch}
+                  <Input
+                    type="number"
+                    step="0.01"
+                    placeholder="Enter start reading"
+                    value={field.value || ''}
+                    onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
                   />
                 )}
               />
-              {formHook.formState.errors.destination_silo_name && (
-                <p className="text-sm text-red-500">{formHook.formState.errors.destination_silo_name.message}</p>
+              {formHook.formState.errors.flow_meter_start_reading && (
+                <p className="text-sm text-red-500">{formHook.formState.errors.flow_meter_start_reading.message}</p>
               )}
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="truck_compartment_number">Truck Compartment Number *</Label>
+              <Label htmlFor="flow_meter_end">Flow Meter End Time *</Label>
               <Controller
-                name="truck_compartment_number"
+                name="flow_meter_end"
                 control={formHook.control}
                 render={({ field }) => (
                   <Input
-                    type="number"
-                    placeholder="Auto-populated"
-                    value={field.value || ""}
-                    onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
-                  />
-                )}
-              />
-              {formHook.formState.errors.truck_compartment_number && (
-                <p className="text-sm text-red-500">{formHook.formState.errors.truck_compartment_number.message}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="tag">Intake Tag *</Label>
-              <Controller
-                name="tag"
-                control={formHook.control}
-                render={({ field }) => (
-                  <Input
-                    placeholder="e.g. RMI-1-12-10-2025"
+                    type="datetime-local"
                     {...field}
                   />
                 )}
               />
-              {formHook.formState.errors.tag && (
-                <p className="text-sm text-red-500">{formHook.formState.errors.tag.message}</p>
+              {formHook.formState.errors.flow_meter_end && (
+                <p className="text-sm text-red-500">{formHook.formState.errors.flow_meter_end.message}</p>
               )}
             </div>
-          </div>
 
-          {/* Hidden operator_id and driver_signature fields */}
-          <Controller
-            name="operator_id"
-            control={formHook.control}
-            render={({ field }) => (
-              <input type="hidden" {...field} />
-            )}
-          />
-          <Controller
-            name="driver_signature"
-            control={formHook.control}
-            render={({ field }) => (
-              <input type="hidden" {...field} />
-            )}
-          />
-        </div>
-
-        {/* Quantity Section */}
-        <div className="space-y-4">
-          <div className="text-center mb-6">
-            <h3 className="text-xl font-light text-gray-900">Quantity Information</h3>
-            <p className="text-sm font-light text-gray-600 mt-2">Enter the total quantity of raw milk received</p>
+            <div className="space-y-2">
+              <Label htmlFor="flow_meter_end_reading">End Reading *</Label>
+              <Controller
+                name="flow_meter_end_reading"
+                control={formHook.control}
+                render={({ field }) => (
+                  <Input
+                    type="number"
+                    step="0.01"
+                    placeholder="Enter end reading"
+                    value={field.value || ''}
+                    onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
+                  />
+                )}
+              />
+              {formHook.formState.errors.flow_meter_end_reading && (
+                <p className="text-sm text-red-500">{formHook.formState.errors.flow_meter_end_reading.message}</p>
+              )}
+            </div>
           </div>
 
           <div className="space-y-2">
             <Label>Quantity Received (L) *</Label>
             <Controller
-              name="quantity_received"
+              name="quantity"
               control={formHook.control}
               render={({ field: { onChange, value } }) => (
                 <Input
                   type="number"
                   step="0.1"
                   placeholder="Enter quantity"
-                  value={value || ''} // Use empty string when value is undefined
+                  value={value || ''}
                   onChange={(e) => onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
                 />
               )}
             />
-            {formHook.formState.errors.quantity_received && (
-              <p className="text-sm text-red-500">{formHook.formState.errors.quantity_received.message}</p>
+            {formHook.formState.errors.quantity && (
+              <p className="text-sm text-red-500">{formHook.formState.errors.quantity.message}</p>
             )}
-          </div>
-        </div>
-
-        {/* Signatures Section */}
-        <div className="space-y-6">
-          <div className="text-center mb-6">
-            <h3 className="text-xl font-light text-gray-900">Signatures</h3>
-            <p className="text-sm font-light text-gray-600 mt-2">Required signatures for this intake</p>
-          </div>
-
-          <div className="grid grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <Label htmlFor="operator_signature">Operator Signature *</Label>
-              <Controller
-                name="operator_signature"
-                control={formHook.control}
-                render={({ field }) => (
-                  <div className="space-y-2">
-                    {field.value ? (
-                      <img src={base64ToPngDataUrl(field.value)} alt="Operator signature" className="h-24 border border-gray-200 rounded-md bg-white w-full object-contain p-2" />
-                    ) : (
-                      <div className="h-24 flex items-center justify-center border border-dashed border-gray-300 rounded-md text-xs text-gray-500 bg-white">
-                        No signature captured
-                      </div>
-                    )}
-                    <div className="flex items-center gap-2">
-                      <Button type="button" size="sm" className="rounded-full h-8" onClick={() => setSignatureOpen(true)}>
-                        Capture
-                      </Button>
-                      {field.value && (
-                        <Button type="button" variant="ghost" size="sm" className="rounded-full text-red-600 h-8" onClick={() => field.onChange("")}>Clear</Button>
-                      )}
-                    </div>
-                  </div>
-                )}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="driver_signature">Driver Signature *</Label>
-              <Controller
-                name="driver_signature"
-                control={formHook.control}
-                render={({ field }) => (
-                  <div className="space-y-2">
-                    {field.value ? (
-                      <img src={base64ToPngDataUrl(field.value)} alt="Driver signature" className="h-24 border border-gray-200 rounded-md bg-white w-full object-contain p-2" />
-                    ) : (
-                      <div className="h-24 flex items-center justify-center border border-dashed border-gray-300 rounded-md text-xs text-gray-500 bg-white">
-                        From voucher
-                      </div>
-                    )}
-                    <p className="text-[10px] text-gray-500 italic text-center">Auto-populated from voucher</p>
-                  </div>
-                )}
-              />
-            </div>
           </div>
         </div>
       </div>
@@ -580,51 +454,34 @@ export function RawMilkIntakeFormDrawer({
   )
 
   return (
-    <>
-      <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent className="tablet-sheet-full p-0 bg-white">
-          <SheetHeader className="p-6 pb-0">
-            <SheetTitle className="text-lg font-light">
-              {mode === "edit" ? "Edit Raw Milk Intake Form" : "Create Raw Milk Intake Form"}
-            </SheetTitle>
-            <SheetDescription className="text-sm font-light">
-              Enter all raw milk intake details including basic information and sample collection
-            </SheetDescription>
-          </SheetHeader>
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent className="tablet-sheet-full p-0 bg-white">
+        <SheetHeader className="p-6 pb-0">
+          <SheetTitle className="text-lg font-light">
+            {mode === "edit" ? "Edit Raw Milk Intake Form" : "Create Raw Milk Intake Form"}
+          </SheetTitle>
+          <SheetDescription className="text-sm font-light">
+            Enter all raw milk intake details including truck selection and flow meter readings
+          </SheetDescription>
+        </SheetHeader>
 
-          <div className="flex-1 overflow-y-auto">
-            <form onSubmit={formHook.handleSubmit(handleSubmit, onInvalid)}>
-              {renderForm()}
+        <div className="flex-1 overflow-y-auto">
+          <form onSubmit={formHook.handleSubmit(handleSubmit, onInvalid)}>
+            {renderForm()}
 
-              <div className="flex items-center justify-end p-6 border-t">
-                <Button
-                  type="submit"
-                  disabled={operationLoading.create || operationLoading.update}
-                  className="flex items-center gap-2"
-                >
-                  <Save className="h-4 w-4" />
-                  {mode === "edit" ? "Update Form" : "Create Form"}
-                </Button>
-              </div>
-            </form>
-          </div>
-        </SheetContent>
-      </Sheet>
-
-      <SignatureModal
-        open={signatureOpen}
-        onOpenChange={setSignatureOpen}
-        title="Capture Operator Signature"
-        onSave={(dataUrl) => {
-          formHook.setValue("operator_signature", dataUrl, { shouldValidate: true })
-        }}
-      />
-      <SignatureViewer
-        open={signatureViewOpen}
-        onOpenChange={setSignatureViewOpen}
-        title="Operator Signature"
-        value={formHook.getValues("operator_signature")}
-      />
-    </>
+            <div className="flex items-center justify-end p-6 border-t">
+              <Button
+                type="submit"
+                disabled={operationLoading.create || operationLoading.update}
+                className="flex items-center gap-2"
+              >
+                <Save className="h-4 w-4" />
+                {mode === "edit" ? "Update Form" : "Create Form"}
+              </Button>
+            </div>
+          </form>
+        </div>
+      </SheetContent>
+    </Sheet>
   )
 }

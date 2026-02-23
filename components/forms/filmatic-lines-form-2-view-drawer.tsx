@@ -264,64 +264,88 @@ export function FilmaticLinesForm2ViewDrawer({
               </div>
             </CardHeader>
             <CardContent className="space-y-6">
-              {form.filmatic_line_form_2_day_shift && form.filmatic_line_form_2_day_shift.length > 0 ? (
-                form.filmatic_line_form_2_day_shift.map((shift, shiftIndex) => (
-                  <div key={shiftIndex} className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <h4 className="text-sm font-medium">Shift Entry #{shiftIndex + 1}</h4>
-                      <Badge className={shift.supervisor_approve ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"}>
-                        {shift.supervisor_approve ? 'Approved' : 'Pending'}
-                      </Badge>
-                    </div>
-                    <div className="pl-4 space-y-2">
-                      <p className="text-sm font-light"><span className="font-medium">Operator:</span> {(() => {
-                        const op = users.find((u: any) => u.id === shift.operator_id)
-                        return op ? <UserAvatar user={op} size="md" showName={true} showEmail={true} showDropdown={true} /> : (shift.operator_id ? shift.operator_id.slice(0, 8) : 'N/A')
-                      })()}</p>
-                      <p className="text-sm font-light"><span className="font-medium">Details Count:</span> {shift.filmatic_line_form_2_day_shift_details?.length || 0}</p>
-
-                      {shift.filmatic_line_form_2_day_shift_details && shift.filmatic_line_form_2_day_shift_details.length > 0 && (
-                        <div className="mt-3">
-                          <h5 className="text-xs font-medium text-gray-700 mb-2">Production Details:</h5>
-                          <div className="space-y-2">
-                            {shift.filmatic_line_form_2_day_shift_details.map((detail, detailIndex) => (
-                              <div key={detailIndex} className="bg-gray-50 p-3 rounded text-xs">
-                                <div className="grid grid-cols-2 gap-2">
-                                  <span><strong>Time:</strong> {detail.time}</span>
-                                  <span><strong>Target:</strong> {detail.target}</span>
-                                  <span><strong>Pallets:</strong> {detail.pallets}</span>
-                                  <span><strong>Setbacks:</strong> {detail.setbacks || 'None'}</span>
-                                </div>
-                                {detail.filmatic_line_form_2_day_shift_details_stoppage_time && detail.filmatic_line_form_2_day_shift_details_stoppage_time.length > 0 && (
-                                  <div className="mt-2">
-                                    <h5 className="text-xs font-medium text-gray-700 mb-2">Stoppage Time:</h5>
-                                    {detail.filmatic_line_form_2_day_shift_details_stoppage_time.map((st: any, stIndex: number) => (
-                                      <div key={stIndex} className="grid grid-cols-2 gap-1 text-xs">
-                                        <div><span className="font-medium">Capper 1 Hours:</span> {st.capper_1_hours ?? '—'}</div>
-                                        <div><span className="font-medium">Capper 2 Hours:</span> {st.capper_2_hours ?? '—'}</div>
-                                        <div><span className="font-medium">Sleever 1 Hours:</span> {st.sleever_1_hours ?? '—'}</div>
-                                        <div><span className="font-medium">Sleever 2 Hours:</span> {st.sleever_2_hours ?? '—'}</div>
-                                        <div><span className="font-medium">Shrink 1 Hours:</span> {st.shrink_1_hours ?? '—'}</div>
-                                        <div><span className="font-medium">Shrink 2 Hours:</span> {st.shrink_2_hours ?? '—'}</div>
-                                        <div><span className="font-medium">Capper 1:</span> {st.capper_1 ?? '—'}</div>
-                                        <div><span className="font-medium">Capper 2:</span> {st.capper_2 ?? '—'}</div>
-                                        <div><span className="font-medium">Sleever 1:</span> {st.sleever_1 ?? '—'}</div>
-                                        <div><span className="font-medium">Sleever 2:</span> {st.sleever_2 ?? '—'}</div>
-                                        <div><span className="font-medium">Shrink 1:</span> {st.shrink_1 ?? '—'}</div>
-                                        <div><span className="font-medium">Shrink 2:</span> {st.shrink_2 ?? '—'}</div>
-                                      </div>
-                                    ))}
-                                  </div>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                    {shiftIndex < form.filmatic_line_form_2_day_shift.length - 1 && <Separator />}
+              {form.day_shift_id ? (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-sm font-medium">Shift Entry</h4>
+                    <Badge className={form.day_shift_id.supervisor_approve ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"}>
+                      {form.day_shift_id.supervisor_approve ? 'Supervisor Approved' : 'Pending Approval'}
+                    </Badge>
                   </div>
-                ))
+
+                  <div className="pl-4 space-y-3">
+                    <p className="text-sm font-light">
+                      <span className="font-medium">Operator:</span> {(() => {
+                        const op = users.find((u: any) => u.id === form.day_shift_id?.operator_id)
+                        return op ? <UserAvatar user={op} size="md" showName={true} showEmail={true} showDropdown={true} /> : (form.day_shift_id?.operator_id?.slice(0, 8) || 'N/A')
+                      })()}
+                    </p>
+
+                    {form.day_shift_id.shift_details && form.day_shift_id.shift_details.length > 0 ? (
+                      <div className="space-y-4">
+                        <h5 className="text-xs font-medium text-gray-700 mt-3">Production Details:</h5>
+                        {form.day_shift_id.shift_details.map((detail, idx) => (
+                          <div key={detail.id || idx} className="bg-gray-50 p-4 rounded-lg border border-gray-100 text-xs">
+                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-3">
+                              <div className="space-y-1">
+                                <p className="text-gray-500 font-light">Time</p>
+                                <p className="font-medium">{detail.time || 'N/A'}</p>
+                              </div>
+                              <div className="space-y-1">
+                                <p className="text-gray-500 font-light">Target</p>
+                                <p className="font-medium">{detail.target}</p>
+                              </div>
+                              <div className="space-y-1">
+                                <p className="text-gray-500 font-light">Pallets</p>
+                                <p className="font-medium">{detail.pallets}</p>
+                              </div>
+                              <div className="space-y-1">
+                                <p className="text-gray-500 font-light">Setbacks</p>
+                                <p className="font-medium">{detail.setbacks || 'None'}</p>
+                              </div>
+                            </div>
+
+                            {detail.stoppage_time && detail.stoppage_time.length > 0 && (
+                              <div className="mt-4 pt-4 border-t border-gray-200">
+                                <h6 className="text-[10px] uppercase tracking-wider font-semibold text-gray-400 mb-3">Stoppage Time Details</h6>
+                                {detail.stoppage_time.map((stoppage, sIdx) => (
+                                  <div key={stoppage.id || sIdx} className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-x-4 gap-y-3">
+                                    <div className="space-y-1">
+                                      <p className="text-gray-500 font-light">Capper 1</p>
+                                      <p className="font-medium">{stoppage.capper_1 ?? '—'} <span className="text-[10px] text-gray-400">({stoppage.capper_1_hours ?? 0}h)</span></p>
+                                    </div>
+                                    <div className="space-y-1">
+                                      <p className="text-gray-500 font-light">Capper 2</p>
+                                      <p className="font-medium">{stoppage.capper_2 ?? '—'} <span className="text-[10px] text-gray-400">({stoppage.capper_2_hours ?? 0}h)</span></p>
+                                    </div>
+                                    <div className="space-y-1">
+                                      <p className="text-gray-500 font-light">Sleever 1</p>
+                                      <p className="font-medium">{stoppage.sleever_1 ?? '—'} <span className="text-[10px] text-gray-400">({stoppage.sleever_1_hours ?? 0}h)</span></p>
+                                    </div>
+                                    <div className="space-y-1">
+                                      <p className="text-gray-500 font-light">Sleever 2</p>
+                                      <p className="font-medium">{stoppage.sleever_2 ?? '—'} <span className="text-[10px] text-gray-400">({stoppage.sleever_2_hours ?? 0}h)</span></p>
+                                    </div>
+                                    <div className="space-y-1">
+                                      <p className="text-gray-500 font-light">Shrink 1</p>
+                                      <p className="font-medium">{stoppage.shrink_1 ?? '—'} <span className="text-[10px] text-gray-400">({stoppage.shrink_1_hours ?? 0}h)</span></p>
+                                    </div>
+                                    <div className="space-y-1">
+                                      <p className="text-gray-500 font-light">Shrink 2</p>
+                                      <p className="font-medium">{stoppage.shrink_2 ?? '—'} <span className="text-[10px] text-gray-400">({stoppage.shrink_2_hours ?? 0}h)</span></p>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-500">No production details available</p>
+                    )}
+                  </div>
+                </div>
               ) : (
                 <p className="text-sm text-gray-500">No day shift data available</p>
               )}
@@ -339,64 +363,88 @@ export function FilmaticLinesForm2ViewDrawer({
               </div>
             </CardHeader>
             <CardContent className="space-y-6">
-              {form.filmatic_line_form_2_night_shift && form.filmatic_line_form_2_night_shift.length > 0 ? (
-                form.filmatic_line_form_2_night_shift.map((shift, shiftIndex) => (
-                  <div key={shiftIndex} className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <h4 className="text-sm font-medium">Shift Entry #{shiftIndex + 1}</h4>
-                      <Badge className={shift.supervisor_approve ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"}>
-                        {shift.supervisor_approve ? 'Approved' : 'Pending'}
-                      </Badge>
-                    </div>
-                    <div className="pl-4 space-y-2">
-                      <p className="text-sm font-light"><span className="font-medium">Operator:</span> {(() => {
-                        const op = users.find((u: any) => u.id === shift.operator_id)
-                        return op ? <UserAvatar user={op} size="md" showName={true} showEmail={true} showDropdown={true} /> : (shift.operator_id ? shift.operator_id.slice(0, 8) : 'N/A')
-                      })()}</p>
-                      <p className="text-sm font-light"><span className="font-medium">Details Count:</span> {shift.filmatic_line_form_2_night_shift_details?.length || 0}</p>
-
-                      {shift.filmatic_line_form_2_night_shift_details && shift.filmatic_line_form_2_night_shift_details.length > 0 && (
-                        <div className="mt-3">
-                          <h5 className="text-xs font-medium text-gray-700 mb-2">Production Details:</h5>
-                          <div className="space-y-2">
-                            {shift.filmatic_line_form_2_night_shift_details.map((detail, detailIndex) => (
-                              <div key={detailIndex} className="bg-gray-50 p-3 rounded text-xs">
-                                <div className="grid grid-cols-2 gap-2">
-                                  <span><strong>Time:</strong> {detail.time}</span>
-                                  <span><strong>Target:</strong> {detail.target}</span>
-                                  <span><strong>Pallets:</strong> {detail.pallets}</span>
-                                  <span><strong>Setbacks:</strong> {detail.setbacks || 'None'}</span>
-                                </div>
-                                {detail.filmatic_line_form_2_night_shift_details_stoppage_time && detail.filmatic_line_form_2_night_shift_details_stoppage_time.length > 0 && (
-                                  <div className="mt-2">
-                                    <h5 className="text-xs font-medium text-gray-700 mb-2">Stoppage Time:</h5>
-                                    {detail.filmatic_line_form_2_night_shift_details_stoppage_time.map((st: any, stIndex: number) => (
-                                      <div key={stIndex} className="grid grid-cols-2 gap-1 text-xs">
-                                        <div><span className="font-medium">Capper 1 Hours:</span> {st.capper_1_hours ?? '—'}</div>
-                                        <div><span className="font-medium">Capper 2 Hours:</span> {st.capper_2_hours ?? '—'}</div>
-                                        <div><span className="font-medium">Sleever 1 Hours:</span> {st.sleever_1_hours ?? '—'}</div>
-                                        <div><span className="font-medium">Sleever 2 Hours:</span> {st.sleever_2_hours ?? '—'}</div>
-                                        <div><span className="font-medium">Shrink 1 Hours:</span> {st.shrink_1_hours ?? '—'}</div>
-                                        <div><span className="font-medium">Shrink 2 Hours:</span> {st.shrink_2_hours ?? '—'}</div>
-                                        <div><span className="font-medium">Capper 1:</span> {st.capper_1 ?? '—'}</div>
-                                        <div><span className="font-medium">Capper 2:</span> {st.capper_2 ?? '—'}</div>
-                                        <div><span className="font-medium">Sleever 1:</span> {st.sleever_1 ?? '—'}</div>
-                                        <div><span className="font-medium">Sleever 2:</span> {st.sleever_2 ?? '—'}</div>
-                                        <div><span className="font-medium">Shrink 1:</span> {st.shrink_1 ?? '—'}</div>
-                                        <div><span className="font-medium">Shrink 2:</span> {st.shrink_2 ?? '—'}</div>
-                                      </div>
-                                    ))}
-                                  </div>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                    {shiftIndex < form.filmatic_line_form_2_night_shift.length - 1 && <Separator />}
+              {form.night_shift_id ? (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-sm font-medium">Shift Entry</h4>
+                    <Badge className={form.night_shift_id.supervisor_approve ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"}>
+                      {form.night_shift_id.supervisor_approve ? 'Supervisor Approved' : 'Pending Approval'}
+                    </Badge>
                   </div>
-                ))
+
+                  <div className="pl-4 space-y-3">
+                    <p className="text-sm font-light">
+                      <span className="font-medium">Operator:</span> {(() => {
+                        const op = users.find((u: any) => u.id === form.night_shift_id?.operator_id)
+                        return op ? <UserAvatar user={op} size="md" showName={true} showEmail={true} showDropdown={true} /> : (form.night_shift_id?.operator_id?.slice(0, 8) || 'N/A')
+                      })()}
+                    </p>
+
+                    {form.night_shift_id.shift_details && form.night_shift_id.shift_details.length > 0 ? (
+                      <div className="space-y-4">
+                        <h5 className="text-xs font-medium text-gray-700 mt-3">Production Details:</h5>
+                        {form.night_shift_id.shift_details.map((detail, idx) => (
+                          <div key={detail.id || idx} className="bg-gray-50 p-4 rounded-lg border border-gray-100 text-xs">
+                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-3">
+                              <div className="space-y-1">
+                                <p className="text-gray-500 font-light">Time</p>
+                                <p className="font-medium">{detail.time || 'N/A'}</p>
+                              </div>
+                              <div className="space-y-1">
+                                <p className="text-gray-500 font-light">Target</p>
+                                <p className="font-medium">{detail.target}</p>
+                              </div>
+                              <div className="space-y-1">
+                                <p className="text-gray-500 font-light">Pallets</p>
+                                <p className="font-medium">{detail.pallets}</p>
+                              </div>
+                              <div className="space-y-1">
+                                <p className="text-gray-500 font-light">Setbacks</p>
+                                <p className="font-medium">{detail.setbacks || 'None'}</p>
+                              </div>
+                            </div>
+
+                            {detail.stoppage_time && detail.stoppage_time.length > 0 && (
+                              <div className="mt-4 pt-4 border-t border-gray-200">
+                                <h6 className="text-[10px] uppercase tracking-wider font-semibold text-gray-400 mb-3">Stoppage Time Details</h6>
+                                {detail.stoppage_time.map((stoppage, sIdx) => (
+                                  <div key={stoppage.id || sIdx} className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-x-4 gap-y-3">
+                                    <div className="space-y-1">
+                                      <p className="text-gray-500 font-light">Capper 1</p>
+                                      <p className="font-medium">{stoppage.capper_1 ?? '—'} <span className="text-[10px] text-gray-400">({stoppage.capper_1_hours ?? 0}h)</span></p>
+                                    </div>
+                                    <div className="space-y-1">
+                                      <p className="text-gray-500 font-light">Capper 2</p>
+                                      <p className="font-medium">{stoppage.capper_2 ?? '—'} <span className="text-[10px] text-gray-400">({stoppage.capper_2_hours ?? 0}h)</span></p>
+                                    </div>
+                                    <div className="space-y-1">
+                                      <p className="text-gray-500 font-light">Sleever 1</p>
+                                      <p className="font-medium">{stoppage.sleever_1 ?? '—'} <span className="text-[10px] text-gray-400">({stoppage.sleever_1_hours ?? 0}h)</span></p>
+                                    </div>
+                                    <div className="space-y-1">
+                                      <p className="text-gray-500 font-light">Sleever 2</p>
+                                      <p className="font-medium">{stoppage.sleever_2 ?? '—'} <span className="text-[10px] text-gray-400">({stoppage.sleever_2_hours ?? 0}h)</span></p>
+                                    </div>
+                                    <div className="space-y-1">
+                                      <p className="text-gray-500 font-light">Shrink 1</p>
+                                      <p className="font-medium">{stoppage.shrink_1 ?? '—'} <span className="text-[10px] text-gray-400">({stoppage.shrink_1_hours ?? 0}h)</span></p>
+                                    </div>
+                                    <div className="space-y-1">
+                                      <p className="text-gray-500 font-light">Shrink 2</p>
+                                      <p className="font-medium">{stoppage.shrink_2 ?? '—'} <span className="text-[10px] text-gray-400">({stoppage.shrink_2_hours ?? 0}h)</span></p>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-500">No production details available</p>
+                    )}
+                  </div>
+                </div>
               ) : (
                 <p className="text-sm text-gray-500">No night shift data available</p>
               )}
