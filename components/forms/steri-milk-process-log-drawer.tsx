@@ -407,7 +407,7 @@ export function SteriMilkProcessLogDrawer({
         batch: {
           // date should be YYYY-MM-DD or null
           date: basicInfo.date ? basicInfo.date : null,
-          batch_number: basicInfo.batch_number ? Number(basicInfo.batch_number) : 1, // Parse to number for backend
+          batch_number: basicInfo.batch_number || "", // Keep as string — alphanumeric batch numbers supported
           // only include *_details objects (formatted times)
           filling_start_details: buildDetailObject(
             data.filling_start_details,
