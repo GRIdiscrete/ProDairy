@@ -1,5 +1,5 @@
 export const API_CONFIG = {
-  BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL || 'http://213.136.80.168:3003/api',
+  BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL,
   ENDPOINTS: {
     USER_ROLES: '/user-roles',
     USERS: '/user',

@@ -14,8 +14,8 @@ interface RoleViewDrawerProps {
   onEdit?: () => void
 }
 
-// Update featureLabels to match backend keys
-const featureLabels: Record<string, string> = {
+// ── Feature labels grouped for display ───────────────────────────────────────
+const adminFeatureLabels: Record<string, string> = {
   user_operations: "User Management",
   role_operations: "Role Management",
   machine_item_operations: "Machine Management",
@@ -23,6 +23,10 @@ const featureLabels: Record<string, string> = {
   supplier_operations: "Supplier Management",
   process_operations: "Process Management",
   devices_operations: "Device Management",
+  production_plan_operations: "Production Plan",
+}
+
+const datacaptureFeatureLabels: Record<string, string> = {
   raw_product_collection_operations: "Raw Product Collection",
   raw_milk_intake_operations: "Raw Milk Intake",
   raw_milk_lab_test_operations: "Raw Milk Lab Test",
@@ -33,12 +37,33 @@ const featureLabels: Record<string, string> = {
   incubation_operations: "Incubation",
   incubation_lab_test_operations: "Incubation Lab Test",
   dispatch_operations: "Dispatch",
-  production_plan_operations: "Production Plan",
   bmt_operations: "BMT",
 }
 
-// Update viewLabels to include all requested views
+const processLogFeatureLabels: Record<string, string> = {
+  test_before_intake: "Test Before Intake",
+  raw_milk_intake: "Raw Milk Intake (Log)",
+  standarizing: "Standarizing",
+  pasteurizing: "Pasteurizing (Log)",
+  filmatic_1: "Filmatic 1",
+  process_log: "Process Log",
+  filmatic_2: "Filmatic 2",
+  palletizer: "Palletizer",
+  incubation: "Incubation (Log)",
+  qa_check_post_incubation: "QA Check Post Incubation",
+  qa_corrrective_measures: "QA Corrective Measures",
+  dispatch: "Dispatch (Log)",
+}
+
+// Flat merged map (still used for getAllOperations)
+const featureLabels: Record<string, string> = {
+  ...adminFeatureLabels,
+  ...datacaptureFeatureLabels,
+  ...processLogFeatureLabels,
+}
+
 const viewLabels: Record<string, string> = {
+  dashboard: "Dashboard",
   admin_panel: "Admin Panel",
   production_dashboard: "Production Dashboard",
   user_tab: "Users Tab",
@@ -52,6 +77,7 @@ const viewLabels: Record<string, string> = {
   process_tab: "Process Tab",
   driver_ui: "Driver UI",
   lab_tests: "Lab Tests",
+  operations: "Operations",
   bmt: "BMT",
   general_lab_test: "General Lab Test",
   cip: "CIP",
@@ -61,7 +87,7 @@ const viewLabels: Record<string, string> = {
 const actionColors: Record<string, string> = {
   create: "bg-green-100 text-green-800",
   read: "bg-blue-100 text-blue-800",
-  update: "bg-yellow-100 text-yellow-800", 
+  update: "bg-yellow-100 text-yellow-800",
   delete: "bg-red-100 text-red-800",
   approve: "bg-blue-100 text-blue-800",
 }
@@ -128,7 +154,7 @@ export function RoleViewDrawer({ open, onClose, role, onEdit }: RoleViewDrawerPr
               </div>
             </div>
             {onEdit && (
-              <Button  size="sm" onClick={onEdit}>
+              <Button size="sm" onClick={onEdit}>
                 <Edit className="w-4 h-4 mr-2" />
                 Edit Role
               </Button>
@@ -152,7 +178,7 @@ export function RoleViewDrawer({ open, onClose, role, onEdit }: RoleViewDrawerPr
                   <p className="text-sm font-semibold">{normalizedRole.role_name}</p>
                 </div>
               </div>
-              
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium text-gray-500">Total Views</label>
@@ -190,37 +216,46 @@ export function RoleViewDrawer({ open, onClose, role, onEdit }: RoleViewDrawerPr
             <CardHeader>
               <CardTitle className="text-lg">Feature Permissions</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              {Object.keys(featureLabels).map((featureKey) => {
-                const operations = getFeatureOperations(featureKey)
-                return (
-                  <div key={featureKey} className="border rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <h4 className="font-medium text-gray-900">
-                        {featureLabels[featureKey]}
-                      </h4>
-                      <Badge >
-                        {operations.length} {operations.length === 1 ? 'Operation' : 'Operations'}
-                      </Badge>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {operations.length > 0 ? (
-                        operations.map((operation: string) => (
-                          <Badge 
-                            key={operation} 
-                            className={actionColors[operation] || "bg-gray-100 text-gray-800"}
-                          >
-                            <CheckCircle className="w-3 h-3 mr-1" />
-                            {operation.charAt(0).toUpperCase() + operation.slice(1)}
-                          </Badge>
-                        ))
-                      ) : (
-                        <span className="text-sm text-gray-500 italic">No operations assigned</span>
-                      )}
-                    </div>
+            <CardContent className="space-y-6">
+              {[
+                { label: "System / Admin", map: adminFeatureLabels },
+                { label: "Data Capture Operations", map: datacaptureFeatureLabels },
+                { label: "Process Log Access", map: processLogFeatureLabels },
+              ].map(({ label, map }) => (
+                <div key={label}>
+                  <h5 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3 border-b pb-1">{label}</h5>
+                  <div className="space-y-3">
+                    {Object.keys(map).map((featureKey) => {
+                      const operations = getFeatureOperations(featureKey)
+                      return (
+                        <div key={featureKey} className="border rounded-lg p-4">
+                          <div className="flex items-center justify-between mb-3">
+                            <h4 className="font-medium text-gray-900 text-sm">{map[featureKey]}</h4>
+                            <Badge>
+                              {operations.length} {operations.length === 1 ? 'Op' : 'Ops'}
+                            </Badge>
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            {operations.length > 0 ? (
+                              operations.map((operation: string) => (
+                                <Badge
+                                  key={operation}
+                                  className={actionColors[operation] || "bg-gray-100 text-gray-800"}
+                                >
+                                  <CheckCircle className="w-3 h-3 mr-1" />
+                                  {operation.charAt(0).toUpperCase() + operation.slice(1)}
+                                </Badge>
+                              ))
+                            ) : (
+                              <span className="text-sm text-gray-400 italic">No operations assigned</span>
+                            )}
+                          </div>
+                        </div>
+                      )
+                    })}
                   </div>
-                )
-              })}
+                </div>
+              ))}
             </CardContent>
           </Card>
 

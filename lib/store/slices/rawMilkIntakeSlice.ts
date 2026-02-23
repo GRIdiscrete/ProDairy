@@ -1,34 +1,51 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit'
-import { CreateRawMilkIntakeFormRequest, RawMilkIntakeForm, TruckPendingIntake, rawMilkIntakeApi } from '@/lib/api/raw-milk-intake'
+import {
+  CreateRawMilkIntakeFormRequest,
+  RawMilkIntakeForm,
+  TestedTruck,
+  TruckCompartment,
+  rawMilkIntakeApi,
+} from '@/lib/api/raw-milk-intake'
 
 interface RawMilkIntakeState {
   rawMilkIntakeForms: RawMilkIntakeForm[]
-  trucks: TruckPendingIntake[]
+  /** Trucks ready for intake (from /tested-trucks) */
+  testedTrucks: TestedTruck[]
+  /** Compartments for the currently selected truck */
+  truckCompartments: TruckCompartment[]
+  /** Legacy: kept for any remaining references */
+  trucks: TruckCompartment[]
   operationLoading: {
     fetch: boolean
     fetchTrucks: boolean
+    fetchCompartments: boolean
     create: boolean
     update: boolean
     delete: boolean
   }
   error: any | null
+  isInitialized: boolean
 }
 
-// Initial state
 const initialState: RawMilkIntakeState = {
   rawMilkIntakeForms: [],
+  testedTrucks: [],
+  truckCompartments: [],
   trucks: [],
   operationLoading: {
     fetch: false,
     fetchTrucks: false,
+    fetchCompartments: false,
     create: false,
     update: false,
-    delete: false
+    delete: false,
   },
-  error: null
+  error: null,
+  isInitialized: false,
 }
 
-// Fetch all forms
+// ── Thunks ────────────────────────────────────────────────────────────────────
+
 export const fetchRawMilkIntakeForms = createAsyncThunk(
   'rawMilkIntake/fetchAll',
   async (_, { rejectWithValue }) => {
@@ -36,27 +53,50 @@ export const fetchRawMilkIntakeForms = createAsyncThunk(
       const response = await rawMilkIntakeApi.getAll()
       return response.data
     } catch (error: any) {
-      console.error('Failed to fetch forms:', error)
       return rejectWithValue(error || { message: 'Failed to fetch forms' })
     }
   }
 )
 
-// Fetch trucks pending intake
+/** Fetch trucks ready for intake from /tested-trucks */
+export const fetchTestedTrucks = createAsyncThunk(
+  'rawMilkIntake/fetchTestedTrucks',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await rawMilkIntakeApi.getTestedTrucks()
+      return response.data
+    } catch (error: any) {
+      return rejectWithValue(error || { message: 'Failed to fetch tested trucks' })
+    }
+  }
+)
+
+/** Fetch compartments for a specific truck number */
+export const fetchTruckCompartments = createAsyncThunk(
+  'rawMilkIntake/fetchTruckCompartments',
+  async (truckNumber: string, { rejectWithValue }) => {
+    try {
+      const response = await rawMilkIntakeApi.getCompartmentsByTruck(truckNumber)
+      return response.data
+    } catch (error: any) {
+      return rejectWithValue(error || { message: 'Failed to fetch truck compartments' })
+    }
+  }
+)
+
+/** Legacy alias — still works but now fetches from new endpoint */
 export const fetchTrucks = createAsyncThunk(
   'rawMilkIntake/fetchTrucks',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await rawMilkIntakeApi.getTrucks()
+      const response = await rawMilkIntakeApi.getTestedTrucks()
       return response.data
     } catch (error: any) {
-      console.error('Failed to fetch trucks:', error)
       return rejectWithValue(error || { message: 'Failed to fetch trucks' })
     }
   }
 )
 
-// Legacy: Fetch pending vouchers (kept for backward compatibility)
 export const fetchPendingVouchers = createAsyncThunk(
   'rawMilkIntake/fetchPendingVouchers',
   async (_, { rejectWithValue }) => {
@@ -64,13 +104,11 @@ export const fetchPendingVouchers = createAsyncThunk(
       const response = await rawMilkIntakeApi.getVouchersPendingTransfer()
       return response.data
     } catch (error: any) {
-      console.error('Failed to fetch pending vouchers:', error)
       return rejectWithValue(error || { message: 'Failed to fetch pending vouchers' })
     }
   }
 )
 
-// Create form
 export const createRawMilkIntakeForm = createAsyncThunk(
   'rawMilkIntake/create',
   async (formData: CreateRawMilkIntakeFormRequest, { rejectWithValue }) => {
@@ -78,13 +116,11 @@ export const createRawMilkIntakeForm = createAsyncThunk(
       const response = await rawMilkIntakeApi.create(formData)
       return response.data
     } catch (error: any) {
-      console.error('Failed to create form:', error)
       return rejectWithValue(error || { message: 'Failed to create form' })
     }
   }
 )
 
-// update form
 export const updateRawMilkIntakeForm = createAsyncThunk(
   'rawMilkIntake/update',
   async (formData: CreateRawMilkIntakeFormRequest, { rejectWithValue }) => {
@@ -93,13 +129,11 @@ export const updateRawMilkIntakeForm = createAsyncThunk(
       const response = await rawMilkIntakeApi.update(formData)
       return response.data
     } catch (error: any) {
-      console.error('Failed to update form:', error)
       return rejectWithValue(error || { message: 'Failed to update form' })
     }
   }
 )
 
-// delete form
 export const deleteRawMilkIntakeForm = createAsyncThunk(
   'rawMilkIntake/delete',
   async (id: string, { rejectWithValue }) => {
@@ -107,99 +141,110 @@ export const deleteRawMilkIntakeForm = createAsyncThunk(
       const response = await rawMilkIntakeApi.delete(id)
       return response.data
     } catch (error: any) {
-      console.error('Failed to delete form:', error)
       return rejectWithValue(error || { message: 'Failed to delete form' })
     }
   }
 )
 
-// The slice
+// ── Slice ─────────────────────────────────────────────────────────────────────
+
 const rawMilkIntakeSlice = createSlice({
   name: 'rawMilkIntake',
   initialState,
   reducers: {
-    clearError: (state) => {
-      state.error = null
-    }
+    clearError: (state) => { state.error = null },
+    clearTruckCompartments: (state) => { state.truckCompartments = [] },
   },
   extraReducers: (builder) => {
     builder
-      // Fetch cases
-      .addCase(fetchRawMilkIntakeForms.pending, (state) => {
-        state.operationLoading.fetch = true
+      // Fetch all
+      .addCase(fetchRawMilkIntakeForms.pending, (s) => { s.operationLoading.fetch = true })
+      .addCase(fetchRawMilkIntakeForms.fulfilled, (s, a: PayloadAction<RawMilkIntakeForm[]>) => {
+        s.operationLoading.fetch = false
+        s.rawMilkIntakeForms = a.payload
+        s.isInitialized = true
+        s.error = null
       })
-      .addCase(fetchRawMilkIntakeForms.fulfilled, (state, action: PayloadAction<RawMilkIntakeForm[]>) => {
-        state.operationLoading.fetch = false
-        state.rawMilkIntakeForms = action.payload
-        state.error = null
-      })
-      .addCase(fetchRawMilkIntakeForms.rejected, (state, action) => {
-        state.operationLoading.fetch = false
-        state.error = action.payload
-      })
-
-      // Fetch trucks cases
-      .addCase(fetchTrucks.pending, (state) => {
-        state.operationLoading.fetchTrucks = true
-      })
-      .addCase(fetchTrucks.fulfilled, (state, action: PayloadAction<TruckPendingIntake[]>) => {
-        state.operationLoading.fetchTrucks = false
-        state.trucks = action.payload
-        state.error = null
-      })
-      .addCase(fetchTrucks.rejected, (state, action) => {
-        state.operationLoading.fetchTrucks = false
-        state.error = action.payload
+      .addCase(fetchRawMilkIntakeForms.rejected, (s, a) => {
+        s.operationLoading.fetch = false
+        s.error = a.payload
       })
 
-      // Create cases
-      .addCase(createRawMilkIntakeForm.pending, (state) => {
-        state.operationLoading.create = true
+      // Fetch tested trucks
+      .addCase(fetchTestedTrucks.pending, (s) => { s.operationLoading.fetchTrucks = true })
+      .addCase(fetchTestedTrucks.fulfilled, (s, a: PayloadAction<TestedTruck[]>) => {
+        s.operationLoading.fetchTrucks = false
+        s.testedTrucks = a.payload
+        s.error = null
       })
-      .addCase(createRawMilkIntakeForm.fulfilled, (state, action: PayloadAction<RawMilkIntakeForm>) => {
-        state.operationLoading.create = false
-        state.rawMilkIntakeForms.push(action.payload)
-        state.error = null
-      })
-      .addCase(createRawMilkIntakeForm.rejected, (state, action) => {
-        state.operationLoading.create = false
-        state.error = action.payload
+      .addCase(fetchTestedTrucks.rejected, (s, a) => {
+        s.operationLoading.fetchTrucks = false
+        s.error = a.payload
       })
 
-      // Update cases
-      .addCase(updateRawMilkIntakeForm.pending, (state) => {
-        state.operationLoading.update = true
+      // Fetch truck compartments
+      .addCase(fetchTruckCompartments.pending, (s) => { s.operationLoading.fetchCompartments = true })
+      .addCase(fetchTruckCompartments.fulfilled, (s, a: PayloadAction<TruckCompartment[]>) => {
+        s.operationLoading.fetchCompartments = false
+        s.truckCompartments = a.payload
+        s.error = null
       })
-      .addCase(updateRawMilkIntakeForm.fulfilled, (state, action: PayloadAction<RawMilkIntakeForm>) => {
-        state.operationLoading.update = false
-        const index = state.rawMilkIntakeForms.findIndex((form) => form.id === action.payload.id)
-        if (index !== -1) {
-          state.rawMilkIntakeForms[index] = action.payload
-        }
-        state.error = null
-      })
-      .addCase(updateRawMilkIntakeForm.rejected, (state, action) => {
-        state.operationLoading.update = false
-        state.error = action.payload
+      .addCase(fetchTruckCompartments.rejected, (s, a) => {
+        s.operationLoading.fetchCompartments = false
+        s.error = a.payload
       })
 
-      // Delete cases
-      .addCase(deleteRawMilkIntakeForm.pending, (state) => {
-        state.operationLoading.delete = true
+      // Legacy fetchTrucks
+      .addCase(fetchTrucks.pending, (s) => { s.operationLoading.fetchTrucks = true })
+      .addCase(fetchTrucks.fulfilled, (s, a) => {
+        s.operationLoading.fetchTrucks = false
+        s.error = null
       })
-      .addCase(deleteRawMilkIntakeForm.fulfilled, (state, action) => {
-        state.operationLoading.delete = false
-        // The action.meta.arg is the ID passed to the thunk
-        state.rawMilkIntakeForms = state.rawMilkIntakeForms.filter(f => f.id !== action.meta.arg)
-        state.error = null
+      .addCase(fetchTrucks.rejected, (s, a) => {
+        s.operationLoading.fetchTrucks = false
+        s.error = a.payload
       })
-      .addCase(deleteRawMilkIntakeForm.rejected, (state, action) => {
-        state.operationLoading.delete = false
-        state.error = action.payload
+
+      // Create
+      .addCase(createRawMilkIntakeForm.pending, (s) => { s.operationLoading.create = true })
+      .addCase(createRawMilkIntakeForm.fulfilled, (s, _a: PayloadAction<RawMilkIntakeForm>) => {
+        s.operationLoading.create = false
+        // Do NOT push the create response — it lacks a `details` array.
+        // The form drawer dispatches fetchRawMilkIntakeForms() after this, which
+        // reloads the full list from the server.
+        s.error = null
       })
-  }
+      .addCase(createRawMilkIntakeForm.rejected, (s, a) => {
+        s.operationLoading.create = false
+        s.error = a.payload
+      })
+
+      // Update
+      .addCase(updateRawMilkIntakeForm.pending, (s) => { s.operationLoading.update = true })
+      .addCase(updateRawMilkIntakeForm.fulfilled, (s, a: PayloadAction<RawMilkIntakeForm>) => {
+        s.operationLoading.update = false
+        const idx = s.rawMilkIntakeForms.findIndex((f) => f.id === a.payload.id)
+        if (idx !== -1) s.rawMilkIntakeForms[idx] = a.payload
+        s.error = null
+      })
+      .addCase(updateRawMilkIntakeForm.rejected, (s, a) => {
+        s.operationLoading.update = false
+        s.error = a.payload
+      })
+
+      // Delete
+      .addCase(deleteRawMilkIntakeForm.pending, (s) => { s.operationLoading.delete = true })
+      .addCase(deleteRawMilkIntakeForm.fulfilled, (s, a) => {
+        s.operationLoading.delete = false
+        s.rawMilkIntakeForms = s.rawMilkIntakeForms.filter((f) => f.id !== a.meta.arg)
+        s.error = null
+      })
+      .addCase(deleteRawMilkIntakeForm.rejected, (s, a) => {
+        s.operationLoading.delete = false
+        s.error = a.payload
+      })
+  },
 })
 
-export const { clearError } = rawMilkIntakeSlice.actions
-
+export const { clearError, clearTruckCompartments } = rawMilkIntakeSlice.actions
 export default rawMilkIntakeSlice.reducer

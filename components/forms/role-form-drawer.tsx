@@ -15,8 +15,9 @@ import { createRole, updateRole } from "@/lib/store/slices/rolesSlice"
 import { toast } from "sonner"
 import { UserRole, UserRoleResponse, convertApiResponseToUserRole } from "@/lib/types/roles"
 
-// Update featureOptions and actionOptions to match backend API keys
-const featureOptions = [
+// ── Operation groups (all DB columns) ─────────────────────────────────────────
+// Group 1 – System/Admin
+const adminFeatures = [
   { key: "user_operations", label: "User Management" },
   { key: "role_operations", label: "Role Management" },
   { key: "machine_item_operations", label: "Machine Management" },
@@ -24,6 +25,11 @@ const featureOptions = [
   { key: "supplier_operations", label: "Supplier Management" },
   { key: "process_operations", label: "Process Management" },
   { key: "devices_operations", label: "Device Management" },
+  { key: "production_plan_operations", label: "Production Plan" },
+]
+
+// Group 2 – Data Capture operations (all _operations keys)
+const datacaptureFeatures = [
   { key: "raw_product_collection_operations", label: "Raw Product Collection" },
   { key: "raw_milk_intake_operations", label: "Raw Milk Intake" },
   { key: "raw_milk_lab_test_operations", label: "Raw Milk Lab Test" },
@@ -34,9 +40,26 @@ const featureOptions = [
   { key: "incubation_operations", label: "Incubation" },
   { key: "incubation_lab_test_operations", label: "Incubation Lab Test" },
   { key: "dispatch_operations", label: "Dispatch" },
-  { key: "production_plan_operations", label: "Production Plan" },
   { key: "bmt_operations", label: "BMT" },
 ]
+
+// Group 3 – Process-log ARRAY columns (formerly null, still editable)
+const processLogFeatures = [
+  { key: "test_before_intake", label: "Test Before Intake" },
+  { key: "raw_milk_intake", label: "Raw Milk Intake (Log)" },
+  { key: "standarizing", label: "Standarizing" },
+  { key: "pasteurizing", label: "Pasteurizing (Log)" },
+  { key: "filmatic_1", label: "Filmatic 1" },
+  { key: "process_log", label: "Process Log" },
+  { key: "filmatic_2", label: "Filmatic 2" },
+  { key: "palletizer", label: "Palletizer" },
+  { key: "incubation", label: "Incubation (Log)" },
+  { key: "qa_check_post_incubation", label: "QA Check Post Incubation" },
+  { key: "qa_corrrective_measures", label: "QA Corrective Measures" },
+  { key: "dispatch", label: "Dispatch (Log)" },
+]
+
+const featureOptions = [...adminFeatures, ...datacaptureFeatures, ...processLogFeatures]
 
 const actionOptions = ["create", "read", "update", "delete", "approve"]
 
@@ -56,12 +79,12 @@ const areAnyOperationsSelected = (featureKey: string, allFeatures: any) => {
 const toggleAllOperations = (featureKey: string, allFeatures: any, setValue: any) => {
   const featureOperations = allFeatures?.[featureKey]?.operations || []
   const allSelected = areAllOperationsSelected(featureKey, allFeatures)
-  
+
   const updatedFeatures = { ...allFeatures }
   if (!updatedFeatures[featureKey]) {
     updatedFeatures[featureKey] = { operations: [] }
   }
-  
+
   if (allSelected) {
     // Unselect all operations
     updatedFeatures[featureKey].operations = []
@@ -69,12 +92,12 @@ const toggleAllOperations = (featureKey: string, allFeatures: any, setValue: any
     // Select all operations
     updatedFeatures[featureKey].operations = [...actionOptions]
   }
-  
+
   setValue('features', updatedFeatures)
 }
 
 const viewOptions = [
-  // Original views
+  { key: "dashboard", label: "Dashboard" },
   { key: "admin_panel", label: "Admin Panel" },
   { key: "production_dashboard", label: "Production Dashboard" },
   { key: "user_tab", label: "Users Tab" },
@@ -88,6 +111,7 @@ const viewOptions = [
   { key: "process_tab", label: "Process Tab" },
   { key: "driver_ui", label: "Driver UI" },
   { key: "lab_tests", label: "Lab Tests" },
+  { key: "operations", label: "Operations" },
   { key: "bmt", label: "BMT" },
   { key: "general_lab_test", label: "General Lab Test" },
   { key: "cip", label: "CIP" },
@@ -120,13 +144,13 @@ export function RoleFormDrawer({ open, onOpenChange, role, mode }: RoleFormDrawe
   // Convert API response to flat structure if needed
   const normalizedRole = role
     ? {
-        role_name: (role as any).role_name || "",
-        ...featureOptions.reduce((acc, feature) => {
-          acc[feature.key] = (role as any)[feature.key] || []
-          return acc
-        }, {} as any),
-        views: (role as any).views || [],
-      }
+      role_name: (role as any).role_name || "",
+      ...featureOptions.reduce((acc, feature) => {
+        acc[feature.key] = (role as any)[feature.key] || []
+        return acc
+      }, {} as any),
+      views: (role as any).views || [],
+    }
     : undefined
 
   const {
@@ -239,76 +263,74 @@ export function RoleFormDrawer({ open, onOpenChange, role, mode }: RoleFormDrawe
               </div>
             </div>
 
-            {/* Permission Matrix */}
+            {/* Permission Matrix - split into labelled groups */}
             <div className="space-y-4">
               <h3 className="text-xl text-gray-900 border-b border-gray-200 pb-2">Permission Matrix</h3>
-              <div className="border border-gray-200 rounded-lg bg-white">
-                <div className="p-4 border-b border-gray-200">
-                  <h4 className="text-lg text-gray-900">Feature Permissions</h4>
-                  <p className="text-sm text-gray-500">Configure feature permissions</p>
-                </div>
-                <div className="p-4">
-                  <div className="overflow-x-auto">
-                    <table className="w-full border-collapse">
-                      <thead>
-                        <tr className="border-b border-gray-200">
-                          <th className="text-left p-3 text-base text-gray-700">
-                            <div className="flex items-center space-x-2">
-                              <span>Feature</span>
-                            </div>
-                          </th>
-                          {actionOptions.map((action) => (
-                            <th key={action} className="text-center p-3 text-base text-gray-700 min-w-[80px] capitalize">
-                              <div className="flex flex-col items-center space-y-1">
-                                <span>{action}</span>
-                              </div>
-                            </th>
-                          ))}
-                          <th className="text-center p-3 text-base text-gray-700 min-w-[80px]">All</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {featureOptions.map((feature, index) => (
-                          <tr key={feature.key} className={`border-b border-gray-200 ${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}`}>
-                            <td className="p-3 text-base text-gray-700">
-                              <span>{feature.label}</span>
-                            </td>
-                            {actionOptions.map((action) => {
-                              const ops = watch(feature.key) || []
-                              const isChecked = ops.includes(action)
-                              return (
-                                <td key={action} className="text-center p-3">
-                                  <div className="flex items-center justify-center">
-                                    <Checkbox
-                                      id={`${feature.key}-${action}`}
-                                      checked={isChecked}
-                                      onCheckedChange={(checked) => {
-                                        const current = watch(feature.key) || []
-                                        if (checked) {
-                                          setValue(feature.key, [...current, action])
-                                        } else {
-                                          setValue(feature.key, current.filter((a: string) => a !== action))
-                                        }
-                                      }}
-                                    />
-                                  </div>
-                                </td>
-                              )
-                            })}
-                            <td className="text-center p-3">
-                              <Checkbox
-                                id={`select-all-${feature.key}`}
-                                checked={areAllOperationsSelected(feature.key, watch())}
-                                onCheckedChange={() => toggleAllOperations(feature.key, watch(), setValue)}
-                              />
-                            </td>
+
+              {[
+                { label: "System / Admin", group: adminFeatures },
+                { label: "Data Capture Operations", group: datacaptureFeatures },
+                { label: "Process Log Access", group: processLogFeatures },
+              ].map(({ label, group }) => (
+                <div key={label} className="border border-gray-200 rounded-lg bg-white">
+                  <div className="p-4 border-b border-gray-200 bg-gray-50">
+                    <h4 className="text-lg text-gray-900">{label}</h4>
+                  </div>
+                  <div className="p-4">
+                    <div className="overflow-x-auto">
+                      <table className="w-full border-collapse">
+                        <thead>
+                          <tr className="border-b border-gray-200">
+                            <th className="text-left p-3 text-base text-gray-700">Feature</th>
+                            {actionOptions.map((action) => (
+                              <th key={action} className="text-center p-3 text-base text-gray-700 min-w-[80px] capitalize">
+                                {action}
+                              </th>
+                            ))}
+                            <th className="text-center p-3 text-base text-gray-700 min-w-[80px]">All</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                        </thead>
+                        <tbody>
+                          {group.map((feature, index) => (
+                            <tr key={feature.key} className={`border-b border-gray-200 ${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}`}>
+                              <td className="p-3 text-base text-gray-700 text-sm">{feature.label}</td>
+                              {actionOptions.map((action) => {
+                                const ops = watch(feature.key as any) as string[] || []
+                                const isChecked = ops.includes(action)
+                                return (
+                                  <td key={action} className="text-center p-3">
+                                    <div className="flex items-center justify-center">
+                                      <Checkbox
+                                        id={`${feature.key}-${action}`}
+                                        checked={isChecked}
+                                        onCheckedChange={(checked) => {
+                                          const current = (watch(feature.key as any) as string[]) || []
+                                          if (checked) {
+                                            setValue(feature.key as any, [...current, action])
+                                          } else {
+                                            setValue(feature.key as any, current.filter((a: string) => a !== action))
+                                          }
+                                        }}
+                                      />
+                                    </div>
+                                  </td>
+                                )
+                              })}
+                              <td className="text-center p-3">
+                                <Checkbox
+                                  id={`select-all-${feature.key}`}
+                                  checked={areAllOperationsSelected(feature.key, watch())}
+                                  onCheckedChange={() => toggleAllOperations(feature.key, watch(), setValue)}
+                                />
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
                 </div>
-              </div>
+              ))}
             </div>
 
             {/* View Permissions */}
@@ -350,16 +372,16 @@ export function RoleFormDrawer({ open, onOpenChange, role, mode }: RoleFormDrawe
             </div>
 
             <div className="flex justify-end space-x-3 pt-6">
-              <LoadingButton 
-                type="button" 
-                 
+              <LoadingButton
+                type="button"
+
                 onClick={() => onOpenChange(false)}
                 className="border border-gray-200 rounded-full px-6 py-2"
               >
                 Cancel
               </LoadingButton>
-              <LoadingButton 
-                type="submit" 
+              <LoadingButton
+                type="submit"
                 loading={mode === "create" ? operationLoading.create : operationLoading.update}
                 loadingText={mode === "create" ? "Creating..." : "Updating..."}
                 className=" bg-[#006BC4] text-white rounded-full px-6 py-2 font-light"

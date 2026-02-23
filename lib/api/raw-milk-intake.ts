@@ -1,5 +1,4 @@
 import { apiRequest } from '@/lib/utils/api-request'
-import { API_CONFIG } from '@/lib/config/api'
 
 export interface ApiResponse<T> {
   statusCode: number
@@ -7,34 +6,52 @@ export interface ApiResponse<T> {
   data: T
 }
 
-// New data structure for raw-milk-intake-2
+// ── New API response types ─────────────────────────────────────────────────────
+
+/** Detail entry returned in GET /raw-milk-intake-2 */
 export interface RawMilkIntakeDetail {
   id?: string
-  status: string
-  quantity: number
-  silo_name: string
   created_at?: string
   updated_at?: string | null
-  flow_meter_end: string
-  flow_meter_start: string
-  flow_meter_end_reading: number
-  flow_meter_start_reading: number
-  truck_compartment_number: number
   raw_milk_intake_form_2_id?: string
+  truck_compartment_number: number
+  silo_name: string
+  /** Time string e.g. "10:27:22" */
+  flow_meter_start?: string | null
+  flow_meter_start_reading?: number | null
+  /** Time string e.g. "00:30:00", null if not yet recorded */
+  flow_meter_end?: string | null
+  flow_meter_end_reading?: number | null
+  /** Only present on some API endpoints; derive from readings when absent */
+  quantity?: number | null
+  status?: string | null
 }
 
+/** Main form record returned from GET /raw-milk-intake-2 */
 export interface RawMilkIntakeForm {
   id: string
-  created_at: string
-  updated_at: string | null
-  operator: string  // Operator ID
-  truck: string     // Truck name
-  updated_by: string | null
-  tag: string
+  /** Not always present in list response */
+  created_at?: string
+  updated_at?: string | null
+  /** New API returns operator as an object */
+  operator: string | { first_name: string; last_name: string }
+  truck: string
+  tag?: string
+  updated_by?: string | null
   details: RawMilkIntakeDetail[]
 }
 
-// Truck pending intake from /raw-milk-intake-2/trucks
+// ── Tested-trucks response types ──────────────────────────────────────────────
+
+/** One truck ready for intake from GET /raw-milk-intake-2/tested-trucks */
+export interface TestedTruck {
+  truck: string
+  route: string
+  driver_first_name: string
+  driver_last_name: string
+}
+
+/** One voucher contribution inside a compartment */
 export interface VoucherContribution {
   volume: number
   voucher_tag: string
@@ -44,28 +61,39 @@ export interface VoucherContribution {
   supplier_first_name: string
 }
 
-export interface TruckPendingIntake {
+/** Compartment returned from GET /raw-milk-intake-2/tested-truck/<truck_number> */
+export interface TruckCompartment {
   truck_number: string
   truck_compartment_number: number
+  route_name: string
+  driver_first_name: string
+  driver_last_name: string
   total_compartment_volume: number
   voucher_contributions: VoucherContribution[]
 }
 
-// Create/Update request structure
+// Legacy alias kept for any remaining references
+export type TruckPendingIntake = TruckCompartment
+
+// ── Request types ─────────────────────────────────────────────────────────────
+
+export interface CreateDetailRequest {
+  truck_compartment_number: number
+  silo_name: string
+  flow_meter_start_reading?: number | null
+  flow_meter_end_reading?: number | null
+  quantity?: number | null
+  status?: string | null
+}
+
 export interface CreateRawMilkIntakeFormRequest {
   id?: string
   operator: string
   truck: string
-  details: Omit<RawMilkIntakeDetail, 'id' | 'created_at' | 'updated_at' | 'raw_milk_intake_form_2_id'>[]
+  details: CreateDetailRequest[]
 }
 
-// Legacy types (kept for backward compatibility during migration)
-export interface RawMaterialSample {
-  supplier_id: string
-  amount_collected: number
-  unit_of_measure: string
-  serial_no: string
-}
+// ── Legacy types (kept for backward compatibility) ────────────────────────────
 
 export interface RawMilkIntakePendingVoucher {
   id: string
@@ -91,59 +119,59 @@ export interface RawMilkIntakePendingVoucher {
   updated_at: string
 }
 
-export const rawMilkIntakeApi = {
-  // Get all raw milk intake forms
-  getAll: async (params: {
-    filters?: Record<string, any>
-  } = {}) => {
-    const { filters } = params
+// ── API client ────────────────────────────────────────────────────────────────
 
+export const rawMilkIntakeApi = {
+  /** GET /raw-milk-intake-2 — list all forms */
+  getAll: async (params: { filters?: Record<string, any> } = {}) => {
+    const { filters } = params
     if (!filters || Object.keys(filters).length === 0) {
       return apiRequest<ApiResponse<RawMilkIntakeForm[]>>('/raw-milk-intake-2')
     }
-
     const queryParams = new URLSearchParams(filters as Record<string, string>)
-    const endpoint = `/raw-milk-intake-2?${queryParams.toString()}`
-
-    return apiRequest<ApiResponse<RawMilkIntakeForm[]>>(endpoint)
+    return apiRequest<ApiResponse<RawMilkIntakeForm[]>>(`/raw-milk-intake-2?${queryParams.toString()}`)
   },
 
-  // Get single form by ID
-  getById: async (id: string) => {
-    return apiRequest<ApiResponse<RawMilkIntakeForm>>(`/raw-milk-intake-2/${id}`)
-  },
+  /** GET /raw-milk-intake-2/:id */
+  getById: async (id: string) =>
+    apiRequest<ApiResponse<RawMilkIntakeForm>>(`/raw-milk-intake-2/${id}`),
 
-  // Get trucks pending intake
-  getTrucks: async () => {
-    return apiRequest<ApiResponse<TruckPendingIntake[]>>('/raw-milk-intake-2/trucks')
-  },
+  /** GET /raw-milk-intake-2/tested-trucks — trucks ready for intake */
+  getTestedTrucks: async () =>
+    apiRequest<ApiResponse<TestedTruck[]>>('/raw-milk-intake-2/tested-trucks'),
 
-  // Get vouchers pending transfer (legacy - kept for backward compatibility)
-  getVouchersPendingTransfer: async () => {
-    return apiRequest<ApiResponse<RawMilkIntakePendingVoucher[]>>('/raw-milk-intake-form/vouchers-pending-transfer')
-  },
+  /** GET /raw-milk-intake-2/tested-truck/:truck_number — compartments for a given truck */
+  getCompartmentsByTruck: async (truckNumber: string) =>
+    apiRequest<ApiResponse<TruckCompartment[]>>(
+      `/raw-milk-intake-2/tested-truck/${encodeURIComponent(truckNumber)}`
+    ),
 
-  // Create new form
-  create: async (formData: CreateRawMilkIntakeFormRequest) => {
-    return apiRequest<ApiResponse<RawMilkIntakeForm>>('/raw-milk-intake-2', {
+  /** POST /raw-milk-intake-2 */
+  create: async (formData: CreateRawMilkIntakeFormRequest) =>
+    apiRequest<ApiResponse<RawMilkIntakeForm>>('/raw-milk-intake-2', {
       method: 'POST',
       body: JSON.stringify(formData),
-    })
-  },
+    }),
 
-  // Update form
+  /** PATCH /raw-milk-intake-2 */
   update: async (formData: CreateRawMilkIntakeFormRequest) => {
     if (!formData.id) throw new Error('Form ID is required for update')
-    return apiRequest<ApiResponse<RawMilkIntakeForm>>(`/raw-milk-intake-2`, {
+    return apiRequest<ApiResponse<RawMilkIntakeForm>>('/raw-milk-intake-2', {
       method: 'PATCH',
       body: JSON.stringify(formData),
     })
   },
 
-  // Delete form
-  delete: async (id: string) => {
-    return apiRequest<ApiResponse<null>>(`/raw-milk-intake-2/${id}`, {
-      method: 'DELETE',
-    })
-  }
+  /** DELETE /raw-milk-intake-2/:id */
+  delete: async (id: string) =>
+    apiRequest<ApiResponse<null>>(`/raw-milk-intake-2/${id}`, { method: 'DELETE' }),
+
+  // Legacy method kept for backward compatibility
+  getTrucks: async () =>
+    apiRequest<ApiResponse<TruckCompartment[]>>('/raw-milk-intake-2/tested-trucks'),
+
+  getVouchersPendingTransfer: async () =>
+    apiRequest<ApiResponse<RawMilkIntakePendingVoucher[]>>(
+      '/raw-milk-intake-form/vouchers-pending-transfer'
+    ),
 }
