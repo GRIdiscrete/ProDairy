@@ -10,10 +10,8 @@ import { Droplets, Truck, User, Package, Clock, Calendar, FileText, Beaker, Edit
 import { format } from "date-fns"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useAppDispatch, useAppSelector } from "@/lib/store"
-import type { RootState } from "@/lib/store"
 import { fetchRawMilkResultSlips, deleteRawMilkResultSlip } from "@/lib/store/slices/rawMilkResultSlipSlice"
 import { FormIdCopy } from "@/components/ui/form-id-copy"
-import { UserAvatar } from "@/components/ui/user-avatar"
 import { RawMilkResultSlipDrawer } from "@/components/forms/raw-milk-result-slip-drawer"
 import type { RawMilkIntakeForm } from "@/lib/api/raw-milk-intake"
 
@@ -35,16 +33,9 @@ export function RawMilkIntakeFormViewDrawer({
   const [activeTab, setActiveTab] = useState<string>("details")
   const dispatch = useAppDispatch()
   const { slips, isInitialized, operationLoading } = useAppSelector((s) => (s as any).rawMilkResultSlips)
-  const { items: users } = useAppSelector((state: RootState) => state.users)
-  const { silos } = useAppSelector((state: RootState) => state.silo)
   const [resultSlipDrawerOpen, setResultSlipDrawerOpen] = useState(false)
   const [resultSlipMode, setResultSlipMode] = useState<"create" | "edit">("create")
   const [resultSlipExistingId, setResultSlipExistingId] = useState<string | undefined>(undefined)
-
-  // Helper function to get silo by name
-  const getSiloByName = (siloName: string) => {
-    return silos.find((silo: any) => silo.name === siloName)
-  }
 
   useEffect(() => {
     if (open && !isInitialized) {
@@ -59,8 +50,22 @@ export function RawMilkIntakeFormViewDrawer({
 
   if (!form) return null
 
-  // Calculate total quantity from all details
-  const totalQuantity = form.details.reduce((sum, detail) => sum + (detail.quantity || 0), 0)
+  // Helper: resolve operator display name
+  const operatorName = typeof form.operator === "string"
+    ? form.operator
+    : `${(form.operator as any)?.first_name ?? ""} ${(form.operator as any)?.last_name ?? ""}`.trim()
+
+  // Derive quantity from flow meter readings if not explicitly provided
+  const getDetailQuantity = (detail: any): number | null => {
+    if (detail.quantity != null) return detail.quantity
+    if (detail.flow_meter_end_reading != null && detail.flow_meter_start_reading != null) {
+      return detail.flow_meter_end_reading - detail.flow_meter_start_reading
+    }
+    return null
+  }
+
+  // Calculate total quantity from all details (nulls are skipped)
+  const totalQuantity = (form.details ?? []).reduce((sum, detail) => sum + (getDetailQuantity(detail) ?? 0), 0)
 
   const handleExportLabTestCSV = () => {
     if (!currentResultSlip) return
@@ -257,28 +262,18 @@ export function RawMilkIntakeFormViewDrawer({
                       <h3 className="text-lg font-light">Operator Information</h3>
                     </div>
                     <div className="space-y-3">
-                      {(() => {
-                        const operatorUser = users.find((user: any) => user.id === form.operator)
-
-                        if (operatorUser) {
-                          return (
-                            <UserAvatar
-                              user={operatorUser}
-                              size="lg"
-                              showName={true}
-                              showEmail={true}
-                              showDropdown={true}
-                            />
-                          )
-                        }
-
-                        return (
-                          <div className="text-sm text-gray-500">
-                            <p>Operator ID: {form.operator}</p>
-                            <p className="text-xs text-gray-400 mt-1">User details not available</p>
+                      {operatorName ? (
+                        <div className="flex items-center gap-2">
+                          <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-medium text-sm">
+                            {operatorName.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase()}
                           </div>
-                        )
-                      })()}
+                          <div>
+                            <p className="text-sm font-medium text-gray-900">{operatorName}</p>
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="text-sm text-gray-400">Unknown operator</p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -293,8 +288,6 @@ export function RawMilkIntakeFormViewDrawer({
                   </div>
                   <div className="space-y-4">
                     {form.details.map((detail, idx) => {
-                      const silo = getSiloByName(detail.silo_name)
-
                       return (
                         <div key={detail.id} className="p-4 bg-gray-50 rounded-lg border border-gray-200">
                           <div className="flex items-center justify-between mb-3">
@@ -302,32 +295,33 @@ export function RawMilkIntakeFormViewDrawer({
                               <Badge variant="outline" className="text-xs">
                                 Compartment #{detail.truck_compartment_number}
                               </Badge>
-                              <Badge
-                                className={
-                                  detail.status === "final" ? "bg-green-100 text-green-800" :
-                                    detail.status === "pending" ? "bg-yellow-100 text-yellow-800" :
-                                      "bg-gray-100 text-gray-800"
-                                }
-                              >
-                                {detail.status}
-                              </Badge>
+                              {detail.status && (
+                                <Badge
+                                  className={
+                                    detail.status === "final" ? "bg-green-100 text-green-800" :
+                                      detail.status === "pending" ? "bg-yellow-100 text-yellow-800" :
+                                        "bg-gray-100 text-gray-800"
+                                  }
+                                >
+                                  {detail.status}
+                                </Badge>
+                              )}
                             </div>
-                            <span className="text-sm font-light text-blue-600">{detail.quantity}L</span>
+                            <span className="text-sm font-light text-blue-600">
+                              {(() => { const q = getDetailQuantity(detail); return q != null ? `${q.toFixed(0)}L` : '—' })()}
+                            </span>
                           </div>
 
                           <div className="grid grid-cols-2 gap-3 mb-3">
                             <div>
                               <span className="text-xs text-gray-500">Destination Silo</span>
                               <p className="text-sm font-light text-green-600">{detail.silo_name}</p>
-                              {silo && (
-                                <p className="text-xs text-gray-500">
-                                  Capacity: {silo.capacity?.toLocaleString()}L
-                                </p>
-                              )}
                             </div>
                             <div>
-                              <span className="text-xs text-gray-500">Quantity</span>
-                              <p className="text-sm font-light">{detail.quantity}L</p>
+                              <span className="text-xs text-gray-500">Derived Quantity</span>
+                              <p className="text-sm font-light">
+                                {(() => { const q = getDetailQuantity(detail); return q != null ? `${q.toFixed(0)}L` : 'N/A' })()}
+                              </p>
                             </div>
                           </div>
 
@@ -336,45 +330,20 @@ export function RawMilkIntakeFormViewDrawer({
                             <div className="grid grid-cols-2 gap-3">
                               <div>
                                 <span className="text-xs text-gray-500">Start Time</span>
-                                <p className="text-sm font-light">
-                                  {new Date(detail.flow_meter_start).toLocaleString('en-GB', {
-                                    day: '2-digit',
-                                    month: 'short',
-                                    hour: '2-digit',
-                                    minute: '2-digit'
-                                  })}
-                                </p>
+                                <p className="text-sm font-light">{detail.flow_meter_start ?? "—"}</p>
                                 <p className="text-xs text-gray-600 mt-1">
-                                  Reading: {detail.flow_meter_start_reading}
+                                  Reading: {detail.flow_meter_start_reading ?? "—"}
                                 </p>
                               </div>
                               <div>
                                 <span className="text-xs text-gray-500">End Time</span>
-                                <p className="text-sm font-light">
-                                  {new Date(detail.flow_meter_end).toLocaleString('en-GB', {
-                                    day: '2-digit',
-                                    month: 'short',
-                                    hour: '2-digit',
-                                    minute: '2-digit'
-                                  })}
-                                </p>
+                                <p className="text-sm font-light">{detail.flow_meter_end ?? "—"}</p>
                                 <p className="text-xs text-gray-600 mt-1">
-                                  Reading: {detail.flow_meter_end_reading}
+                                  Reading: {detail.flow_meter_end_reading ?? "—"}
                                 </p>
                               </div>
                             </div>
                           </div>
-
-                          {detail.created_at && (
-                            <div className="border-t border-gray-200 pt-3 mt-3">
-                              <div className="flex items-center justify-between text-xs text-gray-500">
-                                <span>Created: {new Date(detail.created_at).toLocaleDateString()}</span>
-                                {detail.updated_at && (
-                                  <span>Updated: {new Date(detail.updated_at).toLocaleDateString()}</span>
-                                )}
-                              </div>
-                            </div>
-                          )}
                         </div>
                       )
                     })}

@@ -38,16 +38,10 @@ export default function RawMilkIntakePage() {
     error
   } = useAppSelector((state) => state.rawMilkIntake)
   const { items: users } = useAppSelector((state: RootState) => state.users)
-  const { silos } = useAppSelector((state: RootState) => state.silo)
 
   const [tableFilters, setTableFilters] = useState<TableFilters>({})
   const hasFetchedRef = useRef(false)
-  const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
-
-  // Helper function to get silo by name
-  const getSiloByName = (name: string) => {
-    return silos.find((silo: any) => silo.name === name)
-  }
+  const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null
 
   // Load raw milk intake forms and related data on initial mount
   useEffect(() => {
@@ -97,7 +91,7 @@ export default function RawMilkIntakePage() {
       }
 
       // 3. Date Range filter
-      if (tableFilters.dateRange) {
+      if (tableFilters.dateRange && form.created_at) {
         const formDate = new Date(form.created_at)
         if (tableFilters.dateRange.from) {
           const from = new Date(tableFilters.dateRange.from)
@@ -113,7 +107,7 @@ export default function RawMilkIntakePage() {
 
       return true
     })
-  }, [rawMilkIntakeForms, tableFilters, silos])
+  }, [rawMilkIntakeForms, tableFilters])
 
   // Filter fields configuration for Raw Milk Intake
   const filterFields = useMemo(() => [
@@ -170,10 +164,18 @@ export default function RawMilkIntakePage() {
   // Get latest form for display
   const latestForm = Array.isArray(rawMilkIntakeForms) && rawMilkIntakeForms.length > 0 ? rawMilkIntakeForms[0] : null
 
-  // Calculate total quantity from details
-  const getTotalQuantity = (form: RawMilkIntakeForm) => {
-    return form.details.reduce((sum, detail) => sum + (detail.quantity || 0), 0)
+  // Get total quantity from details, null-safe
+  // Quantity is derived from flow meter readings when not explicitly returned
+  const getDetailQuantity = (detail: any): number | null => {
+    if (detail.quantity != null) return detail.quantity
+    if (detail.flow_meter_end_reading != null && detail.flow_meter_start_reading != null) {
+      return detail.flow_meter_end_reading - detail.flow_meter_start_reading
+    }
+    return null
   }
+
+  const getTotalQuantity = (form: RawMilkIntakeForm) =>
+    (form.details ?? []).reduce((sum, detail) => sum + (getDetailQuantity(detail) ?? 0), 0)
 
   // Table columns with actions
   const columns = [
@@ -197,10 +199,10 @@ export default function RawMilkIntakePage() {
               />
               <div className="flex items-center space-x-2 mt-1">
                 <Badge className="bg-blue-100 text-blue-800 font-light">
-                  {totalQuantity.toFixed(2)}L
+                  {totalQuantity > 0 ? `${totalQuantity.toFixed(0)}L` : '—'}
                 </Badge>
                 <Badge variant="outline" className="text-[10px]">
-                  {form.details.length} compartment(s)
+                  {(form.details ?? []).length} compartment(s)
                 </Badge>
               </div>
             </div>
@@ -223,7 +225,7 @@ export default function RawMilkIntakePage() {
               <span className="text-sm font-light">{form.truck}</span>
             </div>
             <div className="flex items-center gap-2 flex-wrap">
-              {form.details.map((detail: any, idx: number) => (
+              {(form.details ?? []).map((detail: any, idx: number) => (
                 <Badge key={idx} variant="outline" className="text-[10px] font-normal">
                   Comp #{detail.truck_compartment_number}
                 </Badge>
@@ -238,9 +240,24 @@ export default function RawMilkIntakePage() {
       header: "Operator",
       cell: ({ row }: any) => {
         const form = row.original
-        const operatorId = form.operator
-        const operatorUser = users.find((user: any) => user.id === operatorId)
+        // New API returns operator as { first_name, last_name }
+        const operatorName = typeof form.operator === "string"
+          ? null  // legacy: try to look up by ID
+          : `${form.operator?.first_name ?? ""} ${form.operator?.last_name ?? ""}`.trim()
 
+        if (operatorName) {
+          return (
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-medium text-xs">
+                {operatorName.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase()}
+              </div>
+              <span className="text-sm font-light">{operatorName}</span>
+            </div>
+          )
+        }
+
+        // Legacy: look up by ID
+        const operatorUser = users.find((user: any) => user.id === form.operator)
         if (operatorUser) {
           return (
             <UserAvatar
@@ -253,7 +270,6 @@ export default function RawMilkIntakePage() {
           )
         }
 
-        // Show unknown operator when no user match found
         return (
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
@@ -261,7 +277,6 @@ export default function RawMilkIntakePage() {
             </div>
             <div>
               <div className="text-sm font-light text-gray-400">Unknown Operator</div>
-              <div className="text-xs text-gray-500">No user data</div>
             </div>
           </div>
         )
@@ -272,14 +287,13 @@ export default function RawMilkIntakePage() {
       header: "Destination Silos",
       cell: ({ row }: any) => {
         const form = row.original
-        const uniqueSilos = [...new Set(form.details.map((d: any) => d.silo_name))] as string[]
+        const uniqueSilos = [...new Set((form.details ?? []).map((d: any) => d.silo_name))] as string[]
 
         return (
           <div className="space-y-2">
             {uniqueSilos.map((siloName, idx: number) => {
-              const silo = getSiloByName(siloName)
-              const detailsForSilo = form.details.filter((d: any) => d.silo_name === siloName)
-              const totalForSilo = detailsForSilo.reduce((sum: number, d: any) => sum + d.quantity, 0)
+              const detailsForSilo = (form.details ?? []).filter((d: any) => d.silo_name === siloName)
+              const totalForSilo = detailsForSilo.reduce((s: number, d: any) => s + (getDetailQuantity(d) ?? 0), 0)
 
               return (
                 <div key={idx} className="flex items-center space-x-2">
@@ -288,7 +302,9 @@ export default function RawMilkIntakePage() {
                   </div>
                   <div>
                     <p className="text-sm font-light">{siloName}</p>
-                    <p className="text-xs text-gray-500">{totalForSilo.toFixed(2)}L</p>
+                    <p className="text-xs text-gray-500">
+                      {totalForSilo > 0 ? `${totalForSilo.toFixed(0)}L` : '—'}
+                    </p>
                   </div>
                 </div>
               )
@@ -299,41 +315,45 @@ export default function RawMilkIntakePage() {
     },
     {
       accessorKey: "status",
-      header: "Status",
+      header: "Flow Meter",
       cell: ({ row }: any) => {
         const form = row.original
-        const statuses = [...new Set(form.details.map((d: any) => d.status))] as string[]
+        const details = form.details ?? []
+        const allHaveEnd = details.length > 0 && details.every((d: any) => d.flow_meter_end != null)
+        const anyHaveStart = details.some((d: any) => d.flow_meter_start != null)
 
         return (
           <div className="flex flex-col gap-1">
-            {statuses.map((status, idx: number) => (
-              <Badge
-                key={idx}
-                className={
-                  status === "final" ? "bg-green-100 text-green-800" :
-                    status === "pending" ? "bg-yellow-100 text-yellow-800" :
-                      "bg-gray-100 text-gray-800"
-                }
-              >
-                {status}
-              </Badge>
-            ))}
+            {details.length === 0 ? (
+              <Badge className="bg-gray-100 text-gray-500">No details</Badge>
+            ) : allHaveEnd ? (
+              <Badge className="bg-green-100 text-green-800">Complete</Badge>
+            ) : anyHaveStart ? (
+              <Badge className="bg-yellow-100 text-yellow-800">In Progress</Badge>
+            ) : (
+              <Badge className="bg-gray-100 text-gray-600">Pending</Badge>
+            )}
           </div>
         )
       },
     },
     {
       accessorKey: "created_at",
-      header: "Created",
+      header: "Tag / Date",
       cell: ({ row }: any) => {
         const form = row.original
+        // Parse date from tag format RMI-N-DD-M-YYYY
+        const tagParts = (form.tag ?? "").split("-")
+        const tagDate = tagParts.length >= 5
+          ? `${tagParts[2]}/${tagParts[3]}/${tagParts[4]}`
+          : null
         return (
           <div className="space-y-1">
-            <p className="text-sm font-light">
-              {form.created_at ? new Date(form.created_at).toLocaleDateString() : 'N/A'}
-            </p>
+            <p className="text-sm font-medium text-blue-600">{form.tag ?? '—'}</p>
             <p className="text-xs text-gray-500">
-              {form.updated_at ? `Updated: ${new Date(form.updated_at).toLocaleDateString()}` : 'Never updated'}
+              {form.created_at
+                ? new Date(form.created_at).toLocaleDateString()
+                : tagDate ?? '—'}
             </p>
           </div>
         )
@@ -490,16 +510,20 @@ export default function RawMilkIntakePage() {
                     </div>
                     <div className="space-y-2">
                       {(() => {
+                        if (typeof latestForm.operator !== "string") {
+                          const name = `${(latestForm.operator as any).first_name ?? ""} ${(latestForm.operator as any).last_name ?? ""}`.trim()
+                          return (
+                            <div className="flex items-center gap-2">
+                              <div className="w-8 h-8 rounded-full bg-blue-200 flex items-center justify-center text-blue-800 text-xs font-medium">
+                                {name.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase()}
+                              </div>
+                              <span className="text-sm font-medium">{name}</span>
+                            </div>
+                          )
+                        }
                         const operatorUser = users.find((user: any) => user.id === latestForm.operator)
-
                         return operatorUser ? (
-                          <UserAvatar
-                            user={operatorUser}
-                            size="md"
-                            showName={true}
-                            showEmail={true}
-                            showDropdown={true}
-                          />
+                          <UserAvatar user={operatorUser} size="md" showName={true} showEmail={true} showDropdown={true} />
                         ) : (
                           <div className="text-xs text-gray-400">Unknown operator</div>
                         )
@@ -517,10 +541,12 @@ export default function RawMilkIntakePage() {
                     <h4 className="text-sm font-light text-gray-900">Compartments</h4>
                   </div>
                   <div className="space-y-2">
-                    {latestForm.details.map((detail, idx) => (
+                    {(latestForm.details ?? []).map((detail, idx) => (
                       <div key={idx} className="flex items-center justify-between">
                         <span className="text-xs text-gray-600">Comp #{detail.truck_compartment_number}</span>
-                        <span className="text-xs font-light">{detail.quantity}L → {detail.silo_name}</span>
+                        <span className="text-xs font-light">
+                          {(() => { const q = getDetailQuantity(detail); return q != null ? `${q.toFixed(0)}L` : '—' })()} → {detail.silo_name}
+                        </span>
                       </div>
                     ))}
                   </div>

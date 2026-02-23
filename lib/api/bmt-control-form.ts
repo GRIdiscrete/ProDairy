@@ -1,61 +1,124 @@
 import { apiRequest } from "@/lib/utils/api-request"
 
-export interface BMTControlFormSilo {
+// ── Silo detail shapes returned by the API ───────────────────────────────────
+
+export interface BMTSiloDetail {
   id: string
-  name: string
-  product: string
+  silo_name: string
+  volume: number | null
   created_at: string
   updated_at: string | null
-  flow_meter_end: string | null
   flow_meter_start: string | null
-  bmt_control_form_id: string
-  flow_meter_end_reading: number | null
   flow_meter_start_reading: number | null
-  source_silo_quantity_requested: number | null
+  flow_meter_end: string | null
+  flow_meter_end_reading: number | null
+  source_destination_id: string | null
 }
+
+export interface BMTSourceDestinationPair {
+  id: string
+  created_at: string
+  updated_at: string | null
+  bmt_control_form_2_id: string
+  source_silo_details: BMTSiloDetail
+  destination_silo_details: BMTSiloDetail | null
+}
+
+// ── Main record shape ─────────────────────────────────────────────────────────
 
 export interface BMTControlForm {
   id: string
   created_at: string
-  flow_meter_start: string | null
-  flow_meter_start_reading: number | null
-  flow_meter_end: string | null
-  flow_meter_end_reading: number | null
-  source_silo_id: string[] | null
-  movement_start: string | null
-  movement_end: string | null
-  destination_silo_id: string | null
-  volume: number | null
-  llm_operator_id: string | null
-  llm_signature: string | null
+  updated_at: string | null
+  tag: string | null
+  status: string | null
+  product: string
+  updated_by: string | null
+  source_destination: string | null
+
+  dispatch_operator_id: string | null
+  dispatch_operator_signature: string | null
   dpp_operator_id: string | null
   dpp_signature: string | null
-  product: string // Accept any string for product (e.g., "Raw milk")
-  updated_at?: string | null
-  dispatch_operator_id?: string | null
-  dispatch_operator_signature?: string | null
-  tag?: string | null
-  received_bottles?: number | null
+  llm_operator_id: string | null
+  llm_signature: string | null
+
+  source_destination_details: BMTSourceDestinationPair[] | null
+
+  // legacy fields kept to avoid breaking the existing table / view components
+  movement_start?: string | null
+  movement_end?: string | null
+  flow_meter_start?: string | null
+  flow_meter_start_reading?: number | null
+  flow_meter_end?: string | null
+  flow_meter_end_reading?: number | null
+  source_silo_id?: string[] | null
+  destination_silo_id?: string | null
+  volume?: number | null
+  llm_operator_id_legacy?: string | null
+  llm_signature_legacy?: string | null
   receiver_operator_id?: string | null
   receiver_operator_signature?: string | null
-  status?: string | null
-  destination_silo?: BMTControlFormSilo | null
-  bmt_control_form_source_silo?: BMTControlFormSilo[] | null
+}
+
+// ── POST payload ──────────────────────────────────────────────────────────────
+
+export interface CreateSiloDetailRequest {
+  silo_name: string
+  /** Optional on POST – user may omit to let backend auto-generate */
+  flow_meter_end?: string | null
+  flow_meter_end_reading?: number | null
+}
+
+export interface CreateSourceDestinationPairRequest {
+  source_silo_details: CreateSiloDetailRequest
+  destination_silo_details?: CreateSiloDetailRequest
 }
 
 export interface CreateBMTControlFormRequest {
-
-  source_silo_id: string[]
-  movement_start: string
-  movement_end: string
-  destination_silo_id: string
-  volume: number
-  llm_operator_id: string
-  llm_signature: string
+  dispatch_operator_id: string
+  dispatch_operator_signature: string
   dpp_operator_id: string
   dpp_signature: string
-  product: "Raw Milk" | "Skim Milk" | "Standardized Milk" | "Pasteurized Milk"
+  llm_operator_id: string
+  llm_signature: string
+  product: string
+  /** Optional on POST */
+  source_destination_details?: CreateSourceDestinationPairRequest[]
 }
+
+// ── PATCH payload ─────────────────────────────────────────────────────────────
+
+export interface PatchSiloDetailRequest {
+  id: string
+  silo_name: string
+  flow_meter_start?: string | null
+  flow_meter_start_reading?: number | null
+  flow_meter_end?: string | null
+  flow_meter_end_reading?: number | null
+  volume?: number | null
+}
+
+export interface PatchSourceDestinationPairRequest {
+  id: string
+  source_silo_details: PatchSiloDetailRequest
+  destination_silo_details?: PatchSiloDetailRequest
+}
+
+export interface UpdateBMTControlFormRequest {
+  id: string
+  dispatch_operator_id: string
+  dispatch_operator_signature: string
+  dpp_operator_id: string
+  dpp_signature: string
+  llm_operator_id: string
+  llm_signature: string
+  product: string
+  /** Mandatory on PATCH */
+  source_destination_details: PatchSourceDestinationPairRequest[]
+}
+
+// ── Response wrappers ─────────────────────────────────────────────────────────
 
 export interface BMTControlFormResponse {
   statusCode: number
@@ -69,15 +132,16 @@ export interface BMTControlFormsResponse {
   data: BMTControlForm[]
 }
 
+// ── API client ────────────────────────────────────────────────────────────────
+
+const BASE = "/bmt-control-form-2"
+
 export const bmtControlFormApi = {
-  // Get all BMT control forms
   getAll: async (): Promise<BMTControlForm[]> => {
     try {
-      const response = await apiRequest<BMTControlFormsResponse>("/bmt-control-form", {
+      const response = await apiRequest<BMTControlFormsResponse>(BASE, {
         method: "GET",
-        headers: {
-          accept: "application/json",
-        },
+        headers: { accept: "application/json" },
       })
       return response.data || []
     } catch (error) {
@@ -86,14 +150,11 @@ export const bmtControlFormApi = {
     }
   },
 
-  // Get single BMT control form by ID
   getById: async (id: string): Promise<BMTControlForm> => {
     try {
-      const response = await apiRequest<BMTControlFormResponse>(`/bmt-control-form/${id}`, {
+      const response = await apiRequest<BMTControlFormResponse>(`${BASE}/${id}`, {
         method: "GET",
-        headers: {
-          accept: "application/json",
-        },
+        headers: { accept: "application/json" },
       })
       return response.data
     } catch (error) {
@@ -102,15 +163,11 @@ export const bmtControlFormApi = {
     }
   },
 
-  // Create new BMT control form
   create: async (formData: CreateBMTControlFormRequest): Promise<BMTControlFormResponse> => {
     try {
-      const response = await apiRequest<BMTControlFormResponse>("/bmt-control-form", {
+      const response = await apiRequest<BMTControlFormResponse>(BASE, {
         method: "POST",
-        headers: {
-          accept: "application/json",
-          "Content-Type": "application/json",
-        },
+        headers: { accept: "application/json", "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       })
       return response
@@ -120,37 +177,26 @@ export const bmtControlFormApi = {
     }
   },
 
-  // Update BMT control form
-  update: async (id: string, formData: Partial<CreateBMTControlFormRequest>): Promise<BMTControlFormResponse> => {
+  update: async (formData: UpdateBMTControlFormRequest): Promise<BMTControlFormResponse> => {
     try {
-      const requestBody = { id, ...formData }
-      
-      // Debug: Log the final request body
-      console.log('API Request Body:', JSON.stringify(requestBody, null, 2))
-      
-      const response = await apiRequest<BMTControlFormResponse>("/bmt-control-form", {
+      console.log("BMT API PATCH body:", JSON.stringify(formData, null, 2))
+      const response = await apiRequest<BMTControlFormResponse>(BASE, {
         method: "PATCH",
-        headers: {
-          accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(requestBody),
+        headers: { accept: "application/json", "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
       })
       return response
     } catch (error) {
-      console.error(`Error updating BMT control form ${id}:`, error)
+      console.error("Error updating BMT control form:", error)
       throw error
     }
   },
 
-  // Delete BMT control form
   delete: async (id: string): Promise<void> => {
     try {
-      await apiRequest(`/bmt-control-form/${id}`, {
+      await apiRequest(`${BASE}/${id}`, {
         method: "DELETE",
-        headers: {
-          accept: "application/json",
-        },
+        headers: { accept: "application/json" },
       })
     } catch (error) {
       console.error(`Error deleting BMT control form ${id}:`, error)

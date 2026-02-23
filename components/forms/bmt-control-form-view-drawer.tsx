@@ -151,28 +151,56 @@ export function BMTControlFormViewDrawer({ open, onClose, form, onEdit }: BMTCon
     }
   }
 
-  // Helper: get all source silos from form.bmt_control_form_source_silo
-  const getSourceSilos = () => {
+  // Helper: get transfer pairs from new or legacy API structure
+  const getTransferPairs = (): Array<{ source: any; destination: any | null }> => {
     if (!form) return [];
-    if (Array.isArray((form as any).bmt_control_form_source_silo)) {
-      return (form as any).bmt_control_form_source_silo;
-    }
-    return [];
-  };
 
-  // Helper: get destination silo from form.destination_silo
-  const getDestinationSilo = () => {
-    if (!form) return null;
-    if ((form as any).destination_silo) {
-      return (form as any).destination_silo;
+    // New API: source_destination_details array
+    if (Array.isArray(form.source_destination_details) && form.source_destination_details.length > 0) {
+      return form.source_destination_details.map((pair) => ({
+        source: pair.source_silo_details
+          ? {
+            name: pair.source_silo_details.silo_name,
+            flow_meter_start: pair.source_silo_details.flow_meter_start,
+            flow_meter_start_reading: pair.source_silo_details.flow_meter_start_reading,
+            flow_meter_end: pair.source_silo_details.flow_meter_end,
+            flow_meter_end_reading: pair.source_silo_details.flow_meter_end_reading,
+            source_silo_quantity_requested: null,
+            product: form.product,
+          }
+          : null,
+        destination: pair.destination_silo_details
+          ? {
+            name: pair.destination_silo_details.silo_name,
+            flow_meter_start: pair.destination_silo_details.flow_meter_start,
+            flow_meter_start_reading: pair.destination_silo_details.flow_meter_start_reading,
+            flow_meter_end: pair.destination_silo_details.flow_meter_end,
+            flow_meter_end_reading: pair.destination_silo_details.flow_meter_end_reading,
+            quantity_received: null,
+            product: form.product,
+          }
+          : null,
+      }));
     }
-    return null;
+
+    // Legacy API fallback: bmt_control_form_source_silo + bmt_control_form_destination_silo
+    if (Array.isArray((form as any).bmt_control_form_source_silo)) {
+      const srcSilos = (form as any).bmt_control_form_source_silo as any[];
+      const dstSilos: any[] = Array.isArray((form as any).bmt_control_form_destination_silo)
+        ? (form as any).bmt_control_form_destination_silo
+        : [];
+      return srcSilos.map((src, idx) => ({
+        source: src,
+        destination: dstSilos[idx] || dstSilos[0] || null,
+      }));
+    }
+
+    return [];
   };
 
   if (!form) return null;
 
-  const sourceSilos = getSourceSilos();
-  const destinationSiloObj = getDestinationSilo();
+  const transferPairs = getTransferPairs();
 
   const dispatchUser = getUserById((form as any).dispatch_operator_id || form.llm_operator_id)
   const receiverUser = getUserById((form as any).receiver_operator_id || form.dpp_operator_id)
@@ -369,96 +397,92 @@ export function BMTControlFormViewDrawer({ open, onClose, form, onEdit }: BMTCon
             </div>
 
             <div className="space-y-4">
-              {sourceSilos.length > 0 ? (
-                sourceSilos.map((source: any, idx: number) => {
-                  const dest = (form as any).bmt_control_form_destination_silo?.[idx] || (form as any).bmt_control_form_destination_silo?.[0]
+              {transferPairs.length > 0 ? (
+                transferPairs.map(({ source, destination }, idx) => (
+                  <div key={idx} className="border border-gray-200 rounded-xl bg-white shadow-sm overflow-hidden">
+                    <div className="bg-gray-50/50 p-3 border-b flex items-center justify-between">
+                      <span className="text-sm font-medium text-gray-700">Pair #{idx + 1}</span>
+                      <Badge variant="outline" className="bg-white font-normal text-xs">
+                        {source?.product || form.product}
+                      </Badge>
+                    </div>
 
-                  return (
-                    <div key={idx} className="border border-gray-200 rounded-xl bg-white shadow-sm overflow-hidden">
-                      <div className="bg-gray-50/50 p-3 border-b flex items-center justify-between">
-                        <span className="text-sm font-medium text-gray-700">Pair #{idx + 1}</span>
-                        <Badge variant="outline" className="bg-white font-normal text-xs">
-                          {source.product || form.product}
-                        </Badge>
-                      </div>
-
-                      <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-6 relative">
-                        {/* Source Silo Column */}
-                        <div className="space-y-3">
-                          <div className="flex items-center gap-2 mb-1">
-                            <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
-                              <span className="text-[10px] font-bold text-blue-600">S</span>
-                            </div>
-                            <span className="text-xs font-bold uppercase text-gray-500 tracking-wider">Source</span>
+                    <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-6 relative">
+                      {/* Source Silo Column */}
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2 mb-1">
+                          <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
+                            <span className="text-[10px] font-bold text-blue-600">S</span>
                           </div>
-                          <div className="space-y-2 pl-8">
-                            <div className="flex justify-between items-center">
-                              <p className="text-sm font-medium text-gray-900">{source.name}</p>
+                          <span className="text-xs font-bold uppercase text-gray-500 tracking-wider">Source</span>
+                        </div>
+                        <div className="space-y-2 pl-8">
+                          <p className="text-sm font-medium text-gray-900">{source?.name ?? 'N/A'}</p>
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-0.5">
+                              <p className="text-[10px] text-gray-400 font-medium">START READING</p>
+                              <p className="text-sm font-light text-blue-600">{source?.flow_meter_start_reading ?? '—'} L</p>
+                              <p className="text-[10px] text-gray-400">{formatTimeOnly(source?.flow_meter_start)}</p>
                             </div>
-                            <div className="grid grid-cols-2 gap-4">
-                              <div className="space-y-0.5">
-                                <p className="text-[10px] text-gray-400 font-medium">START READING</p>
-                                <p className="text-sm font-light text-blue-600">{source.flow_meter_start_reading || '0'} L</p>
-                                <p className="text-[10px] text-gray-400">{formatTimeOnly(source.flow_meter_start)}</p>
-                              </div>
-                              <div className="space-y-0.5">
-                                <p className="text-[10px] text-gray-400 font-medium">END READING</p>
-                                <p className="text-sm font-light text-blue-600">{source.flow_meter_end_reading || '0'} L</p>
-                                <p className="text-[10px] text-gray-400">{formatTimeOnly(source.flow_meter_end)}</p>
-                              </div>
+                            <div className="space-y-0.5">
+                              <p className="text-[10px] text-gray-400 font-medium">END READING</p>
+                              <p className="text-sm font-light text-blue-600">{source?.flow_meter_end_reading ?? '—'} L</p>
+                              <p className="text-[10px] text-gray-400">{formatTimeOnly(source?.flow_meter_end)}</p>
                             </div>
+                          </div>
+                          {source?.source_silo_quantity_requested != null && (
                             <div className="pt-1">
                               <p className="text-[10px] text-gray-400 font-medium uppercase">Requested Volume</p>
-                              <p className="text-sm font-medium text-gray-700">{source.source_silo_quantity_requested || '0'} L</p>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Visual Connector Arrow (Desktop only) */}
-                        <div className="hidden md:flex absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-gray-50 border border-gray-200 items-center justify-center z-10 shadow-sm">
-                          <ArrowRight className="w-4 h-4 text-gray-400" />
-                        </div>
-
-                        {/* Destination Silo Column */}
-                        <div className="space-y-3">
-                          <div className="flex items-center gap-2 mb-1">
-                            <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center">
-                              <span className="text-[10px] font-bold text-green-600">D</span>
-                            </div>
-                            <span className="text-xs font-bold uppercase text-gray-500 tracking-wider">Destination</span>
-                          </div>
-                          {dest ? (
-                            <div className="space-y-2 pl-8">
-                              <div className="flex justify-between items-center">
-                                <p className="text-sm font-medium text-gray-900">{dest.name}</p>
-                              </div>
-                              <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-0.5">
-                                  <p className="text-[10px] text-gray-400 font-medium">START READING</p>
-                                  <p className="text-sm font-light text-green-600">{dest.flow_meter_start_reading || '0'} L</p>
-                                  <p className="text-[10px] text-gray-400">{formatTimeOnly(dest.flow_meter_start)}</p>
-                                </div>
-                                <div className="space-y-0.5">
-                                  <p className="text-[10px] text-gray-400 font-medium">END READING</p>
-                                  <p className="text-sm font-light text-green-600">{dest.flow_meter_end_reading || '0'} L</p>
-                                  <p className="text-[10px] text-gray-400">{formatTimeOnly(dest.flow_meter_end)}</p>
-                                </div>
-                              </div>
-                              <div className="pt-1">
-                                <p className="text-[10px] text-gray-400 font-medium uppercase">Quantity Received</p>
-                                <p className="text-sm font-medium text-gray-700">{dest.quantity_received || '0'} L</p>
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="pl-8 flex items-center h-full">
-                              <p className="text-sm italic text-gray-400 font-light">No paired destination data</p>
+                              <p className="text-sm font-medium text-gray-700">{source.source_silo_quantity_requested} L</p>
                             </div>
                           )}
                         </div>
                       </div>
+
+                      {/* Visual Connector Arrow (Desktop only) */}
+                      <div className="hidden md:flex absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-gray-50 border border-gray-200 items-center justify-center z-10 shadow-sm">
+                        <ArrowRight className="w-4 h-4 text-gray-400" />
+                      </div>
+
+                      {/* Destination Silo Column */}
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2 mb-1">
+                          <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center">
+                            <span className="text-[10px] font-bold text-green-600">D</span>
+                          </div>
+                          <span className="text-xs font-bold uppercase text-gray-500 tracking-wider">Destination</span>
+                        </div>
+                        {destination ? (
+                          <div className="space-y-2 pl-8">
+                            <p className="text-sm font-medium text-gray-900">{destination.name}</p>
+                            <div className="grid grid-cols-2 gap-4">
+                              <div className="space-y-0.5">
+                                <p className="text-[10px] text-gray-400 font-medium">START READING</p>
+                                <p className="text-sm font-light text-green-600">{destination.flow_meter_start_reading ?? '—'} L</p>
+                                <p className="text-[10px] text-gray-400">{formatTimeOnly(destination.flow_meter_start)}</p>
+                              </div>
+                              <div className="space-y-0.5">
+                                <p className="text-[10px] text-gray-400 font-medium">END READING</p>
+                                <p className="text-sm font-light text-green-600">{destination.flow_meter_end_reading ?? '—'} L</p>
+                                <p className="text-[10px] text-gray-400">{formatTimeOnly(destination.flow_meter_end)}</p>
+                              </div>
+                            </div>
+                            {destination.quantity_received != null && (
+                              <div className="pt-1">
+                                <p className="text-[10px] text-gray-400 font-medium uppercase">Quantity Received</p>
+                                <p className="text-sm font-medium text-gray-700">{destination.quantity_received} L</p>
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="pl-8 flex items-center h-full">
+                            <p className="text-sm italic text-gray-400 font-light">No paired destination data</p>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  )
-                })
+                  </div>
+                ))
               ) : (
                 <div className="text-center p-8 border-2 border-dashed border-gray-200 rounded-xl bg-gray-50/30">
                   <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-3">
