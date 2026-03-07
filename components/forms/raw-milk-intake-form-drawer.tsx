@@ -31,6 +31,7 @@ import type { RawMilkIntakeForm, TruckCompartment } from "@/lib/api/raw-milk-int
 // ── Schemas ───────────────────────────────────────────────────────────────────
 
 const detailSchema = yup.object({
+  id: yup.string().nullable().optional(),
   truck_compartment_number: yup.number().required("Compartment number is required"),
   silo_name: yup.string().required("Destination silo is required"),
   flow_meter_start_reading: yup.number().nullable().optional(),
@@ -92,7 +93,7 @@ function CompartmentInfoCard({ compartment }: { compartment: TruckCompartment })
     <div className="border border-blue-100 bg-blue-50 rounded-lg p-3 text-xs">
       <div className="flex items-center justify-between">
         <span className="font-medium text-blue-800">
-          Compartment #{compartment.truck_compartment_number} — {compartment.total_compartment_volume.toLocaleString()}L
+          Compartment #{compartment?.truck_compartment_number} — {compartment?.total_compartment_volume?.toLocaleString()}L
         </span>
         <button type="button" onClick={() => setExpanded(!expanded)} className="text-blue-600">
           {expanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
@@ -168,6 +169,7 @@ export function RawMilkIntakeFormDrawer({
       // Populate edit form from existing record
       editForm.reset({
         details: (form.details ?? []).map((d) => ({
+          id: d.id ?? null,
           truck_compartment_number: d.truck_compartment_number,
           silo_name: d.silo_name,
           flow_meter_start_reading: d.flow_meter_start_reading ?? null,
@@ -221,6 +223,7 @@ export function RawMilkIntakeFormDrawer({
           : `${(form.operator as any).first_name}`,
         truck: form.truck,
         details: data.details.map((d) => ({
+          ...(d.id ? { id: d.id } : {}),
           truck_compartment_number: d.truck_compartment_number,
           silo_name: d.silo_name,
           flow_meter_start_reading: d.flow_meter_start_reading ?? undefined,

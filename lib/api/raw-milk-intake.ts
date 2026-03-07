@@ -78,6 +78,7 @@ export type TruckPendingIntake = TruckCompartment
 // ── Request types ─────────────────────────────────────────────────────────────
 
 export interface CreateDetailRequest {
+  id?: string
   truck_compartment_number: number
   silo_name: string
   flow_meter_start_reading?: number | null
