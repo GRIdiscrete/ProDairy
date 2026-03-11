@@ -35,8 +35,6 @@ const detailSchema = yup.object({
   truck_compartment_number: yup.number().required("Compartment number is required"),
   silo_name: yup.string().required("Destination silo is required"),
   flow_meter_start_reading: yup.number().nullable().optional(),
-  flow_meter_end_reading: yup.number().nullable().optional(),
-  quantity: yup.number().nullable().optional(),
 })
 
 const createSchema = yup.object({
@@ -173,8 +171,6 @@ export function RawMilkIntakeFormDrawer({
           truck_compartment_number: d.truck_compartment_number,
           silo_name: d.silo_name,
           flow_meter_start_reading: d.flow_meter_start_reading ?? null,
-          flow_meter_end_reading: d.flow_meter_end_reading ?? null,
-          quantity: d.quantity ?? null,
         })),
       })
     }
@@ -201,8 +197,6 @@ export function RawMilkIntakeFormDrawer({
           truck_compartment_number: d.truck_compartment_number,
           silo_name: d.silo_name,
           flow_meter_start_reading: d.flow_meter_start_reading ?? undefined,
-          flow_meter_end_reading: d.flow_meter_end_reading ?? undefined,
-          quantity: d.quantity ?? undefined,
         })),
       })).unwrap()
       toast.success("Intake form created successfully")
@@ -227,8 +221,6 @@ export function RawMilkIntakeFormDrawer({
           truck_compartment_number: d.truck_compartment_number,
           silo_name: d.silo_name,
           flow_meter_start_reading: d.flow_meter_start_reading ?? undefined,
-          flow_meter_end_reading: d.flow_meter_end_reading ?? undefined,
-          quantity: d.quantity ?? undefined,
         })),
       })).unwrap()
       toast.success("Intake form updated successfully")
@@ -255,8 +247,6 @@ export function RawMilkIntakeFormDrawer({
       truck_compartment_number: comp.truck_compartment_number,
       silo_name: "",
       flow_meter_start_reading: null,
-      flow_meter_end_reading: null,
-      quantity: null,
     })
   }
 
@@ -305,55 +295,17 @@ export function RawMilkIntakeFormDrawer({
         )}
       </div>
 
-      {/* Flow meter readings */}
-      <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-1">
-          <Label className="text-xs">Start Reading <span className="text-gray-400">(optional)</span></Label>
-          <Controller
-            name={`${namePrefix}.${idx}.flow_meter_start_reading` as any}
-            control={formObj.control}
-            render={({ field }) => (
-              <Input
-                type="number"
-                step="0.01"
-                placeholder="e.g. 6493"
-                className="rounded-full text-sm"
-                value={field.value ?? ""}
-                onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : null)}
-              />
-            )}
-          />
-        </div>
-        <div className="space-y-1">
-          <Label className="text-xs">End Reading <span className="text-gray-400">(optional)</span></Label>
-          <Controller
-            name={`${namePrefix}.${idx}.flow_meter_end_reading` as any}
-            control={formObj.control}
-            render={({ field }) => (
-              <Input
-                type="number"
-                step="0.01"
-                placeholder="e.g. 7550"
-                className="rounded-full text-sm"
-                value={field.value ?? ""}
-                onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : null)}
-              />
-            )}
-          />
-        </div>
-      </div>
-
-      {/* Quantity */}
+      {/* Flow meter start reading */}
       <div className="space-y-1">
-        <Label className="text-xs">Quantity (L) <span className="text-gray-400">(optional)</span></Label>
+        <Label className="text-xs">Start Reading <span className="text-gray-400">(optional)</span></Label>
         <Controller
-          name={`${namePrefix}.${idx}.quantity` as any}
+          name={`${namePrefix}.${idx}.flow_meter_start_reading` as any}
           control={formObj.control}
           render={({ field }) => (
             <Input
               type="number"
-              step="0.1"
-              placeholder="e.g. 1000"
+              step="0.01"
+              placeholder="e.g. 6493"
               className="rounded-full text-sm"
               value={field.value ?? ""}
               onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : null)}
