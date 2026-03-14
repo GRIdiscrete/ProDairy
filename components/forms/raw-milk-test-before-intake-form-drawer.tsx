@@ -1,701 +1,706 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { useForm, Controller } from "react-hook-form"
+import { useEffect, useMemo, useRef, useState } from "react"
+import { useForm, Controller, useFieldArray } from "react-hook-form"
 import { yupResolver } from "@hookform/resolvers/yup"
 import * as yup from "yup"
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
-import { SearchableSelect } from "@/components/ui/searchable-select"
-import { DatePicker } from "@/components/ui/date-picker"
-import { SignatureModal } from "@/components/ui/signature-modal"
 import { Checkbox } from "@/components/ui/checkbox"
-import {
-    Plus,
-    Truck,
-    Save,
-    Beaker,
-    User,
-    FlaskConical,
-    ClipboardList,
-    Calendar,
-    Clock,
-    CheckCircle2
-} from "lucide-react"
+import { Textarea } from "@/components/ui/textarea"
+import { Separator } from "@/components/ui/separator"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { DatePicker } from "@/components/ui/date-picker"
+import { SearchableSelect, SearchableSelectOption } from "@/components/ui/searchable-select"
+import { SignatureModal } from "@/components/ui/signature-modal"
 import { useAppDispatch, useAppSelector } from "@/lib/store"
 import {
     createResultSlip,
-    updateResultSlip
+    updateResultSlip,
+    fetchUntestedCompartments,
 } from "@/lib/store/slices/rawMilkTestBeforeIntakeSlice"
-import { fetchCollectionVouchers } from "@/lib/store/slices/collectionVoucherSlice"
-import { fetchTankers } from "@/lib/store/slices/tankerSlice"
-import { fetchUsers } from "@/lib/store/slices/usersSlice"
-import { RawMilkResultSlipBeforeIntake } from "@/lib/types"
-import { toast } from "sonner"
-import { normalizeDataUrlToBase64, base64ToPngDataUrl } from "@/lib/utils/signature"
-import { SignatureViewer } from "@/components/ui/signature-viewer"
+import { usersApi } from "@/lib/api/users"
 import { rolesApi } from "@/lib/api/roles"
-import { UserRole, UserRoleResponse } from "@/lib/types/roles"
+import { toast } from "sonner"
+import { base64ToPngDataUrl, normalizeDataUrlToBase64 } from "@/lib/utils/signature"
+import { FlaskConical, Truck, User, Calendar, Clock } from "lucide-react"
+import type { RawMilkResultSlipBeforeIntake, UntestedCompartment, UntestedCompartmentSupplier } from "@/lib/types"
 
-// Validation Schema
-const rawMilkTestBeforeIntakeSchema = yup.object({
-    voucher_id: yup.string().required("Collection voucher is required"),
-    truck_compartment_number: yup.number().required("Compartment number is required").min(1, "Must be at least 1"),
+// ─── Schema ─────────────────────────────────────────────────────────────────
+
+const labTestEntrySchema = yup.object({
+    id: yup.string().optional(),
+    truck_compartment_number: yup.number().required(),
+    temperature: yup.number().nullable(),
+    time: yup.string().nullable(),
+    ot: yup.string().nullable(),
+    cob: yup.boolean().nullable(),
+    alcohol: yup.number().nullable(),
+    titratable_acidity: yup.number().nullable(),
+    ph: yup.number().nullable(),
+    resazurin: yup.string().nullable(),
+    fat: yup.number().nullable(),
+    protein: yup.number().nullable(),
+    lr_snf: yup.string().nullable(),
+    total_solids: yup.number().nullable(),
+    fpd: yup.number().nullable(),
+    scc: yup.number().nullable(),
+    density: yup.number().nullable(),
+    antibiotics: yup.boolean().nullable(),
+    starch: yup.boolean().nullable(),
+    remark: yup.string().nullable(),
+    pass: yup.boolean().default(false),
+})
+
+const schema = yup.object({
+    truck_number: yup.string().required("Truck is required"),
+    route: yup.string().nullable(),
+    tag: yup.string().nullable(),
     date: yup.string().required("Date is required"),
     time_in: yup.string().required("Time in is required"),
     time_out: yup.string().required("Time out is required"),
-    approved_by: yup.string().required("Approved by is required"),
+    analyst: yup.string().nullable(),
+    results_collected_by: yup.string().nullable(),
+    approved_by: yup.string().required("Approver role is required"),
     approver_signature: yup.string().required("Approver signature is required"),
-    analyst: yup.string().required("Analyst is required"),
-    results_collected_by: yup.string().required("Results collected by is required"),
-    tag: yup.string().required("Tag is required"),
-    lab_test: yup.object({
-        temperature: yup.number().nullable().transform((v) => (isNaN(v) ? null : v)),
-        time: yup.string().required("Lab test time is required"),
-        ot: yup.string().nullable().default("OK"),
-        cob: yup.boolean().nullable().default(false),
-        alcohol: yup.number().nullable().transform((v) => (isNaN(v) ? null : v)),
-        titratable_acidity: yup.number().nullable().transform((v) => (isNaN(v) ? null : v)),
-        ph: yup.number().nullable().transform((v) => (isNaN(v) ? null : v)),
-        resazurin: yup.string().nullable().default("OK"),
-        fat: yup.number().nullable().transform((v) => (isNaN(v) ? null : v)),
-        protein: yup.number().nullable().transform((v) => (isNaN(v) ? null : v)),
-        lr_snf: yup.string().nullable(),
-        total_solids: yup.number().nullable().transform((v) => (isNaN(v) ? null : v)),
-        fpd: yup.number().nullable().transform((v) => (isNaN(v) ? null : v)),
-        scc: yup.number().nullable().transform((v) => (isNaN(v) ? null : v)),
-        density: yup.number().nullable().transform((v) => (isNaN(v) ? null : v)),
-        antibiotics: yup.boolean().nullable().default(false),
-        starch: yup.boolean().nullable().default(false),
-        remark: yup.string().nullable(),
-        pass: yup.boolean().required("Pass result is required"),
-    })
+    lab_test: yup.array().of(labTestEntrySchema).min(1, "At least one compartment result required").required(),
 })
 
-type RawMilkTestBeforeIntakeFormData = yup.InferType<typeof rawMilkTestBeforeIntakeSchema>
+type LabTestEntry = yup.InferType<typeof labTestEntrySchema>
+type FormData = yup.InferType<typeof schema>
 
-interface RawMilkTestBeforeIntakeFormDrawerProps {
+// ─── Parameter Rows Definition ───────────────────────────────────────────────
+
+type ParamType = "number" | "text" | "time" | "checkbox" | "textarea"
+
+const PARAMETERS: { label: string; key: keyof LabTestEntry; type: ParamType; step?: string; placeholder?: string }[] = [
+    { label: "Temperature (°C)", key: "temperature", type: "number", step: "0.1" },
+    { label: "Time", key: "time", type: "time" },
+    { label: "OT", key: "ot", type: "text", placeholder: "OK" },
+    { label: "Clot On Boil", key: "cob", type: "checkbox" },
+    { label: "Alcohol (%)", key: "alcohol", type: "number", step: "0.01" },
+    { label: "Titratable Acidity", key: "titratable_acidity", type: "number", step: "0.01" },
+    { label: "pH", key: "ph", type: "number", step: "0.01" },
+    { label: "Resazurin", key: "resazurin", type: "text", placeholder: "OK" },
+    { label: "Fat (%)", key: "fat", type: "number", step: "0.01" },
+    { label: "Protein (%)", key: "protein", type: "number", step: "0.01" },
+    { label: "LR/SNF", key: "lr_snf", type: "text" },
+    { label: "Total Solids (%)", key: "total_solids", type: "number", step: "0.01" },
+    { label: "FPD", key: "fpd", type: "number", step: "0.0001" },
+    { label: "SCC", key: "scc", type: "number" },
+    { label: "Density", key: "density", type: "number", step: "0.001" },
+    { label: "Antibiotics", key: "antibiotics", type: "checkbox" },
+    { label: "Starch", key: "starch", type: "checkbox" },
+    { label: "Pass", key: "pass", type: "checkbox" },
+    { label: "Remark", key: "remark", type: "textarea" },
+]
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+const emptyLabEntry = (compartmentNumber: number): LabTestEntry => ({
+    truck_compartment_number: compartmentNumber,
+    temperature: null,
+    time: "",
+    ot: "",
+    cob: false,
+    alcohol: null,
+    titratable_acidity: null,
+    ph: null,
+    resazurin: "",
+    fat: null,
+    protein: null,
+    lr_snf: "",
+    total_solids: null,
+    fpd: null,
+    scc: null,
+    density: null,
+    antibiotics: false,
+    starch: false,
+    remark: "",
+    pass: false,
+})
+
+// ─── Props ───────────────────────────────────────────────────────────────────
+
+interface Props {
     open: boolean
     onOpenChange: (open: boolean) => void
-    form?: RawMilkResultSlipBeforeIntake | null
+    form: RawMilkResultSlipBeforeIntake | null
     mode: "create" | "edit"
+    onSuccess?: () => void
 }
 
-export function RawMilkTestBeforeIntakeFormDrawer({
-    open,
-    onOpenChange,
-    form,
-    mode = "create"
-}: RawMilkTestBeforeIntakeFormDrawerProps) {
+// ─── Component ───────────────────────────────────────────────────────────────
+
+export function RawMilkTestBeforeIntakeFormDrawer({ open, onOpenChange, form: existingSlip, mode, onSuccess }: Props) {
     const dispatch = useAppDispatch()
-    const { operationLoading } = useAppSelector((state) => state.rawMilkTestBeforeIntake)
-    const { collectionVouchers } = useAppSelector((state) => state.collectionVoucher)
-    const { items: tankers } = useAppSelector((state) => state.tankers)
-    const { items: users } = useAppSelector((state) => state.users)
-    const { user, profile } = useAppSelector((state) => state.auth)
+    const { untestedCompartments, operationLoading } = useAppSelector((s) => s.rawMilkTestBeforeIntake)
 
+    const [users, setUsers] = useState<SearchableSelectOption[]>([])
+    const [roles, setRoles] = useState<SearchableSelectOption[]>([])
+    const [loadingUsers, setLoadingUsers] = useState(false)
+    const [loadingRoles, setLoadingRoles] = useState(false)
     const [signatureOpen, setSignatureOpen] = useState(false)
-    const [signatureViewOpen, setSignatureViewOpen] = useState(false)
-    const [roles, setRoles] = useState<UserRoleResponse[]>([])
-    const [rolesLoading, setRolesLoading] = useState(false)
+    // Prevents the selectedTruck watcher from wiping edit-mode data on initial reset
+    const skipTruckEffect = useRef(false)
 
-    const formHook = useForm<RawMilkTestBeforeIntakeFormData>({
-        resolver: yupResolver(rawMilkTestBeforeIntakeSchema),
+    // ── Derive unique trucks ──────────────────────────────────────────────────
+    const uniqueTrucks = useMemo(() => {
+        const map = new Map<string, UntestedCompartment[]>()
+        untestedCompartments.forEach((c) => {
+            const existing = map.get(c.truck) || []
+            map.set(c.truck, [...existing, c])
+        })
+        return map
+    }, [untestedCompartments])
+
+    const truckOptions = useMemo(() => {
+        const options = Array.from(uniqueTrucks.keys()).map((t) => ({ value: t, label: t }))
+        
+        // In edit mode, if the current truck is not in the untested list, add it
+        if (mode === "edit" && existingSlip?.truck_number && !uniqueTrucks.has(existingSlip.truck_number)) {
+            options.push({ value: existingSlip.truck_number, label: existingSlip.truck_number })
+        }
+        
+        return options
+    }, [uniqueTrucks, mode, existingSlip?.truck_number])
+
+    // ── Form ─────────────────────────────────────────────────────────────────
+    const formHook = useForm<FormData>({
+        resolver: yupResolver(schema) as any,
         defaultValues: {
-            date: new Date().toISOString().split('T')[0],
-            time_in: "08:00:00",
-            time_out: "12:00:00",
-            lab_test: {
-                temperature: null as any,
-                ph: null as any,
-                density: null as any,
-                ot: "",
-                alcohol: null as any,
-                fat: null as any,
-                protein: null as any,
-                resazurin: "",
-                lr_snf: "",
-                total_solids: null as any,
-                fpd: null as any,
-                scc: null as any,
-                titratable_acidity: null as any,
-                time: new Date().toISOString(),
-                cob: false,
-                antibiotics: false,
-                starch: false,
-                pass: true,
-                remark: ""
-            }
+            truck_number: "",
+            route: "",
+            tag: "",
+            date: new Date().toISOString().split("T")[0],
+            time_in: "",
+            time_out: "",
+            analyst: "",
+            results_collected_by: "",
+            approved_by: "",
+            approver_signature: "",
+            lab_test: [],
         },
     })
 
-    const selectedVoucherId = formHook.watch("voucher_id")
-    const selectedVoucher = collectionVouchers.find(v => v.id === selectedVoucherId)
-    const associatedTanker = tankers.find((t: any) => t.reg_number === selectedVoucher?.truck_number)
-    const compartmentsCount = associatedTanker?.compartments || 0
+    const { fields, replace } = useFieldArray({
+        control: formHook.control,
+        name: "lab_test",
+    })
 
+    const selectedTruck = formHook.watch("truck_number")
+
+    // When truck changes, rebuild lab_test entries from compartments
     useEffect(() => {
-        if (open) {
-            dispatch(fetchCollectionVouchers({}))
-            dispatch(fetchTankers())
-            dispatch(fetchUsers({}))
+        if (!selectedTruck) return
 
-            const loadRoles = async () => {
-                try {
-                    setRolesLoading(true)
-                    const res = await rolesApi.getRoles()
-                    setRoles(res.data)
-                } catch (err) {
-                    toast.error("Failed to load roles")
-                } finally {
-                    setRolesLoading(false)
-                }
-            }
-            loadRoles()
+        // In edit mode, if we just loaded the original truck, skip the auto-replace
+        // so we don't wipe the results that came from the reset() call.
+        if (mode === "edit" && selectedTruck === existingSlip?.truck_number && fields.length > 0) {
+            return
         }
-    }, [open, dispatch])
 
+        // Handle the manual skip flag (for the very first reset call)
+        if (skipTruckEffect.current) {
+            skipTruckEffect.current = false
+            return
+        }
+
+        const compartments = uniqueTrucks.get(selectedTruck) || []
+
+        // Only replace if we actually found compartments for an untested truck.
+        // If we are in edit mode and the truck isn't in the untested list (common),
+        // we shouldn't wipe the existing fields.
+        if (compartments.length > 0) {
+            // Set route from first compartment
+            if (compartments[0]) formHook.setValue("route", compartments[0].route)
+            // Build new entries
+            replace(compartments.map((c) => emptyLabEntry(c.truck_compartment_number)))
+        }
+    }, [selectedTruck, uniqueTrucks, mode, existingSlip, fields.length])
+
+    // ── Load data on open ─────────────────────────────────────────────────────
     useEffect(() => {
-        if (open) {
-            if (mode === "edit" && form) {
-                formHook.reset({
-                    voucher_id: form.voucher_id,
-                    truck_compartment_number: form.truck_compartment_number,
-                    date: form.date,
-                    time_in: form.time_in,
-                    time_out: form.time_out,
-                    approved_by: form.approved_by,
-                    approver_signature: form.approver_signature,
-                    analyst: form.analyst,
-                    results_collected_by: form.results_collected_by,
-                    tag: form.tag,
-                    lab_test: {
-                        temperature: form.lab_test?.temperature ?? null,
-                        time: form.lab_test?.time || new Date().toISOString(),
-                        ot: form.lab_test?.ot ?? null,
-                        cob: form.lab_test?.cob ?? null,
-                        alcohol: form.lab_test?.alcohol ?? null,
-                        titratable_acidity: form.lab_test?.titratable_acidity ?? null,
-                        ph: form.lab_test?.ph ?? null,
-                        resazurin: form.lab_test?.resazurin ?? null,
-                        fat: form.lab_test?.fat ?? null,
-                        protein: form.lab_test?.protein ?? null,
-                        lr_snf: form.lab_test?.lr_snf ?? null,
-                        total_solids: form.lab_test?.total_solids ?? null,
-                        fpd: form.lab_test?.fpd ?? null,
-                        scc: form.lab_test?.scc ?? null,
-                        density: form.lab_test?.density ?? null,
-                        antibiotics: form.lab_test?.antibiotics ?? null,
-                        starch: form.lab_test?.starch ?? null,
-                        remark: form.lab_test?.remark ?? null,
-                        pass: form.lab_test?.pass ?? true,
-                    }
-                })
-            } else {
-                formHook.reset({
-                    date: new Date().toISOString().split('T')[0],
-                    time_in: "08:00:00",
-                    time_out: "12:00:00",
-                    approved_by: profile?.role_id || "",
-                    approver_signature: "",
-                    analyst: user?.id || "",
-                    results_collected_by: user?.id || "",
-                    tag: `RMCVBI-${Math.floor(Math.random() * 1000)}-${new Date().getDate()}-${new Date().getMonth() + 1}-${new Date().getFullYear()}`,
-                    lab_test: {
-                        temperature: null as any,
-                        ph: null as any,
-                        density: null as any,
-                        ot: "",
-                        alcohol: null as any,
-                        fat: null as any,
-                        protein: null as any,
-                        resazurin: "",
-                        lr_snf: "",
-                        total_solids: null as any,
-                        fpd: null as any,
-                        scc: null as any,
-                        titratable_acidity: null as any,
-                        time: new Date().toISOString(),
-                        cob: false,
-                        antibiotics: false,
-                        starch: false,
-                        pass: true,
-                        remark: ""
-                    }
-                })
-            }
-        }
-    }, [open, mode, form, user, profile])
+        if (!open) return
+        dispatch(fetchUntestedCompartments())
+        ;(async () => {
+            try {
+                setLoadingUsers(true)
+                const res = await usersApi.getUsers()
+                setUsers((res.data || []).map((u: any) => ({
+                    value: u.id,
+                    label: `${u.first_name || ""} ${u.last_name || ""}`.trim() || u.email,
+                    description: u.email,
+                })))
+            } catch { toast.error("Failed to load users") }
+            finally { setLoadingUsers(false) }
+        })()
+        ;(async () => {
+            try {
+                setLoadingRoles(true)
+                const res = await rolesApi.getRoles()
+                setRoles((res.data || []).map((r: any) => ({
+                    value: r.id,
+                    label: r.role_name,
+                    description: r.description || "",
+                })))
+            } catch { toast.error("Failed to load roles") }
+            finally { setLoadingRoles(false) }
+        })()
 
-    const onSubmit = async (data: RawMilkTestBeforeIntakeFormData) => {
+        if (mode === "edit" && existingSlip) {
+            const labTests = Array.isArray(existingSlip.lab_test) ? existingSlip.lab_test : []
+            // Signal the selectedTruck watcher to skip the replace() so existing data is kept
+            skipTruckEffect.current = true
+            formHook.reset({
+                truck_number: existingSlip.truck_number || "",
+                route: existingSlip.route || "",
+                tag: existingSlip.tag || "",
+                date: existingSlip.date || new Date().toISOString().split("T")[0],
+                time_in: existingSlip.time_in ? existingSlip.time_in.substring(0, 5) : "",
+                time_out: existingSlip.time_out ? existingSlip.time_out.substring(0, 5) : "",
+                analyst: existingSlip.analyst || "",
+                results_collected_by: existingSlip.results_collected_by || "",
+                approved_by: existingSlip.approved_by || "",
+                approver_signature: existingSlip.approver_signature || "",
+                lab_test: labTests.map((lt: any) => ({
+                    id: lt.id,
+                    truck_compartment_number: lt.truck_compartment_number ?? 1,
+                    temperature: lt.temperature ?? null,
+                    time: lt.time ? lt.time.substring(0, 5) : "",
+                    ot: lt.ot ?? "",
+                    cob: lt.cob ?? false,
+                    alcohol: lt.alcohol ?? null,
+                    titratable_acidity: lt.titratable_acidity ?? null,
+                    ph: lt.ph ?? null,
+                    resazurin: lt.resazurin ?? "",
+                    fat: lt.fat ?? null,
+                    protein: lt.protein ?? null,
+                    lr_snf: lt.lr_snf ?? "",
+                    total_solids: lt.total_solids ?? null,
+                    fpd: lt.fpd ?? null,
+                    scc: lt.scc ?? null,
+                    density: lt.density ?? null,
+                    antibiotics: lt.antibiotics ?? false,
+                    starch: lt.starch ?? false,
+                    remark: lt.remark ?? "",
+                    pass: lt.pass ?? false,
+                })),
+            })
+        } else {
+            formHook.reset({
+                truck_number: "", route: "", tag: "",
+                date: new Date().toISOString().split("T")[0],
+                time_in: "", time_out: "",
+                analyst: "", results_collected_by: "",
+                approved_by: "", approver_signature: "",
+                lab_test: [],
+            })
+        }
+    }, [open, mode, existingSlip])
+
+    // ── Submit ────────────────────────────────────────────────────────────────
+    const onSubmit = async (data: FormData) => {
         try {
-            // Helper function to format time to HH:MM:SS.000000+00
-            const formatTime = (timeInput: string | null | undefined): string => {
-                if (!timeInput) return "00:00:00.000000+00"
-
-                // Extract HH, MM, and optionally SS using regex to ignore offsets or extra precision in input
-                const match = String(timeInput).match(/(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?/)
-                if (match) {
-                    const hh = match[1].padStart(2, '0')
-                    const mm = match[2].padStart(2, '0')
-                    const ss = (match[3] || "00").padStart(2, '0')
-                    return `${hh}:${mm}:${ss}.000000+00`
-                }
-
-                return "00:00:00.000000+00"
+            const formatTime = (t: string | null | undefined) => {
+                if (!t) return "00:00:00.000000+00"
+                const [h, m] = t.split(":")
+                return `${h.padStart(2, "0")}:${m.padStart(2, "0")}:00.000000+00`
             }
+
+            const labTestPayload = (data.lab_test || []).map((lt) => ({
+                id: lt.id,
+                truck_compartment_number: lt.truck_compartment_number,
+                temperature: lt.temperature ? Number(lt.temperature) : null,
+                time: lt.time && lt.time.trim() ? formatTime(lt.time) : null,
+                ot: lt.ot || null,
+                cob: Boolean(lt.cob),
+                alcohol: lt.alcohol ? Number(lt.alcohol) : null,
+                titratable_acidity: lt.titratable_acidity ? Number(lt.titratable_acidity) : null,
+                ph: lt.ph ? Number(lt.ph) : null,
+                resazurin: lt.resazurin || null,
+                fat: lt.fat ? Number(lt.fat) : null,
+                protein: lt.protein ? Number(lt.protein) : null,
+                lr_snf: lt.lr_snf || null,
+                total_solids: lt.total_solids ? Number(lt.total_solids) : null,
+                fpd: lt.fpd ? Number(lt.fpd) : null,
+                scc: lt.scc ? Number(lt.scc) : null,
+                density: lt.density ? Number(lt.density) : null,
+                antibiotics: Boolean(lt.antibiotics),
+                starch: Boolean(lt.starch),
+                remark: lt.remark || null,
+                pass: Boolean(lt.pass),
+            }))
 
             const payload = {
-                ...data,
+                date: data.date,
                 time_in: formatTime(data.time_in),
                 time_out: formatTime(data.time_out),
+                approved_by: data.approved_by,
                 approver_signature: normalizeDataUrlToBase64(data.approver_signature),
-                lab_test: {
-                    ...data.lab_test,
-                    time: formatTime(data.lab_test.time),
-                    temperature: data.lab_test.temperature ?? null,
-                    ph: data.lab_test.ph ?? null,
-                    density: data.lab_test.density ?? null,
-                    alcohol: data.lab_test.alcohol ?? null,
-                    fat: data.lab_test.fat ?? null,
-                    protein: data.lab_test.protein ?? null,
-                    total_solids: data.lab_test.total_solids ?? null,
-                    fpd: data.lab_test.fpd ?? null,
-                    scc: data.lab_test.scc ?? null,
-                    titratable_acidity: data.lab_test.titratable_acidity ?? null,
-                    ot: data.lab_test.ot ?? null,
-                    resazurin: data.lab_test.resazurin ?? null,
-                    lr_snf: data.lab_test.lr_snf ?? null,
-                    remark: data.lab_test.remark ?? null,
-                    cob: data.lab_test.cob ?? false,
-                    antibiotics: data.lab_test.antibiotics ?? false,
-                    starch: data.lab_test.starch ?? false,
-                }
+                analyst: data.analyst || "",
+                results_collected_by: data.results_collected_by || "",
+                truck_number: data.truck_number,
+                route: data.route || "",
+                lab_test: labTestPayload,
             }
 
-            if (mode === "edit" && form) {
-                await dispatch(updateResultSlip({ ...payload, id: form.id, lab_test: { ...payload.lab_test, id: form.lab_test.id } })).unwrap()
-                toast.success("Result slip updated successfully")
+            if (mode === "edit" && existingSlip) {
+                await dispatch(updateResultSlip({ id: existingSlip.id, ...payload } as any)).unwrap()
+                toast.success("Test result updated")
             } else {
-                await dispatch(createResultSlip(payload)).unwrap()
-                toast.success("Result slip created successfully")
+                await dispatch(createResultSlip(payload as any)).unwrap()
+                toast.success("Test result created")
             }
             onOpenChange(false)
-        } catch (error: any) {
-            toast.error(error || "Failed to save result slip")
+            onSuccess?.()
+        } catch (e: any) {
+            toast.error(e?.message || e || "Failed to save test result")
         }
+    }
+
+    // ── Compartment info for selected truck ───────────────────────────────────
+    const compartmentsForTruck = useMemo(
+        () => uniqueTrucks.get(selectedTruck) || [],
+        [uniqueTrucks, selectedTruck]
+    )
+
+    // Helper to render a cell input
+    const renderCell = (colIdx: number, param: typeof PARAMETERS[0]) => {
+        const fieldName = `lab_test.${colIdx}.${param.key}` as any
+        return (
+            <Controller
+                key={fieldName}
+                name={fieldName}
+                control={formHook.control}
+                render={({ field }) => {
+                    switch (param.type) {
+                        case "checkbox":
+                            return (
+                                <div className="flex justify-center">
+                                    <Checkbox
+                                        checked={field.value || false}
+                                        onCheckedChange={field.onChange}
+                                        className={param.key === "pass" ? "border-blue-400 data-[state=checked]:bg-blue-600" : ""}
+                                    />
+                                </div>
+                            )
+                        case "textarea":
+                            return (
+                                <Textarea
+                                    {...field}
+                                    value={field.value ?? ""}
+                                    rows={2}
+                                    className="text-xs min-w-[120px] resize-none"
+                                />
+                            )
+                        case "time":
+                            return (
+                                <Input
+                                    type="time"
+                                    {...field}
+                                    value={field.value ?? ""}
+                                    className="text-xs min-w-[110px]"
+                                />
+                            )
+                        default:
+                            return (
+                                <Input
+                                    type={param.type}
+                                    step={param.step}
+                                    placeholder={param.placeholder ?? ""}
+                                    {...field}
+                                    value={field.value ?? ""}
+                                    className="text-xs min-w-[90px]"
+                                />
+                            )
+                    }
+                }}
+            />
+        )
     }
 
     return (
         <>
             <Sheet open={open} onOpenChange={onOpenChange}>
-                <SheetContent className="tablet-sheet-full p-0 bg-white min-w-[70vw]">
-                    <SheetHeader className="p-6 pb-0">
-                        <SheetTitle className="text-2xl font-light">
-                            {mode === "edit" ? "Edit Test Before Intake" : "New Test Before Intake"}
-                        </SheetTitle>
-                        <SheetDescription className="text-sm font-light text-gray-500">
-                            Conduct a laboratory test on a tanker compartment before milk intake.
-                        </SheetDescription>
+                <SheetContent className="tablet-sheet-full p-0 bg-white min-w-[80vw] flex flex-col">
+
+                    {/* ── Header ──────────────────────────────────────────── */}
+                    <SheetHeader className="p-6 pb-4 border-b">
+                        <div className="flex items-center gap-3">
+                            <div className="text-lg font-bold text-blue-900">PRO dairy</div>
+                            <div className="flex-1 text-center">
+                                <SheetTitle className="text-lg font-semibold text-gray-800">
+                                    RAW MILK RESULT SLIP — BEFORE INTAKE
+                                </SheetTitle>
+                                <SheetDescription className="text-sm font-light">
+                                    {mode === "edit" ? "Edit existing test result" : "Record test results for untested compartments"}
+                                </SheetDescription>
+                            </div>
+                        </div>
                     </SheetHeader>
 
-                    <div className="flex-1 overflow-y-auto px-6 py-6 h-[calc(100vh-140px)]">
-                        <form id="test-before-intake-form" onSubmit={formHook.handleSubmit(onSubmit)} className="space-y-8 pb-10">
+                    {/* ── Scrollable Body ──────────────────────────────────── */}
+                    <div className="flex-1 overflow-y-auto">
+                        <form id="test-before-intake-form" onSubmit={formHook.handleSubmit(onSubmit)} className="p-6 space-y-6">
 
-                            {/* Reference Information */}
+                            {/* ── Truck Selection ─────────────────────────────── */}
                             <div className="space-y-4">
-                                <div className="flex items-center space-x-2 text-blue-600">
-                                    <ClipboardList className="w-5 h-5" />
-                                    <h3 className="text-lg font-light">Voucher & Compartment</h3>
+                                <div className="flex items-center space-x-2 text-blue-700">
+                                    <Truck className="w-4 h-4" />
+                                    <h3 className="text-base font-medium">Truck Selection</h3>
                                 </div>
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    <div className="space-y-2">
-                                        <Label>Collection Voucher</Label>
+
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                    {/* Truck */}
+                                    <div className="space-y-1">
+                                        <Label className="text-xs">Truck <span className="text-red-500">*</span></Label>
                                         <Controller
-                                            name="voucher_id"
+                                            name="truck_number"
                                             control={formHook.control}
                                             render={({ field }) => (
-                                                <SearchableSelect
-                                                    options={collectionVouchers.map(v => ({
-                                                        value: v.id,
-                                                        label: v.tag ?? v.id,
-                                                        description: `Truck: ${v.truck_number} • Date: ${new Date(v.date).toLocaleDateString()}`
-                                                    }))}
+                                                <Select
                                                     value={field.value}
                                                     onValueChange={field.onChange}
-                                                    placeholder="Select voucher"
-                                                />
-                                            )}
-                                        />
-                                        {formHook.formState.errors.voucher_id && (
-                                            <p className="text-xs text-red-500">{formHook.formState.errors.voucher_id.message}</p>
-                                        )}
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <Label>Truck Compartment</Label>
-                                        <Controller
-                                            name="truck_compartment_number"
-                                            control={formHook.control}
-                                            render={({ field }) => (
-                                                <Select value={String(field.value)} onValueChange={(v) => field.onChange(Number(v))}>
-                                                    <SelectTrigger className="rounded-full">
-                                                        <SelectValue placeholder="Select compartment" />
+                                                    disabled={operationLoading.fetchUntested}
+                                                >
+                                                    <SelectTrigger className="rounded-full text-xs">
+                                                        <SelectValue placeholder={
+                                                            operationLoading.fetchUntested ? "Loading..." :
+                                                            untestedCompartments.length === 0 ? "No trucks" : "Select truck"
+                                                        } />
                                                     </SelectTrigger>
                                                     <SelectContent>
-                                                        {Array.from({ length: compartmentsCount || 1 }).map((_, i) => (
-                                                            <SelectItem key={i + 1} value={String(i + 1)}>Compartment {i + 1}</SelectItem>
+                                                        {truckOptions.map((t) => (
+                                                            <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
                                                         ))}
                                                     </SelectContent>
                                                 </Select>
                                             )}
                                         />
-                                        {formHook.formState.errors.truck_compartment_number && (
-                                            <p className="text-xs text-red-500">{formHook.formState.errors.truck_compartment_number.message}</p>
+                                        {formHook.formState.errors.truck_number && (
+                                            <p className="text-[10px] text-red-500">{formHook.formState.errors.truck_number.message}</p>
                                         )}
-                                        {!selectedVoucherId && <p className="text-[10px] text-orange-500">Select a voucher first</p>}
                                     </div>
 
-                                    <div className="space-y-2">
-                                        <Label>Tag / Reference</Label>
+                                    {/* Route (auto) */}
+                                    <div className="space-y-1">
+                                        <Label className="text-xs">Route</Label>
+                                        <Controller
+                                            name="route"
+                                            control={formHook.control}
+                                            render={({ field }) => (
+                                                <Input {...field} value={field.value ?? ""} className="rounded-full text-xs bg-gray-50" readOnly />
+                                            )}
+                                        />
+                                    </div>
+
+                                    {/* Tag */}
+                                    <div className="space-y-1">
+                                        <Label className="text-xs">Tag / Reference</Label>
                                         <Controller
                                             name="tag"
                                             control={formHook.control}
-                                            render={({ field }) => <Input {...field} placeholder="e.g. RMRSBI-1-15-1-2026" className="rounded-full" />}
+                                            render={({ field }) => (
+                                                <Input {...field} value={field.value ?? ""} placeholder="RMRSBI-1-15-1-2026" className="rounded-full text-xs" />
+                                            )}
                                         />
-                                        {formHook.formState.errors.tag && (
-                                            <p className="text-xs text-red-500">{formHook.formState.errors.tag.message}</p>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-
-                            <Separator />
-
-                            {/* Lab Test Results */}
-                            <div className="space-y-4">
-                                <div className="flex items-center space-x-2 text-green-600">
-                                    <FlaskConical className="w-5 h-5" />
-                                    <h3 className="text-lg font-light">Laboratory Test Results</h3>
-                                </div>
-
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                    <div className="space-y-2">
-                                        <Label>Temperature (°C)</Label>
-                                        <Controller
-                                            name="lab_test.temperature"
-                                            control={formHook.control}
-                                            render={({ field }) => <Input {...field} value={field.value ?? ""} type="number" step="0.1" className="rounded-full" />}
-                                        />
-                                        {formHook.formState.errors.lab_test?.temperature && <p className="text-xs text-red-500">{formHook.formState.errors.lab_test.temperature.message}</p>}
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label>PH</Label>
-                                        <Controller
-                                            name="lab_test.ph"
-                                            control={formHook.control}
-                                            render={({ field }) => <Input {...field} value={field.value ?? ""} type="number" step="0.01" className="rounded-full" />}
-                                        />
-                                        {formHook.formState.errors.lab_test?.ph && <p className="text-xs text-red-500">{formHook.formState.errors.lab_test.ph.message}</p>}
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label>Density</Label>
-                                        <Controller
-                                            name="lab_test.density"
-                                            control={formHook.control}
-                                            render={({ field }) => <Input {...field} value={field.value ?? ""} type="number" step="0.001" className="rounded-full" />}
-                                        />
-                                        {formHook.formState.errors.lab_test?.density && <p className="text-xs text-red-500">{formHook.formState.errors.lab_test.density.message}</p>}
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label>Organoleptic (OT)</Label>
-                                        <Controller
-                                            name="lab_test.ot"
-                                            control={formHook.control}
-                                            render={({ field }) => <Input {...field} value={field.value ?? ""} placeholder="OK" className="rounded-full" />}
-                                        />
-                                        {formHook.formState.errors.lab_test?.ot && <p className="text-xs text-red-500">{formHook.formState.errors.lab_test.ot.message}</p>}
-                                    </div>
-                                </div>
-
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                    <div className="space-y-2">
-                                        <Label>Alcohol (%)</Label>
-                                        <Controller
-                                            name="lab_test.alcohol"
-                                            control={formHook.control}
-                                            render={({ field }) => <Input {...field} value={field.value ?? ""} type="number" step="0.01" className="rounded-full" />}
-                                        />
-                                        {formHook.formState.errors.lab_test?.alcohol && <p className="text-xs text-red-500">{formHook.formState.errors.lab_test.alcohol.message}</p>}
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label>Fat Content (%)</Label>
-                                        <Controller
-                                            name="lab_test.fat"
-                                            control={formHook.control}
-                                            render={({ field }) => <Input {...field} value={field.value ?? ""} type="number" step="0.01" className="rounded-full" />}
-                                        />
-                                        {formHook.formState.errors.lab_test?.fat && <p className="text-xs text-red-500">{formHook.formState.errors.lab_test.fat.message}</p>}
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label>Protein Content (%)</Label>
-                                        <Controller
-                                            name="lab_test.protein"
-                                            control={formHook.control}
-                                            render={({ field }) => <Input {...field} value={field.value ?? ""} type="number" step="0.01" className="rounded-full" />}
-                                        />
-                                        {formHook.formState.errors.lab_test?.protein && <p className="text-xs text-red-500">{formHook.formState.errors.lab_test.protein.message}</p>}
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label>Resazurin</Label>
-                                        <Controller
-                                            name="lab_test.resazurin"
-                                            control={formHook.control}
-                                            render={({ field }) => <Input {...field} value={field.value ?? ""} placeholder="OK" className="rounded-full" />}
-                                        />
-                                        {formHook.formState.errors.lab_test?.resazurin && <p className="text-xs text-red-500">{formHook.formState.errors.lab_test.resazurin.message}</p>}
-                                    </div>
-                                </div>
-
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                    <div className="space-y-2">
-                                        <Label>LR/SNF</Label>
-                                        <Controller
-                                            name="lab_test.lr_snf"
-                                            control={formHook.control}
-                                            render={({ field }) => <Input {...field} value={field.value ?? ""} placeholder="Enter LR/SNF" className="rounded-full" />}
-                                        />
-                                        {formHook.formState.errors.lab_test?.lr_snf && <p className="text-xs text-red-500">{formHook.formState.errors.lab_test.lr_snf.message}</p>}
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label>Total Solids (%)</Label>
-                                        <Controller
-                                            name="lab_test.total_solids"
-                                            control={formHook.control}
-                                            render={({ field }) => <Input {...field} value={field.value ?? ""} type="number" step="0.01" className="rounded-full" />}
-                                        />
-                                        {formHook.formState.errors.lab_test?.total_solids && <p className="text-xs text-red-500">{formHook.formState.errors.lab_test.total_solids.message}</p>}
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label>FPD</Label>
-                                        <Controller
-                                            name="lab_test.fpd"
-                                            control={formHook.control}
-                                            render={({ field }) => <Input {...field} value={field.value ?? ""} type="number" step="0.0001" className="rounded-full" />}
-                                        />
-                                        {formHook.formState.errors.lab_test?.fpd && <p className="text-xs text-red-500">{formHook.formState.errors.lab_test.fpd.message}</p>}
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label>SCC</Label>
-                                        <Controller
-                                            name="lab_test.scc"
-                                            control={formHook.control}
-                                            render={({ field }) => <Input {...field} value={field.value ?? ""} type="number" className="rounded-full" />}
-                                        />
-                                        {formHook.formState.errors.lab_test?.scc && <p className="text-xs text-red-500">{formHook.formState.errors.lab_test.scc.message}</p>}
-                                    </div>
-                                </div>
-
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                    <div className="space-y-2">
-                                        <Label>Titratable Acidity</Label>
-                                        <Controller
-                                            name="lab_test.titratable_acidity"
-                                            control={formHook.control}
-                                            render={({ field }) => <Input {...field} value={field.value ?? ""} type="number" step="0.01" className="rounded-full" />}
-                                        />
-                                        {formHook.formState.errors.lab_test?.titratable_acidity && <p className="text-xs text-red-500">{formHook.formState.errors.lab_test.titratable_acidity.message}</p>}
-                                    </div>
-                                </div>
-
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-2">
-                                    <div className="flex items-center space-x-2 bg-gray-50 p-3 rounded-xl border border-gray-100">
-                                        <Controller
-                                            name="lab_test.cob"
-                                            control={formHook.control}
-                                            render={({ field }) => <Checkbox id="cob" checked={field.value || false} onCheckedChange={field.onChange} />}
-                                        />
-                                        <Label htmlFor="cob" className="cursor-pointer">COB Positive</Label>
-                                    </div>
-                                    <div className="flex items-center space-x-2 bg-gray-50 p-3 rounded-xl border border-gray-100">
-                                        <Controller
-                                            name="lab_test.antibiotics"
-                                            control={formHook.control}
-                                            render={({ field }) => <Checkbox id="antibiotics" checked={field.value || false} onCheckedChange={field.onChange} />}
-                                        />
-                                        <Label htmlFor="antibiotics" className="cursor-pointer">Antibiotics Detect</Label>
-                                    </div>
-                                    <div className="flex items-center space-x-2 bg-gray-50 p-3 rounded-xl border border-gray-100">
-                                        <Controller
-                                            name="lab_test.starch"
-                                            control={formHook.control}
-                                            render={({ field }) => <Checkbox id="starch" checked={field.value || false} onCheckedChange={field.onChange} />}
-                                        />
-                                        <Label htmlFor="starch" className="cursor-pointer">Starch Detect</Label>
-                                    </div>
-                                    <div className="flex items-center space-x-2 bg-blue-50 p-3 rounded-xl border border-blue-100">
-                                        <Controller
-                                            name="lab_test.pass"
-                                            control={formHook.control}
-                                            render={({ field }) => <Checkbox id="pass" checked={field.value} onCheckedChange={field.onChange} />}
-                                        />
-                                        <Label htmlFor="pass" className="cursor-pointer text-blue-700 font-medium">Result PASS</Label>
-                                    </div>
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label>Analyst Remarks</Label>
-                                    <Controller
-                                        name="lab_test.remark"
-                                        control={formHook.control}
-                                        render={({ field }) => <Textarea {...field} value={field.value ?? ""} className="min-h-[80px]" />}
-                                    />
-                                    {formHook.formState.errors.lab_test?.remark && <p className="text-xs text-red-500">{formHook.formState.errors.lab_test.remark.message}</p>}
-                                </div>
-                            </div>
-
-                            <Separator />
-
-                            {/* Administrative Information */}
-                            <div className="space-y-4">
-                                <div className="flex items-center space-x-2 text-purple-600">
-                                    <User className="w-5 h-5" />
-                                    <h3 className="text-lg font-light">Administration & Personnel</h3>
-                                </div>
-
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                    <div className="space-y-4">
-                                        <div className="space-y-2">
-                                            <Label><Calendar className="inline w-3 h-3 mr-1" /> Date</Label>
-                                            <Controller
-                                                name="date"
-                                                control={formHook.control}
-                                                render={({ field }) => <DatePicker value={field.value} onChange={field.onChange} />}
-                                            />
-                                            {formHook.formState.errors.date && <p className="text-xs text-red-500">{formHook.formState.errors.date.message}</p>}
-                                        </div>
-                                        <div className="space-y-2">
-                                            <Label><Clock className="inline w-3 h-3 mr-1" /> Time In</Label>
-                                            <Controller
-                                                name="time_in"
-                                                control={formHook.control}
-                                                render={({ field }) => <Input type="time" {...field} className="rounded-full" />}
-                                            />
-                                            {formHook.formState.errors.time_in && <p className="text-xs text-red-500">{formHook.formState.errors.time_in.message}</p>}
-                                        </div>
-                                        <div className="space-y-2">
-                                            <Label><Clock className="inline w-3 h-3 mr-1" /> Time Out</Label>
-                                            <Controller
-                                                name="time_out"
-                                                control={formHook.control}
-                                                render={({ field }) => <Input type="time" {...field} className="rounded-full" />}
-                                            />
-                                            {formHook.formState.errors.time_out && <p className="text-xs text-red-500">{formHook.formState.errors.time_out.message}</p>}
-                                        </div>
                                     </div>
 
-                                    <div className="space-y-4 col-span-2">
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div className="space-y-2">
-                                                <Label>Analyst</Label>
-                                                <Controller
-                                                    name="analyst"
-                                                    control={formHook.control}
-                                                    render={({ field }) => (
-                                                        <Select value={field.value} onValueChange={field.onChange}>
-                                                            <SelectTrigger className="rounded-full">
-                                                                <SelectValue placeholder="Select analyst" />
-                                                            </SelectTrigger>
-                                                            <SelectContent>
-                                                                {users.map(u => (
-                                                                    <SelectItem key={u.id} value={u.id}>{u.first_name} {u.last_name}</SelectItem>
-                                                                ))}
-                                                            </SelectContent>
-                                                        </Select>
-                                                    )}
-                                                />
-                                                {formHook.formState.errors.analyst && <p className="text-xs text-red-500">{formHook.formState.errors.analyst.message}</p>}
-                                            </div>
-                                            <div className="space-y-2">
-                                                <Label>Results Collected By</Label>
-                                                <Controller
-                                                    name="results_collected_by"
-                                                    control={formHook.control}
-                                                    render={({ field }) => (
-                                                        <Select value={field.value} onValueChange={field.onChange}>
-                                                            <SelectTrigger className="rounded-full">
-                                                                <SelectValue placeholder="Select person" />
-                                                            </SelectTrigger>
-                                                            <SelectContent>
-                                                                {users.map(u => (
-                                                                    <SelectItem key={u.id} value={u.id}>{u.first_name} {u.last_name}</SelectItem>
-                                                                ))}
-                                                            </SelectContent>
-                                                        </Select>
-                                                    )}
-                                                />
-                                                {formHook.formState.errors.results_collected_by && <p className="text-xs text-red-500">{formHook.formState.errors.results_collected_by.message}</p>}
+                                    {/* Compartment count badge */}
+                                    {selectedTruck && (
+                                        <div className="flex items-end pb-1">
+                                            <div className="flex items-center gap-2 text-xs text-blue-700 bg-blue-50 border border-blue-100 rounded-full px-3 py-1.5">
+                                                <Truck className="w-3 h-3" />
+                                                {compartmentsForTruck.length} compartment(s)
                                             </div>
                                         </div>
+                                    )}
+                                </div>
 
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div className="space-y-2">
-                                                <Label>Approved By (Role)</Label>
-                                                <Controller
-                                                    name="approved_by"
-                                                    control={formHook.control}
-                                                    render={({ field }) => (
-                                                        <Select value={field.value} onValueChange={field.onChange} disabled={rolesLoading}>
-                                                            <SelectTrigger className="rounded-full">
-                                                                <SelectValue placeholder={rolesLoading ? "Loading roles..." : "Select approver role"} />
-                                                            </SelectTrigger>
-                                                            <SelectContent>
-                                                                {roles.map(r => (
-                                                                    <SelectItem key={r.id} value={r.id}>{r.role_name}</SelectItem>
-                                                                ))}
-                                                            </SelectContent>
-                                                        </Select>
-                                                    )}
-                                                />
-                                                {formHook.formState.errors.approved_by && <p className="text-xs text-red-500">{formHook.formState.errors.approved_by.message}</p>}
-                                            </div>
-                                            <div className="space-y-2">
-                                                <Label>Approver Signature</Label>
-                                                <Controller
-                                                    name="approver_signature"
-                                                    control={formHook.control}
-                                                    render={({ field }) => (
-                                                        <div className="flex items-center space-x-2">
-                                                            {field.value ? (
-                                                                <img src={base64ToPngDataUrl(field.value)} alt="Signature" className="h-10 border rounded bg-white" />
-                                                            ) : (
-                                                                <div className="h-10 w-full border border-dashed rounded flex items-center justify-center text-[10px] text-gray-400">Capture needed</div>
-                                                            )}
-                                                            <Button type="button" size="sm" variant="outline" className="rounded-full shrink-0" onClick={() => setSignatureOpen(true)}>
-                                                                {field.value ? "Change" : "Capture"}
-                                                            </Button>
+                                {/* Compartment info strip */}
+                                {compartmentsForTruck.length > 0 && (
+                                    <div className="space-y-2">
+                                        <div className="flex gap-2 flex-wrap">
+                                            {compartmentsForTruck.map((c, i) => (
+                                                <div key={i} className="text-[10px] bg-blue-50 border border-blue-100 rounded-lg p-2 min-w-[200px]">
+                                                    <div className="flex justify-between items-center mb-1">
+                                                        <span className="font-semibold text-blue-700">Compartment #{c.truck_compartment_number}</span>
+                                                        <span className="text-green-700 font-medium">{c.total_compartment_volume}L</span>
+                                                    </div>
+                                                    <div className="text-gray-500 mb-1">{c.route} · {c.driver_first_name} {c.driver_last_name}</div>
+                                                    
+                                                    {c.suppliers && c.suppliers.length > 0 && (
+                                                        <div className="border-t border-blue-100 pt-1 mt-1">
+                                                            <div className="text-[9px] text-gray-400 font-medium uppercase mb-0.5">Suppliers:</div>
+                                                            {c.suppliers.map((s: UntestedCompartmentSupplier, si: number) => (
+                                                                <div key={si} className="text-[9px] text-gray-600 truncate">
+                                                                    • {s.first_name} {s.last_name} ({s.volume}L) - {s.voucher}
+                                                                </div>
+                                                            ))}
                                                         </div>
                                                     )}
-                                                />
-                                                {formHook.formState.errors.approver_signature && (
-                                                    <p className="text-xs text-red-500">{formHook.formState.errors.approver_signature.message}</p>
-                                                )}
-                                            </div>
+                                                </div>
+                                            ))}
                                         </div>
+                                    </div>
+                                )}
+
+                            </div>
+
+                            <Separator />
+
+                            {/* ── Lab Results Table ────────────────────────────── */}
+                            <div className="space-y-3">
+                                <div className="flex items-center space-x-2 text-green-700">
+                                    <FlaskConical className="w-4 h-4" />
+                                    <h3 className="text-base font-medium">Laboratory Test Results</h3>
+                                </div>
+
+                                {fields.length === 0 ? (
+                                    <div className="text-center py-10 text-gray-400 border border-dashed rounded-lg text-sm">
+                                        {selectedTruck ? (mode === "edit" ? "Loading existing test results..." : "Loading compartments...") : "Select a truck above to begin entering test results"}
+                                    </div>
+                                ) : (
+                                    <div className="overflow-x-auto border border-gray-300 rounded-lg">
+                                        <table className="min-w-full border-collapse text-xs">
+                                            <thead>
+                                                <tr className="bg-gray-100">
+                                                    <th className="border border-gray-300 px-3 py-2 text-left font-semibold text-gray-700 min-w-[150px] sticky left-0 bg-gray-100 z-10">
+                                                        Parameter
+                                                    </th>
+                                                    {fields.map((field, idx) => {
+                                                        const compartmentInfo = compartmentsForTruck[idx]
+                                                        return (
+                                                            <th key={field.id} className="border border-gray-300 px-3 py-2 text-center font-semibold text-blue-700 min-w-[130px]">
+                                                                <div>Result {idx + 1}</div>
+                                                                <div className="text-gray-500 font-normal text-[10px]">
+                                                                    Compartment #{field.truck_compartment_number}
+                                                                    {compartmentInfo && (
+                                                                        <span className="ml-1 text-gray-400">({compartmentInfo.total_compartment_volume}L)</span>
+                                                                    )}
+                                                                </div>
+                                                            </th>
+                                                        )
+                                                    })}
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {PARAMETERS.map((param, rowIdx) => (
+                                                    <tr
+                                                        key={param.key}
+                                                        className={`${rowIdx % 2 === 0 ? "bg-white" : "bg-gray-50"} ${
+                                                            param.key === "pass" ? "bg-blue-50" : ""
+                                                        }`}
+                                                    >
+                                                        <td className={`border border-gray-300 px-3 py-2 font-medium text-gray-700 sticky left-0 z-10 ${
+                                                            rowIdx % 2 === 0 ? "bg-white" : "bg-gray-50"
+                                                        } ${param.key === "pass" ? "!bg-blue-50 text-blue-700" : ""}`}>
+                                                            {param.label}
+                                                        </td>
+                                                        {fields.map((_, colIdx) => (
+                                                            <td key={colIdx} className="border border-gray-300 px-2 py-1.5">
+                                                                {renderCell(colIdx, param)}
+                                                            </td>
+                                                        ))}
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                )}
+                            </div>
+
+                            <Separator />
+
+                            {/* ── Administration ───────────────────────────────── */}
+                            <div className="space-y-4">
+                                <div className="flex items-center space-x-2 text-purple-700">
+                                    <User className="w-4 h-4" />
+                                    <h3 className="text-base font-medium">Administration & Personnel</h3>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div className="space-y-1">
+                                        <Label className="text-xs"><Calendar className="inline w-3 h-3 mr-1" />Date <span className="text-red-500">*</span></Label>
+                                        <Controller name="date" control={formHook.control} render={({ field }) => (
+                                            <DatePicker value={field.value} onChange={field.onChange} />
+                                        )} />
+                                        {formHook.formState.errors.date && <p className="text-[10px] text-red-500">{formHook.formState.errors.date.message}</p>}
+                                    </div>
+                                    <div className="space-y-1">
+                                        <Label className="text-xs"><Clock className="inline w-3 h-3 mr-1" />Time In <span className="text-red-500">*</span></Label>
+                                        <Controller name="time_in" control={formHook.control} render={({ field }) => (
+                                            <Input type="time" {...field} className="rounded-full" />
+                                        )} />
+                                        {formHook.formState.errors.time_in && <p className="text-[10px] text-red-500">{formHook.formState.errors.time_in.message}</p>}
+                                    </div>
+                                    <div className="space-y-1">
+                                        <Label className="text-xs"><Clock className="inline w-3 h-3 mr-1" />Time Out <span className="text-red-500">*</span></Label>
+                                        <Controller name="time_out" control={formHook.control} render={({ field }) => (
+                                            <Input type="time" {...field} className="rounded-full" />
+                                        )} />
+                                        {formHook.formState.errors.time_out && <p className="text-[10px] text-red-500">{formHook.formState.errors.time_out.message}</p>}
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="space-y-1">
+                                        <Label className="text-xs">Analyst</Label>
+                                        <Controller name="analyst" control={formHook.control} render={({ field }) => (
+                                            <SearchableSelect options={users} value={field.value ?? ""} onValueChange={field.onChange} placeholder="Select analyst" loading={loadingUsers} />
+                                        )} />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <Label className="text-xs">Results Collected By</Label>
+                                        <Controller name="results_collected_by" control={formHook.control} render={({ field }) => (
+                                            <SearchableSelect options={users} value={field.value ?? ""} onValueChange={field.onChange} placeholder="Select person" loading={loadingUsers} />
+                                        )} />
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="space-y-1">
+                                        <Label className="text-xs">Approved By (Role) <span className="text-red-500">*</span></Label>
+                                        <Controller name="approved_by" control={formHook.control} render={({ field, fieldState }) => (
+                                            <>
+                                                <SearchableSelect options={roles} value={field.value} onValueChange={field.onChange} placeholder="Select approver role" loading={loadingRoles} />
+                                                {fieldState.error && <p className="text-[10px] text-red-500">{fieldState.error.message}</p>}
+                                            </>
+                                        )} />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <Label className="text-xs">Approver Signature <span className="text-red-500">*</span></Label>
+                                        <Controller name="approver_signature" control={formHook.control} render={({ field, fieldState }) => (
+                                            <>
+                                                <div className="flex items-center space-x-2">
+                                                    {field.value ? (
+                                                        <img src={base64ToPngDataUrl(field.value)} alt="Signature" className="h-10 border rounded bg-white" />
+                                                    ) : (
+                                                        <div className="h-10 w-full border border-dashed rounded flex items-center justify-center text-[10px] text-gray-400">
+                                                            Capture needed
+                                                        </div>
+                                                    )}
+                                                    <Button type="button" size="sm" variant="outline" className="rounded-full shrink-0" onClick={() => setSignatureOpen(true)}>
+                                                        {field.value ? "Change" : "Capture"}
+                                                    </Button>
+                                                </div>
+                                                {fieldState.error && <p className="text-[10px] text-red-500">{fieldState.error.message}</p>}
+                                            </>
+                                        )} />
                                     </div>
                                 </div>
                             </div>
                         </form>
                     </div>
 
-                    <div className="p-6 border-t flex justify-end space-x-3 bg-gray-50">
-                        <Button type="button" variant="outline" className="rounded-full px-8" onClick={() => onOpenChange(false)}>Cancel</Button>
+                    {/* ── Footer ──────────────────────────────────────────────── */}
+                    <div className="p-6 border-t flex justify-end space-x-3 bg-gray-50 shrink-0">
+                        <Button type="button" variant="outline" className="rounded-full px-8" onClick={() => onOpenChange(false)}>
+                            Cancel
+                        </Button>
                         <Button
                             type="submit"
                             form="test-before-intake-form"
@@ -708,11 +713,11 @@ export function RawMilkTestBeforeIntakeFormDrawer({
                 </SheetContent>
             </Sheet>
 
+            {/* Signature Modal */}
             <SignatureModal
                 open={signatureOpen}
                 onOpenChange={setSignatureOpen}
-                title="Approver Signature"
-                onSave={(dataUrl) => formHook.setValue("approver_signature", dataUrl, { shouldValidate: true })}
+                onSave={(sig) => formHook.setValue("approver_signature", sig)}
             />
         </>
     )

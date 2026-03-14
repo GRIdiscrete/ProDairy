@@ -7,9 +7,31 @@ export interface ApiResponse<T> {
     data: T
 }
 
-export interface CreateRawMilkResultSlipRequest {
-    voucher_id: string
+export interface LabTestPayload {
     truck_compartment_number: number
+    temperature: number | null
+    time: string
+    ot: string | null
+    cob: boolean | null
+    alcohol: number | null
+    titratable_acidity: number | null
+    ph: number | null
+    resazurin: string | null
+    fat: number | null
+    protein: number | null
+    lr_snf: string | null
+    total_solids: number | null
+    fpd: number | null
+    scc: number | null
+    density: number | null
+    antibiotics: boolean | null
+    starch: boolean | null
+    remark: string | null
+    pass: boolean
+    accepted?: boolean
+}
+
+export interface CreateRawMilkResultSlipRequest {
     date: string
     time_in: string
     time_out: string
@@ -17,34 +39,13 @@ export interface CreateRawMilkResultSlipRequest {
     approver_signature: string
     analyst: string
     results_collected_by: string
-    tag: string
-    lab_test: {
-        temperature: number | null
-        time: string
-        ot: string | null
-        cob: boolean | null
-        alcohol: number | null
-        titratable_acidity: number | null
-        ph: number | null
-        resazurin: string | null
-        fat: number | null
-        protein: number | null
-        lr_snf: string | null
-        total_solids: number | null
-        fpd: number | null
-        scc: number | null
-        density: number | null
-        antibiotics: boolean | null
-        starch: boolean | null
-        remark: string | null
-        pass: boolean
-    }
+    truck_number: string
+    route: string
+    lab_test: LabTestPayload[]
 }
 
 export interface UpdateRawMilkResultSlipRequest {
     id: string
-    voucher_id?: string
-    truck_compartment_number?: number
     date?: string
     time_in?: string
     time_out?: string
@@ -52,8 +53,9 @@ export interface UpdateRawMilkResultSlipRequest {
     approver_signature?: string
     analyst?: string
     results_collected_by?: string
-    tag?: string
-    lab_test: Partial<CreateRawMilkResultSlipRequest['lab_test']> & { id: string, accepted?: boolean }
+    truck_number?: string
+    route?: string
+    lab_test: (Partial<LabTestPayload> & { id: string })[]
 }
 
 export const rawMilkTestBeforeIntakeApi = {
@@ -69,7 +71,7 @@ export const rawMilkTestBeforeIntakeApi = {
 
     // Get untested compartments
     getUntestedCompartments: async () => {
-        return apiRequest<ApiResponse<UntestedCompartment[]>>('/raw-milk-result-slip-before-intake/untestd-compartments')
+        return apiRequest<ApiResponse<UntestedCompartment[]>>('/raw-milk-result-slip-before-intake/untested-truck-compartments')
     },
 
     // Create new result slip
