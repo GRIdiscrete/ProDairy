@@ -11,6 +11,7 @@ import { format } from "date-fns"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useAppDispatch, useAppSelector } from "@/lib/store"
 import { fetchRawMilkResultSlips, deleteRawMilkResultSlip } from "@/lib/store/slices/rawMilkResultSlipSlice"
+import { fetchTankers } from "@/lib/store/slices/tankerSlice"
 import { FormIdCopy } from "@/components/ui/form-id-copy"
 import { RawMilkResultSlipDrawer } from "@/components/forms/raw-milk-result-slip-drawer"
 import type { RawMilkIntakeForm } from "@/lib/api/raw-milk-intake"
@@ -33,15 +34,17 @@ export function RawMilkIntakeFormViewDrawer({
   const [activeTab, setActiveTab] = useState<string>("details")
   const dispatch = useAppDispatch()
   const { slips, isInitialized, operationLoading } = useAppSelector((s) => (s as any).rawMilkResultSlips)
+  const { items: tankers, isInitialized: tankersInitialized } = useAppSelector((s) => (s as any).tankers)
   const [resultSlipDrawerOpen, setResultSlipDrawerOpen] = useState(false)
   const [resultSlipMode, setResultSlipMode] = useState<"create" | "edit">("create")
   const [resultSlipExistingId, setResultSlipExistingId] = useState<string | undefined>(undefined)
 
   useEffect(() => {
-    if (open && !isInitialized) {
-      dispatch(fetchRawMilkResultSlips())
+    if (open) {
+      if (!isInitialized) dispatch(fetchRawMilkResultSlips())
+      if (!tankersInitialized) dispatch(fetchTankers())
     }
-  }, [open, isInitialized, dispatch])
+  }, [open, isInitialized, tankersInitialized, dispatch])
 
   const currentResultSlip = useMemo(() => {
     if (!form) return null
@@ -54,6 +57,10 @@ export function RawMilkIntakeFormViewDrawer({
   const operatorName = typeof form.operator === "string"
     ? form.operator
     : `${(form.operator as any)?.first_name ?? ""} ${(form.operator as any)?.last_name ?? ""}`.trim()
+
+  // Helper: resolve tanker registration number
+  const tanker = useMemo(() => tankers.find((t: any) => t.id === form.truck), [tankers, form.truck])
+  const truckDisplay = tanker?.reg_number || form.truck
 
   // Derive quantity from flow meter readings if not explicitly provided
   const getDetailQuantity = (detail: any): number | null => {
@@ -218,7 +225,7 @@ export function RawMilkIntakeFormViewDrawer({
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-light text-gray-600">Truck</span>
-                        <span className="text-sm font-light text-blue-600">{form.truck}</span>
+                        <span className="text-sm font-light text-blue-600">{truckDisplay}</span>
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-light text-gray-600">Total Quantity</span>

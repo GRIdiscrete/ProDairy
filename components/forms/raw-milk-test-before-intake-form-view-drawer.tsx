@@ -1,24 +1,13 @@
 "use client"
 
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet"
+import { Sheet, SheetContent } from "@/components/ui/sheet"
 import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button"
-import {
-    FlaskConical,
-    Calendar,
-    Clock,
-    Truck,
-    User,
-    Droplets,
-    CheckCircle2,
-    XCircle,
-    Edit,
-    FileText
-} from "lucide-react"
+import { Label } from "@/components/ui/label"
 import { RawMilkResultSlipBeforeIntake } from "@/lib/types"
 import { useAppSelector } from "@/lib/store"
 import { base64ToPngDataUrl } from "@/lib/utils/signature"
+import { Printer, Edit, X, FlaskConical } from "lucide-react"
 
 interface RawMilkTestBeforeIntakeFormViewDrawerProps {
     open: boolean
@@ -34,194 +23,275 @@ export function RawMilkTestBeforeIntakeFormViewDrawer({
     onEdit
 }: RawMilkTestBeforeIntakeFormViewDrawerProps) {
     const { items: users } = useAppSelector((state) => state.users)
-    const { collectionVouchers } = useAppSelector((state) => state.collectionVoucher)
+    const { roles } = useAppSelector((state) => state.roles)
+    const { items: tankers } = useAppSelector((state) => state.tankers)
 
     if (!form) return null
 
     const analyst = users.find(u => u.id === form.analyst)
-    const approver = users.find(u => u.id === form.approved_by)
+    const approver = roles.find(r => r.id === form.approved_by)
     const collector = users.find(u => u.id === form.results_collected_by)
-    const voucher = collectionVouchers.find(v => v.id === form.voucher_id)
+    const tanker = tankers.find(t => t.id === form.truck_number)
+    const truckDisplay = tanker?.reg_number || form.truck_number || "N/A"
 
-    const labTest = form.lab_test
+    const labTests = Array.isArray(form.lab_test) ? form.lab_test : []
+    const columns = Array.from({ length: 6 })
 
-    const DataRow = ({ label, value, unit = "" }: { label: string, value: any, unit?: string }) => (
-        <div className="flex justify-between items-center py-2 border-b border-gray-50 last:border-0">
-            <span className="text-sm font-light text-gray-500">{label}</span>
-            <span className="text-sm font-medium text-gray-900">{value}{unit}</span>
-        </div>
-    )
+    const parameters = [
+        { label: "Temperature (°C)", key: "temperature" },
+        { label: "Time of Test", key: "time" },
+        { label: "OT", key: "ot" },
+        { label: "Clot On Boil", key: "cob", type: "boolean" },
+        { label: "Alcohol (%)", key: "alcohol" },
+        { label: "Titrable Acidity", key: "titratable_acidity" },
+        { label: "pH", key: "ph" },
+        { label: "Resazurin", key: "resazurin" },
+        { label: "Fat (%)", key: "fat" },
+        { label: "Protein (%)", key: "protein" },
+        { label: "LR/SNF", key: "lr_snf" },
+        { label: "Total Solids (%)", key: "total_solids" },
+        { label: "FPD", key: "fpd" },
+        { label: "SCC", key: "scc" },
+        { label: "Density", key: "density" },
+        { label: "Antibiotics", key: "antibiotics", type: "boolean" },
+        { label: "Starch", key: "starch", type: "boolean" },
+        { label: "Result PASS", key: "pass", type: "boolean" },
+    ]
+
+    const handlePrint = () => {
+        window.print()
+    }
 
     return (
         <Sheet open={open} onOpenChange={onOpenChange}>
-            <SheetContent className="tablet-sheet-full p-0 bg-white min-w-[50vw]">
-                <SheetHeader className="p-6 border-b bg-gray-50 flex-row justify-between items-center space-y-0">
-                    <div>
+            <SheetContent className="tablet-sheet-full p-0 bg-white min-w-[95vw] overflow-y-auto">
+                {/* Action Bar */}
+                <div className="flex justify-between items-center p-4 border-b bg-gray-50/50 print:hidden sticky top-0 z-10 backdrop-blur-sm">
+                    <div className="flex items-center space-x-4">
+                        <Button variant="outline" size="sm" className="rounded-full shadow-none border-gray-200" onClick={() => onOpenChange(false)}>
+                            <X className="w-4 h-4 mr-2" />
+                            Close
+                        </Button>
                         <div className="flex items-center space-x-2">
-                            <SheetTitle className="text-xl font-light">Test Result Details</SheetTitle>
-                            <Badge className={form.lab_test?.pass ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}>
-                                {form.lab_test ? (form.lab_test.pass ? "PASSED" : "FAILED") : "PENDING"}
-                            </Badge>
-                        </div>
-                        <SheetDescription className="text-xs font-light mt-1">
-                            Voucher Ref: {form.tag}
-                        </SheetDescription>
-                    </div>
-                    <Button onClick={onEdit} variant="outline" size="sm" className="rounded-full mr-12">
-                        <Edit className="w-4 h-4 mr-2" />
-                        Edit
-                    </Button>
-                </SheetHeader>
-
-                <div className="flex-1 overflow-y-auto p-6 space-y-8 h-[calc(100vh-80px)]">
-
-                    {/* Header Stats */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div className="p-4 bg-blue-50 rounded-xl space-y-1">
-                            <div className="text-[10px] uppercase tracking-wider text-blue-600 font-medium">Compartment</div>
-                            <div className="text-2xl font-light">#{form.truck_compartment_number}</div>
-                        </div>
-                        <div className="p-4 bg-gray-50 rounded-xl space-y-1">
-                            <div className="text-[10px] uppercase tracking-wider text-gray-500 font-medium">Temperature</div>
-                            <div className="text-2xl font-light">{labTest?.temperature ?? "-"}°C</div>
-                        </div>
-                        <div className="p-4 bg-gray-50 rounded-xl space-y-1">
-                            <div className="text-[10px] uppercase tracking-wider text-gray-500 font-medium">PH</div>
-                            <div className="text-2xl font-light">{labTest?.ph ?? "-"}</div>
-                        </div>
-                        <div className="p-4 bg-gray-50 rounded-xl space-y-1">
-                            <div className="text-[10px] uppercase tracking-wider text-gray-500 font-medium">Density</div>
-                            <div className="text-2xl font-light">{labTest?.density ?? "-"}</div>
+                            <FlaskConical className="w-5 h-5 text-[#006BC4]" />
+                            <span className="font-semibold text-sm tracking-tight text-gray-900 leading-none">Viewing Result Slip</span>
                         </div>
                     </div>
-
-                    {/* Detailed Results */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div className="space-y-4">
-                            <div className="flex items-center space-x-2 text-blue-600 border-b pb-2">
-                                <FlaskConical className="w-4 h-4" />
-                                <span className="text-sm font-medium">Chemical & Physical Tests</span>
-                            </div>
-                            <div className="space-y-1">
-                                <DataRow label="Fat Content" value={labTest?.fat} unit="%" />
-                                <DataRow label="Protein Content" value={labTest?.protein} unit="%" />
-                                <DataRow label="Alcohol Test" value={labTest?.alcohol} unit="%" />
-                                <DataRow label="Total Solids" value={labTest?.total_solids} unit="%" />
-                                <DataRow label="LR/SNF" value={labTest?.lr_snf} />
-                                <DataRow label="FPD" value={labTest?.fpd} />
-                                <DataRow label="SCC" value={labTest?.scc} />
-                                <DataRow label="Titratable Acidity" value={labTest?.titratable_acidity} />
-                            </div>
-                        </div>
-
-                        <div className="space-y-4">
-                            <div className="flex items-center space-x-2 text-purple-600 border-b pb-2">
-                                <Droplets className="w-4 h-4" />
-                                <span className="text-sm font-medium">Quality & Adulteration</span>
-                            </div>
-                            <div className="space-y-1">
-                                <DataRow label="Organoleptic (OT)" value={labTest?.ot || "-"} />
-                                <DataRow label="Resazurin" value={labTest?.resazurin || "-"} />
-                                <div className="flex justify-between items-center py-2 border-b border-gray-50">
-                                    <span className="text-sm font-light text-gray-500">COB Positive</span>
-                                    {labTest?.cob ? <CheckCircle2 className="w-4 h-4 text-red-500" /> : <XCircle className="w-4 h-4 text-green-500" />}
-                                </div>
-                                <div className="flex justify-between items-center py-2 border-b border-gray-50">
-                                    <span className="text-sm font-light text-gray-500">Antibiotics Detect</span>
-                                    {labTest?.antibiotics ? <CheckCircle2 className="w-4 h-4 text-red-500" /> : <XCircle className="w-4 h-4 text-green-500" />}
-                                </div>
-                                <div className="flex justify-between items-center py-2 border-b border-gray-50">
-                                    <span className="text-sm font-light text-gray-500">Starch Detect</span>
-                                    {labTest?.starch ? <CheckCircle2 className="w-4 h-4 text-red-500" /> : <XCircle className="w-4 h-4 text-green-500" />}
-                                </div>
-                            </div>
-                            <div className="p-4 bg-orange-50 rounded-xl border border-orange-100">
-                                <div className="text-[10px] uppercase font-medium text-orange-600 mb-1">Remarks</div>
-                                <p className="text-sm font-light text-gray-700 italic">"{labTest?.remark || "No remarks"}"</p>
-                            </div>
-                        </div>
+                    <div className="flex items-center space-x-3">
+                        <Button variant="outline" size="sm" className="rounded-full border-[#A0CF06] text-[#211D1E] hover:bg-[#A0CF06]/10 shadow-none" onClick={onEdit}>
+                            <Edit className="w-4 h-4 mr-2" />
+                            Modify Data
+                        </Button>
+                        <Button className="rounded-full bg-[#006BC4] hover:bg-[#006BC4]/90 px-8 shadow-none" size="sm" onClick={handlePrint}>
+                            <Printer className="w-4 h-4 mr-2" />
+                            Print Sheet
+                        </Button>
                     </div>
-
-                    <Separator />
-
-                    {/* Admin & Context */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div className="space-y-3">
-                            <div className="flex items-center space-x-2 text-gray-400">
-                                <Calendar className="w-4 h-4" />
-                                <span className="text-xs font-medium uppercase tracking-wider">Context</span>
-                            </div>
-                            <div className="space-y-2">
-                                <div className="flex items-center space-x-3">
-                                    <FileText className="w-5 h-5 text-gray-400" />
-                                    <div>
-                                        <div className="text-xs text-gray-500">Collection Voucher</div>
-                                        <div className="text-sm font-light">{voucher?.tag || form.voucher_id}</div>
-                                    </div>
-                                </div>
-                                <div className="flex items-center space-x-3">
-                                    <Truck className="w-5 h-5 text-gray-400" />
-                                    <div>
-                                        <div className="text-xs text-gray-500">Truck Registration</div>
-                                        <div className="text-sm font-light">{voucher?.truck_number || "Unknown"}</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="space-y-3">
-                            <div className="flex items-center space-x-2 text-gray-400">
-                                <User className="w-4 h-4" />
-                                <span className="text-xs font-medium uppercase tracking-wider">Personnel</span>
-                            </div>
-                            <div className="space-y-2">
-                                <div className="flex items-center space-x-2">
-                                    <span className="text-[10px] w-16 text-gray-400 uppercase">Analyst:</span>
-                                    <span className="text-sm font-light">{analyst ? `${analyst.first_name} ${analyst.last_name}` : "Unknown"}</span>
-                                </div>
-                                <div className="flex items-center space-x-2">
-                                    <span className="text-[10px] w-16 text-gray-400 uppercase">Collector:</span>
-                                    <span className="text-sm font-light">{collector ? `${collector.first_name} ${collector.last_name}` : "Unknown"}</span>
-                                </div>
-                                <div className="flex items-center space-x-2">
-                                    <span className="text-[10px] w-16 text-gray-400 uppercase">Approver:</span>
-                                    <span className="text-sm font-light">{approver ? `${approver.first_name} ${approver.last_name}` : "Unknown"}</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="space-y-3">
-                            <div className="flex items-center space-x-2 text-gray-400">
-                                <CheckCircle2 className="w-4 h-4" />
-                                <span className="text-xs font-medium uppercase tracking-wider">Approval Signature</span>
-                            </div>
-                            <div className="border border-dashed border-gray-200 rounded-lg p-2 h-20 flex items-center justify-center bg-white">
-                                {form.approver_signature ? (
-                                    <img src={base64ToPngDataUrl(form.approver_signature)} alt="Signature" className="max-h-full" />
-                                ) : (
-                                    <span className="text-[10px] text-gray-300 italic">No signature available</span>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Time and Dates */}
-                    <div className="flex items-center space-x-6 pt-4 text-gray-400 border-t">
-                        <div className="flex items-center space-x-2">
-                            <Calendar className="w-3 h-3" />
-                            <span className="text-xs">{new Date(form.date).toLocaleDateString()}</span>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                            <Clock className="w-3 h-3" />
-                            <span className="text-xs">In: {form.time_in}</span>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                            <Clock className="w-3 h-3" />
-                            <span className="text-xs">Out: {form.time_out}</span>
-                        </div>
-                    </div>
-
                 </div>
+
+                {/* LABORATORY SHEET LAYOUT */}
+                <div className="p-0 border-none bg-white min-h-screen">
+                    <div className="mx-auto p-12 max-w-[1300px]">
+
+                        {/* HEADER SECTION - 2 ROW LAYOUT */}
+                        <div className="border-b-2 border-black pb-8 mb-10">
+                            <div className="flex justify-between items-start mb-8">
+                                <div className="flex flex-col">
+                                    <span className="text-4xl font-bold text-[#006BC4] leading-none">PRO dairy</span>
+                                    <span className="text-[10px] text-gray-400 mt-1 uppercase tracking-widest text-center">Laboratory Administration</span>
+                                </div>
+                                <div className="text-center">
+                                    <h1 className="text-3xl font-bold tracking-tighter text-gray-900 mb-1">RAW MILK RESULT SLIP</h1>
+                                    <p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold">Quality Control validation</p>
+                                </div>
+                                <div className="text-right tabular-nums">
+                                    <span className="text-gray-400 uppercase text-[10px] block mb-1">Reference Tag</span>
+                                    <span className="font-bold text-gray-900 text-xl">{form.tag || "N/A"}</span>
+                                </div>
+                            </div>
+
+                            {/* ROW 1: DATA, TRUCK, ROUTE */}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+                                <div className="space-y-1">
+                                    <Label className="text-[10px] uppercase text-gray-500 font-bold tracking-tight">Data / Date of Acceptance</Label>
+                                    <div className="h-11 rounded-full border border-gray-100 bg-gray-50/50 flex items-center px-6 font-bold text-gray-900">
+                                        {new Date(form.date).toLocaleDateString("en-GB", { day: '2-digit', month: 'long', year: 'numeric' })}
+                                    </div>
+                                </div>
+                                <div className="space-y-1">
+                                    <Label className="text-[10px] uppercase text-gray-500 font-bold tracking-tight">Truck Number / ID (Voucher)</Label>
+                                    <div className="h-11 rounded-full border border-gray-100 bg-gray-50/50 flex items-center px-6 font-bold text-gray-900 truncate">
+                                        {truckDisplay}
+                                    </div>
+                                </div>
+                                <div className="space-y-1">
+                                    <Label className="text-[10px] uppercase text-gray-500 font-bold tracking-tight">Route Source</Label>
+                                    <div className="h-11 rounded-full border border-gray-100 bg-gray-50/50 flex items-center px-6 font-bold text-gray-900">
+                                        {form.route || "N/A"}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* ROW 2: TIMES, ANALYST, COLLECTOR */}
+                            <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+                                <div className="space-y-1">
+                                    <Label className="text-[10px] uppercase text-gray-500 font-bold tracking-tight">Arrival / Dispatch Times</Label>
+                                    <div className="h-11 rounded-full border border-gray-100 bg-gray-50/50 flex items-center px-6 font-bold text-gray-900 tabular-nums">
+                                        {form.time_in ? (form.time_in.includes('T') ? form.time_in.split('T')[1].substring(0, 5) : form.time_in.substring(0, 5)) : "--:--"}
+                                        {" - "}
+                                        {form.time_out ? (form.time_out.includes('T') ? form.time_out.split('T')[1].substring(0, 5) : form.time_out.substring(0, 5)) : "--:--"}
+                                    </div>
+                                </div>
+                                <div className="space-y-1">
+                                    <Label className="text-[10px] uppercase text-gray-500 font-bold tracking-tight">Lead Analyst</Label>
+                                    <div className="h-11 rounded-full border border-gray-100 bg-gray-50/50 flex items-center px-6 font-bold text-gray-900 truncate">
+                                        {analyst ? `${analyst.first_name} ${analyst.last_name}` : "N/A"}
+                                    </div>
+                                </div>
+                                <div className="space-y-1 md:col-span-2">
+                                    <Label className="text-[10px] uppercase text-gray-500 font-bold tracking-tight">Results Collected By</Label>
+                                    <div className="h-11 rounded-full border border-gray-100 bg-gray-50/50 flex items-center px-6 font-bold text-gray-900 truncate">
+                                        {collector ? `${collector.first_name} ${collector.last_name}` : "N/A"}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* MAIN DATA TABLE */}
+                        <div className="mb-12 overflow-hidden outline outline-1 outline-black bg-white">
+                            <table className="w-full border-collapse">
+                                <thead>
+                                    <tr className="bg-gray-50 border-b border-black">
+                                        <th className="p-5 text-left text-[11px] font-bold border-r border-black w-64 uppercase tracking-widest text-gray-600">Laboratory Parameter</th>
+                                        {columns.map((_, i) => (
+                                            <th key={i} className="p-2 text-center text-[11px] font-bold border-r border-black last:border-r-0">
+                                                <div className="text-gray-900">RESULT {i + 1}</div>
+                                                <div className="text-[9px] font-medium text-[#006BC4] mt-0.5 uppercase">
+                                                    {labTests[i] ? `COMPARTMENT ${labTests[i].truck_compartment_number}` : "-"}
+                                                </div>
+                                            </th>
+                                        ))}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {parameters.map((param, pIdx) => (
+                                        <tr key={param.key} className="border-b border-gray-200 last:border-b-0 hover:bg-gray-50/50 transition-colors">
+                                            <td className="p-4 px-5 text-[13px] font-bold border-r border-black bg-gray-50/20 text-gray-800">
+                                                {param.label}
+                                            </td>
+                                            {columns.map((_, cIdx) => {
+                                                const lt = labTests[cIdx]
+                                                let value: any = lt ? lt[param.key as keyof typeof lt] : ""
+
+                                                if (param.type === "boolean" && lt) {
+                                                    value = value ? "POSITIVE" : "NEGATIVE"
+                                                }
+
+                                                if (param.key === "time" && value && (value.includes('T') || value.includes(' '))) {
+                                                    value = value.includes('T') ? value.split('T')[1].substring(0, 5) : value.split(' ')[1].substring(0, 5)
+                                                }
+
+                                                return (
+                                                    <td key={cIdx} className={`p-2 text-center text-[13px] font-bold border-r border-black last:border-r-0 h-14 ${!lt ? 'bg-gray-50/30' : ''}`}>
+                                                        {value || (lt ? "-" : "")}
+                                                    </td>
+                                                )
+                                            })}
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {/* BOTTOM SECTION */}
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 mt-16 pb-12">
+                            <div className="space-y-10">
+                                <div className="space-y-3">
+                                    <Label className="text-[11px] font-bold uppercase tracking-widest text-gray-500 block">Authorized QA/QC Approver</Label>
+                                    <div className="h-14 rounded-full border-2 border-black bg-white flex items-center px-8 text-xl font-bold text-gray-900 tracking-tight">
+                                        {approver ? approver.role_name : "SIGNATURE VALIDATION REQUIRED"}
+                                    </div>
+                                </div>
+
+                                <div className="space-y-3">
+                                    <Label className="text-[11px] font-bold uppercase tracking-widest text-gray-500 block">Analytical Observations</Label>
+                                    <div className="text-[14px] min-h-[160px] rounded-[2rem] p-8 bg-gray-50/30 italic text-gray-600 leading-relaxed border border-gray-100">
+                                        {labTests[0]?.remark || "No specific deviations recorded for this intake batch. Product meets standard sensory and analytical requirements."}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="space-y-6">
+                                <Label className="text-[11px] font-bold uppercase tracking-widest text-gray-500 block">Validation Signature Matrix</Label>
+                                <div className="space-y-4">
+                                    <div
+                                        className="h-56 w-full border-2 border-gray-100 rounded-[2.5rem] bg-gray-50/20 flex items-center justify-center overflow-hidden grayscale"
+                                    >
+                                        {form.approver_signature ? (
+                                            <img src={base64ToPngDataUrl(form.approver_signature)} alt="Signature" className="max-h-full p-8" />
+                                        ) : (
+                                            <div className="text-center">
+                                                <span className="text-xs text-gray-300 font-bold uppercase tracking-widest block">WAITING FOR ANALYST AUTHENTICATION</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="flex items-center justify-center space-x-3 text-[11px] font-black tracking-widest">
+                                        <div className={`w-3 h-3 rounded-full ${form.approver_signature ? 'bg-[#A0CF06]' : 'bg-gray-200'}`} />
+                                        <span className={form.approver_signature ? 'text-[#211D1E]' : 'text-gray-300'}>
+                                            {form.approver_signature ? 'DOCUMENT LEGALLY AUTHENTICATED' : 'SIGNATURE_VALIDATION_PENDING'}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="mt-20 pt-10 border-t border-gray-100 flex justify-between items-end opacity-40">
+                            <p className="text-[10px] text-gray-400 max-w-lg leading-relaxed font-medium italic">
+                                This document is a certified extract from the PRO Dairy Quality Information System. All sensory and analytical results are binding and immutable.
+                            </p>
+                            <div className="text-right">
+                                <div className="text-xs font-black text-gray-900 mb-1 uppercase tracking-tighter">QA_SYSTEM_v2.4.1</div>
+                                <div className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">Process Engineering Department</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Combined Styles */}
+                <style jsx global>{`
+                    @media print {
+                        body * {
+                            visibility: hidden;
+                        }
+                        .sheet-content, .sheet-content * {
+                            visibility: visible !important;
+                        }
+                        .sheet-content {
+                            position: absolute;
+                            left: 0;
+                            top: 0;
+                            width: 100%;
+                            padding: 0 !important;
+                        }
+                        .sticky {
+                            position: static !important;
+                        }
+                        .print-hidden {
+                            display: none !important;
+                        }
+                        @page {
+                            size: A4;
+                            margin: 10mm;
+                        }
+                    }
+                    .tablet-sheet-full {
+                        animation: slide-up 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+                    }
+                    @keyframes slide-up {
+                        from { transform: translateY(15%); opacity: 0; }
+                        to { transform: translateY(0); opacity: 1; }
+                    }
+                `}</style>
             </SheetContent>
         </Sheet>
     )

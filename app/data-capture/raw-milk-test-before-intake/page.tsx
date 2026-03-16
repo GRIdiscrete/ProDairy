@@ -31,6 +31,7 @@ import {
 } from "@/lib/store/slices/rawMilkTestBeforeIntakeSlice"
 import { fetchUsers } from "@/lib/store/slices/usersSlice"
 import { fetchCollectionVouchers } from "@/lib/store/slices/collectionVoucherSlice"
+import { fetchTankers } from "@/lib/store/slices/tankerSlice"
 import { toast } from "sonner"
 import { RawMilkResultSlipBeforeIntake, TableFilters } from "@/lib/types"
 
@@ -44,6 +45,7 @@ export default function RawMilkTestBeforeIntakePage() {
     } = useAppSelector((state) => state.rawMilkTestBeforeIntake)
     const { items: users } = useAppSelector((state) => state.users)
     const { collectionVouchers } = useAppSelector((state) => state.collectionVoucher)
+    const { items: tankers, isInitialized: tankersInitialized } = useAppSelector((state) => state.tankers)
 
     const [tableFilters, setTableFilters] = useState<TableFilters>({})
     const [formDrawerOpen, setFormDrawerOpen] = useState(false)
@@ -62,8 +64,11 @@ export default function RawMilkTestBeforeIntakePage() {
             dispatch(fetchPendingVouchers())
             dispatch(fetchUsers({}))
             dispatch(fetchCollectionVouchers({}))
+            if (!tankersInitialized) {
+                dispatch(fetchTankers())
+            }
         }
-    }, [dispatch])
+    }, [dispatch, tankersInitialized])
 
     const filteredSlips = useMemo(() => {
         if (!resultSlips) return []
@@ -73,7 +78,10 @@ export default function RawMilkTestBeforeIntakePage() {
             if (tableFilters.search) {
                 const searchLower = tableFilters.search.toLowerCase()
                 const tag = (slip.tag || "").toLowerCase()
-                const truckNumber = (collectionVouchers.find(v => v.id === slip.voucher_id)?.truck_number || "").toLowerCase()
+                const voucher = collectionVouchers.find(v => v.id === slip.voucher_id)
+                const truckId = slip.truck_number || voucher?.truck_number
+                const tanker = tankers.find(t => t.id === truckId)
+                const truckNumber = (tanker?.reg_number || truckId || "").toLowerCase()
                 if (!tag.includes(searchLower) && !truckNumber.includes(searchLower)) return false
             }
 
@@ -108,7 +116,7 @@ export default function RawMilkTestBeforeIntakePage() {
 
             return true
         })
-    }, [resultSlips, tableFilters, collectionVouchers])
+    }, [resultSlips, tableFilters, collectionVouchers, tankers])
 
     const handleAddSlip = () => {
         setSelectedSlip(null)
@@ -143,6 +151,12 @@ export default function RawMilkTestBeforeIntakePage() {
         }
     }
 
+    const handleSuccess = () => {
+        dispatch(fetchResultSlips())
+        dispatch(fetchUntestedCompartments())
+        dispatch(fetchPendingVouchers())
+    }
+
     const columns = [
         {
             accessorKey: "tag",
@@ -161,25 +175,41 @@ export default function RawMilkTestBeforeIntakePage() {
         },
         {
             accessorKey: "compartment",
-            header: "Compartment",
-            cell: ({ row }: any) => (
-                <div className="flex items-center space-x-2">
-                    <Badge variant="outline" className="rounded-md font-light">
-                        Comp #{row.original.truck_compartment_number}
-                    </Badge>
-                </div>
-            )
+            header: "Compartment(s)",
+            cell: ({ row }: any) => {
+                const tests = row.original.lab_test || []
+                const isArray = Array.isArray(tests)
+
+                return (
+                    <div className="flex flex-wrap gap-1">
+                        {isArray && tests.length > 0 ? (
+                            tests.map((lt: any) => (
+                                <Badge key={lt.id} variant="outline" className="text-[10px] py-0 px-1 font-light">
+                                    C#{lt.truck_compartment_number}
+                                </Badge>
+                            ))
+                        ) : (
+                            <Badge variant="outline" className="text-[10px] py-0 px-1 font-light italic">
+                                Gen #{row.original.truck_compartment_number || "N/A"}
+                            </Badge>
+                        )}
+                    </div>
+                )
+            }
         },
         {
             accessorKey: "voucher",
             header: "Collection Voucher",
             cell: ({ row }: any) => {
                 const voucher = collectionVouchers.find(v => v.id === row.original.voucher_id)
+                const truckId = row.original.truck_number || voucher?.truck_number
+                const tanker = tankers.find(t => t.id === truckId)
+                const truckDisplay = tanker?.reg_number || truckId || "Unknown Truck"
                 return (
                     <div className="space-y-1">
                         <div className="flex items-center space-x-2 text-xs font-light text-gray-600">
                             <Truck className="w-3 h-3" />
-                            <span>{voucher?.truck_number || "Unknown Truck"}</span>
+                            <span>{truckDisplay}</span>
                         </div>
                         <FormIdCopy displayId={voucher?.tag || "N/A"} actualId={row.original.voucher_id} size="sm" />
                     </div>
@@ -199,11 +229,21 @@ export default function RawMilkTestBeforeIntakePage() {
         {
             accessorKey: "result",
             header: "Result",
-            cell: ({ row }: any) => (
-                <Badge className={row.original.lab_test?.pass ? "bg-green-100 text-green-700 hover:bg-green-100" : "bg-red-100 text-red-700 hover:bg-red-100"}>
-                    {row.original.lab_test ? (row.original.lab_test.pass ? "PASS" : "FAIL") : "PENDING"}
-                </Badge>
-            )
+            cell: ({ row }: any) => {
+                const tests = row.original.lab_test || []
+                const isArray = Array.isArray(tests)
+
+                if (!isArray || tests.length === 0) {
+                    return <Badge className="bg-gray-100 text-gray-500">NO DATA</Badge>
+                }
+
+                const allPass = tests.every((t: any) => t.pass)
+                return (
+                    <Badge className={allPass ? "bg-green-100 text-green-700 hover:bg-green-100" : "bg-red-100 text-red-700 hover:bg-red-100"}>
+                        {allPass ? "PASS" : "FAIL"}
+                    </Badge>
+                )
+            }
         },
         {
             id: "actions",
@@ -232,7 +272,6 @@ export default function RawMilkTestBeforeIntakePage() {
     return (
         <DataCaptureDashboardLayout title="Raw Milk Test Before Intake" subtitle="Laboratory testing for tankers arriving on site">
             <div className="space-y-6">
-
                 {/* Header Section */}
                 <div className="flex items-center justify-between">
                     <div>
@@ -253,7 +292,7 @@ export default function RawMilkTestBeforeIntakePage() {
                             <h3 className="text-sm font-medium text-orange-800">Pending Compartment Tests</h3>
                         </div>
                         <div className="mt-2 text-xs text-orange-700">
-                            You have {untestedCompartments.length} compartment(s) awaiting intake testing across {new Set(untestedCompartments.map(c => c.truck_number)).size} truck(s).
+                            You have {untestedCompartments.length} compartment(s) awaiting intake testing across {new Set(untestedCompartments.map(c => c.truck)).size} truck(s).
                         </div>
                     </div>
                 )}
@@ -297,6 +336,7 @@ export default function RawMilkTestBeforeIntakePage() {
                     onOpenChange={setFormDrawerOpen}
                     form={selectedSlip}
                     mode={formMode}
+                    onSuccess={handleSuccess}
                 />
 
                 {/* View Drawer */}

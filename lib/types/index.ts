@@ -513,6 +513,7 @@ export interface RawMilkResultSlipBeforeIntakeLabTest {
   temperature: number | null
   total_solids: number | null
   titratable_acidity: number | null
+  truck_compartment_number: number | null
   raw_milk_result_slip_before_intake_id: string
 }
 
@@ -528,17 +529,30 @@ export interface RawMilkResultSlipBeforeIntake {
   analyst: string
   results_collected_by: string
   tag: string
-  lab_test: RawMilkResultSlipBeforeIntakeLabTest
+  lab_test: RawMilkResultSlipBeforeIntakeLabTest[]
+  collection_voucher_tanker_compartment: any | null
   truck_compartment_number: number
   voucher_id: string
+  approver: any | null
+  approved: boolean
+  truck_number: string | null
+  route: string | null
+}
+
+export interface UntestedCompartmentSupplier {
+  tank: string
+  volume: number
+  voucher: string
+  last_name: string
+  first_name: string
 }
 
 export interface UntestedCompartment {
-  voucher_id: string
-  voucher_created_at: string
-  farmer_tank: string
+  truck: string
   truck_compartment_number: number
+  route: string
   driver_first_name: string
   driver_last_name: string
-  truck_number: string
+  total_compartment_volume: number
+  suppliers: UntestedCompartmentSupplier[]
 }
