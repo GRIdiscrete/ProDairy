@@ -100,7 +100,7 @@ export function ShadcnTimePicker({
   })
 
   return (
-    <div className={cn("space-y-2", className)}>
+    <div className={cn(label && "space-y-2", className)}>
       {label && (
         <Label className={cn("text-sm font-medium", error && "text-red-500")}> 
           {label}
@@ -112,10 +112,11 @@ export function ShadcnTimePicker({
           <Button
             variant="outline"
             className={cn(
-              "w-full h-12 justify-start text-left font-normal bg-transparent hover:bg-transparent border border-gray-300 hover:border-gray-400 focus:border-[#006BC4]",
+              "w-full h-10 justify-start text-left font-normal bg-transparent hover:bg-transparent border border-gray-300 hover:border-gray-400 focus:border-[#006BC4]",
               !displayTime && "text-muted-foreground",
               error && "border-red-500 focus:border-red-500",
-              disabled && "opacity-50 cursor-not-allowed"
+              disabled && "opacity-50 cursor-not-allowed",
+              className?.includes("h-") && className.split(" ").filter(c => c.startsWith("h-")).pop()
             )}
             disabled={disabled}
           >

@@ -95,4 +95,20 @@ export const siloApi = {
       method: 'DELETE',
     })
   },
+  // Silo Manager Endpoints
+
+  // Get silos for the silo manager dashboard
+  async getSiloManagerSilos(): Promise<ApiEnvelope<Silo[]>> {
+    return apiRequest<ApiEnvelope<Silo[]>>(API_CONFIG.ENDPOINTS.SILO_MANAGER.SILOS)
+  },
+
+  // Get CIP status for a specific silo by name
+  async getCIPStatus(siloName: string): Promise<ApiEnvelope<any>> {
+    return apiRequest<ApiEnvelope<any>>(`${API_CONFIG.ENDPOINTS.SILO_MANAGER.CIP_STATUS}/${siloName}`)
+  },
+
+  // Get silo transfers (BMT forms)
+  async getSiloTransfers(): Promise<ApiEnvelope<any[]>> {
+    return apiRequest<ApiEnvelope<any[]>>(API_CONFIG.ENDPOINTS.SILO_MANAGER.TRANSFERS)
+  },
 }

@@ -81,6 +81,12 @@ const dataCaptureNavigation = [
     icon: Beaker,
     current: false,
   },
+  {
+    name: "Silo Management",
+    href: "/data-capture/silo-management",
+    icon: Droplets,
+    current: false,
+  },
   // Flow-driven stages are injected dynamically below based on selected process
   // Process Control Forms moved to Tools module
   // Production Forms

@@ -177,6 +177,29 @@ export default function RawMilkIntakePage() {
   const getTotalQuantity = (form: RawMilkIntakeForm) =>
     (form.details ?? []).reduce((sum, detail) => sum + (getDetailQuantity(detail) ?? 0), 0)
 
+  const formatSafeDate = (dateStr: string | undefined | null, long: boolean = false) => {
+    if (!dateStr) return "—"
+    const d = new Date(dateStr)
+    if (isNaN(d.getTime())) {
+      // Try to handle ISO date with space instead of T if necessary, or other common PG formats
+      const cleanDate = dateStr.replace(' ', 'T')
+      const d2 = new Date(cleanDate)
+      if (!isNaN(d2.getTime())) {
+        return d2.toLocaleDateString('en-GB', {
+          day: 'numeric',
+          month: long ? 'long' : 'short',
+          year: 'numeric'
+        })
+      }
+      return "—"
+    }
+    return d.toLocaleDateString('en-GB', {
+      day: 'numeric',
+      month: long ? 'long' : 'short',
+      year: 'numeric'
+    })
+  }
+
   // Table columns with actions
   const columns = [
     {
@@ -240,24 +263,26 @@ export default function RawMilkIntakePage() {
       header: "Operator",
       cell: ({ row }: any) => {
         const form = row.original
-        // New API returns operator as { first_name, last_name }
-        const operatorName = typeof form.operator === "string"
-          ? null  // legacy: try to look up by ID
-          : `${form.operator?.first_name ?? ""} ${form.operator?.last_name ?? ""}`.trim()
+        const operator = form.operator
 
-        if (operatorName) {
+        // Handle operator object from new API
+        if (operator && typeof operator !== "string") {
+          const name = `${operator.first_name ?? ""} ${operator.last_name ?? ""}`.trim()
           return (
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-medium text-xs">
-                {operatorName.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase()}
+              <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-medium text-xs border border-blue-200">
+                {name.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase()}
               </div>
-              <span className="text-sm font-light">{operatorName}</span>
+              <div className="flex flex-col">
+                <span className="text-sm font-medium text-gray-900 leading-none">{name}</span>
+                {/* <span className="text-[10px] text-gray-400 mt-1 uppercase tracking-tighter">Verified Operator</span> */}
+              </div>
             </div>
           )
         }
 
-        // Legacy: look up by ID
-        const operatorUser = users.find((user: any) => user.id === form.operator)
+        // Legacy/Fallback: look up by ID
+        const operatorUser = users.find((user: any) => user.id === operator)
         if (operatorUser) {
           return (
             <UserAvatar
@@ -265,19 +290,17 @@ export default function RawMilkIntakePage() {
               size="md"
               showName={true}
               showEmail={true}
-              showDropdown={true}
+              showDropdown={false}
             />
           )
         }
 
         return (
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
-              <User className="w-4 h-4 text-gray-500" />
+            <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center border border-dashed border-gray-200">
+              <User className="w-3.5 h-3.5 text-gray-400" />
             </div>
-            <div>
-              <div className="text-sm font-light text-gray-400">Unknown Operator</div>
-            </div>
+            <span className="text-sm font-light text-gray-400 italic">Unassigned</span>
           </div>
         )
       },
@@ -337,28 +360,7 @@ export default function RawMilkIntakePage() {
         )
       },
     },
-    {
-      accessorKey: "created_at",
-      header: "Tag / Date",
-      cell: ({ row }: any) => {
-        const form = row.original
-        // Parse date from tag format RMI-N-DD-M-YYYY
-        const tagParts = (form.tag ?? "").split("-")
-        const tagDate = tagParts.length >= 5
-          ? `${tagParts[2]}/${tagParts[3]}/${tagParts[4]}`
-          : null
-        return (
-          <div className="space-y-1">
-            <p className="text-sm font-medium text-blue-600">{form.tag ?? '—'}</p>
-            <p className="text-xs text-gray-500">
-              {form.created_at
-                ? new Date(form.created_at).toLocaleDateString()
-                : tagDate ?? '—'}
-            </p>
-          </div>
-        )
-      },
-    },
+
     {
       id: "actions",
       header: "Actions",
@@ -477,10 +479,10 @@ export default function RawMilkIntakePage() {
                 <div className="space-y-2">
                   <div className="flex items-center space-x-2">
                     <Droplets className="h-4 w-4 text-blue-500" />
-                    <p className="text-sm font-light text-gray-600">Total Quantity</p>
+                    <p className="text-sm font-light text-gray-600">Total volume</p>
                   </div>
-                  <p className="text-lg font-light text-blue-600">
-                    {getTotalQuantity(latestForm).toFixed(2)}L
+                  <p className="text-lg font-medium text-blue-600">
+                    {getTotalQuantity(latestForm).toLocaleString()} L
                   </p>
                 </div>
                 <div className="space-y-2">
@@ -488,11 +490,9 @@ export default function RawMilkIntakePage() {
                     <Clock className="h-4 w-4 text-gray-500" />
                     <p className="text-sm font-light text-gray-600">Created</p>
                   </div>
-                  <p className="text-lg font-light">{new Date(latestForm.created_at).toLocaleDateString('en-GB', {
-                    day: 'numeric',
-                    month: 'long',
-                    year: 'numeric'
-                  })}</p>
+                  <p className="text-lg font-light">
+                    {formatSafeDate(latestForm.created_at, true)}
+                  </p>
                 </div>
 
               </div>

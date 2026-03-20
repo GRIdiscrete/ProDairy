@@ -14,5 +14,10 @@ export const API_CONFIG = {
     RAW_MILK_INTAKE_LAB_TEST: '/raw-milk-intake-lab-test',
     STERI_MILK_TEST_REPORT: '/steri-milk-test-report',
     RAW_MILK_RESULT_SLIP: '/raw-milk-result-slip',
+    SILO_MANAGER: {
+      SILOS: '/silo-manager/silos',
+      CIP_STATUS: '/silo-manager/cip-status',
+      TRANSFERS: '/silo-manager/transfers',
+    }
   },
 } as const

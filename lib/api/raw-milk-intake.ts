@@ -34,7 +34,7 @@ export interface RawMilkIntakeForm {
   created_at?: string
   updated_at?: string | null
   /** New API returns operator as an object */
-  operator: string | { first_name: string; last_name: string }
+  operator: string | { id?: string; first_name: string; last_name: string }
   truck: string
   tag?: string
   updated_by?: string | null
@@ -45,10 +45,18 @@ export interface RawMilkIntakeForm {
 
 /** One truck ready for intake from GET /raw-milk-intake-2/tested-trucks */
 export interface TestedTruck {
-  truck: string
-  route: string
-  driver_first_name: string
-  driver_last_name: string
+  truck_number: string
+  created_at: string
+  total_volume: number
+  voucher_contributions: {
+    volume: number
+    voucher_tag: string
+    voucher_date: string
+    collection_id: string
+    supplier_tank: string
+    supplier_last_name: string
+    supplier_first_name: string
+  }[]
 }
 
 /** One voucher contribution inside a compartment */
@@ -141,10 +149,10 @@ export const rawMilkIntakeApi = {
   getTestedTrucks: async () =>
     apiRequest<ApiResponse<TestedTruck[]>>('/raw-milk-intake-2/tested-trucks'),
 
-  /** GET /raw-milk-intake-2/tested-truck/:truck_number — compartments for a given truck */
+  /** GET /raw-milk-intake-2/tested-trucks/:truck_number — compartments for a given truck */
   getCompartmentsByTruck: async (truckNumber: string) =>
     apiRequest<ApiResponse<TruckCompartment[]>>(
-      `/raw-milk-intake-2/tested-truck/${encodeURIComponent(truckNumber)}`
+      `/raw-milk-intake-2/tested-trucks/${encodeURIComponent(truckNumber)}`
     ),
 
   /** POST /raw-milk-intake-2 */
