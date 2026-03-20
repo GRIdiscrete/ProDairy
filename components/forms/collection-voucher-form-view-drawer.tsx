@@ -116,8 +116,8 @@ export function CollectionVoucherViewDrawer({
     const driverUser = users.find(user => user.id === collectionVoucher.driver)
     const supplierData = suppliers.find(s => s.id === (typeof collectionVoucher.supplier === 'string' ? collectionVoucher.supplier : (collectionVoucher.supplier as any)?.id))
 
-    const details = Array.isArray(collectionVoucher.raw_milk_collection_voucher_2_details)
-        ? collectionVoucher.raw_milk_collection_voucher_2_details
+    const details = Array.isArray(collectionVoucher.details)
+        ? collectionVoucher.details
         : []
 
     return (
@@ -196,7 +196,7 @@ export function CollectionVoucherViewDrawer({
                                             <Calendar className="h-3 w-3" />Date
                                         </div>
                                         <div className="text-sm font-light">
-                                            {new Date(collectionVoucher.date).toLocaleDateString()}
+                                            {collectionVoucher.date ? new Date(collectionVoucher.date).toLocaleDateString() : 'N/A'}
                                         </div>
                                     </div>
 
@@ -317,7 +317,7 @@ export function CollectionVoucherViewDrawer({
                             <div className="p-6 space-y-8">
                                 {details.map((detail, detailIndex) => (
                                     <div key={detail.id || detailIndex} className="space-y-6">
-                                        {(detail.raw_milk_collection_voucher_2_details_farmer_tank || []).map((tank, tankIndex) => (
+                                        {(detail.supplier_tanks || []).map((tank: any, tankIndex: number) => (
                                             <div key={tank.id || tankIndex} className="p-4 border border-gray-100 rounded-xl bg-gray-50/50 space-y-4">
                                                 <div className="flex items-center justify-between">
                                                     <div className="flex items-center gap-2">

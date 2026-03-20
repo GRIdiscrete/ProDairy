@@ -145,10 +145,6 @@ export function CollectionVoucherFormDrawer({
         name: "details"
     })
 
-    const { fields: labTestFields } = useFieldArray({
-        control,
-        name: "lab_test"
-    })
 
     const selectedTruckNumber = watch("truck_number")
     const selectedTanker = displayTankers?.find((t: any) => t.reg_number === selectedTruckNumber)
@@ -214,7 +210,7 @@ export function CollectionVoucherFormDrawer({
                     }
                 }).catch(() => { })
 
-                dispatch(fetchTankers({})).then((result: any) => {
+                dispatch(fetchTankers()).then((result: any) => {
                     if (result.payload && typeof window !== 'undefined') {
                         LocalStorageService.saveTankers(result.payload)
                         setOfflineData(prev => ({ ...prev, tankers: result.payload }))
@@ -236,13 +232,13 @@ export function CollectionVoucherFormDrawer({
                 setValue("time_in", collectionVoucher.time_in)
                 setValue("time_out", collectionVoucher.time_out)
 
-                const details = Array.isArray(collectionVoucher.raw_milk_collection_voucher_2_details)
-                    ? collectionVoucher.raw_milk_collection_voucher_2_details
+                const details = Array.isArray(collectionVoucher.details)
+                    ? collectionVoucher.details
                     : []
 
                 setValue("details", details.map(d => ({
                     id: d.id,
-                    supplier_tanks: (d.raw_milk_collection_voucher_2_details_farmer_tank || []).map(ft => ({
+                    supplier_tanks: (d.supplier_tanks || []).map(ft => ({
                         id: ft.id,
                         supplier_tank_id: ft.supplier_tank_id || "",
                         truck_compartment_number: ft.truck_compartment_number || 0,
@@ -297,7 +293,7 @@ export function CollectionVoucherFormDrawer({
                 truck_number: data.truck_number,
                 time_in: data.time_in,
                 time_out: data.time_out,
-                details: data.details.map(d => ({
+                details: (data.details || []).map(d => ({
                     id: d.id,
                     supplier_tanks: (d.supplier_tanks || []).map(st => ({
                         id: st.id,
@@ -700,8 +696,8 @@ export function CollectionVoucherFormDrawer({
                                                         <Controller
                                                             name={`details.${detailIndex}.supplier_tanks.${tankIndex}.temperature`}
                                                             control={control}
-                                                            render={({ field }) => (
-                                                                <Input {...field} type="number" step="0.1" placeholder="0.0" className="rounded-full h-9 bg-white" disabled={isSubmitting} onChange={(e) => field.onChange(e.target.value === '' ? '' : parseFloat(e.target.value))} />
+                                                            render={({ field: { value, ...restField } }) => (
+                                                                <Input {...restField} value={value ?? ""} type="number" step="0.1" placeholder="0.0" className="rounded-full h-9 bg-white" disabled={isSubmitting} onChange={(e) => restField.onChange(e.target.value === '' ? '' : parseFloat(e.target.value))} />
                                                             )}
                                                         />
                                                     </div>
@@ -711,8 +707,8 @@ export function CollectionVoucherFormDrawer({
                                                         <Controller
                                                             name={`details.${detailIndex}.supplier_tanks.${tankIndex}.dip_reading`}
                                                             control={control}
-                                                            render={({ field }) => (
-                                                                <Input {...field} type="number" step="0.1" placeholder="0.0" className="rounded-full h-9 bg-white" disabled={isSubmitting} onChange={(e) => field.onChange(e.target.value === '' ? '' : parseFloat(e.target.value))} />
+                                                            render={({ field: { value, ...restField } }) => (
+                                                                <Input {...restField} value={value ?? ""} type="number" step="0.1" placeholder="0.0" className="rounded-full h-9 bg-white" disabled={isSubmitting} onChange={(e) => restField.onChange(e.target.value === '' ? '' : parseFloat(e.target.value))} />
                                                             )}
                                                         />
                                                     </div>
@@ -722,8 +718,8 @@ export function CollectionVoucherFormDrawer({
                                                         <Controller
                                                             name={`details.${detailIndex}.supplier_tanks.${tankIndex}.volume`}
                                                             control={control}
-                                                            render={({ field }) => (
-                                                                <Input {...field} type="number" step="0.1" placeholder="0.0" className="rounded-full h-9 bg-white" disabled={isSubmitting} onChange={(e) => field.onChange(e.target.value === '' ? '' : parseFloat(e.target.value))} />
+                                                            render={({ field: { value, ...restField } }) => (
+                                                                <Input {...restField} value={value ?? ""} type="number" step="0.1" placeholder="0.0" className="rounded-full h-9 bg-white" disabled={isSubmitting} onChange={(e) => restField.onChange(e.target.value === '' ? '' : parseFloat(e.target.value))} />
                                                             )}
                                                         />
                                                     </div>
@@ -735,8 +731,8 @@ export function CollectionVoucherFormDrawer({
                                                         <Controller
                                                             name={`details.${detailIndex}.supplier_tanks.${tankIndex}.meter_start`}
                                                             control={control}
-                                                            render={({ field }) => (
-                                                                <Input {...field} type="number" step="0.1" placeholder="0.0" className="rounded-full h-9 bg-white" disabled={isSubmitting} onChange={(e) => field.onChange(e.target.value === '' ? '' : parseFloat(e.target.value))} />
+                                                            render={({ field: { value, ...restField } }) => (
+                                                                <Input {...restField} value={value ?? ""} type="number" step="0.1" placeholder="0.0" className="rounded-full h-9 bg-white" disabled={isSubmitting} onChange={(e) => restField.onChange(e.target.value === '' ? '' : parseFloat(e.target.value))} />
                                                             )}
                                                         />
                                                     </div>
@@ -746,8 +742,8 @@ export function CollectionVoucherFormDrawer({
                                                         <Controller
                                                             name={`details.${detailIndex}.supplier_tanks.${tankIndex}.meter_finish`}
                                                             control={control}
-                                                            render={({ field }) => (
-                                                                <Input {...field} type="number" step="0.1" placeholder="0.0" className="rounded-full h-9 bg-white" disabled={isSubmitting} onChange={(e) => field.onChange(e.target.value === '' ? '' : parseFloat(e.target.value))} />
+                                                            render={({ field: { value, ...restField } }) => (
+                                                                <Input {...restField} value={value ?? ""} type="number" step="0.1" placeholder="0.0" className="rounded-full h-9 bg-white" disabled={isSubmitting} onChange={(e) => restField.onChange(e.target.value === '' ? '' : parseFloat(e.target.value))} />
                                                             )}
                                                         />
                                                     </div>
@@ -757,8 +753,8 @@ export function CollectionVoucherFormDrawer({
                                                         <Controller
                                                             name={`details.${detailIndex}.supplier_tanks.${tankIndex}.dairy_total`}
                                                             control={control}
-                                                            render={({ field }) => (
-                                                                <Input {...field} type="number" step="0.1" placeholder="0.0" className="rounded-full h-9 bg-white" disabled={isSubmitting} onChange={(e) => field.onChange(e.target.value === '' ? '' : parseFloat(e.target.value))} />
+                                                            render={({ field: { value, ...restField } }) => (
+                                                                <Input {...restField} value={value ?? ""} type="number" step="0.1" placeholder="0.0" className="rounded-full h-9 bg-white" disabled={isSubmitting} onChange={(e) => restField.onChange(e.target.value === '' ? '' : parseFloat(e.target.value))} />
                                                             )}
                                                         />
                                                     </div>
@@ -826,7 +822,7 @@ export function CollectionVoucherFormDrawer({
                                         ))}
                                     </div>
                                 ))}
-                                {(!watch("details") || watch("details")[0]?.supplier_tanks?.length === 0) && (
+                                {(!watch("details") || (watch("details") as any).length === 0 || (watch("details") as any)[0]?.supplier_tanks?.length === 0) && (
                                     <div className="text-center py-10 border-2 border-dashed border-gray-100 rounded-xl">
                                         <p className="text-sm text-gray-400 font-light">Select a supplier to generate collection entries</p>
                                     </div>

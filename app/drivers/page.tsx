@@ -110,9 +110,9 @@ export default function DriversDashboard() {
   const vouchersToday = displayVouchers.filter(v => v.date.startsWith(todayStr))
 
   const totalVolumeToday = vouchersToday.reduce((total, v) => {
-    const details = v.raw_milk_collection_voucher_2_details || []
+    const details = v.details || []
     return total + details.reduce((dTotal, d) => {
-      const tanks = d.raw_milk_collection_voucher_2_details_farmer_tank || []
+      const tanks = d.supplier_tanks || []
       return dTotal + tanks.reduce((tTotal, t) => tTotal + (Number(t.volume) || 0), 0)
     }, 0)
   }, 0)
@@ -211,8 +211,8 @@ export default function DriversDashboard() {
                     const timeAgo = formatTimeAgo(voucherDate)
 
                     // Simple logic to count tanks as products for display
-                    const tankCount = (voucher.raw_milk_collection_voucher_2_details || []).reduce(
-                      (count, d) => count + (d.raw_milk_collection_voucher_2_details_farmer_tank?.length || 0), 0
+                    const tankCount = (voucher.details || []).reduce(
+                      (count, d) => count + (d.supplier_tanks?.length || 0), 0
                     )
 
                     return (

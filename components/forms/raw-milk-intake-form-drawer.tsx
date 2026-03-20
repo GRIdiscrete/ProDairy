@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useForm, useFieldArray, Controller } from "react-hook-form"
 import { yupResolver } from "@hookform/resolvers/yup"
 import * as yup from "yup"
@@ -13,7 +13,10 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import {
-  Droplets, Truck, Plus, Trash2, Save, ArrowRight, Package, ChevronDown, ChevronUp, Info
+  Droplets, Truck, User, Package, Clock, Calendar, FileText, Beaker, Edit, Check,
+  Save,
+  ArrowRight,
+  Info
 } from "lucide-react"
 import { useAppDispatch, useAppSelector } from "@/lib/store"
 import {
@@ -26,6 +29,7 @@ import {
 } from "@/lib/store/slices/rawMilkIntakeSlice"
 import { siloApi } from "@/lib/api/silo"
 import { toast } from "sonner"
+import { DatePicker } from "@/components/ui/date-picker"
 import type { RawMilkIntakeForm, TruckCompartment } from "@/lib/api/raw-milk-intake"
 
 // ── Schemas ───────────────────────────────────────────────────────────────────
@@ -34,7 +38,10 @@ const detailSchema = yup.object({
   id: yup.string().nullable().optional(),
   truck_compartment_number: yup.number().required("Compartment number is required"),
   silo_name: yup.string().required("Destination silo is required"),
+  flow_meter_start: yup.string().nullable().optional(),
+  flow_meter_end: yup.string().nullable().optional(),
   flow_meter_start_reading: yup.number().nullable().optional(),
+  flow_meter_end_reading: yup.number().nullable().optional(),
 })
 
 const createSchema = yup.object({
@@ -43,6 +50,7 @@ const createSchema = yup.object({
 })
 
 const editSchema = yup.object({
+  created_at: yup.string().required("Date is required"),
   details: yup.array(detailSchema).required(),
 })
 
@@ -136,16 +144,22 @@ export function RawMilkIntakeFormDrawer({
     resolver: yupResolver(createSchema),
     defaultValues: { truck: "", details: [] },
   })
-  const createDetails = useFieldArray({ control: createForm.control, name: "details" })
+  const { fields: createFields, replace, append: appendCreate } = useFieldArray({
+    control: createForm.control,
+    name: "details"
+  })
   const selectedTruck = createForm.watch("truck")
 
   // ── Edit form ──────────────────────────────────────────────────────────────
 
   const editForm = useForm<EditFormData>({
     resolver: yupResolver(editSchema),
-    defaultValues: { details: [] },
+    defaultValues: { created_at: "", details: [] },
   })
-  const editDetails = useFieldArray({ control: editForm.control, name: "details" })
+  const { fields: editFields, replace: editReplace, append: appendEdit } = useFieldArray({
+    control: editForm.control,
+    name: "details"
+  })
 
   // ── Load data when drawer opens ────────────────────────────────────────────
 
@@ -166,11 +180,15 @@ export function RawMilkIntakeFormDrawer({
     } else if (form) {
       // Populate edit form from existing record
       editForm.reset({
+        created_at: form.created_at || "",
         details: (form.details ?? []).map((d) => ({
           id: d.id ?? null,
           truck_compartment_number: d.truck_compartment_number,
           silo_name: d.silo_name,
+          flow_meter_start: d.flow_meter_start ?? null,
+          flow_meter_end: d.flow_meter_end ?? null,
           flow_meter_start_reading: d.flow_meter_start_reading ?? null,
+          flow_meter_end_reading: d.flow_meter_end_reading ?? null,
         })),
       })
     }
@@ -181,9 +199,20 @@ export function RawMilkIntakeFormDrawer({
   useEffect(() => {
     if (!selectedTruck) return
     dispatch(clearTruckCompartments())
-    createDetails.replace([])
+    replace([])
     dispatch(fetchTruckCompartments(selectedTruck))
-  }, [selectedTruck])
+  }, [selectedTruck, dispatch, replace])
+
+  // Auto-populate details when compartments are fetched
+  useEffect(() => {
+    if (isCreate && truckCompartments.length > 0) {
+      replace(truckCompartments.map(comp => ({
+        truck_compartment_number: comp.truck_compartment_number,
+        silo_name: "",
+        flow_meter_start_reading: null,
+      })))
+    }
+  }, [truckCompartments, isCreate, replace])
 
   // ── Submit handlers ────────────────────────────────────────────────────────
 
@@ -212,15 +241,19 @@ export function RawMilkIntakeFormDrawer({
       if (!form?.id) return
       await dispatch(updateRawMilkIntakeForm({
         id: form.id,
+        created_at: data.created_at,
         operator: typeof form.operator === "string"
           ? form.operator
-          : `${(form.operator as any).first_name}`,
+          : (form.operator as any).id || (form.operator as any).first_name,
         truck: form.truck,
         details: data.details.map((d) => ({
-          ...(d.id ? { id: d.id } : {}),
+          id: d.id || undefined,
           truck_compartment_number: d.truck_compartment_number,
           silo_name: d.silo_name,
-          flow_meter_start_reading: d.flow_meter_start_reading ?? undefined,
+          flow_meter_start: d.flow_meter_start || undefined,
+          flow_meter_end: d.flow_meter_end || undefined,
+          flow_meter_start_reading: d.flow_meter_start_reading != null ? d.flow_meter_start_reading : undefined,
+          flow_meter_end_reading: d.flow_meter_end_reading != null ? d.flow_meter_end_reading : undefined,
         })),
       })).unwrap()
       toast.success("Intake form updated successfully")
@@ -239,11 +272,11 @@ export function RawMilkIntakeFormDrawer({
   // ── Add compartment from truck compartments ────────────────────────────────
 
   const addCompartment = (comp: TruckCompartment) => {
-    const existing = createDetails.fields.find(
+    const existing = createFields.find(
       (f) => f.truck_compartment_number === comp.truck_compartment_number
     )
     if (existing) { toast.error("Compartment already added"); return }
-    createDetails.append({
+    appendCreate({
       truck_compartment_number: comp.truck_compartment_number,
       silo_name: "",
       flow_meter_start_reading: null,
@@ -252,67 +285,88 @@ export function RawMilkIntakeFormDrawer({
 
   // ── Detail row renderer ────────────────────────────────────────────────────
 
-  const renderDetailRow = (
-    idx: number,
-    compartmentNumber: number,
+  const renderCompartmentTable = (
     formObj: any,
     namePrefix: string,
-    onRemove?: () => void
+    fieldArray: any[]
   ) => (
-    <div key={idx} className="border border-gray-200 rounded-lg p-4 bg-gray-50 space-y-3">
-      <div className="flex items-center justify-between">
-        <Badge variant="outline" className="font-light">
-          Compartment #{compartmentNumber}
-        </Badge>
-        {onRemove && (
-          <Button type="button" variant="ghost" size="sm" onClick={onRemove} className="text-red-500 hover:text-red-700 h-7 w-7 p-0">
-            <Trash2 className="w-4 h-4" />
-          </Button>
-        )}
-      </div>
-
-      {/* Silo */}
-      <div className="space-y-1">
-        <Label className="text-xs">Destination Silo *</Label>
-        <Controller
-          name={`${namePrefix}.${idx}.silo_name` as any}
-          control={formObj.control}
-          render={({ field }) => (
-            <Select onValueChange={field.onChange} value={field.value ?? ""} disabled={loadingSilos}>
-              <SelectTrigger className="rounded-full border-gray-200 text-sm">
-                <SelectValue placeholder={loadingSilos ? "Loading silos…" : "Select destination silo"} />
-              </SelectTrigger>
-              <SelectContent>
-                {silos.map((s) => (
-                  <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-        />
-        {formObj.formState.errors?.details?.[idx]?.silo_name && (
-          <p className="text-xs text-red-500">{formObj.formState.errors.details[idx]?.silo_name?.message}</p>
-        )}
-      </div>
-
-      {/* Flow meter start reading */}
-      <div className="space-y-1">
-        <Label className="text-xs">Start Reading <span className="text-gray-400">(optional)</span></Label>
-        <Controller
-          name={`${namePrefix}.${idx}.flow_meter_start_reading` as any}
-          control={formObj.control}
-          render={({ field }) => (
-            <Input
-              type="number"
-              step="0.01"
-              placeholder="e.g. 6493"
-              className="rounded-full text-sm"
-              value={field.value ?? ""}
-              onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : null)}
-            />
-          )}
-        />
-      </div>
+    <div className="overflow-x-auto border border-gray-100 rounded-xl bg-white shadow-sm">
+      <table className="w-full text-left border-collapse">
+        <thead className="bg-gray-50/50">
+          <tr>
+            <th className="p-3 text-[11px] font-medium text-gray-500 uppercase tracking-wider w-20">Comp #</th>
+            <th className="p-3 text-[11px] font-medium text-gray-500 uppercase tracking-wider min-w-[150px]">Silo</th>
+            <th className="p-3 text-[11px] font-medium text-gray-500 uppercase tracking-wider">Start Reading</th>
+            {!isCreate && (
+              <th className="p-3 text-[11px] font-medium text-gray-500 uppercase tracking-wider">End Reading</th>
+            )}
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-gray-100">
+          {fieldArray.map((field, idx) => (
+            <tr key={field.id} className="hover:bg-gray-50/50 transition-colors">
+              <td className="p-3 text-sm font-medium text-gray-700">
+                #{field.truck_compartment_number}
+              </td>
+              <td className="p-3">
+                <Controller
+                  name={`${namePrefix}.${idx}.silo_name` as any}
+                  control={formObj.control}
+                  render={({ field }) => (
+                    <Select onValueChange={field.onChange} value={field.value ?? ""} disabled={loadingSilos}>
+                      <SelectTrigger className="h-9 rounded-lg border-gray-200 text-sm bg-white">
+                        <SelectValue placeholder={loadingSilos ? "Loading…" : "Select Silo"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {silos.map((s) => (
+                          <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+                {formObj.formState.errors?.details?.[idx]?.silo_name && (
+                  <p className="text-[10px] text-red-500 mt-1">{formObj.formState.errors.details[idx]?.silo_name?.message}</p>
+                )}
+              </td>
+              <td className="p-3">
+                <Controller
+                  name={`${namePrefix}.${idx}.flow_meter_start_reading` as any}
+                  control={formObj.control}
+                  render={({ field }) => (
+                    <Input
+                      type="number"
+                      step="0.01"
+                      placeholder="Start"
+                      className="h-9 rounded-lg text-sm bg-white"
+                      value={field.value ?? ""}
+                      onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : null)}
+                    />
+                  )}
+                />
+              </td>
+              {!isCreate && (
+                <td className="p-3">
+                  <Controller
+                    name={`${namePrefix}.${idx}.flow_meter_end_reading` as any}
+                    control={formObj.control}
+                    render={({ field }) => (
+                      <Input
+                        type="number"
+                        step="0.01"
+                        placeholder="End"
+                        className="h-9 rounded-lg text-sm bg-white border-blue-100 focus:border-blue-300"
+                        value={field.value ?? ""}
+                        onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : null)}
+                      />
+                    )}
+                  />
+                </td>
+              )}
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   )
 
@@ -323,10 +377,24 @@ export function RawMilkIntakeFormDrawer({
       <Sheet open={open} onOpenChange={onOpenChange}>
         <SheetContent className="tablet-sheet-full p-0 bg-white">
           <SheetHeader className="p-6 pb-0">
-            <SheetTitle className="text-lg font-light">Create Raw Milk Intake Form</SheetTitle>
-            <SheetDescription className="text-sm font-light">
-              Select a truck, add compartments, and assign destination silos
-            </SheetDescription>
+            <div className="flex items-center justify-between border-b border-gray-100 pb-4">
+              <div>
+                <SheetTitle className="text-lg font-light">Create Raw Milk Intake Form</SheetTitle>
+                <SheetDescription className="text-sm font-light">
+                  Select a truck and assign destination silos
+                </SheetDescription>
+              </div>
+              <div className="text-right">
+                <div className="flex items-center gap-2 text-xs font-medium text-gray-500">
+                  <User className="w-3 h-3 text-blue-500" />
+                  <span>Operator: <span className="text-blue-600">{user?.first_name} {user?.last_name}</span></span>
+                </div>
+                <div className="flex items-center gap-2 text-[10px] text-gray-400 mt-1">
+                  <Calendar className="w-3 h-3" />
+                  <span>{new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                </div>
+              </div>
+            </div>
           </SheetHeader>
 
           <div className="flex-1 overflow-y-auto">
@@ -336,7 +404,7 @@ export function RawMilkIntakeFormDrawer({
 
                 {/* Truck Select */}
                 <div className="space-y-2">
-                  <Label className="font-medium">Truck *</Label>
+                  <Label className="font-medium text-sm text-gray-700">Select Truck *</Label>
                   <Controller
                     name="truck"
                     control={createForm.control}
@@ -346,16 +414,23 @@ export function RawMilkIntakeFormDrawer({
                         value={field.value}
                         disabled={operationLoading.fetchTrucks}
                       >
-                        <SelectTrigger className="rounded-full border-gray-200">
+                        <SelectTrigger className="h-11 rounded-xl border-gray-200 bg-white">
                           <SelectValue placeholder={operationLoading.fetchTrucks ? "Loading trucks…" : "Select a truck"} />
                         </SelectTrigger>
                         <SelectContent>
                           {testedTrucks.map((t) => (
-                            <SelectItem key={t.truck} value={t.truck}>
-                              <span className="font-medium">{t.truck}</span>
-                              <span className="text-gray-400 ml-2 text-xs">
-                                {t.route} · {t.driver_first_name} {t.driver_last_name}
-                              </span>
+                            <SelectItem key={t.truck_number} value={t.truck_number} className="py-3">
+                              <div className="flex flex-col">
+                                <span className="font-medium text-gray-900">{t.truck_number}</span>
+                                <div className="flex items-center gap-3 mt-1">
+                                  <span className="text-[10px] font-medium text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded uppercase">
+                                    Vol: {t.total_volume.toLocaleString()}L
+                                  </span>
+                                  <span className="text-[10px] text-gray-400">
+                                    Date: {new Date(t.created_at).toLocaleDateString()}
+                                  </span>
+                                </div>
+                              </div>
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -367,57 +442,28 @@ export function RawMilkIntakeFormDrawer({
                   )}
                 </div>
 
-                {/* Available Compartments */}
+                {/* Compartment Assignments Table */}
                 {selectedTruck && (
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <Label className="font-medium">Available Compartments</Label>
-                      <span className="text-xs text-gray-400">Click + to add to form</span>
+                      <Label className="font-medium text-sm text-gray-700">Compartment Assignments</Label>
+                      <Badge variant="outline" className="font-normal text-[10px] uppercase tracking-wider text-gray-400">
+                        {createFields.length} Compartments
+                      </Badge>
                     </div>
+
                     {operationLoading.fetchCompartments ? (
-                      <div className="text-sm text-gray-500 text-center py-4">Loading compartments…</div>
-                    ) : truckCompartments.length === 0 ? (
-                      <div className="flex items-center gap-2 text-sm text-amber-600 bg-amber-50 border border-amber-200 rounded-lg p-3">
-                        <Info className="w-4 h-4 flex-shrink-0" />
-                        No tested compartments found for this truck
+                      <div className="bg-gray-50 rounded-xl border border-dashed border-gray-200 p-8 text-center">
+                        <div className="animate-spin w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full mx-auto mb-2" />
+                        <p className="text-xs text-gray-500">Fetching compartments...</p>
+                      </div>
+                    ) : createFields.length === 0 ? (
+                      <div className="bg-amber-50 border border-amber-100 rounded-xl p-4 flex gap-3 italic">
+                        <Info className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
+                        <p className="text-xs text-amber-700">No tested compartments found for this truck.</p>
                       </div>
                     ) : (
-                      <div className="space-y-2">
-                        {truckCompartments.map((comp) => (
-                          <div key={comp.truck_compartment_number} className="space-y-1">
-                            <CompartmentInfoCard compartment={comp} />
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              className="w-full rounded-full text-xs border-blue-200 text-blue-600 hover:bg-blue-50"
-                              onClick={() => addCompartment(comp)}
-                            >
-                              <Plus className="w-3 h-3 mr-1" />
-                              Add Compartment #{comp.truck_compartment_number} to form
-                            </Button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Added Compartment Details */}
-                {createDetails.fields.length > 0 && (
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-2">
-                      <Label className="font-medium">Compartment Details</Label>
-                      <Badge variant="outline" className="font-normal text-xs">{createDetails.fields.length} added</Badge>
-                    </div>
-                    {createDetails.fields.map((field, idx) =>
-                      renderDetailRow(
-                        idx,
-                        field.truck_compartment_number,
-                        createForm,
-                        "details",
-                        () => createDetails.remove(idx)
-                      )
+                      renderCompartmentTable(createForm, "details", createFields)
                     )}
                   </div>
                 )}
@@ -459,10 +505,39 @@ export function RawMilkIntakeFormDrawer({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="tablet-sheet-full p-0 bg-white">
         <SheetHeader className="p-6 pb-0">
-          <SheetTitle className="text-lg font-light">Edit Raw Milk Intake Form</SheetTitle>
-          <SheetDescription className="text-sm font-light">
-            Update silo assignments and flow meter readings for each compartment
-          </SheetDescription>
+          <div className="flex items-center justify-between border-b border-gray-100 pb-4">
+            <div>
+              <SheetTitle className="text-lg font-light">Edit Raw Milk Intake Form</SheetTitle>
+              <SheetDescription className="text-sm font-light">
+                Update silo assignments and flow meter readings
+              </SheetDescription>
+            </div>
+            {form && (
+              <div className="text-right">
+                <div className="flex items-center gap-2 text-xs font-medium text-gray-500">
+                  <User className="w-3 h-3 text-blue-500" />
+                  <span>Operator: <span className="text-blue-600">{operatorName}</span></span>
+                </div>
+                <div className="flex items-center gap-2 text-[10px] text-gray-400 mt-1">
+                  <Calendar className="w-3 h-3" />
+                  <span>
+                    {(() => {
+                      if (!form.created_at) return "N/A";
+                      const d = new Date(form.created_at);
+                      if (!isNaN(d.getTime())) {
+                        return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+                      }
+                      // Handle space instead of T
+                      const d2 = new Date(form.created_at.replace(' ', 'T'));
+                      return !isNaN(d2.getTime())
+                        ? d2.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
+                        : "Invalid Date";
+                    })()}
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
         </SheetHeader>
 
         <div className="flex-1 overflow-y-auto">
@@ -470,25 +545,47 @@ export function RawMilkIntakeFormDrawer({
             <div className="p-6 space-y-6">
               {/* Summary card */}
               {form && (
-                <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 space-y-1">
+                <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 space-y-3">
                   <div className="flex items-center gap-2">
                     <Truck className="w-4 h-4 text-blue-600" />
                     <span className="text-sm font-medium text-blue-800">{form.truck}</span>
                     <Badge variant="outline" className="text-xs font-normal ml-auto">{form.tag}</Badge>
                   </div>
-                  <p className="text-xs text-blue-600">Operator: {operatorName}</p>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <Label className="text-[10px] text-blue-400 uppercase font-bold tracking-tighter">Operator</Label>
+                      <p className="text-xs text-blue-800 font-medium tabular-nums">{operatorName}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-[10px] text-blue-400 uppercase font-bold tracking-tighter">Intake Date</Label>
+                      <Controller
+                        name="created_at"
+                        control={editForm.control}
+                        render={({ field }) => (
+                          <DatePicker
+                            value={field.value}
+                            onChange={field.onChange}
+                            className="w-full"
+                          />
+                        )}
+                      />
+                    </div>
+                  </div>
                 </div>
               )}
 
               {/* Editable compartment details */}
               <div className="space-y-3">
-                <Label className="font-medium">Compartment Details</Label>
-                {editDetails.fields.length === 0 ? (
-                  <p className="text-sm text-gray-400 italic">No compartment details available</p>
+                <div className="flex items-center justify-between">
+                  <Label className="font-medium text-sm text-gray-700">Compartment Assignments</Label>
+                  <Badge variant="outline" className="font-normal text-[10px] uppercase tracking-wider text-gray-400">
+                    {editFields.length} Compartments
+                  </Badge>
+                </div>
+                {editFields.length === 0 ? (
+                  <p className="text-sm text-gray-400 italic bg-gray-50 rounded-xl p-8 text-center border border-dashed border-gray-200">No compartment details available</p>
                 ) : (
-                  editDetails.fields.map((field, idx) =>
-                    renderDetailRow(idx, field.truck_compartment_number, editForm, "details")
-                  )
+                  renderCompartmentTable(editForm, "details", editFields)
                 )}
               </div>
             </div>

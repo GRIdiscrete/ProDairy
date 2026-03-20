@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Separator } from "@/components/ui/separator"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { DatePicker } from "@/components/ui/date-picker"
+import { ShadcnTimePicker } from "@/components/ui/shadcn-time-picker"
 import { SearchableSelect, SearchableSelectOption } from "@/components/ui/searchable-select"
 import { SignatureModal } from "@/components/ui/signature-modal"
 import { useAppDispatch, useAppSelector } from "@/lib/store"
@@ -59,12 +60,12 @@ const schema = yup.object({
     route: yup.string().nullable(),
     tag: yup.string().nullable(),
     date: yup.string().required("Date is required"),
-    time_in: yup.string().required("Time in is required"),
-    time_out: yup.string().required("Time out is required"),
+    time_in: yup.string().nullable(),
+    time_out: yup.string().nullable(),
     analyst: yup.string().nullable(),
     results_collected_by: yup.string().nullable(),
-    approved_by: yup.string().required("Approver role is required"),
-    approver_signature: yup.string().required("Approver signature is required"),
+    approved_by: yup.string().nullable(),
+    approver_signature: yup.string().nullable(),
     lab_test: yup.array().of(labTestEntrySchema).min(1, "At least one compartment result required").required(),
 })
 
@@ -137,6 +138,7 @@ interface Props {
 export function RawMilkTestBeforeIntakeFormDrawer({ open, onOpenChange, form: existingSlip, mode, onSuccess }: Props) {
     const dispatch = useAppDispatch()
     const { untestedCompartments, operationLoading } = useAppSelector((s) => s.rawMilkTestBeforeIntake)
+    const currentUser = useAppSelector((state) => (state as any).auth.user)
 
     const [users, setUsers] = useState<SearchableSelectOption[]>([])
     const [roles, setRoles] = useState<SearchableSelectOption[]>([])
@@ -158,12 +160,12 @@ export function RawMilkTestBeforeIntakeFormDrawer({ open, onOpenChange, form: ex
 
     const truckOptions = useMemo(() => {
         const options = Array.from(uniqueTrucks.keys()).map((t) => ({ value: t, label: t }))
-        
+
         // In edit mode, if the current truck is not in the untested list, add it
         if (mode === "edit" && existingSlip?.truck_number && !uniqueTrucks.has(existingSlip.truck_number)) {
             options.push({ value: existingSlip.truck_number, label: existingSlip.truck_number })
         }
-        
+
         return options
     }, [uniqueTrucks, mode, existingSlip?.truck_number])
 
@@ -177,8 +179,8 @@ export function RawMilkTestBeforeIntakeFormDrawer({ open, onOpenChange, form: ex
             date: new Date().toISOString().split("T")[0],
             time_in: "",
             time_out: "",
-            analyst: "",
-            results_collected_by: "",
+            analyst: currentUser?.id || "",
+            results_collected_by: currentUser?.id || "",
             approved_by: "",
             approver_signature: "",
             lab_test: [],
@@ -225,30 +227,30 @@ export function RawMilkTestBeforeIntakeFormDrawer({ open, onOpenChange, form: ex
     useEffect(() => {
         if (!open) return
         dispatch(fetchUntestedCompartments())
-        ;(async () => {
-            try {
-                setLoadingUsers(true)
-                const res = await usersApi.getUsers()
-                setUsers((res.data || []).map((u: any) => ({
-                    value: u.id,
-                    label: `${u.first_name || ""} ${u.last_name || ""}`.trim() || u.email,
-                    description: u.email,
-                })))
-            } catch { toast.error("Failed to load users") }
-            finally { setLoadingUsers(false) }
-        })()
-        ;(async () => {
-            try {
-                setLoadingRoles(true)
-                const res = await rolesApi.getRoles()
-                setRoles((res.data || []).map((r: any) => ({
-                    value: r.id,
-                    label: r.role_name,
-                    description: r.description || "",
-                })))
-            } catch { toast.error("Failed to load roles") }
-            finally { setLoadingRoles(false) }
-        })()
+            ; (async () => {
+                try {
+                    setLoadingUsers(true)
+                    const res = await usersApi.getUsers()
+                    setUsers((res.data || []).map((u: any) => ({
+                        value: u.id,
+                        label: `${u.first_name || ""} ${u.last_name || ""}`.trim() || u.email,
+                        description: u.email,
+                    })))
+                } catch { toast.error("Failed to load users") }
+                finally { setLoadingUsers(false) }
+            })()
+            ; (async () => {
+                try {
+                    setLoadingRoles(true)
+                    const res = await rolesApi.getRoles()
+                    setRoles((res.data || []).map((r: any) => ({
+                        value: r.id,
+                        label: r.role_name,
+                        description: r.description || "",
+                    })))
+                } catch { toast.error("Failed to load roles") }
+                finally { setLoadingRoles(false) }
+            })()
 
         if (mode === "edit" && existingSlip) {
             const labTests = Array.isArray(existingSlip.lab_test) ? existingSlip.lab_test : []
@@ -336,12 +338,12 @@ export function RawMilkTestBeforeIntakeFormDrawer({ open, onOpenChange, form: ex
 
             const payload = {
                 date: data.date,
-                time_in: formatTime(data.time_in),
-                time_out: formatTime(data.time_out),
-                approved_by: data.approved_by,
-                approver_signature: normalizeDataUrlToBase64(data.approver_signature),
-                analyst: data.analyst || "",
-                results_collected_by: data.results_collected_by || "",
+                time_in: data.time_in || null,
+                time_out: data.time_out || null,
+                approved_by: data.approved_by || null,
+                approver_signature: data.approver_signature ? normalizeDataUrlToBase64(data.approver_signature) : null,
+                analyst: data.analyst || currentUser?.id || "",
+                results_collected_by: data.results_collected_by || currentUser?.id || "",
                 truck_number: data.truck_number,
                 route: data.route || "",
                 lab_test: labTestPayload,
@@ -398,11 +400,10 @@ export function RawMilkTestBeforeIntakeFormDrawer({ open, onOpenChange, form: ex
                             )
                         case "time":
                             return (
-                                <Input
-                                    type="time"
-                                    {...field}
+                                <ShadcnTimePicker
                                     value={field.value ?? ""}
-                                    className="text-xs min-w-[110px]"
+                                    onChange={field.onChange}
+                                    className="h-8 text-xs min-w-[110px]"
                                 />
                             )
                         default:
@@ -438,6 +439,20 @@ export function RawMilkTestBeforeIntakeFormDrawer({ open, onOpenChange, form: ex
                                 <SheetDescription className="text-sm font-light">
                                     {mode === "edit" ? "Edit existing test result" : "Record test results for untested compartments"}
                                 </SheetDescription>
+                                <div className="flex items-center justify-center gap-6 mt-3 text-[11px] text-gray-500 font-medium bg-gray-50/50 py-1.5 rounded-full border border-gray-100">
+                                    <div className="flex items-center gap-1.5">
+                                        <Calendar className="w-3.5 h-3.5 text-blue-600" />
+                                        <span>Date: <span className="text-gray-900">{formHook.watch("date")}</span></span>
+                                    </div>
+                                    <div className="flex items-center gap-1.5">
+                                        <User className="w-3.5 h-3.5 text-blue-600" />
+                                        <span>Analyst: <span className="text-gray-900">{currentUser?.first_name} {currentUser?.last_name}</span></span>
+                                    </div>
+                                    <div className="flex items-center gap-1.5">
+                                        <User className="w-3.5 h-3.5 text-blue-600" />
+                                        <span>Collected By: <span className="text-gray-900">{currentUser?.first_name} {currentUser?.last_name}</span></span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </SheetHeader>
@@ -469,7 +484,7 @@ export function RawMilkTestBeforeIntakeFormDrawer({ open, onOpenChange, form: ex
                                                     <SelectTrigger className="rounded-full text-xs">
                                                         <SelectValue placeholder={
                                                             operationLoading.fetchUntested ? "Loading..." :
-                                                            untestedCompartments.length === 0 ? "No trucks" : "Select truck"
+                                                                untestedCompartments.length === 0 ? "No trucks" : "Select truck"
                                                         } />
                                                     </SelectTrigger>
                                                     <SelectContent>
@@ -498,7 +513,7 @@ export function RawMilkTestBeforeIntakeFormDrawer({ open, onOpenChange, form: ex
                                     </div>
 
                                     {/* Tag */}
-                                    <div className="space-y-1">
+                                    {/* <div className="space-y-1">
                                         <Label className="text-xs">Tag / Reference</Label>
                                         <Controller
                                             name="tag"
@@ -507,7 +522,7 @@ export function RawMilkTestBeforeIntakeFormDrawer({ open, onOpenChange, form: ex
                                                 <Input {...field} value={field.value ?? ""} placeholder="RMRSBI-1-15-1-2026" className="rounded-full text-xs" />
                                             )}
                                         />
-                                    </div>
+                                    </div> */}
 
                                     {/* Compartment count badge */}
                                     {selectedTruck && (
@@ -531,7 +546,7 @@ export function RawMilkTestBeforeIntakeFormDrawer({ open, onOpenChange, form: ex
                                                         <span className="text-green-700 font-medium">{c.total_compartment_volume}L</span>
                                                     </div>
                                                     <div className="text-gray-500 mb-1">{c.route} · {c.driver_first_name} {c.driver_last_name}</div>
-                                                    
+
                                                     {c.suppliers && c.suppliers.length > 0 && (
                                                         <div className="border-t border-blue-100 pt-1 mt-1">
                                                             <div className="text-[9px] text-gray-400 font-medium uppercase mb-0.5">Suppliers:</div>
@@ -591,13 +606,11 @@ export function RawMilkTestBeforeIntakeFormDrawer({ open, onOpenChange, form: ex
                                                 {PARAMETERS.map((param, rowIdx) => (
                                                     <tr
                                                         key={param.key}
-                                                        className={`${rowIdx % 2 === 0 ? "bg-white" : "bg-gray-50"} ${
-                                                            param.key === "pass" ? "bg-blue-50" : ""
-                                                        }`}
+                                                        className={`${rowIdx % 2 === 0 ? "bg-white" : "bg-gray-50"} ${param.key === "pass" ? "bg-blue-50" : ""
+                                                            }`}
                                                     >
-                                                        <td className={`border border-gray-300 px-3 py-2 font-medium text-gray-700 sticky left-0 z-10 ${
-                                                            rowIdx % 2 === 0 ? "bg-white" : "bg-gray-50"
-                                                        } ${param.key === "pass" ? "!bg-blue-50 text-blue-700" : ""}`}>
+                                                        <td className={`border border-gray-300 px-3 py-2 font-medium text-gray-700 sticky left-0 z-10 ${rowIdx % 2 === 0 ? "bg-white" : "bg-gray-50"
+                                                            } ${param.key === "pass" ? "!bg-blue-50 text-blue-700" : ""}`}>
                                                             {param.label}
                                                         </td>
                                                         {fields.map((_, colIdx) => (
@@ -615,32 +628,24 @@ export function RawMilkTestBeforeIntakeFormDrawer({ open, onOpenChange, form: ex
 
                             <Separator />
 
-                            {/* ── Administration ───────────────────────────────── */}
                             <div className="space-y-4">
                                 <div className="flex items-center space-x-2 text-purple-700">
                                     <User className="w-4 h-4" />
                                     <h3 className="text-base font-medium">Administration & Personnel</h3>
                                 </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="space-y-1">
-                                        <Label className="text-xs"><Calendar className="inline w-3 h-3 mr-1" />Date <span className="text-red-500">*</span></Label>
-                                        <Controller name="date" control={formHook.control} render={({ field }) => (
-                                            <DatePicker value={field.value} onChange={field.onChange} />
-                                        )} />
-                                        {formHook.formState.errors.date && <p className="text-[10px] text-red-500">{formHook.formState.errors.date.message}</p>}
-                                    </div>
-                                    <div className="space-y-1">
-                                        <Label className="text-xs"><Clock className="inline w-3 h-3 mr-1" />Time In <span className="text-red-500">*</span></Label>
+                                        <Label className="text-xs"><Clock className="inline w-3 h-3 mr-1" />Time In</Label>
                                         <Controller name="time_in" control={formHook.control} render={({ field }) => (
-                                            <Input type="time" {...field} className="rounded-full" />
+                                            <ShadcnTimePicker value={field.value ?? ""} onChange={field.onChange} />
                                         )} />
                                         {formHook.formState.errors.time_in && <p className="text-[10px] text-red-500">{formHook.formState.errors.time_in.message}</p>}
                                     </div>
                                     <div className="space-y-1">
-                                        <Label className="text-xs"><Clock className="inline w-3 h-3 mr-1" />Time Out <span className="text-red-500">*</span></Label>
+                                        <Label className="text-xs"><Clock className="inline w-3 h-3 mr-1" />Time Out</Label>
                                         <Controller name="time_out" control={formHook.control} render={({ field }) => (
-                                            <Input type="time" {...field} className="rounded-full" />
+                                            <ShadcnTimePicker value={field.value ?? ""} onChange={field.onChange} />
                                         )} />
                                         {formHook.formState.errors.time_out && <p className="text-[10px] text-red-500">{formHook.formState.errors.time_out.message}</p>}
                                     </div>
@@ -648,31 +653,16 @@ export function RawMilkTestBeforeIntakeFormDrawer({ open, onOpenChange, form: ex
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="space-y-1">
-                                        <Label className="text-xs">Analyst</Label>
-                                        <Controller name="analyst" control={formHook.control} render={({ field }) => (
-                                            <SearchableSelect options={users} value={field.value ?? ""} onValueChange={field.onChange} placeholder="Select analyst" loading={loadingUsers} />
-                                        )} />
-                                    </div>
-                                    <div className="space-y-1">
-                                        <Label className="text-xs">Results Collected By</Label>
-                                        <Controller name="results_collected_by" control={formHook.control} render={({ field }) => (
-                                            <SearchableSelect options={users} value={field.value ?? ""} onValueChange={field.onChange} placeholder="Select person" loading={loadingUsers} />
-                                        )} />
-                                    </div>
-                                </div>
-
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div className="space-y-1">
-                                        <Label className="text-xs">Approved By (Role) <span className="text-red-500">*</span></Label>
+                                        <Label className="text-xs">Approved By (Role)</Label>
                                         <Controller name="approved_by" control={formHook.control} render={({ field, fieldState }) => (
                                             <>
-                                                <SearchableSelect options={roles} value={field.value} onValueChange={field.onChange} placeholder="Select approver role" loading={loadingRoles} />
+                                                <SearchableSelect options={roles} value={field.value ?? ""} onValueChange={field.onChange} placeholder="Select approver role" loading={loadingRoles} />
                                                 {fieldState.error && <p className="text-[10px] text-red-500">{fieldState.error.message}</p>}
                                             </>
                                         )} />
                                     </div>
                                     <div className="space-y-1">
-                                        <Label className="text-xs">Approver Signature <span className="text-red-500">*</span></Label>
+                                        <Label className="text-xs">Approver Signature</Label>
                                         <Controller name="approver_signature" control={formHook.control} render={({ field, fieldState }) => (
                                             <>
                                                 <div className="flex items-center space-x-2">

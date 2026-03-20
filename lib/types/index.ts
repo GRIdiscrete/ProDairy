@@ -462,9 +462,8 @@ export interface CollectionVoucherDetails2 {
   id?: string
   created_at?: string
   updated_at?: string | null
-  supplier_tanks?: string | null
+  supplier_tanks?: FarmerTank[]
   raw_milk_collection_voucher_2_id?: string
-  raw_milk_collection_voucher_2_details_farmer_tank: FarmerTank[]
 }
 
 export interface CollectionVoucher2 {
@@ -481,13 +480,12 @@ export interface CollectionVoucher2 {
   remark: string
   driver_signature: string
   tag: string
-  details?: string | null
+  details: CollectionVoucherDetails2[]
   ot_result?: string | null
   cob_result?: boolean | null
   lab_test?: any | null
   number_of_compartments?: number | null
   route_total?: number | null
-  raw_milk_collection_voucher_2_details: CollectionVoucherDetails2[]
 }
 export interface RawMilkResultSlipBeforeIntakeLabTest {
   id: string

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { formatTimeForDisplay } from "@/lib/utils/time-formatter"
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet"
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetClose } from "@/components/ui/sheet"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { LoadingButton } from "@/components/ui/loading-button"
@@ -230,91 +230,72 @@ export function BMTControlFormViewDrawer({ open, onClose, form, onEdit }: BMTCon
 
   return (
     <Sheet open={open} onOpenChange={onClose}>
-      <SheetContent className="tablet-sheet-full p-0 bg-white">
-        <SheetHeader className="p-6 pb-0">
-          <SheetTitle className="flex items-center gap-2 text-lg font-light">
-            <Beaker className="w-5 h-5" />
-            BMT Control Form Details
-          </SheetTitle>
-          <SheetDescription className="text-sm font-light flex items-center gap-2">
-            <span>Complete information about the bulk milk transfer control form record</span>
-            <FormIdCopy
-              displayId={form.tag || "N/A"}
-              actualId={form.tag || ""}
-              size="lg"
-            />
-          </SheetDescription>
-        </SheetHeader>
-
-        <div className="flex-1 overflow-y-auto p-6">
-          {/* Process Overview */}
-          <div className="mb-8 p-6 bg-blue-50 rounded-lg">
-            <h3 className="text-lg font-light text-gray-900 mb-4">Process Overview</h3>
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
-                  <Package className="w-4 h-4 text-blue-600" />
-                </div>
-                <span className="text-sm font-light">Source Silo</span>
-              </div>
-              <ArrowRight className="w-4 h-4 text-gray-400" />
-              <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
-                  <Beaker className="w-4 h-4 text-green-600" />
-                </div>
-                <div className="flex items-center space-x-2">
-                  <span className="text-sm font-medium text-green-600">BMT Transfer</span>
-                  <div className=" bg-gray-100 text-gray-600 px-2 py-1 rounded-full text-xs font-medium shadow-lg">
-                    Current Step
-                  </div>
-                </div>
-              </div>
-              <ArrowRight className="w-4 h-4 text-gray-400" />
-              <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
-                  <Package className="w-4 h-4 text-gray-400" />
-                </div>
-                <span className="text-sm font-light text-gray-400">Destination Silo</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center space-x-2">
-              <h2 className="text-xl font-light">BMT Control Form</h2>
-            </div>
-            <div className="flex items-center space-x-2">
-              <LoadingButton
-
-                size="sm"
-                onClick={onEdit}
-                className="bg-[#A0CF06] text-[#211D1E] rounded-full"
-              >
-                <Edit className="w-4 h-4 mr-2" />
-                Edit
-              </LoadingButton>
-            </div>
-          </div>
-
-          {/* Form Information */}
-          <div className="mb-6 flex items-center justify-between">
-            <div className="flex items-center space-x-2">
+      <SheetContent className="sm:max-w-xl p-0 bg-white overflow-hidden flex flex-col border-l-0 shadow-2xl">
+        <SheetHeader className="p-8 pb-0 flex flex-row items-center justify-between space-y-0">
+          <div className="space-y-1">
+            <SheetTitle className="flex items-center gap-2 text-2xl font-light">
+              <Beaker className="w-6 h-6 text-blue-600" />
+              BMT Control Form
+            </SheetTitle>
+            <SheetDescription className="text-sm font-light flex items-center gap-2">
+              <span>Bulk milk transfer control form record</span>
               <FormIdCopy
                 displayId={form.tag || "N/A"}
                 actualId={form.tag || ""}
                 size="sm"
               />
-            </div>
-            <div className="flex items-center space-x-2">
-              <Badge className="bg-blue-100 text-blue-800 font-light">
-                Status: {(form as any).status || 'Draft'}
-              </Badge>
+            </SheetDescription>
+          </div>
+          <SheetClose onClick={onClose} className="rounded-full w-10 h-10 bg-gray-50 flex items-center justify-center hover:bg-gray-100 transition-colors">
+             <XIcon className="w-5 h-5 text-gray-400" />
+          </SheetClose>
+        </SheetHeader>
+
+        <div className="flex-1 overflow-y-auto p-8 space-y-10 custom-scrollbar">
+          {/* Process Overview */}
+          <div className="p-6 bg-blue-50/50 rounded-2xl border border-blue-100/50 shadow-sm">
+            <h3 className="text-lg font-light text-gray-900 mb-6 flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-blue-500" />
+                Process Overview
+            </h3>
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex flex-col items-center gap-2">
+                <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+                  <Package className="w-5 h-5 text-blue-600" />
+                </div>
+                <span className="text-[10px] uppercase tracking-wider text-gray-500 font-medium">Source Silo</span>
+              </div>
+              <div className="flex-1 h-px bg-gray-200 mx-4 mt-[-20px]" />
+              <div className="flex flex-col items-center gap-2">
+                <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center relative">
+                  <Beaker className="w-5 h-5 text-green-600" />
+                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white animate-pulse" />
+                </div>
+                <div className="flex flex-col items-center">
+                  <span className="text-[10px] uppercase tracking-wider text-green-600 font-bold">BMT Transfer</span>
+                  <span className="text-[8px] text-gray-400">Current Step</span>
+                </div>
+              </div>
+              <div className="flex-1 h-px bg-gray-200 mx-4 mt-[-20px]" />
+              <div className="flex flex-col items-center gap-2">
+                <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
+                  <Package className="w-5 h-5 text-gray-400" />
+                </div>
+                <span className="text-[10px] uppercase tracking-wider text-gray-400 font-medium">Destination</span>
+              </div>
             </div>
           </div>
 
-          {/* Basic Information Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Information Grid */}
+          <div className="mt-8">
+            <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-light text-gray-900">Form Information</h3>
+                <Badge className="bg-blue-100 text-blue-800 font-light border-none px-4 py-1 rounded-full">
+                    Status: {(form as any).status || 'Draft'}
+                </Badge>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Transfer Details */}
             <div className="p-6 bg-white border border-gray-200 rounded-lg">
               <div className="flex items-center space-x-2 mb-4">
@@ -344,12 +325,12 @@ export function BMTControlFormViewDrawer({ open, onClose, form, onEdit }: BMTCon
             </div>
 
             {/* Movement Timeline */}
-            <div className="p-6 bg-white border border-gray-200 rounded-lg">
-              <div className="flex items-center space-x-2 mb-4">
-                <div className="w-6 h-6 rounded-full bg-indigo-100 flex items-center justify-center">
-                  <Clock className="w-4 h-4 text-indigo-600" />
+            <div className="p-6 bg-white border border-gray-100 rounded-2xl shadow-sm space-y-6">
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center">
+                  <Clock className="w-5 h-5 text-indigo-500" />
                 </div>
-                <h3 className="text-lg font-light">Movement Timeline</h3>
+                <h3 className="text-base font-medium text-gray-700">Movement Timeline</h3>
               </div>
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
@@ -386,6 +367,7 @@ export function BMTControlFormViewDrawer({ open, onClose, form, onEdit }: BMTCon
               </div>
             </div>
           </div>
+        </div>
 
           {/* Transfer Pairs Information */}
           <div className="space-y-6">
@@ -496,7 +478,9 @@ export function BMTControlFormViewDrawer({ open, onClose, form, onEdit }: BMTCon
 
 
           {/* Operator Information */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="mt-12">
+             <h3 className="text-xl font-light text-gray-900 mb-6">Execution & Responsibility</h3>
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-6">
             {/* Dispatch Operator */}
             <div className="p-6 bg-white border border-gray-200 rounded-lg">
               <div className="flex items-center space-x-2 mb-4">
@@ -601,9 +585,10 @@ export function BMTControlFormViewDrawer({ open, onClose, form, onEdit }: BMTCon
               </div>
             </div>
           </div>
+        </div>
 
           {/* Record Information */}
-          <div className="p-6 bg-white border border-gray-200 rounded-lg">
+          <div className="mt-12 p-8 bg-gray-50/50 border border-gray-100 rounded-3xl space-y-8 mb-10">
             <div className="flex items-center space-x-2 mb-4">
               <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center">
                 <FileText className="w-4 h-4 text-gray-600" />

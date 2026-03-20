@@ -14,6 +14,8 @@ interface SiloState {
     delete: boolean
     fetch: boolean
   }
+  cipStatuses: Record<string, any>
+  transfers: any[]
 }
 
 const initialState: SiloState = {
@@ -28,6 +30,8 @@ const initialState: SiloState = {
     delete: false,
     fetch: false,
   },
+  cipStatuses: {},
+  transfers: [],
 }
 
 // Async thunks
@@ -92,6 +96,42 @@ export const deleteSilo = createAsyncThunk(
     } catch (error: any) {
       const message = error?.response?.data?.message || error?.message || 'Failed to delete silo'
       return rejectWithValue(message)
+    }
+  }
+)
+
+export const fetchSiloManagerSilos = createAsyncThunk(
+  "silo/fetchSiloManagerSilos",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await siloApi.getSiloManagerSilos()
+      return response.data
+    } catch (error: any) {
+      return rejectWithValue(error?.message || 'Failed to fetch silo manager silos')
+    }
+  }
+)
+
+export const fetchCIPStatus = createAsyncThunk(
+  "silo/fetchCIPStatus",
+  async (siloName: string, { rejectWithValue }) => {
+    try {
+      const response = await siloApi.getCIPStatus(siloName)
+      return { siloName, data: response.data }
+    } catch (error: any) {
+      return rejectWithValue(error?.message || 'Failed to fetch CIP status')
+    }
+  }
+)
+
+export const fetchSiloTransfers = createAsyncThunk(
+  "silo/fetchSiloTransfers",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await siloApi.getSiloTransfers()
+      return response.data
+    } catch (error: any) {
+      return rejectWithValue(error?.message || 'Failed to fetch silo transfers')
     }
   }
 )
@@ -192,6 +232,27 @@ const siloSlice = createSlice({
       .addCase(deleteSilo.rejected, (state, action) => {
         state.operationLoading.delete = false
         state.error = action.payload as string
+      })
+
+      // Silo Manager
+      .addCase(fetchSiloManagerSilos.pending, (state) => {
+        state.operationLoading.fetch = true
+      })
+      .addCase(fetchSiloManagerSilos.fulfilled, (state, action) => {
+        state.operationLoading.fetch = false
+        state.silos = action.payload
+      })
+      .addCase(fetchSiloManagerSilos.rejected, (state, action) => {
+        state.operationLoading.fetch = false
+        state.error = action.payload as string
+      })
+
+      .addCase(fetchCIPStatus.fulfilled, (state, action) => {
+        state.cipStatuses[action.payload.siloName] = action.payload.data
+      })
+
+      .addCase(fetchSiloTransfers.fulfilled, (state, action) => {
+        state.transfers = action.payload
       })
   },
 })

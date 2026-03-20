@@ -236,66 +236,80 @@ export default function CollectionVouchersPage() {
             const rows: any[] = []
 
             displayVouchers.forEach(voucher => {
-                const driver = displayUsers.find(u => u.id === voucher.driver)
-                const supplier = displaySuppliers.find(s => s.id === (typeof voucher.supplier === 'string' ? voucher.supplier : (voucher.supplier as any)?.id))
-                const driverName = driver ? `${driver.first_name} ${driver.last_name}` : 'Unknown'
-                const farmerName = typeof voucher.supplier === 'object' && voucher.supplier
-                    ? `${(voucher.supplier as any).first_name} ${(voucher.supplier as any).last_name}`
-                    : supplier ? `${supplier.first_name} ${supplier.last_name}` : 'Unknown'
+                if (!voucher) return
 
-                const details = voucher.raw_milk_collection_voucher_2_details || []
+                const driver = Array.isArray(displayUsers) ? displayUsers.find(u => u?.id === voucher?.driver) : null
+                const supplierId = typeof voucher.supplier === 'string' 
+                    ? voucher.supplier 
+                    : (voucher.supplier as any)?.id
+                    
+                const supplier = Array.isArray(displaySuppliers) 
+                    ? displaySuppliers.find(s => s?.id === supplierId) 
+                    : null
+                
+                const driverName = driver ? `${driver.first_name || ''} ${driver.last_name || ''}`.trim() : 'Unknown'
+                const farmerName = typeof voucher.supplier === 'object' && voucher.supplier
+                    ? `${(voucher.supplier as any).first_name || ''} ${(voucher.supplier as any).last_name || ''}`.trim()
+                    : supplier ? `${supplier.first_name || ''} ${supplier.last_name || ''}`.trim() : 'Unknown'
+
+                const details = Array.isArray(voucher.details) ? voucher.details : []
 
                 // Create a row for each tank entry
                 details.forEach((detail: any) => {
-                    const tanks = detail.raw_milk_collection_voucher_2_details_farmer_tank || []
+                    const tanks = Array.isArray(detail?.supplier_tanks) ? detail.supplier_tanks : []
 
                     tanks.forEach((tank: any, tankIdx: number) => {
-                        const lab = tank.lab_test || {}
+                        const lab = tank?.lab_test || {}
+                        const voucherDate = voucher.date ? new Date(voucher.date) : null
+                        const createdAtDate = voucher.created_at ? new Date(voucher.created_at) : null
 
                         rows.push([
-                            voucher.id,
+                            voucher.id || 'N/A',
                             voucher.tag || 'N/A',
-                            driverName,
-                            new Date(voucher.date).toLocaleDateString(),
-                            voucher.route,
-                            farmerName,
-                            voucher.truck_number,
-                            voucher.time_in,
-                            voucher.time_out,
+                            driverName || 'Unknown',
+                            voucherDate && !isNaN(voucherDate.getTime()) ? voucherDate.toLocaleDateString() : 'N/A',
+                            voucher.route || 'N/A',
+                            farmerName || 'Unknown',
+                            voucher.truck_number || 'N/A',
+                            voucher.time_in || 'N/A',
+                            voucher.time_out || 'N/A',
                             tankIdx + 1,
-                            tank.truck_compartment_number || 'N/A',
-                            tank.temperature || 'N/A',
-                            tank.dip_reading || 'N/A',
-                            tank.meter_start || 'N/A',
-                            tank.meter_finish || 'N/A',
-                            tank.volume || 'N/A',
-                            tank.dairy_total || 'N/A',
-                            tank.supplier_tank_id || 'N/A',
-                            lab.ot_result || 'N/A',
-                            lab.organoleptic || 'N/A',
-                            lab.alcohol || 'N/A',
-                            lab.cob_result ? 'Yes' : 'No',
-                            voucher.remark,
-                            new Date(voucher.created_at).toLocaleDateString()
+                            tank?.truck_compartment_number || 'N/A',
+                            tank?.temperature || 'N/A',
+                            tank?.dip_reading || 'N/A',
+                            tank?.meter_start || 'N/A',
+                            tank?.meter_finish || 'N/A',
+                            tank?.volume || 'N/A',
+                            tank?.dairy_total || 'N/A',
+                            tank?.supplier_tank_id || 'N/A',
+                            lab?.ot_result || 'N/A',
+                            lab?.organoleptic || 'N/A',
+                            lab?.alcohol || 'N/A',
+                            lab?.cob_result ? 'Yes' : 'No',
+                            voucher.remark || '',
+                            createdAtDate && !isNaN(createdAtDate.getTime()) ? createdAtDate.toLocaleDateString() : 'N/A'
                         ])
                     })
                 })
 
                 // If no details/tanks, add one basic row
-                if (details.length === 0 || details.every(d => !d.raw_milk_collection_voucher_2_details_farmer_tank?.length)) {
+                if (details.length === 0 || details.every(d => !Array.isArray(d?.supplier_tanks) || d.supplier_tanks.length === 0)) {
+                    const voucherDate = voucher.date ? new Date(voucher.date) : null
+                    const createdAtDate = voucher.created_at ? new Date(voucher.created_at) : null
+
                     rows.push([
-                        voucher.id,
+                        voucher.id || 'N/A',
                         voucher.tag || 'N/A',
-                        driverName,
-                        new Date(voucher.date).toLocaleDateString(),
-                        voucher.route,
-                        farmerName,
-                        voucher.truck_number,
-                        voucher.time_in,
-                        voucher.time_out,
+                        driverName || 'Unknown',
+                        voucherDate && !isNaN(voucherDate.getTime()) ? voucherDate.toLocaleDateString() : 'N/A',
+                        voucher.route || 'N/A',
+                        farmerName || 'Unknown',
+                        voucher.truck_number || 'N/A',
+                        voucher.time_in || 'N/A',
+                        voucher.time_out || 'N/A',
                         'N/A', 'N/A', 'N/A', 'N/A', 'N/A', 'N/A', 'N/A', 'N/A', 'N/A', 'N/A', 'N/A', 'N/A', 'N/A',
-                        voucher.remark,
-                        new Date(voucher.created_at).toLocaleDateString()
+                        voucher.remark || '',
+                        createdAtDate && !isNaN(createdAtDate.getTime()) ? createdAtDate.toLocaleDateString() : 'N/A'
                     ])
                 }
             })
@@ -339,8 +353,10 @@ export default function CollectionVouchersPage() {
     // Sort by date descending
     const sortedVouchers = useMemo(() => {
         return [...displayVouchers].sort((a, b) => {
+            if (!a?.created_at || !b?.created_at) return 0
             const dateA = new Date(a.created_at).getTime()
             const dateB = new Date(b.created_at).getTime()
+            if (isNaN(dateA) || isNaN(dateB)) return 0
             return dateB - dateA
         })
     }, [displayVouchers])
@@ -428,7 +444,7 @@ export default function CollectionVouchersPage() {
             header: "Farmer",
             cell: ({ row }: any) => {
                 const voucher = row.original as CollectionVoucher2
-                const supplier = displaySuppliers.find((s: any) => s.id === (typeof voucher.supplier === 'string' ? voucher.supplier : (voucher.supplier as any)?.id))
+                const supplier = Array.isArray(displaySuppliers) ? displaySuppliers.find((s: any) => s.id === (typeof voucher.supplier === 'string' ? voucher.supplier : (voucher.supplier as any)?.id)) : null
 
                 // If farmer/supplier is an object (nested response), use it directly
                 if (typeof voucher.supplier === 'object' && voucher.supplier) {
@@ -452,9 +468,9 @@ export default function CollectionVouchersPage() {
             header: "Total Volume",
             cell: ({ row }: any) => {
                 const voucher = row.original as CollectionVoucher2
-                const details = voucher.raw_milk_collection_voucher_2_details || []
+                const details = voucher.details || []
                 const totalVolume = details.reduce((acc, detail) => {
-                    const tanks = detail.raw_milk_collection_voucher_2_details_farmer_tank || []
+                    const tanks = detail.supplier_tanks || []
                     return acc + tanks.reduce((tacc, tank) => tacc + (Number(tank.volume) || 0), 0)
                 }, 0)
                 return <span className="text-sm font-light">{totalVolume} L</span>

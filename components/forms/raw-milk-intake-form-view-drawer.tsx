@@ -9,9 +9,11 @@ import { CopyButton } from "@/components/ui/copy-button"
 import { Droplets, Truck, User, Package, Clock, Calendar, FileText, Beaker, Edit, Trash2, ArrowRight, Play, RotateCcw, TrendingUp, Building2, Download } from "lucide-react"
 import { format } from "date-fns"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { cn } from "@/lib/utils"
 import { useAppDispatch, useAppSelector } from "@/lib/store"
 import { fetchRawMilkResultSlips, deleteRawMilkResultSlip } from "@/lib/store/slices/rawMilkResultSlipSlice"
 import { fetchTankers } from "@/lib/store/slices/tankerSlice"
+import { fetchSilos } from "@/lib/store/slices/siloSlice"
 import { FormIdCopy } from "@/components/ui/form-id-copy"
 import { RawMilkResultSlipDrawer } from "@/components/forms/raw-milk-result-slip-drawer"
 import type { RawMilkIntakeForm } from "@/lib/api/raw-milk-intake"
@@ -35,6 +37,7 @@ export function RawMilkIntakeFormViewDrawer({
   const dispatch = useAppDispatch()
   const { slips, isInitialized, operationLoading } = useAppSelector((s) => (s as any).rawMilkResultSlips)
   const { items: tankers, isInitialized: tankersInitialized } = useAppSelector((s) => (s as any).tankers)
+  const { silos, operationLoading: siloLoading } = useAppSelector((s) => (s as any).silo)
   const [resultSlipDrawerOpen, setResultSlipDrawerOpen] = useState(false)
   const [resultSlipMode, setResultSlipMode] = useState<"create" | "edit">("create")
   const [resultSlipExistingId, setResultSlipExistingId] = useState<string | undefined>(undefined)
@@ -43,13 +46,33 @@ export function RawMilkIntakeFormViewDrawer({
     if (open) {
       if (!isInitialized) dispatch(fetchRawMilkResultSlips())
       if (!tankersInitialized) dispatch(fetchTankers())
+      if (!siloLoading.fetch && silos.length === 0) dispatch(fetchSilos())
     }
-  }, [open, isInitialized, tankersInitialized, dispatch])
+  }, [open, isInitialized, tankersInitialized, siloLoading.fetch, silos.length, dispatch])
 
   const currentResultSlip = useMemo(() => {
     if (!form) return null
     return (slips || []).find((s: any) => s.raw_milk_intake_id === form.id) || null
   }, [slips, form])
+
+  // Helper: resolve tanker registration number
+  const tanker = useMemo(() => {
+    if (!form) return null
+    return tankers.find((t: any) => t.id === form.truck || t.reg_number === form.truck)
+  }, [tankers, form?.truck])
+
+  // Calculate total quantity from all details (nulls are skipped)
+  // Quantity is derived from flow meter readings when not explicitly provided
+  const totalQuantity = useMemo(() => {
+    if (!form) return 0
+    return (form.details ?? []).reduce((sum, detail) => {
+      let q = detail.quantity
+      if (q == null && detail.flow_meter_end_reading != null && detail.flow_meter_start_reading != null) {
+        q = detail.flow_meter_end_reading - detail.flow_meter_start_reading
+      }
+      return sum + (q ?? 0)
+    }, 0)
+  }, [form?.details])
 
   if (!form) return null
 
@@ -58,11 +81,9 @@ export function RawMilkIntakeFormViewDrawer({
     ? form.operator
     : `${(form.operator as any)?.first_name ?? ""} ${(form.operator as any)?.last_name ?? ""}`.trim()
 
-  // Helper: resolve tanker registration number
-  const tanker = useMemo(() => tankers.find((t: any) => t.id === form.truck), [tankers, form.truck])
   const truckDisplay = tanker?.reg_number || form.truck
 
-  // Derive quantity from flow meter readings if not explicitly provided
+  // Helper function for individual detail quantity
   const getDetailQuantity = (detail: any): number | null => {
     if (detail.quantity != null) return detail.quantity
     if (detail.flow_meter_end_reading != null && detail.flow_meter_start_reading != null) {
@@ -71,8 +92,7 @@ export function RawMilkIntakeFormViewDrawer({
     return null
   }
 
-  // Calculate total quantity from all details (nulls are skipped)
-  const totalQuantity = (form.details ?? []).reduce((sum, detail) => sum + (getDetailQuantity(detail) ?? 0), 0)
+  const getSiloByName = (name: string) => silos.find(s => s.name === name || s.id === name)
 
   const handleExportLabTestCSV = () => {
     if (!currentResultSlip) return
@@ -128,6 +148,28 @@ export function RawMilkIntakeFormViewDrawer({
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
+  }
+
+  const formatSafeDate = (dateStr: string | undefined | null) => {
+    if (!dateStr) return "N/A"
+    const parsedDate = new Date(dateStr)
+    if (isNaN(parsedDate.getTime())) {
+      const cleanDate = dateStr.replace(' ', 'T')
+      const d2 = new Date(cleanDate)
+      if (!isNaN(d2.getTime())) {
+        return d2.toLocaleDateString('en-GB', {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric'
+        })
+      }
+      return "Invalid Date"
+    }
+    return parsedDate.toLocaleDateString('en-GB', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    })
   }
 
   return (
@@ -215,6 +257,13 @@ export function RawMilkIntakeFormViewDrawer({
                       <h3 className="text-lg font-light">Basic Information</h3>
                     </div>
                     <div className="space-y-3">
+                      <div className="flex items-center justify-between pb-2 border-b border-gray-50">
+                        <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">Date</span>
+                        <div className="flex items-center gap-2 text-sm font-medium text-blue-600">
+                          <Calendar className="w-3.5 h-3.5" />
+                          <span>{formatSafeDate(form.created_at)}</span>
+                        </div>
+                      </div>
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-light text-gray-600">Form Tag</span>
                         <FormIdCopy
@@ -229,35 +278,27 @@ export function RawMilkIntakeFormViewDrawer({
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-light text-gray-600">Total Quantity</span>
-                        <span className="text-sm font-light text-blue-600">{totalQuantity.toFixed(2)}L</span>
+                        <span className="text-sm font-light text-blue-600 font-medium">{totalQuantity.toLocaleString()} L</span>
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-light text-gray-600">Compartments</span>
-                        <Badge variant="outline" className="font-light">{form.details.length}</Badge>
+                        <Badge variant="outline" className="font-normal border-blue-100 text-blue-700 bg-blue-50/30">{form.details.length}</Badge>
                       </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-light text-gray-600">Created</span>
-                        <span className="text-sm font-light">
-                          {new Date(form.created_at).toLocaleDateString('en-GB', {
+                    </div>
+                    {form.updated_at && (
+                      <div className="flex items-center justify-between pt-2 border-t border-gray-50 mt-2">
+                        <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">Last Sync</span>
+                        <span className="text-[10px] text-gray-500">
+                          {new Date(form.updated_at || "").toLocaleDateString('en-GB', {
                             day: 'numeric',
-                            month: 'long',
-                            year: 'numeric'
+                            month: 'short',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
                           })}
                         </span>
                       </div>
-                      {form.updated_at && (
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-light text-gray-600">Last Updated</span>
-                          <span className="text-sm font-light">
-                            {new Date(form.updated_at).toLocaleDateString('en-GB', {
-                              day: 'numeric',
-                              month: 'long',
-                              year: 'numeric'
-                            })}
-                          </span>
-                        </div>
-                      )}
-                    </div>
+                    )}
                   </div>
 
                   {/* Operator Information */}
@@ -425,32 +466,103 @@ export function RawMilkIntakeFormViewDrawer({
                         </div>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                        <div className="flex items-center justify-between"><span className="text-sm text-gray-600">Date</span><span className="text-sm font-light">{currentResultSlip.date}</span></div>
-                        <div className="flex items-center justify-between"><span className="text-sm text-gray-600">Time In</span><span className="text-sm font-light">{currentResultSlip.time_in}</span></div>
-                        <div className="flex items-center justify-between"><span className="text-sm text-gray-600">Time Out</span><span className="text-sm font-light">{currentResultSlip.time_out}</span></div>
-                        <div className="flex items-center justify-between"><span className="text-sm text-gray-600">Details Count</span><span className="text-sm font-light">{currentResultSlip.raw_milk_result_slip_details?.length || 0}</span></div>
+                        <div className="flex items-center justify-between"><span className="text-sm text-gray-600 font-light">Date</span><span className="text-sm font-light">{currentResultSlip.date}</span></div>
+                        <div className="flex items-center justify-between"><span className="text-sm text-gray-600 font-light">Time In</span><span className="text-sm font-light">{currentResultSlip.time_in}</span></div>
+                        <div className="flex items-center justify-between"><span className="text-sm text-gray-600 font-light">Time Out</span><span className="text-sm font-light">{currentResultSlip.time_out}</span></div>
+                        <div className="flex items-center justify-between"><span className="text-sm text-gray-600 font-light">Compartments Count</span><span className="text-sm font-light">{currentResultSlip.lab_test?.length || 0}</span></div>
                       </div>
 
-                      {currentResultSlip.raw_milk_result_slip_details && currentResultSlip.raw_milk_result_slip_details.length > 0 && (
-                        <div className="space-y-3">
-                          <h4 className="text-md font-light">Test Details</h4>
-                          {currentResultSlip.raw_milk_result_slip_details.map((detail: any, index: number) => (
-                            <div key={detail.id} className="p-4 bg-gray-50 rounded-lg">
-                              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-                                <div className="flex items-center justify-between"><span className="text-gray-600">Temperature</span><span className="font-light">{detail.temperature}°C</span></div>
-                                <div className="flex items-center justify-between"><span className="text-gray-600">pH</span><span className="font-light">{detail.ph}</span></div>
-                                <div className="flex items-center justify-between"><span className="text-gray-600">Fat</span><span className="font-light">{detail.fat}%</span></div>
-                                <div className="flex items-center justify-between"><span className="text-gray-600">Protein</span><span className="font-light">{detail.protein}%</span></div>
-                                <div className="flex items-center justify-between"><span className="text-gray-600">Alcohol</span><span className="font-light">{detail.alcohol}</span></div>
-                                <div className="flex items-center justify-between"><span className="text-gray-600">Resazurin</span><span className="font-light">{detail.resazurin}</span></div>
-                                <div className="flex items-center justify-between"><span className="text-gray-600">Total Solids</span><span className="font-light">{detail.total_solids}</span></div>
-                                <div className="flex items-center justify-between"><span className="text-gray-600">Density</span><span className="font-light">{detail.density}</span></div>
-                                <div className="flex items-center justify-between"><span className="text-gray-600">Starch</span><span className="font-light">{detail.starch ? "Yes" : "No"}</span></div>
+                      {currentResultSlip.lab_test && currentResultSlip.lab_test.length > 0 && (
+                        <div className="space-y-4">
+                          <h4 className="text-md font-light text-blue-800">Compartment Analysis Results</h4>
+                          {currentResultSlip.lab_test.map((detail: any, index: number) => (
+                            <div key={detail.id || index} className="p-5 bg-gray-50 rounded-xl border border-gray-100 shadow-sm">
+                              <div className="flex items-center justify-between mb-4 border-b border-gray-200 pb-2">
+                                <span className="text-sm font-medium text-gray-700">Compartment #{detail.truck_compartment_number || index + 1}</span>
+                                <Badge variant="outline" className={cn("font-light", detail.pass ? "bg-green-50 text-green-700 border-green-200" : "bg-red-50 text-red-700 border-red-200")}>
+                                  {detail.pass ? "Pass" : "Fail"}
+                                </Badge>
+                              </div>
+                              <div className="grid grid-cols-2 md:grid-cols-4 gap-y-4 gap-x-6">
+                                <div className="space-y-1">
+                                  <span className="text-[11px] text-gray-500 uppercase tracking-wider font-light">Temp</span>
+                                  <p className="text-sm font-light text-gray-900">{detail.temperature != null ? `${detail.temperature}°C` : "—"}</p>
+                                </div>
+                                <div className="space-y-1">
+                                  <span className="text-[11px] text-gray-500 uppercase tracking-wider font-light">pH</span>
+                                  <p className="text-sm font-light text-gray-900">{detail.ph ?? "—"}</p>
+                                </div>
+                                <div className="space-y-1">
+                                  <span className="text-[11px] text-gray-500 uppercase tracking-wider font-light">Fat</span>
+                                  <p className="text-sm font-light text-gray-900">{detail.fat != null ? `${detail.fat}%` : "—"}</p>
+                                </div>
+                                <div className="space-y-1">
+                                  <span className="text-[11px] text-gray-500 uppercase tracking-wider font-light">Protein</span>
+                                  <p className="text-sm font-light text-gray-900">{detail.protein != null ? `${detail.protein}%` : "—"}</p>
+                                </div>
+                                <div className="space-y-1">
+                                  <span className="text-[11px] text-gray-500 uppercase tracking-wider font-light">Density</span>
+                                  <p className="text-sm font-light text-gray-900">{detail.density ?? "—"}</p>
+                                </div>
+                                <div className="space-y-1">
+                                  <span className="text-[11px] text-gray-500 uppercase tracking-wider font-light">Alcohol</span>
+                                  <p className="text-sm font-light text-gray-900">{detail.alcohol ?? "—"}</p>
+                                </div>
+                                <div className="space-y-1">
+                                  <span className="text-[11px] text-gray-500 uppercase tracking-wider font-light">Total Solids</span>
+                                  <p className="text-sm font-light text-gray-900">{detail.total_solids ?? "—"}</p>
+                                </div>
+                                <div className="space-y-1">
+                                  <span className="text-[11px] text-gray-500 uppercase tracking-wider font-light">LR/SNF</span>
+                                  <p className="text-sm font-light text-gray-900">{detail.lr_snf ?? "—"}</p>
+                                </div>
+                                <div className="space-y-1">
+                                  <span className="text-[11px] text-gray-500 uppercase tracking-wider font-light">T. Acidity</span>
+                                  <p className="text-sm font-light text-gray-900">{detail.titratable_acidity ?? "—"}</p>
+                                </div>
+                                <div className="space-y-1">
+                                  <span className="text-[11px] text-gray-500 uppercase tracking-wider font-light">FPD</span>
+                                  <p className="text-sm font-light text-gray-900">{detail.fpd ?? "—"}</p>
+                                </div>
+                                <div className="space-y-1">
+                                  <span className="text-[11px] text-gray-500 uppercase tracking-wider font-light">SCC</span>
+                                  <p className="text-sm font-light text-gray-900">{detail.scc ?? "—"}</p>
+                                </div>
+                                <div className="space-y-1">
+                                  <span className="text-[11px] text-gray-500 uppercase tracking-wider font-light">Starch</span>
+                                  <p className="text-sm font-light text-gray-900">{detail.starch != null ? (detail.starch ? "Yes" : "No") : "—"}</p>
+                                </div>
+                                <div className="space-y-1">
+                                  <span className="text-[11px] text-gray-500 uppercase tracking-wider font-light">Antibiotics</span>
+                                  <p className="text-sm font-light text-gray-900">{detail.antibiotics != null ? (detail.antibiotics ? "Positive" : "Negative") : "—"}</p>
+                                </div>
+                                <div className="space-y-1">
+                                  <span className="text-[11px] text-gray-500 uppercase tracking-wider font-light">COB</span>
+                                  <p className="text-sm font-light text-gray-900">{detail.cob != null ? (detail.cob ? "Positive" : "Negative") : "—"}</p>
+                                </div>
+                                <div className="space-y-1">
+                                  <span className="text-[11px] text-gray-500 uppercase tracking-wider font-light">Resazurin</span>
+                                  <p className="text-sm font-light text-gray-900">{detail.resazurin || "—"}</p>
+                                </div>
+                                <div className="space-y-1">
+                                  <span className="text-[11px] text-gray-500 uppercase tracking-wider font-light">OT</span>
+                                  <p className="text-sm font-light text-gray-900">{detail.ot || "—"}</p>
+                                </div>
+                                <div className="space-y-1">
+                                  <span className="text-[11px] text-gray-500 uppercase tracking-wider font-light">Test Time</span>
+                                  <p className="text-sm font-light text-gray-900">{detail.time || "—"}</p>
+                                </div>
+                                <div className="space-y-1">
+                                  <span className="text-[11px] text-gray-500 uppercase tracking-wider font-light">Accepted</span>
+                                  <Badge variant="outline" className={cn("font-light h-5 px-1.5 text-[10px]", detail.accepted ? "text-green-600 border-green-200 bg-green-50" : "text-gray-500 border-gray-200")}>
+                                    {detail.accepted ? "Yes" : "No"}
+                                  </Badge>
+                                </div>
                               </div>
                               {detail.remark && (
-                                <div className="mt-2 pt-2 border-t border-gray-200">
-                                  <span className="text-xs text-gray-600">Remark: </span>
-                                  <span className="text-xs font-light">{detail.remark}</span>
+                                <div className="mt-4 pt-3 border-t border-gray-100">
+                                  <span className="text-[11px] text-gray-500 uppercase tracking-wider font-light block mb-1">Remark</span>
+                                  <p className="text-xs font-light text-gray-600 bg-white p-2 rounded border border-gray-100">{detail.remark}</p>
                                 </div>
                               )}
                             </div>
