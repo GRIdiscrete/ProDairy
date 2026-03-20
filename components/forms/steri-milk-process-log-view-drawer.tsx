@@ -137,23 +137,23 @@ export function SteriMilkProcessLogViewDrawer({
   if (!log) return null
 
   // single batch from new API
-  const batch: any = (log as any).batch_id || null
+  const batch = log.batch || null
 
   // helper array for process times/readings display (safe primitives)
   const detailItems = [
-    { key: "Filling Start", detail: batch?.filling_start_details, fallback: batch?.filling_start },
-    { key: "Autoclave Start", detail: batch?.autoclave_start_details, fallback: batch?.autoclave_start },
-    { key: "Heating Start", detail: batch?.heating_start_details, fallback: batch?.heating_start },
-    { key: "Heating Finish", detail: batch?.heating_finish_details, fallback: batch?.heating_finish },
-    { key: "Sterilization Start", detail: batch?.sterilization_start_details, fallback: batch?.sterilization_start },
-    { key: "Sterilization After 5", detail: batch?.sterilization_after_5_details, fallback: batch?.sterilization_after_5 },
-    { key: "Sterilization Finish", detail: batch?.sterilization_finish_details, fallback: batch?.sterilization_finish },
-    { key: "Pre Cooling Start", detail: batch?.pre_cooling_start_details, fallback: batch?.pre_cooling_start },
-    { key: "Pre Cooling Finish", detail: batch?.pre_cooling_finish_details, fallback: batch?.pre_cooling_finish },
-    { key: "Cooling 1 Start", detail: batch?.cooling_1_start_details, fallback: batch?.cooling_1_start },
-    { key: "Cooling 1 Finish", detail: batch?.cooling_1_finish_details, fallback: batch?.cooling_1_finish },
-    { key: "Cooling 2 Start", detail: batch?.cooling_2_start_details, fallback: batch?.cooling_2_start },
-    { key: "Cooling 2 Finish", detail: batch?.cooling_2_finish_details, fallback: batch?.cooling_2_finish },
+    { key: "Filling Start", detail: batch?.filling_start },
+    { key: "Autoclave Start", detail: batch?.autoclave_start },
+    { key: "Heating Start", detail: batch?.heating_start },
+    { key: "Heating Finish", detail: batch?.heating_finish },
+    { key: "Sterilization Start", detail: batch?.sterilization_start },
+    { key: "Sterilization After 5", detail: batch?.sterilization_after_5 },
+    { key: "Sterilization Finish", detail: batch?.sterilization_finish },
+    { key: "Pre Cooling Start", detail: batch?.pre_cooling_start },
+    { key: "Pre Cooling Finish", detail: batch?.pre_cooling_finish },
+    { key: "Cooling 1 Start", detail: batch?.cooling_1_start },
+    { key: "Cooling 1 Finish", detail: batch?.cooling_1_finish },
+    { key: "Cooling 2 Start", detail: batch?.cooling_2_start },
+    { key: "Cooling 2 Finish", detail: batch?.cooling_2_finish },
   ]
 
   return (
@@ -340,6 +340,9 @@ export function SteriMilkProcessLogViewDrawer({
                         <div>
                           <p className="text-sm font-light"><span className="font-medium">Date:</span> {batch.date ?? "—"}</p>
                         </div>
+                        <div>
+                          <p className="text-sm font-light"><span className="font-medium">Autoclave:</span> {log.autoclave?.name || "N/A"}</p>
+                        </div>
                       </div>
                     </div>
 
@@ -349,17 +352,9 @@ export function SteriMilkProcessLogViewDrawer({
                       <h4 className="text-sm font-medium">Process Times & Readings</h4>
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg">
                         {detailItems.map(item => {
-                          // compute safe display values: fallback may be a primitive or an object { time, temperature, pressure }
-                          const fb = item.fallback as any
-                          const fbIsObj = fb && typeof fb === "object"
-
-                          const timeVal = item.detail?.time ?? (fbIsObj ? fb.time : fb) ?? "N/A"
-
-                          const tempRaw = item.detail?.temperature ?? (fbIsObj ? fb.temperature : null)
-                          const tempVal = tempRaw != null ? `${tempRaw}°C` : "N/A"
-
-                          const pressureRaw = item.detail?.pressure ?? (fbIsObj ? fb.pressure : null)
-                          const pressureVal = pressureRaw != null ? `${pressureRaw} Bar` : "N/A"
+                          const timeVal = item.detail?.time ?? "N/A"
+                          const tempVal = item.detail?.temperature != null ? `${item.detail.temperature}°C` : "N/A"
+                          const pressureVal = item.detail?.pressure != null ? `${item.detail.pressure} Bar` : "N/A"
 
                           return (
                             <div key={String(item.key)} className="bg-white p-3 rounded-md shadow-sm border border-gray-100">

@@ -1,94 +1,64 @@
 import { apiRequest } from "@/lib/utils/api-request"
 
+export interface RawMilkDetails {
+  id?: string
+  fat: number | null
+  quantity: number | null
+  source_silo_name: string | null
+}
+
+export interface SkimMilkDetails {
+  id?: string
+  fat: number | null
+  quantity: number | null
+  destination_silo_name: string | null
+}
+
+export interface CreamDetails {
+  id?: string
+  fat: number | null
+  quantity: number | null
+  cream_tank: string | null
+}
+
 export interface SkimmingForm {
   id: string
-  created_at: string
+  tag: string
+  created_at?: string
   updated_at?: string
-  operator_id: string
-  operator_signature: string
-  bmt_id: string
-  raw_milk_id: string | null
-  skim_milk_id: string | null
-  cream_id: string | null
-  standardizing_form_raw_milk: Array<{
-    id: string
-    fat: number
-    quantity: number
-    created_at: string
-    updated_at?: string
-    source_silo_id: string
-    unit_of_measure: string
-    raw_milk_form_id: string
-    standardizing_form_id: string
-  }>
-  standardizing_form_skim_milk: Array<{
-    id: string
-    fat: number
-    quantity: number
-    created_at: string
-    updated_at?: string
-    filmatic_form_id: string
-    destination_silo_id: string
-    standardizing_form_id: string
-  }>
-  standardizing_form_cream: Array<{
-    id: string
-    fat: number
-    quantity: number
-    created_at: string
-    updated_at?: string
-    transfer_end: string
-    transfer_start: string
-    standardizing_form_id: string
-  }>
+  operator_id?: string
+  operator_signature?: string
+  raw_milk: RawMilkDetails | null
+  skim_milk: SkimMilkDetails | null
+  cream: CreamDetails | null
 }
 
 export interface CreateSkimmingFormRequest {
   operator_id: string
   operator_signature: string
-  bmt_id: string
   raw_milk: {
+    source_silo_name: string
     quantity: number
     fat: number
-    unit_of_measure: string
-    source_silo_id: string
   }
-  skim_milk: {
+  skim_milk?: {
     quantity: number
     fat: number
-    destination_silo_id: string
+    destination_silo_name: string
   }
-  cream: {
+  cream?: {
     quantity: number
     fat: number
-    transfer_start: string
-    transfer_end: string
+    cream_tank: string
   }
 }
 
 export interface UpdateSkimmingFormRequest {
   id: string
-  operator_id: string
-  operator_signature: string
-  bmt_id: string
-  raw_milk: {
-    quantity: number
-    raw_milk_form_id: string
-    fat: number
-    unit_of_measure: string
-    source_silo_id: string
-  }
-  skim_milk: {
-    quantity: number
-    fat: number
-    destination_silo_id: string
-  }
-  cream: {
-    quantity: number
-    fat: number
-    transfer_start: string
-    transfer_end: string
-  }
+  tag?: string
+  raw_milk?: RawMilkDetails
+  skim_milk?: SkimMilkDetails
+  cream?: CreamDetails
 }
 
 export interface SkimmingFormResponse {

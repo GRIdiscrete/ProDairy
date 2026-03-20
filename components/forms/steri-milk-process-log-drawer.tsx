@@ -12,6 +12,7 @@ import {
 } from "@/lib/store/slices/steriMilkProcessLogSlice"
 import { usersApi } from "@/lib/api/users"
 import { rolesApi } from "@/lib/api/roles"
+import { machineApi } from "@/lib/api/machine"
 import { filmaticLinesForm1Api } from "@/lib/api/filmatic-lines-form-1"
 import { toast } from "sonner"
 import { SteriMilkProcessLog } from "@/lib/api/steri-milk-process-log"
@@ -43,12 +44,15 @@ export function SteriMilkProcessLogDrawer({
   const [users, setUsers] = useState<any[]>([])
   const [userRoles, setUserRoles] = useState<any[]>([])
   const [filmaticForms, setFilmaticForms] = useState<any[]>([])
+  const [machines, setMachines] = useState<any[]>([])
   const [loadingUsers, setLoadingUsers] = useState(false)
   const [loadingUserRoles, setLoadingUserRoles] = useState(false)
   const [loadingFilmaticForms, setLoadingFilmaticForms] = useState(false)
+  const [loadingMachines, setLoadingMachines] = useState(false)
 
   const basicInfoForm = useForm<BasicInfoFormData>({
     defaultValues: {
+      autoclave: "",
       approved: true,
       approver_id: "",
       filmatic_form_id: "",
@@ -59,19 +63,19 @@ export function SteriMilkProcessLogDrawer({
 
   const processDetailsForm = useForm<ProcessDetailsFormData>({
     defaultValues: {
-      filling_start_details: { time: "", temperature: "", pressure: "" },
-      autoclave_start_details: { time: "", temperature: "", pressure: "" },
-      heating_start_details: { time: "", temperature: "", pressure: "" },
-      heating_finish_details: { time: "", temperature: "", pressure: "" },
-      sterilization_start_details: { time: "", temperature: "", pressure: "" },
-      sterilization_after_5_details: { time: "", temperature: "", pressure: "" },
-      sterilization_finish_details: { time: "", temperature: "", pressure: "" },
-      pre_cooling_start_details: { time: "", temperature: "", pressure: "" },
-      pre_cooling_finish_details: { time: "", temperature: "", pressure: "" },
-      cooling_1_start_details: { time: "", temperature: "", pressure: "" },
-      cooling_1_finish_details: { time: "", temperature: "", pressure: "" },
-      cooling_2_start_details: { time: "", temperature: "", pressure: "" },
-      cooling_2_finish_details: { time: "", temperature: "", pressure: "" },
+      filling_start: { time: "", temperature: "", pressure: "" },
+      autoclave_start: { time: "", temperature: "", pressure: "" },
+      heating_start: { time: "", temperature: "", pressure: "" },
+      heating_finish: { time: "", temperature: "", pressure: "" },
+      sterilization_start: { time: "", temperature: "", pressure: "" },
+      sterilization_after_5: { time: "", temperature: "", pressure: "" },
+      sterilization_finish: { time: "", temperature: "", pressure: "" },
+      pre_cooling_start: { time: "", temperature: "", pressure: "" },
+      pre_cooling_finish: { time: "", temperature: "", pressure: "" },
+      cooling_1_start: { time: "", temperature: "", pressure: "" },
+      cooling_1_finish: { time: "", temperature: "", pressure: "" },
+      cooling_2_start: { time: "", temperature: "", pressure: "" },
+      cooling_2_finish: { time: "", temperature: "", pressure: "" },
     },
   })
 
@@ -100,38 +104,38 @@ export function SteriMilkProcessLogDrawer({
   useEffect(() => {
     const subscription = processDetailsForm.watch((value, { name }) => {
       // Only trigger when heating_finish fields are updated
-      if (name?.startsWith('heating_finish_details')) {
+      if (name?.startsWith('heating_finish')) {
         setTimeout(() => {
-          autoFillNextStep('heating_finish_details.time', 'sterilization_start_details.time')
-          autoFillNextStep('heating_finish_details.temperature', 'sterilization_start_details.temperature')
-          autoFillNextStep('heating_finish_details.pressure', 'sterilization_start_details.pressure')
+          autoFillNextStep('heating_finish.time', 'sterilization_start.time')
+          autoFillNextStep('heating_finish.temperature', 'sterilization_start.temperature')
+          autoFillNextStep('heating_finish.pressure', 'sterilization_start.pressure')
         }, 300) // Small delay to ensure value is set
       }
 
       // Sterilization Finish -> Pre Cooling Start
-      if (name?.startsWith('sterilization_finish_details')) {
+      if (name?.startsWith('sterilization_finish')) {
         setTimeout(() => {
-          autoFillNextStep('sterilization_finish_details.time', 'pre_cooling_start_details.time')
-          autoFillNextStep('sterilization_finish_details.temperature', 'pre_cooling_start_details.temperature')
-          autoFillNextStep('sterilization_finish_details.pressure', 'pre_cooling_start_details.pressure')
+          autoFillNextStep('sterilization_finish.time', 'pre_cooling_start.time')
+          autoFillNextStep('sterilization_finish.temperature', 'pre_cooling_start.temperature')
+          autoFillNextStep('sterilization_finish.pressure', 'pre_cooling_start.pressure')
         }, 300)
       }
 
       // Pre Cooling Finish -> Cooling 1 Start
-      if (name?.startsWith('pre_cooling_finish_details')) {
+      if (name?.startsWith('pre_cooling_finish')) {
         setTimeout(() => {
-          autoFillNextStep('pre_cooling_finish_details.time', 'cooling_1_start_details.time')
-          autoFillNextStep('pre_cooling_finish_details.temperature', 'cooling_1_start_details.temperature')
-          autoFillNextStep('pre_cooling_finish_details.pressure', 'cooling_1_start_details.pressure')
+          autoFillNextStep('pre_cooling_finish.time', 'cooling_1_start.time')
+          autoFillNextStep('pre_cooling_finish.temperature', 'cooling_1_start.temperature')
+          autoFillNextStep('pre_cooling_finish.pressure', 'cooling_1_start.pressure')
         }, 300)
       }
 
       // Cooling 1 Finish -> Cooling 2 Start
-      if (name?.startsWith('cooling_1_finish_details')) {
+      if (name?.startsWith('cooling_1_finish')) {
         setTimeout(() => {
-          autoFillNextStep('cooling_1_finish_details.time', 'cooling_2_start_details.time')
-          autoFillNextStep('cooling_1_finish_details.temperature', 'cooling_2_start_details.temperature')
-          autoFillNextStep('cooling_1_finish_details.pressure', 'cooling_2_start_details.pressure')
+          autoFillNextStep('cooling_1_finish.time', 'cooling_2_start.time')
+          autoFillNextStep('cooling_1_finish.temperature', 'cooling_2_start.temperature')
+          autoFillNextStep('cooling_1_finish.pressure', 'cooling_2_start.pressure')
         }, 300)
       }
     })
@@ -145,39 +149,36 @@ export function SteriMilkProcessLogDrawer({
       setLoadingUsers(true)
       setLoadingUserRoles(true)
       setLoadingFilmaticForms(true)
+      setLoadingMachines(true)
 
       try {
         // Load users
         try {
           const usersResponse = await usersApi.getUsers()
           setUsers(usersResponse.data || [])
-        } catch (userError) {
-
-        }
+        } catch (userError) {}
 
         // Load user roles
         try {
           const rolesResponse = await rolesApi.getRoles()
           setUserRoles(rolesResponse.data || [])
-        } catch (roleError) {
+        } catch (roleError) {}
 
-        }
+        // Load machines (autoclaves)
+        try {
+          const machineResponse = await machineApi.getMachines()
+          setMachines(machineResponse.data || [])
+        } catch (machineError) {}
 
         // Load Filmatic forms (Form 1 only)
         try {
           const form1Response = await filmaticLinesForm1Api.getForms()
-
-          console.log('Form1 Response:', form1Response)
-
           const allForms = [
             ...(form1Response || []).map((form: any) => ({ ...form, type: 'Form 1' }))
           ]
-
-          console.log('All Forms:', allForms)
           setFilmaticForms(allForms)
         } catch (formError) {
           console.error('Error loading Filmatic forms:', formError)
-
         }
       } catch (error) {
         console.warn("Form will work with fallback data")
@@ -185,6 +186,7 @@ export function SteriMilkProcessLogDrawer({
         setLoadingUsers(false)
         setLoadingUserRoles(false)
         setLoadingFilmaticForms(false)
+        setLoadingMachines(false)
       }
     }
 
@@ -199,9 +201,15 @@ export function SteriMilkProcessLogDrawer({
 
     if (mode === "edit" && log) {
       try {
-        const batch = (log as any).batch_id || null
+        const batch = log.batch || null
+
+        const autoclaveVal = log.autoclave as any
+        const autoclaveId = autoclaveVal?.id || 
+                           (machines.find(m => m.name === autoclaveVal?.name)?.id) ||
+                           (typeof autoclaveVal === 'string' ? autoclaveVal : "");
 
         basicInfoForm.reset({
+          autoclave: autoclaveId,
           approved: !!log.approved,
           approver_id: log.approver_id || "",
           filmatic_form_id: log.filmatic_form_id || "",
@@ -246,30 +254,12 @@ export function SteriMilkProcessLogDrawer({
           return String(val)
         }
 
-        // Helper to prefer detail.time, then legacy time object/string on batch, otherwise ""
-        const timeFrom = (detailObj: any, legacyField?: any) => {
-          // prefer explicit detail object time if present
-          if (detailObj) {
-            // detailObj may be object with .time or a string
-            const t = detailObj.time ?? detailObj
-            const normalized = normalizeTime(t)
-            if (normalized) return normalized
-          }
-          // legacyField may be object or string
-          if (legacyField) {
-            const normalizedLegacy = normalizeTime(legacyField)
-            if (normalizedLegacy) return normalizedLegacy
-          }
-          return ""
-        }
-
-        // Helper to extract details preferring specific object or fallback
+        // Helper to extract details
         const getDetailValues = (baseKey: string) => {
-          // Check both "key_details" and "key"
-          const detail = batch?.[`${baseKey}_details`] || batch?.[baseKey]
+          const detail = batch?.[baseKey as keyof typeof batch] as any
 
           return {
-            time: normalizeTime(detail?.time ?? detail),
+            time: normalizeTime(detail?.time),
             temperature: detail?.temperature ? String(detail.temperature) : "",
             pressure: detail?.pressure ? String(detail.pressure) : ""
           }
@@ -277,19 +267,19 @@ export function SteriMilkProcessLogDrawer({
 
         // map time fields
         processDetailsForm.reset({
-          filling_start_details: getDetailValues('filling_start'),
-          autoclave_start_details: getDetailValues('autoclave_start'),
-          heating_start_details: getDetailValues('heating_start'),
-          heating_finish_details: getDetailValues('heating_finish'),
-          sterilization_start_details: getDetailValues('sterilization_start'),
-          sterilization_after_5_details: getDetailValues('sterilization_after_5'),
-          sterilization_finish_details: getDetailValues('sterilization_finish'),
-          pre_cooling_start_details: getDetailValues('pre_cooling_start'),
-          pre_cooling_finish_details: getDetailValues('pre_cooling_finish'),
-          cooling_1_start_details: getDetailValues('cooling_1_start'),
-          cooling_1_finish_details: getDetailValues('cooling_1_finish'),
-          cooling_2_start_details: getDetailValues('cooling_2_start'),
-          cooling_2_finish_details: getDetailValues('cooling_2_finish')
+          filling_start: getDetailValues('filling_start'),
+          autoclave_start: getDetailValues('autoclave_start'),
+          heating_start: getDetailValues('heating_start'),
+          heating_finish: getDetailValues('heating_finish'),
+          sterilization_start: getDetailValues('sterilization_start'),
+          sterilization_after_5: getDetailValues('sterilization_after_5'),
+          sterilization_finish: getDetailValues('sterilization_finish'),
+          pre_cooling_start: getDetailValues('pre_cooling_start'),
+          pre_cooling_finish: getDetailValues('pre_cooling_finish'),
+          cooling_1_start: getDetailValues('cooling_1_start'),
+          cooling_1_finish: getDetailValues('cooling_1_finish'),
+          cooling_2_start: getDetailValues('cooling_2_start'),
+          cooling_2_finish: getDetailValues('cooling_2_finish')
         })
 
         // set UI to first step
@@ -307,7 +297,7 @@ export function SteriMilkProcessLogDrawer({
       processDetailsForm.reset()
       setCurrentStep(1)
     }
-  }, [open, mode, log, basicInfoForm, processDetailsForm])
+  }, [open, mode, log, basicInfoForm, processDetailsForm, machines])
 
   const handleBasicInfoSubmit = async (data: BasicInfoFormData) => {
     setCurrentStep(2)
@@ -397,83 +387,49 @@ export function SteriMilkProcessLogDrawer({
       }
 
       // Get existing batch data for update mode
-      const existingBatch = mode === "edit" && log ? (log as any).batch_id : null
+      const existingBatch = mode === "edit" && log ? log.batch : null
 
-      // Build payload that matches your API examples: no simple process times, only details
+      // Build payload that matches your API examples
       const formData: any = {
+        autoclave: basicInfo.autoclave,
         approved: basicInfo.approved || false,
-        approver_id: basicInfo.approver_id || "",
         filmatic_form_id: basicInfo.filmatic_form_id || null,
+        approver_id: basicInfo.approver_id || null,
         batch: {
-          // date should be YYYY-MM-DD or null
-          date: basicInfo.date ? basicInfo.date : null,
-          batch_number: basicInfo.batch_number || "", // Keep as string — alphanumeric batch numbers supported
-          // only include *_details objects (formatted times)
-          filling_start_details: buildDetailObject(
-            data.filling_start_details,
-            existingBatch?.filling_start
-          ),
-          autoclave_start_details: buildDetailObject(
-            data.autoclave_start_details,
-            existingBatch?.autoclave_start
-          ),
-          heating_start_details: buildDetailObject(
-            data.heating_start_details,
-            existingBatch?.heating_start
-          ),
-          heating_finish_details: buildDetailObject(
-            data.heating_finish_details,
-            existingBatch?.heating_finish
-          ),
-          sterilization_start_details: buildDetailObject(
-            data.sterilization_start_details,
-            existingBatch?.sterilization_start
-          ),
-          sterilization_after_5_details: buildDetailObject(
-            data.sterilization_after_5_details,
-            existingBatch?.sterilization_after_5
-          ),
-          sterilization_finish_details: buildDetailObject(
-            data.sterilization_finish_details,
-            existingBatch?.sterilization_finish
-          ),
-          pre_cooling_start_details: buildDetailObject(
-            data.pre_cooling_start_details,
-            existingBatch?.pre_cooling_start
-          ),
-          pre_cooling_finish_details: buildDetailObject(
-            data.pre_cooling_finish_details,
-            existingBatch?.pre_cooling_finish
-          ),
-          cooling_1_start_details: buildDetailObject(
-            data.cooling_1_start_details,
-            existingBatch?.cooling_1_start
-          ),
-          cooling_1_finish_details: buildDetailObject(
-            data.cooling_1_finish_details,
-            existingBatch?.cooling_1_finish
-          ),
-          cooling_2_start_details: buildDetailObject(
-            data.cooling_2_start_details,
-            existingBatch?.cooling_2_start
-          ),
-          cooling_2_finish_details: buildDetailObject(
-            data.cooling_2_finish_details,
-            existingBatch?.cooling_2_finish
-          )
+          date: basicInfo.date || new Date().toISOString().slice(0, 10),
+          batch_number: basicInfo.batch_number || "",
+          filling_start: buildDetailObject(data.filling_start, existingBatch?.filling_start),
+          autoclave_start: buildDetailObject(data.autoclave_start, existingBatch?.autoclave_start),
+          heating_start: buildDetailObject(data.heating_start, existingBatch?.heating_start),
+          heating_finish: buildDetailObject(data.heating_finish, existingBatch?.heating_finish),
+          sterilization_start: buildDetailObject(data.sterilization_start, existingBatch?.sterilization_start),
+          sterilization_after_5: buildDetailObject(data.sterilization_after_5, existingBatch?.sterilization_after_5),
+          sterilization_finish: buildDetailObject(data.sterilization_finish, existingBatch?.sterilization_finish),
+          pre_cooling_start: buildDetailObject(data.pre_cooling_start, existingBatch?.pre_cooling_start),
+          pre_cooling_finish: buildDetailObject(data.pre_cooling_finish, existingBatch?.pre_cooling_finish),
+          cooling_1_start: buildDetailObject(data.cooling_1_start, existingBatch?.cooling_1_start),
+          cooling_1_finish: buildDetailObject(data.cooling_1_finish, existingBatch?.cooling_1_finish),
+          cooling_2_start: buildDetailObject(data.cooling_2_start, existingBatch?.cooling_2_start),
+          cooling_2_finish: buildDetailObject(data.cooling_2_finish, existingBatch?.cooling_2_finish)
         }
       }
 
+      // Default time for filling_start if missing in create mode
+      if (mode === "create" && !formData.batch.filling_start.time) {
+        const now = new Date()
+        const hh = String(now.getHours()).padStart(2, "0")
+        const mm = String(now.getMinutes()).padStart(2, "0")
+        formData.batch.filling_start.time = `${hh}:${mm}:00+00`
+      }
+
       if (mode === "edit" && log?.id) {
-        // update payload must include top-level id and batch.id per your example
-        const batchId = log?.batch_id?.id || ""
+        // update payload
+        const batchId = log?.batch?.id || ""
         await dispatch(updateSteriMilkProcessLog({
           id: log.id,
           data: {
+            ...formData,
             id: log.id,
-            approved: formData.approved,
-            approver_id: formData.approver_id,
-            filmatic_form_id: formData.filmatic_form_id || null,
             batch: { id: batchId, ...formData.batch }
           }
         })).unwrap()
@@ -532,8 +488,10 @@ export function SteriMilkProcessLogDrawer({
               form={basicInfoForm}
               userRoles={userRoles}
               filmaticForms={filmaticForms}
+              machines={machines}
               loadingUserRoles={loadingUserRoles}
               loadingFilmaticForms={loadingFilmaticForms}
+              loadingMachines={loadingMachines}
             />
           ) : (
             <ProcessDetailsStep form={processDetailsForm} />

@@ -13,16 +13,20 @@ interface BasicInfoStepProps {
   form: UseFormReturn<BasicInfoFormData>
   userRoles: any[]
   filmaticForms: any[]
+  machines: any[]
   loadingUserRoles: boolean
   loadingFilmaticForms: boolean
+  loadingMachines: boolean
 }
 
 export function BasicInfoStep({
   form,
   userRoles,
   filmaticForms,
+  machines,
   loadingUserRoles,
-  loadingFilmaticForms
+  loadingFilmaticForms,
+  loadingMachines
 }: BasicInfoStepProps) {
   return (
     <div className="space-y-6 p-6">
@@ -32,6 +36,32 @@ export function BasicInfoStep({
         <div className="text-center mb-6">
           <h3 className="text-xl font-light text-gray-900">Basic Information</h3>
           <p className="text-sm font-light text-gray-600 mt-2">Enter the basic log information and batch details</p>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="autoclave">Process Machine (Autoclave)</Label>
+          <Controller
+            name="autoclave"
+            control={form.control}
+            render={({ field }) => (
+              <SearchableSelect
+                options={machines.map(m => ({
+                  value: m.id,
+                  label: m.name,
+                  description: `${m.location} • ${m.serial_number}`
+                }))}
+                value={field.value}
+                onValueChange={field.onChange}
+                placeholder="Select autoclave machine"
+                searchPlaceholder="Search machines..."
+                emptyMessage="No machines found"
+                loading={loadingMachines}
+              />
+            )}
+          />
+          {form.formState.errors.autoclave && (
+            <p className="text-sm text-red-500">{form.formState.errors.autoclave.message}</p>
+          )}
         </div>
 
         <div className="space-y-2">

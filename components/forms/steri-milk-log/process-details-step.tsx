@@ -107,117 +107,117 @@ export function ProcessDetailsStep({ form }: ProcessDetailsStepProps) {
             title="Filling Start Details"
             icon="clock"
             iconColor="text-blue-600"
-            timeFieldName="filling_start_details.time"
-            tempFieldName="filling_start_details.temperature"
-            pressureFieldName="filling_start_details.pressure"
+            timeFieldName="filling_start.time"
+            tempFieldName="filling_start.temperature"
+            pressureFieldName="filling_start.pressure"
             form={form}
           />
           <ProcessDetailCard
             title="Autoclave Start Details"
             icon="thermometer"
             iconColor="text-red-600"
-            timeFieldName="autoclave_start_details.time"
-            tempFieldName="autoclave_start_details.temperature"
-            pressureFieldName="autoclave_start_details.pressure"
+            timeFieldName="autoclave_start.time"
+            tempFieldName="autoclave_start.temperature"
+            pressureFieldName="autoclave_start.pressure"
             form={form}
           />
           <ProcessDetailCard
             title="Heating Start Details"
             icon="thermometer"
             iconColor="text-orange-600"
-            timeFieldName="heating_start_details.time"
-            tempFieldName="heating_start_details.temperature"
-            pressureFieldName="heating_start_details.pressure"
+            timeFieldName="heating_start.time"
+            tempFieldName="heating_start.temperature"
+            pressureFieldName="heating_start.pressure"
             form={form}
           />
           <ProcessDetailCard
             title="Heating Finish Details"
             icon="thermometer"
             iconColor="text-orange-600"
-            timeFieldName="heating_finish_details.time"
-            tempFieldName="heating_finish_details.temperature"
-            pressureFieldName="heating_finish_details.pressure"
+            timeFieldName="heating_finish.time"
+            tempFieldName="heating_finish.temperature"
+            pressureFieldName="heating_finish.pressure"
             form={form}
           />
           <ProcessDetailCard
             title="Steri 1"
             icon="thermometer"
             iconColor="text-red-600"
-            timeFieldName="sterilization_start_details.time"
-            tempFieldName="sterilization_start_details.temperature"
-            pressureFieldName="sterilization_start_details.pressure"
+            timeFieldName="sterilization_start.time"
+            tempFieldName="sterilization_start.temperature"
+            pressureFieldName="sterilization_start.pressure"
             form={form}
           />
           <ProcessDetailCard
             title="Steri 2"
             icon="thermometer"
             iconColor="text-red-600"
-            timeFieldName="sterilization_after_5_details.time"
-            tempFieldName="sterilization_after_5_details.temperature"
-            pressureFieldName="sterilization_after_5_details.pressure"
+            timeFieldName="sterilization_after_5.time"
+            tempFieldName="sterilization_after_5.temperature"
+            pressureFieldName="sterilization_after_5.pressure"
             form={form}
           />
           <ProcessDetailCard
             title="Sterilization Finish Details"
             icon="thermometer"
             iconColor="text-red-600"
-            timeFieldName="sterilization_finish_details.time"
-            tempFieldName="sterilization_finish_details.temperature"
-            pressureFieldName="sterilization_finish_details.pressure"
+            timeFieldName="sterilization_finish.time"
+            tempFieldName="sterilization_finish.temperature"
+            pressureFieldName="sterilization_finish.pressure"
             form={form}
           />
           <ProcessDetailCard
             title="Pre Cooling Start Details"
             icon="thermometer"
             iconColor="text-blue-600"
-            timeFieldName="pre_cooling_start_details.time"
-            tempFieldName="pre_cooling_start_details.temperature"
-            pressureFieldName="pre_cooling_start_details.pressure"
+            timeFieldName="pre_cooling_start.time"
+            tempFieldName="pre_cooling_start.temperature"
+            pressureFieldName="pre_cooling_start.pressure"
             form={form}
           />
           <ProcessDetailCard
             title="Pre Cooling Finish Details"
             icon="thermometer"
             iconColor="text-blue-600"
-            timeFieldName="pre_cooling_finish_details.time"
-            tempFieldName="pre_cooling_finish_details.temperature"
-            pressureFieldName="pre_cooling_finish_details.pressure"
+            timeFieldName="pre_cooling_finish.time"
+            tempFieldName="pre_cooling_finish.temperature"
+            pressureFieldName="pre_cooling_finish.pressure"
             form={form}
           />
           <ProcessDetailCard
             title="Cooling 1 Start Details"
             icon="thermometer"
             iconColor="text-cyan-600"
-            timeFieldName="cooling_1_start_details.time"
-            tempFieldName="cooling_1_start_details.temperature"
-            pressureFieldName="cooling_1_start_details.pressure"
+            timeFieldName="cooling_1_start.time"
+            tempFieldName="cooling_1_start.temperature"
+            pressureFieldName="cooling_1_start.pressure"
             form={form}
           />
           <ProcessDetailCard
             title="Cooling 1 Finish Details"
             icon="thermometer"
             iconColor="text-cyan-600"
-            timeFieldName="cooling_1_finish_details.time"
-            tempFieldName="cooling_1_finish_details.temperature"
-            pressureFieldName="cooling_1_finish_details.pressure"
+            timeFieldName="cooling_1_finish.time"
+            tempFieldName="cooling_1_finish.temperature"
+            pressureFieldName="cooling_1_finish.pressure"
             form={form}
           />
           <ProcessDetailCard
             title="Cooling 2 Start Details"
             icon="thermometer"
             iconColor="text-indigo-600"
-            timeFieldName="cooling_2_start_details.time"
-            tempFieldName="cooling_2_start_details.temperature"
-            pressureFieldName="cooling_2_start_details.pressure"
+            timeFieldName="cooling_2_start.time"
+            tempFieldName="cooling_2_start.temperature"
+            pressureFieldName="cooling_2_start.pressure"
             form={form}
           />
           <ProcessDetailCard
             title="Cooling 2 Finish Details"
             icon="thermometer"
-            iconColor="text-indigo-600"
-            timeFieldName="cooling_2_finish_details.time"
-            tempFieldName="cooling_2_finish_details.temperature"
-            pressureFieldName="cooling_2_finish_details.pressure"
+            iconColor="indigo-600"
+            timeFieldName="cooling_2_finish.time"
+            tempFieldName="cooling_2_finish.temperature"
+            pressureFieldName="cooling_2_finish.pressure"
             form={form}
           />
         </div>

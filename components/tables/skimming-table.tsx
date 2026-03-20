@@ -1,6 +1,6 @@
 import { Badge } from "@/components/ui/badge"
 import { LoadingButton } from "@/components/ui/loading-button"
-import { Eye, Edit, Trash2, Beaker, TrendingUp, FileText, Clock, Package, ArrowRight } from "lucide-react"
+import { Eye, Edit, Trash2, Beaker, TrendingUp, Clock, Package, ArrowRight } from "lucide-react"
 import { SkimmingForm } from "@/lib/api/skimming-form"
 
 interface SkimmingTableProps {
@@ -22,20 +22,19 @@ export function SkimmingTable({ forms, onView, onEdit, onDelete, operationLoadin
                 <ArrowRight className="w-6 h-6 text-white" />
               </div>
               <div>
-                <div className=\"flex items-center space-x-2\">
-                  <span className=\"font-light text-lg\">#{form.id.slice(0, 8)}</span>
-                  <Badge className=\"bg-blue-100 text-blue-800 font-light\">
+                <div className="flex items-center space-x-2">
+                  <span className="font-light text-lg">{form.tag || `#${form.id.slice(0, 8)}`}</span>
+                  <Badge className="bg-blue-100 text-blue-800 font-light">
                     Skimming Process
                   </Badge>
                 </div>
                 <p className="text-sm text-gray-500 mt-1">
-                  {new Date(form.created_at).toLocaleDateString()} • BMT: #{form.bmt_id.slice(0, 8)}
+                  {form.created_at ? new Date(form.created_at).toLocaleDateString() : 'No date'}
                 </p>
               </div>
             </div>
             <div className="flex space-x-2">
               <LoadingButton
-                
                 size="sm"
                 onClick={() => onView(form)}
                 className="bg-[#006BC4] text-white rounded-full"
@@ -43,7 +42,6 @@ export function SkimmingTable({ forms, onView, onEdit, onDelete, operationLoadin
                 <Eye className="w-4 h-4" />
               </LoadingButton>
               <LoadingButton
-                
                 size="sm"
                 onClick={() => onEdit(form)}
                 className="bg-[#A0CF06] text-[#211D1E] rounded-full"
@@ -72,17 +70,16 @@ export function SkimmingTable({ forms, onView, onEdit, onDelete, operationLoadin
                 <p className="text-sm font-light text-gray-600">Raw Milk Input</p>
               </div>
               <div className="space-y-1">
-                {form.standardizing_form_raw_milk?.map((raw, index) => (
-                  <div key={raw.id} className="text-sm">
+                {form.raw_milk ? (
+                  <div className="text-sm">
                     <div className="flex items-center justify-between">
-                      <span>Entry {index + 1}:</span>
-                      <span className="font-light">{raw.quantity}L</span>
+                      <span className="font-light">{form.raw_milk.quantity}L</span>
                     </div>
                     <div className="text-xs text-gray-500">
-                      {raw.fat}% fat • {raw.source_silo_id.slice(0, 8)}
+                      {form.raw_milk.fat}% fat • {form.raw_milk.source_silo_name || 'N/A'}
                     </div>
                   </div>
-                )) || <p className="text-sm text-gray-400">No raw milk entries</p>}
+                ) : <p className="text-sm text-gray-400">No raw milk details</p>}
               </div>
             </div>
 
@@ -93,17 +90,16 @@ export function SkimmingTable({ forms, onView, onEdit, onDelete, operationLoadin
                 <p className="text-sm font-light text-gray-600">Skim Milk Output</p>
               </div>
               <div className="space-y-1">
-                {form.standardizing_form_skim_milk?.map((skim, index) => (
-                  <div key={skim.id} className="text-sm">
+                {form.skim_milk ? (
+                  <div className="text-sm">
                     <div className="flex items-center justify-between">
-                      <span>Entry {index + 1}:</span>
-                      <span className="font-light">{skim.quantity}L</span>
+                      <span className="font-light">{form.skim_milk.quantity}L</span>
                     </div>
                     <div className="text-xs text-gray-500">
-                      {skim.fat}% fat → {skim.destination_silo_id.slice(0, 8)}
+                      {form.skim_milk.fat}% fat → {form.skim_milk.destination_silo_name || 'N/A'}
                     </div>
                   </div>
-                )) || <p className="text-sm text-gray-400">No skim milk entries</p>}
+                ) : <p className="text-sm text-gray-400">No skim milk produced</p>}
               </div>
             </div>
 
@@ -114,17 +110,16 @@ export function SkimmingTable({ forms, onView, onEdit, onDelete, operationLoadin
                 <p className="text-sm font-light text-gray-600">Cream Output</p>
               </div>
               <div className="space-y-1">
-                {form.standardizing_form_cream?.map((cream, index) => (
-                  <div key={cream.id} className="text-sm">
+                {form.cream ? (
+                  <div className="text-sm">
                     <div className="flex items-center justify-between">
-                      <span>Entry {index + 1}:</span>
-                      <span className="font-light">{cream.quantity}L</span>
+                      <span className="font-light">{form.cream.quantity}L</span>
                     </div>
                     <div className="text-xs text-gray-500">
-                      {cream.fat}% fat
+                      {form.cream.fat}% fat • {form.cream.cream_tank || 'N/A'}
                     </div>
                   </div>
-                )) || <p className="text-sm text-gray-400">No cream entries</p>}
+                ) : <p className="text-sm text-gray-400">No cream produced</p>}
               </div>
             </div>
           </div>
@@ -133,7 +128,7 @@ export function SkimmingTable({ forms, onView, onEdit, onDelete, operationLoadin
           <div className="mt-4 pt-4 border-t border-gray-100">
             <div className="flex items-center space-x-2 text-sm text-gray-500">
               <Clock className="h-4 w-4" />
-              <span>Created: {new Date(form.created_at).toLocaleDateString()}</span>
+              <span>Created: {form.created_at ? new Date(form.created_at).toLocaleDateString() : 'N/A'}</span>
               {form.updated_at && (
                 <>
                   <span>•</span>
