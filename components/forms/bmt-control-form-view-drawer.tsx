@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { LoadingButton } from "@/components/ui/loading-button"
 import { CopyButton } from "@/components/ui/copy-button"
 import { AnimatedSiloTransfer } from "@/components/ui/animated-silo-transfer"
-import { Edit, Beaker, Droplets, Users, Clock, BarChart3, ArrowRight, Play, RotateCcw, FileText, Package, TrendingUp, User } from "lucide-react"
+import { Edit, Beaker, Droplets, Users, Clock, BarChart3, ArrowRight, Play, RotateCcw, FileText, Package, TrendingUp, User, XIcon } from "lucide-react"
 import { format } from "date-fns"
 import { useAppDispatch, useAppSelector } from "@/lib/store"
 import { fetchUsers } from "@/lib/store/slices/usersSlice"
@@ -230,7 +230,7 @@ export function BMTControlFormViewDrawer({ open, onClose, form, onEdit }: BMTCon
 
   return (
     <Sheet open={open} onOpenChange={onClose}>
-      <SheetContent className="sm:max-w-xl p-0 bg-white overflow-hidden flex flex-col border-l-0 shadow-2xl">
+      <SheetContent className="tablet-sheet-full p-0 bg-white overflow-hidden flex flex-col border-l-0 shadow-2xl">
         <SheetHeader className="p-8 pb-0 flex flex-row items-center justify-between space-y-0">
           <div className="space-y-1">
             <SheetTitle className="flex items-center gap-2 text-2xl font-light">
@@ -246,17 +246,15 @@ export function BMTControlFormViewDrawer({ open, onClose, form, onEdit }: BMTCon
               />
             </SheetDescription>
           </div>
-          <SheetClose onClick={onClose} className="rounded-full w-10 h-10 bg-gray-50 flex items-center justify-center hover:bg-gray-100 transition-colors">
-             <XIcon className="w-5 h-5 text-gray-400" />
-          </SheetClose>
+          <div />
         </SheetHeader>
 
         <div className="flex-1 overflow-y-auto p-8 space-y-10 custom-scrollbar">
           {/* Process Overview */}
           <div className="p-6 bg-blue-50/50 rounded-2xl border border-blue-100/50 shadow-sm">
             <h3 className="text-lg font-light text-gray-900 mb-6 flex items-center gap-2">
-                <TrendingUp className="w-5 h-5 text-blue-500" />
-                Process Overview
+              <TrendingUp className="w-5 h-5 text-blue-500" />
+              Process Overview
             </h3>
             <div className="flex items-center justify-between mb-2">
               <div className="flex flex-col items-center gap-2">
@@ -289,85 +287,85 @@ export function BMTControlFormViewDrawer({ open, onClose, form, onEdit }: BMTCon
           {/* Information Grid */}
           <div className="mt-8">
             <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-light text-gray-900">Form Information</h3>
-                <Badge className="bg-blue-100 text-blue-800 font-light border-none px-4 py-1 rounded-full">
-                    Status: {(form as any).status || 'Draft'}
-                </Badge>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Transfer Details */}
-            <div className="p-6 bg-white border border-gray-200 rounded-lg">
-              <div className="flex items-center space-x-2 mb-4">
-                <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
-                  <Beaker className="w-4 h-4 text-blue-600" />
-                </div>
-                <h3 className="text-lg font-light">Transfer Details</h3>
-              </div>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-light text-gray-600">Product</span>
-                  <span className="text-sm font-light text-blue-600">{form.product}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-light text-gray-600">Volume</span>
-                  <span className="text-sm font-light text-green-600">{form.volume || 'N/A'}L</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-light text-gray-600">Tag</span>
-                  <span className="text-sm font-light">{(form as any).tag || 'N/A'}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-light text-gray-600">Received Bottles</span>
-                  <span className="text-sm font-light">{(form as any).received_bottles || 'N/A'}</span>
-                </div>
-              </div>
+              <h3 className="text-xl font-light text-gray-900">Form Information</h3>
+              <Badge className="bg-blue-100 text-blue-800 font-light border-none px-4 py-1 rounded-full">
+                Status: {(form as any).status || 'Draft'}
+              </Badge>
             </div>
 
-            {/* Movement Timeline */}
-            <div className="p-6 bg-white border border-gray-100 rounded-2xl shadow-sm space-y-6">
-              <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center">
-                  <Clock className="w-5 h-5 text-indigo-500" />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Transfer Details */}
+              <div className="p-6 bg-white border border-gray-200 rounded-lg">
+                <div className="flex items-center space-x-2 mb-4">
+                  <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
+                    <Beaker className="w-4 h-4 text-blue-600" />
+                  </div>
+                  <h3 className="text-lg font-light">Transfer Details</h3>
                 </div>
-                <h3 className="text-base font-medium text-gray-700">Movement Timeline</h3>
-              </div>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-light text-gray-600">Movement Start</span>
-                  <span className="text-sm font-light">
-                    {formatTimeForDisplay(form?.movement_start || undefined)}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-light text-gray-600">Movement End</span>
-                  <span className="text-sm font-light">
-                    {formatTimeForDisplay(form?.movement_end || undefined)}
-                  </span>
-                </div>
-                {form.movement_start && form.movement_end && (
+                <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-light text-gray-600">Total Duration</span>
-                    <span className="text-sm font-light text-indigo-600">
-                      {(() => {
-                        try {
-                          const startDate = new Date(form.movement_start)
-                          const endDate = new Date(form.movement_end)
-                          if (!isNaN(startDate.getTime()) && !isNaN(endDate.getTime())) {
-                            return Math.round((endDate.getTime() - startDate.getTime()) / (1000 * 60)) + ' minutes'
-                          }
-                          return 'N/A'
-                        } catch (error) {
-                          return 'N/A'
-                        }
-                      })()}
+                    <span className="text-sm font-light text-gray-600">Product</span>
+                    <span className="text-sm font-light text-blue-600">{form.product}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-light text-gray-600">Volume</span>
+                    <span className="text-sm font-light text-green-600">{form.volume || 'N/A'}L</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-light text-gray-600">Tag</span>
+                    <span className="text-sm font-light">{(form as any).tag || 'N/A'}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-light text-gray-600">Received Bottles</span>
+                    <span className="text-sm font-light">{(form as any).received_bottles || 'N/A'}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Movement Timeline */}
+              <div className="p-6 bg-white border border-gray-100 rounded-2xl shadow-sm space-y-6">
+                <div className="flex items-center space-x-2">
+                  <div className="w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center">
+                    <Clock className="w-5 h-5 text-indigo-500" />
+                  </div>
+                  <h3 className="text-base font-medium text-gray-700">Movement Timeline</h3>
+                </div>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-light text-gray-600">Movement Start</span>
+                    <span className="text-sm font-light">
+                      {formatTimeForDisplay(form?.movement_start || undefined)}
                     </span>
                   </div>
-                )}
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-light text-gray-600">Movement End</span>
+                    <span className="text-sm font-light">
+                      {formatTimeForDisplay(form?.movement_end || undefined)}
+                    </span>
+                  </div>
+                  {form.movement_start && form.movement_end && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-light text-gray-600">Total Duration</span>
+                      <span className="text-sm font-light text-indigo-600">
+                        {(() => {
+                          try {
+                            const startDate = new Date(form.movement_start)
+                            const endDate = new Date(form.movement_end)
+                            if (!isNaN(startDate.getTime()) && !isNaN(endDate.getTime())) {
+                              return Math.round((endDate.getTime() - startDate.getTime()) / (1000 * 60)) + ' minutes'
+                            }
+                            return 'N/A'
+                          } catch (error) {
+                            return 'N/A'
+                          }
+                        })()}
+                      </span>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
-        </div>
 
           {/* Transfer Pairs Information */}
           <div className="space-y-6">
@@ -479,113 +477,113 @@ export function BMTControlFormViewDrawer({ open, onClose, form, onEdit }: BMTCon
 
           {/* Operator Information */}
           <div className="mt-12">
-             <h3 className="text-xl font-light text-gray-900 mb-6">Execution & Responsibility</h3>
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-6">
-            {/* Dispatch Operator */}
-            <div className="p-6 bg-white border border-gray-200 rounded-lg">
-              <div className="flex items-center space-x-2 mb-4">
-                <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
-                  <User className="h-4 w-4 text-blue-600" />
-                </div>
-                <h3 className="text-lg font-light">Dispatch Operator</h3>
-              </div>
-              <div className="space-y-4">
-                {dispatchUser ? (
-                  <UserAvatar
-                    user={dispatchUser}
-                    size="lg"
-                    showName={true}
-                    showEmail={true}
-                    showDropdown={true}
-                  />
-                ) : (
-                  <div className="text-sm text-gray-500">
-                    {(form as any).dispatch_operator_id || form.llm_operator_id
-                      ? `User not found (${((form as any).dispatch_operator_id || form.llm_operator_id).slice(0, 8)}...)`
-                      : 'No operator assigned'}
+            <h3 className="text-xl font-light text-gray-900 mb-6">Execution & Responsibility</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-6">
+              {/* Dispatch Operator */}
+              <div className="p-6 bg-white border border-gray-200 rounded-lg">
+                <div className="flex items-center space-x-2 mb-4">
+                  <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
+                    <User className="h-4 w-4 text-blue-600" />
                   </div>
-                )}
-
-                <div className="space-y-2">
-                  <span className="text-sm font-light text-gray-600">Dispatch Signature</span>
-                  {(form as any).dispatch_operator_signature ? (
-                    <div className="border border-gray-200 rounded-lg p-2 bg-gray-50">
-                      <img
-                        src={base64ToPngDataUrl((form as any).dispatch_operator_signature)}
-                        alt="Dispatch signature"
-                        className="w-full h-20 object-contain"
-                      />
-                    </div>
-                  ) : form.llm_signature ? (
-                    <div className="border border-gray-200 rounded-lg p-2 bg-gray-50">
-                      <img
-                        src={base64ToPngDataUrl(form.llm_signature)}
-                        alt="LLM signature"
-                        className="w-full h-20 object-contain"
-                      />
-                    </div>
+                  <h3 className="text-lg font-light">Dispatch Operator</h3>
+                </div>
+                <div className="space-y-4">
+                  {dispatchUser ? (
+                    <UserAvatar
+                      user={dispatchUser}
+                      size="lg"
+                      showName={true}
+                      showEmail={true}
+                      showDropdown={true}
+                    />
                   ) : (
-                    <div className="border border-gray-200 rounded-lg p-4 bg-gray-50 text-center text-gray-500 text-sm">
-                      No signature available
+                    <div className="text-sm text-gray-500">
+                      {(form as any).dispatch_operator_id || form.llm_operator_id
+                        ? `User not found (${((form as any).dispatch_operator_id || form.llm_operator_id).slice(0, 8)}...)`
+                        : 'No operator assigned'}
                     </div>
                   )}
-                </div>
-              </div>
-            </div>
 
-            {/* Receiver Operator */}
-            <div className="p-6 bg-white border border-gray-200 rounded-lg">
-              <div className="flex items-center space-x-2 mb-4">
-                <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center">
-                  <User className="h-4 w-4 text-green-600" />
-                </div>
-                <h3 className="text-lg font-light">Receiver Operator</h3>
-              </div>
-              <div className="space-y-4">
-                {receiverUser ? (
-                  <UserAvatar
-                    user={receiverUser}
-                    size="lg"
-                    showName={true}
-                    showEmail={true}
-                    showDropdown={true}
-                  />
-                ) : (
-                  <div className="text-sm text-gray-500">
-                    {(form as any).receiver_operator_id || form.dpp_operator_id
-                      ? `User not found (${((form as any).receiver_operator_id || form.dpp_operator_id).slice(0, 8)}...)`
-                      : 'No operator assigned'}
+                  <div className="space-y-2">
+                    <span className="text-sm font-light text-gray-600">Dispatch Signature</span>
+                    {(form as any).dispatch_operator_signature ? (
+                      <div className="border border-gray-200 rounded-lg p-2 bg-gray-50">
+                        <img
+                          src={base64ToPngDataUrl((form as any).dispatch_operator_signature)}
+                          alt="Dispatch signature"
+                          className="w-full h-20 object-contain"
+                        />
+                      </div>
+                    ) : form.llm_signature ? (
+                      <div className="border border-gray-200 rounded-lg p-2 bg-gray-50">
+                        <img
+                          src={base64ToPngDataUrl(form.llm_signature)}
+                          alt="LLM signature"
+                          className="w-full h-20 object-contain"
+                        />
+                      </div>
+                    ) : (
+                      <div className="border border-gray-200 rounded-lg p-4 bg-gray-50 text-center text-gray-500 text-sm">
+                        No signature available
+                      </div>
+                    )}
                   </div>
-                )}
+                </div>
+              </div>
 
-                <div className="space-y-2">
-                  <span className="text-sm font-light text-gray-600">Receiver Signature</span>
-                  {(form as any).receiver_operator_signature ? (
-                    <div className="border border-gray-200 rounded-lg p-2 bg-gray-50">
-                      <img
-                        src={base64ToPngDataUrl((form as any).receiver_operator_signature)}
-                        alt="Receiver signature"
-                        className="w-full h-20 object-contain"
-                      />
-                    </div>
-                  ) : form.dpp_signature ? (
-                    <div className="border border-gray-200 rounded-lg p-2 bg-gray-50">
-                      <img
-                        src={base64ToPngDataUrl(form.dpp_signature)}
-                        alt="DPP signature"
-                        className="w-full h-20 object-contain"
-                      />
-                    </div>
+              {/* Receiver Operator */}
+              <div className="p-6 bg-white border border-gray-200 rounded-lg">
+                <div className="flex items-center space-x-2 mb-4">
+                  <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center">
+                    <User className="h-4 w-4 text-green-600" />
+                  </div>
+                  <h3 className="text-lg font-light">Receiver Operator</h3>
+                </div>
+                <div className="space-y-4">
+                  {receiverUser ? (
+                    <UserAvatar
+                      user={receiverUser}
+                      size="lg"
+                      showName={true}
+                      showEmail={true}
+                      showDropdown={true}
+                    />
                   ) : (
-                    <div className="border border-gray-200 rounded-lg p-4 bg-gray-50 text-center text-gray-500 text-sm">
-                      No signature available
+                    <div className="text-sm text-gray-500">
+                      {(form as any).receiver_operator_id || form.dpp_operator_id
+                        ? `User not found (${((form as any).receiver_operator_id || form.dpp_operator_id).slice(0, 8)}...)`
+                        : 'No operator assigned'}
                     </div>
                   )}
+
+                  <div className="space-y-2">
+                    <span className="text-sm font-light text-gray-600">Receiver Signature</span>
+                    {(form as any).receiver_operator_signature ? (
+                      <div className="border border-gray-200 rounded-lg p-2 bg-gray-50">
+                        <img
+                          src={base64ToPngDataUrl((form as any).receiver_operator_signature)}
+                          alt="Receiver signature"
+                          className="w-full h-20 object-contain"
+                        />
+                      </div>
+                    ) : form.dpp_signature ? (
+                      <div className="border border-gray-200 rounded-lg p-2 bg-gray-50">
+                        <img
+                          src={base64ToPngDataUrl(form.dpp_signature)}
+                          alt="DPP signature"
+                          className="w-full h-20 object-contain"
+                        />
+                      </div>
+                    ) : (
+                      <div className="border border-gray-200 rounded-lg p-4 bg-gray-50 text-center text-gray-500 text-sm">
+                        No signature available
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
 
           {/* Record Information */}
           <div className="mt-12 p-8 bg-gray-50/50 border border-gray-100 rounded-3xl space-y-8 mb-10">

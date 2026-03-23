@@ -18,37 +18,21 @@ export interface ProcessDetail {
 export interface Batch {
   id?: string
   date?: string | null
-  batch_number: number
+  batch_number: string // Changed to string to support "3A"
 
-  // // time references (IDs or null)
-  // filling_start?: string | null
-  // autoclave_start?: string | null
-  // heating_start?: string | null
-  // heating_finish?: string | null
-  // sterilization_start?: string | null
-  // sterilization_after_5?: string | null
-  // sterilization_finish?: string | null
-  // pre_cooling_start?: string | null
-  // pre_cooling_finish?: string | null
-  // cooling_1_start?: string | null
-  // cooling_1_finish?: string | null
-  // cooling_2_start?: string | null
-  // cooling_2_finish?: string | null
-
-  // detailed readings
-  filling_start_details?: ProcessDetail | null
-  autoclave_start_details?: ProcessDetail | null
-  heating_start_details?: ProcessDetail | null
-  heating_finish_details?: ProcessDetail | null
-  sterilization_start_details?: ProcessDetail | null
-  sterilization_after_5_details?: ProcessDetail | null
-  sterilization_finish_details?: ProcessDetail | null
-  pre_cooling_start_details?: ProcessDetail | null
-  pre_cooling_finish_details?: ProcessDetail | null
-  cooling_1_start_details?: ProcessDetail | null
-  cooling_1_finish_details?: ProcessDetail | null
-  cooling_2_start_details?: ProcessDetail | null
-  cooling_2_finish_details?: ProcessDetail | null
+  filling_start?: ProcessDetail | null
+  autoclave_start?: ProcessDetail | null
+  heating_start?: ProcessDetail | null
+  heating_finish?: ProcessDetail | null
+  sterilization_start?: ProcessDetail | null
+  sterilization_after_5?: ProcessDetail | null
+  sterilization_finish?: ProcessDetail | null
+  pre_cooling_start?: ProcessDetail | null
+  pre_cooling_finish: ProcessDetail | null
+  cooling_1_start: ProcessDetail | null
+  cooling_1_finish: ProcessDetail | null
+  cooling_2_start: ProcessDetail | null
+  cooling_2_finish: ProcessDetail | null
 }
 
 // API resource shape (returns batch)
@@ -56,20 +40,22 @@ export interface SteriMilkProcessLog {
   id: string
   created_at?: string
   updated_at?: string | null
+  operator: string
   approved: boolean
-  approver_id: string
+  approver_id: string | null
   filmatic_form_id: string | null
-  tag?: string           // <- new field returned by API
-  batch_id?: Batch | null // <- API returns a single batch object or null
+  updated_by?: string | null
+  tag?: string
+  autoclave?: { id: string; name: string } | null
+  batch?: Batch | null
 }
 
-// New create request shape (single batch)
+// New create/update request shape
 export interface CreateSteriMilkProcessLogRequest {
-  approved: boolean
-  approver_id: string
-  filmatic_form_id: string | null
-  batch: Batch
   id?: string
+  autoclave: string // machine ID string
+  approved: boolean
+  batch: Partial<Batch>
 }
 
 export const steriMilkProcessLogApi = {

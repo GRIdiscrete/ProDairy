@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button"
 import { useAppDispatch, useAppSelector } from "@/lib/store"
 import { createBMTControlFormAction, updateBMTControlFormAction, fetchBMTControlForms } from "@/lib/store/slices/bmtControlFormSlice"
+import { fetchSiloTransfers, fetchSiloManagerSilos } from "@/lib/store/slices/siloSlice"
 import { usersApi } from "@/lib/api/users"
 import { siloApi } from "@/lib/api/silo"
 import { toast } from "sonner"
@@ -54,24 +55,25 @@ const editPairSchema = yup.object({
     .transform((v, o) => (o === "" ? undefined : v)),
 })
 
-const baseSchema = {
+const baseFields = {
   dispatch_operator_id: yup.string().optional().nullable(),
   dispatch_operator_signature: yup.string().optional().nullable(),
   dpp_operator_id: yup.string().optional().nullable(),
   dpp_signature: yup.string().optional().nullable(),
   llm_operator_id: yup.string().optional().nullable(),
   llm_signature: yup.string().optional().nullable(),
-  product: yup.string().required("Product is required"),
 }
 
 const createSchema = yup.object({
-  ...baseSchema,
+  ...baseFields,
+  product: yup.string().required("Product is required"),
   /** Optional on POST */
   source_destination_details: yup.array().of(createPairSchema).optional(),
 })
 
 const editSchema = yup.object({
-  ...baseSchema,
+  ...baseFields,
+  product: yup.string().optional().nullable(),
   /** Mandatory on PATCH */
   source_destination_details: yup
     .array()
@@ -291,12 +293,12 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
       const pairs = (data.source_destination_details ?? []).filter((p) => p.source_silo_name)
       await dispatch(
         createBMTControlFormAction({
-          dispatch_operator_id: data.dispatch_operator_id,
-          dispatch_operator_signature: data.dispatch_operator_signature,
-          dpp_operator_id: data.dpp_operator_id,
-          dpp_signature: data.dpp_signature,
-          llm_operator_id: data.llm_operator_id,
-          llm_signature: data.llm_signature,
+          dispatch_operator_id: data.dispatch_operator_id || null,
+          dispatch_operator_signature: data.dispatch_operator_signature || null,
+          dpp_operator_id: data.dpp_operator_id || null,
+          dpp_signature: data.dpp_signature || null,
+          llm_operator_id: data.llm_operator_id || null,
+          llm_signature: data.llm_signature || null,
           product: data.product,
           ...(pairs.length > 0 && {
             source_destination_details: pairs.map((p) => ({
@@ -311,6 +313,8 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
 
       toast.success("BMT Control Form created successfully")
       dispatch(fetchBMTControlForms()).catch(() => { })
+      dispatch(fetchSiloTransfers()).catch(() => { })
+      dispatch(fetchSiloManagerSilos()).catch(() => { })
       onOpenChange(false)
       createForm.reset()
     } catch (error: any) {
@@ -381,12 +385,12 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
       await dispatch(
         updateBMTControlFormAction({
           id: form.id,
-          dispatch_operator_id: data.dispatch_operator_id,
-          dispatch_operator_signature: data.dispatch_operator_signature,
-          dpp_operator_id: data.dpp_operator_id,
-          dpp_signature: data.dpp_signature,
-          llm_operator_id: data.llm_operator_id,
-          llm_signature: data.llm_signature,
+          dispatch_operator_id: data.dispatch_operator_id || null,
+          dispatch_operator_signature: data.dispatch_operator_signature || null,
+          dpp_operator_id: data.dpp_operator_id || null,
+          dpp_signature: data.dpp_signature || null,
+          llm_operator_id: data.llm_operator_id || null,
+          llm_signature: data.llm_signature || null,
           product: data.product,
           source_destination_details: data.source_destination_details.map((p) => ({
             id: p.pair_id,
@@ -412,6 +416,8 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
 
       toast.success("BMT Control Form updated successfully")
       dispatch(fetchBMTControlForms()).catch(() => { })
+      dispatch(fetchSiloTransfers()).catch(() => { })
+      dispatch(fetchSiloManagerSilos()).catch(() => { })
       onOpenChange(false)
     } catch (error: any) {
       toast.error(typeof error === "string" ? error : error?.message ?? "Failed to update BMT control form")

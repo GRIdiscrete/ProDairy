@@ -226,11 +226,11 @@ export default function ProcessLogPage() {
       header: "Batch",
       cell: ({ row }: any) => {
         const log = row.original
-        // map single batch object (batch_id) to array for UI logic compatibility
-        const batches = log.batch_id ? [log.batch_id] : []
+        // map single batch object to array for UI logic compatibility
+        const batches = log.batch ? [log.batch] : []
         const totalBatches = batches.length
         const completedBatches = batches.filter((batch: any) =>
-          batch.filling_start_details && batch.sterilization_finish_details
+          batch.filling_start && batch.sterilization_finish
         ).length
 
         return (
@@ -429,10 +429,19 @@ export default function ProcessLogPage() {
                     {latest?.filmatic_form_id ? (formMap[latest.filmatic_form_id]?.tag ? `Form ${formMap[latest.filmatic_form_id].tag}` : `Form #${String(latest.filmatic_form_id).slice(0, 8)}`) : 'Not linked'}
                   </p>
                 </div>
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <Workflow className="h-4 w-4 text-purple-500" />
+                    <p className="text-sm font-light">Autoclave</p>
+                  </div>
+                  <p className="text-lg font-light text-purple-600">
+                    {latest?.autoclave?.name || 'N/A'}
+                  </p>
+                </div>
               </div>
 
-              {/* Batch cards from batch_id */}
-              {latest.batch_id && (
+              {/* Batch cards from batch */}
+              {latest.batch && (
                 <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-4">
                   <div className="p-4 bg-gray-50 rounded-lg">
                     <div className="flex items-center space-x-2 mb-3">
@@ -448,7 +457,7 @@ export default function ProcessLogPage() {
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-light text-gray-600">Latest Batch</span>
-                        <span className="text-xs font-light">#{latest.batch_id.batch_number || 'N/A'}</span>
+                        <span className="text-xs font-light">#{latest.batch.batch_number || 'N/A'}</span>
                       </div>
                     </div>
                   </div>
@@ -463,11 +472,11 @@ export default function ProcessLogPage() {
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-light text-gray-600">Filling Start</span>
-                        <span className="text-xs font-light">{latest.batch_id.filling_start_details ? 'Completed' : 'Pending'}</span>
+                        <span className="text-xs font-light">{latest.batch.filling_start ? 'Completed' : 'Pending'}</span>
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-light text-gray-600">Sterilization</span>
-                        <span className="text-xs font-light">{latest.batch_id.sterilization_start_details ? 'Completed' : 'Pending'}</span>
+                        <span className="text-xs font-light">{latest.batch.sterilization_start ? 'Completed' : 'Pending'}</span>
                       </div>
                     </div>
                   </div>

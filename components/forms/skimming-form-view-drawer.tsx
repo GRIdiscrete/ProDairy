@@ -23,37 +23,24 @@ export function SkimmingFormViewDrawer({
 }: SkimmingFormViewDrawerProps) {
   if (!form) return null
 
-  const rawMilkData = (form as any).standardizing_form_raw_milk?.[0]
-  const skimMilkData = (form as any).standardizing_form_skim_milk?.[0]
-  const creamData = (form as any).standardizing_form_cream?.[0]
+  const rawMilkData = form.raw_milk
+  const skimMilkData = form.skim_milk
+  const creamData = form.cream
 
   const totalRawMilk = rawMilkData ? rawMilkData.quantity || 0 : 0
   const totalSkimMilk = skimMilkData ? skimMilkData.quantity || 0 : 0
   const totalCream = creamData ? creamData.quantity || 0 : 0
-  const { forms: bmtForms } = useAppSelector((state: RootState) => state.bmtControlForms)
-
-
-
-
-
-
-  const getBMTFormById = (bmtId: string) => {
-    return bmtForms.find((form: any) => form.id === bmtId)
-  }
-
-  //get machine by machine id
- 
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="tablet-sheet-full p-0 overflow-hidden bg-white">
+      <SheetContent className="tablet-sheet-full p-0 overflow-hidden bg-white flex flex-col">
         <SheetHeader className="p-6 pb-0">
           <SheetTitle className="flex items-center gap-2 text-lg font-light">
             <Beaker className="w-5 h-5" />
             Skimming Form Details
           </SheetTitle>
           <SheetDescription className="text-sm font-light">
-            View details of the skimming form #{form.id.slice(0, 8)}
+            View details of the skimming form {form.tag}
           </SheetDescription>
         </SheetHeader>
 
@@ -62,36 +49,19 @@ export function SkimmingFormViewDrawer({
           <div className="p-6 bg-white border border-gray-200 rounded-lg">
             <h3 className="text-lg font-light mb-4">Basic Information</h3>
             <div className="grid grid-cols-2 gap-4">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between col-span-2">
                 <span className="text-sm font-light text-gray-600">Form ID</span>
-                <div className="flex items-center space-x-2">
-                  <span className="text-sm font-light">{form?.tag}</span>
-                  <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
-                    <Clock className="h-3 w-3" />
-                  </Button>
-                </div>
+                <span className="text-sm font-light">{form?.tag}</span>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-light text-gray-600">BMT ID</span>
-                <div className="flex items-center space-x-2">
-                  <span className="text-sm font-light">
-                    {getBMTFormById(form.bmt_id)?.tag}
-                  </span>
-                  {form.bmt_id && (
-                    <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
-                      <Clock className="h-3 w-3" />
-                    </Button>
-                  )}
-                </div>
-              </div>
+              
               <div className="flex items-center justify-between">
                 <span className="text-sm font-light text-gray-600">Created</span>
                 <span className="text-sm font-light">
-                  {new Date(form.created_at).toLocaleDateString('en-GB', {
+                  {form.created_at ? new Date(form.created_at).toLocaleDateString('en-GB', {
                     day: 'numeric',
                     month: 'long',
                     year: 'numeric'
-                  })}
+                  }) : 'N/A'}
                 </span>
               </div>
               <div className="flex items-center justify-between">
@@ -107,9 +77,9 @@ export function SkimmingFormViewDrawer({
                 </span>
               </div>
               <div className="space-y-2 pt-2">
-                <span className="text-sm font-light text-gray-600">Operator</span>
-                <div className="text-sm font-light">
-                  {form.operator_id ? `ID: ${form.operator_id.slice(0, 8)}` : 'Not specified'}
+                <span className="text-sm font-light text-gray-600">Operator ID</span>
+                <div className="text-sm font-light truncate max-w-[150px]">
+                  {form.operator_id || 'Not specified'}
                 </div>
               </div>
               <div className="space-y-2 pt-2">
@@ -132,112 +102,67 @@ export function SkimmingFormViewDrawer({
           </div>
 
           {/* Raw Milk Information */}
-          <div className="p-6 bg-white border border-gray-200 rounded-lg">
+          <div className="p-6 bg-white border border-gray-200 rounded-lg border-l-4 border-l-green-500">
             <div className="flex items-center space-x-2 mb-4">
-              <div className="w-6 h-6 rounded-full bg-orange-100 flex items-center justify-center">
-                <Beaker className="w-4 h-4 text-orange-600" />
+              <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center">
+                <Beaker className="w-4 h-4 text-green-600" />
               </div>
               <h3 className="text-lg font-light">Raw Milk</h3>
             </div>
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-light text-gray-600">Quantity</span>
-                <span className="text-sm font-light text-orange-600">
-                  {rawMilkData ? '1 entry' : '0 entries'}
-                </span>
+                <span className="text-sm font-light text-gray-600">Source Silo</span>
+                <span className="text-sm font-light">{rawMilkData?.source_silo_name || '—'}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm font-light text-gray-600">Total Quantity</span>
+                <span className="text-sm font-light text-gray-600">Quantity</span>
                 <span className="text-sm font-light">{totalRawMilk.toFixed(1)}L</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm font-light text-gray-600">Fat Content</span>
                 <span className="text-sm font-light">
-                  {rawMilkData ? `${rawMilkData.fat || 0}%` : '0.0%'}
+                  {rawMilkData?.fat != null ? `${rawMilkData.fat}%` : '—'}
                 </span>
               </div>
-              {rawMilkData ? (
-                <div className="mt-4">
-                  <p className="text-xs font-light text-gray-600 mb-2">Raw Milk Details:</p>
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between text-xs bg-orange-50 p-2 rounded">
-                      <span className="font-light">Raw Milk Entry</span>
-                      <div className="flex items-center space-x-2">
-                        <Badge className="text-xs bg-orange-100 text-orange-800">
-                          {rawMilkData.quantity || 0}L
-                        </Badge>
-                        <Badge className="text-xs bg-yellow-100 text-yellow-800">
-                          {rawMilkData.fat || 0}% fat
-                        </Badge>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="mt-4 p-4 bg-gray-50 rounded-lg text-center">
-                  <p className="text-sm text-gray-500">No raw milk data available</p>
-                </div>
-              )}
             </div>
           </div>
 
           {/* Skim Milk Information */}
-          <div className="p-6 bg-white border border-gray-200 rounded-lg">
+          <div className="p-6 bg-white border border-gray-200 rounded-lg border-l-4 border-l-[#006BC4]">
             <div className="flex items-center space-x-2 mb-4">
               <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
-                <TrendingUp className="w-4 h-4 text-blue-600" />
+                <TrendingUp className="w-4 h-4 text-[#006BC4]" />
               </div>
               <h3 className="text-lg font-light">Skim Milk</h3>
             </div>
             <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-light text-gray-600">Quantity</span>
-                <span className="text-sm font-light text-blue-600">
-                  {skimMilkData ? '1 entry' : '0 entries'}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-light text-gray-600">Total Quantity</span>
-                <span className="text-sm font-light">{totalSkimMilk.toFixed(1)}L</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-light text-gray-600">Fat Content</span>
-                <span className="text-sm font-light">
-                  {skimMilkData ? `${skimMilkData.fat || 0}%` : '0.0%'}
-                </span>
-              </div>
               {skimMilkData ? (
-                <div className="mt-4">
-                  <p className="text-xs font-light text-gray-600 mb-2">Skim Milk Details:</p>
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between text-xs bg-blue-50 p-2 rounded">
-                      <span className="font-light">Skim Milk Entry</span>
-                      <div className="flex items-center space-x-2">
-                        <Badge className="text-xs bg-blue-100 text-blue-800">
-                          {skimMilkData.quantity || 0}L
-                        </Badge>
-                        <Badge className="text-xs bg-cyan-100 text-cyan-800">
-                          {skimMilkData.fat || 0}% fat
-                        </Badge>
-                        {skimMilkData.destination_silo_id && (
-                          <Badge className="text-xs bg-green-100 text-green-800">
-                            Silo #{skimMilkData.destination_silo_id.slice(0, 6)}
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
+                <>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-light text-gray-600">Destination Silo</span>
+                    <span className="text-sm font-light">{skimMilkData.destination_silo_name || '—'}</span>
                   </div>
-                </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-light text-gray-600">Quantity</span>
+                    <span className="text-sm font-light">{totalSkimMilk.toFixed(1)}L</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-light text-gray-600">Fat Content</span>
+                    <span className="text-sm font-light">
+                      {skimMilkData.fat != null ? `${skimMilkData.fat}%` : '—'}
+                    </span>
+                  </div>
+                </>
               ) : (
-                <div className="mt-4 p-4 bg-gray-50 rounded-lg text-center">
-                  <p className="text-sm text-gray-500">No skim milk data available</p>
+                <div className="py-4 text-center">
+                  <p className="text-sm font-light text-gray-400 italic">No skim milk produced</p>
                 </div>
               )}
             </div>
           </div>
 
           {/* Cream Information */}
-          <div className="p-6 bg-white border border-gray-200 rounded-lg">
+          <div className="p-6 bg-white border border-gray-200 rounded-lg border-l-4 border-l-yellow-500">
             <div className="flex items-center space-x-2 mb-4">
               <div className="w-6 h-6 rounded-full bg-yellow-100 flex items-center justify-center">
                 <TrendingUp className="w-4 h-4 text-yellow-600" />
@@ -245,47 +170,26 @@ export function SkimmingFormViewDrawer({
               <h3 className="text-lg font-light">Cream</h3>
             </div>
             <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-light text-gray-600">Quantity</span>
-                <span className="text-sm font-light text-yellow-600">
-                  {creamData ? '1 entry' : '0 entries'}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-light text-gray-600">Total Quantity</span>
-                <span className="text-sm font-light">{totalCream.toFixed(1)}L</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-light text-gray-600">Fat Content</span>
-                <span className="text-sm font-light">
-                  {creamData ? `${creamData.fat || 0}%` : '0.0%'}
-                </span>
-              </div>
               {creamData ? (
-                <div className="mt-4">
-                  <p className="text-xs font-light text-gray-600 mb-2">Cream Details:</p>
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between text-xs bg-yellow-50 p-2 rounded">
-                      <span className="font-light">Cream Entry</span>
-                      <div className="flex items-center space-x-2">
-                        <Badge className="text-xs bg-yellow-100 text-yellow-800">
-                          {creamData.quantity || 0}L
-                        </Badge>
-                        <Badge className="text-xs bg-orange-100 text-orange-800">
-                          {creamData.fat || 0}% fat
-                        </Badge>
-                        {creamData.transfer_start && creamData.transfer_end && (
-                          <Badge className="text-xs bg-blue-100 text-blue-800">
-                            {Math.round((new Date(creamData.transfer_end).getTime() - new Date(creamData.transfer_start).getTime()) / (1000 * 60))}min
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
+                <>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-light text-gray-600">Cream Tank</span>
+                    <span className="text-sm font-light">{creamData.cream_tank || '—'}</span>
                   </div>
-                </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-light text-gray-600">Quantity</span>
+                    <span className="text-sm font-light">{totalCream.toFixed(1)}L</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-light text-gray-600">Fat Content</span>
+                    <span className="text-sm font-light">
+                      {creamData.fat != null ? `${creamData.fat}%` : '—'}
+                    </span>
+                  </div>
+                </>
               ) : (
-                <div className="mt-4 p-4 bg-gray-50 rounded-lg text-center">
-                  <p className="text-sm text-gray-500">No cream data available</p>
+                <div className="py-4 text-center">
+                  <p className="text-sm font-light text-gray-400 italic">No cream produced</p>
                 </div>
               )}
             </div>
@@ -298,11 +202,11 @@ export function SkimmingFormViewDrawer({
               <div className="flex items-center justify-between">
                 <span className="text-sm font-light text-gray-600">Created</span>
                 <span className="text-sm font-light">
-                  {new Date(form.created_at).toLocaleDateString('en-GB', {
+                  {form.created_at ? new Date(form.created_at).toLocaleDateString('en-GB', {
                     day: 'numeric',
                     month: 'long',
                     year: 'numeric'
-                  })}
+                  }) : 'N/A'}
                 </span>
               </div>
               {form.updated_at && (

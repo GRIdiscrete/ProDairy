@@ -152,14 +152,18 @@ export default function StandardizingPage() {
       if (tableFilters.search) {
         const searchLower = tableFilters.search.toLowerCase()
         const tag = (form.tag || "").toLowerCase()
-        const operator = getUserById(form.operator_id)
-        const operatorName = `${operator?.first_name} ${operator?.last_name}`.toLowerCase()
-        const bmtForm = getBMTFormById(form.bmt_id)
-        const bmtTag = (bmtForm?.tag || "").toLowerCase()
+        const operatorId = form.operator_id
+        const operator = getUserById(operatorId)
+        const operatorName = operator ? `${operator.first_name} ${operator.last_name}`.toLowerCase() : ""
+        
+        // Search in tag, operator, or silo names
+        const sourceSilo = (form.raw_milk?.source_silo_name || "").toLowerCase()
+        const destSilo = (form.skim_milk?.destination_silo_name || "").toLowerCase()
 
         if (!tag.includes(searchLower) &&
           !operatorName.includes(searchLower) &&
-          !bmtTag.includes(searchLower)) return false
+          !sourceSilo.includes(searchLower) &&
+          !destSilo.includes(searchLower)) return false
       }
 
       // 2. Specific filter fields
@@ -169,17 +173,10 @@ export default function StandardizingPage() {
         if (filterDate.toDateString() !== formDate.toDateString()) return false
       }
 
-      if (tableFilters.bmt_id) {
-        const bmtLower = tableFilters.bmt_id.toLowerCase()
-        const bmtForm = getBMTFormById(form.bmt_id)
-        const bmtTag = (bmtForm?.tag || "").toLowerCase()
-        if (!bmtTag.includes(bmtLower)) return false
-      }
-
       if (tableFilters.operator_id) {
         const opLower = tableFilters.operator_id.toLowerCase()
         const operator = getUserById(form.operator_id)
-        const operatorName = `${operator?.first_name} ${operator?.last_name}`.toLowerCase()
+        const operatorName = operator ? `${operator.first_name} ${operator.last_name}`.toLowerCase() : ""
         if (!operatorName.includes(opLower)) return false
       }
 
@@ -200,7 +197,7 @@ export default function StandardizingPage() {
 
       return true
     })
-  }, [skimmingForms, tableFilters, users, bmtForms])
+  }, [skimmingForms, tableFilters, users])
 
   // Filter fields configuration for Standardizing Forms
   const filterFields = useMemo(() => [
@@ -215,6 +212,22 @@ export default function StandardizingPage() {
       label: "BMT Form ID",
       type: "text" as const,
       placeholder: "Filter by BMT form"
+    },
+    {
+      key: "operator_id",
+      label: "Operator",
+      type: "text" as const,
+      placeholder: "Filter by operator"
+    }
+  ], [])
+
+  // Filter fields configuration for Skimming Forms
+  const skimmingFilterFields = useMemo(() => [
+    {
+      key: "created_at",
+      label: "Date",
+      type: "date" as const,
+      placeholder: "Filter by date"
     },
     {
       key: "operator_id",
@@ -316,13 +329,9 @@ export default function StandardizingPage() {
       header: "Skimming Form",
       cell: ({ row }: any) => {
         const form = row.original
-        const formId = generateSkimmingFormId(form.created_at)
-        const rawMilk = Array.isArray(form.standardizing_form_raw_milk) && form.standardizing_form_raw_milk.length > 0
-          ? form.standardizing_form_raw_milk[0]
-          : null
-        const skimMilk = Array.isArray(form.standardizing_form_skim_milk) && form.standardizing_form_skim_milk.length > 0
-          ? form.standardizing_form_skim_milk[0]
-          : null
+        const rawMilk = form.raw_milk
+        const skimMilk = form.skim_milk
+        const cream = form.cream
 
         return (
           <div className="flex items-center space-x-3">
@@ -335,60 +344,12 @@ export default function StandardizingPage() {
                 actualId={form.id}
                 size="sm"
               />
-              <div className="flex items-center space-x-3 mt-1 text-sm text-gray-600">
-                <div>
-                  <div className="text-xs text-gray-500">Raw Milk</div>
-                  <div className="text-sm text-gray-700">
-                    {rawMilk ? `${Number(rawMilk.quantity || 0).toFixed(1)}L • ${rawMilk.fat ?? ""}%` : '—'}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-xs text-gray-500">Skim Milk</div>
-                  <div className="text-sm text-gray-700">
-                    {skimMilk ? `${Number(skimMilk.quantity || 0).toFixed(1)}L • ${skimMilk.fat ?? ""}%` : '—'}
-                  </div>
-                </div>
+              <div className="flex items-center space-x-3 mt-1 text-[10px] text-gray-500 font-light">
+                {rawMilk && <span>Raw: {Number(rawMilk.quantity).toFixed(0)}L</span>}
+                {skimMilk && <span>• Skim: {Number(skimMilk.quantity).toFixed(0)}L</span>}
+                {cream && <span>• Cream: {Number(cream.quantity).toFixed(0)}L</span>}
               </div>
             </div>
-          </div>
-        )
-      },
-    },
-    {
-      accessorKey: "bmt_form",
-      header: "BMT Form",
-      cell: ({ row }: any) => {
-        const form = row.original
-        const bmtForm = getBMTFormById(form.bmt_id)
-
-        return (
-          <div className="space-y-2">
-            <div className="flex items-center space-x-2">
-              <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center">
-                <Package className="w-3 h-3 text-blue-600" />
-              </div>
-              <span className="text-sm font-light">BMT Form</span>
-            </div>
-            {bmtForm ? (
-              <div className="space-y-1">
-                <FormIdCopy
-                  displayId={bmtForm.tag!}
-                  actualId={form.bmt_id}
-                  size="sm"
-                />
-                <div className="flex items-center space-x-2 mt-1">
-                  <Badge className="bg-blue-100 text-blue-800 font-light text-xs">
-                    {bmtForm.volume}L
-                  </Badge>
-                </div>
-              </div>
-            ) : form.bmt_id ? (
-              <div className="text-xs text-gray-400">
-                BMT form not found
-              </div>
-            ) : (
-              <p className="text-xs text-gray-400">No BMT form</p>
-            )}
           </div>
         )
       },
@@ -431,9 +392,7 @@ export default function StandardizingPage() {
       header: "Raw Milk",
       cell: ({ row }: any) => {
         const form = row.original
-        const raw = Array.isArray(form.standardizing_form_raw_milk) && form.standardizing_form_raw_milk.length > 0
-          ? form.standardizing_form_raw_milk[0]
-          : null
+        const raw = form.raw_milk
 
         return (
           <div className="space-y-1">
@@ -441,9 +400,14 @@ export default function StandardizingPage() {
               <Badge className="bg-green-100 text-green-800 font-light text-xs">
                 {raw ? '1' : '0'}
               </Badge>
+              {raw?.source_silo_name && (
+                <span className="text-[10px] text-gray-400 truncate max-w-[80px]">
+                  {raw.source_silo_name}
+                </span>
+              )}
             </div>
             <p className="text-sm font-light">{raw ? `${Number(raw.quantity || 0).toFixed(1)}L` : '0.0L'}</p>
-            <p className="text-xs text-gray-500">{raw ? `${raw.fat ?? ''}%` : 'N/A'}</p>
+            <p className="text-xs text-gray-500">{raw?.fat != null ? `${raw.fat}%` : 'N/A'}</p>
           </div>
         )
       },
@@ -453,9 +417,7 @@ export default function StandardizingPage() {
       header: "Skim Milk",
       cell: ({ row }: any) => {
         const form = row.original
-        const skim = Array.isArray(form.standardizing_form_skim_milk) && form.standardizing_form_skim_milk.length > 0
-          ? form.standardizing_form_skim_milk[0]
-          : null
+        const skim = form.skim_milk
 
         return (
           <div className="space-y-1">
@@ -463,9 +425,39 @@ export default function StandardizingPage() {
               <Badge className="bg-blue-100 text-blue-800 font-light text-xs">
                 {skim ? '1' : '0'}
               </Badge>
+              {skim?.destination_silo_name && (
+                <span className="text-[10px] text-gray-400 truncate max-w-[80px]">
+                  {skim.destination_silo_name}
+                </span>
+              )}
             </div>
             <p className="text-sm font-light">{skim ? `${Number(skim.quantity || 0).toFixed(1)}L` : '0.0L'}</p>
-            <p className="text-xs text-gray-500">{skim ? `${skim.fat ?? ''}%` : 'N/A'}</p>
+            <p className="text-xs text-gray-500">{skim?.fat != null ? `${skim.fat}%` : 'N/A'}</p>
+          </div>
+        )
+      },
+    },
+    {
+      accessorKey: "cream_info",
+      header: "Cream",
+      cell: ({ row }: any) => {
+        const form = row.original
+        const cream = form.cream
+
+        return (
+          <div className="space-y-1">
+            <div className="flex items-center space-x-2">
+              <Badge className="bg-amber-100 text-amber-800 font-light text-xs">
+                {cream ? '1' : '0'}
+              </Badge>
+              {cream?.cream_tank && (
+                <span className="text-[10px] text-gray-400 truncate max-w-[80px]">
+                  {cream.cream_tank}
+                </span>
+              )}
+            </div>
+            <p className="text-sm font-light">{cream ? `${Number(cream.quantity || 0).toFixed(1)}L` : '0.0L'}</p>
+            <p className="text-xs text-gray-500">{cream?.fat != null ? `${cream.fat}%` : 'N/A'}</p>
           </div>
         )
       },
@@ -990,7 +982,7 @@ export default function StandardizingPage() {
                         <p className="text-sm font-light text-gray-600">Raw Milk</p>
                       </div>
                       {(() => {
-                        const rm = latestSkimmingForm?.standardizing_form_raw_milk?.[0]
+                        const rm = latestSkimmingForm?.raw_milk
                         return (
                           <p className="text-lg font-light text-green-600">
                             {rm ? `${Number(rm.quantity || 0).toFixed(1)}L • ${rm.fat ?? ""}%` : "N/A"}
@@ -1019,7 +1011,7 @@ export default function StandardizingPage() {
                         <p className="text-sm font-light text-gray-600">Cream</p>
                       </div>
                       {(() => {
-                        const cr = latestSkimmingForm?.standardizing_form_cream?.[0]
+                        const cr = latestSkimmingForm?.cream
                         return (
                           <p className="text-lg font-light text-yellow-600">
                             {cr ? `${Number(cr.quantity || 0).toFixed(1)}L • ${cr.fat ?? ""}%` : "N/A"}
@@ -1029,43 +1021,7 @@ export default function StandardizingPage() {
                     </div>
                   </div>
 
-                  {/* BMT Form and Operator Details */}
-                  <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-4">
-                    {/* BMT Form Details */}
-                    {latestSkimmingForm.bmt_id && (
-                      <div className="p-4 bg-blue-50 rounded-lg">
-                        <div className="flex items-center space-x-2 mb-3">
-                          <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
-                            <Package className="h-4 w-4 text-blue-600" />
-                          </div>
-                          <h4 className="text-sm font-light text-gray-900">BMT Form</h4>
-                        </div>
-                        <div className="space-y-2">
-                          {(() => {
-                            const bmtForm = getBMTFormById(latestSkimmingForm.bmt_id)
-
-                            return bmtForm ? (
-                              <>
-                                <FormIdCopy
-                                  displayId={bmtForm.tag}
-                                  actualId={latestSkimmingForm.bmt_id}
-                                  size="sm"
-                                />
-                                <div className="flex items-center justify-between">
-                                  <span className="text-xs text-gray-600">Volume</span>
-                                  <span className="text-xs font-light">{bmtForm.volume}L</span>
-                                </div>
-                              </>
-                            ) : (
-                              <div className="flex items-center space-x-2">
-                                <span className="text-xs font-light">#{latestSkimmingForm.bmt_id.slice(0, 8)}</span>
-                              </div>
-                            )
-                          })()}
-                        </div>
-                      </div>
-                    )}
-
+                  <div className="mt-6 grid grid-cols-1 gap-4">
                     {/* Operator Details */}
                     {latestSkimmingForm.operator_id && (
                       <div className="p-4 bg-blue-50 rounded-lg">
@@ -1132,7 +1088,7 @@ export default function StandardizingPage() {
                     onFiltersChange={setTableFilters}
                     onSearch={(searchTerm) => setTableFilters(prev => ({ ...prev, search: searchTerm }))}
                     searchPlaceholder="Search skimming forms..."
-                    filterFields={filterFields}
+                    filterFields={skimmingFilterFields}
                   />
 
                   {skimmingLoading ? (
