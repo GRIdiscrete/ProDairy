@@ -145,6 +145,7 @@ export function RawMilkTestBeforeIntakeFormDrawer({ open, onOpenChange, form: ex
     const [loadingUsers, setLoadingUsers] = useState(false)
     const [loadingRoles, setLoadingRoles] = useState(false)
     const [signatureOpen, setSignatureOpen] = useState(false)
+    const [expandedCompartments, setExpandedCompartments] = useState<Record<number, boolean>>({})
     // Prevents the selectedTruck watcher from wiping edit-mode data on initial reset
     const skipTruckEffect = useRef(false)
 
@@ -345,7 +346,7 @@ export function RawMilkTestBeforeIntakeFormDrawer({ open, onOpenChange, form: ex
                 analyst: data.analyst || currentUser?.id || "",
                 results_collected_by: data.results_collected_by || currentUser?.id || "",
                 truck_number: data.truck_number,
-                route: data.route || "",
+                route: data.route || null,
                 lab_test: labTestPayload,
             }
 
@@ -535,30 +536,44 @@ export function RawMilkTestBeforeIntakeFormDrawer({ open, onOpenChange, form: ex
                                     )}
                                 </div>
 
-                                {/* Compartment info strip */}
                                 {compartmentsForTruck.length > 0 && (
                                     <div className="space-y-2">
                                         <div className="flex gap-2 flex-wrap">
-                                            {compartmentsForTruck.map((c, i) => (
-                                                <div key={i} className="text-[10px] bg-blue-50 border border-blue-100 rounded-lg p-2 min-w-[200px]">
-                                                    <div className="flex justify-between items-center mb-1">
-                                                        <span className="font-semibold text-blue-700">Compartment #{c.truck_compartment_number}</span>
-                                                        <span className="text-green-700 font-medium">{c.total_compartment_volume}L</span>
-                                                    </div>
-                                                    <div className="text-gray-500 mb-1">{c.route} · {c.driver_first_name} {c.driver_last_name}</div>
+                                            {compartmentsForTruck.map((c, i) => {
+                                                const isExpanded = expandedCompartments[i]
+                                                const visibleSuppliers = isExpanded ? c.suppliers : c.suppliers?.slice(0, 3)
+                                                const hasMore = c.suppliers && c.suppliers.length > 3
 
-                                                    {c.suppliers && c.suppliers.length > 0 && (
-                                                        <div className="border-t border-blue-100 pt-1 mt-1">
-                                                            <div className="text-[9px] text-gray-400 font-medium uppercase mb-0.5">Suppliers:</div>
-                                                            {c.suppliers.map((s: UntestedCompartmentSupplier, si: number) => (
-                                                                <div key={si} className="text-[9px] text-gray-600 truncate">
-                                                                    • {s.first_name} {s.last_name} ({s.volume}L) - {s.voucher}
-                                                                </div>
-                                                            ))}
+                                                return (
+                                                    <div key={i} className="text-[10px] bg-blue-50 border border-blue-100 rounded-lg p-2 min-w-[200px]">
+                                                        <div className="flex justify-between items-center mb-1">
+                                                            <span className="font-semibold text-blue-700">Compartment #{c.truck_compartment_number}</span>
+                                                            <span className="text-green-700 font-medium">{c.total_compartment_volume}L</span>
                                                         </div>
-                                                    )}
-                                                </div>
-                                            ))}
+                                                        <div className="text-gray-500 mb-1">{c.route} · {c.driver_first_name} {c.driver_last_name}</div>
+
+                                                        {c.suppliers && c.suppliers.length > 0 && (
+                                                            <div className="border-t border-blue-100 pt-1 mt-1">
+                                                                <div className="text-[9px] text-gray-400 font-medium uppercase mb-0.5">Suppliers:</div>
+                                                                {visibleSuppliers?.map((s: UntestedCompartmentSupplier, si: number) => (
+                                                                    <div key={si} className="text-[9px] text-gray-600 truncate">
+                                                                        • {s.first_name} {s.last_name} ({s.volume}L) - {s.voucher}
+                                                                    </div>
+                                                                ))}
+                                                                {hasMore && (
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => setExpandedCompartments(prev => ({ ...prev, [i]: !prev[i] }))}
+                                                                        className="text-[9px] text-blue-600 font-semibold hover:underline mt-1 focus:outline-none"
+                                                                    >
+                                                                        {isExpanded ? "Show Less" : `View ${c.suppliers.length - 3} More...`}
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )
+                                            })}
                                         </div>
                                     </div>
                                 )}

@@ -43,19 +43,17 @@ export interface RawMilkIntakeForm {
 
 // ── Tested-trucks response types ──────────────────────────────────────────────
 
-/** One truck ready for intake from GET /raw-milk-intake-2/tested-trucks */
+/** One truck compartment ready for intake from GET /raw-milk-intake-2/tested-trucks */
 export interface TestedTruck {
-  truck_number: string
-  created_at: string
+  truck: string
+  truck_compartment_number: number
   total_volume: number
-  voucher_contributions: {
+  suppliers: {
+    tank: string
     volume: number
-    voucher_tag: string
-    voucher_date: string
-    collection_id: string
-    supplier_tank: string
-    supplier_last_name: string
-    supplier_first_name: string
+    voucher: string
+    last_name: string
+    first_name: string
   }[]
 }
 
@@ -71,13 +69,16 @@ export interface VoucherContribution {
 
 /** Compartment returned from GET /raw-milk-intake-2/tested-truck/<truck_number> */
 export interface TruckCompartment {
-  truck_number: string
+  truck: string
   truck_compartment_number: number
-  route_name: string
-  driver_first_name: string
-  driver_last_name: string
-  total_compartment_volume: number
-  voucher_contributions: VoucherContribution[]
+  total_volume: number
+  suppliers: {
+    tank: string
+    volume: number
+    voucher: string
+    last_name: string
+    first_name: string
+  }[]
 }
 
 // Legacy alias kept for any remaining references

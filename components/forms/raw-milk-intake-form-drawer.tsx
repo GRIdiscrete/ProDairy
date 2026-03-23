@@ -16,7 +16,9 @@ import {
   Droplets, Truck, User, Package, Clock, Calendar, FileText, Beaker, Edit, Check,
   Save,
   ArrowRight,
-  Info
+  Info,
+  ChevronUp,
+  ChevronDown
 } from "lucide-react"
 import { useAppDispatch, useAppSelector } from "@/lib/store"
 import {
@@ -30,7 +32,7 @@ import {
 import { siloApi } from "@/lib/api/silo"
 import { toast } from "sonner"
 import { DatePicker } from "@/components/ui/date-picker"
-import type { RawMilkIntakeForm, TruckCompartment } from "@/lib/api/raw-milk-intake"
+import type { RawMilkIntakeForm, TruckCompartment, TestedTruck } from "@/lib/api/raw-milk-intake"
 
 // ── Schemas ───────────────────────────────────────────────────────────────────
 
@@ -99,7 +101,7 @@ function CompartmentInfoCard({ compartment }: { compartment: TruckCompartment })
     <div className="border border-blue-100 bg-blue-50 rounded-lg p-3 text-xs">
       <div className="flex items-center justify-between">
         <span className="font-medium text-blue-800">
-          Compartment #{compartment?.truck_compartment_number} — {compartment?.total_compartment_volume?.toLocaleString()}L
+          Compartment #{compartment?.truck_compartment_number} — {compartment?.total_volume?.toLocaleString()}L
         </span>
         <button type="button" onClick={() => setExpanded(!expanded)} className="text-blue-600">
           {expanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
@@ -107,12 +109,11 @@ function CompartmentInfoCard({ compartment }: { compartment: TruckCompartment })
       </div>
       {expanded && (
         <div className="mt-2 space-y-1 text-blue-700">
-          <p>Route: {compartment.route_name}</p>
-          <p>Driver: {compartment.driver_first_name} {compartment.driver_last_name}</p>
-          {compartment.voucher_contributions.map((v, i) => (
+          <p>Truck: {compartment.truck}</p>
+          {compartment.suppliers.map((s, i) => (
             <div key={i} className="pl-2 border-l border-blue-200 mt-1">
-              <p>{v.supplier_first_name} {v.supplier_last_name} — {v.volume}L</p>
-              <p className="text-blue-500">{v.voucher_tag} · {v.supplier_tank}</p>
+              <p>{s.first_name} {s.last_name} — {s.volume}L</p>
+              <p className="text-blue-500">{s.voucher} · {s.tank}</p>
             </div>
           ))}
         </div>
@@ -137,6 +138,18 @@ export function RawMilkIntakeFormDrawer({
   const [loadingSilos, setLoadingSilos] = useState(false)
 
   const isCreate = mode === "create"
+
+  // Derive unique trucks from testedTrucks (which is now a list of compartments)
+  const uniqueTrucks = useMemo(() => {
+    const trucksMap = new Map<string, TestedTruck>();
+    testedTrucks.forEach(item => {
+      // Use the first compartment found for each truck to represent the truck in the selector
+      if (!trucksMap.has(item.truck)) {
+        trucksMap.set(item.truck, item);
+      }
+    });
+    return Array.from(trucksMap.values());
+  }, [testedTrucks]);
 
   // ── Create form ────────────────────────────────────────────────────────────
 
@@ -418,16 +431,19 @@ export function RawMilkIntakeFormDrawer({
                           <SelectValue placeholder={operationLoading.fetchTrucks ? "Loading trucks…" : "Select a truck"} />
                         </SelectTrigger>
                         <SelectContent>
-                          {testedTrucks.map((t) => (
-                            <SelectItem key={t.truck_number} value={t.truck_number} className="py-3">
+                          {uniqueTrucks.map((t) => (
+                            <SelectItem key={t.truck} value={t.truck} className="py-3">
                               <div className="flex flex-col">
-                                <span className="font-medium text-gray-900">{t.truck_number}</span>
+                                <span className="font-medium text-gray-900">{t.truck}</span>
                                 <div className="flex items-center gap-3 mt-1">
                                   <span className="text-[10px] font-medium text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded uppercase">
-                                    Vol: {t.total_volume.toLocaleString()}L
+                                    Compartments Available
                                   </span>
                                   <span className="text-[10px] text-gray-400">
-                                    Date: {new Date(t.created_at).toLocaleDateString()}
+                                    Total Truck Vol: {testedTrucks
+                                      .filter(item => item.truck === t.truck)
+                                      .reduce((acc, curr) => acc + curr.total_volume, 0)
+                                      .toLocaleString()}L
                                   </span>
                                 </div>
                               </div>
