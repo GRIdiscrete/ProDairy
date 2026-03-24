@@ -2,8 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react"
 import { useRouter, usePathname } from "next/navigation"
-import { Search, Bell, MapPin, ChevronDown, LogOut, User, Settings, HelpCircle, Users, Truck, ClipboardList, Wrench, ArrowRight, Menu, ExternalLink, Plus, Pencil, Trash2 } from "lucide-react"
-import { Input } from "@/components/ui/input"
+import { Search, Bell, MapPin, ChevronDown, LogOut, User, Users, Truck, ClipboardList, Wrench, ArrowRight, Menu, ExternalLink, Plus, Pencil, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
@@ -32,10 +31,8 @@ import { useAppDispatch, useAppSelector } from "@/lib/store"
 import { logoutUser } from "@/lib/store/slices/authSlice"
 import { motion, AnimatePresence } from "framer-motion"
 import { useTablet } from "@/hooks/use-tablet"
-import { getRecentNotifications, humanizeModule, moduleToRoute, type NotificationItem } from "@/lib/api/notifications"
 import { fetchRecentNotifications } from "@/lib/store/slices/notificationsSlice"
 import { formatDistanceToNow, parseISO, isValid } from "date-fns"
-import cityTimezones from 'city-timezones'
 import axios from 'axios'
 // import { useAccessibleModules } from "@/hooks/use-permissions" // Removed - no longer using permissions
 
@@ -46,10 +43,54 @@ interface HeaderProps {
   allowedSwitches?: Array<{ key: string, label: string, perm?: string, path?: string }> // path is optional for compatibility
 }
 
+// Helper functions (outer scope for performance)
+function moduleToRoute(module: string, formId?: string): string | null {
+  const hardcodedId = "a4de97cc-e132-431e-a0a7-5c5e85e53d11";
+  const idValue = formId || hardcodedId;
+  const queryParam = formId ? `?form_id=${formId}` : "";
+
+  const map: Record<string, string> = {
+    "drivers_form": `/drivers/forms${queryParam}`,
+    "bmt_control_form": `/tools/bmt-control-form${queryParam}`,
+    "cip_control_form": `/tools/cip-control-form${queryParam}`,
+    "ist_control_form": `/tools/ist-control-form${queryParam}`,
+    "general_lab_test": `/tools/general-lab-test${queryParam}`,
+    "production_plan": `/admin/production-plan${queryParam}`,
+    "process": `/admin/processes${queryParam}`,
+    "filmatic_line_groups_2": `/admin/filmatic-lines-groups${queryParam}`,
+    "silo": `/admin/silos${queryParam}`,
+    "raw-milk-intake": `/data-capture/raw-milk-intake${queryParam}`,
+    "raw_milk_intake_lab_test": `/data-capture/raw-milk-intake${queryParam}`,
+    "raw_milk_intake_form": `/data-capture/raw-milk-intake${queryParam}`,
+    "raw_milk_result_slip": `/data-capture/raw-milk-intake${queryParam}`,
+    "standardizing_form": `/data-capture/standardizing${queryParam}`,
+    "standardizing_form_no_skim": `/data-capture/standardizing${queryParam}`,
+    "steri_milk_pasteurizing_form": `/data-capture/${idValue}/pasteurizing`,
+    "lab_test_mixing_and_pasteurizing": `/data-capture/${idValue}/pasteurizing`,
+    "filmatic_line_form_1": `/data-capture/${idValue}/filmatic-lines${queryParam}`,
+    "steri_milk_process_log": `/data-capture/${idValue}/process-log${queryParam}`,
+    "lab_test_post_process": `/data-capture/${idValue}/process-log${queryParam}`,
+    "steri_milk_test_report": `/data-capture/${idValue}/process-log${queryParam}`,
+    "filmatic_line_form_2": `/data-capture/${idValue}/filmatic-lines-2${queryParam}`,
+    "palletiser_sheet": `/data-capture/${idValue}/palletiser-sheet${queryParam}`,
+    "incubation_tracking_form": `/data-capture/${idValue}/incubation${queryParam}`,
+    "uht_quality_check_after_incubation": `/data-capture/${idValue}/test${queryParam}`,
+    "qa_corrective_action": `/data-capture/${idValue}/qa-corrective-measures${queryParam}`,
+    "qa_release_note": `/data-capture/${idValue}/dispatch${queryParam}`,
+    "qa_reject_note": `/data-capture/${idValue}/dispatch${queryParam}`,
+  }
+
+  return map[module] || null
+}
+
+function humanizeModule(module: string): string {
+  return module.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+}
+
 export function Header({ title = "Dashboard", subtitle = "Welcome back!", onOpenSidebar }: HeaderProps) {
   const dispatch = useAppDispatch()
   const authState = useAppSelector((state) => state.auth)
-  const { user, profile, isAuthenticated } = authState || { user: null, profile: null, isAuthenticated: false }
+  const { user, profile } = authState || { user: null, profile: null, isAuthenticated: false }
   const router = useRouter()
   const pathname = usePathname()
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false)
@@ -274,56 +315,6 @@ export function Header({ title = "Dashboard", subtitle = "Welcome back!", onOpen
     setSearchQuery("")
   }
 
-  // --- Add moduleToRoute mapping helper ---
-  function moduleToRoute(module: string, formId?: string): string | null {
-    // Hardcoded formId for routes that require it
-    const hardcodedId = "a4de97cc-e132-431e-a0a7-5c5e85e53d11";
-    const map: Record<string, (id?: string) => string> = {
-      // Drivers
-      "drivers_form": (id) => `/drivers/forms${id ? `?form_id=${formId}` : ""}`,
-
-      // Tools
-      "bmt_control_form": (id) => `/tools/bmt-control-form${id ? `?form_id=${formId}` : ""}`,
-      "cip_control_form": (id) => `/tools/cip-control-form${id ? `?form_id=${formId}` : ""}`,
-      "ist_control_form": (id) => `/tools/ist-control-form${id ? `?form_id=${formId}` : ""}`,
-      "general_lab_test": (id) => `/tools/general-lab-test${id ? `?form_id=${formId}` : ""}`,
-
-      // Admin
-      "production_plan": (id) => `/admin/production-plan${id ? `?form_id=${formId}` : ""}`,
-      "process": (id) => `/admin/processes${id ? `?form_id=${formId}` : ""}`,
-      "filmatic_line_groups_2": (id) => `/admin/filmatic-lines-groups${id ? `?form_id=${formId}` : ""}`,
-      "silo": (id) => `/admin/silos${id ? `?form_id=${formId}` : ""}`,
-
-      // Data Capture - no formId in URL, now append formId as query param
-      "raw-milk-intake": (id) => `/data-capture/raw-milk-intake${id ? `?form_id=${formId}` : ""}`,
-      "raw_milk_intake_lab_test": (id) => `/data-capture/raw-milk-intake${id ? `?form_id=${formId}` : ""}`,
-      "raw_milk_intake_form": (id) => `/data-capture/raw-milk-intake${id ? `?form_id=${formId}` : ""}`,
-      "raw_milk_result_slip": (id) => `/data-capture/raw-milk-intake${id ? `?form_id=${formId}` : ""}`,
-      "standardizing_form": (id) => `/data-capture/standardizing${id ? `?form_id=${formId}` : ""}`,
-      "standardizing_form_no_skim": (id) => `/data-capture/standardizing${id ? `?form_id=${formId}` : ""}`,
-
-      // Data Capture - with formId in URL (use formId from notification, fallback to hardcodedId)
-      "steri_milk_pasteurizing_form": (id) => `/data-capture/${id || hardcodedId}/pasteurizing`,
-      "lab_test_mixing_and_pasteurizing": (id) => `/data-capture/${id || hardcodedId}/pasteurizing`,
-      "filmatic_line_form_1": (id) => `/data-capture/${id || hardcodedId}/filmatic-lines${id ? `?form_id=${formId}` : ""}`,
-      "steri_milk_process_log": (id) => `/data-capture/${id || hardcodedId}/process-log${id ? `?form_id=${formId}` : ""}`,
-      "lab_test_post_process": (id) => `/data-capture/${id || hardcodedId}/process-log${id ? `?form_id=${formId}` : ""}`,
-      "steri_milk_test_report": (id) => `/data-capture/${id || hardcodedId}/process-log${id ? `?form_id=${formId}` : ""}`,
-      "filmatic_line_form_2": (id) => `/data-capture/${id || hardcodedId}/filmatic-lines-2${id ? `?form_id=${formId}` : ""}`,
-      "palletiser_sheet": (id) => `/data-capture/${id || hardcodedId}/palletiser-sheet${id ? `?form_id=${formId}` : ""}`,
-      "incubation_tracking_form": (id) => `/data-capture/${id || hardcodedId}/incubation${id ? `?form_id=${formId}` : ""}`,
-      "uht_quality_check_after_incubation": (id) => `/data-capture/${id || hardcodedId}/test${id ? `?form_id=${formId}` : ""}`,
-      "qa_corrective_action": (id) => `/data-capture/${id || hardcodedId}/qa-corrective-measures${id ? `?form_id=${formId}` : ""}`,
-      "qa_release_note": (id) => `/data-capture/${id || hardcodedId}/dispatch${id ? `?form_id=${formId}` : ""}`,
-      "qa_reject_note": (id) => `/data-capture/${id || hardcodedId}/dispatch${id ? `?form_id=${formId}` : ""}`,
-    }
-
-    if (map[module]) {
-      return map[module](formId)
-    }
-    return null
-  }
-
   return (
     <header className="sticky top-0 z-40 border-b border-zinc-200 bg-white/80 backdrop-blur-xl">
       {/* subtle sheen */}
@@ -353,15 +344,26 @@ export function Header({ title = "Dashboard", subtitle = "Welcome back!", onOpen
                 className="flex items-center gap-2 px-3 py-2 hover:bg-zinc-100"
               >
                 <div className="flex items-center gap-2">
-                  <span className="text-lg">{currentDashboard.emoji || "🧑‍💻"}</span>
-                  <div className="hidden md:block text-left">
-                    <p className="text-sm font-medium text-zinc-900">
-                      {currentDashboard.name}
-                    </p>
-                    <p className="text-xs text-zinc-500">
-                      {currentDashboard.description}
-                    </p>
-                  </div>
+                  {isClient ? (
+                    <>
+                      <span className="text-lg">{currentDashboard.emoji || "🧑‍💻"}</span>
+                      <div className="hidden md:block text-left">
+                        <p className="text-sm font-medium text-zinc-900">
+                          {currentDashboard.name}
+                        </p>
+                        <p className="text-xs text-zinc-500">
+                          {currentDashboard.description}
+                        </p>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">🧑‍💻</span>
+                      <div className="hidden md:block text-left">
+                        <p className="text-sm font-medium text-zinc-900 italic opacity-50">Loading...</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <ChevronDown className="h-4 w-4 text-zinc-500" />
               </Button>

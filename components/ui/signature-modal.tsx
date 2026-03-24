@@ -23,9 +23,26 @@ export const SignatureModal: React.FC<SignatureModalProps> = ({
 
   // Bridge to get canvas element from SignaturePad
   const setCanvasRef = (el: HTMLDivElement | null) => {
-    if (!el) return
-    const c = el.querySelector("canvas") as HTMLCanvasElement | null
-    canvasRef.current = c
+    if (!el) {
+      console.log('SignatureModal: Ref element is null');
+      return;
+    }
+    
+    try {
+      // Add check for querySelector function in case of weird browser environments
+      if (typeof el.querySelector !== 'function') {
+        console.error('SignatureModal: el.querySelector is not a function. Element:', el);
+        return;
+      }
+      
+      const c = el.querySelector("canvas") as HTMLCanvasElement | null
+      if (!c) {
+        console.error('SignatureModal: Canvas element not found inside ref div');
+      }
+      canvasRef.current = c
+    } catch (err) {
+      console.error('SignatureModal: Error in setCanvasRef:', err);
+    }
   }
 
   const handleClear = () => {

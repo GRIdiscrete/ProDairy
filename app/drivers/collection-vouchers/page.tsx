@@ -468,9 +468,9 @@ export default function CollectionVouchersPage() {
             header: "Total Volume",
             cell: ({ row }: any) => {
                 const voucher = row.original as CollectionVoucher2
-                const details = voucher.details || []
+                const details = Array.isArray(voucher.details) ? voucher.details : []
                 const totalVolume = details.reduce((acc, detail) => {
-                    const tanks = detail.supplier_tanks || []
+                    const tanks = Array.isArray(detail.supplier_tanks) ? detail.supplier_tanks : []
                     return acc + tanks.reduce((tacc, tank) => tacc + (Number(tank.volume) || 0), 0)
                 }, 0)
                 return <span className="text-sm font-light">{totalVolume} L</span>
@@ -610,6 +610,8 @@ export default function CollectionVouchersPage() {
                         <DataTable
                             columns={columns}
                             data={paginatedVouchers}
+                            searchKey="tag"
+                            searchPlaceholder="Search by tag..."
                         />
 
                         {/* Pagination */}
