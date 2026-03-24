@@ -18,6 +18,18 @@ export const API_CONFIG = {
       SILOS: '/silo-manager/silos',
       CIP_STATUS: '/silo-manager/cip-status',
       TRANSFERS: '/silo-manager/transfers',
-    }
+    },
+    ANALYTICS: {
+      COLLECTION_SUMMARY: '/analytics/collection/summary',
+      COLLECTION_DETAILS: '/analytics/collection/details',
+      FAILED_COLLECTION_SUMMARY: '/analytics/failed-collection/summary',
+      SUCCESSFUL_COLLECTION_SUMMARY: '/analytics/successful-collection/summary',
+      TESTED_COLLECTION_SUMMARY: '/analytics/tested-collection/summary',
+      TESTED_COLLECTION_DETAILS: '/analytics/tested-collection/details',
+      UNTESTED_COLLECTION_SUMMARY: '/analytics/untested-collection/summary',
+      UNTESTED_COLLECTION_DETAILS: '/analytics/untested-collection/details',
+      INTAKE_SUMMARY: '/analytics/intake/summary',
+      INTAKE_DETAILS: '/analytics/intake/details',
+    },
   },
 } as const

@@ -25,6 +25,7 @@ import {
   Calendar,
   Store,
   Database,
+  BarChart3,
 } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { useFilteredNavigation } from "@/hooks/use-permissions"
@@ -53,6 +54,7 @@ const AdminSidebarContent = dynamic(() => Promise.resolve(AdminSidebarComponent)
 
 const navPermissionMap: Record<string, string> = {
   "/admin": "dashboard",
+  "/admin/executive-dashboard": "dashboard",
   "/admin/users": "user_tab",
   "/admin/roles": "role_tab",
   "/admin/machines": "machine_tab",
@@ -70,6 +72,7 @@ const navPermissionMap: Record<string, string> = {
 
 const adminNavigation = [
   { name: "Dashboard", href: "/admin", icon: LayoutDashboard, current: false },
+  { name: "Executive Dashboard", href: "/admin/executive-dashboard", icon: BarChart3, current: false },
   {
     name: "Users",
     href: "/admin/users",

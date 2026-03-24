@@ -74,27 +74,25 @@ export function FormIdCopy({ displayId, actualId, showCopyButton = true, size = 
       </div>
 
       {showCopyButton && (
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                className={`${sizeClasses.button} p-0 hover:bg-gray-100 rounded-full`}
-                onClick={handleCopy}
-              >
-                {copied ? (
-                  <Check className={`${sizeClasses.icon} text-green-600`} />
-                ) : (
-                  <Copy className={`${sizeClasses.icon} text-gray-500`} />
-                )}
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>{copied ? "Copied!" : "Copy full form tag"}</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className={`${sizeClasses.button} p-0 hover:bg-gray-100 rounded-full`}
+              onClick={handleCopy}
+            >
+              {copied ? (
+                <Check className={`${sizeClasses.icon} text-green-600`} />
+              ) : (
+                <Copy className={`${sizeClasses.icon} text-gray-500`} />
+              )}
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>{copied ? "Copied!" : "Copy full form tag"}</p>
+          </TooltipContent>
+        </Tooltip>
       )}
     </div>
   )

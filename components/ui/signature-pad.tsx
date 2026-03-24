@@ -87,28 +87,40 @@ export function SignaturePad({
 
   const getCoordinates = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current
-    if (!canvas) return { x: 0, y: 0 }
-
-    const rect = canvas.getBoundingClientRect()
-    let clientX: number, clientY: number
-
-    if ('touches' in e) {
-      // Touch event
-      clientX = e.touches[0].clientX
-      clientY = e.touches[0].clientY
-    } else {
-      // Mouse event
-      clientX = e.clientX
-      clientY = e.clientY
+    if (!canvas) {
+      console.log('SignaturePad: getCoordinates - canvas ref is null');
+      return { x: 0, y: 0 }
     }
 
-    // Calculate coordinates relative to canvas
-    const scaleX = canvas.width / rect.width
-    const scaleY = canvas.height / rect.height
-    
-    return {
-      x: (clientX - rect.left) * scaleX,
-      y: (clientY - rect.top) * scaleY
+    try {
+      const rect = canvas.getBoundingClientRect()
+      let clientX: number, clientY: number
+
+      if ('touches' in e) {
+        // Touch event
+        if (!e.touches || e.touches.length === 0) {
+          console.log('SignaturePad: getCoordinates - no touches in event');
+          return { x: 0, y: 0 }
+        }
+        clientX = e.touches[0].clientX
+        clientY = e.touches[0].clientY
+      } else {
+        // Mouse event
+        clientX = e.clientX
+        clientY = e.clientY
+      }
+
+      // Calculate coordinates relative to canvas
+      const scaleX = canvas.width / rect.width
+      const scaleY = canvas.height / rect.height
+      
+      return {
+        x: (clientX - rect.left) * scaleX,
+        y: (clientY - rect.top) * scaleY
+      }
+    } catch (err) {
+      console.error('SignaturePad: Error in getCoordinates:', err);
+      return { x: 0, y: 0 }
     }
   }
 
