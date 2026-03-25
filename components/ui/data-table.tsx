@@ -13,7 +13,8 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table"
-import { ChevronDown, Search, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react"
+import { ChevronDown, Search, ArrowUpDown, ArrowUp, ArrowDown, Download } from "lucide-react"
+import { exportToCSV } from "@/lib/export-utils"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -41,6 +42,9 @@ interface DataTableProps<TData, TValue> {
   searchKey?: string
   searchPlaceholder?: string
   showSearch?: boolean
+  showExport?: boolean
+  exportFilename?: string
+  toolbarActions?: React.ReactNode
   filters?: Array<{
     key: string
     label: string
@@ -54,6 +58,9 @@ export function DataTable<TData, TValue>({
   searchKey = "name",
   searchPlaceholder = "Search...",
   showSearch = true,
+  showExport = false,
+  exportFilename = "table-export",
+  toolbarActions,
   filters = [],
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([])
@@ -80,10 +87,15 @@ export function DataTable<TData, TValue>({
     },
   })
 
+  const handleExport = () => {
+    const tableData = table.getFilteredRowModel().rows.map(row => row.original)
+    exportToCSV(tableData, exportFilename)
+  }
+
   return (
     <div className="w-full space-y-4">
       {/* Table Toolbar */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2">
         <div className="flex flex-1 items-center space-x-2">
           {showSearch && (
             <div className="relative">
@@ -95,6 +107,20 @@ export function DataTable<TData, TValue>({
                 className="max-w-sm pl-8 h-9"
               />
             </div>
+          )}
+        </div>
+        <div className="flex items-center space-x-2">
+          {toolbarActions}
+          {showExport && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleExport}
+              className="h-9 font-light border-dashed border-gray-300 hover:border-gray-400"
+            >
+              <Download className="mr-2 h-4 w-4" />
+              Export CSV
+            </Button>
           )}
         </div>
         {/* <DropdownMenu>

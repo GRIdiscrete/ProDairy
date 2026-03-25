@@ -500,7 +500,13 @@ export default function PalletiserSheetPage({ processId }: PalletiserSheetPagePr
               {loading ? (
                 <ContentSkeleton sections={1} cardsPerSection={4} />
               ) : (
-                <DataTable columns={columns} data={filteredSheets} showSearch={false} />
+                <DataTable
+                  columns={columns}
+                  data={filteredSheets}
+                  showSearch={false}
+                  showExport={true}
+                  exportFilename="palletiser-sheet-data"
+                />
               )}
             </div>
           </div>

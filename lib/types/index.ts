@@ -113,6 +113,17 @@ export interface Machine {
 
 export type MachineStatus = "active" | "inactive" | "maintenance" | "offline"
 
+export interface SiloComposition {
+  volume: number
+  voucher_tag: string
+  voucher_date: string
+  collection_id: string
+  supplier_tank: string
+  scientist_lab_test: string
+  supplier_last_name: string
+  supplier_first_name: string
+}
+
 export interface Silo {
   id: string
   created_at: string
@@ -124,6 +135,9 @@ export interface Silo {
   milk_volume: number
   capacity: number
   updated_at: string
+  fat_content: number | null
+  temperature: number | null
+  composition: SiloComposition[] | null
 }
 
 export type SiloStatus = "active" | "inactive" | "maintenance" | "offline"

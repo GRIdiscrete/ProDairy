@@ -23,7 +23,7 @@ export type QaReleaseNote = {
   qa_release_note_details?: QaReleaseNoteDetail[]
 }
 
-const BASE = process.env.NEXT_PUBLIC_API_BASE_URL / qa - release - note"
+const BASE = `${process.env.NEXT_PUBLIC_API_BASE_URL}/qa-release-note`
 
 const handleResp = async (res: Response) => {
   const json = await res.json().catch(() => ({}))

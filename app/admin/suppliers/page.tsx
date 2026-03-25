@@ -400,6 +400,8 @@ export default function SuppliersPage() {
                 columns={columns}
                 data={filteredSuppliers}
                 showSearch={false}
+                showExport={true}
+                exportFilename="suppliers-list"
               />
             )}
           </CardContent>

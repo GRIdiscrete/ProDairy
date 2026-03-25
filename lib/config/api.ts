@@ -30,6 +30,8 @@ export const API_CONFIG = {
       UNTESTED_COLLECTION_DETAILS: '/analytics/untested-collection/details',
       INTAKE_SUMMARY: '/analytics/intake/summary',
       INTAKE_DETAILS: '/analytics/intake/details',
+      CIP: '/analytics/cip',
+      PRODUCTION_DETAILS: '/analytics/production/details',
     },
   },
 } as const

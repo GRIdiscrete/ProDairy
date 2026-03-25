@@ -538,7 +538,13 @@ export default function QACorrectiveMeasuresPage({ params }: QACorrectiveMeasure
               {loading ? (
                 <ContentSkeleton sections={1} cardsPerSection={4} />
               ) : (
-                <DataTable columns={columns} data={filteredActions} showSearch={false} />
+                <DataTable
+                  columns={columns}
+                  data={filteredActions}
+                  showSearch={false}
+                  showExport={true}
+                  exportFilename="qa-corrective-measures-data"
+                />
               )}
             </div>
           </div>

@@ -358,6 +358,8 @@ export default function ProductionPage() {
                   columns={columns}
                   data={filteredPlans}
                   showSearch={false}
+                  showExport={true}
+                  exportFilename="production-plans"
                 />
               )}
             </div>

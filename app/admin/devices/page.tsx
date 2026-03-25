@@ -285,7 +285,7 @@ export default function DevicesPage() {
             <CardTitle>Devices List</CardTitle>
           </CardHeader>
           <CardContent>
-            <DataTable columns={columns} data={filteredDevices} searchKey="name" />
+            <DataTable columns={columns} data={filteredDevices} searchKey="name" showExport={true} exportFilename="devices-list" />
           </CardContent>
         </Card>
 

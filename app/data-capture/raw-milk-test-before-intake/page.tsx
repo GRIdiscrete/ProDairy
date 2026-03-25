@@ -324,6 +324,8 @@ export default function RawMilkTestBeforeIntakePage() {
                             <DataTable
                                 columns={columns}
                                 showSearch={false}
+                                showExport={true}
+                                exportFilename="raw-milk-test-before-intake-data"
                                 data={filteredSlips}
                             />
                         )}

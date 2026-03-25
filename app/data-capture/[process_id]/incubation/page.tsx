@@ -501,7 +501,13 @@ export default function ProductIncubationPage({ params }: ProductIncubationPageP
               {loading ? (
                 <ContentSkeleton sections={1} cardsPerSection={4} />
               ) : (
-                <DataTable columns={columns} data={filteredIncubations} showSearch={false} />
+                <DataTable
+                  columns={columns}
+                  data={filteredIncubations}
+                  showSearch={false}
+                  showExport={true}
+                  exportFilename="product-incubation-data"
+                />
               )}
             </div>
           </div>

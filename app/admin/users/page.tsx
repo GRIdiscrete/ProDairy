@@ -337,6 +337,8 @@ export default function AdminUsersPage() {
                   columns={columns}
                   data={filteredUsers}
                   showSearch={false}
+                  showExport={true}
+                  exportFilename="system-users"
                 />
               )}
             </div>

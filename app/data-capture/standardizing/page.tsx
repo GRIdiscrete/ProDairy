@@ -925,7 +925,13 @@ export default function StandardizingPage() {
                   {loading ? (
                     <ContentSkeleton sections={1} cardsPerSection={4} />
                   ) : (
-                    <DataTable columns={columns} data={filteredForms} showSearch={false} />
+                    <DataTable
+                      columns={columns}
+                      data={filteredForms}
+                      showSearch={false}
+                      showExport={true}
+                      exportFilename="standardizing-data"
+                    />
                   )}
                 </div>
               </div>
@@ -1094,7 +1100,13 @@ export default function StandardizingPage() {
                   {skimmingLoading ? (
                     <ContentSkeleton sections={1} cardsPerSection={4} />
                   ) : (
-                    <DataTable columns={skimmingColumns} data={filteredSkimmingForms} showSearch={false} />
+                    <DataTable
+                      columns={skimmingColumns}
+                      data={filteredSkimmingForms}
+                      showSearch={false}
+                      showExport={true}
+                      exportFilename="skimming-data"
+                    />
                   )}
                 </div>
               </div>

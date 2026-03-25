@@ -502,7 +502,13 @@ export default function ProcessLogPage() {
               {loading.fetch ? (
                 <ContentSkeleton sections={1} cardsPerSection={4} />
               ) : (
-                <DataTable columns={columns} data={filteredLogs} showSearch={false} />
+                <DataTable
+                  columns={columns}
+                  data={filteredLogs}
+                  showSearch={false}
+                  showExport={true}
+                  exportFilename="process-log-data"
+                />
               )}
             </div>
           </div>

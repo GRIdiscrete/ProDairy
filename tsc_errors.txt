@@ -1,0 +1,1019 @@
+components/forms/steri-milk-test-report-form-drawer.backup.tsx(1625,7): error TS1128: Declaration or statement expected.
+components/forms/steri-milk-test-report-form-drawer.backup.tsx(1625,13): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.backup.tsx(1768,7): error TS1128: Declaration or statement expected.
+components/forms/steri-milk-test-report-form-drawer.backup.tsx(1768,13): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.backup.tsx(1869,7): error TS1128: Declaration or statement expected.
+components/forms/steri-milk-test-report-form-drawer.backup.tsx(1869,13): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.backup.tsx(2076,7): error TS1128: Declaration or statement expected.
+components/forms/steri-milk-test-report-form-drawer.backup.tsx(2076,13): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.backup.tsx(2310,7): error TS1128: Declaration or statement expected.
+components/forms/steri-milk-test-report-form-drawer.backup.tsx(2310,13): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.backup.tsx(2375,7): error TS1128: Declaration or statement expected.
+components/forms/steri-milk-test-report-form-drawer.backup.tsx(2375,14): error TS1128: Declaration or statement expected.
+components/forms/steri-milk-test-report-form-drawer.backup.tsx(2378,3): error TS1128: Declaration or statement expected.
+components/forms/steri-milk-test-report-form-drawer.backup.tsx(2486,1): error TS1128: Declaration or statement expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1,13): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1,25): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(9,54): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(9,97): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(13,103): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(13,171): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(17,46): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(17,99): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(21,69): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(21,95): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(25,78): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(25,180): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(29,60): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(29,107): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(33,58): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(33,103): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(37,67): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(37,112): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(41,31): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(41,99): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(45,57): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(49,70): error TS1005: ':' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(49,121): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(49,126): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(49,140): error TS1005: ':' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(49,147): error TS1005: ':' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(49,168): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(49,173): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(51,3): error TS1005: ':' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(51,14): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(51,19): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(53,86): error TS1005: ':' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(53,117): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(53,152): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(53,157): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(53,191): error TS1005: ':' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(53,198): error TS1005: ':' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(53,213): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(53,218): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(55,3): error TS1005: ':' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(55,21): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(55,26): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(57,74): error TS1005: ':' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(57,91): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(57,104): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(57,109): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(57,126): error TS1005: ':' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(57,133): error TS1005: ':' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(57,191): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(57,196): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(59,3): error TS1005: ':' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(59,10): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(59,15): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(61,3): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(61,76): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(65,28): error TS1131: Property or signature expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(65,85): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(69,16): error TS1435: Unknown keyword or identifier. Did you mean 'string import'?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(69,48): error TS1434: Unexpected keyword or identifier.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(69,86): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(73,23): error TS1435: Unknown keyword or identifier. Did you mean 'string import'?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(73,56): error TS1434: Unexpected keyword or identifier.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(73,95): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(77,12): error TS1435: Unknown keyword or identifier. Did you mean 'string import'?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(77,74): error TS1434: Unexpected keyword or identifier.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(77,102): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(81,11): error TS1435: Unknown keyword or identifier. Did you mean 'string import'?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(81,34): error TS1434: Unexpected keyword or identifier.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(81,47): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(85,18): error TS1435: Unknown keyword or identifier. Did you mean 'number import'?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(85,49): error TS1434: Unexpected keyword or identifier.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(85,86): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(89,10): error TS1435: Unknown keyword or identifier. Did you mean 'number import'?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(89,72): error TS1434: Unexpected keyword or identifier.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(93,9): error TS1435: Unknown keyword or identifier. Did you mean 'number const'?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(93,59): error TS1005: ':' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(93,69): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(93,74): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(95,5): error TS1005: ':' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(95,8): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(97,5): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(97,21): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(97,88): error TS1005: ':' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(97,106): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(97,111): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(99,5): error TS1005: ':' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(99,12): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(101,5): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(101,22): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(105,3): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(105,14): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(105,101): error TS1005: ':' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(109,5): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(109,17): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(113,5): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(113,19): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(117,5): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(117,17): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(121,5): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(121,34): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(125,6): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(125,18): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(127,37): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(129,22): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(133,5): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(133,19): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(133,39): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(137,5): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(137,17): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(137,40): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(141,5): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(141,26): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(141,56): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(145,5): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(145,19): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(145,49): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(149,5): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(149,20): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(149,44): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(153,5): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(153,22): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(153,41): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(157,5): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(157,22): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(161,3): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(161,40): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(165,5): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(165,22): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(165,38): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(169,5): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(169,19): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(169,42): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(173,5): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(173,20): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(173,39): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(177,5): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(177,19): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(177,34): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(181,5): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(181,23): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(181,38): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(185,5): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(185,29): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(185,41): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(189,5): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(189,23): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(189,38): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(193,5): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(193,47): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(193,65): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(197,5): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(197,24): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(197,43): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(201,1): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(201,6): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(201,25): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(205,11): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(205,46): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(205,54): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(205,62): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(207,7): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(209,3): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(209,15): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(209,53): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(213,3): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(213,43): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(213,55): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(217,5): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(217,7): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(217,19): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(217,36): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(219,1): error TS1135: Argument expression expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(221,100): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(221,112): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(221,119): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(225,86): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(225,96): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(225,97): error TS1128: Declaration or statement expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(225,98): error TS1128: Declaration or statement expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(227,17): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(227,66): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(227,99): error TS1128: Declaration or statement expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(229,17): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(229,48): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(229,79): error TS1128: Declaration or statement expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(229,94): error TS1434: Unexpected keyword or identifier.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(231,3): error TS1136: Property assignment expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(233,1): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(233,8): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(233,20): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(233,24): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(237,1): error TS1135: Argument expression expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(237,67): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(237,77): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(237,84): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(237,85): error TS1109: Expression expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(241,37): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(241,39): error TS1434: Unexpected keyword or identifier.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(245,16): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(245,25): error TS1434: Unexpected keyword or identifier.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(247,1): error TS1109: Expression expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(247,2): error TS1128: Declaration or statement expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(247,4): error TS1434: Unexpected keyword or identifier.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(247,38): error TS1128: Declaration or statement expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(251,3): error TS1109: Expression expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(253,57): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(253,117): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(255,9): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(255,31): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(255,48): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(255,50): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(257,66): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(257,82): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(257,105): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(257,106): error TS1109: Expression expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(259,3): error TS1109: Expression expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(261,64): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(261,81): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(261,95): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(261,96): error TS1109: Expression expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(263,3): error TS1109: Expression expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(265,11): error TS1434: Unexpected keyword or identifier.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(267,3): error TS1109: Expression expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(269,79): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(273,39): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(277,46): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(281,93): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(285,47): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(289,38): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(293,42): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(297,35): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(297,61): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(301,37): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(305,43): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(309,24): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(309,43): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(313,18): error TS1005: ')' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(313,34): error TS1434: Unexpected keyword or identifier.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(315,23): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(317,11): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(317,17): error TS1109: Expression expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(319,16): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(321,13): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(321,33): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(323,17): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(325,11): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(325,23): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(325,25): error TS1434: Unexpected keyword or identifier.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(327,12): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(329,26): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(329,39): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(329,41): error TS1434: Unexpected keyword or identifier.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(331,16): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(333,8): error TS1128: Declaration or statement expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(333,26): error TS1434: Unexpected keyword or identifier.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(335,41): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(337,24): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(337,26): error TS1434: Unexpected keyword or identifier.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(339,14): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(341,13): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(341,25): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(341,27): error TS1434: Unexpected keyword or identifier.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(343,20): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(345,11): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(345,23): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(345,25): error TS1434: Unexpected keyword or identifier.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(347,16): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(349,20): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(349,32): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(349,34): error TS1434: Unexpected keyword or identifier.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(351,11): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(353,12): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(353,26): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(353,28): error TS1434: Unexpected keyword or identifier.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(355,12): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(357,14): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(357,26): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(357,28): error TS1434: Unexpected keyword or identifier.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(359,15): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(361,16): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(361,30): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(361,32): error TS1434: Unexpected keyword or identifier.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(363,16): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(365,16): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(365,24): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(365,31): error TS1434: Unexpected keyword or identifier.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(367,7): error TS1109: Expression expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(367,8): error TS1128: Declaration or statement expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(369,42): error TS1434: Unexpected keyword or identifier.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(371,13): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(373,14): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(373,30): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(373,41): error TS1128: Declaration or statement expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(377,11): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(377,26): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(377,34): error TS1128: Declaration or statement expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(377,35): error TS1128: Declaration or statement expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(381,12): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(381,34): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(385,11): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(385,49): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(385,51): error TS1435: Unknown keyword or identifier. Did you mean 'string type'?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(389,41): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(391,9): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(393,46): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(395,9): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(397,24): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(401,39): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(401,44): error TS1109: Expression expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(405,16): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(405,22): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(407,7): error TS1128: Declaration or statement expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(409,5): error TS1128: Declaration or statement expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(411,4): error TS1128: Declaration or statement expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(413,9): error TS1434: Unexpected keyword or identifier.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(417,48): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(421,35): error TS1109: Expression expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(421,47): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(425,13): error TS1109: Expression expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(425,40): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(429,33): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(437,69): error TS1137: Expression or comma expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(437,91): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(439,11): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(441,31): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(441,123): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(443,10): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(445,45): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(445,59): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(445,90): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(445,125): error TS1128: Declaration or statement expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(449,9): error TS1005: 'try' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(449,40): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(449,68): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(449,100): error TS1128: Declaration or statement expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(453,50): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(453,64): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(453,113): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(453,146): error TS1128: Declaration or statement expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(457,33): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(457,47): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(457,78): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(457,109): error TS1128: Declaration or statement expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(461,24): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(461,56): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(461,90): error TS1128: Declaration or statement expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(463,5): error TS1128: Declaration or statement expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(465,1): error TS1128: Declaration or statement expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(469,4): error TS1128: Declaration or statement expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(469,12): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(477,57): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(481,64): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(485,87): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(489,91): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(489,104): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(493,92): error TS1109: Expression expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(493,93): error TS1128: Declaration or statement expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(493,95): error TS1434: Unexpected keyword or identifier.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(493,129): error TS1128: Declaration or statement expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(493,131): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(495,99): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(497,78): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(497,134): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(501,93): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(501,142): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(505,7): error TS1128: Declaration or statement expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(505,9): error TS1005: 'try' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(509,51): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(509,105): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(513,5): error TS1128: Declaration or statement expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(513,71): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(517,23): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(517,82): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(519,3): error TS1128: Declaration or statement expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(519,4): error TS1128: Declaration or statement expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(519,36): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(521,64): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(525,35): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(525,104): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(529,88): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(533,32): error TS1005: ':' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(535,9): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(537,62): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(539,9): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(541,5): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(541,44): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(549,65): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(553,39): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(553,64): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(557,61): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(561,50): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(561,102): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(563,11): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(565,77): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(565,89): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(565,104): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(571,11): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(575,11): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(577,20): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(577,45): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(579,7): error TS1005: 'try' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(581,24): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(581,41): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(585,12): error TS1472: 'catch' or 'finally' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(585,36): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(589,61): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(593,46): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(593,59): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(597,12): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(601,48): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(605,46): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(605,60): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(609,12): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(613,98): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(617,31): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(617,46): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(621,68): error TS1472: 'catch' or 'finally' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(625,90): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(629,13): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(631,9): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(635,9): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(639,9): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(643,9): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(647,9): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(649,54): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(657,30): error TS1109: Expression expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(661,75): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(665,32): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(665,67): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(667,21): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(669,32): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(673,28): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(673,51): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(675,7): error TS1109: Expression expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(677,7): error TS1005: 'try' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(677,59): error TS1109: Expression expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(681,76): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(681,97): error TS1109: Expression expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(683,5): error TS1109: Expression expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(685,32): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(685,47): error TS1109: Expression expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(689,3): error TS1128: Declaration or statement expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(695,3): error TS1109: Expression expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(699,3): error TS1109: Expression expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(701,27): error TS1005: '}' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(701,102): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(705,107): error TS1005: '}' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(705,176): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(709,82): error TS1005: '}' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(709,173): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(713,68): error TS1005: '}' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(713,139): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(717,56): error TS1005: '}' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(717,129): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(733,50): error TS1109: Expression expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(737,120): error TS1005: '}' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(737,136): error TS1003: Identifier expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(737,139): error TS1005: '...' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(739,23): error TS1109: Expression expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(741,60): error TS1005: '}' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(741,66): error TS1003: Identifier expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(743,21): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(743,23): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(743,24): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(747,23): error TS1003: Identifier expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(747,36): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(747,57): error TS1109: Expression expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(749,21): error TS1109: Expression expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(751,23): error TS1003: Identifier expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(751,29): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(751,66): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(751,70): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(751,72): error TS17002: Expected corresponding JSX closing tag for 'div'.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(753,21): error TS1005: '}' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(753,22): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(757,60): error TS1005: ')' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(761,44): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(763,19): error TS1109: Expression expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(763,20): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(767,17): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(769,15): error TS17002: Expected corresponding JSX closing tag for 'SheetContent'.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(779,13): error TS17002: Expected corresponding JSX closing tag for 'Sheet'.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(789,74): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(791,17): error TS2657: JSX expressions must have one parent element.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(797,62): error TS1003: Identifier expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(803,23): error TS1003: Identifier expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(805,25): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(805,37): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(805,52): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(805,66): error TS1359: Identifier expected. 'const' is a reserved word that cannot be used here.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(805,72): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(807,40): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(809,64): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(809,79): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(811,24): error TS1109: Expression expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(813,21): error TS1109: Expression expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(813,22): error TS1005: '=>' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(813,29): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(815,19): error TS1161: Unterminated regular expression literal.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(817,19): error TS1005: '}' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(817,46): error TS1109: Expression expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(817,108): error TS1005: '}' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(817,118): error TS1005: '}' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(817,126): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(817,128): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(821,20): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(821,23): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(821,75): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(823,17): error TS1109: Expression expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(829,40): error TS1005: '...' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(829,72): error TS1005: '}' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(829,120): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(841,47): error TS1003: Identifier expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(841,61): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(845,25): error TS1005: '}' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(847,24): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(849,22): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(849,27): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(851,20): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(853,54): error TS1109: Expression expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(853,81): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(857,20): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(861,15): error TS1005: '}' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(869,47): error TS1005: '...' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(877,47): error TS1003: Identifier expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(891,22): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(893,20): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(897,101): error TS1005: ')' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(897,140): error TS1136: Property assignment expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(897,152): error TS1005: '}' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(897,153): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(899,20): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(901,31): error TS1005: '}' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(905,19): error TS1003: Identifier expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(909,41): error TS1003: Identifier expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(909,85): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(911,21): error TS1005: '}' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(913,93): error TS1005: ')' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(917,22): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(917,72): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(919,20): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(921,45): error TS1109: Expression expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(921,61): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(925,20): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(925,25): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(925,39): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(929,33): error TS1005: '}' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(929,34): error TS1005: '...' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(937,32): error TS1003: Identifier expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(937,55): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(949,54): error TS1138: Parameter declaration expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(949,57): error TS1005: ')' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(949,58): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(951,27): error TS1005: '}' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(955,25): error TS1003: Identifier expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(955,28): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(961,89): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(963,25): error TS1005: '}' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(965,93): error TS1136: Property assignment expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(965,105): error TS1005: '}' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(965,106): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(973,22): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(975,20): error TS1109: Expression expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(977,26): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(977,53): error TS1109: Expression expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(977,59): error TS1005: ':' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(977,149): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(979,24): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(979,69): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(979,90): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(979,92): error TS17002: Expected corresponding JSX closing tag for 'div'.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(981,39): error TS1003: Identifier expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(981,85): error TS1005: '}' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(981,93): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(983,19): error TS17015: Expected corresponding closing tag for JSX fragment.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(983,22): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(989,50): error TS1003: Identifier expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(989,146): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(993,106): error TS1005: '}' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(993,114): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(993,131): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(997,142): error TS1005: '}' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(997,150): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(997,165): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1001,167): error TS1005: ')' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1001,237): error TS1005: '}' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1001,245): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1003,25): error TS1109: Expression expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1003,27): error TS1005: '}' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1005,169): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1009,39): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1009,68): error TS1109: Expression expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1009,69): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1011,26): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1015,28): error TS17008: JSX element 'Button' has no corresponding closing tag.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1019,27): error TS1005: ')' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1019,29): error TS17002: Expected corresponding JSX closing tag for 'div'.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1021,50): error TS1109: Expression expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1025,136): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1025,148): error TS17008: JSX element 'div' has no corresponding closing tag.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1035,27): error TS1003: Identifier expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1035,28): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1037,33): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1041,22): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1043,20): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1045,52): error TS1109: Expression expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1045,100): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1045,125): error TS1136: Property assignment expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1045,137): error TS1005: '}' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1045,138): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1049,20): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1051,17): error TS1003: Identifier expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1055,13): error TS1005: '}' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1055,15): error TS17002: Expected corresponding JSX closing tag for 'form'.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1057,62): error TS1005: '}' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1057,72): error TS1005: '}' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1057,80): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1057,82): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1061,148): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1063,19): error TS1005: '}' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1063,50): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1063,83): error TS17002: Expected corresponding JSX closing tag for 'div'.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1073,68): error TS1003: Identifier expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1073,121): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1077,51): error TS1109: Expression expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1077,69): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1081,64): error TS1005: ')' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1081,70): error TS1003: Identifier expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1081,91): error TS1161: Unterminated regular expression literal.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1083,27): error TS1005: '}' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1087,38): error TS1005: ')' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1089,25): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1089,28): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1089,33): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1093,57): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1093,71): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1101,150): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1101,163): error TS2657: JSX expressions must have one parent element.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1105,24): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1107,22): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1109,20): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1111,17): error TS1003: Identifier expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1117,60): error TS1003: Identifier expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1121,53): error TS1109: Expression expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1121,92): error TS1136: Property assignment expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1121,104): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1121,105): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1125,60): error TS1003: Identifier expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1129,122): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1133,81): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1135,24): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1137,22): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1137,44): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1137,67): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1139,19): error TS1161: Unterminated regular expression literal.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1141,17): error TS1005: ')' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1141,33): error TS1005: '}' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1145,130): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1153,62): error TS1003: Identifier expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1157,49): error TS1109: Expression expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1161,22): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1163,20): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1165,27): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1169,80): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1173,21): error TS1005: '>' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1177,47): error TS1359: Identifier expected. 'const' is a reserved word that cannot be used here.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1177,53): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1179,30): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1179,31): error TS1128: Declaration or statement expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1179,39): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1181,22): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1181,57): error TS1003: Identifier expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1181,82): error TS1136: Property assignment expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1181,94): error TS1005: '}' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1181,95): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1183,20): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1189,19): error TS1003: Identifier expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1189,70): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1191,19): error TS1136: Property assignment expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1193,21): error TS1005: ')' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1193,48): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1197,110): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1201,22): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1201,46): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1201,80): error TS1005: '}' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1203,20): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1205,27): error TS1005: '}' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1205,43): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1205,70): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1207,17): error TS17015: Expected corresponding closing tag for JSX fragment.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1213,70): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1217,48): error TS1003: Identifier expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1223,28): error TS1005: ')' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1223,44): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1225,62): error TS1003: Identifier expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1225,63): error TS17008: JSX element 'TestReportFormData' has no corresponding closing tag.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1225,99): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1227,27): error TS1005: '}' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1231,27): error TS1005: '}' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1235,26): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1237,86): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1241,22): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1241,98): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1243,20): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1245,36): error TS1109: Expression expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1251,19): error TS2657: JSX expressions must have one parent element.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1253,59): error TS1003: Identifier expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1255,21): error TS1005: ')' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1257,51): error TS1359: Identifier expected. 'const' is a reserved word that cannot be used here.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1257,57): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1257,114): error TS1136: Property assignment expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1257,115): error TS1005: '=>' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1261,22): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1263,20): error TS1109: Expression expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1265,17): error TS1109: Expression expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1265,42): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1265,71): error TS2657: JSX expressions must have one parent element.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1273,78): error TS1003: Identifier expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1279,30): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1279,41): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1279,55): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1279,66): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1279,83): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1279,95): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1279,109): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1279,119): error TS1136: Property assignment expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1279,123): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1281,22): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1283,20): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1287,15): error TS1109: Expression expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1297,73): error TS1003: Identifier expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1297,119): error TS1005: ':' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1297,243): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1301,51): error TS1109: Expression expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1305,22): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1307,20): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1317,84): error TS1003: Identifier expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1317,129): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1321,134): error TS1005: ')' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1321,169): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1325,22): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1325,44): error TS17008: JSX element 'Button' has no corresponding closing tag.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1327,20): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1333,65): error TS17002: Expected corresponding JSX closing tag for 'div'.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1337,46): error TS1003: Identifier expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1341,19): error TS1005: ')' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1345,66): error TS1005: ')' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1347,20): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1349,18): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1349,25): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1351,15): error TS1005: '}' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1353,13): error TS1109: Expression expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1353,23): error TS1109: Expression expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1353,25): error TS1005: 'try' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1353,65): error TS1128: Declaration or statement expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1357,117): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1359,13): error TS2657: JSX expressions must have one parent element.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1365,87): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1365,118): error TS1109: Expression expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1365,119): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1369,68): error TS1003: Identifier expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1373,47): error TS1109: Expression expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1377,23): error TS1109: Expression expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1377,38): error TS1109: Expression expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1377,39): error TS1109: Expression expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1379,17): error TS1161: Unterminated regular expression literal.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1381,15): error TS1109: Expression expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1381,33): error TS1161: Unterminated regular expression literal.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1383,20): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1387,19): error TS2657: JSX expressions must have one parent element.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1389,49): error TS1145: '{' or JSX element expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1389,58): error TS1003: Identifier expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1389,58): error TS1005: ')' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1389,77): error TS1005: '}' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1389,114): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1389,152): error TS17002: Expected corresponding JSX closing tag for 'div'.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1393,50): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1393,51): error TS1109: Expression expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1395,29): error TS1136: Property assignment expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1395,30): error TS1136: Property assignment expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1395,39): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1395,41): error TS1005: '(' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1397,195): error TS1005: ')' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1397,213): error TS1109: Expression expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1399,21): error TS1109: Expression expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1399,22): error TS1109: Expression expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1403,17): error TS1109: Expression expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1405,17): error TS2657: JSX expressions must have one parent element.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1405,29): error TS17008: JSX element 'Sheet' has no corresponding closing tag.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1409,52): error TS1005: '>' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1417,23): error TS2657: JSX expressions must have one parent element.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1419,22): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1421,20): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1423,19): error TS17002: Expected corresponding JSX closing tag for 'SheetTitle'.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1429,42): error TS1003: Identifier expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1429,44): error TS17002: Expected corresponding JSX closing tag for 'div'.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1429,63): error TS1005: ')' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1435,29): error TS1136: Property assignment expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1435,41): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1435,42): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1437,268): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1437,269): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1439,22): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1441,20): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1441,35): error TS17002: Expected corresponding JSX closing tag for 'SheetHeader'.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1441,59): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1443,19): error TS17002: Expected corresponding JSX closing tag for 'Controller'.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1445,15): error TS1109: Expression expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1445,31): error TS1109: Expression expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1447,20): error TS1005: '>' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1453,61): error TS1005: '...' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1457,48): error TS1003: Identifier expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1461,23): error TS2657: JSX expressions must have one parent element.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1463,22): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1465,20): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1465,70): error TS1161: Unterminated regular expression literal.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1467,17): error TS1005: ')' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1469,93): error TS1003: Identifier expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1473,53): error TS1005: '>' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1473,145): error TS1005: '}' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1477,86): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1481,215): error TS1005: ')' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1483,22): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1485,20): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1485,41): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1485,43): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1485,44): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1491,19): error TS1180: Property destructuring pattern expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1491,26): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1491,55): error TS1005: ',' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1491,57): error TS17002: Expected corresponding JSX closing tag for 'div'.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1493,65): error TS1005: '>' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1493,89): error TS1005: ')' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1501,23): error TS2657: JSX expressions must have one parent element.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1501,272): error TS1005: ')' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1503,22): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1505,20): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1505,42): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1505,43): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1507,17): error TS1109: Expression expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1509,41): error TS17002: Expected corresponding JSX closing tag for 'SignatureViewer'.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1509,47): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1513,107): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1513,146): error TS1005: ')' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1513,155): error TS1011: An element access expression should take an argument.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1517,80): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1517,91): error TS1136: Property assignment expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1517,165): error TS1005: '}' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1521,27): error TS1136: Property assignment expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1521,39): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1521,65): error TS1109: Expression expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1569,130): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1569,153): error TS1005: ')' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1569,171): error TS1109: Expression expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1573,166): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1573,184): error TS1434: Unexpected keyword or identifier.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1573,195): error TS1127: Invalid character.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1573,197): error TS1434: Unexpected keyword or identifier.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1573,211): error TS1434: Unexpected keyword or identifier.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1573,220): error TS1443: Module declaration names may only use ' or " quoted strings.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1581,35): error TS1434: Unexpected keyword or identifier.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1581,58): error TS1005: ')' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1581,76): error TS1109: Expression expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1583,41): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1583,59): error TS1434: Unexpected keyword or identifier.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1583,70): error TS1127: Invalid character.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1583,72): error TS1434: Unexpected keyword or identifier.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1583,86): error TS1434: Unexpected keyword or identifier.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1583,95): error TS1443: Module declaration names may only use ' or " quoted strings.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1653,165): error TS1434: Unexpected keyword or identifier.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1653,188): error TS1005: ')' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1653,206): error TS1109: Expression expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1657,84): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1657,102): error TS1434: Unexpected keyword or identifier.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1657,113): error TS1127: Invalid character.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1657,115): error TS1434: Unexpected keyword or identifier.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1657,129): error TS1434: Unexpected keyword or identifier.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1657,138): error TS1443: Module declaration names may only use ' or " quoted strings.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1901,104): error TS1434: Unexpected keyword or identifier.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1901,123): error TS1434: Unexpected keyword or identifier.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1905,85): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1905,104): error TS1127: Invalid character.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1905,106): error TS1434: Unexpected keyword or identifier.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1913,35): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1913,54): error TS1434: Unexpected keyword or identifier.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1915,41): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1915,60): error TS1127: Invalid character.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(1915,62): error TS1434: Unexpected keyword or identifier.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(2169,55): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(2169,78): error TS1005: ')' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(2169,96): error TS1109: Expression expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(2173,62): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(2173,80): error TS1434: Unexpected keyword or identifier.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(2173,91): error TS1127: Invalid character.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(2173,93): error TS1434: Unexpected keyword or identifier.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(2173,107): error TS1434: Unexpected keyword or identifier.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(2173,116): error TS1443: Module declaration names may only use ' or " quoted strings.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(2363,35): error TS1434: Unexpected keyword or identifier.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(2363,54): error TS1434: Unexpected keyword or identifier.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(2365,41): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(2365,60): error TS1127: Invalid character.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(2365,62): error TS1434: Unexpected keyword or identifier.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(2683,116): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(2683,139): error TS1005: ')' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(2683,157): error TS1109: Expression expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(2685,102): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(2685,120): error TS1434: Unexpected keyword or identifier.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(2685,131): error TS1127: Invalid character.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(2685,133): error TS1434: Unexpected keyword or identifier.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(2685,147): error TS1434: Unexpected keyword or identifier.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(2685,156): error TS1443: Module declaration names may only use ' or " quoted strings.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(2711,77): error TS1434: Unexpected keyword or identifier.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(2711,96): error TS1434: Unexpected keyword or identifier.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(2713,52): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(2713,71): error TS1127: Invalid character.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(2713,73): error TS1434: Unexpected keyword or identifier.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(2753,56): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(2753,79): error TS1005: ')' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(2753,97): error TS1109: Expression expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(2755,76): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(2755,94): error TS1434: Unexpected keyword or identifier.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(2755,105): error TS1127: Invalid character.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(2755,107): error TS1434: Unexpected keyword or identifier.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(2755,121): error TS1434: Unexpected keyword or identifier.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(2755,130): error TS1443: Module declaration names may only use ' or " quoted strings.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(2905,35): error TS1434: Unexpected keyword or identifier.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(2905,58): error TS1005: ')' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(2905,76): error TS1109: Expression expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(2907,41): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(2907,59): error TS1434: Unexpected keyword or identifier.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(2907,70): error TS1127: Invalid character.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(2907,72): error TS1434: Unexpected keyword or identifier.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(2907,86): error TS1434: Unexpected keyword or identifier.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(2907,95): error TS1443: Module declaration names may only use ' or " quoted strings.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(3085,71): error TS1434: Unexpected keyword or identifier.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(3085,90): error TS1434: Unexpected keyword or identifier.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(3087,225): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(3087,244): error TS1127: Invalid character.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(3087,246): error TS1434: Unexpected keyword or identifier.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(3175,38): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(3175,57): error TS1434: Unexpected keyword or identifier.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(3177,114): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(3177,133): error TS1127: Invalid character.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(3177,135): error TS1434: Unexpected keyword or identifier.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(3237,35): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(3237,54): error TS1434: Unexpected keyword or identifier.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(3239,41): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(3239,60): error TS1127: Invalid character.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(3239,62): error TS1434: Unexpected keyword or identifier.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(3587,76): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(3587,95): error TS1434: Unexpected keyword or identifier.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(3589,70): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(3589,89): error TS1127: Invalid character.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(3589,91): error TS1434: Unexpected keyword or identifier.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(3687,35): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(3687,54): error TS1434: Unexpected keyword or identifier.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(3689,41): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(3689,60): error TS1127: Invalid character.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(3689,62): error TS1434: Unexpected keyword or identifier.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(4218,33): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(4218,52): error TS1434: Unexpected keyword or identifier.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(4219,39): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(4219,58): error TS1127: Invalid character.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(4219,60): error TS1434: Unexpected keyword or identifier.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(4287,33): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(4287,56): error TS1005: ')' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(4287,74): error TS1109: Expression expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(4288,39): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(4288,57): error TS1434: Unexpected keyword or identifier.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(4288,68): error TS1127: Invalid character.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(4288,70): error TS1434: Unexpected keyword or identifier.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(4288,84): error TS1434: Unexpected keyword or identifier.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(4288,93): error TS1443: Module declaration names may only use ' or " quoted strings.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(4531,33): error TS1434: Unexpected keyword or identifier.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(4531,56): error TS1005: ')' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(4531,74): error TS1109: Expression expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(4532,39): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(4532,57): error TS1434: Unexpected keyword or identifier.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(4532,68): error TS1127: Invalid character.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(4532,70): error TS1434: Unexpected keyword or identifier.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(4532,84): error TS1434: Unexpected keyword or identifier.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(4532,93): error TS1443: Module declaration names may only use ' or " quoted strings.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(4696,33): error TS1434: Unexpected keyword or identifier.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(4696,52): error TS1434: Unexpected keyword or identifier.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(4697,39): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(4697,58): error TS1127: Invalid character.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(4697,60): error TS1434: Unexpected keyword or identifier.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(4930,33): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(4930,52): error TS1434: Unexpected keyword or identifier.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(4931,39): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(4931,58): error TS1127: Invalid character.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(4931,60): error TS1434: Unexpected keyword or identifier.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(5047,36): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(5047,54): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(5047,69): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(5047,73): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(5047,77): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(5047,90): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(5058,38): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(5058,43): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(5058,49): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(5058,54): error TS1005: ';' expected.
+components/forms/steri-milk-test-report-form-drawer.old.tsx(5135,1): error TS1160: Unterminated template literal.
+lib/api/qaReleaseNote.ts(26,72): error TS1005: ',' expected.
+lib/api/qaReleaseNote.ts(26,73): error TS1002: Unterminated string literal.

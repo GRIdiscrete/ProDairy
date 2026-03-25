@@ -540,7 +540,13 @@ export default function FilmaticLines2Page() {
               {loading.fetch ? (
                 <ContentSkeleton sections={1} cardsPerSection={4} />
               ) : (
-                <DataTable columns={columns} data={filteredForms} showSearch={false} />
+                <DataTable
+                  columns={columns}
+                  data={filteredForms}
+                  showSearch={false}
+                  showExport={true}
+                  exportFilename="filmatic-lines-form-2-data"
+                />
               )}
             </div>
           </div>

@@ -224,7 +224,13 @@ export default function AdminTankersPage() {
                   </div>
                 </div>
               ) : (
-                <DataTable columns={columns as any} data={filteredTankers} showSearch={false} />
+                <DataTable
+                  columns={columns as any}
+                  data={filteredTankers}
+                  showSearch={false}
+                  showExport={true}
+                  exportFilename="tankers-list"
+                />
               )}
             </div>
           </div>
