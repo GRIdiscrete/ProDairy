@@ -417,6 +417,8 @@ export default function SilosPage() {
                   columns={columns}
                   data={filteredSilos}
                   showSearch={false}
+                  showExport={true}
+                  exportFilename="silos-list"
                 />
               )}
             </div>

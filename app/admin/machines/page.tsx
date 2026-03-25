@@ -390,6 +390,8 @@ export default function MachinesPage() {
                   columns={columns}
                   data={filteredMachines}
                   showSearch={false}
+                  showExport={true}
+                  exportFilename="machines-list"
                 />
               )}
             </div>

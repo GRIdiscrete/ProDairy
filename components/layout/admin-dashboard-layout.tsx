@@ -40,7 +40,7 @@ export function AdminDashboardLayout({ children, title, subtitle }: AdminDashboa
       <div className="flex flex-1 flex-col">
         {/* Pass allowedSwitches to Header, or use directly in your switch UI */}
         <Header title={title} subtitle={subtitle} allowedSwitches={allowedSwitches} />
-        <main className="flex-1 p-6">{children}</main>
+        <main className="flex-1 p-6 overflow-x-hidden no-scrollbar">{children}</main>
       </div>
     </div>
   )

@@ -21,8 +21,9 @@ import { toast } from "sonner"
 import { TableFilters } from "@/lib/types"
 import { CIPControlForm } from "@/lib/api/data-capture-forms"
 import ContentSkeleton from "@/components/ui/content-skeleton"
-import { ToolsDashboardLayout } from "@/components/layout/tools-dashboard-layout"
+import { AdminDashboardLayout } from "@/components/layout/admin-dashboard-layout"
 import { FormIdCopy } from "@/components/ui/form-id-copy"
+import { PermissionGuard } from "@/components/auth/permission-guard"
 
 export default function CIPControlFormPage() {
   const dispatch = useAppDispatch()
@@ -271,86 +272,88 @@ export default function CIPControlFormPage() {
   const latestForm = Array.isArray(forms) && forms.length > 0 ? forms[0] : null
 
   return (
-    <ToolsDashboardLayout title="CIP Control Forms" subtitle="Cleaning in Place control and monitoring">
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-light text-foreground">CIP Control Forms</h1>
-            <p className="text-sm font-light text-muted-foreground">Manage cleaning in place control forms</p>
+    <PermissionGuard requiredView="cip">
+      <AdminDashboardLayout title="CIP Control Forms" subtitle="Cleaning in Place control and monitoring">
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-light text-foreground">CIP Control Forms</h1>
+              <p className="text-sm font-light text-muted-foreground">Manage cleaning in place control forms</p>
+            </div>
+            <LoadingButton
+              onClick={handleAddForm}
+              className="bg-[#006BC4] text-white border-0 rounded-full px-6 py-2 font-light"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Add CIP Form
+            </LoadingButton>
           </div>
-          <LoadingButton
-            onClick={handleAddForm}
-            className="bg-[#006BC4] text-white border-0 rounded-full px-6 py-2 font-light"
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Add CIP Form
-          </LoadingButton>
-        </div>
 
-        {/* Latest Form Spotlight */}
-        {!loading && latestForm && (
-          <div className="border border-gray-200 rounded-xl bg-white border-l-4 border-l-[#006BC4] shadow-none">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center space-x-2">
-                  <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center">
-                    <Droplets className="h-5 w-5" />
+          {/* Latest Form Spotlight */}
+          {!loading && latestForm && (
+            <div className="border border-gray-200 rounded-xl bg-white border-l-4 border-l-[#006BC4] shadow-none">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center">
+                      <Droplets className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-medium">Latest CIP Session</h3>
+                      <FormIdCopy displayId={latestForm.tag || "N/A"} actualId={latestForm.tag || ""} size="sm" />
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="text-lg font-medium">Latest CIP Session</h3>
-                    <FormIdCopy displayId={latestForm.tag || "N/A"} actualId={latestForm.tag || ""} size="sm" />
+                  <Badge className={getStatusColor(latestForm.status)}>{latestForm.status}</Badge>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div className="p-3 bg-gray-50 rounded-lg">
+                    <p className="text-[10px] font-bold uppercase text-gray-400">Machine/Silo</p>
+                    <p className="text-sm font-medium">{latestForm.machine_id?.name || 'N/A'}</p>
                   </div>
-                </div>
-                <Badge className={getStatusColor(latestForm.status)}>{latestForm.status}</Badge>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="p-3 bg-gray-50 rounded-lg">
-                  <p className="text-[10px] font-bold uppercase text-gray-400">Machine/Silo</p>
-                  <p className="text-sm font-medium">{latestForm.machine_id?.name || 'N/A'}</p>
-                </div>
-                <div className="p-3 bg-gray-50 rounded-lg">
-                  <p className="text-[10px] font-bold uppercase text-gray-400">Caustic</p>
-                  <p className="text-sm font-medium text-orange-600">{latestForm.caustic_solution_strength}%</p>
-                </div>
-                <div className="p-3 bg-gray-50 rounded-lg">
-                  <p className="text-[10px] font-bold uppercase text-gray-400">Acid</p>
-                  <p className="text-sm font-medium text-red-600">{latestForm.acid_solution_strength}%</p>
-                </div>
-                <div className="p-3 bg-gray-50 rounded-lg">
-                  <p className="text-[10px] font-bold uppercase text-gray-400">Date</p>
-                  <p className="text-sm font-medium">{latestForm.date ? new Date(latestForm.date).toLocaleDateString() : 'N/A'}</p>
+                  <div className="p-3 bg-gray-50 rounded-lg">
+                    <p className="text-[10px] font-bold uppercase text-gray-400">Caustic</p>
+                    <p className="text-sm font-medium text-orange-600">{latestForm.caustic_solution_strength}%</p>
+                  </div>
+                  <div className="p-3 bg-gray-50 rounded-lg">
+                    <p className="text-[10px] font-bold uppercase text-gray-400">Acid</p>
+                    <p className="text-sm font-medium text-red-600">{latestForm.acid_solution_strength}%</p>
+                  </div>
+                  <div className="p-3 bg-gray-50 rounded-lg">
+                    <p className="text-[10px] font-bold uppercase text-gray-400">Date</p>
+                    <p className="text-sm font-medium">{latestForm.date ? new Date(latestForm.date).toLocaleDateString() : 'N/A'}</p>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Table Section */}
-        <div className="border border-gray-200 rounded-xl bg-white shadow-none overflow-hidden">
-          <div className="p-6 space-y-4">
-            <DataTableFilters
-              filters={tableFilters}
-              onFiltersChange={setTableFilters}
-              searchPlaceholder="Search by tag or machine..."
-              filterFields={filterFields}
-            />
-
-            {loading ? (
-              <ContentSkeleton sections={1} cardsPerSection={4} />
-            ) : (
-              <DataTable
-                columns={columns}
-                data={filteredForms}
-                showSearch={false}
+          {/* Table Section */}
+          <div className="border border-gray-200 rounded-xl bg-white shadow-none overflow-hidden">
+            <div className="p-6 space-y-4">
+              <DataTableFilters
+                filters={tableFilters}
+                onFiltersChange={setTableFilters}
+                searchPlaceholder="Search by tag or machine..."
+                filterFields={filterFields}
               />
-            )}
-          </div>
-        </div>
 
-        <CIPControlFormDrawer open={formDrawerOpen} onOpenChange={setFormDrawerOpen} form={selectedForm} mode={formMode} />
-        <CIPControlFormViewDrawer open={viewDrawerOpen} onClose={() => setViewDrawerOpen(false)} form={selectedForm} onEdit={() => { setViewDrawerOpen(false); handleEditForm(selectedForm!); }} />
-        <DeleteConfirmationDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen} title="Delete CIP Control Form" description="Are you sure you want to delete this cleaning record?" onConfirm={confirmDelete} loading={operationLoading.delete} />
-      </div>
-    </ToolsDashboardLayout>
+              {loading ? (
+                <ContentSkeleton sections={1} cardsPerSection={4} />
+              ) : (
+                <DataTable
+                  columns={columns}
+                  data={filteredForms}
+                  showSearch={false}
+                />
+              )}
+            </div>
+          </div>
+
+          <CIPControlFormDrawer open={formDrawerOpen} onOpenChange={setFormDrawerOpen} form={selectedForm} mode={formMode} />
+          <CIPControlFormViewDrawer open={viewDrawerOpen} onClose={() => setViewDrawerOpen(false)} form={selectedForm} onEdit={() => { setViewDrawerOpen(false); handleEditForm(selectedForm!); }} />
+          <DeleteConfirmationDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen} title="Delete CIP Control Form" description="Are you sure you want to delete this cleaning record?" onConfirm={confirmDelete} loading={operationLoading.delete} />
+        </div>
+      </AdminDashboardLayout>
+    </PermissionGuard>
   )
 }

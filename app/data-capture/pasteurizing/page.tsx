@@ -639,7 +639,13 @@ export default function PasteurizingPage() {
               {loading ? (
                 <ContentSkeleton sections={1} cardsPerSection={4} />
               ) : (
-                <DataTable columns={columns} data={filteredForms} showSearch={false} />
+                <DataTable
+                  columns={columns}
+                  data={filteredForms}
+                  showSearch={false}
+                  showExport={true}
+                  exportFilename="pasteurizing-data"
+                />
               )}
             </div>
           </div>

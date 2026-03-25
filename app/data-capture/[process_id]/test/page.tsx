@@ -510,7 +510,13 @@ export default function UHTQualityCheckPage({ params }: UHTQualityCheckPageProps
             {loading ? (
               <ContentSkeleton sections={1} cardsPerSection={4} />
             ) : (
-              <DataTable columns={columns} data={qualityChecks} showSearch={false} />
+                <DataTable
+                  columns={columns}
+                  data={qualityChecks}
+                  showSearch={false}
+                  showExport={true}
+                  exportFilename="uht-quality-check-data"
+                />
             )}
             </div>
           </div>

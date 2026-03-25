@@ -579,6 +579,8 @@ export default function RawMilkIntakePage() {
                 <DataTable
                   columns={columns}
                   showSearch={false}
+                  showExport={true}
+                  exportFilename="raw-milk-intake-data"
                   data={filteredForms}
                 />
               )}

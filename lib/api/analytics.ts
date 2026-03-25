@@ -58,6 +58,28 @@ export interface IntakeDetailItem extends IntakeSummaryItem {
   truck_compartment_number: number
 }
 
+// CIP item
+export interface CIPItem {
+  machine: string | null
+  silo: string | null
+  tag: string
+  status: 'Draft' | 'In Progress' | 'Completed' | 'Failed'
+  stage: string | null
+}
+
+// Production detail item
+export interface ProductionDetailItem {
+  production_plan_id: string
+  product_name: string
+  plan_name: string
+  total_expected_output: number
+  total_input: number | null
+  total_day_bottles: number | null
+  total_day_litres: number | null
+  total_night_bottles: number | null
+  total_night_litres: number | null
+}
+
 export const analyticsApi = {
   // Collection endpoints
   async getCollectionSummary(): Promise<ApiEnvelope<CollectionSummaryItem[]>> {
@@ -99,5 +121,15 @@ export const analyticsApi = {
 
   async getIntakeDetails(): Promise<ApiEnvelope<IntakeDetailItem[]>> {
     return apiRequest<ApiEnvelope<IntakeDetailItem[]>>(API_CONFIG.ENDPOINTS.ANALYTICS.INTAKE_DETAILS)
+  },
+
+  // CIP endpoints
+  async getCIPData(): Promise<ApiEnvelope<CIPItem[]>> {
+    return apiRequest<ApiEnvelope<CIPItem[]>>(API_CONFIG.ENDPOINTS.ANALYTICS.CIP)
+  },
+
+  // Production endpoints
+  async getProductionDetails(): Promise<ApiEnvelope<ProductionDetailItem[]>> {
+    return apiRequest<ApiEnvelope<ProductionDetailItem[]>>(API_CONFIG.ENDPOINTS.ANALYTICS.PRODUCTION_DETAILS)
   },
 }

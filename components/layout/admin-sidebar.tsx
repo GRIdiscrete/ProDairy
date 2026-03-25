@@ -26,6 +26,7 @@ import {
   Store,
   Database,
   BarChart3,
+  Droplets,
 } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { useFilteredNavigation } from "@/hooks/use-permissions"
@@ -54,25 +55,23 @@ const AdminSidebarContent = dynamic(() => Promise.resolve(AdminSidebarComponent)
 
 const navPermissionMap: Record<string, string> = {
   "/admin": "dashboard",
-  "/admin/executive-dashboard": "dashboard",
   "/admin/users": "user_tab",
   "/admin/roles": "role_tab",
   "/admin/machines": "machine_tab",
   "/admin/silos": "silo_tab",
   "/admin/devices": "devices_tab",
-  "/admin/materials": "settings", // or another relevant permission
   "/admin/tankers": "driver_ui",
   "/admin/suppliers": "supplier_tab",
   "/admin/processes": "process_tab",
   "/admin/filmatic-lines-groups": "bmt", // or another relevant permission
   "/admin/production-plan": "production_dashboard",
   "/admin/audit": "admin_panel",
+  "/admin/cip-control-form": "cip",
   "/profile": "settings", // or another relevant permission
 }
 
 const adminNavigation = [
   { name: "Dashboard", href: "/admin", icon: LayoutDashboard, current: false },
-  { name: "Executive Dashboard", href: "/admin/executive-dashboard", icon: BarChart3, current: false },
   {
     name: "Users",
     href: "/admin/users",
@@ -104,12 +103,6 @@ const adminNavigation = [
   //   current: false,
   // },
   {
-    name: "Materials",
-    href: "/admin/materials",
-    icon: Layers,
-    current: false,
-  },
-  {
     name: "Tankers",
     href: "/admin/tankers",
     icon: Truck,
@@ -137,6 +130,12 @@ const adminNavigation = [
     name: "Suppliers",
     href: "/admin/suppliers",
     icon: Store,
+    current: false,
+  },
+  {
+    name: "CIP Control",
+    href: "/admin/cip-control-form",
+    icon: Droplets,
     current: false,
   },
   // {
@@ -183,18 +182,25 @@ function AdminSidebarComponent({ collapsed = false, onToggle }: AdminSidebarProp
     return allowedViews.includes(permKey)
   }).map(item => {
     // For dropdowns, filter children as well
-    if (item.children) {
-      const filteredChildren = item.children.filter(child => {
+    const navItem = item as any
+    if (navItem.children) {
+      const filteredChildren = navItem.children.filter((child: any) => {
         const permKey = navPermissionMap[child.href]
         if (!permKey) return true
         return allowedViews.includes(permKey)
       })
       // Hide parent if no children are visible
       if (filteredChildren.length === 0) return null
-      return { ...item, children: filteredChildren }
+      return { ...item, children: filteredChildren } as any
     }
-    return item
-  }).filter(Boolean)
+    return item as any
+  }).filter(Boolean) as any[]
+  
+  // Update current item if needed
+  const activeNavigation = filteredNavigation.map(item => ({
+    ...item,
+    current: pathname === item.href || (item.children && item.children.some((c: any) => pathname === c.href))
+  }))
 
   // Layout widths (ensure logo never clipped)
   const openWidth = 272
@@ -299,7 +305,7 @@ function AdminSidebarComponent({ collapsed = false, onToggle }: AdminSidebarProp
 
             return (
               <li key={item.name} className="relative">
-                {item.children ? (
+                {(item as any).children ? (
                   <>
                     <button
                       onClick={() => toggleDropdown(item.name)}
@@ -328,7 +334,7 @@ function AdminSidebarComponent({ collapsed = false, onToggle }: AdminSidebarProp
                         </>
                       )}
                     </button>
-
+ 
                     {/* Dropdown */}
                     <AnimatePresence initial={false}>
                       {!collapsed && isDropdownOpen && (
@@ -340,7 +346,7 @@ function AdminSidebarComponent({ collapsed = false, onToggle }: AdminSidebarProp
                           variants={dropdownVariants}
                           className="ml-9 overflow-hidden pr-1"
                         >
-                          {item.children.map((child) => {
+                          {((item as any).children as any[]).map((child) => {
                             const childActive = pathname === child.href
                             return (
                               <li key={child.name}>

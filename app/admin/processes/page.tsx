@@ -294,6 +294,8 @@ export default function ProcessPage() {
                   columns={columns}
                   data={filteredProcesses}
                   showSearch={false}
+                  showExport={true}
+                  exportFilename="manufacturing-processes"
                 />
               )}
             </div>
