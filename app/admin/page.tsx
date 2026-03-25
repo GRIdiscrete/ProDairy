@@ -7,7 +7,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import {
+import { 
   BarChart3,
   TrendingUp,
   Truck,
@@ -25,6 +25,8 @@ import {
   Layers,
   Settings2,
   Package,
+  Download,
+  FileSpreadsheet,
 } from "lucide-react"
 import {
   analyticsApi,
@@ -55,6 +57,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { exportToCSV } from "@/lib/export-utils"
 
 // ─── Types ───
 type TimePeriod = "volume_today" | "volume_yesterday" | "volume_wtd" | "volume_mtd" | "volume_qtd" | "volume_ytd" | "volume_last_7_days" | "volume_last_30_days"
@@ -444,6 +447,13 @@ export default function AdminDashboard() {
                            <CardDescription>Volume breakdown by vehicle and compartment</CardDescription>
                          </div>
                          <div className="flex items-center gap-2">
+                           <button 
+                             onClick={() => exportToCSV(data.collectionDetails, 'truck-performance')}
+                             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#006BC4] text-white hover:bg-[#005aab] transition-all shadow-sm"
+                           >
+                             <Download className="w-3.5 h-3.5" />
+                             Export CSV
+                           </button>
                            <Badge variant="outline" className="h-8 rounded-lg cursor-pointer hover:bg-muted transition-colors"><Filter className="w-3 h-3 mr-1" /> Filter</Badge>
                          </div>
                       </CardHeader>
@@ -497,9 +507,31 @@ export default function AdminDashboard() {
                     </Card>
 
                     <Card className="border-border">
-                      <CardHeader>
-                        <CardTitle className="text-lg">Detailed Supplier Breakdown</CardTitle>
-                        <CardDescription>Milk origin grouped by truck and tank</CardDescription>
+                      <CardHeader className="flex flex-row items-center justify-between pb-2">
+                        <div>
+                          <CardTitle className="text-lg">Detailed Supplier Breakdown</CardTitle>
+                          <CardDescription>Milk origin grouped by truck and tank</CardDescription>
+                        </div>
+                        <button 
+                          onClick={() => {
+                            const flattenedData = data.collectionDetails
+                              .filter(d => d.suppliers && d.suppliers.length > 0)
+                              .flatMap(row => (row.suppliers || []).map((s: any) => ({
+                                Truck: row.truck_number || "N/A",
+                                Compartment: row.truck_compartment_number || "N/A",
+                                Supplier: `${s.first_name} ${s.last_name}`,
+                                Tank: s.tank || "N/A",
+                                Voucher: s.voucher || "N/A",
+                                Volume: s.volume || 0,
+                                Export_Date: new Date().toLocaleDateString()
+                              })))
+                            exportToCSV(flattenedData, 'supplier-breakdown')
+                          }}
+                          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#006BC4] text-white hover:bg-[#005aab] transition-all shadow-sm"
+                        >
+                          <Download className="w-3.5 h-3.5" />
+                          Export CSV
+                        </button>
                       </CardHeader>
                       <CardContent className="px-6 pb-6 space-y-4 no-scrollbar">
                         {data.collectionDetails.filter(d => d.suppliers && d.suppliers.length > 0).slice(0, 5).map((row, i) => (
@@ -574,6 +606,13 @@ export default function AdminDashboard() {
                            <div className="flex items-center justify-between">
                               <CardTitle className="text-lg">Shift Performance Breakdown</CardTitle>
                               <div className="flex items-center gap-2">
+                                <button 
+                                  onClick={() => exportToCSV(data.productionDetails, 'shift-performance')}
+                                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition-all shadow-sm"
+                                >
+                                  <Download className="w-3.5 h-3.5" />
+                                  Export CSV
+                                </button>
                                 <Badge className="bg-orange-500/10 text-orange-600 border-none">Day Shift</Badge>
                                 <Badge className="bg-indigo-500/10 text-indigo-600 border-none">Night Shift</Badge>
                               </div>
@@ -644,9 +683,18 @@ export default function AdminDashboard() {
 
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <Card className="border-border">
-                      <CardHeader>
-                        <CardTitle className="text-lg">Intake Volume Analysis</CardTitle>
-                        <CardDescription>Breakdown by truck and compartment</CardDescription>
+                      <CardHeader className="flex flex-row items-center justify-between">
+                        <div>
+                          <CardTitle className="text-lg">Intake Volume Analysis</CardTitle>
+                          <CardDescription>Breakdown by truck and compartment</CardDescription>
+                        </div>
+                        <button 
+                          onClick={() => exportToCSV(data.intakeDetails, 'intake-analysis')}
+                          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#006BC4] text-white hover:bg-[#005aab] transition-all shadow-sm"
+                        >
+                          <Download className="w-3.5 h-3.5" />
+                          Export
+                        </button>
                       </CardHeader>
                       <CardContent className="p-0 overflow-x-auto no-scrollbar">
                         <table className="w-full text-sm">
@@ -709,9 +757,18 @@ export default function AdminDashboard() {
                   </div>
 
                   <Card className="border-border">
-                    <CardHeader>
-                      <CardTitle className="text-lg">Machine & Silo Cleaning Status</CardTitle>
-                      <CardDescription>Current stage and status of all CIP processes</CardDescription>
+                    <CardHeader className="flex flex-row items-center justify-between">
+                      <div>
+                        <CardTitle className="text-lg">Machine & Silo Cleaning Status</CardTitle>
+                        <CardDescription>Current stage and status of all CIP processes</CardDescription>
+                      </div>
+                      <button 
+                        onClick={() => exportToCSV(data.cipData, 'cip-history')}
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-orange-600 text-white hover:bg-orange-700 transition-all shadow-sm"
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                        Export All
+                      </button>
                     </CardHeader>
                     <CardContent className="px-6 pb-6 no-scrollbar">
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -758,6 +815,24 @@ export default function AdminDashboard() {
               {/* ─── TANKS TAB ─── */}
               {activeTab === "tanks" && (
                 <div className="space-y-6">
+                  <div className="flex items-center justify-between px-1">
+                    <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Live Silo Status</h3>
+                    <button 
+                      onClick={() => exportToCSV(data.silos.map(s => ({
+                        Name: s.name,
+                        Serial: s.serial_number,
+                        Status: s.status,
+                        Volume: s.milk_volume,
+                        Capacity: s.capacity,
+                        Fill: `${Math.round((s.milk_volume / s.capacity) * 100)}%`,
+                        Location: s.location
+                      })), 'silo-status')}
+                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-border bg-white hover:bg-muted transition-all shadow-sm"
+                    >
+                      <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
+                      Export Inventory
+                    </button>
+                  </div>
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 no-scrollbar">
                     {data.silos.sort((a,b) => b.milk_volume - a.milk_volume).map((silo, i) => {
                       const fillPercent = Math.max(0, Math.min(100, (silo.milk_volume / silo.capacity) * 100))
