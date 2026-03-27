@@ -1,16 +1,29 @@
 import { apiRequest } from "@/lib/utils/api-request"
 
 export interface Production {
-  product: string
-  quantity: number
+  id?: string
+  time: string
+  created_at?: string
+  process_id: string
+  updated_at?: string | null
+  temp_hot_water: number
+  temp_product_out: number
+  ouput_target_units: string
+  output_target_value: number
+  temp_product_pasteurisation: number
+  total_homogenisation_pressure: number
+  homogenisation_pressure_stage_1: number
+  homogenisation_pressure_stage_2: number
+  steri_milk_pasteurizing_form_id?: string
 }
 
 export interface PasteurizingForm {
   id: string
   created_at: string
-  updated_at?: string
+  updated_at?: string | null
+  operator?: string | null
+  date?: string | null
   machine: string
-  source_silo: string
   preheating_start: string
   water_circulation: string
   production_start: string
@@ -19,12 +32,60 @@ export interface PasteurizingForm {
   machine_end: string
   bmt: string
   fat: number
-  production: Production[]
+  production_?: string | null
+  cream_index?: number | null
+  steri_milk_pasteurizing_form_production: Production[]
+  // Related data from API response (for backward compatibility)
+  steri_milk_pasteurizing_form_operator_fkey?: any
+  steri_milk_pasteurizing_form_machine_fkey?: {
+    id: string
+    name: string
+    status: string
+    category: string
+    location: string
+    counter_id?: string
+    created_at: string
+    updated_at: string
+    cases_packed?: number
+    serial_number: string
+  }
+  steri_milk_pasteurizing_form_source_silo_fkey?: {
+    id: string
+    name: string
+    status: string
+    capacity: number
+    category: string
+    location: string
+    created_at: string
+    updated_at: string
+    milk_volume: number
+    serial_number: string
+  }
+  steri_milk_pasteurizing_form_bmt_fkey?: {
+    id: string
+    volume: number
+    product?: string
+    created_at: string
+    updated_at?: string
+    movement_end: string
+    dpp_signature: string
+    llm_signature: string
+    flow_meter_end: string
+    movement_start: string
+    source_silo_id: string
+    dpp_operator_id: string
+    llm_operator_id: string
+    flow_meter_start: string
+    destination_silo_id: string
+    flow_meter_end_reading: number
+    flow_meter_start_reading: number
+  }
 }
 
 export interface CreatePasteurizingFormRequest {
+  operator: string
+  date: string
   machine: string
-  source_silo: string
   preheating_start: string
   water_circulation: string
   production_start: string
@@ -33,7 +94,48 @@ export interface CreatePasteurizingFormRequest {
   machine_end: string
   bmt: string
   fat: number
-  production: Production[]
+  cream_index?: number
+  production_: {
+    process_id: string
+    output_target_value: number
+    ouput_target_units: string
+    temp_hot_water: number
+    temp_product_out: number
+    temp_product_pasteurisation: number
+    total_homogenisation_pressure: number
+    homogenisation_pressure_stage_1: number
+    homogenisation_pressure_stage_2: number
+    time: string
+  }[]
+}
+
+export interface UpdatePasteurizingFormRequest {
+  id: string
+  operator?: string
+  date?: string
+  machine?: string
+  preheating_start?: string
+  water_circulation?: string
+  production_start?: string
+  production_end?: string
+  machine_start?: string
+  machine_end?: string
+  bmt?: string
+  fat?: number
+  cream_index?: number
+  production_?: {
+    id: string
+    process_id: string
+    output_target_value: number
+    ouput_target_units: string
+    temp_hot_water: number
+    temp_product_out: number
+    temp_product_pasteurisation: number
+    total_homogenisation_pressure: number
+    homogenisation_pressure_stage_1: number
+    homogenisation_pressure_stage_2: number
+    time: string
+  }[]
 }
 
 export interface PasteurizingFormResponse {
@@ -102,30 +204,15 @@ export const pasteurizingApi = {
   },
 
   // Update pasteurizing form
-  update: async (id: string, formData: Partial<CreatePasteurizingFormRequest>): Promise<PasteurizingFormResponse> => {
+  update: async (id: string, formData: UpdatePasteurizingFormRequest): Promise<PasteurizingFormResponse> => {
     try {
-      const patchData = {
-        id,
-        machine: formData.machine,
-        source_silo: formData.source_silo,
-        preheating_start: formData.preheating_start,
-        water_circulation: formData.water_circulation,
-        production_start: formData.production_start,
-        production_end: formData.production_end,
-        machine_start: formData.machine_start,
-        machine_end: formData.machine_end,
-        bmt: formData.bmt,
-        fat: formData.fat,
-        production: formData.production || []
-      }
-
       const response = await apiRequest<PasteurizingFormResponse>("/steri-milk-pasteurizing-form", {
         method: "PATCH",
         headers: {
           accept: "application/json",
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(patchData),
+        body: JSON.stringify(formData),
       })
       return response
     } catch (error) {

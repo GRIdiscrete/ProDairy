@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Edit, Shield, Settings, Eye, CheckCircle, Calendar, Clock } from "lucide-react"
-import { UserRole } from "@/lib/types/roles"
+import { UserRole, UserRoleResponse, convertApiResponseToUserRole } from "@/lib/types/roles"
 
 interface RoleViewDrawerProps {
   open: boolean
@@ -14,27 +14,48 @@ interface RoleViewDrawerProps {
   onEdit?: () => void
 }
 
+// Update featureLabels to match backend keys
 const featureLabels: Record<string, string> = {
-  user: "User Management",
-  role: "Role Management", 
-  machine_item: "Machine Management",
-  silo_item: "Silo Management",
-  supplier: "Supplier Management",
-  process: "Process Management",
-  devices: "Device Management",
+  user_operations: "User Management",
+  role_operations: "Role Management",
+  machine_item_operations: "Machine Management",
+  silo_item_operations: "Silo Management",
+  supplier_operations: "Supplier Management",
+  process_operations: "Process Management",
+  devices_operations: "Device Management",
+  raw_product_collection_operations: "Raw Product Collection",
+  raw_milk_intake_operations: "Raw Milk Intake",
+  raw_milk_lab_test_operations: "Raw Milk Lab Test",
+  before_and_after_autoclave_lab_test_operations: "Before & After Autoclave Lab Test",
+  pasteurizing_operations: "Pasteurizing",
+  filmatic_operation_operations: "Filmatic Operation",
+  steri_process_operation_operations: "Steri Process Operation",
+  incubation_operations: "Incubation",
+  incubation_lab_test_operations: "Incubation Lab Test",
+  dispatch_operations: "Dispatch",
+  production_plan_operations: "Production Plan",
+  bmt_operations: "BMT",
 }
 
+// Update viewLabels to include all requested views
 const viewLabels: Record<string, string> = {
-  dashboard: "Dashboard",
-  settings: "Settings",
   admin_panel: "Admin Panel",
-  user_tab: "User Tab",
-  role_tab: "Role Tab",
+  production_dashboard: "Production Dashboard",
+  user_tab: "Users Tab",
   machine_tab: "Machine Tab",
-  silo_tab: "Silo Tab",
   supplier_tab: "Supplier Tab",
-  process_tab: "Process Tab",
   devices_tab: "Devices Tab",
+  data_capture_module: "Data Capture Module",
+  settings: "Settings",
+  role_tab: "Role Tab",
+  silo_tab: "Silo Tab",
+  process_tab: "Process Tab",
+  driver_ui: "Driver UI",
+  lab_tests: "Lab Tests",
+  bmt: "BMT",
+  general_lab_test: "General Lab Test",
+  cip: "CIP",
+  ist: "IST",
 }
 
 const actionColors: Record<string, string> = {
@@ -42,10 +63,14 @@ const actionColors: Record<string, string> = {
   read: "bg-blue-100 text-blue-800",
   update: "bg-yellow-100 text-yellow-800", 
   delete: "bg-red-100 text-red-800",
+  approve: "bg-purple-100 text-purple-800",
 }
 
 export function RoleViewDrawer({ open, onClose, role, onEdit }: RoleViewDrawerProps) {
   if (!role) return null
+
+  // Accept backend structure directly
+  const normalizedRole = role as any
 
   const getRoleColor = (roleName: string) => {
     switch (roleName?.toLowerCase()) {
@@ -61,6 +86,7 @@ export function RoleViewDrawer({ open, onClose, role, onEdit }: RoleViewDrawerPr
   }
 
   const formatDate = (dateString: string) => {
+    if (!dateString) return "N/A"
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'long',
@@ -70,31 +96,19 @@ export function RoleViewDrawer({ open, onClose, role, onEdit }: RoleViewDrawerPr
     })
   }
 
+  // Get all operations from all features (flattened)
   const getAllOperations = () => {
-    if (!role) return []
-    return [
-      ...role.user_operations,
-      ...role.role_operations,
-      ...role.machine_item_operations,
-      ...role.silo_item_operations,
-      ...role.supplier_operations,
-      ...role.process_operations,
-      ...role.devices_operations
-    ]
+    return Object.keys(featureLabels).reduce((acc, key) => {
+      const ops = normalizedRole[key]
+      if (Array.isArray(ops)) return [...acc, ...ops]
+      return acc
+    }, [] as string[])
   }
 
+  // Get operations for a feature
   const getFeatureOperations = (featureKey: string) => {
-    if (!role) return []
-    switch (featureKey) {
-      case 'user': return role.user_operations
-      case 'role': return role.role_operations
-      case 'machine_item': return role.machine_item_operations
-      case 'silo_item': return role.silo_item_operations
-      case 'supplier': return role.supplier_operations
-      case 'process': return role.process_operations
-      case 'devices': return role.devices_operations
-      default: return []
-    }
+    const ops = normalizedRole[featureKey]
+    return Array.isArray(ops) ? ops : []
   }
 
   return (
@@ -108,8 +122,8 @@ export function RoleViewDrawer({ open, onClose, role, onEdit }: RoleViewDrawerPr
               </div>
               <div>
                 <SheetTitle className="flex items-center space-x-2">
-                  <span>{role.role_name} Role</span>
-                  <Badge className={getRoleColor(role.role_name)}>{role.role_name}</Badge>
+                  <span>{normalizedRole.role_name} Role</span>
+                  <Badge className={getRoleColor(normalizedRole.role_name)}>{normalizedRole.role_name}</Badge>
                 </SheetTitle>
               </div>
             </div>
@@ -135,14 +149,14 @@ export function RoleViewDrawer({ open, onClose, role, onEdit }: RoleViewDrawerPr
               <div className="grid grid-cols-1 gap-4">
                 <div>
                   <label className="text-sm font-medium text-gray-500">Role Name</label>
-                  <p className="text-sm font-semibold">{role.role_name}</p>
+                  <p className="text-sm font-semibold">{normalizedRole.role_name}</p>
                 </div>
               </div>
               
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium text-gray-500">Total Views</label>
-                  <p className="text-sm font-semibold">{role.views.length} Views</p>
+                  <p className="text-sm font-semibold">{(normalizedRole.views || []).length} Views</p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-500">Total Operations</label>
@@ -158,14 +172,14 @@ export function RoleViewDrawer({ open, onClose, role, onEdit }: RoleViewDrawerPr
                     <Calendar className="w-4 h-4 mr-1" />
                     Created At
                   </label>
-                  <p className="text-sm">{formatDate(role.created_at)}</p>
+                  <p className="text-sm">{formatDate(normalizedRole.created_at)}</p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-500 flex items-center">
                     <Clock className="w-4 h-4 mr-1" />
                     Updated At
                   </label>
-                  <p className="text-sm">{formatDate(role.updated_at)}</p>
+                  <p className="text-sm">{formatDate(normalizedRole.updated_at)}</p>
                 </div>
               </div>
             </CardContent>
@@ -191,7 +205,7 @@ export function RoleViewDrawer({ open, onClose, role, onEdit }: RoleViewDrawerPr
                     </div>
                     <div className="flex flex-wrap gap-2">
                       {operations.length > 0 ? (
-                        operations.map((operation) => (
+                        operations.map((operation: string) => (
                           <Badge 
                             key={operation} 
                             className={actionColors[operation] || "bg-gray-100 text-gray-800"}
@@ -216,9 +230,9 @@ export function RoleViewDrawer({ open, onClose, role, onEdit }: RoleViewDrawerPr
               <CardTitle className="text-lg">View Permissions</CardTitle>
             </CardHeader>
             <CardContent>
-              {role.views.length > 0 ? (
+              {(normalizedRole.views || []).length > 0 ? (
                 <div className="grid grid-cols-2 gap-3">
-                  {role.views.map((viewKey: string) => (
+                  {(normalizedRole.views || []).map((viewKey: string) => (
                     <div key={viewKey} className="flex items-center space-x-2 p-2 border rounded-lg">
                       <Eye className="w-4 h-4 text-blue-500" />
                       <span className="text-sm font-medium">

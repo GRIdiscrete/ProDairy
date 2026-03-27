@@ -11,7 +11,6 @@ export interface SkimMilk {
   quantity: number
   fat: number
   destination_silo_id: string
-  bmt_id: string
 }
 
 export interface Cream {

@@ -120,16 +120,25 @@ export interface ProductionPlan {
   status: "planned" | "ongoing" | "completed" | "cancelled"
   updated_at?: string
   production_plan_supervisor_fkey?: UserEntity
+  process_id?: string
+  output?: {
+    value: number
+    unit_of_measure: string
+  }
 }
 
 // New Driver Form Types
 export interface DriverFormCollectedProduct {
+  id?: string
+  created_at?: string
+  updated_at?: string | null
+  drivers_form_id?: string
   raw_material_id: string
   supplier_id: string
   collected_amount: number
   unit_of_measure: string
-  "e-sign-supplier": string
-  "e-sign-driver": string
+  e_sign_supplier: string
+  e_sign_driver: string
 }
 
 export interface DriverForm {
@@ -138,7 +147,11 @@ export interface DriverForm {
   driver: string
   start_date: string
   end_date: string
-  collected_products: DriverFormCollectedProduct[] | null
+  tanker:string
+  tag:string
+  collected_products?: any[] | null
+  collected_products_?: string | null
+  drivers_form_collected_products: DriverFormCollectedProduct[]
   delivered: boolean
   rejected: boolean
   updated_at: string

@@ -1,63 +1,104 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useForm, useFieldArray, Controller } from "react-hook-form"
+import { useParams } from "next/navigation"
+import { useForm, useFieldArray } from "react-hook-form"
 import { yupResolver } from "@hookform/resolvers/yup"
 import * as yup from "yup"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { SearchableSelect, SearchableSelectOption } from "@/components/ui/searchable-select"
-import { DatePicker, TimePicker } from "@/components/ui/date-picker"
-import { 
-  Plus, 
-  Trash2, 
-  FlaskConical, 
-  Package, 
+import { DatePicker } from "@/components/ui/date-picker"
+import { TimePicker } from "@/components/ui/time-picker"
+import { ShadcnTimePicker } from "@/components/ui/shadcn-time-picker"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Plus,
+  Trash2,
+  FlaskConical,
+  Package,
   Save,
   X,
-  ChevronLeft,
-  ChevronRight,
   ArrowRight,
   Droplets,
   TrendingUp,
   Clock,
-  Factory
+  Factory,
+  Beaker
 } from "lucide-react"
-import { useAppDispatch, useAppSelector } from "@/lib/store"
-import { 
-  createPasteurizingForm, 
-  updatePasteurizingForm
-} from "@/lib/store/slices/pasteurizingSlice"
-import { 
-  fetchStandardizingForms 
-} from "@/lib/store/slices/standardizingSlice"
-import { 
-  fetchMachines 
-} from "@/lib/store/slices/machineSlice"
-import { 
-  fetchSilos 
-} from "@/lib/store/slices/siloSlice"
-import { 
-  fetchBMTControlForms 
-} from "@/lib/store/slices/bmtControlFormSlice"
-import { PasteurizingForm, CreatePasteurizingFormRequest, Production } from "@/lib/api/pasteurizing"
 import { toast } from "sonner"
+import { pasteurizingApi, CreatePasteurizingFormRequest, PasteurizingForm } from "@/lib/api/pasteurizing"
+import { useAuth } from "@/hooks/use-auth"
+import { useAppDispatch, useAppSelector } from "@/lib/store"
+import { fetchMachines } from "@/lib/store/slices/machineSlice"
+import { fetchBMTControlForms } from "@/lib/store/slices/bmtControlFormSlice"
+import { fetchPasteurizingForms } from "@/lib/store/slices/pasteurizingSlice"
+import { format } from "date-fns"
+import { id } from "date-fns/locale"
+
+// Helpers — convert/parse times so we always send backend datetime format:
+const formatDateToBackend = (d: Date) => {
+  const iso = d.toISOString();
+  const [datePart, fracPart] = iso.split(".");
+  const millis = (fracPart || "000Z").replace("Z", "");
+  const micro = `${millis}000`;
+  return `${datePart.replace("T", " ")}.${micro}+00`;
+}
+
+const convertTimeToBackend = (dateStr: string | null | undefined, timeVal: any) => {
+  if (!timeVal && timeVal !== 0) return null;
+  const val = String(timeVal);
+  if (val.includes(" ") && /\d{4}-\d{2}-\d{2}/.test(val)) return val;
+  if (val.includes("T") || val.endsWith("Z")) {
+    const parsed = new Date(val);
+    if (isNaN(parsed.getTime())) return null;
+    return formatDateToBackend(parsed);
+  }
+  const hhmmMatch = val.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
+  if (hhmmMatch) {
+    const hh = Number(hhmmMatch[1]);
+    const mm = Number(hhmmMatch[2]);
+    const ss = Number(hhmmMatch[3] || 0);
+    let d: Date;
+    if (dateStr && /\d{4}-\d{2}-\d{2}/.test(dateStr)) {
+      const [y, m, day] = dateStr.split("-").map(Number);
+      d = new Date(Date.UTC(y, (m || 1) - 1, day, hh, mm, ss, 0));
+    } else {
+      const now = new Date();
+      d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), hh, mm, ss, 0));
+    }
+    return formatDateToBackend(d);
+  }
+  return null;
+}
+
+const extractTime = (value: string | undefined | null) => {
+  if (!value) return "";
+  if (value.includes(" ") && /\d{4}-\d{2}-\d{2}/.test(value)) {
+    const timePart = value.split(" ")[1] || "";
+    return timePart.substring(0, 5);
+  }
+  if (value.includes("T")) {
+    const t = value.split("T")[1] || "";
+    return t.substring(0, 5);
+  }
+  const hhmmMatch = value.match(/^(\d{1,2}:\d{2})/);
+  return hhmmMatch ? hhmmMatch[1] : "";
+}
 
 // Process Overview Component
 const ProcessOverview = () => (
-  <div className="mb-8 p-6 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg">
+  <div className="mb-6 p-6 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg">
     <h3 className="text-lg font-light text-gray-900 mb-4">Process Overview</h3>
-    <div className="flex items-center justify-between mb-4">
+    <div className="flex items-center justify-between mb-2">
       <div className="flex items-center space-x-2">
         <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center">
-          <TrendingUp className="w-4 h-4 text-orange-600" />
+          <Beaker className="w-4 h-4 text-orange-600" />
         </div>
         <span className="text-sm font-light">Standardizing</span>
       </div>
@@ -76,7 +117,7 @@ const ProcessOverview = () => (
       <ArrowRight className="w-4 h-4 text-gray-400" />
       <div className="flex items-center space-x-2">
         <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
-          <Factory className="w-4 h-4 text-gray-400" />
+          <Factory className="h-4 w-4 text-gray-400" />
         </div>
         <span className="text-sm font-light text-gray-400">Filmatic Lines</span>
       </div>
@@ -86,20 +127,30 @@ const ProcessOverview = () => (
 
 // Form Schema
 const pasteurizingFormSchema = yup.object({
+  operator: yup.string().required("Operator is required"),
+  date: yup.string().required("Date is required"),
   machine: yup.string().required("Machine is required"),
-  source_silo: yup.string().required("Source silo is required"),
   preheating_start: yup.string().required("Preheating start time is required"),
-  water_circulation: yup.string().required("Water circulation time is required"),
+ 
   production_start: yup.string().required("Production start time is required"),
   production_end: yup.string().required("Production end time is required"),
   machine_start: yup.string().required("Machine start time is required"),
   machine_end: yup.string().required("Machine end time is required"),
   bmt: yup.string().required("BMT is required"),
   fat: yup.number().required("Fat content is required").min(0, "Fat content must be positive"),
-  production: yup.array().of(
+  cream_index: yup.number().optional().nullable().min(0, "Cream index must be positive"),
+  production_: yup.array().of(
     yup.object({
-      product: yup.string().required("Product is required"),
-      quantity: yup.number().required("Quantity is required").min(0, "Quantity must be positive"),
+      process_id: yup.string().required("Process ID is required"),
+      time: yup.string().required("Time is required"),
+      temp_hot_water: yup.number().required("Hot water temperature required").min(0, "Must be positive"),
+      temp_product_out: yup.number().required("Product out temperature required").min(0, "Must be positive"),
+      temp_product_pasteurisation: yup.number().required("Pasteurisation temperature required").min(0, "Must be positive"),
+      homogenisation_pressure_stage_1: yup.number().required("Stage 1 pressure required").min(0, "Must be positive"),
+      homogenisation_pressure_stage_2: yup.number().required("Stage 2 pressure required").min(0, "Must be positive"),
+      total_homogenisation_pressure: yup.number().required("Total pressure required").min(0, "Must be positive"),
+      output_target_value: yup.number().required("Output target value required").min(0, "Must be positive"),
+      ouput_target_units: yup.string().required("Output target units required"),
     })
   ).min(1, "At least one production entry is required"),
 })
@@ -111,29 +162,41 @@ interface PasteurizingFormDrawerProps {
   onOpenChange: (open: boolean) => void
   form?: PasteurizingForm | null
   mode: "create" | "edit"
+  onSuccess?: () => void
 }
 
-export function PasteurizingFormDrawer({ 
-  open, 
-  onOpenChange, 
-  form, 
-  mode = "create" 
+export function PasteurizingFormDrawer({
+  open,
+  onOpenChange,
+  form,
+  mode = "create",
+  onSuccess
 }: PasteurizingFormDrawerProps) {
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const params = useParams()
+  const { user } = useAuth()
   const dispatch = useAppDispatch()
-  const { loading } = useAppSelector((state) => state.pasteurizing)
-  const { forms: standardizingForms } = useAppSelector((state) => state.standardizing)
-  const { machines } = useAppSelector((state) => state.machine)
-  const { silos } = useAppSelector((state) => state.silo)
-  const { forms: bmtForms } = useAppSelector((state) => state.bmtControlForms)
 
-  const [loadingInitialData, setLoadingInitialData] = useState(false)
+  // Get data from Redux store
+  const { machines = [], loading: machinesLoading = false } = useAppSelector((state) => state.machine || {})
+  const { forms: bmtForms = [], loading: bmtLoading = false } = useAppSelector((state) => state.bmtControlForms || {})
 
-  // Single form for all data
-  const formHook = useForm<PasteurizingFormData>({
-    resolver: yupResolver(pasteurizingFormSchema),
+  // Process ID from route params
+  const processId = params?.process_id as string || ""
+
+  const {
+    register,
+    handleSubmit,
+    control,
+    formState: { errors },
+    reset,
+    setValue,
+    watch
+  } = useForm({
     defaultValues: {
+      operator: "",
+      date: "",
       machine: "",
-      source_silo: "",
       preheating_start: "",
       water_circulation: "",
       production_start: "",
@@ -141,75 +204,93 @@ export function PasteurizingFormDrawer({
       machine_start: "",
       machine_end: "",
       bmt: "",
-      fat: 0,
-      production: [{ product: "", quantity: 0 }],
-    },
-  })
-
-  const { fields: productionFields, append: appendProduction, remove: removeProduction } = useFieldArray({
-    control: formHook.control,
-    name: "production"
-  })
-
-  // Load initial data
-  const loadInitialData = async () => {
-    try {
-      setLoadingInitialData(true)
-      
-      // Load standardizing forms to show process flow
-      if (standardizingForms.length === 0) {
-        await dispatch(fetchStandardizingForms())
-      }
-      
-      // Load machines for the searchable select
-      if (machines.length === 0) {
-        await dispatch(fetchMachines({}))
-      }
-      
-      // Load silos for the searchable select
-      if (silos.length === 0) {
-        await dispatch(fetchSilos({}))
-      }
-      
-      // Load BMT forms for the searchable select
-      if (bmtForms.length === 0) {
-        await dispatch(fetchBMTControlForms())
-      }
-    } catch (error) {
-      console.error("Failed to load initial data:", error)
-      toast.error("Failed to load form data")
-    } finally {
-      setLoadingInitialData(false)
+      fat: "",
+      cream_index: "",
+      production_: [] as any[]
     }
-  }
+  })
 
-  // Load data when drawer opens
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: "production_"
+  })
+
+  // Fetch data on component mount
+  useEffect(() => {
+    if (dispatch) {
+      dispatch(fetchMachines())
+      dispatch(fetchBMTControlForms())
+    }
+  }, [dispatch])
+
+  // Auto-prefill operator and process ID when component opens
   useEffect(() => {
     if (open) {
-      loadInitialData()
+      // Always auto-prefill operator from logged-in user (for both create and edit)
+      if (user?.id) {
+        console.log("Auto-filling operator with user ID:", user.id)
+        setValue("operator", user.id)
+      } else {
+        console.log("No user ID available for auto-fill:", user)
+      }
+
+      // Auto-prefill process ID from route params and add initial production entry (create mode only)
+      if (mode === "create" && processId) {
+        // Add initial production entry with process ID
+        setValue("production_", [{
+          process_id: processId,
+          time: "",
+          temp_hot_water: "",
+          temp_product_out: "",
+          temp_product_pasteurisation: "",
+          homogenisation_pressure_stage_1: "",
+          homogenisation_pressure_stage_2: "",
+          total_homogenisation_pressure: "",
+          output_target_value: "",
+          ouput_target_units: ""
+        }])
+      }
     }
-  }, [open])
+  }, [open, mode, user?.id, processId, setValue])
 
   // Reset form when form prop changes
   useEffect(() => {
     if (form && mode === "edit") {
-      formHook.reset({
+      reset({
+        operator: form.operator || "",
+        date: form.date || "",
         machine: form.machine || "",
-        source_silo: form.source_silo || "",
-        preheating_start: form.preheating_start || "",
-        water_circulation: form.water_circulation || "",
-        production_start: form.production_start || "",
-        production_end: form.production_end || "",
-        machine_start: form.machine_start || "",
-        machine_end: form.machine_end || "",
+        // extract HH:mm for time-only backend values like "23:00:00" or full datetimes
+        preheating_start: extractTime(form.preheating_start),
+        water_circulation: extractTime(form.water_circulation),
+        production_start: extractTime(form.production_start),
+        production_end: extractTime(form.production_end),
+        machine_start: extractTime(form.machine_start),
+        machine_end: extractTime(form.machine_end),
         bmt: form.bmt || "",
-        fat: form.fat || 0,
-        production: form.production?.length > 0 ? form.production : [{ product: "", quantity: 0 }],
+        fat: form.fat || undefined,
+        cream_index: form.cream_index || undefined,
+        // include existing production ids so they persist through edit -> submit
+        production_: form.steri_milk_pasteurizing_form_production?.map(prod => ({
+          id: prod.id, // preserve backend id
+          process_id: prod.process_id,
+          // prefill picker with HH:mm (handles "HH:mm:ss" and full datetimes)
+          time: extractTime(prod.time),
+          temp_hot_water: prod.temp_hot_water,
+          temp_product_out: prod.temp_product_out,
+          temp_product_pasteurisation: prod.temp_product_pasteurisation,
+          homogenisation_pressure_stage_1: prod.homogenisation_pressure_stage_1,
+          homogenisation_pressure_stage_2: prod.homogenisation_pressure_stage_2,
+          total_homogenisation_pressure: prod.total_homogenisation_pressure,
+          output_target_value: prod.output_target_value,
+          ouput_target_units: prod.ouput_target_units,
+        })) || []
       })
     } else if (mode === "create") {
-      formHook.reset({
+      reset({
+        operator: "",
+        date: "",
         machine: "",
-        source_silo: "",
         preheating_start: "",
         water_circulation: "",
         production_start: "",
@@ -217,415 +298,493 @@ export function PasteurizingFormDrawer({
         machine_start: "",
         machine_end: "",
         bmt: "",
-        fat: 0,
-        production: [{ product: "", quantity: 0 }],
+        fat: undefined,
+        cream_index: undefined,
+        production_: []
       })
     }
-  }, [form, mode, formHook])
+  }, [form, mode, reset])
 
-  const handleSubmit = async (data: PasteurizingFormData) => {
+  const onSubmit = async (data: any) => {
+    setIsSubmitting(true)
     try {
+      // Ensure operator is always set from logged-in user
+      const operatorId = data.operator || user?.id || ""
+
+      // Helper: normalize empty time/string to null
+      const normalizeTime = (val: any) => (val === "" || val === undefined || val === null) ? null : val
+
+
+      // Normalize production_ entries (time -> null if empty; numeric fields -> null if empty)
+      const productionEntries = (data.production_ || []).map((p: any) => ({
+        ...p,
+        // ensure id exists (use existing or generate one)
+        id: p.id || (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function" ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2,8)}`),
+        time: normalizeTime(p.time),
+        temp_hot_water: p.temp_hot_water === "" || p.temp_hot_water === undefined ? null : p.temp_hot_water,
+        temp_product_out: p.temp_product_out === "" || p.temp_product_out === undefined ? null : p.temp_product_out,
+        temp_product_pasteurisation: p.temp_product_pasteurisation === "" || p.temp_product_pasteurisation === undefined ? null : p.temp_product_pasteurisation,
+        homogenisation_pressure_stage_1: p.homogenisation_pressure_stage_1 === "" || p.homogenisation_pressure_stage_1 === undefined ? null : p.homogenisation_pressure_stage_1,
+        homogenisation_pressure_stage_2: p.homogenisation_pressure_stage_2 === "" || p.homogenisation_pressure_stage_2 === undefined ? null : p.homogenisation_pressure_stage_2,
+        total_homogenisation_pressure: p.total_homogenisation_pressure === "" || p.total_homogenisation_pressure === undefined ? null : p.total_homogenisation_pressure,
+        output_target_value: p.output_target_value === "" || p.output_target_value === undefined ? null : p.output_target_value,
+        ouput_target_units: p.ouput_target_units || null,
+      }))
+
       const formData: CreatePasteurizingFormRequest = {
-        machine: data.machine,
-        source_silo: data.source_silo,
-        preheating_start: data.preheating_start,
-        water_circulation: data.water_circulation,
-        production_start: data.production_start,
-        production_end: data.production_end,
-        machine_start: data.machine_start,
-        machine_end: data.machine_end,
-        bmt: data.bmt,
-        fat: data.fat,
-        production: data.production,
+        operator: operatorId,
+        date: data.date || null,
+        machine: data.machine || null,
+        preheating_start: convertTimeToBackend(data.date, data.preheating_start),
+        water_circulation: convertTimeToBackend(data.date, data.water_circulation),
+        production_start: convertTimeToBackend(data.date, data.production_start),
+        production_end: convertTimeToBackend(data.date, data.production_end),
+        machine_start: convertTimeToBackend(data.date, data.machine_start),
+        machine_end: convertTimeToBackend(data.date, data.machine_end),
+        bmt: data.bmt || null,
+        fat: data.fat === "" || data.fat === undefined ? null : data.fat,
+        cream_index: data.cream_index === "" || data.cream_index === undefined ? null : data.cream_index,
+        production_: productionEntries
       }
 
       if (mode === "create") {
-        await dispatch(createPasteurizingForm(formData)).unwrap()
+        await pasteurizingApi.create(formData)
         toast.success("Pasteurizing form created successfully")
-      } else if (form) {
-        await dispatch(updatePasteurizingForm({ id: form.id, formData })).unwrap()
+      } else if (form?.id) {
+        await pasteurizingApi.update(form.id, { id: form.id, ...formData })
         toast.success("Pasteurizing form updated successfully")
       }
 
+      // re-fetch pasteurizing forms so UI updates (and notify parent)
+      try {
+        await dispatch(fetchPasteurizingForms()).unwrap()
+      } catch (e) {
+        console.warn("Failed to refresh pasteurizing forms:", e)
+      }
+
+      onSuccess?.()
       onOpenChange(false)
     } catch (error: any) {
-      toast.error(error || "Failed to save pasteurizing form")
+      toast.error(error?.message || `Failed to ${mode} pasteurizing form`)
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
-  const renderForm = () => {
-    // Convert machines to searchable select options
-    const machineOptions: SearchableSelectOption[] = machines.map(machine => ({
-      value: machine.id,
-      label: machine.name,
-      description: `${machine.category} • ${machine.status}`
-    }))
+  // Create options arrays from Redux data
+  const machineOptions: SearchableSelectOption[] = machines.map(machine => ({
+    value: machine.id,
+    label: machine.name,
+    description: `${machine.category} - ${machine.location}`
+  }))
 
-    // Convert silos to searchable select options
-    const siloOptions: SearchableSelectOption[] = silos.map(silo => ({
-      value: silo.id,
-      label: silo.name,
-      description: `${silo.capacity}L • ${silo.status}`
-    }))
+  const bmtOptions: SearchableSelectOption[] = bmtForms.map(bmt => ({
+    value: bmt.id,
+    label: bmt?.tag,
+    description: `Volume: ${bmt.volume ?? 0}L`
+  }))
 
-    // Convert BMT forms to searchable select options
-    const bmtOptions: SearchableSelectOption[] = bmtForms.map(bmt => ({
-      value: bmt.id,
-      label: `BMT Form #${bmt.id.slice(0, 8)}`,
-      description: `${bmt.volume}L • ${bmt.product}`
-    }))
-
-    return (
-      <div className="space-y-6 p-6">
-        <ProcessOverview />
-
-        <div className="space-y-6">
-          {/* Basic Information Section */}
-          <div className="space-y-4">
-            <div className="text-center mb-6">
-              <h3 className="text-xl font-light text-gray-900">Basic Information</h3>
-              <p className="text-sm font-light text-gray-600 mt-2">Enter the basic pasteurizing form details</p>
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="machine">Machine *</Label>
-                <Controller
-                  name="machine"
-                  control={formHook.control}
-                  render={({ field }) => (
-                    <SearchableSelect
-                      options={machineOptions}
-                      value={field.value}
-                      onValueChange={field.onChange}
-                      placeholder="Select machine..."
-                      searchPlaceholder="Search machines..."
-                      emptyMessage="No machines found"
-                      loading={loadingInitialData}
-                    />
-                  )}
-                />
-                {formHook.formState.errors.machine && (
-                  <p className="text-sm text-red-500">{formHook.formState.errors.machine.message}</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="source_silo">Source Silo *</Label>
-                <Controller
-                  name="source_silo"
-                  control={formHook.control}
-                  render={({ field }) => (
-                    <SearchableSelect
-                      options={siloOptions}
-                      value={field.value}
-                      onValueChange={field.onChange}
-                      placeholder="Select source silo..."
-                      searchPlaceholder="Search silos..."
-                      emptyMessage="No silos found"
-                      loading={loadingInitialData}
-                    />
-                  )}
-                />
-                {formHook.formState.errors.source_silo && (
-                  <p className="text-sm text-red-500">{formHook.formState.errors.source_silo.message}</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="bmt">BMT Form *</Label>
-                <Controller
-                  name="bmt"
-                  control={formHook.control}
-                  render={({ field }) => (
-                    <SearchableSelect
-                      options={bmtOptions}
-                      value={field.value}
-                      onValueChange={field.onChange}
-                      placeholder="Select BMT form..."
-                      searchPlaceholder="Search BMT forms..."
-                      emptyMessage="No BMT forms found"
-                      loading={loadingInitialData}
-                    />
-                  )}
-                />
-                {formHook.formState.errors.bmt && (
-                  <p className="text-sm text-red-500">{formHook.formState.errors.bmt.message}</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="fat">Fat Content (%) *</Label>
-                <Controller
-                  name="fat"
-                  control={formHook.control}
-                  render={({ field }) => (
-                    <Input
-                      id="fat"
-                      type="number"
-                      step="0.1"
-                      placeholder="Enter fat content"
-                      {...field}
-                      onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                    />
-                  )}
-                />
-                {formHook.formState.errors.fat && (
-                  <p className="text-sm text-red-500">{formHook.formState.errors.fat.message}</p>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Timing Section */}
-          <div className="space-y-4">
-            <div className="text-center mb-6">
-              <h3 className="text-xl font-light text-gray-900">Process Timing</h3>
-              <p className="text-sm font-light text-gray-600 mt-2">Enter the process timing information</p>
-            </div>
-            
-            <div className="grid grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <Controller
-                  name="preheating_start"
-                  control={formHook.control}
-                  render={({ field }) => (
-                    <DatePicker
-                      label="Preheating Start *"
-                      value={field.value}
-                      onChange={field.onChange}
-                      placeholder="Select preheating start date and time"
-                      showTime={true}
-                      error={!!formHook.formState.errors.preheating_start}
-                    />
-                  )}
-                />
-                {formHook.formState.errors.preheating_start && (
-                  <p className="text-sm text-red-500">{formHook.formState.errors.preheating_start.message}</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Controller
-                  name="water_circulation"
-                  control={formHook.control}
-                  render={({ field }) => (
-                    <DatePicker
-                      label="Water Circulation *"
-                      value={field.value}
-                      onChange={field.onChange}
-                      placeholder="Select water circulation date and time"
-                      showTime={true}
-                      error={!!formHook.formState.errors.water_circulation}
-                    />
-                  )}
-                />
-                {formHook.formState.errors.water_circulation && (
-                  <p className="text-sm text-red-500">{formHook.formState.errors.water_circulation.message}</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Controller
-                  name="production_start"
-                  control={formHook.control}
-                  render={({ field }) => (
-                    <DatePicker
-                      label="Production Start *"
-                      value={field.value}
-                      onChange={field.onChange}
-                      placeholder="Select production start date and time"
-                      showTime={true}
-                      error={!!formHook.formState.errors.production_start}
-                    />
-                  )}
-                />
-                {formHook.formState.errors.production_start && (
-                  <p className="text-sm text-red-500">{formHook.formState.errors.production_start.message}</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Controller
-                  name="production_end"
-                  control={formHook.control}
-                  render={({ field }) => (
-                    <DatePicker
-                      label="Production End *"
-                      value={field.value}
-                      onChange={field.onChange}
-                      placeholder="Select production end date and time"
-                      showTime={true}
-                      error={!!formHook.formState.errors.production_end}
-                    />
-                  )}
-                />
-                {formHook.formState.errors.production_end && (
-                  <p className="text-sm text-red-500">{formHook.formState.errors.production_end.message}</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Controller
-                  name="machine_start"
-                  control={formHook.control}
-                  render={({ field }) => (
-                    <DatePicker
-                      label="Machine Start *"
-                      value={field.value}
-                      onChange={field.onChange}
-                      placeholder="Select machine start date and time"
-                      showTime={true}
-                      error={!!formHook.formState.errors.machine_start}
-                    />
-                  )}
-                />
-                {formHook.formState.errors.machine_start && (
-                  <p className="text-sm text-red-500">{formHook.formState.errors.machine_start.message}</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Controller
-                  name="machine_end"
-                  control={formHook.control}
-                  render={({ field }) => (
-                    <DatePicker
-                      label="Machine End *"
-                      value={field.value}
-                      onChange={field.onChange}
-                      placeholder="Select machine end date and time"
-                      showTime={true}
-                      error={!!formHook.formState.errors.machine_end}
-                    />
-                  )}
-                />
-                {formHook.formState.errors.machine_end && (
-                  <p className="text-sm text-red-500">{formHook.formState.errors.machine_end.message}</p>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Production Section */}
-          <div className="space-y-4">
-            <div className="text-center mb-6">
-              <h3 className="text-xl font-light text-gray-900">Production Details</h3>
-              <p className="text-sm font-light text-gray-600 mt-2">Enter production information</p>
-            </div>
-            
-            <div className="space-y-4">
-              {productionFields.map((field, index) => (
-                <Card key={field.id} className="p-4">
-                  <div className="flex items-center justify-between mb-4">
-                    <h4 className="text-sm font-medium text-gray-900">Production Entry {index + 1}</h4>
-                    {productionFields.length > 1 && (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => removeProduction(index)}
-                        className="text-red-600 hover:text-red-700"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    )}
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor={`production.${index}.product`}>Product *</Label>
-                      <Controller
-                        name={`production.${index}.product`}
-                        control={formHook.control}
-                        render={({ field }) => (
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <SelectTrigger className="h-12 border border-gray-300 hover:border-gray-400 focus:border-blue-500 shadow-none hover:shadow-none focus:shadow-none rounded-full">
-                              <SelectValue placeholder="Select product" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="UHT Milk">UHT Milk</SelectItem>
-                              <SelectItem value="Fresh Milk">Fresh Milk</SelectItem>
-                              <SelectItem value="Sterilized Milk">Sterilized Milk</SelectItem>
-                              <SelectItem value="Skim Milk">Skim Milk</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        )}
-                      />
-                      {formHook.formState.errors.production?.[index]?.product && (
-                        <p className="text-sm text-red-500">
-                          {formHook.formState.errors.production[index]?.product?.message}
-                        </p>
-                      )}
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor={`production.${index}.quantity`}>Quantity (L) *</Label>
-                      <Controller
-                        name={`production.${index}.quantity`}
-                        control={formHook.control}
-                        render={({ field }) => (
-                          <Input
-                            id={`production.${index}.quantity`}
-                            type="number"
-                            step="0.1"
-                            placeholder="Enter quantity"
-                            {...field}
-                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                          />
-                        )}
-                      />
-                      {formHook.formState.errors.production?.[index]?.quantity && (
-                        <p className="text-sm text-red-500">
-                          {formHook.formState.errors.production[index]?.quantity?.message}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </Card>
-              ))}
-              
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => appendProduction({ product: "", quantity: 0 })}
-                className="w-full border-dashed border-2 border-gray-300 hover:border-blue-500 hover:bg-blue-50"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Add Production Entry
-              </Button>
-            </div>
-          </div>
-
-        </div>
-      </div>
-    )
+  const addProductionEntry = () => {
+	append({
+		// generate id for new entry so it persists through edits/submits
+		id: (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function")
+			? crypto.randomUUID()
+			: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+		process_id: processId || "",
+		time: "",
+		temp_hot_water: undefined,
+		temp_product_out: undefined,
+		temp_product_pasteurisation: undefined,
+		homogenisation_pressure_stage_1: undefined,
+		homogenisation_pressure_stage_2: undefined,
+		total_homogenisation_pressure: undefined,
+		output_target_value: undefined,
+		ouput_target_units: ""
+	})
   }
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-[75vw] sm:max-w-[75vw] p-0 bg-white">
-        <SheetHeader className="p-6 pb-0">
-          <SheetTitle className="text-lg font-light">
-            {mode === "edit" ? "Edit Pasteurizing Form" : "Create Pasteurizing Form"}
-          </SheetTitle>
-          <SheetDescription className="text-sm font-light">
-            Enter all pasteurizing form details including machine information and production data
-          </SheetDescription>
+      <SheetContent className="tablet-sheet-full p-0 bg-white">
+        <SheetHeader className="p-6 pb-0 bg-white">
+          <div className="flex items-center justify-between">
+            <div>
+              <SheetTitle className="text-lg font-light">
+                {mode === "create" ? "Create" : "Edit"} Pasteurizing Form
+              </SheetTitle>
+              <SheetDescription className="text-sm font-light">
+                Enter all pasteurizing form details including machine information and production data
+              </SheetDescription>
+            </div>
+            <Button
+              onClick={() => onOpenChange(false)}
+              variant="ghost"
+              size="sm"
+              className="rounded-full"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
         </SheetHeader>
 
-        <div className="flex-1 overflow-y-auto">
-          <form onSubmit={formHook.handleSubmit(handleSubmit)}>
-            {renderForm()}
-            
-            <div className="flex items-center justify-end p-6 border-t">
+        <div className="flex-1 overflow-y-auto p-6 bg-white">
+          <ProcessOverview />
+
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            {/* Basic Information */}
+            <Card className="shadow-none border border-gray-200 rounded-lg">
+              <CardHeader className="pb-4">
+                <div className="flex items-center space-x-2">
+                  <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
+                    <Package className="h-4 w-4 text-blue-600" />
+                  </div>
+                  <CardTitle className="text-base font-light">Basic Information</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Hidden operator field - auto-filled */}
+                <input type="hidden" {...register("operator")} />
+
+                <div className="grid grid-cols-1 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="date">Date</Label>
+                    <DatePicker
+                      value={watch("date")}
+                      onChange={(date) => setValue("date", date ? format(date, "yyyy-MM-dd") : "")}
+                    />
+                    {errors.date && (
+                      <p className="text-sm text-red-500">{errors.date.message}</p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="machine">Machine</Label>
+                    <SearchableSelect
+                      options={machineOptions}
+                      value={watch("machine")}
+                      onValueChange={(value) => setValue("machine", value)}
+                      placeholder={machinesLoading ? "Loading machines..." : "Select machine..."}
+                      disabled={machinesLoading}
+                    />
+                    {errors.machine && (
+                      <p className="text-sm text-red-500">{errors.machine.message}</p>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="bmt">BMT Form</Label>
+                    <SearchableSelect
+                      options={bmtOptions}
+                      value={watch("bmt")}
+                      onValueChange={(value) => setValue("bmt", value)}
+                      placeholder={bmtLoading ? "Loading BMT forms..." : "Select BMT form..."}
+                      disabled={bmtLoading}
+                    />
+                    {errors.bmt && (
+                      <p className="text-sm text-red-500">{errors.bmt.message}</p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="fat">Fat Content (%)</Label>
+                    <Input
+                      type="number"
+                      step="0.1"
+                      placeholder="Enter fat content"
+                      {...register("fat", { valueAsNumber: true })}
+                    />
+                    {errors.fat && (
+                      <p className="text-sm text-red-500">{errors.fat.message}</p>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="cream_index">Cream Index</Label>
+                    <Input
+                      type="number"
+                      step="0.1"
+                      placeholder="Enter cream index"
+                      {...register("cream_index", { valueAsNumber: true, min: 0, max: 100 })}
+                    />
+                    {errors.cream_index && (
+                      <p className="text-sm text-red-500">{errors.cream_index.message}</p>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Time Information */}
+            <Card className="shadow-none border border-gray-200 rounded-lg">
+              <CardHeader className="pb-4">
+                <div className="flex items-center space-x-2">
+                  <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center">
+                    <Clock className="h-4 w-4 text-green-600" />
+                  </div>
+                  <CardTitle className="text-base font-light">Time Information</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="preheating_start">Preheating Start</Label>
+                    <ShadcnTimePicker
+                      value={watch("preheating_start")}
+                      onChange={(time) => setValue("preheating_start", time)}
+                      placeholder="Select preheating start time"
+                    />
+                    {errors.preheating_start && (
+                      <p className="text-sm text-red-500">{errors.preheating_start.message}</p>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="water_circulation">Water Circulation</Label>
+                    <ShadcnTimePicker
+                      value={watch("water_circulation")}
+                      onChange={(time) => setValue("water_circulation", time)}
+                      placeholder="Select water circulation time"
+                    />
+                    {errors.water_circulation && (
+                      <p className="text-sm text-red-500">{errors.water_circulation.message}</p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="production_start">Production Start</Label>
+                    <ShadcnTimePicker
+                      value={watch("production_start")}
+                      onChange={(time) => setValue("production_start", time)}
+                      placeholder="Select production start time"
+                    />
+                    {errors.production_start && (
+                      <p className="text-sm text-red-500">{errors.production_start.message}</p>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="production_end">Production End</Label>
+                    <ShadcnTimePicker
+                      value={watch("production_end")}
+                      onChange={(time) => setValue("production_end", time)}
+                      placeholder="Select production end time"
+                    />
+                    {errors.production_end && (
+                      <p className="text-sm text-red-500">{errors.production_end.message}</p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="machine_start">Machine Start</Label>
+                    <ShadcnTimePicker
+                      value={watch("machine_start")}
+                      onChange={(time) => setValue("machine_start", time)}
+                      placeholder="Select machine start time"
+                    />
+                    {errors.machine_start && (
+                      <p className="text-sm text-red-500">{errors.machine_start.message}</p>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="machine_end">Machine End</Label>
+                    <ShadcnTimePicker
+                      value={watch("machine_end")}
+                      onChange={(time) => setValue("machine_end", time)}
+                      placeholder="Select machine end time"
+                    />
+                    {errors.machine_end && (
+                      <p className="text-sm text-red-500">{errors.machine_end.message}</p>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Production Details */}
+            <Card className="shadow-none border border-gray-200 rounded-lg">
+              <CardHeader className="pb-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center">
+                      <TrendingUp className="h-4 w-4 text-purple-600" />
+                    </div>
+                    <CardTitle className="text-base font-light">Production Details</CardTitle>
+                  </div>
+                  <Button
+                    type="button"
+                    onClick={addProductionEntry}
+                    variant="outline"
+                    size="sm"
+                    className="rounded-full"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Entry
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {fields.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    <TrendingUp className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                    <p className="text-sm">No production entries yet</p>
+                    <p className="text-xs text-gray-400">Click "Add Entry" to start</p>
+                  </div>
+                ) : (
+                  fields.map((field, index) => (
+                    <div key={field.id} className="p-4 border border-gray-200 rounded-lg space-y-4">
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-sm font-medium">Production Entry #{index + 1}</h4>
+                        <Button
+                          type="button"
+                          onClick={() => remove(index)}
+                          variant="ghost"
+                          size="sm"
+                          className="text-red-500 hover:text-red-700 rounded-full"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+
+                      {/* Hidden process ID field - auto-filled */}
+                      <input type="hidden" {...register(`production_.${index}.id`)} />
+                      <input type="hidden" {...register(`production_.${index}.process_id`)} />
+
+                      <div className="grid grid-cols-1 gap-4">
+                        <div className="space-y-2">
+                          <Label>Time</Label>
+                          <ShadcnTimePicker
+                            value={watch(`production_.${index}.time`) || ""}
+                            onChange={(time) => setValue(`production_.${index}.time`, time)}
+                            placeholder="Select production time"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-4">
+                        <div className="space-y-2">
+                          <Label>Hot Water Temp (°C)</Label>
+                          <Input
+                            type="number"
+                            step="0.1"
+                            placeholder="Enter temperature"
+                            {...register(`production_.${index}.temp_hot_water`, { valueAsNumber: true })}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Product Out Temp (°C)</Label>
+                          <Input
+                            type="number"
+                            step="0.1"
+                            placeholder="Enter temperature"
+                            {...register(`production_.${index}.temp_product_out`, { valueAsNumber: true })}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Pasteurisation Temp (°C)</Label>
+                          <Input
+                            type="number"
+                            step="0.1"
+                            placeholder="Enter temperature"
+                            {...register(`production_.${index}.temp_product_pasteurisation`, { valueAsNumber: true })}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-4">
+                        <div className="space-y-2">
+                          <Label>Stage 1 Pressure</Label>
+                          <Input
+                            type="number"
+                            step="0.1"
+                            placeholder="Enter pressure (bar)"
+                            {...register(`production_.${index}.homogenisation_pressure_stage_1`, { valueAsNumber: true })}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Stage 2 Pressure</Label>
+                          <Input
+                            type="number"
+                            step="0.1"
+                            placeholder="Enter pressure (bar)"
+                            {...register(`production_.${index}.homogenisation_pressure_stage_2`, { valueAsNumber: true })}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Total Pressure</Label>
+                          <Input
+                            type="number"
+                            step="0.1"
+                            placeholder="Enter total pressure (bar)"
+                            {...register(`production_.${index}.total_homogenisation_pressure`, { valueAsNumber: true })}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label>Output Target Value</Label>
+                          <Input
+                            type="number"
+                            step="0.1"
+                            placeholder="Enter target value"
+                            {...register(`production_.${index}.output_target_value`, { valueAsNumber: true })}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Output Target Units</Label>
+                          <Select
+                            value={watch(`production_.${index}.ouput_target_units`) || ""}
+                            onValueChange={(value) => setValue(`production_.${index}.ouput_target_units`, value)}
+                          >
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Select units" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="liters">Liters</SelectItem>
+                              <SelectItem value="gallons">Gallons</SelectItem>
+                              <SelectItem value="kg">Kilograms</SelectItem>
+                              <SelectItem value="pounds">Pounds</SelectItem>
+                              <SelectItem value="ml">Milliliters</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Submit Button */}
+            <div className="flex justify-end space-x-4 pt-6 border-t">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+                disabled={isSubmitting}
+              >
+                Cancel
+              </Button>
               <Button
                 type="submit"
-                disabled={loading.create || loading.update}
-                className="flex items-center gap-2"
+                disabled={isSubmitting}
+                className="bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white"
               >
-                <Save className="h-4 w-4" />
-                {mode === "edit" ? "Update Form" : "Create Form"}
+                {isSubmitting ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    {mode === "create" ? "Creating..." : "Updating..."}
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-4 w-4 mr-2" />
+                    {mode === "create" ? "Create Form" : "Update Form"}
+                  </>
+                )}
               </Button>
             </div>
           </form>

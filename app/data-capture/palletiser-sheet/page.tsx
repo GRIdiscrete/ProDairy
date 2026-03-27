@@ -22,8 +22,13 @@ import {
 import { toast } from "sonner"
 import { TableFilters } from "@/lib/types"
 import { PalletiserSheet } from "@/lib/api/data-capture-forms"
+import ContentSkeleton from "@/components/ui/content-skeleton"
 
-export default function PalletiserSheetPage() {
+interface PalletiserSheetPageProps {
+  processId?: string
+}
+
+export default function PalletiserSheetPage({ processId }: PalletiserSheetPageProps = {}) {
   const dispatch = useAppDispatch()
   const { sheets, loading, error, operationLoading, isInitialized } = useAppSelector((state) => state.palletiserSheets)
   
@@ -137,11 +142,10 @@ export default function PalletiserSheetPage() {
             </div>
             <div>
               <div className="flex items-center space-x-2">
-                <span className="font-light">#{sheet.id ? sheet.id.slice(0, 8) : 'N/A'}</span>
                 <Badge className="bg-blue-100 text-blue-800 font-light">{sheet.batch_number || 'N/A'}</Badge>
               </div>
               <p className="text-sm text-gray-500 mt-1">
-                {sheet.created_at ? new Date(sheet.created_at).toLocaleDateString() : 'N/A'} • {sheet.product_type || 'N/A'}
+                {sheet.created_at ? new Date(sheet.created_at).toLocaleDateString() : 'N/A'}
               </p>
             </div>
           </div>
@@ -201,7 +205,9 @@ export default function PalletiserSheetPage() {
             <div className="space-y-1">
               <div className="flex items-center justify-between">
                 <span className="text-xs text-gray-500">Type</span>
-                <span className="text-xs font-light">{sheet.product_type}</span>
+                <span className="text-xs font-light">
+                  {sheet.product_type && sheet.product_type.length > 20 ? 'N/A' : (sheet.product_type || 'N/A')}
+                </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-xs text-gray-500">Batch</span>
@@ -350,32 +356,7 @@ export default function PalletiserSheetPage() {
 
         {/* Current Sheet Details */}
         {loading ? (
-          <div className="border border-gray-200 rounded-lg bg-white border-l-4 border-l-blue-500">
-            <div className="p-6 pb-0">
-              <div className="flex items-center space-x-2">
-                <Skeleton className="h-5 w-5 rounded" />
-                <Skeleton className="h-6 w-48" />
-                <Skeleton className="h-6 w-16 rounded-full" />
-              </div>
-            </div>
-            <div className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                {Array.from({ length: 4 }).map((_, i) => (
-                  <div key={i} className="space-y-2">
-                    <Skeleton className="h-4 w-24" />
-                    <Skeleton className="h-6 w-20" />
-                  </div>
-                ))}
-              </div>
-              <div className="mt-4 space-y-2">
-                <Skeleton className="h-4 w-48" />
-                <Skeleton className="h-4 w-56" />
-              </div>
-              <div className="mt-4 flex justify-end">
-                <Skeleton className="h-9 w-32" />
-              </div>
-            </div>
-          </div>
+          <ContentSkeleton sections={1} cardsPerSection={4} />
         ) : latestSheet ? (
           <div className="border border-gray-200 rounded-lg bg-white border-l-4 border-l-blue-500">
             <div className="p-6 pb-0">
@@ -398,24 +379,14 @@ export default function PalletiserSheetPage() {
               </div>
             </div>
             <div className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <div className="space-y-2">
-                  <div className="flex items-center space-x-2">
-                    <FileText className="h-4 w-4 text-gray-500" />
-                    <p className="text-sm font-light text-gray-600">Sheet ID</p>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <p className="text-lg font-light">#{latestSheet.id?.slice(0, 8) || 'N/A'}</p>
-                    <CopyButton text={latestSheet.id || ''} />
-                  </div>
-                </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="space-y-2">
                   <div className="flex items-center space-x-2">
                     <Package className="h-4 w-4 text-blue-500" />
                     <p className="text-sm font-light text-gray-600">Product</p>
                   </div>
                   <p className="text-lg font-light text-blue-600">
-                    {latestSheet.product_type}
+                    {latestSheet.product_type && latestSheet.product_type.length > 20 ? 'N/A' : (latestSheet.product_type || 'N/A')}
                   </p>
                 </div>
                 <div className="space-y-2">
@@ -514,51 +485,9 @@ export default function PalletiserSheetPage() {
             />
             
             {loading ? (
-                <div className="space-y-3">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <div key={i} className="flex items-center space-x-4 p-4 border rounded-lg">
-                      <div className="flex items-center space-x-3">
-                        <Skeleton className="h-8 w-8 rounded-lg" />
-                        <div className="space-y-1">
-                          <div className="flex items-center space-x-2">
-                            <Skeleton className="h-4 w-16" />
-                            <Skeleton className="h-5 w-12 rounded-full" />
-                          </div>
-                          <Skeleton className="h-3 w-32" />
-                        </div>
-                      </div>
-                      <div className="flex-1 grid grid-cols-4 gap-4">
-                        <div className="space-y-1">
-                          <Skeleton className="h-4 w-20" />
-                          <Skeleton className="h-3 w-24" />
-                        </div>
-                        <div className="space-y-1">
-                          <Skeleton className="h-4 w-20" />
-                          <Skeleton className="h-3 w-24" />
-                        </div>
-                        <div className="space-y-1">
-                          <Skeleton className="h-4 w-20" />
-                          <Skeleton className="h-3 w-24" />
-                        </div>
-                        <div className="space-y-1">
-                          <Skeleton className="h-4 w-20" />
-                          <Skeleton className="h-3 w-24" />
-                        </div>
-                      </div>
-                      <div className="flex space-x-2">
-                        <Skeleton className="h-8 w-8" />
-                        <Skeleton className="h-8 w-8" />
-                        <Skeleton className="h-8 w-8" />
-                      </div>
-                    </div>
-                  ))}
-              </div>
+              <ContentSkeleton sections={1} cardsPerSection={4} />
             ) : (
-              <DataTable
-                columns={columns}
-                data={sheets}
-                showSearch={false}
-              />
+              <DataTable columns={columns} data={sheets} showSearch={false} />
             )}
             </div>
           </div>
@@ -569,7 +498,8 @@ export default function PalletiserSheetPage() {
           open={formDrawerOpen} 
           onOpenChange={setFormDrawerOpen} 
           sheet={selectedSheet}
-          mode={formMode} 
+          mode={formMode}
+          productType={processId}
         />
 
         {/* View Drawer */}

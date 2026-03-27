@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "../styles/gdairen.css";
+@import "../styles/tablet.css";
 
 @custom-variant dark (&:is(.dark *));
 

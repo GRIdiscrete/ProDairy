@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit'
-import { AuthAPI } from '@/lib/api/auth'
+import { authApi } from '@/lib/api/auth'
+import { userProfileApi } from '@/lib/api/user-profile'
 import { CookieManager } from '@/lib/utils/cookies'
 import type { 
   AuthState, 
@@ -54,32 +55,27 @@ const initialState: AuthState = getInitialState()
 // Async thunks
 export const loginUser = createAsyncThunk(
   'auth/login',
-  async (credentials: LoginCredentials, { rejectWithValue }) => {
+  async (credentials: LoginCredentials, { rejectWithValue, dispatch }) => {
     try {
       console.log('loginUser: Starting login process...')
-      const loginResponse = await AuthAPI.login(credentials)
-      console.log('loginUser: Login API response received')
+      const loginResponse = await authApi.login(credentials)
+      console.log('loginUser: Login API response received:', loginResponse)
       
-      // Fetch user profile after successful login
-      console.log('loginUser: About to fetch user profile with token:', {
-        userId: loginResponse.user.id,
-        hasToken: !!loginResponse.access_token,
-        tokenPreview: loginResponse.access_token ? `${loginResponse.access_token.substring(0, 20)}...` : 'none'
-      })
+      // Extract user and token from the response
+      const { user, access_token, refresh_token } = loginResponse
       
-      // Use the token directly to avoid interceptor timing issues
-      const profile = await AuthAPI.getUserProfile(
-        loginResponse.user.id, 
-        loginResponse.access_token
-      )
-      console.log('loginUser: User profile fetched successfully')
+      // Fetch detailed user profile
+      console.log('loginUser: Fetching detailed user profile...')
+      const profileResponse = await userProfileApi.getUserProfile(user.id)
+      const profile = profileResponse.data
+      console.log('loginUser: Detailed profile fetched:', profile)
 
       // Store in cookies
       console.log('loginUser: Setting auth cookies...')
       CookieManager.setAuthCookies(
-        loginResponse.access_token,
-        loginResponse.refresh_token,
-        loginResponse.user,
+        access_token,
+        refresh_token,
+        user,
         profile
       )
       console.log('loginUser: Auth cookies set successfully')
@@ -92,10 +88,10 @@ export const loginUser = createAsyncThunk(
       })
 
       return {
-        user: loginResponse.user,
+        user: user,
         profile,
-        accessToken: loginResponse.access_token,
-        refreshToken: loginResponse.refresh_token,
+        accessToken: access_token,
+        refreshToken: refresh_token,
       }
     } catch (error: any) {
       console.log('loginUser: Login failed:', error)
@@ -105,11 +101,38 @@ export const loginUser = createAsyncThunk(
         fullError: error
       })
       
+      // Handle API error response properly
+      let errorMessage = "Login failed"
+      let statusCode = 500
+      
+      // Check if error has the API response structure
+      if (error && typeof error === 'object') {
+        // Direct API response structure
+        if (error.message && error.statusCode) {
+          errorMessage = error.message
+          statusCode = error.statusCode
+        }
+        // Nested in response or data
+        else if (error.response && error.response.data) {
+          const apiError = error.response.data
+          if (apiError.message && apiError.statusCode) {
+            errorMessage = apiError.message
+            statusCode = apiError.statusCode
+          }
+        }
+        // Fallback to error message
+        else if (error.message) {
+          errorMessage = error.message
+        }
+      }
+      
+      console.log('loginUser: Processed error:', { errorMessage, statusCode })
+      
       // Pass serializable error data instead of the Error object
       return rejectWithValue({
-        message: error.message,
-        statusCode: error.statusCode,
-        apiError: error.apiError
+        message: errorMessage,
+        statusCode: statusCode,
+        apiError: error
       })
     }
   }
@@ -134,7 +157,7 @@ export const refreshUserToken = createAsyncThunk(
         throw new Error('No refresh token available')
       }
 
-      const response = await AuthAPI.refreshToken(refreshToken)
+      const response = await authApi.refreshToken({ refresh_token: refreshToken })
       
       // Update cookies with new tokens
       CookieManager.setCookie('access_token', response.access_token)
@@ -146,6 +169,38 @@ export const refreshUserToken = createAsyncThunk(
       }
     } catch (error: any) {
       return rejectWithValue(error.message || 'Token refresh failed')
+    }
+  }
+)
+
+export const fetchUserProfile = createAsyncThunk(
+  'auth/fetchUserProfile',
+  async (userId: string, { rejectWithValue }) => {
+    try {
+      console.log('fetchUserProfile: Fetching user profile for ID:', userId)
+      const response = await userProfileApi.getUserProfile(userId)
+      console.log('fetchUserProfile: Profile fetched successfully:', response.data)
+      return response.data
+    } catch (error: any) {
+      console.log('fetchUserProfile: Failed to fetch profile:', error)
+      const message = error?.message || 'Failed to fetch user profile'
+      return rejectWithValue(message)
+    }
+  }
+)
+
+export const changePassword = createAsyncThunk(
+  'auth/changePassword',
+  async (payload: { email: string; password: string }, { rejectWithValue }) => {
+    try {
+      console.log('changePassword: Changing password for user:', payload.email)
+      const response = await userProfileApi.changePassword(payload)
+      console.log('changePassword: Password changed successfully')
+      return response.data
+    } catch (error: any) {
+      console.log('changePassword: Failed to change password:', error)
+      const message = error?.message || 'Failed to change password'
+      return rejectWithValue(message)
     }
   }
 )
@@ -294,6 +349,49 @@ const authSlice = createSlice({
         console.log('Redux: validateAndRestoreSession.rejected - Session restoration failed')
         state.isLoading = false
         state.isAuthenticated = false
+      })
+      
+      // Fetch User Profile
+      .addCase(fetchUserProfile.pending, (state) => {
+        state.isLoading = true
+        state.error = null
+      })
+      .addCase(fetchUserProfile.fulfilled, (state, action) => {
+        state.isLoading = false
+        state.profile = action.payload as ExtendedUserProfile
+        // Update cookies with new profile data
+        CookieManager.setAuthCookies(
+          state.accessToken!,
+          state.refreshToken!,
+          state.user!,
+          action.payload as ExtendedUserProfile
+        )
+      })
+      .addCase(fetchUserProfile.rejected, (state, action) => {
+        state.isLoading = false
+        state.error = action.payload as string
+      })
+      
+      // Change Password
+      .addCase(changePassword.pending, (state) => {
+        state.isLoading = true
+        state.error = null
+      })
+      .addCase(changePassword.fulfilled, (state, action) => {
+        state.isLoading = false
+        // After successful password change, logout the user
+        state.user = null
+        state.profile = null
+        state.accessToken = null
+        state.refreshToken = null
+        state.isAuthenticated = false
+        state.error = null
+        // Clear cookies
+        CookieManager.clearAuthCookies()
+      })
+      .addCase(changePassword.rejected, (state, action) => {
+        state.isLoading = false
+        state.error = action.payload as string
       })
   },
 })

@@ -23,6 +23,23 @@ import {
 } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { useFilteredNavigation } from "@/hooks/use-permissions"
+import { useAppSelector } from "@/lib/store"
+
+const navPermissionMap: Record<string, string> = {
+  "/admin": "dashboard",
+  "/admin/users": "user_tab",
+  "/admin/roles": "role_tab",
+  "/admin/machines": "machine_tab",
+  "/admin/silos": "silo_tab",
+  "/admin/devices": "devices_tab",
+  "/admin/materials": "settings", // or another relevant permission
+  "/admin/tankers": "driver_ui",
+  "/admin/processes": "process_tab",
+  "/admin/filmatic-lines-groups": "bmt", // or another relevant permission
+  "/admin/production-plan": "production_dashboard",
+  "/admin/audit": "admin_panel",
+  "/profile": "settings", // or another relevant permission
+}
 
 const adminNavigation = [
   { name: "Dashboard", href: "/admin", icon: LayoutDashboard, current: false },
@@ -63,9 +80,21 @@ const adminNavigation = [
     current: false,
   },
   {
+    name: "Tankers",
+    href: "/admin/tankers",
+    icon: Truck,
+    current: false,
+  },
+  {
     name: "Processes",
     href: "/admin/processes",
     icon: ClipboardList,
+    current: false,
+  },
+  {
+    name: "Filmatic Lines Groups",
+    href: "/admin/filmatic-lines-groups",
+    icon: Users,
     current: false,
   },
   {
@@ -100,16 +129,35 @@ interface AdminSidebarProps {
 
 export function AdminSidebar({ collapsed = false, onToggle }: AdminSidebarProps) {
   const pathname = usePathname()
+  const { user, profile } = useAppSelector((state) => state.auth)
   const [openDropdowns, setOpenDropdowns] = useState<string[]>([])
-  
-  // Filter navigation based on user permissions
-  const filteredNavigation = useFilteredNavigation(adminNavigation)
 
-  const toggleDropdown = (itemName: string) => {
-    setOpenDropdowns((prev) =>
-      prev.includes(itemName) ? prev.filter((n) => n !== itemName) : [...prev, itemName]
-    )
-  }
+  // Get allowed views from user profile
+  const allowedViews: string[] =
+    profile?.users_role_id_fkey?.views && Array.isArray(profile.users_role_id_fkey.views)
+      ? profile.users_role_id_fkey.views
+      : []
+
+  // Filter navigation based on permissions, but always show "Profile"
+  const filteredNavigation = adminNavigation.filter((item) => {
+    if (item.href === "/profile") return true // Always show Profile
+    const permKey = navPermissionMap[item.href]
+    if (!permKey) return true
+    return allowedViews.includes(permKey)
+  }).map(item => {
+    // For dropdowns, filter children as well
+    if (item.children) {
+      const filteredChildren = item.children.filter(child => {
+        const permKey = navPermissionMap[child.href]
+        if (!permKey) return true
+        return allowedViews.includes(permKey)
+      })
+      // Hide parent if no children are visible
+      if (filteredChildren.length === 0) return null
+      return { ...item, children: filteredChildren }
+    }
+    return item
+  }).filter(Boolean)
 
   // Layout widths (ensure logo never clipped)
   const openWidth = 272
@@ -182,7 +230,7 @@ export function AdminSidebar({ collapsed = false, onToggle }: AdminSidebarProps)
                 className="truncate"
               >
                 <span className="block text-sm font-extralight tracking-[0.18em] text-zinc-900 uppercase">
-                  ProDairy OS
+                  ProDairy DMS
                 </span>
                 <span className="block text-[11px] font-light tracking-wider text-zinc-500">
                   Admin Console
@@ -327,9 +375,16 @@ export function AdminSidebar({ collapsed = false, onToggle }: AdminSidebarProps)
                 exit={{ opacity: 0, x: -6 }}
                 className="min-w-0"
               >
-                <p className="truncate text-sm font-light text-zinc-900">Admin User</p>
+                <p className="truncate text-sm font-light text-zinc-900">
+                  {profile?.first_name && profile?.last_name 
+                    ? `${profile.first_name} ${profile.last_name}` 
+                    : user?.first_name && user?.last_name 
+                    ? `${user.first_name} ${user.last_name}` 
+                    : 'Admin User'
+                  }
+                </p>
                 <p className="truncate text-xs font-extralight tracking-wide text-zinc-500">
-                  admin@prodairy.co.zw
+                  {profile?.email || user?.email || 'admin@prodairy.co.zw'}
                 </p>
               </motion.div>
             )}

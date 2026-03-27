@@ -1,12 +1,5 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit'
-import { 
-  BMTControlForm,
-  getBMTControlForms,
-  getBMTControlForm,
-  createBMTControlForm,
-  updateBMTControlForm,
-  deleteBMTControlForm
-} from '@/lib/api/data-capture-forms'
+import { bmtControlFormApi, BMTControlForm } from '@/lib/api/bmt-control-form'
 
 interface BMTControlFormState {
   forms: BMTControlForm[]
@@ -45,13 +38,16 @@ export const fetchBMTControlForms = createAsyncThunk(
     try {
       const state = getState() as { bmtControlForms: BMTControlFormState }
       const { lastFetched, isInitialized } = state.bmtControlForms
-      
+
       // Skip if recently fetched (within 5 seconds)
       if (isInitialized && lastFetched && Date.now() - lastFetched < 5000) {
         return state.bmtControlForms.forms
       }
-      
-      const forms = await getBMTControlForms()
+
+      const forms = await bmtControlFormApi.getAll()
+
+
+
       return forms
     } catch (error: any) {
       const errorMessage = error?.response?.data?.message || error.message || 'Failed to fetch BMT control forms'
@@ -64,7 +60,7 @@ export const fetchBMTControlForm = createAsyncThunk(
   'bmtControlForms/fetchOne',
   async (id: string, { rejectWithValue }) => {
     try {
-      const form = await getBMTControlForm(id)
+      const form = await bmtControlFormApi.getById(id)
       return form
     } catch (error: any) {
       const errorMessage = error?.response?.data?.message || error.message || 'Failed to fetch BMT control form'
@@ -77,8 +73,11 @@ export const createBMTControlFormAction = createAsyncThunk(
   'bmtControlForms/create',
   async (formData: Omit<BMTControlForm, 'id' | 'created_at' | 'updated_at'>, { rejectWithValue }) => {
     try {
-      const newForm = await createBMTControlForm(formData)
-      return newForm
+
+      //remove id, tag , from form data
+      const { id, tag, created_at, updated_at, ...rest } = formData
+      const response = await bmtControlFormApi.create(rest)
+      return response.data
     } catch (error: any) {
       const errorMessage = error?.response?.data?.message || error.message || 'Failed to create BMT control form'
       return rejectWithValue(errorMessage)
@@ -87,14 +86,17 @@ export const createBMTControlFormAction = createAsyncThunk(
 )
 
 export const updateBMTControlFormAction = createAsyncThunk(
-  'bmtControlForms/update',
-  async (formData: BMTControlForm, { rejectWithValue }) => {
+  'bmtControlForm/update',
+  async (payload: { id: string; formData: any }, { rejectWithValue }) => {
     try {
-      const updatedForm = await updateBMTControlForm(formData)
-      return updatedForm
+      console.log('BMT Slice - Update ID:', payload.id)
+      console.log('BMT Slice - Update Payload:', payload.formData)
+
+      const response = await bmtControlFormApi.update(payload.id, payload.formData)
+      return response.data
     } catch (error: any) {
-      const errorMessage = error?.response?.data?.message || error.message || 'Failed to update BMT control form'
-      return rejectWithValue(errorMessage)
+      console.error('BMT Slice - Update Error:', error)
+      return rejectWithValue(error?.response?.data?.message || error?.message || 'Failed to update BMT control form')
     }
   }
 )
@@ -103,7 +105,7 @@ export const deleteBMTControlFormAction = createAsyncThunk(
   'bmtControlForms/delete',
   async (id: string, { rejectWithValue }) => {
     try {
-      await deleteBMTControlForm(id)
+      await bmtControlFormApi.delete(id)
       return id
     } catch (error: any) {
       const errorMessage = error?.response?.data?.message || error.message || 'Failed to delete BMT control form'
@@ -143,7 +145,7 @@ const bmtControlFormSlice = createSlice({
         state.operationLoading.fetch = false
         state.error = action.payload as string
       })
-      
+
       // Fetch single form
       .addCase(fetchBMTControlForm.pending, (state) => {
         state.loading = true
@@ -157,7 +159,7 @@ const bmtControlFormSlice = createSlice({
         state.loading = false
         state.error = action.payload as string
       })
-      
+
       // Create form
       .addCase(createBMTControlFormAction.pending, (state) => {
         state.operationLoading.create = true
@@ -174,7 +176,7 @@ const bmtControlFormSlice = createSlice({
         state.operationLoading.create = false
         state.error = action.payload as string
       })
-      
+
       // Update form
       .addCase(updateBMTControlFormAction.pending, (state) => {
         state.operationLoading.update = true
@@ -196,7 +198,7 @@ const bmtControlFormSlice = createSlice({
         state.operationLoading.update = false
         state.error = action.payload as string
       })
-      
+
       // Delete form
       .addCase(deleteBMTControlFormAction.pending, (state) => {
         state.operationLoading.delete = true

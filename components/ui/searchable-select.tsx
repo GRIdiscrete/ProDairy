@@ -52,8 +52,8 @@ export function SearchableSelect({
 
   // Filter options based on search term
   const filteredOptions = (options || []).filter(option =>
-    option.label.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    option.description?.toLowerCase().includes(searchTerm.toLowerCase())
+    (option.label || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (option.description || '').toLowerCase().includes(searchTerm.toLowerCase())
   )
 
   // Handle search with debouncing
@@ -112,9 +112,9 @@ export function SearchableSelect({
     if (multiple) {
       if (selectedOptions.length === 0) return placeholder
       if (selectedOptions.length <= maxDisplayItems) {
-        return selectedOptions.map(opt => opt.label).join(", ")
+        return selectedOptions.map(opt => opt.label || 'Unknown').join(", ")
       }
-      return `${selectedOptions.slice(0, maxDisplayItems).map(opt => opt.label).join(", ")} +${selectedOptions.length - maxDisplayItems} more`
+      return `${selectedOptions.slice(0, maxDisplayItems).map(opt => opt.label || 'Unknown').join(", ")} +${selectedOptions.length - maxDisplayItems} more`
     } else {
       return selectedOptions[0]?.label || placeholder
     }
@@ -143,7 +143,7 @@ export function SearchableSelect({
                     variant="secondary"
                     className="text-xs"
                   >
-                    {option.label}
+                    {option.label || 'Unknown'}
                     <button
                       type="button"
                       onClick={(e) => {
@@ -205,7 +205,7 @@ export function SearchableSelect({
                     >
                       <div className="flex items-center justify-between w-full">
                         <div className="flex flex-col">
-                          <span className="font-normal">{option.label}</span>
+                          <span className="font-normal">{option.label || 'Unknown'}</span>
                           {option.description && (
                             <span className="text-sm text-muted-foreground">
                               {option.description}

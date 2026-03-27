@@ -1,146 +1,101 @@
+import { apiRequest } from '@/lib/utils/api-request'
 import { API_CONFIG } from '@/lib/config/api'
-import { authenticatedFetch } from '@/lib/utils/api-interceptor'
-import type { 
-  LoginCredentials, 
-  LoginResponse, 
-  ExtendedUserProfile, 
-  TokenValidationResponse 
-} from '@/lib/types/auth'
 
-const AUTH_ENDPOINTS = {
-  LOGIN: '/auth/login',
-  PROFILE: '/auth/profiles',
-  USER_PROFILE: '/user',
-} as const
+export interface CreateAccountRequest {
+  first_name: string
+  last_name: string
+  role_id: string
+  department: string
+  email: string
+  password: string
+  updated_at: string
+}
 
-export class AuthAPI {
-  private static baseUrl = API_CONFIG.BASE_URL
-
-  static async login(credentials: LoginCredentials): Promise<LoginResponse> {
-    const response = await authenticatedFetch(`${this.baseUrl}${AUTH_ENDPOINTS.LOGIN}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-      body: JSON.stringify(credentials),
-    })
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}))
-      
-      // Create a custom error object that preserves the API error structure
-      const customError = new Error(errorData.message || `Login failed: ${response.status}`)
-      ;(customError as any).statusCode = response.status
-      ;(customError as any).apiError = errorData
-      
-      console.log('AuthAPI: Error response:', {
-        status: response.status,
-        errorData,
-        customError: {
-          message: customError.message,
-          statusCode: (customError as any).statusCode,
-          apiError: (customError as any).apiError
-        }
-      })
-      
-      // Also log the actual API response for debugging
-      console.log('AuthAPI: Raw API error response:', {
-        status: response.status,
-        statusText: response.statusText,
-        errorData: errorData,
-        headers: Object.fromEntries(response.headers.entries())
-      })
-      
-      throw customError
+export interface CreateAccountResponse {
+  statusCode: number
+  message: string
+  data: {
+    access_token: string
+    user: {
+      id: string
+      email: string
+      first_name: string
+      last_name: string
+      role: string
     }
-
-    return response.json()
-  }
-
-  static async getUserProfile(userId: string, accessToken?: string): Promise<ExtendedUserProfile> {
-    // If accessToken is provided, use it directly; otherwise let the interceptor handle it
-    const headers: Record<string, string> = {
-      'Accept': '*/*',
+    data: {
+      email: string
+      sub: string
     }
-    
-          if (accessToken) {
-        headers['Authorization'] = `Bearer ${accessToken}`
-        console.log('AuthAPI: getUserProfile - Using provided token:', {
-          userId,
-          tokenLength: accessToken.length,
-          tokenPreview: `${accessToken.substring(0, 20)}...`,
-          headers
-        })
-        
-        // Use native fetch when token is provided to avoid interceptor timing issues
-        const response = await fetch(`${this.baseUrl}${AUTH_ENDPOINTS.USER_PROFILE}/${userId}`, {
-          method: 'GET',
-          headers,
-        })
-      
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}))
-        throw new Error(errorData.message || `Failed to fetch profile: ${response.status}`)
-      }
-      
-            const result = await response.json()
-      return result.data
-    } else {
-      // Use interceptor when no token provided
-      const response = await authenticatedFetch(`${this.baseUrl}${AUTH_ENDPOINTS.USER_PROFILE}/${userId}`, {
-        method: 'GET',
-        headers,
-      })
-      
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}))
-        throw new Error(errorData.message || `Failed to fetch profile: ${response.status}`)
-      }
-      
-      const result = await response.json()
-      return result.data
-    }
-  }
-
-  static async validateToken(accessToken: string): Promise<TokenValidationResponse> {
-    try {
-      // For now, we'll validate by trying to fetch the user profile
-      // In a real implementation, you might want to call a dedicated token validation endpoint
-      const response = await authenticatedFetch(`${this.baseUrl}/auth/validate`, {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-          // Note: authenticatedFetch will automatically add the Bearer token
-        },
-      })
-
-      if (response.ok) {
-        return { valid: true }
-      } else {
-        return { valid: false, error: 'Token is invalid or expired' }
-      }
-    } catch (error) {
-      return { valid: false, error: 'Failed to validate token' }
-    }
-  }
-
-  static async refreshToken(refreshToken: string): Promise<{ access_token: string; refresh_token: string }> {
-    const response = await authenticatedFetch(`${this.baseUrl}/auth/refresh`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-      body: JSON.stringify({ refresh_token: refreshToken }),
-    })
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}))
-      throw new Error(errorData.message || `Token refresh failed: ${response.status}`)
-    }
-
-    return response.json()
   }
 }
 
+export interface LoginRequest {
+  email: string
+  password: string
+}
+
+export interface LoginResponse {
+  status: string
+  statusCode: number
+  message: string
+  access_token: string
+  refresh_token: string
+  token_type: string
+  user: {
+    id: string
+    email: string
+    phone: string | null
+    first_name: string
+    last_name: string
+    account_type: string
+    created_at: string
+    dob: string | null
+    gender: string | null
+    wallet_id: string | null
+    cooperative_id: string | null
+    business_id: string | null
+    updated_at: string
+    affliations: any
+    coop_account_id: string | null
+    push_token: string
+    avatar: string | null
+    national_id_url: string | null
+    passport_url: string | null
+    role: string
+  }
+  error: any
+}
+
+export interface RefreshTokenRequest {
+  refresh_token: string
+}
+
+export interface RefreshTokenResponse {
+  access_token: string
+  refresh_token: string
+  token_type: string
+}
+
+export const authApi = {
+  login: async (payload: LoginRequest): Promise<LoginResponse> => {
+    return apiRequest<LoginResponse>(`${API_CONFIG.ENDPOINTS.AUTH}/login`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    })
+  },
+  
+  createAccount: async (payload: CreateAccountRequest): Promise<CreateAccountResponse> => {
+    return apiRequest<CreateAccountResponse>(`${API_CONFIG.ENDPOINTS.AUTH}/create-account`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    })
+  },
+  
+  refreshToken: async (payload: RefreshTokenRequest): Promise<RefreshTokenResponse> => {
+    return apiRequest<RefreshTokenResponse>(`${API_CONFIG.ENDPOINTS.AUTH}/refresh`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    })
+  },
+}

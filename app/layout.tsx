@@ -5,6 +5,8 @@ import { ReduxProvider } from "@/lib/providers/redux-provider"
 import { ThemeProvider } from "@/components/theme-provider"
 import { ToastProvider } from "@/components/providers/toast-provider"
 import { AuthProvider } from "@/components/providers/auth-provider"
+import { OfflineProvider } from "@/components/providers/offline-provider"
+import { OrientationLock } from "@/components/layout/orientation-lock"
 
 export const metadata: Metadata = {
   title: "ProDairy Admin - Dairy Management System",
@@ -23,8 +25,12 @@ export default function RootLayout({
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
           <ReduxProvider>
             <AuthProvider>
-              {children}
-              <ToastProvider />
+              <OfflineProvider>
+                <OrientationLock>
+                  {children}
+                  <ToastProvider />
+                </OrientationLock>
+              </OfflineProvider>
             </AuthProvider>
           </ReduxProvider>
         </ThemeProvider>

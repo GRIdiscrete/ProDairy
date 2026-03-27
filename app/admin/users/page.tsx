@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react"
 import { AdminDashboardLayout } from "@/components/layout/admin-dashboard-layout"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+// Remove Card wrappers; use bordered sections like data-capture pages
 import { LoadingButton } from "@/components/ui/loading-button"
 import { DataTable } from "@/components/ui/data-table"
 import { DataTableFilters } from "@/components/ui/data-table-filters"
@@ -244,8 +244,8 @@ export default function AdminUsersPage() {
         <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Users Management</h1>
-            <p className="text-muted-foreground">Manage system users and their permissions</p>
+            <h1 className="text-3xl font-light text-foreground">Users Management</h1>
+            <p className="text-sm font-light text-muted-foreground">Manage system users and their permissions</p>
           </div>
           <PermissionButton
             feature="user"
@@ -258,11 +258,11 @@ export default function AdminUsersPage() {
           </PermissionButton>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Users</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
+        <div className="border border-gray-200 rounded-lg bg-white">
+          <div className="p-6 pb-0">
+            <div className="text-lg font-light">Users</div>
+          </div>
+          <div className="p-6 space-y-4">
             <DataTableFilters
               filters={tableFilters}
               onFiltersChange={setTableFilters}
@@ -271,17 +271,20 @@ export default function AdminUsersPage() {
               filterFields={filterFields}
             />
             
-                         {usersLoading ? (
-               <TablePulseLoading rows={8} />
-             ) : (
+            {usersLoading ? (
+              <div className="space-y-3">
+                <div className="h-10 bg-gray-100 rounded w-48" />
+                <div className="h-64 bg-gray-50 border border-dashed border-gray-200 rounded" />
+              </div>
+            ) : (
               <DataTable
                 columns={columns}
                 data={mappedUsers}
                 showSearch={false}
               />
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Form Drawer */}
         <UserFormDrawer 

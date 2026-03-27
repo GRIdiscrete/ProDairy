@@ -146,5 +146,10 @@ const usersSlice = createSlice({
   },
 })
 
+// Selectors
+export const selectUserById = (state: any, userId: string) => {
+  return state.users.items.find((user: any) => user.id === userId) || null
+}
+
 export const { clearUsersError } = usersSlice.actions
 export default usersSlice.reducer

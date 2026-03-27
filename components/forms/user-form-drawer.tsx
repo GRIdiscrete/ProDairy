@@ -25,11 +25,13 @@ const userSchema = yup.object({
   last_name: yup.string().required("Last name is required"),
   email: yup.string().email("Invalid email").required("Email is required"),
   password: yup.string()
-    .min(6, "Password must be at least 6 characters")
     .when('mode', {
       is: 'create',
-      then: (schema) => schema.required("Password is required"),
-      otherwise: (schema) => schema.notRequired()
+      then: (schema) => schema.required("Password is required").min(6, "Password must be at least 6 characters"),
+      otherwise: (schema) => schema.optional().test('password-length', 'Password must be at least 6 characters', function(value) {
+        if (!value || value.length === 0) return true; // Allow empty password in edit mode
+        return value.length >= 6;
+      })
     }),
   role_id: yup.string().required("Role is required"),
   department: yup.string().required("Department is required"),
@@ -176,7 +178,7 @@ export function UserFormDrawer({ open, onOpenChange, user, mode, onSuccess }: Us
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-[50vw] sm:max-w-[50vw] overflow-y-auto p-6">
+      <SheetContent className="tablet-sheet-full overflow-y-auto p-6">
         <SheetHeader className="mb-6">
           <SheetTitle className="flex items-center gap-2">
             {mode === "create" ? "Add New User" : `Edit User: ${user?.first_name} ${user?.last_name}`}

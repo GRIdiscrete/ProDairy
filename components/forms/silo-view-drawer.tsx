@@ -1,10 +1,9 @@
 "use client"
 
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Edit, Database, Settings, Eye, Calendar, MapPin, Gauge, Activity } from "lucide-react"
+import { Edit, Database, Settings, Calendar, MapPin, Gauge, Activity, FileText, Wrench } from "lucide-react"
 import { Silo } from "@/lib/types"
 
 interface SiloViewDrawerProps {
@@ -20,117 +19,90 @@ export function SiloViewDrawer({ open, onClose, silo, onEdit }: SiloViewDrawerPr
   const getStatusVariant = (status: string) => {
     switch (status?.toLowerCase()) {
       case "active":
-        return "default"
+        return "bg-green-100 text-green-800"
       case "maintenance":
-        return "secondary"
-      case "offline":
-        return "destructive"
+        return "bg-yellow-100 text-yellow-800"
       case "inactive":
-        return "destructive"
+      case "offline":
+        return "bg-red-100 text-red-800"
       default:
-        return "outline"
+        return "bg-gray-100 text-gray-800"
     }
-  }
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    })
   }
 
   const fillPercentage = silo.capacity > 0 ? (silo.milk_volume / silo.capacity) * 100 : 0
 
   return (
     <Sheet open={open} onOpenChange={onClose}>
-      <SheetContent className="w-[50vw] sm:max-w-[50vw] p-6 overflow-y-auto">
-        <SheetHeader className="mb-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#4f46e5] to-[#7c3aed] flex items-center justify-center">
-                <Database className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <SheetTitle className="flex items-center space-x-2">
-                  <span>{silo.name}</span>
-                  <Badge variant={getStatusVariant(silo.status)}>{silo.status}</Badge>
-                </SheetTitle>
-                <p className="text-sm text-gray-500 mt-1">Serial: {silo.serial_number}</p>
-              </div>
-            </div>
-            {onEdit && (
-              <Button variant="outline" size="sm" onClick={onEdit}>
-                <Edit className="w-4 h-4 mr-2" />
-                Edit Silo
-              </Button>
-            )}
-          </div>
+      <SheetContent className="w-[50vw] sm:max-w-[50vw] p-6 bg-white">
+        <SheetHeader>
+          <SheetTitle className="text-lg font-light">Silo Details</SheetTitle>
+          <SheetDescription className="text-sm font-light">View silo information and capacity stats</SheetDescription>
         </SheetHeader>
 
-        <div className="space-y-6">
-          {/* Basic Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center">
-                <Settings className="w-5 h-5 mr-2" />
-                Basic Information
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Silo Name</label>
-                  <p className="text-sm font-semibold">{silo.name}</p>
+        <div className="space-y-6 mt-6">
+          <div className="border border-gray-200 rounded-lg bg-white">
+            <div className="p-4 pb-0">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-gray-500 to-gray-700 flex items-center justify-center">
+                    <Database className="w-4 h-4 text-white" />
+                  </div>
+                  <div className="text-base font-light">{silo.name}</div>
+                  <Badge className={getStatusVariant(silo.status)}>{silo.status}</Badge>
                 </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Category</label>
-                  <p className="text-sm font-semibold">{silo.category}</p>
-                </div>
+                {onEdit && (
+                  <Button onClick={onEdit} variant="outline" size="sm" className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 rounded-full"> 
+                    <Edit className="w-4 h-4 mr-2" /> Edit
+                  </Button>
+                )}
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Serial Number</label>
-                  <p className="text-sm font-mono bg-gray-100 px-2 py-1 rounded">{silo.serial_number}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Location</label>
-                  <p className="text-sm font-semibold flex items-center">
-                    <MapPin className="w-4 h-4 mr-1" />
-                    {silo.location}
-                  </p>
-                </div>
+            </div>
+            <div className="p-4 grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <div className="text-xs text-gray-500 flex items-center gap-1"><FileText className="h-3 w-3" />Serial</div>
+                <div className="text-sm font-light">{silo.serial_number}</div>
               </div>
-            </CardContent>
-          </Card>
+              <div className="space-y-1">
+                <div className="text-xs text-gray-500 flex items-center gap-1"><Wrench className="h-3 w-3" />Category</div>
+                <div className="text-sm font-light">{silo.category}</div>
+              </div>
+              <div className="space-y-1">
+                <div className="text-xs text-gray-500 flex items-center gap-1"><MapPin className="h-3 w-3" />Location</div>
+                <div className="text-sm font-light">{silo.location}</div>
+              </div>
+              <div className="space-y-1">
+                <div className="text-xs text-gray-500 flex items-center gap-1"><Calendar className="h-3 w-3" />Created</div>
+                <div className="text-sm font-light">{new Date(silo.created_at).toLocaleDateString()}</div>
+              </div>
+            </div>
+          </div>
 
           {/* Capacity & Volume Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center">
-                <Gauge className="w-5 h-5 mr-2" />
-                Capacity & Volume
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
+          <div className="border border-gray-200 rounded-lg bg-white">
+            <div className="p-4 pb-0">
+              <div className="flex items-center space-x-2">
+                <Gauge className="w-4 h-4 text-blue-600" />
+                <div className="text-base font-light">Capacity & Volume</div>
+              </div>
+            </div>
+            <div className="p-4 space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="p-3 border rounded-lg">
-                  <label className="text-sm font-medium text-gray-500">Total Capacity</label>
-                  <p className="text-2xl font-bold text-blue-600">{silo.capacity.toLocaleString()}L</p>
+                  <div className="text-xs text-gray-500">Total Capacity</div>
+                  <div className="text-2xl font-light text-blue-600">{silo.capacity.toLocaleString()}L</div>
                 </div>
                 <div className="p-3 border rounded-lg">
-                  <label className="text-sm font-medium text-gray-500">Current Volume</label>
-                  <p className="text-2xl font-bold text-purple-600">{silo.milk_volume.toLocaleString()}L</p>
+                  <div className="text-xs text-gray-500">Current Volume</div>
+                  <div className="text-2xl font-light text-purple-600">{silo.milk_volume.toLocaleString()}L</div>
                 </div>
               </div>
               
               {/* Fill Percentage Indicator */}
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
-                  <label className="text-sm font-medium text-gray-500">Fill Percentage</label>
-                  <span className={`text-sm font-semibold ${
+                  <div className="text-xs text-gray-500">Fill Percentage</div>
+                  <span className={`text-sm font-light ${
                     fillPercentage > 80 ? 'text-red-600' : 
                     fillPercentage > 60 ? 'text-yellow-600' : 
                     'text-green-600'
@@ -152,59 +124,13 @@ export function SiloViewDrawer({ open, onClose, silo, onEdit }: SiloViewDrawerPr
 
               {/* Available Space */}
               <div className="p-3 bg-gray-50 rounded-lg">
-                <label className="text-sm font-medium text-gray-500">Available Space</label>
-                <p className="text-lg font-semibold text-gray-700">
+                <div className="text-xs text-gray-500">Available Space</div>
+                <div className="text-lg font-light text-gray-700">
                   {(silo.capacity - silo.milk_volume).toLocaleString()}L
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Status Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center">
-                <Activity className="w-5 h-5 mr-2" />
-                Status Information
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Current Status</label>
-                  <div className="flex items-center space-x-2 mt-1">
-                    <Badge variant={getStatusVariant(silo.status)} className="capitalize">
-                      {silo.status}
-                    </Badge>
-                    {silo.status === "active" && (
-                      <span className="text-xs text-green-600">Operational</span>
-                    )}
-                  </div>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Category</label>
-                  <p className="text-sm font-semibold mt-1">{silo.category}</p>
                 </div>
               </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-gray-500 flex items-center">
-                    <Calendar className="w-4 h-4 mr-1" />
-                    Created At
-                  </label>
-                  <p className="text-sm">{formatDate(silo.created_at)}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500 flex items-center">
-                    <Calendar className="w-4 h-4 mr-1" />
-                    Updated At
-                  </label>
-                  <p className="text-sm">{formatDate(silo.updated_at)}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
       </SheetContent>
     </Sheet>

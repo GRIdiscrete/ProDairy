@@ -70,8 +70,15 @@ export const apiRequest = async <T>(
     }
     const err: any = new Error(`API Error: ${response.status} ${response.statusText}`)
     err.status = response.status
+    err.statusCode = response.status  // Add statusCode for compatibility
     err.body = errorBody
     err.url = url
+    
+    // If we have error body with message, use it
+    if (errorBody && errorBody.message) {
+      err.message = errorBody.message
+    }
+    
     throw err
   }
 

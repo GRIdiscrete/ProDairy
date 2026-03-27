@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit"
-import { standardizingApi, StandardizingForm, CreateStandardizingFormRequest } from "@/lib/api/standardizing"
+import { standardizingFormApi, StandardizingForm, CreateStandardizingFormRequest } from "@/lib/api/standardizing-form"
 
 interface StandardizingState {
   forms: StandardizingForm[]
@@ -34,7 +34,7 @@ export const fetchStandardizingForms = createAsyncThunk(
   "standardizing/fetchForms",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await standardizingApi.getAll()
+      const response = await standardizingFormApi.getAll()
       return response
     } catch (error: any) {
       return rejectWithValue(error.message || "Failed to fetch standardizing forms")
@@ -46,7 +46,7 @@ export const fetchStandardizingFormById = createAsyncThunk(
   "standardizing/fetchFormById",
   async (id: string, { rejectWithValue }) => {
     try {
-      const response = await standardizingApi.getById(id)
+      const response = await standardizingFormApi.getById(id)
       return response
     } catch (error: any) {
       return rejectWithValue(error.message || "Failed to fetch standardizing form")
@@ -58,7 +58,7 @@ export const createStandardizingForm = createAsyncThunk(
   "standardizing/createForm",
   async (formData: CreateStandardizingFormRequest, { rejectWithValue }) => {
     try {
-      const response = await standardizingApi.create(formData)
+      const response = await standardizingFormApi.create(formData)
       return response.data
     } catch (error: any) {
       return rejectWithValue(error.message || "Failed to create standardizing form")
@@ -68,9 +68,9 @@ export const createStandardizingForm = createAsyncThunk(
 
 export const updateStandardizingForm = createAsyncThunk(
   "standardizing/updateForm",
-  async ({ id, formData }: { id: string; formData: Partial<CreateStandardizingFormRequest> }, { rejectWithValue }) => {
+  async (formData: any, { rejectWithValue }) => {
     try {
-      const response = await standardizingApi.update(id, formData)
+      const response = await standardizingFormApi.update(formData)
       return response.data
     } catch (error: any) {
       return rejectWithValue(error.message || "Failed to update standardizing form")
@@ -82,7 +82,7 @@ export const deleteStandardizingForm = createAsyncThunk(
   "standardizing/deleteForm",
   async (id: string, { rejectWithValue }) => {
     try {
-      await standardizingApi.delete(id)
+      await standardizingFormApi.delete(id)
       return id
     } catch (error: any) {
       return rejectWithValue(error.message || "Failed to delete standardizing form")

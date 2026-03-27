@@ -1,0 +1,516 @@
+"use client"
+
+import { useState, useEffect, useRef, useMemo } from "react"
+import { DataCaptureDashboardLayout } from "@/components/layout/data-capture-dashboard-layout"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { LoadingButton } from "@/components/ui/loading-button"
+import { DataTable } from "@/components/ui/data-table"
+import { DataTableFilters } from "@/components/ui/data-table-filters"
+import { Badge } from "@/components/ui/badge"
+import { Plus, Eye, Edit, Trash2, TestTube, TrendingUp, FileText, Clock, ArrowRight, Package } from "lucide-react"
+import { ProductIncubationDrawer } from "@/components/forms/product-incubation-drawer"
+import { ProductIncubationViewDrawer } from "@/components/forms/product-incubation-view-drawer"
+import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-dialog"
+import { Skeleton } from "@/components/ui/skeleton"
+import { CopyButton } from "@/components/ui/copy-button"
+import { useAppDispatch, useAppSelector } from "@/lib/store"
+import { 
+  fetchProductIncubations, 
+  deleteProductIncubationAction,
+  clearError
+} from "@/lib/store/slices/productIncubationSlice"
+import { toast } from "sonner"
+import { TableFilters } from "@/lib/types"
+import { ProductIncubation } from "@/lib/api/data-capture-forms"
+import ContentSkeleton from "@/components/ui/content-skeleton"
+
+interface ProductIncubationPageProps {
+  params: {
+    process_id: string
+  }
+}
+
+export default function ProductIncubationPage({ params }: ProductIncubationPageProps) {
+  const dispatch = useAppDispatch()
+  const { incubations, loading, error, operationLoading, isInitialized } = useAppSelector((state) => state.productIncubations)
+  
+  const [tableFilters, setTableFilters] = useState<TableFilters>({})
+  const hasFetchedRef = useRef(false)
+  
+  // Load product incubations on initial mount
+  useEffect(() => {
+    if (!isInitialized && !hasFetchedRef.current) {
+      hasFetchedRef.current = true
+      dispatch(fetchProductIncubations())
+    }
+  }, [dispatch, isInitialized])
+  
+  // Handle filter changes
+  useEffect(() => {
+    if (isInitialized && Object.keys(tableFilters).length > 0) {
+      dispatch(fetchProductIncubations())
+    }
+  }, [dispatch, tableFilters, isInitialized])
+  
+  // Handle errors with toast notifications
+  useEffect(() => {
+    if (error) {
+      toast.error(error)
+      dispatch(clearError())
+    }
+  }, [error, dispatch])
+  
+  // Drawer states
+  const [formDrawerOpen, setFormDrawerOpen] = useState(false)
+  const [viewDrawerOpen, setViewDrawerOpen] = useState(false)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  
+  // Selected incubation and mode
+  const [selectedIncubation, setSelectedIncubation] = useState<ProductIncubation | null>(null)
+  const [formMode, setFormMode] = useState<"create" | "edit">("create")
+
+  // Filter fields configuration for Product Incubation
+  const filterFields = useMemo(() => [
+    {
+      key: "created_at",
+      label: "Date",
+      type: "date" as const,
+      placeholder: "Filter by date"
+    },
+    {
+      key: "bn",
+      label: "Batch Number",
+      type: "text" as const,
+      placeholder: "Filter by batch number"
+    },
+    {
+      key: "product_description",
+      label: "Product Description",
+      type: "text" as const,
+      placeholder: "Filter by product description"
+    }
+  ], [])
+
+  // Action handlers
+  const handleAddIncubation = () => {
+    setSelectedIncubation(null)
+    setFormMode("create")
+    setFormDrawerOpen(true)
+  }
+
+  const handleEditIncubation = (incubation: ProductIncubation) => {
+    setSelectedIncubation(incubation)
+    setFormMode("edit")
+    setFormDrawerOpen(true)
+  }
+
+  const handleViewIncubation = (incubation: ProductIncubation) => {
+    setSelectedIncubation(incubation)
+    setViewDrawerOpen(true)
+  }
+
+  const handleDeleteIncubation = (incubation: ProductIncubation) => {
+    setSelectedIncubation(incubation)
+    setDeleteDialogOpen(true)
+  }
+
+  const confirmDelete = async () => {
+    if (!selectedIncubation) return
+    
+    try {
+      await dispatch(deleteProductIncubationAction(selectedIncubation.id!)).unwrap()
+      toast.success('Product Incubation deleted successfully')
+      setDeleteDialogOpen(false)
+      setSelectedIncubation(null)
+    } catch (error: any) {
+      toast.error(error || 'Failed to delete product incubation')
+    }
+  }
+
+  // Get latest incubation for display
+  const latestIncubation = Array.isArray(incubations) && incubations.length > 0 ? incubations[0] : null
+
+  // Table columns with actions
+  const columns = useMemo(() => [
+    {
+      accessorKey: "incubation_info",
+      header: "Incubation",
+      cell: ({ row }: any) => {
+        const incubation = row.original
+        return (
+          <div className="flex items-center space-x-3">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center">
+              <TestTube className="w-4 h-4 text-white" />
+            </div>
+            <div>
+              <div className="flex items-center space-x-2">
+                <Badge className="bg-purple-100 text-purple-800 font-light">Batch #{incubation.bn || 'N/A'}</Badge>
+              </div>
+              <p className="text-sm text-gray-500 mt-1">
+                {incubation.created_at ? new Date(incubation.created_at).toLocaleDateString() : 'N/A'} • {incubation.incubation_days} days
+              </p>
+            </div>
+          </div>
+        )
+      },
+    },
+    {
+      accessorKey: "product_info",
+      header: "Product",
+      cell: ({ row }: any) => {
+        const incubation = row.original
+        return (
+          <div className="space-y-2">
+            <div className="flex items-center space-x-2">
+              <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center">
+                <TestTube className="w-3 h-3 text-blue-600" />
+              </div>
+              <p className="text-sm font-light">
+                Product Details
+              </p>
+            </div>
+            <div className="space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-gray-500">Description</span>
+                <span className="text-xs font-light">
+                  {incubation.product_description && incubation.product_description.length > 20 ? 'N/A' : (incubation.product_description || 'N/A')}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-gray-500">Batch</span>
+                <span className="text-xs font-light">{incubation.bn}</span>
+              </div>
+            </div>
+          </div>
+        )
+      },
+    },
+    {
+      accessorKey: "dates",
+      header: "Dates",
+      cell: ({ row }: any) => {
+        const incubation = row.original
+        return (
+          <div className="space-y-2">
+            <div className="flex items-center space-x-2">
+              <div className="w-5 h-5 rounded-full bg-orange-100 flex items-center justify-center">
+                <Clock className="h-3 w-3 text-orange-600" />
+              </div>
+              <p className="text-sm font-light">
+                Incubation Period
+              </p>
+            </div>
+            <div className="space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-gray-500">Date In</span>
+                <span className="text-xs font-light">{new Date(incubation.date_in).toLocaleDateString()}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-gray-500">Expected Out</span>
+                <span className="text-xs font-light">{new Date(incubation.expected_date_out).toLocaleDateString()}</span>
+              </div>
+            </div>
+          </div>
+        )
+      },
+    },
+    {
+      accessorKey: "manufacturing",
+      header: "Manufacturing",
+      cell: ({ row }: any) => {
+        const incubation = row.original
+        return (
+          <div className="space-y-2">
+            <div className="flex items-center space-x-2">
+              <div className="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center">
+                <FileText className="h-3 w-3 text-green-600" />
+              </div>
+              <p className="text-sm font-light">
+                Manufacturing
+              </p>
+            </div>
+            <div className="space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-gray-500">MNF</span>
+                <span className="text-xs font-light">{new Date(incubation.mnf).toLocaleDateString()}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-gray-500">BB</span>
+                <span className="text-xs font-light">{new Date(incubation.bb).toLocaleDateString()}</span>
+              </div>
+            </div>
+          </div>
+        )
+      },
+    },
+    {
+      accessorKey: "approval",
+      header: "Approval",
+      cell: ({ row }: any) => {
+        const incubation = row.original
+        const approver = incubation.product_incubation_approved_by_fkey
+        return (
+          <div className="space-y-2">
+            <div className="flex items-center space-x-2">
+              <div className="w-5 h-5 rounded-full bg-purple-100 flex items-center justify-center">
+                <TrendingUp className="h-3 w-3 text-purple-600" />
+              </div>
+              <p className="text-sm font-light">
+                Approved By
+              </p>
+            </div>
+            {approver ? (
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-500">Role</span>
+                  <span className="text-xs font-light">{approver.role_name}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-500">Operations</span>
+                  <span className="text-xs font-light">{approver.user_operations?.length || 0}</span>
+                </div>
+              </div>
+            ) : (
+              <p className="text-xs text-gray-400">No details</p>
+            )}
+          </div>
+        )
+      },
+    },
+    {
+      accessorKey: "created_at",
+      header: "Created",
+      cell: ({ row }: any) => {
+        const incubation = row.original
+        return (
+          <div className="space-y-1">
+            <p className="text-sm font-light">
+              {incubation.created_at ? new Date(incubation.created_at).toLocaleDateString() : 'N/A'}
+            </p>
+            <p className="text-xs text-gray-500">
+              {incubation.updated_at ? `Updated: ${new Date(incubation.updated_at).toLocaleDateString()}` : 'Never updated'}
+            </p>
+          </div>
+        )
+      },
+    },
+    {
+      id: "actions",
+      header: "Actions",
+      cell: ({ row }: any) => {
+        const incubation = row.original
+        return (
+          <div className="flex space-x-2">
+            <LoadingButton 
+              variant="outline" 
+              size="sm" 
+              onClick={() => handleViewIncubation(incubation)}
+              className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 rounded-full"
+            >
+              <Eye className="w-4 h-4" />
+            </LoadingButton>
+            <LoadingButton 
+              variant="outline" 
+              size="sm" 
+              onClick={() => handleEditIncubation(incubation)}
+              className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 rounded-full"
+            >
+              <Edit className="w-4 h-4" />
+            </LoadingButton>
+            <LoadingButton 
+              variant="destructive" 
+              size="sm" 
+              onClick={() => handleDeleteIncubation(incubation)}
+              loading={operationLoading.delete}
+              disabled={operationLoading.delete}
+              className="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white border-0 rounded-full"
+            >
+              <Trash2 className="w-4 h-4" />
+            </LoadingButton>
+          </div>
+        )
+      },
+    },
+  ], [operationLoading.delete])
+
+  return (
+    <DataCaptureDashboardLayout title="Product Incubation" subtitle="Product incubation process control and monitoring">
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-light text-foreground">Product Incubation</h1>
+            <p className="text-sm font-light text-muted-foreground">Manage product incubation forms and process control</p>
+            <p className="text-xs text-gray-500 mt-1">Process ID: {params.process_id}</p>
+          </div>
+          <LoadingButton 
+            onClick={handleAddIncubation}
+            className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white border-0 rounded-full px-6 py-2 font-light"
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Add Product Incubation
+          </LoadingButton>
+        </div>
+
+        {/* Current Incubation Details */}
+        {loading ? (
+          <ContentSkeleton sections={1} cardsPerSection={4} />
+        ) : latestIncubation ? (
+          <div className="border border-gray-200 rounded-lg bg-white border-l-4 border-l-purple-500">
+            <div className="p-6 pb-0">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2 text-lg font-light">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center">
+                    <TestTube className="h-4 w-4 text-white" />
+                  </div>
+                  <span>Current Incubation Process</span>
+                  <Badge className="bg-gradient-to-r from-purple-100 to-pink-100 text-purple-800 font-light">Latest</Badge>
+                </div>
+                <LoadingButton 
+                  variant="outline" 
+                  onClick={() => handleViewIncubation(latestIncubation)}
+                  className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white border-0 rounded-full px-4 py-2 font-light text-sm"
+                >
+                  <Eye className="mr-2 h-4 w-4" />
+                  View Details
+                </LoadingButton>
+              </div>
+            </div>
+            <div className="p-6">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <TestTube className="h-4 w-4 text-purple-500" />
+                    <p className="text-sm font-light text-gray-600">Product</p>
+                  </div>
+                  <p className="text-lg font-light text-purple-600">
+                    {latestIncubation.product_description && latestIncubation.product_description.length > 20 ? 'N/A' : (latestIncubation.product_description || 'N/A')}
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <Clock className="h-4 w-4 text-gray-500" />
+                    <p className="text-sm font-light text-gray-600">Date In</p>
+                  </div>
+                  <p className="text-lg font-light">{new Date(latestIncubation.date_in).toLocaleDateString('en-GB', { 
+                    day: 'numeric', 
+                    month: 'long', 
+                    year: 'numeric' 
+                  })}</p>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <TrendingUp className="h-4 w-4 text-green-500" />
+                    <p className="text-sm font-light text-gray-600">Batch</p>
+                  </div>
+                  <p className="text-lg font-light text-green-600">
+                    #{latestIncubation.bn}
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <FileText className="h-4 w-4 text-blue-500" />
+                    <p className="text-sm font-light text-gray-600">Days</p>
+                  </div>
+                  <p className="text-lg font-light text-blue-600">
+                    {latestIncubation.incubation_days} days
+                  </p>
+                </div>
+              </div>
+              
+              {/* Process Overview */}
+              <div className="mt-6 p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg">
+                <div className="flex items-center space-x-2 mb-3">
+                  <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center">
+                    <TestTube className="h-4 w-4 text-purple-600" />
+                  </div>
+                  <h4 className="text-sm font-light text-gray-900">Process Overview</h4>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
+                      <FileText className="h-4 w-4 text-blue-600" />
+                    </div>
+                    <span className="text-sm font-light">Palletizer</span>
+                  </div>
+                  <ArrowRight className="w-4 h-4 text-gray-400" />
+                  <div className="flex items-center space-x-2">
+                    <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center">
+                      <TestTube className="h-4 w-4 text-purple-600" />
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <span className="text-sm font-medium text-purple-600">Incubation</span>
+                      <div className="bg-gradient-to-r from-purple-500 to-pink-600 text-white px-2 py-1 rounded-full text-xs font-medium shadow-lg">
+                        Current Step
+                      </div>
+                    </div>
+                  </div>
+                  <ArrowRight className="w-4 h-4 text-gray-400" />
+                  <div className="flex items-center space-x-2">
+                    <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center">
+                      <TestTube className="h-4 w-4 text-gray-400" />
+                    </div>
+                    <span className="text-sm font-light text-gray-400">Test</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : null}
+
+        {/* Data Table */}
+        {!loading && (
+          <div className="border border-gray-200 rounded-lg bg-white">
+            <div className="p-6 pb-0">
+              <div className="text-lg font-light">Product Incubations</div>
+            </div>
+            <div className="p-6 space-y-4">
+            <DataTableFilters
+              filters={tableFilters}
+              onFiltersChange={setTableFilters}
+              onSearch={(searchTerm) => setTableFilters(prev => ({ ...prev, search: searchTerm }))}
+              searchPlaceholder="Search product incubations..."
+              filterFields={filterFields}
+            />
+            
+            {loading ? (
+              <ContentSkeleton sections={1} cardsPerSection={4} />
+            ) : (
+              <DataTable columns={columns} data={incubations} showSearch={false} />
+            )}
+            </div>
+          </div>
+        )}
+
+        {/* Form Drawer */}
+        <ProductIncubationDrawer 
+          open={formDrawerOpen} 
+          onOpenChange={setFormDrawerOpen} 
+          incubation={selectedIncubation}
+          mode={formMode}
+          processId={params.process_id}
+        />
+
+        {/* View Drawer */}
+        <ProductIncubationViewDrawer
+          open={viewDrawerOpen}
+          onOpenChange={setViewDrawerOpen}
+          incubation={selectedIncubation}
+          onEdit={() => {
+            setViewDrawerOpen(false)
+            handleEditIncubation(selectedIncubation!)
+          }}
+        />
+
+        {/* Delete Confirmation Dialog */}
+        <DeleteConfirmationDialog
+          open={deleteDialogOpen}
+          onOpenChange={setDeleteDialogOpen}
+          title="Delete Product Incubation"
+          description={`Are you sure you want to delete this product incubation? This action cannot be undone and may affect production tracking.`}
+          onConfirm={confirmDelete}
+          loading={operationLoading.delete}
+        />
+      </div>
+    </DataCaptureDashboardLayout>
+  )
+}

@@ -53,23 +53,28 @@ export function RawMaterialViewDrawer({ open, onClose, rawMaterial, onEdit }: Ra
 
   return (
     <Sheet open={open} onOpenChange={onClose}>
-      <SheetContent className="w-[50vw] sm:max-w-[50vw] p-6 overflow-y-auto">
-        <SheetHeader className="mb-6">
+      <SheetContent className="w-[50vw] sm:max-w-[50vw] p-6 overflow-y-auto bg-white">
+        <SheetHeader className="mb-6 bg-white">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#f59e0b] to-[#d97706] flex items-center justify-center">
                 <Package className="w-5 h-5 text-white" />
               </div>
               <div>
-                <SheetTitle className="flex items-center space-x-2">
-                  <span>{rawMaterial.name}</span>
+                <SheetTitle className="flex items-center space-x-2 text-lg font-light">
+                  <span className="font-light">{rawMaterial.name}</span>
                   <Badge variant="outline" className="text-xs">Raw Material</Badge>
                 </SheetTitle>
-                <p className="text-sm text-gray-500 mt-1">Material Details</p>
+                <p className="text-sm font-light text-gray-500 mt-1">Material Details</p>
               </div>
             </div>
             {onEdit && (
-              <Button variant="outline" size="sm" onClick={onEdit}>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={onEdit}
+                className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 rounded-full"
+              >
                 <Edit className="w-4 h-4 mr-2" />
                 Edit Material
               </Button>
@@ -79,32 +84,32 @@ export function RawMaterialViewDrawer({ open, onClose, rawMaterial, onEdit }: Ra
 
         <div className="space-y-6">
           {/* Basic Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center">
+          <div className="border border-gray-200 rounded-lg bg-white">
+            <div className="p-4 pb-0">
+              <div className="text-base font-light flex items-center gap-2">
                 <Info className="w-5 h-5 mr-2" />
                 Basic Information
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <label className="text-sm font-medium text-gray-500">Material Name</label>
-                <p className="text-lg font-semibold">{rawMaterial.name}</p>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+            <div className="p-4 space-y-4">
+              <div>
+                <label className="text-sm font-light text-gray-500">Material Name</label>
+                <p className="text-lg font-light">{rawMaterial.name}</p>
+              </div>
+            </div>
+          </div>
 
           {/* Description */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center">
+          <div className="border border-gray-200 rounded-lg bg-white">
+            <div className="p-4 pb-0">
+              <div className="text-base font-light flex items-center gap-2">
                 <BookOpen className="w-5 h-5 mr-2" />
                 Description & Specifications
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
+              </div>
+            </div>
+            <div className="p-4 space-y-4">
               <div>
-                <label className="text-sm font-medium text-gray-500">Description</label>
+                <label className="text-sm font-light text-gray-500">Description</label>
                 <div className="mt-2 p-3 bg-gray-50 rounded-lg">
                   {rawMaterial.description ? (
                     <p className="text-sm leading-relaxed whitespace-pre-wrap">
@@ -120,32 +125,32 @@ export function RawMaterialViewDrawer({ open, onClose, rawMaterial, onEdit }: Ra
               <div className="grid grid-cols-2 gap-4">
                 <div className="p-3 border rounded-lg text-center">
                   <p className="text-sm text-gray-500">Description Length</p>
-                  <p className="text-lg font-bold text-blue-600">
+                  <p className="text-lg font-light text-blue-600">
                     {rawMaterial.description ? rawMaterial.description.length : 0} chars
                   </p>
                 </div>
                 <div className="p-3 border rounded-lg text-center">
                   <p className="text-sm text-gray-500">Word Count</p>
-                  <p className="text-lg font-bold text-green-600">
+                  <p className="text-lg font-light text-green-600">
                     {rawMaterial.description ? rawMaterial.description.split(/\s+/).filter(word => word.length > 0).length : 0} words
                   </p>
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
           {/* Status Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center">
+          <div className="border border-gray-200 rounded-lg bg-white">
+            <div className="p-4 pb-0">
+              <div className="text-base font-light flex items-center gap-2">
                 <Clock className="w-5 h-5 mr-2" />
                 Status & Activity
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
+              </div>
+            </div>
+            <div className="p-4 space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="p-3 border rounded-lg">
-                  <label className="text-sm font-medium text-gray-500">Status</label>
+                  <label className="text-sm font-light text-gray-500">Status</label>
                   <div className="flex items-center space-x-2 mt-1">
                     <Badge variant="default" className="bg-green-100 text-green-800">
                       Active
@@ -154,8 +159,8 @@ export function RawMaterialViewDrawer({ open, onClose, rawMaterial, onEdit }: Ra
                   </div>
                 </div>
                 <div className="p-3 border rounded-lg">
-                  <label className="text-sm font-medium text-gray-500">Category</label>
-                  <p className="text-sm font-semibold mt-1 capitalize">
+                  <label className="text-sm font-light text-gray-500">Category</label>
+                  <p className="text-sm font-light mt-1 capitalize">
                     {rawMaterial.name.toLowerCase().includes('milk') ? 'Dairy Product' :
                      rawMaterial.name.toLowerCase().includes('cream') ? 'Dairy Product' :
                      rawMaterial.name.toLowerCase().includes('powder') ? 'Powder' :
@@ -165,7 +170,7 @@ export function RawMaterialViewDrawer({ open, onClose, rawMaterial, onEdit }: Ra
               </div>
               
               <div className="p-3 bg-gray-50 rounded-lg">
-                <label className="text-sm font-medium text-gray-500">Usage Recommendations</label>
+                <label className="text-sm font-light text-gray-500">Usage Recommendations</label>
                 <ul className="text-sm text-gray-600 mt-2 space-y-1">
                   <li>• Store in appropriate temperature conditions</li>
                   <li>• Check expiration dates before use</li>
@@ -173,40 +178,40 @@ export function RawMaterialViewDrawer({ open, onClose, rawMaterial, onEdit }: Ra
                   <li>• Maintain proper handling protocols</li>
                 </ul>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
           {/* Timeline Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center">
+          <div className="border border-gray-200 rounded-lg bg-white">
+            <div className="p-4 pb-0">
+              <div className="text-base font-light flex items-center gap-2">
                 <Calendar className="w-5 h-5 mr-2" />
                 Timeline & History
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
+              </div>
+            </div>
+            <div className="p-4 space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-medium text-gray-500 flex items-center">
+                  <label className="text-sm font-light text-gray-500 flex items-center">
                     <Calendar className="w-4 h-4 mr-1" />
                     Created At
                   </label>
-                  <p className="text-sm font-semibold">{formatDate(rawMaterial.created_at)}</p>
+                  <p className="text-sm font-light">{formatDate(rawMaterial.created_at)}</p>
                   <p className="text-xs text-gray-500">{getTimeSinceCreation()}</p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-500 flex items-center">
+                  <label className="text-sm font-light text-gray-500 flex items-center">
                     <Calendar className="w-4 h-4 mr-1" />
                     Last Updated
                   </label>
-                  <p className="text-sm font-semibold">{formatDate(rawMaterial.updated_at)}</p>
+                  <p className="text-sm font-light">{formatDate(rawMaterial.updated_at)}</p>
                   <p className="text-xs text-gray-500">{getTimeSinceUpdate()}</p>
                 </div>
               </div>
               
               {/* Activity Summary */}
               <div className="p-3 border rounded-lg">
-                <h4 className="text-sm font-medium text-gray-700 mb-2">Activity Summary</h4>
+                <h4 className="text-sm font-light text-gray-700 mb-2">Activity Summary</h4>
                 <div className="space-y-1">
                   <div className="flex justify-between text-xs">
                     <span className="text-gray-500">Material entry created</span>
@@ -218,8 +223,8 @@ export function RawMaterialViewDrawer({ open, onClose, rawMaterial, onEdit }: Ra
                   </div>
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
       </SheetContent>
     </Sheet>

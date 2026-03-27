@@ -9,7 +9,6 @@ import { LoadingButton } from "@/components/ui/loading-button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Textarea } from "@/components/ui/textarea"
 import { useAppDispatch, useAppSelector } from "@/lib/store"
 import { createMachine, updateMachine } from "@/lib/store/slices/machineSlice"
 import { toast } from "sonner"
@@ -99,98 +98,59 @@ export function MachineFormDrawer({ open, onOpenChange, machine, mode }: Machine
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-[50vw] sm:max-w-[50vw] overflow-y-auto">
-        <div className="p-6">
-          <SheetHeader>
-            <SheetTitle>{mode === "create" ? "Add New Machine" : "Edit Machine"}</SheetTitle>
-            <SheetDescription>
-              {mode === "create" ? "Create a new machine configuration" : "Update machine information"}
-            </SheetDescription>
-          </SheetHeader>
-
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 mt-6">
-            {/* Basic Information */}
+      <SheetContent className="w-[50vw] sm:max-w-[50vw] p-0 bg-white">
+        <SheetHeader className="p-6 pb-0 bg-white">
+          <SheetTitle className="text-lg font-light">
+            {mode === "create" ? "Add New Machine" : "Edit Machine"}
+          </SheetTitle>
+          <SheetDescription className="text-sm font-light">
+            {mode === "create" ? "Create a new machine configuration" : "Update machine information"}
+          </SheetDescription>
+        </SheetHeader>
+        <div className="flex-1 overflow-y-auto bg-white p-6">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Machine Information</h3>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name">Machine Name *</Label>
-                  <Controller
-                    name="name"
-                    control={control}
-                    render={({ field }) => (
-                      <Input
-                        id="name"
-                        {...field}
-                        placeholder="Enter machine name"
-                      />
-                    )}
-                  />
+                  <Label>Machine Name *</Label>
+                  <Controller name="name" control={control} render={({ field }) => (
+                    <Input placeholder="e.g., Pasteurizer-001" {...field} />
+                  )} />
                   {errors.name && <p className="text-sm text-red-500">{errors.name.message}</p>}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="serial_number">Serial Number *</Label>
-                  <Controller
-                    name="serial_number"
-                    control={control}
-                    render={({ field }) => (
-                      <Input
-                        id="serial_number"
-                        {...field}
-                        placeholder="Enter serial number"
-                      />
-                    )}
-                  />
+                  <Label>Serial Number *</Label>
+                  <Controller name="serial_number" control={control} render={({ field }) => (
+                    <Input placeholder="e.g., SN123456789" {...field} />
+                  )} />
                   {errors.serial_number && <p className="text-sm text-red-500">{errors.serial_number.message}</p>}
                 </div>
               </div>
+              
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="category">Category *</Label>
-                  <Controller
-                    name="category"
-                    control={control}
-                    render={({ field }) => (
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select category" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Pasteurizing Machines">Pasteurizing Machines</SelectItem>
-                          <SelectItem value="Separator Machines">Separator Machines</SelectItem>
-                          <SelectItem value="Homogenizer Machines">Homogenizer Machines</SelectItem>
-                          <SelectItem value="Packaging Machines">Packaging Machines</SelectItem>
-                          <SelectItem value="Cooling Machines">Cooling Machines</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    )}
-                  />
+                  <Label>Category *</Label>
+                  <Controller name="category" control={control} render={({ field }) => (
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <SelectTrigger className="w-full rounded-full">
+                        <SelectValue placeholder="Select category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Skimmer">Skimmer</SelectItem>
+                        <SelectItem value="Pasteurizer">Pasteurizer</SelectItem>
+                        <SelectItem value="Filmatic">Filmatic</SelectItem>
+                        <SelectItem value="Autoclave">Autoclave</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )} />
                   {errors.category && <p className="text-sm text-red-500">{errors.category.message}</p>}
                 </div>
+                
                 <div className="space-y-2">
-                  <Label htmlFor="location">Location *</Label>
-                  <Controller
-                    name="location"
-                    control={control}
-                    render={({ field }) => (
-                      <Input
-                        id="location"
-                        {...field}
-                        placeholder="Enter location (e.g., PD2)"
-                      />
-                    )}
-                  />
-                  {errors.location && <p className="text-sm text-red-500">{errors.location.message}</p>}
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="status">Status *</Label>
-                <Controller
-                  name="status"
-                  control={control}
-                  render={({ field }) => (
+                  <Label>Status *</Label>
+                  <Controller name="status" control={control} render={({ field }) => (
                     <Select onValueChange={field.onChange} value={field.value}>
-                      <SelectTrigger>
+                      <SelectTrigger className="w-full rounded-full">
                         <SelectValue placeholder="Select status" />
                       </SelectTrigger>
                       <SelectContent>
@@ -200,22 +160,34 @@ export function MachineFormDrawer({ open, onOpenChange, machine, mode }: Machine
                         <SelectItem value="offline">Offline</SelectItem>
                       </SelectContent>
                     </Select>
-                  )}
-                />
-                {errors.status && <p className="text-sm text-red-500">{errors.status.message}</p>}
+                  )} />
+                  {errors.status && <p className="text-sm text-red-500">{errors.status.message}</p>}
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label>Location *</Label>
+                <Controller name="location" control={control} render={({ field }) => (
+                  <Input placeholder="e.g., Production Floor A" {...field} />
+                )} />
+                {errors.location && <p className="text-sm text-red-500">{errors.location.message}</p>}
               </div>
             </div>
 
-
-
             <div className="flex justify-end space-x-2 pt-4">
-              <LoadingButton type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              <LoadingButton
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+                disabled={operationLoading.create || operationLoading.update}
+              >
                 Cancel
               </LoadingButton>
-              <LoadingButton 
-                type="submit" 
-                loading={mode === "create" ? operationLoading.create : operationLoading.update}
-                loadingText={mode === "create" ? "Creating..." : "Updating..."}
+              <LoadingButton
+                type="submit"
+                loading={operationLoading.create || operationLoading.update}
+                disabled={operationLoading.create || operationLoading.update}
+                className="bg-gradient-to-r from-gray-500 to-gray-700 hover:from-gray-600 hover:to-gray-800 text-white border-0 rounded-full px-6 py-2 font-light"
               >
                 {mode === "create" ? "Create Machine" : "Update Machine"}
               </LoadingButton>

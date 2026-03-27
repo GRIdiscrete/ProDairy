@@ -23,12 +23,25 @@ import flexOneSteriliserProcessReducer from "./slices/flexOneSteriliserProcessSl
 import fillerLog2Reducer from "./slices/fillerLog2Slice"
 import rawMilkIntakeReducer from "./slices/rawMilkIntakeSlice"
 import standardizingReducer from "./slices/standardizingSlice"
+import skimmingReducer from "./slices/skimmingSlice"
 import pasteurizingReducer from "./slices/pasteurizingSlice"
 import filmaticLinesProductionSheetReducer from "./slices/filmaticLinesProductionSheetSlice"
 import filmaticLinesProductionSheetDetailReducer from "./slices/filmaticLinesProductionSheetDetailSlice"
 import filmaticLinesBottlesReconciliationReducer from "./slices/filmaticLinesBottlesReconciliationSlice"
 import filmaticLinesMilkReconciliationReducer from "./slices/filmaticLinesMilkReconciliationSlice"
 import filmaticLinesStoppageTimeMinutesReducer from "./slices/filmaticLinesStoppageTimeMinutesSlice"
+import tankerReducer from "./slices/tankerSlice"
+import filmaticLinesGroupsReducer from "./slices/filmaticLinesGroupsSlice"
+import filmaticLinesForm1Reducer from "./slices/filmaticLinesForm1Slice"
+import filmaticLinesForm2Reducer from "./slices/filmaticLinesForm2Slice"
+import steriMilkProcessLogReducer from "./slices/steriMilkProcessLogSlice"
+import rawMilkIntakeLabTestsReducer from "./slices/rawMilkIntakeLabTestSlice"
+import driverFormLabTestsReducer from "./slices/driverFormLabTestSlice"
+import rawMilkResultSlipsReducer from "./slices/rawMilkResultSlipSlice"
+import productIncubationReducer from "./slices/productIncubationSlice"
+import uhtQualityCheckReducer from "./slices/uhtQualityCheckSlice"
+import qaCorrectiveActionReducer from "./slices/qaCorrectiveActionSlice"
+import generalLabTestSlice from "./slices/generalLabTestSlice"
 export const store = configureStore({
   reducer: {
     dashboard: dashboardReducer,
@@ -40,6 +53,7 @@ export const store = configureStore({
     roles: rolesReducer,
     users: usersReducer,
     silo: siloReducer,
+    generalLabTests: generalLabTestSlice,
     rawMaterial: rawMaterialReducer,
     process: processReducer,
     productionPlan: productionPlanReducer,
@@ -54,12 +68,24 @@ export const store = configureStore({
     fillerLog2s: fillerLog2Reducer,
     rawMilkIntake: rawMilkIntakeReducer,
     standardizing: standardizingReducer,
+    skimming: skimmingReducer,
     pasteurizing: pasteurizingReducer,
     filmaticLinesProductionSheets: filmaticLinesProductionSheetReducer,
     filmaticLinesProductionSheetDetails: filmaticLinesProductionSheetDetailReducer,
     filmaticLinesBottlesReconciliations: filmaticLinesBottlesReconciliationReducer,
     filmaticLinesMilkReconciliations: filmaticLinesMilkReconciliationReducer,
     filmaticLinesStoppageTimeMinutes: filmaticLinesStoppageTimeMinutesReducer,
+    tankers: tankerReducer,
+    filmaticLinesGroups: filmaticLinesGroupsReducer,
+    filmaticLinesForm1: filmaticLinesForm1Reducer,
+    filmaticLinesForm2: filmaticLinesForm2Reducer,
+    steriMilkProcessLog: steriMilkProcessLogReducer,
+    rawMilkIntakeLabTests: rawMilkIntakeLabTestsReducer,
+    driverFormLabTests: driverFormLabTestsReducer,
+    rawMilkResultSlips: rawMilkResultSlipsReducer,
+    productIncubations: productIncubationReducer,
+    uhtQualityChecks: uhtQualityCheckReducer,
+    qaCorrectiveActions: qaCorrectiveActionReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
