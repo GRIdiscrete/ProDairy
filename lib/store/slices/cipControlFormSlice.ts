@@ -142,6 +142,7 @@ const cipControlFormSlice = createSlice({
       .addCase(fetchCIPControlForms.rejected, (state, action) => {
         state.operationLoading.fetch = false
         state.error = action.payload as string
+        state.isInitialized = true
       })
       
       // Fetch single form

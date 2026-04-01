@@ -5,7 +5,7 @@ import { LoadingButton } from "@/components/ui/loading-button"
 import { DataTable } from "@/components/ui/data-table"
 import { DataTableFilters } from "@/components/ui/data-table-filters"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Eye, Edit, Trash2, Droplets, TrendingUp, Clock, FlaskConical } from "lucide-react"
+import { Plus, Eye, Edit, Trash2, Droplets } from "lucide-react"
 import { CIPControlFormDrawer } from "@/components/forms/cip-control-form-drawer"
 import { CIPControlFormViewDrawer } from "@/components/forms/cip-control-form-view-drawer"
 import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-dialog"
@@ -21,7 +21,7 @@ import { toast } from "sonner"
 import { TableFilters } from "@/lib/types"
 import { CIPControlForm } from "@/lib/api/data-capture-forms"
 import ContentSkeleton from "@/components/ui/content-skeleton"
-import { AdminDashboardLayout } from "@/components/layout/admin-dashboard-layout"
+import { ToolsDashboardLayout } from "@/components/layout/tools-dashboard-layout"
 import { FormIdCopy } from "@/components/ui/form-id-copy"
 import { PermissionGuard } from "@/components/auth/permission-guard"
 
@@ -34,7 +34,6 @@ export default function CIPControlFormPage() {
   const [tableFilters, setTableFilters] = useState<TableFilters>({})
   const hasFetchedRef = useRef(false)
 
-  // Load initial data
   useEffect(() => {
     if (!isInitialized && !hasFetchedRef.current) {
       hasFetchedRef.current = true
@@ -47,12 +46,10 @@ export default function CIPControlFormPage() {
     if (!rolesInitialized) dispatch(fetchRoles({}))
   }, [dispatch, usersInitialized, rolesInitialized])
 
-  // Frontend Filtering Logic
   const filteredForms = useMemo(() => {
     if (!forms) return [];
 
     return forms.filter((form: CIPControlForm) => {
-      // 1. Search filter (by tag or machine name)
       if (tableFilters.search) {
         const searchLower = tableFilters.search.toLowerCase();
         const tag = (form.tag || "").toLowerCase();
@@ -60,18 +57,15 @@ export default function CIPControlFormPage() {
         if (!tag.includes(searchLower) && !machine.includes(searchLower)) return false;
       }
 
-      // 2. Status filter
       if (tableFilters.status && tableFilters.status !== "all") {
         if (form.status !== tableFilters.status) return false;
       }
 
-      // 3. Machine filter
       if (tableFilters.machine_id) {
         const machine = (form.machine_id?.name || "").toLowerCase();
         if (!machine.includes(tableFilters.machine_id.toLowerCase())) return false;
       }
 
-      // 4. Operator filter
       if (tableFilters.operator_id) {
         const operatorName = form.cip_control_form_operator_id_fkey
           ? `${form.cip_control_form_operator_id_fkey.first_name} ${form.cip_control_form_operator_id_fkey.last_name}`.toLowerCase()
@@ -79,7 +73,6 @@ export default function CIPControlFormPage() {
         if (!operatorName.includes(tableFilters.operator_id.toLowerCase())) return false;
       }
 
-      // 5. Date Range filter
       if (tableFilters.dateRange) {
         const formDate = form.date ? new Date(form.date) : (form.created_at ? new Date(form.created_at) : null);
         if (formDate) {
@@ -102,7 +95,6 @@ export default function CIPControlFormPage() {
     });
   }, [forms, tableFilters]);
 
-  // Handle errors
   useEffect(() => {
     if (error) {
       toast.error(error)
@@ -273,7 +265,7 @@ export default function CIPControlFormPage() {
 
   return (
     <PermissionGuard requiredView="cip">
-      <AdminDashboardLayout title="CIP Control Forms" subtitle="Cleaning in Place control and monitoring">
+      <ToolsDashboardLayout title="CIP Control Forms" subtitle="Cleaning in Place control and monitoring">
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div>
@@ -289,7 +281,6 @@ export default function CIPControlFormPage() {
             </LoadingButton>
           </div>
 
-          {/* Latest Form Spotlight */}
           {!loading && latestForm && (
             <div className="border border-gray-200 rounded-xl bg-white border-l-4 border-l-[#006BC4] shadow-none">
               <div className="p-6">
@@ -327,7 +318,6 @@ export default function CIPControlFormPage() {
             </div>
           )}
 
-          {/* Table Section */}
           <div className="border border-gray-200 rounded-xl bg-white shadow-none overflow-hidden">
             <div className="p-6 space-y-4">
               <DataTableFilters
@@ -353,7 +343,7 @@ export default function CIPControlFormPage() {
           <CIPControlFormViewDrawer open={viewDrawerOpen} onClose={() => setViewDrawerOpen(false)} form={selectedForm} onEdit={() => { setViewDrawerOpen(false); handleEditForm(selectedForm!); }} />
           <DeleteConfirmationDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen} title="Delete CIP Control Form" description="Are you sure you want to delete this cleaning record?" onConfirm={confirmDelete} loading={operationLoading.delete} />
         </div>
-      </AdminDashboardLayout>
+      </ToolsDashboardLayout>
     </PermissionGuard>
   )
 }
