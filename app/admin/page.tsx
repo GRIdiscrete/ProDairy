@@ -25,7 +25,6 @@ import {
   Layers,
   Settings2,
   Package,
-  Download,
   FileSpreadsheet,
 } from "lucide-react"
 import {
@@ -57,7 +56,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { exportToCSV } from "@/lib/export-utils"
+import { exportToExcel, type ExportColumn } from "@/lib/export-utils"
 
 // ─── Types ───
 type TimePeriod = "volume_today" | "volume_yesterday" | "volume_wtd" | "volume_mtd" | "volume_qtd" | "volume_ytd" | "volume_last_7_days" | "volume_last_30_days"
@@ -447,12 +446,21 @@ export default function AdminDashboard() {
                            <CardDescription>Volume breakdown by vehicle and compartment</CardDescription>
                          </div>
                          <div className="flex items-center gap-2">
-                           <button 
-                             onClick={() => exportToCSV(data.collectionDetails, 'truck-performance')}
+                           <button
+                             onClick={async () => {
+                               const cols: ExportColumn[] = [
+                                 { label: 'Truck', getValue: r => r.truck_number },
+                                 { label: 'Compartment', getValue: r => r.truck_compartment_number },
+                                 { label: 'Today (L)', getValue: r => r.volume_today ?? 0 },
+                                 { label: 'WTD (L)', getValue: r => r.volume_wtd ?? 0 },
+                                 { label: 'MTD (L)', getValue: r => r.volume_mtd ?? 0 },
+                               ]
+                               await exportToExcel(data.collectionDetails.filter(d => d.truck_number !== 'TOTAL'), 'truck-performance', cols, 'Truck Performance')
+                             }}
                              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#006BC4] text-white hover:bg-[#005aab] transition-all shadow-sm"
                            >
-                             <Download className="w-3.5 h-3.5" />
-                             Export CSV
+                             <FileSpreadsheet className="w-3.5 h-3.5" />
+                             Export Excel
                            </button>
                            <Badge variant="outline" className="h-8 rounded-lg cursor-pointer hover:bg-muted transition-colors"><Filter className="w-3 h-3 mr-1" /> Filter</Badge>
                          </div>
@@ -512,25 +520,34 @@ export default function AdminDashboard() {
                           <CardTitle className="text-lg">Detailed Supplier Breakdown</CardTitle>
                           <CardDescription>Milk origin grouped by truck and tank</CardDescription>
                         </div>
-                        <button 
-                          onClick={() => {
+                        <button
+                          onClick={async () => {
                             const flattenedData = data.collectionDetails
                               .filter(d => d.suppliers && d.suppliers.length > 0)
                               .flatMap(row => (row.suppliers || []).map((s: any) => ({
-                                Truck: row.truck_number || "N/A",
-                                Compartment: row.truck_compartment_number || "N/A",
+                                Truck: row.truck_number || 'N/A',
+                                Compartment: row.truck_compartment_number || 'N/A',
                                 Supplier: `${s.first_name} ${s.last_name}`,
-                                Tank: s.tank || "N/A",
-                                Voucher: s.voucher || "N/A",
+                                Tank: s.tank || 'N/A',
+                                Voucher: s.voucher || 'N/A',
                                 Volume: s.volume || 0,
-                                Export_Date: new Date().toLocaleDateString()
+                                Export_Date: new Date().toLocaleDateString(),
                               })))
-                            exportToCSV(flattenedData, 'supplier-breakdown')
+                            const cols: ExportColumn[] = [
+                              { label: 'Truck', getValue: r => r.Truck },
+                              { label: 'Compartment', getValue: r => r.Compartment },
+                              { label: 'Supplier', getValue: r => r.Supplier },
+                              { label: 'Tank', getValue: r => r.Tank },
+                              { label: 'Voucher', getValue: r => r.Voucher },
+                              { label: 'Volume (L)', getValue: r => r.Volume },
+                              { label: 'Export Date', getValue: r => r.Export_Date },
+                            ]
+                            await exportToExcel(flattenedData, 'supplier-breakdown', cols, 'Supplier Breakdown')
                           }}
                           className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#006BC4] text-white hover:bg-[#005aab] transition-all shadow-sm"
                         >
-                          <Download className="w-3.5 h-3.5" />
-                          Export CSV
+                          <FileSpreadsheet className="w-3.5 h-3.5" />
+                          Export Excel
                         </button>
                       </CardHeader>
                       <CardContent className="px-6 pb-6 space-y-4 no-scrollbar">
@@ -606,12 +623,22 @@ export default function AdminDashboard() {
                            <div className="flex items-center justify-between">
                               <CardTitle className="text-lg">Shift Performance Breakdown</CardTitle>
                               <div className="flex items-center gap-2">
-                                <button 
-                                  onClick={() => exportToCSV(data.productionDetails, 'shift-performance')}
+                                <button
+                                  onClick={async () => {
+                                    const cols: ExportColumn[] = [
+                                      { label: 'Product', getValue: r => r.product_name },
+                                      { label: 'Plan ID', getValue: r => r.production_plan_id },
+                                      { label: 'Day Bottles', getValue: r => r.total_day_bottles ?? 0 },
+                                      { label: 'Day Litres (L)', getValue: r => r.total_day_litres ?? 0 },
+                                      { label: 'Night Bottles', getValue: r => r.total_night_bottles ?? 0 },
+                                      { label: 'Night Litres (L)', getValue: r => r.total_night_litres ?? 0 },
+                                    ]
+                                    await exportToExcel(data.productionDetails, 'shift-performance', cols, 'Shift Performance')
+                                  }}
                                   className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition-all shadow-sm"
                                 >
-                                  <Download className="w-3.5 h-3.5" />
-                                  Export CSV
+                                  <FileSpreadsheet className="w-3.5 h-3.5" />
+                                  Export Excel
                                 </button>
                                 <Badge className="bg-orange-500/10 text-orange-600 border-none">Day Shift</Badge>
                                 <Badge className="bg-indigo-500/10 text-indigo-600 border-none">Night Shift</Badge>
@@ -688,12 +715,21 @@ export default function AdminDashboard() {
                           <CardTitle className="text-lg">Intake Volume Analysis</CardTitle>
                           <CardDescription>Breakdown by truck and compartment</CardDescription>
                         </div>
-                        <button 
-                          onClick={() => exportToCSV(data.intakeDetails, 'intake-analysis')}
+                        <button
+                          onClick={async () => {
+                            const cols: ExportColumn[] = [
+                              { label: 'Truck', getValue: r => r.truck },
+                              { label: 'Compartment', getValue: r => r.truck_compartment_number },
+                              { label: 'Today (L)', getValue: r => r.volume_today ?? 0 },
+                              { label: 'WTD (L)', getValue: r => r.volume_wtd ?? 0 },
+                              { label: 'MTD (L)', getValue: r => r.volume_mtd ?? 0 },
+                            ]
+                            await exportToExcel(data.intakeDetails.filter(d => d.truck !== 'TOTAL'), 'intake-analysis', cols, 'Intake Analysis')
+                          }}
                           className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#006BC4] text-white hover:bg-[#005aab] transition-all shadow-sm"
                         >
-                          <Download className="w-3.5 h-3.5" />
-                          Export
+                          <FileSpreadsheet className="w-3.5 h-3.5" />
+                          Export Excel
                         </button>
                       </CardHeader>
                       <CardContent className="p-0 overflow-x-auto no-scrollbar">
@@ -762,12 +798,20 @@ export default function AdminDashboard() {
                         <CardTitle className="text-lg">Machine & Silo Cleaning Status</CardTitle>
                         <CardDescription>Current stage and status of all CIP processes</CardDescription>
                       </div>
-                      <button 
-                        onClick={() => exportToCSV(data.cipData, 'cip-history')}
+                      <button
+                        onClick={async () => {
+                          const cols: ExportColumn[] = [
+                            { label: 'Tag', getValue: r => r.tag },
+                            { label: 'Machine / Silo', getValue: r => r.machine || r.silo },
+                            { label: 'Status', getValue: r => r.status },
+                            { label: 'Stage', getValue: r => r.stage ?? 'N/A' },
+                          ]
+                          await exportToExcel(data.cipData, 'cip-history', cols, 'CIP History')
+                        }}
                         className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-orange-600 text-white hover:bg-orange-700 transition-all shadow-sm"
                       >
-                        <Download className="w-3.5 h-3.5" />
-                        Export All
+                        <FileSpreadsheet className="w-3.5 h-3.5" />
+                        Export Excel
                       </button>
                     </CardHeader>
                     <CardContent className="px-6 pb-6 no-scrollbar">
@@ -817,20 +861,23 @@ export default function AdminDashboard() {
                 <div className="space-y-6">
                   <div className="flex items-center justify-between px-1">
                     <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Live Silo Status</h3>
-                    <button 
-                      onClick={() => exportToCSV(data.silos.map(s => ({
-                        Name: s.name,
-                        Serial: s.serial_number,
-                        Status: s.status,
-                        Volume: s.milk_volume,
-                        Capacity: s.capacity,
-                        Fill: `${Math.round((s.milk_volume / s.capacity) * 100)}%`,
-                        Location: s.location
-                      })), 'silo-status')}
+                    <button
+                      onClick={async () => {
+                        const cols: ExportColumn[] = [
+                          { label: 'Name', getValue: s => s.name },
+                          { label: 'Serial', getValue: s => s.serial_number },
+                          { label: 'Status', getValue: s => s.status },
+                          { label: 'Volume (L)', getValue: s => s.milk_volume },
+                          { label: 'Capacity (L)', getValue: s => s.capacity },
+                          { label: 'Fill %', getValue: s => `${Math.round((s.milk_volume / s.capacity) * 100)}%` },
+                          { label: 'Location', getValue: s => s.location },
+                        ]
+                        await exportToExcel(data.silos, 'silo-status', cols, 'Silo Status')
+                      }}
                       className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-border bg-white hover:bg-muted transition-all shadow-sm"
                     >
                       <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
-                      Export Inventory
+                      Export Excel
                     </button>
                   </div>
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 no-scrollbar">

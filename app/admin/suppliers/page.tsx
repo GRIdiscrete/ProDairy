@@ -16,6 +16,7 @@ import { fetchSuppliers, deleteSupplier, clearError } from "@/lib/store/slices/s
 import { toast } from "sonner"
 import { TableFilters } from "@/lib/types"
 import { AdminDashboardLayout } from "@/components/layout/admin-dashboard-layout"
+import { type ExportColumn } from "@/lib/export-utils"
 
 export default function SuppliersPage() {
   const dispatch = useAppDispatch()
@@ -142,6 +143,20 @@ export default function SuppliersPage() {
   const totalVolumeSupplied = suppliers.reduce((total, s) => total + (s.volume_supplied || 0), 0)
   const totalVolumeRejected = suppliers.reduce((total, s) => total + (s.volume_rejected || 0), 0)
   const acceptanceRate = totalVolumeSupplied > 0 ? ((totalVolumeSupplied - totalVolumeRejected) / totalVolumeSupplied) * 100 : 0
+
+  const exportColumns: ExportColumn[] = useMemo(() => [
+    { label: 'First Name', getValue: (row) => row.first_name || '' },
+    { label: 'Last Name', getValue: (row) => row.last_name || '' },
+    { label: 'Company', getValue: (row) => row.company_name || '' },
+    { label: 'Raw Product', getValue: (row) => row.raw_product || '' },
+    { label: 'Phone', getValue: (row) => row.phone_number || '' },
+    { label: 'Email', getValue: (row) => row.email || '' },
+    { label: 'Location', getValue: (row) => row.physical_address || '' },
+    { label: 'Volume Supplied (L)', getValue: (row) => row.volume_supplied || 0 },
+    { label: 'Volume Rejected (L)', getValue: (row) => row.volume_rejected || 0 },
+    { label: 'Rejection Rate %', getValue: (row) => (row.volume_supplied || 0) > 0 ? (((row.volume_rejected || 0) / row.volume_supplied) * 100).toFixed(1) : '0.0' },
+    { label: 'Added', getValue: (row) => row.created_at ? new Date(row.created_at).toLocaleDateString('en-GB') : '' },
+  ], [])
 
   // Table columns with actions
   const columns = [
@@ -402,6 +417,7 @@ export default function SuppliersPage() {
                 showSearch={false}
                 showExport={true}
                 exportFilename="suppliers-list"
+                exportColumns={exportColumns}
               />
             )}
           </CardContent>

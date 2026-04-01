@@ -28,6 +28,7 @@ import { FilmaticLinesForm2 } from "@/lib/api/filmatic-lines-form-2"
 import ContentSkeleton from "@/components/ui/content-skeleton"
 import { UserAvatar } from "@/components/ui/user-avatar"
 import { FormIdCopy } from "@/components/ui/form-id-copy"
+import { type ExportColumn } from "@/lib/export-utils"
 
 export default function FilmaticLines2Page() {
   const params = useParams()
@@ -186,6 +187,23 @@ export default function FilmaticLines2Page() {
   // selectors for users and BMT forms
   const { items: users } = useAppSelector((state: RootState) => state.users)
   const { forms: bmtForms } = useAppSelector((state: RootState) => state.bmtControlForms)
+
+  const exportColumns: ExportColumn[] = useMemo(() => [
+    { label: 'Reference Tag', getValue: (row) => row.tag || '' },
+    { label: 'Date', getValue: (row) => row.date ? new Date(row.date).toLocaleDateString('en-GB') : '' },
+    { label: 'Day Shift', getValue: (row) => row.day_shift_id ? 'Yes' : 'No' },
+    { label: 'Night Shift', getValue: (row) => row.night_shift_id ? 'Yes' : 'No' },
+    { label: 'Day Pallets', getValue: (row) => (row.day_shift_id?.shift_details || []).reduce((sum: number, d: any) => sum + (d.pallets || 0), 0) },
+    { label: 'Night Pallets', getValue: (row) => (row.night_shift_id?.shift_details || []).reduce((sum: number, d: any) => sum + (d.pallets || 0), 0) },
+    { label: 'Total Pallets', getValue: (row) => {
+      const day = (row.day_shift_id?.shift_details || []).reduce((s: number, d: any) => s + (d.pallets || 0), 0)
+      const night = (row.night_shift_id?.shift_details || []).reduce((s: number, d: any) => s + (d.pallets || 0), 0)
+      return day + night
+    }},
+    { label: 'Day Opening Bottles', getValue: (row) => row.day_shift_opening_bottles ?? '' },
+    { label: 'Night Opening Bottles', getValue: (row) => row.night_shift_opening_bottles ?? '' },
+    { label: 'Status', getValue: (row) => row.approved ? 'Approved' : 'Pending' },
+  ], [])
 
   // --- Query param handling ---
   const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
@@ -546,6 +564,7 @@ export default function FilmaticLines2Page() {
                   showSearch={false}
                   showExport={true}
                   exportFilename="filmatic-lines-form-2-data"
+                  exportColumns={exportColumns}
                 />
               )}
             </div>

@@ -29,6 +29,7 @@ import { UserAvatar } from "@/components/ui/user-avatar"
 import { FormIdCopy } from "@/components/ui/form-id-copy"
 import { fetchUsers } from "@/lib/store/slices/usersSlice"
 import { useRouter, useSearchParams } from "next/navigation"
+import { type ExportColumn } from "@/lib/export-utils"
 
 interface ProductIncubationPageProps {
   params: {
@@ -378,6 +379,25 @@ export default function ProductIncubationPage({ params }: ProductIncubationPageP
     },
   ], [operationLoading.delete, users])
 
+  const exportColumns: ExportColumn[] = useMemo(() => [
+    { label: 'Reference Tag', getValue: (row) => row.tag || '' },
+    { label: 'Batch Number', getValue: (row) => row.batch?.batch_number ?? '' },
+    { label: 'Days', getValue: (row) => row.batch?.days ?? '' },
+    { label: 'Time In', getValue: (row) => row.batch?.time_in || '' },
+    { label: 'Expected Time Out', getValue: (row) => row.batch?.expected_time_out || '' },
+    { label: 'Manufacture Date', getValue: (row) => row.batch?.manufacture_date ? new Date(row.batch.manufacture_date).toLocaleDateString('en-GB') : '' },
+    { label: 'Best Before Date', getValue: (row) => row.batch?.best_before_date ? new Date(row.batch.best_before_date).toLocaleDateString('en-GB') : '' },
+    { label: 'Approver', getValue: (row) => {
+      const u = users.find((u: any) => u.id === row.batch?.approver_id)
+      return u ? `${u.first_name || ''} ${u.last_name || ''}`.trim() : ''
+    }},
+    { label: 'Scientist', getValue: (row) => {
+      const u = users.find((u: any) => u.id === row.batch?.scientist_id)
+      return u ? `${u.first_name || ''} ${u.last_name || ''}`.trim() : ''
+    }},
+    { label: 'Created', getValue: (row) => row.created_at ? new Date(row.created_at).toLocaleDateString('en-GB') : '' },
+  ], [users])
+
   // --- Helper: open view drawer if form_id query param is present ---
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -507,6 +527,7 @@ export default function ProductIncubationPage({ params }: ProductIncubationPageP
                   showSearch={false}
                   showExport={true}
                   exportFilename="product-incubation-data"
+                  exportColumns={exportColumns}
                 />
               )}
             </div>

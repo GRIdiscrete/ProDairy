@@ -30,6 +30,7 @@ import { FormIdCopy } from "@/components/ui/form-id-copy"
 import { fetchUsers } from "@/lib/store/slices/usersSlice"
 import { UserAvatar } from "@/components/ui/user-avatar"
 import { useRouter, useSearchParams } from "next/navigation"
+import { type ExportColumn } from "@/lib/export-utils"
 // import { watch } from "fs"
 import { SearchableSelect, SearchableSelectOption } from "@/components/ui/searchable-select"
 
@@ -458,6 +459,24 @@ export default function PasteurizingPage() {
     },
   ]
 
+  const exportColumns: ExportColumn[] = useMemo(() => [
+    { label: 'Reference Tag', getValue: (row) => row.tag || '' },
+    { label: 'Total Production (L)', getValue: (row) => (row.steri_milk_pasteurizing_form_production || []).reduce((sum: number, item: any) => sum + (item.output_target_value || 0), 0).toFixed(0) },
+    { label: 'Operator', getValue: (row) => {
+      const u = users.find((u: any) => u.id === row.operator)
+      return u ? `${u.first_name || ''} ${u.last_name || ''}`.trim() : ''
+    }},
+    { label: 'Machine', getValue: (row) => getMachineName(row) },
+    { label: 'BMT Form Tag', getValue: (row) => {
+      const bmt = bmtForms.find((b: any) => b.id === row.bmt)
+      return bmt?.tag || ''
+    }},
+    { label: 'Production Start', getValue: (row) => row.production_start || '' },
+    { label: 'Production End', getValue: (row) => row.production_end || '' },
+    { label: 'Fat %', getValue: (row) => row.fat ?? '' },
+    { label: 'Created', getValue: (row) => row.created_at ? new Date(row.created_at).toLocaleDateString('en-GB') : '' },
+  ], [users, machines, bmtForms])
+
   // --- Helper: open view drawer if form_id query param is present ---
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -645,6 +664,7 @@ export default function PasteurizingPage() {
                   showSearch={false}
                   showExport={true}
                   exportFilename="pasteurizing-data"
+                  exportColumns={exportColumns}
                 />
               )}
             </div>

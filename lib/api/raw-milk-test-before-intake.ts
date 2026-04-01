@@ -71,7 +71,7 @@ export const rawMilkTestBeforeIntakeApi = {
 
     // Get untested compartments
     getUntestedCompartments: async () => {
-        return apiRequest<ApiResponse<UntestedCompartment[]>>('/raw-milk-result-slip-before-intake/untested-truck-compartments')
+        return apiRequest<ApiResponse<UntestedCompartment[]>>('/raw-milk-result-slip-before-intake/untestd-compartments')
     },
 
     // Create new result slip

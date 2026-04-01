@@ -18,6 +18,7 @@ import { toast } from "sonner"
 import { useMemo } from "react"
 import { TableFilters } from "@/lib/types"
 import { AdminDashboardLayout } from "@/components/layout/admin-dashboard-layout"
+import { type ExportColumn } from "@/lib/export-utils"
 import { PermissionGuard } from "@/components/auth/permission-guard"
 
 export default function MaterialsPage() {
@@ -132,6 +133,13 @@ export default function MaterialsPage() {
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
     return createdDate > sevenDaysAgo
   }).length
+
+  const exportColumns: ExportColumn[] = useMemo(() => [
+    { label: 'Name', getValue: (row) => row.name || '' },
+    { label: 'Description', getValue: (row) => row.description || '' },
+    { label: 'Created', getValue: (row) => row.created_at ? new Date(row.created_at).toLocaleDateString('en-GB') : '' },
+    { label: 'Last Modified', getValue: (row) => row.updated_at ? new Date(row.updated_at).toLocaleDateString('en-GB') : '' },
+  ], [])
 
   // Table columns with actions
   const columns = [
@@ -374,6 +382,9 @@ export default function MaterialsPage() {
                   columns={columns}
                   data={filteredRawMaterials}
                   showSearch={false}
+                  showExport={true}
+                  exportFilename="raw-materials"
+                  exportColumns={exportColumns}
                 />
               )}
             </div>

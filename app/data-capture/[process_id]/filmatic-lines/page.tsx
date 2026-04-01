@@ -28,6 +28,7 @@ import { FilmaticLinesForm1 } from "@/lib/api/filmatic-lines-form-1"
 import ContentSkeleton from "@/components/ui/content-skeleton"
 import { UserAvatar } from "@/components/ui/user-avatar"
 import { FormIdCopy } from "@/components/ui/form-id-copy"
+import { type ExportColumn } from "@/lib/export-utils"
 
 export default function FilmaticLines1Page() {
   const params = useParams()
@@ -307,6 +308,23 @@ export default function FilmaticLines1Page() {
     },
   ]
 
+  const exportColumns: ExportColumn[] = useMemo(() => [
+    { label: 'Reference Tag', getValue: (row) => row.tag || '' },
+    { label: 'Date', getValue: (row) => row.date ? new Date(row.date).toLocaleDateString('en-GB') : '' },
+    { label: 'Day Shift', getValue: (row) => row.day_shift_id ? 'Yes' : 'No' },
+    { label: 'Night Shift', getValue: (row) => row.night_shift_id ? 'Yes' : 'No' },
+    { label: 'Day Pallets', getValue: (row) => row.day_shift_id?.shift_details?.pallets ?? 0 },
+    { label: 'Night Pallets', getValue: (row) => row.night_shift_id?.shift_details?.pallets ?? 0 },
+    { label: 'Total Pallets', getValue: (row) => (row.day_shift_id?.shift_details?.pallets || 0) + (row.night_shift_id?.shift_details?.pallets || 0) },
+    { label: 'Holding Tank (BMT Tag)', getValue: (row) => {
+      const bmt = bmtForms.find((b: any) => b.id === row.holding_tank_bmt)
+      return bmt?.tag || ''
+    }},
+    { label: 'Day Opening Bottles', getValue: (row) => row.day_shift_opening_bottles ?? '' },
+    { label: 'Night Opening Bottles', getValue: (row) => row.night_shift_opening_bottles ?? '' },
+    { label: 'Status', getValue: (row) => row.approved ? 'Approved' : 'Pending' },
+  ], [bmtForms])
+
   // --- Helper: open view drawer if form_id query param is present ---
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -564,6 +582,7 @@ export default function FilmaticLines1Page() {
                   showSearch={false}
                   showExport={true}
                   exportFilename="filmatic-lines-form-1-data"
+                  exportColumns={exportColumns}
                 />
               )}
             </div>

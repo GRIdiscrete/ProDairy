@@ -25,6 +25,7 @@ import { QACorrectiveAction } from "@/lib/api/data-capture-forms"
 import ContentSkeleton from "@/components/ui/content-skeleton"
 import { useRouter, useSearchParams } from "next/navigation"
 import { FormIdCopy } from "@/components/ui/form-id-copy"
+import { type ExportColumn } from "@/lib/export-utils"
 
 interface QACorrectiveMeasuresPageProps {
   params: {
@@ -384,6 +385,19 @@ export default function QACorrectiveMeasuresPage({ params }: QACorrectiveMeasure
     },
   ], [operationLoading.delete])
 
+  const exportColumns: ExportColumn[] = useMemo(() => [
+    { label: 'Reference Tag', getValue: (row) => row.tag || '' },
+    { label: 'Batch Number', getValue: (row) => row.batch_number || '' },
+    { label: 'Issue', getValue: (row) => row.issue || '' },
+    { label: 'QA Decision', getValue: (row) => row.qa_decision || '' },
+    { label: 'Date of Production', getValue: (row) => row.date_of_production ? new Date(row.date_of_production).toLocaleDateString('en-GB') : '' },
+    { label: 'Date Analysed', getValue: (row) => row.date_analysed ? new Date(row.date_analysed).toLocaleDateString('en-GB') : '' },
+    { label: 'pH (7 days @ 30°C)', getValue: (row) => row.qa_corrective_action_details_fkey?.ph_after_7_days_at_30_degrees ?? '' },
+    { label: 'Packaging Integrity', getValue: (row) => row.qa_corrective_action_details_fkey?.packaging_integrity || '' },
+    { label: 'Defects', getValue: (row) => row.qa_corrective_action_details_fkey?.defects || '' },
+    { label: 'Created', getValue: (row) => row.created_at ? new Date(row.created_at).toLocaleDateString('en-GB') : '' },
+  ], [])
+
   return (
     <DataCaptureDashboardLayout title="QA Corrective Measures" subtitle="Quality assurance corrective actions and measures">
       <div className="space-y-6">
@@ -544,6 +558,7 @@ export default function QACorrectiveMeasuresPage({ params }: QACorrectiveMeasure
                   showSearch={false}
                   showExport={true}
                   exportFilename="qa-corrective-measures-data"
+                  exportColumns={exportColumns}
                 />
               )}
             </div>

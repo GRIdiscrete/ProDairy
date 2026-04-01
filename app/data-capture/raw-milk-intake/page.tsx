@@ -28,6 +28,7 @@ import { toast } from "sonner"
 import { TableFilters } from "@/lib/types"
 import { RawMilkIntakeForm } from "@/lib/api/raw-milk-intake"
 import ContentSkeleton from "@/components/ui/content-skeleton"
+import { type ExportColumn } from "@/lib/export-utils"
 import { useRouter, useSearchParams } from "next/navigation"
 
 export default function RawMilkIntakePage() {
@@ -199,6 +200,32 @@ export default function RawMilkIntakePage() {
       year: 'numeric'
     })
   }
+
+  const exportColumns: ExportColumn[] = useMemo(() => [
+    { label: 'Form Tag', getValue: (row) => row.tag || '' },
+    { label: 'Truck', getValue: (row) => row.truck || '' },
+    { label: 'Compartments', getValue: (row) => (row.details || []).map((d: any) => `#${d.truck_compartment_number}`).join(', ') },
+    { label: 'Total Volume (L)', getValue: (row) => (row.details || []).reduce((sum: number, d: any) => {
+      if (d.quantity != null) return sum + d.quantity
+      if (d.flow_meter_end_reading != null && d.flow_meter_start_reading != null) return sum + (d.flow_meter_end_reading - d.flow_meter_start_reading)
+      return sum
+    }, 0).toFixed(0) },
+    { label: 'Operator', getValue: (row) => {
+      const op = row.operator
+      if (op && typeof op !== 'string') return `${op.first_name ?? ''} ${op.last_name ?? ''}`.trim()
+      const opUser = users.find((u: any) => u.id === op)
+      return opUser ? `${opUser.first_name || ''} ${opUser.last_name || ''}`.trim() : ''
+    }},
+    { label: 'Destination Silos', getValue: (row) => [...new Set((row.details || []).map((d: any) => d.silo_name).filter(Boolean))].join(', ') },
+    { label: 'Flow Meter Status', getValue: (row) => {
+      const details = row.details || []
+      if (details.length === 0) return 'No details'
+      if (details.every((d: any) => d.flow_meter_end != null)) return 'Complete'
+      if (details.some((d: any) => d.flow_meter_start != null)) return 'In Progress'
+      return 'Pending'
+    }},
+    { label: 'Date', getValue: (row) => row.created_at ? new Date(row.created_at).toLocaleDateString('en-GB') : '' },
+  ], [users])
 
   // Table columns with actions
   const columns = [
@@ -582,6 +609,7 @@ export default function RawMilkIntakePage() {
                   showExport={true}
                   exportFilename="raw-milk-intake-data"
                   data={filteredForms}
+                  exportColumns={exportColumns}
                 />
               )}
             </div>

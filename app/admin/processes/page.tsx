@@ -17,6 +17,7 @@ import { LoadingButton } from "@/components/ui/loading-button"
 import type { Process, TableFilters } from "@/lib/types"
 import { useMemo } from "react"
 import { AdminDashboardLayout } from "@/components/layout/admin-dashboard-layout"
+import { type ExportColumn } from "@/lib/export-utils"
 import { PermissionGuard } from "@/components/auth/permission-guard"
 
 export default function ProcessPage() {
@@ -71,6 +72,13 @@ export default function ProcessPage() {
     setViewingProcess(process)
     setIsViewDrawerOpen(true)
   }
+
+  const exportColumns: ExportColumn[] = useMemo(() => [
+    { label: 'Process Name', getValue: (row) => row.name || '' },
+    { label: 'Raw Materials Count', getValue: (row) => (row.raw_material_ids || []).length },
+    { label: 'Created', getValue: (row) => row.created_at ? new Date(row.created_at).toLocaleDateString('en-GB') : '' },
+    { label: 'Last Updated', getValue: (row) => row.updated_at ? new Date(row.updated_at).toLocaleDateString('en-GB') : 'Never' },
+  ], [])
 
   const columns = [
     {
@@ -296,6 +304,7 @@ export default function ProcessPage() {
                   showSearch={false}
                   showExport={true}
                   exportFilename="manufacturing-processes"
+                  exportColumns={exportColumns}
                 />
               )}
             </div>

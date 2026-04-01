@@ -113,17 +113,6 @@ export interface Machine {
 
 export type MachineStatus = "active" | "inactive" | "maintenance" | "offline"
 
-export interface SiloComposition {
-  volume: number
-  voucher_tag: string
-  voucher_date: string
-  collection_id: string
-  supplier_tank: string
-  scientist_lab_test: string
-  supplier_last_name: string
-  supplier_first_name: string
-}
-
 export interface Silo {
   id: string
   created_at: string
@@ -135,9 +124,6 @@ export interface Silo {
   milk_volume: number
   capacity: number
   updated_at: string
-  fat_content: number | null
-  temperature: number | null
-  composition: SiloComposition[] | null
 }
 
 export type SiloStatus = "active" | "inactive" | "maintenance" | "offline"
@@ -476,8 +462,9 @@ export interface CollectionVoucherDetails2 {
   id?: string
   created_at?: string
   updated_at?: string | null
-  supplier_tanks?: FarmerTank[]
+  supplier_tanks?: string | null
   raw_milk_collection_voucher_2_id?: string
+  raw_milk_collection_voucher_2_details_farmer_tank: FarmerTank[]
 }
 
 export interface CollectionVoucher2 {
@@ -494,12 +481,13 @@ export interface CollectionVoucher2 {
   remark: string
   driver_signature: string
   tag: string
-  details: CollectionVoucherDetails2[]
+  details?: string | null
   ot_result?: string | null
   cob_result?: boolean | null
   lab_test?: any | null
   number_of_compartments?: number | null
   route_total?: number | null
+  raw_milk_collection_voucher_2_details: CollectionVoucherDetails2[]
 }
 export interface RawMilkResultSlipBeforeIntakeLabTest {
   id: string
@@ -551,20 +539,12 @@ export interface RawMilkResultSlipBeforeIntake {
   route: string | null
 }
 
-export interface UntestedCompartmentSupplier {
-  tank: string
-  volume: number
-  voucher: string
-  last_name: string
-  first_name: string
-}
-
 export interface UntestedCompartment {
-  truck: string
+  voucher_id: string
+  voucher_created_at: string
+  farmer_tank: string
   truck_compartment_number: number
-  route: string
   driver_first_name: string
   driver_last_name: string
-  total_compartment_volume: number
-  suppliers: UntestedCompartmentSupplier[]
+  truck_number: string
 }

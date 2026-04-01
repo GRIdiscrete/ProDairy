@@ -14,6 +14,7 @@ import { LoadingButton } from "@/components/ui/loading-button"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { Droplets, ArrowRightLeft, Clock, History, Package, Plus, Eye, Edit, LayoutGrid, List } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
+import { type ExportColumn } from "@/lib/export-utils"
 
 export default function SiloManagementPage() {
   const dispatch = useAppDispatch()
@@ -58,6 +59,19 @@ export default function SiloManagementPage() {
     setSelectedTransfer(transfer)
     setViewTransferDrawerOpen(true)
   }
+
+  const transferExportColumns: ExportColumn[] = useMemo(() => [
+    { label: 'Transfer Tag', getValue: (row) => row.tag || '' },
+    { label: 'Product', getValue: (row) => row.product || '' },
+    { label: 'Source Silo', getValue: (row) => row.source_destination_details?.[0]?.source_silo_details?.silo_name || '' },
+    { label: 'Destination Silo', getValue: (row) => row.source_destination_details?.[0]?.destination_silo_details?.silo_name || '' },
+    { label: 'Volume (L)', getValue: (row) => {
+      const d = row.source_destination_details?.[0]
+      return d?.source_silo_details?.volume || d?.destination_silo_details?.volume || ''
+    }},
+    { label: 'Date', getValue: (row) => row.created_at ? new Date(row.created_at).toLocaleDateString('en-GB') : '' },
+    { label: 'Transfer Time', getValue: (row) => row.created_at ? new Date(row.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '' },
+  ], [])
 
   // Table columns for Silo Transfers (BMT forms)
   const transferColumns = [
@@ -206,11 +220,14 @@ export default function SiloManagementPage() {
           <TabsContent value="transfers" className="mt-0">
             {/* Transfers Section */}
             <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
-                <DataTable 
-                columns={transferColumns} 
-                data={transfers} 
+                <DataTable
+                columns={transferColumns}
+                data={transfers}
                 showSearch={true}
                 searchPlaceholder="Filter transfers..."
+                showExport={true}
+                exportFilename="silo-transfers"
+                exportColumns={transferExportColumns}
                 />
             </div>
           </TabsContent>

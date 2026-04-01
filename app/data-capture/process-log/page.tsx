@@ -23,6 +23,7 @@ import { FormIdCopy } from "@/components/ui/form-id-copy"
 import { rolesApi } from "@/lib/api/roles"
 import { filmaticLinesForm1Api } from "@/lib/api/filmatic-lines-form-1"
 import { useRouter, useSearchParams } from "next/navigation"
+import { type ExportColumn } from "@/lib/export-utils"
 
 export default function ProcessLogPage() {
   const dispatch = useAppDispatch()
@@ -317,6 +318,18 @@ export default function ProcessLogPage() {
     }
   ], [loading.delete, rolesMap, formMap])
 
+  const exportColumns: ExportColumn[] = useMemo(() => [
+    { label: 'Reference Tag', getValue: (row) => row.tag || '' },
+    { label: 'Status', getValue: (row) => row.approved ? 'Approved' : 'Pending' },
+    { label: 'Batch Number', getValue: (row) => row.batch?.batch_number || '' },
+    { label: 'Filmatic Form', getValue: (row) => row.filmatic_form_id ? (formMap[row.filmatic_form_id]?.tag || '') : '' },
+    { label: 'Approver Role', getValue: (row) => row.approver_id ? (rolesMap[row.approver_id] || '') : '' },
+    { label: 'Autoclave', getValue: (row) => row.autoclave?.name || '' },
+    { label: 'Filling Start', getValue: (row) => row.batch?.filling_start ? 'Completed' : 'Pending' },
+    { label: 'Sterilization', getValue: (row) => row.batch?.sterilization_start ? 'Completed' : 'Pending' },
+    { label: 'Created', getValue: (row) => row.created_at ? new Date(row.created_at).toLocaleDateString('en-GB') : '' },
+  ], [rolesMap, formMap])
+
   const latest = Array.isArray(logs) && logs.length > 0 ? logs[0] : null
 
   const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
@@ -508,6 +521,7 @@ export default function ProcessLogPage() {
                   showSearch={false}
                   showExport={true}
                   exportFilename="process-log-data"
+                  exportColumns={exportColumns}
                 />
               )}
             </div>

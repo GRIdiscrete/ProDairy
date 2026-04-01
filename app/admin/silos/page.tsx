@@ -16,6 +16,7 @@ import { fetchSilos, deleteSilo, clearError } from "@/lib/store/slices/siloSlice
 import { toast } from "sonner"
 import { TableFilters } from "@/lib/types"
 import { AdminDashboardLayout } from "@/components/layout/admin-dashboard-layout"
+import { type ExportColumn } from "@/lib/export-utils"
 import { PermissionGuard } from "@/components/auth/permission-guard"
 
 export default function SilosPage() {
@@ -171,6 +172,18 @@ export default function SilosPage() {
       toast.error(error || 'Failed to delete silo')
     }
   }
+
+  const exportColumns: ExportColumn[] = useMemo(() => [
+    { label: 'Name', getValue: (row) => row.name || '' },
+    { label: 'Serial Number', getValue: (row) => row.serial_number || '' },
+    { label: 'Category', getValue: (row) => row.category || '' },
+    { label: 'Status', getValue: (row) => row.status || '' },
+    { label: 'Location', getValue: (row) => row.location || '' },
+    { label: 'Capacity (L)', getValue: (row) => row.capacity || 0 },
+    { label: 'Current Volume (L)', getValue: (row) => row.milk_volume || 0 },
+    { label: 'Fill %', getValue: (row) => (row.capacity || 0) > 0 ? (((row.milk_volume || 0) / row.capacity) * 100).toFixed(1) : '0.0' },
+    { label: 'Created', getValue: (row) => row.created_at ? new Date(row.created_at).toLocaleDateString('en-GB') : '' },
+  ], [])
 
   // Table columns with actions
   const columns = [
@@ -419,6 +432,7 @@ export default function SilosPage() {
                   showSearch={false}
                   showExport={true}
                   exportFilename="silos-list"
+                  exportColumns={exportColumns}
                 />
               )}
             </div>

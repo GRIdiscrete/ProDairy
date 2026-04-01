@@ -30,6 +30,7 @@ import { FormIdCopy } from "@/components/ui/form-id-copy"
 import { UserAvatar } from "@/components/ui/user-avatar"
 import type { RootState } from "@/lib/store"
 import { useRouter, useSearchParams } from "next/navigation"
+import { type ExportColumn } from "@/lib/export-utils"
 
 interface PalletiserSheetPageProps {
   processId?: string
@@ -343,6 +344,32 @@ export default function PalletiserSheetPage({ processId }: PalletiserSheetPagePr
     },
   ], [operationLoading.delete, machines, roles])
 
+  const exportColumns: ExportColumn[] = useMemo(() => [
+    { label: 'Reference Tag', getValue: (row) => row.tag || '' },
+    { label: 'Batch Number', getValue: (row) => row.batch_number || '' },
+    { label: 'Product Type', getValue: (row) => row.product_type || '' },
+    { label: 'Machine', getValue: (row) => {
+      const m = machines.find((m: any) => m.id === row.machine_id) || row.palletiser_sheet_machine_id_fkey
+      return m?.name || ''
+    }},
+    { label: 'Machine Category', getValue: (row) => {
+      const m = machines.find((m: any) => m.id === row.machine_id) || row.palletiser_sheet_machine_id_fkey
+      return m?.category || ''
+    }},
+    { label: 'Machine Location', getValue: (row) => {
+      const m = machines.find((m: any) => m.id === row.machine_id) || row.palletiser_sheet_machine_id_fkey
+      return m?.location || ''
+    }},
+    { label: 'Manufacturing Date', getValue: (row) => row.manufacturing_date ? new Date(row.manufacturing_date).toLocaleDateString('en-GB') : '' },
+    { label: 'Expiry Date', getValue: (row) => row.expiry_date ? new Date(row.expiry_date).toLocaleDateString('en-GB') : '' },
+    { label: 'Approver Role', getValue: (row) => {
+      const r = roles?.find((r: any) => r.id === row.approved_by)
+      return r ? (r.role_name || r.name || '') : ''
+    }},
+    { label: 'Cases Packed', getValue: (row) => (row.palletiser_sheet_details || []).reduce((sum: number, d: any) => sum + (d.cases_packed || 0), 0) },
+    { label: 'Created', getValue: (row) => row.created_at ? new Date(row.created_at).toLocaleDateString('en-GB') : '' },
+  ], [machines, roles])
+
   // --- Helper: open view drawer if form_id query param is present ---
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -506,6 +533,7 @@ export default function PalletiserSheetPage({ processId }: PalletiserSheetPagePr
                   showSearch={false}
                   showExport={true}
                   exportFilename="palletiser-sheet-data"
+                  exportColumns={exportColumns}
                 />
               )}
             </div>

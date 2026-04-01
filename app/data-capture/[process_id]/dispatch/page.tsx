@@ -20,6 +20,7 @@ import ContentSkeleton from "@/components/ui/content-skeleton"
 import { FormIdCopy } from "@/components/ui/form-id-copy"
 import { rolesApi } from "@/lib/api/roles"
 import { useRouter, useSearchParams } from "next/navigation"
+import { type ExportColumn } from "@/lib/export-utils"
 
 interface Props { params: { process_id: string } }
 
@@ -349,6 +350,29 @@ export default function DispatchPage({ params }: Props) {
         }
     ], [operationLoading, rolesMap, rolesList])
 
+  const releaseExportColumns: ExportColumn[] = useMemo(() => [
+    { label: 'Reference Tag', getValue: (row) => row.tag || '' },
+    { label: 'Status', getValue: (row) => row.qa_release_note_details?.[0]?.status || '' },
+    { label: 'Batch No', getValue: (row) => row.qa_release_note_details?.[0]?.batch_no || '' },
+    { label: 'Pack Size (ml)', getValue: (row) => row.qa_release_note_details?.[0]?.pack_size_ml ?? '' },
+    { label: 'Pallets on Hold', getValue: (row) => row.qa_release_note_details?.[0]?.pallets_on_hold ?? '' },
+    { label: 'Hold Times', getValue: (row) => row.qa_release_note_details?.[0]?.hold_times ?? '' },
+    { label: 'MNF Date', getValue: (row) => row.qa_release_note_details?.[0]?.mnf_date || '' },
+    { label: 'Approver Role', getValue: (row) => getRoleName(row.approved_by) },
+    { label: 'Created', getValue: (row) => row.created_at ? new Date(row.created_at).toLocaleDateString('en-GB') : '' },
+  ], [rolesMap, rolesList])
+
+  const rejectExportColumns: ExportColumn[] = useMemo(() => [
+    { label: 'Reference Tag', getValue: (row) => row.tag || '' },
+    { label: 'Status', getValue: (row) => (row.qa_reject_note_details?.[0] || row.details_id || {}).status || '' },
+    { label: 'Batch No', getValue: (row) => (row.qa_reject_note_details?.[0] || row.details_id || {}).batch_no || '' },
+    { label: 'Pack Size', getValue: (row) => (row.qa_reject_note_details?.[0] || row.details_id || {}).pack_size ?? '' },
+    { label: 'Pallets Rejected', getValue: (row) => (row.qa_reject_note_details?.[0] || row.details_id || {}).pallets_rejected ?? '' },
+    { label: 'Reject Date', getValue: (row) => (row.qa_reject_note_details?.[0] || row.details_id || {}).reject_date || '' },
+    { label: 'Approver Role', getValue: (row) => getRoleName(row.approved_by) },
+    { label: 'Created', getValue: (row) => row.created_at ? new Date(row.created_at).toLocaleDateString('en-GB') : '' },
+  ], [rolesMap, rolesList])
+
     const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
 
     // --- Helper: open view drawer if form_id query param is present ---
@@ -475,7 +499,7 @@ export default function DispatchPage({ params }: Props) {
                             searchPlaceholder="Search QA notes..."
                             filterFields={filterFields}
                         />
-                        <DataTable columns={activeTab === "release" ? releaseColumns : rejectColumns} data={filteredNotes} showSearch={false} />
+                        <DataTable columns={activeTab === "release" ? releaseColumns : rejectColumns} data={filteredNotes} showSearch={false} showExport={true} exportFilename={activeTab === "release" ? "qa-release-notes" : "qa-reject-notes"} exportColumns={activeTab === "release" ? releaseExportColumns : rejectExportColumns} />
                     </div>
                 </div>
 

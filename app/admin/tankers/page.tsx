@@ -12,6 +12,7 @@ import { fetchTankers, deleteTankerAction, clearError } from "@/lib/store/slices
 import { fetchUsers } from "@/lib/store/slices/usersSlice"
 import { Tanker } from "@/lib/api/tanker"
 import { TableFilters } from "@/lib/types"
+import { type ExportColumn } from "@/lib/export-utils"
 import ContentSkeleton from "@/components/ui/content-skeleton"
 import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-dialog"
 import { TankerFormDrawer } from "@/components/forms/tanker-form-drawer"
@@ -84,6 +85,20 @@ export default function AdminTankersPage() {
     setDeleteDialogOpen(false)
     setSelected(null)
   }
+
+  const exportColumns: ExportColumn[] = useMemo(() => [
+    { label: 'Reg Number', getValue: (row) => row.reg_number || '' },
+    { label: 'Capacity (L)', getValue: (row) => Math.round(row.capacity) || 0 },
+    { label: 'Mileage (km)', getValue: (row) => row.mileage || 0 },
+    { label: 'Age (yrs)', getValue: (row) => row.age || '' },
+    { label: 'Condition', getValue: (row) => row.condition || '' },
+    { label: 'Compartments', getValue: (row) => row.compartments || '' },
+    { label: 'Driver', getValue: (row) => {
+      const driver = Array.isArray(userItems) ? userItems.find((u: any) => u.id === row.driver_id) : null
+      return driver ? `${driver.first_name || ''} ${driver.last_name || ''}`.trim() : ''
+    }},
+    { label: 'Created', getValue: (row) => row.created_at ? new Date(row.created_at).toLocaleDateString('en-GB') : '' },
+  ], [userItems])
 
   const columns = [
     {
@@ -230,6 +245,7 @@ export default function AdminTankersPage() {
                   showSearch={false}
                   showExport={true}
                   exportFilename="tankers-list"
+                  exportColumns={exportColumns}
                 />
               )}
             </div>

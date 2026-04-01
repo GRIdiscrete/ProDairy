@@ -21,6 +21,7 @@ import { PermissionGuard } from "@/components/auth/permission-guard"
 import { UserAvatar } from "@/components/users/user-avatar"
 import { useMemo } from "react"
 import { TableFilters } from "@/lib/types"
+import { type ExportColumn } from "@/lib/export-utils"
 
 export default function ProductionPage() {
   const dispatch = useDispatch<AppDispatch>()
@@ -106,6 +107,20 @@ export default function ProductionPage() {
         return "bg-gray-100 text-gray-800"
     }
   }
+
+  const exportColumns: ExportColumn[] = useMemo(() => [
+    { label: 'Plan Name', getValue: (row) => row.name || '' },
+    { label: 'Status', getValue: (row) => row.status ? row.status.charAt(0).toUpperCase() + row.status.slice(1) : '' },
+    { label: 'Supervisor', getValue: (row) => {
+      const sup = users.find((u: any) => u.id === row.supervisor)
+      if (sup) return `${sup.first_name || ''} ${sup.last_name || ''}`.trim()
+      if (row.production_plan_supervisor_fkey) return `${row.production_plan_supervisor_fkey.first_name || ''} ${row.production_plan_supervisor_fkey.last_name || ''}`.trim()
+      return ''
+    }},
+    { label: 'Start Date', getValue: (row) => row.start_date ? new Date(row.start_date).toLocaleDateString('en-GB') : '' },
+    { label: 'End Date', getValue: (row) => row.end_date ? new Date(row.end_date).toLocaleDateString('en-GB') : '' },
+    { label: 'Raw Materials Count', getValue: (row) => (row.raw_products || []).length },
+  ], [users])
 
   const columns = [
     {
@@ -360,6 +375,7 @@ export default function ProductionPage() {
                   showSearch={false}
                   showExport={true}
                   exportFilename="production-plans"
+                  exportColumns={exportColumns}
                 />
               )}
             </div>

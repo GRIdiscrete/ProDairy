@@ -17,6 +17,7 @@ import { fetchRoles } from "@/lib/store/slices/rolesSlice"
 import { toast } from "sonner"
 import { User as UserType, TableFilters } from "@/lib/types"
 import { ColumnDef } from "@tanstack/react-table"
+import { type ExportColumn } from "@/lib/export-utils"
 import { TablePulseLoading } from "@/components/ui/pulse-loading"
 import { PermissionGuard } from "@/components/auth/permission-guard"
 import { PermissionButton } from "@/components/ui/permission-table-actions"
@@ -134,6 +135,17 @@ export default function AdminUsersPage() {
       placeholder: "Select role"
     },
   ], [departments, roles])
+
+  const exportColumns: ExportColumn[] = useMemo(() => [
+    { label: 'First Name', getValue: (row) => row.first_name || '' },
+    { label: 'Last Name', getValue: (row) => row.last_name || '' },
+    { label: 'Email', getValue: (row) => row.email || '' },
+    { label: 'Phone', getValue: (row) => row.phone_number || '' },
+    { label: 'Department', getValue: (row) => row.department || '' },
+    { label: 'Role', getValue: (row) => row.users_role_id_fkey?.role_name || roleNameById.get(row.role_id) || '' },
+    { label: 'Status', getValue: () => 'Active' },
+    { label: 'Created At', getValue: (row) => row.created_at ? new Date(row.created_at).toLocaleDateString('en-GB') : '' },
+  ], [roleNameById])
 
   // Define columns for DataTable
   const columns: ColumnDef<UserType>[] = [
@@ -339,6 +351,7 @@ export default function AdminUsersPage() {
                   showSearch={false}
                   showExport={true}
                   exportFilename="system-users"
+                  exportColumns={exportColumns}
                 />
               )}
             </div>

@@ -31,6 +31,7 @@ import { generateSkimmingFormId } from "@/lib/utils/form-id-generator"
 import { SkimmingFormDrawer } from "@/components/forms/skimming-form-drawer"
 import { SkimmingFormViewDrawer } from "@/components/forms/skimming-form-view-drawer"
 import { fetchSkimmingForms } from "@/lib/store/slices/skimmingSlice"
+import { type ExportColumn } from "@/lib/export-utils"
 import { useRouter, useSearchParams } from "next/navigation"
 
 export default function StandardizingPage() {
@@ -321,6 +322,36 @@ export default function StandardizingPage() {
       toast.error(error || 'Failed to delete skimming form')
     }
   }
+
+  const standardizingExportColumns: ExportColumn[] = useMemo(() => [
+    { label: 'Form Tag', getValue: (row) => row.tag || '' },
+    { label: 'Operator', getValue: (row) => {
+      const op = getUserById(row.operator_id)
+      return op ? `${op.first_name || ''} ${op.last_name || ''}`.trim() : ''
+    }},
+    { label: 'BMT Form', getValue: (row) => {
+      const bmt = getBMTFormById(row.bmt_id)
+      return bmt?.tag || ''
+    }},
+    { label: 'Date', getValue: (row) => row.created_at ? new Date(row.created_at).toLocaleDateString('en-GB') : '' },
+  ], [users, bmtForms])
+
+  const skimmingExportColumns: ExportColumn[] = useMemo(() => [
+    { label: 'Form Tag', getValue: (row) => row.tag || '' },
+    { label: 'Operator', getValue: (row) => {
+      const op = getUserById(row.operator_id)
+      return op ? `${op.first_name || ''} ${op.last_name || ''}`.trim() : ''
+    }},
+    { label: 'Source Silo', getValue: (row) => row.raw_milk?.source_silo_name || '' },
+    { label: 'Raw Milk (L)', getValue: (row) => row.raw_milk?.quantity ? Number(row.raw_milk.quantity).toFixed(1) : '' },
+    { label: 'Raw Milk Fat %', getValue: (row) => row.raw_milk?.fat != null ? row.raw_milk.fat : '' },
+    { label: 'Skim Milk Destination', getValue: (row) => row.skim_milk?.destination_silo_name || '' },
+    { label: 'Skim Milk (L)', getValue: (row) => row.skim_milk?.quantity ? Number(row.skim_milk.quantity).toFixed(1) : '' },
+    { label: 'Skim Milk Fat %', getValue: (row) => row.skim_milk?.fat != null ? row.skim_milk.fat : '' },
+    { label: 'Cream Tank', getValue: (row) => row.cream?.cream_tank || '' },
+    { label: 'Cream (L)', getValue: (row) => row.cream?.quantity ? Number(row.cream.quantity).toFixed(1) : '' },
+    { label: 'Date', getValue: (row) => row.created_at ? new Date(row.created_at).toLocaleDateString('en-GB') : '' },
+  ], [users])
 
   // Skimming Forms Table columns
   const skimmingColumns = [
@@ -931,6 +962,7 @@ export default function StandardizingPage() {
                       showSearch={false}
                       showExport={true}
                       exportFilename="standardizing-data"
+                      exportColumns={standardizingExportColumns}
                     />
                   )}
                 </div>
@@ -1106,6 +1138,7 @@ export default function StandardizingPage() {
                       showSearch={false}
                       showExport={true}
                       exportFilename="skimming-data"
+                      exportColumns={skimmingExportColumns}
                     />
                   )}
                 </div>

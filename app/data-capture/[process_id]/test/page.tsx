@@ -24,6 +24,7 @@ import { TableFilters } from "@/lib/types"
 import { UHTQualityCheckAfterIncubation } from "@/lib/api/data-capture-forms"
 import ContentSkeleton from "@/components/ui/content-skeleton"
 import { useRouter, useSearchParams } from "next/navigation"
+import { type ExportColumn } from "@/lib/export-utils"
 
 interface UHTQualityCheckPageProps {
   params: {
@@ -351,6 +352,19 @@ export default function UHTQualityCheckPage({ params }: UHTQualityCheckPageProps
     },
   ], [operationLoading.delete])
 
+  const exportColumns: ExportColumn[] = useMemo(() => [
+    { label: 'Batch Number', getValue: (row) => row.batch_number || '' },
+    { label: 'Product', getValue: (row) => typeof row.product === 'object' && row.product?.name ? row.product.name : (typeof row.product === 'string' ? row.product : '') },
+    { label: 'Date of Production', getValue: (row) => row.date_of_production ? new Date(row.date_of_production).toLocaleDateString('en-GB') : '' },
+    { label: 'Date Analysed', getValue: (row) => row.date_analysed ? new Date(row.date_analysed).toLocaleDateString('en-GB') : '' },
+    { label: 'pH (0 days)', getValue: (row) => row.ph_0_days ?? '' },
+    { label: 'pH (30°C)', getValue: (row) => row.uht_qa_check_after_incubation_details_fkey?.ph_30_degrees ?? '' },
+    { label: 'pH (55°C)', getValue: (row) => row.uht_qa_check_after_incubation_details_fkey?.ph_55_degrees ?? '' },
+    { label: 'Defects', getValue: (row) => row.uht_qa_check_after_incubation_details_fkey?.defects || '' },
+    { label: 'Event', getValue: (row) => row.uht_qa_check_after_incubation_details_fkey?.event || '' },
+    { label: 'Created', getValue: (row) => row.created_at ? new Date(row.created_at).toLocaleDateString('en-GB') : '' },
+  ], [])
+
   // --- Helper: open view drawer if form_id query param is present ---
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -516,6 +530,7 @@ export default function UHTQualityCheckPage({ params }: UHTQualityCheckPageProps
                   showSearch={false}
                   showExport={true}
                   exportFilename="uht-quality-check-data"
+                  exportColumns={exportColumns}
                 />
             )}
             </div>

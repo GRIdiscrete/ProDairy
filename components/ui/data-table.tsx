@@ -14,7 +14,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table"
 import { ChevronDown, Search, ArrowUpDown, ArrowUp, ArrowDown, Download } from "lucide-react"
-import { exportToCSV } from "@/lib/export-utils"
+import { exportToCSV, exportToExcel, type ExportColumn } from "@/lib/export-utils"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -44,6 +44,7 @@ interface DataTableProps<TData, TValue> {
   showSearch?: boolean
   showExport?: boolean
   exportFilename?: string
+  exportColumns?: ExportColumn[]
   toolbarActions?: React.ReactNode
   filters?: Array<{
     key: string
@@ -60,6 +61,7 @@ export function DataTable<TData, TValue>({
   showSearch = true,
   showExport = false,
   exportFilename = "table-export",
+  exportColumns,
   toolbarActions,
   filters = [],
 }: DataTableProps<TData, TValue>) {
@@ -87,9 +89,13 @@ export function DataTable<TData, TValue>({
     },
   })
 
-  const handleExport = () => {
+  const handleExport = async () => {
     const tableData = table.getFilteredRowModel().rows.map(row => row.original)
-    exportToCSV(tableData, exportFilename)
+    if (exportColumns && exportColumns.length > 0) {
+      await exportToExcel(tableData, exportFilename, exportColumns)
+    } else {
+      exportToCSV(tableData, exportFilename)
+    }
   }
 
   return (
@@ -119,7 +125,7 @@ export function DataTable<TData, TValue>({
               className="h-9 font-light border-dashed border-gray-300 hover:border-gray-400"
             >
               <Download className="mr-2 h-4 w-4" />
-              Export CSV
+              {exportColumns && exportColumns.length > 0 ? 'Export Excel' : 'Export CSV'}
             </Button>
           )}
         </div>

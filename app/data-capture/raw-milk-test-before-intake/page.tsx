@@ -34,6 +34,7 @@ import { fetchCollectionVouchers } from "@/lib/store/slices/collectionVoucherSli
 import { fetchTankers } from "@/lib/store/slices/tankerSlice"
 import { toast } from "sonner"
 import { RawMilkResultSlipBeforeIntake, TableFilters } from "@/lib/types"
+import { type ExportColumn } from "@/lib/export-utils"
 
 export default function RawMilkTestBeforeIntakePage() {
     const dispatch = useAppDispatch()
@@ -150,6 +151,35 @@ export default function RawMilkTestBeforeIntakePage() {
             toast.error(error || "Failed to delete result slip")
         }
     }
+
+    const exportColumns: ExportColumn[] = useMemo(() => [
+        { label: 'Reference Tag', getValue: (row) => row.tag || '' },
+        { label: 'Date', getValue: (row) => row.date ? new Date(row.date).toLocaleDateString('en-GB') : '' },
+        { label: 'Compartments', getValue: (row) => {
+            const tests = row.lab_test || []
+            if (Array.isArray(tests) && tests.length > 0) return tests.map((t: any) => `C#${t.truck_compartment_number}`).join(', ')
+            return `Gen #${row.truck_compartment_number || 'N/A'}`
+        }},
+        { label: 'Voucher Tag', getValue: (row) => {
+            const voucher = collectionVouchers.find((v: any) => v.id === row.voucher_id)
+            return voucher?.tag || ''
+        }},
+        { label: 'Truck', getValue: (row) => {
+            const voucher = collectionVouchers.find((v: any) => v.id === row.voucher_id)
+            const truckId = row.truck_number || voucher?.truck_number
+            const tanker = tankers.find((t: any) => t.id === truckId)
+            return tanker?.reg_number || truckId || ''
+        }},
+        { label: 'Analyst', getValue: (row) => {
+            const analyst = users.find((u: any) => u.id === row.analyst)
+            return analyst ? `${analyst.first_name || ''} ${analyst.last_name || ''}`.trim() : ''
+        }},
+        { label: 'Result', getValue: (row) => {
+            const tests = row.lab_test || []
+            if (!Array.isArray(tests) || tests.length === 0) return 'NO DATA'
+            return tests.every((t: any) => t.pass) ? 'PASS' : 'FAIL'
+        }},
+    ], [collectionVouchers, tankers, users])
 
     const handleSuccess = () => {
         dispatch(fetchResultSlips())
@@ -327,6 +357,7 @@ export default function RawMilkTestBeforeIntakePage() {
                                 showExport={true}
                                 exportFilename="raw-milk-test-before-intake-data"
                                 data={filteredSlips}
+                                exportColumns={exportColumns}
                             />
                         )}
                     </div>

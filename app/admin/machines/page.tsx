@@ -16,6 +16,7 @@ import { fetchMachines, deleteMachine, clearError } from "@/lib/store/slices/mac
 import { toast } from "sonner"
 import { TableFilters } from "@/lib/types"
 import { AdminDashboardLayout } from "@/components/layout/admin-dashboard-layout"
+import { type ExportColumn } from "@/lib/export-utils"
 import { PermissionGuard } from "@/components/auth/permission-guard"
 import { PermissionButton } from "@/components/ui/permission-table-actions"
 
@@ -169,6 +170,16 @@ export default function MachinesPage() {
       toast.error(error || 'Failed to delete machine')
     }
   }
+
+  const exportColumns: ExportColumn[] = useMemo(() => [
+    { label: 'Name', getValue: (row) => row.name || '' },
+    { label: 'Serial Number', getValue: (row) => row.serial_number || '' },
+    { label: 'Category', getValue: (row) => row.category || '' },
+    { label: 'Status', getValue: (row) => row.status || '' },
+    { label: 'Location', getValue: (row) => row.location || '' },
+    { label: 'Created', getValue: (row) => row.created_at ? new Date(row.created_at).toLocaleDateString('en-GB') : '' },
+    { label: 'Last Updated', getValue: (row) => row.updated_at ? new Date(row.updated_at).toLocaleDateString('en-GB') : '' },
+  ], [])
 
   // Table columns with actions
   const columns = [
@@ -392,6 +403,7 @@ export default function MachinesPage() {
                   showSearch={false}
                   showExport={true}
                   exportFilename="machines-list"
+                  exportColumns={exportColumns}
                 />
               )}
             </div>
