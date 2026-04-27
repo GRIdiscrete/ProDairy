@@ -1308,6 +1308,7 @@ export interface UHTQualityCheckAfterIncubation {
   product: string | { id: string; tag?: string | null; name: string; created_at?: string; updated_at?: string; raw_material_ids?: string[] }
   checked_by: string
   ph_0_days: number
+  machine?: string | null
   details?: string | null
   tag?: string | null
   // NEW: nested incubation_details payload accepted by backend

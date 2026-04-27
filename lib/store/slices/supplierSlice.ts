@@ -125,7 +125,7 @@ const supplierSlice = createSlice({
       })
       .addCase(fetchSuppliers.fulfilled, (state, action) => {
         state.operationLoading.fetch = false
-        state.suppliers = action.payload
+        state.suppliers = Array.isArray(action.payload) ? action.payload : []
       })
       .addCase(fetchSuppliers.rejected, (state, action) => {
         state.operationLoading.fetch = false

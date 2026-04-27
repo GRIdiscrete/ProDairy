@@ -110,7 +110,8 @@ export function CollectionVoucherFormDrawer({
 
     // Use online data if available, fallback to offline
     const displayUsers = (isOnline && users && users.length > 0) ? users : offlineData.drivers
-    const displaySuppliers = (isOnline && suppliers && suppliers.length > 0) ? suppliers : offlineData.suppliers
+    const rawSuppliers = (isOnline && suppliers && suppliers.length > 0) ? suppliers : offlineData.suppliers
+    const displaySuppliers: any[] = Array.isArray(rawSuppliers) ? rawSuppliers : []
     const displayTankers = (isOnline && tankers && tankers.length > 0) ? tankers : offlineData.tankers
 
     const {
@@ -205,8 +206,9 @@ export function CollectionVoucherFormDrawer({
 
                 dispatch(fetchSuppliers({})).then((result: any) => {
                     if (result.payload && typeof window !== 'undefined') {
-                        LocalStorageService.saveSuppliers(result.payload)
-                        setOfflineData(prev => ({ ...prev, suppliers: result.payload }))
+                        const safeSuppliers = Array.isArray(result.payload) ? result.payload : []
+                        LocalStorageService.saveSuppliers(safeSuppliers)
+                        setOfflineData(prev => ({ ...prev, suppliers: safeSuppliers }))
                     }
                 }).catch(() => { })
 

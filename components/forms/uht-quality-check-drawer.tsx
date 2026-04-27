@@ -21,6 +21,7 @@ import {
 } from "@/lib/store/slices/uhtQualityCheckSlice"
 import { usersApi } from "@/lib/api/users"
 import { rolesApi } from "@/lib/api/roles"
+import { machineApi } from "@/lib/api/machine"
 import { toast } from "sonner"
 import { UHTQualityCheckAfterIncubation, UHTQualityCheckAfterIncubationDetails } from "@/lib/api/data-capture-forms"
 import { ChevronLeft, ChevronRight, ArrowRight, TestTube, FileText, Package, Beaker } from "lucide-react"
@@ -76,6 +77,7 @@ const qualityCheckSchema = yup.object({
     .matches(/^\d+-\d+$/, "Batch number must be a range (e.g., 1-15, 1-25)"),
   product: yup.string().required("Product is required"),
   checked_by: yup.string().required("Checked by is required"),
+  machine: yup.string().required("Machine is required"),
   ph_0_days: yup.number()
     .transform((value, originalValue) => originalValue === "" ? undefined : value)
     .required("pH 0 days is required"),
@@ -113,8 +115,10 @@ export function UHTQualityCheckDrawer({
   const [incubationDetailsList, setIncubationDetailsList] = useState<QualityCheckDetailsFormData[]>([])
   const [users, setUsers] = useState<any[]>([])
   const [roles, setRoles] = useState<any[]>([])
+  const [machines, setMachines] = useState<any[]>([])
   const [loadingUsers, setLoadingUsers] = useState(false)
   const [loadingRoles, setLoadingRoles] = useState(false)
+  const [loadingMachines, setLoadingMachines] = useState(false)
 
   // Quality check form
   const qualityCheckForm = useForm<QualityCheckFormData>({
@@ -125,6 +129,7 @@ export function UHTQualityCheckDrawer({
       batch_number: "",
       product: "",
       checked_by: "",
+      machine: "",
       ph_0_days: "" as any,
     },
   })
@@ -149,20 +154,23 @@ export function UHTQualityCheckDrawer({
     const loadData = async () => {
       setLoadingUsers(true)
       setLoadingRoles(true)
+      setLoadingMachines(true)
       try {
-        // Load users
-        const usersResponse = await usersApi.getUsers()
+        const [usersResponse, rolesResponse, machinesResponse] = await Promise.all([
+          usersApi.getUsers(),
+          rolesApi.getRoles(),
+          machineApi.getMachines(),
+        ])
         setUsers(usersResponse.data || [])
-
-        // Load roles
-        const rolesResponse = await rolesApi.getRoles()
         setRoles(rolesResponse.data || [])
+        setMachines(Array.isArray(machinesResponse.data) ? machinesResponse.data : [])
       } catch (error) {
         console.error("Failed to load data:", error)
         toast.error("Failed to load form data")
       } finally {
         setLoadingUsers(false)
         setLoadingRoles(false)
+        setLoadingMachines(false)
       }
     }
 
@@ -182,6 +190,7 @@ export function UHTQualityCheckDrawer({
           batch_number: qualityCheck.batch_number || "",
           product: typeof qualityCheck.product === 'object' ? qualityCheck.product.id : (qualityCheck.product || ""),
           checked_by: qualityCheck.checked_by || "",
+          machine: (qualityCheck as any).machine || "",
           ph_0_days: qualityCheck.ph_0_days ?? "" as any,
         })
 
@@ -226,6 +235,7 @@ export function UHTQualityCheckDrawer({
           batch_number: qualityCheck.batch_number || "",
           product: typeof qualityCheck.product === 'object' ? qualityCheck.product.id : (qualityCheck.product || ""),
           checked_by: qualityCheck.checked_by || "",
+          machine: (qualityCheck as any).machine || "",
           ph_0_days: qualityCheck.ph_0_days ?? 0,
         })
         setCreatedQualityCheck(qualityCheck)
@@ -238,6 +248,7 @@ export function UHTQualityCheckDrawer({
           batch_number: "",
           product: processId || "",
           checked_by: "",
+          machine: "",
           ph_0_days: "" as any,
         })
         qualityCheckDetailsForm.reset({
@@ -289,6 +300,7 @@ export function UHTQualityCheckDrawer({
       batch_number: s1.batch_number,
       product: processId || s1.product,
       checked_by: s1.checked_by,
+      machine: s1.machine,
       ph_0_days: s1.ph_0_days,
       incubation_details: allDetails.map(detail => {
         const mappedDetail: any = {
@@ -528,6 +540,32 @@ export function UHTQualityCheckDrawer({
           />
           {qualityCheckForm.formState.errors.checked_by && (
             <p className="text-sm text-red-500">{qualityCheckForm.formState.errors.checked_by.message}</p>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="machine">Machine *</Label>
+          <Controller
+            name="machine"
+            control={qualityCheckForm.control}
+            render={({ field }) => (
+              <SearchableSelect
+                options={machines.map(machine => ({
+                  value: machine.id,
+                  label: machine.name,
+                  description: `${machine.serial_number} • ${machine.category} • ${machine.location}`
+                }))}
+                value={field.value}
+                onValueChange={field.onChange}
+                placeholder="Select machine"
+                searchPlaceholder="Search machines..."
+                emptyMessage="No machines found"
+                loading={loadingMachines}
+              />
+            )}
+          />
+          {qualityCheckForm.formState.errors.machine && (
+            <p className="text-sm text-red-500">{qualityCheckForm.formState.errors.machine.message}</p>
           )}
         </div>
       </div>
