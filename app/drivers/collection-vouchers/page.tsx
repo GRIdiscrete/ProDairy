@@ -238,7 +238,9 @@ export default function CollectionVouchersPage() {
             displayVouchers.forEach(voucher => {
                 if (!voucher) return
 
-                const driver = Array.isArray(displayUsers) ? displayUsers.find(u => u?.id === voucher?.driver) : null
+                const driver = typeof voucher.driver === 'object' && voucher.driver
+                    ? voucher.driver
+                    : Array.isArray(displayUsers) ? displayUsers.find(u => u?.id === voucher?.driver) : null
                 const supplierId = typeof voucher.supplier === 'string' 
                     ? voucher.supplier 
                     : (voucher.supplier as any)?.id
@@ -394,7 +396,10 @@ export default function CollectionVouchersPage() {
             header: "Driver",
             cell: ({ row }: any) => {
                 const voucher = row.original as CollectionVoucher2
-                const driverUser = Array.isArray(displayUsers) ? displayUsers.find((user: any) => user.id === voucher.driver) : null
+                const driverUser = typeof voucher.driver !== 'object'
+                    ? (Array.isArray(displayUsers) ? displayUsers.find((user: any) => user.id === voucher.driver) : null)
+                    : null
+                const driverObj = typeof voucher.driver === 'object' && voucher.driver ? voucher.driver as any : null
 
                 if (driverUser) {
                     return (
@@ -408,12 +413,16 @@ export default function CollectionVouchersPage() {
                     )
                 }
 
+                const driverName = driverObj
+                    ? `${driverObj.first_name || ''} ${driverObj.last_name || ''}`.trim()
+                    : null
+
                 return (
                     <div className="flex items-center gap-2">
                         <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
                             <User className="w-4 h-4 text-gray-500" />
                         </div>
-                        <div className="text-sm font-light text-gray-400">Unknown</div>
+                        <div className="text-sm font-light">{driverName || 'Unknown'}</div>
                     </div>
                 )
             },
