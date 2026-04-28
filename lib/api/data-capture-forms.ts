@@ -1311,6 +1311,7 @@ export interface UHTQualityCheckAfterIncubation {
   machine?: string | null
   details?: string | null
   tag?: string | null
+  verified_by?: string | null
   // NEW: nested incubation_details payload accepted by backend
   incubation_details?: UHTQualityCheckAfterIncubationDetails | null
   // Relationship data
@@ -1348,28 +1349,8 @@ export interface UHTQualityCheckAfterIncubationDetails {
   ph_55_degrees: number
   defects: string
   event: string
-  analyst: string
-  verified_by: string
   // Relationship data
   uht_qa_check_after_incubation_details_uht_qa_check_after_incubation_id_fkey?: UHTQualityCheckAfterIncubation
-  uht_qa_check_after_incubation_details_analyst_fkey?: {
-    id: string
-    created_at: string
-    first_name: string
-    last_name: string
-    role_id: string
-    department: string
-    email: string
-  }
-  uht_qa_check_after_incubation_details_verified_by_fkey?: {
-    id: string
-    created_at: string
-    first_name: string
-    last_name: string
-    role_id: string
-    department: string
-    email: string
-  }
 }
 
 export const getUHTQualityCheckAfterIncubations = async () => {

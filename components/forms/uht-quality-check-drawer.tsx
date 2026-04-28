@@ -81,6 +81,7 @@ const qualityCheckSchema = yup.object({
   ph_0_days: yup.number()
     .transform((value, originalValue) => originalValue === "" ? undefined : value)
     .required("pH 0 days is required"),
+  verified_by: yup.string(),
 })
 
 // Step 2: Quality Check Details Form Schema
@@ -92,8 +93,6 @@ const qualityCheckDetailsSchema = yup.object({
     .transform((value, originalValue) => originalValue === "" ? undefined : value),
   defects: yup.string(),
   // event: yup.string().required("Event is required"),
-  analyst: yup.string(),
-  verified_by: yup.string(),
 })
 
 type QualityCheckFormData = yup.InferType<typeof qualityCheckSchema>
@@ -131,6 +130,7 @@ export function UHTQualityCheckDrawer({
       checked_by: "",
       machine: "",
       ph_0_days: "" as any,
+      verified_by: "",
     },
   })
 
@@ -143,8 +143,6 @@ export function UHTQualityCheckDrawer({
       ph_55_degrees: "" as any,
       defects: "",
       // event: "",
-      analyst: "",
-      verified_by: "",
     },
     mode: "onChange"
   })
@@ -192,6 +190,7 @@ export function UHTQualityCheckDrawer({
           checked_by: qualityCheck.checked_by || "",
           machine: (qualityCheck as any).machine || "",
           ph_0_days: qualityCheck.ph_0_days ?? "" as any,
+          verified_by: (qualityCheck as any).verified_by || "",
         })
 
         // Load existing incubation_details array from API response
@@ -203,8 +202,6 @@ export function UHTQualityCheckDrawer({
             ph_30_degrees: detail.ph_30_degrees ?? "" as any,
             ph_55_degrees: detail.ph_55_degrees ?? "" as any,
             defects: detail.defects || "",
-            analyst: detail.analyst || "",
-            verified_by: detail.verified_by || "",
             id: detail.id // Keep track of existing IDs for updates
           }))
           setIncubationDetailsList(mappedDetails)
@@ -214,8 +211,6 @@ export function UHTQualityCheckDrawer({
             ph_30_degrees: "" as any,
             ph_55_degrees: "" as any,
             defects: "",
-            analyst: "",
-            verified_by: "",
           })
         } else {
           setIncubationDetailsList([])
@@ -224,8 +219,6 @@ export function UHTQualityCheckDrawer({
             ph_30_degrees: "" as any,
             ph_55_degrees: "" as any,
             defects: "",
-            analyst: "",
-            verified_by: "",
           })
         }
         
@@ -237,6 +230,7 @@ export function UHTQualityCheckDrawer({
           checked_by: qualityCheck.checked_by || "",
           machine: (qualityCheck as any).machine || "",
           ph_0_days: qualityCheck.ph_0_days ?? 0,
+          verified_by: (qualityCheck as any).verified_by || "",
         })
         setCreatedQualityCheck(qualityCheck)
         setCurrentStep(1)
@@ -250,6 +244,7 @@ export function UHTQualityCheckDrawer({
           checked_by: "",
           machine: "",
           ph_0_days: "" as any,
+          verified_by: "",
         })
         qualityCheckDetailsForm.reset({
           time: "",
@@ -257,8 +252,6 @@ export function UHTQualityCheckDrawer({
           ph_55_degrees: "" as any,
           defects: "",
           // event: "",
-          analyst: "",
-          verified_by: "",
         })
         setStep1Data(null)
         setCreatedQualityCheck(null)
@@ -302,14 +295,13 @@ export function UHTQualityCheckDrawer({
       checked_by: s1.checked_by,
       machine: s1.machine,
       ph_0_days: s1.ph_0_days,
+      verified_by: s1.verified_by?.trim() || null,
       incubation_details: allDetails.map(detail => {
         const mappedDetail: any = {
           time: detail.time?.trim() || null,
           ph_30_degrees: null,
           ph_55_degrees: null,
           defects: null,
-          analyst: null,
-          verified_by: null,
         }
 
         // Handle ph_30_degrees
@@ -326,18 +318,6 @@ export function UHTQualityCheckDrawer({
         const trimmedDefects = detail.defects?.trim()
         if (trimmedDefects) {
           mappedDetail.defects = trimmedDefects
-        }
-
-        // Handle analyst
-        const trimmedAnalyst = detail.analyst?.trim()
-        if (trimmedAnalyst) {
-          mappedDetail.analyst = trimmedAnalyst
-        }
-
-        // Handle verified_by
-        const trimmedVerifiedBy = detail.verified_by?.trim()
-        if (trimmedVerifiedBy) {
-          mappedDetail.verified_by = trimmedVerifiedBy
         }
 
         // Add id if exists
@@ -568,6 +548,30 @@ export function UHTQualityCheckDrawer({
             <p className="text-sm text-red-500">{qualityCheckForm.formState.errors.machine.message}</p>
           )}
         </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="verified_by">Verified By</Label>
+          <Controller
+            name="verified_by"
+            control={qualityCheckForm.control}
+            render={({ field }) => (
+              <SearchableSelect
+                options={users.map(user => ({
+                  value: user.id,
+                  label: `${user.first_name} ${user.last_name}`.trim() || user.email,
+                  description: `${user.department} • ${user.email}`
+                }))}
+                value={field.value}
+                onValueChange={field.onChange}
+                onSearch={handleUserSearch}
+                placeholder="Search and select verifier"
+                searchPlaceholder="Search users..."
+                emptyMessage="No users found"
+                loading={loadingUsers}
+              />
+            )}
+          />
+        </div>
       </div>
     </div>
   )
@@ -623,54 +627,25 @@ export function UHTQualityCheckDrawer({
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="ph_55_degrees">pH 55°C</Label>
-            <Controller
-              name="ph_55_degrees"
-              control={qualityCheckDetailsForm.control}
-              render={({ field }) => (
-                <Input
-                  id="ph_55_degrees"
-                  type="number"
-                  step="0.1"
-                  placeholder="Enter pH value"
-                  value={field.value === 0 ? "" : field.value}
-                  onChange={(e) => field.onChange(e.target.value === "" ? "" : Number(e.target.value))}
-                />
-              )}
-            />
-            {qualityCheckDetailsForm.formState.errors.ph_55_degrees && (
-              <p className="text-sm text-red-500">{qualityCheckDetailsForm.formState.errors.ph_55_degrees.message}</p>
+        <div className="space-y-2">
+          <Label htmlFor="ph_55_degrees">pH 55°C</Label>
+          <Controller
+            name="ph_55_degrees"
+            control={qualityCheckDetailsForm.control}
+            render={({ field }) => (
+              <Input
+                id="ph_55_degrees"
+                type="number"
+                step="0.1"
+                placeholder="Enter pH value"
+                value={field.value === 0 ? "" : field.value}
+                onChange={(e) => field.onChange(e.target.value === "" ? "" : Number(e.target.value))}
+              />
             )}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="analyst">Analyst</Label>
-            <Controller
-              name="analyst"
-              control={qualityCheckDetailsForm.control}
-              render={({ field }) => (
-                <SearchableSelect
-                  options={users.map(user => ({
-                    value: user.id,
-                    label: `${user.first_name} ${user.last_name}`.trim() || user.email,
-                    description: `${user.department} • ${user.email}`
-                  }))}
-                  value={field.value}
-                  onValueChange={field.onChange}
-                  onSearch={handleUserSearch}
-                  placeholder="Search and select analyst"
-                  searchPlaceholder="Search users..."
-                  emptyMessage="No users found"
-                  loading={loadingUsers}
-                />
-              )}
-            />
-            {qualityCheckDetailsForm.formState.errors.analyst && (
-              <p className="text-sm text-red-500">{qualityCheckDetailsForm.formState.errors.analyst.message}</p>
-            )}
-          </div>
+          />
+          {qualityCheckDetailsForm.formState.errors.ph_55_degrees && (
+            <p className="text-sm text-red-500">{qualityCheckDetailsForm.formState.errors.ph_55_degrees.message}</p>
+          )}
         </div>
 
         <div className="space-y-2">
@@ -688,51 +663,6 @@ export function UHTQualityCheckDrawer({
           />
           {qualityCheckDetailsForm.formState.errors.defects && (
             <p className="text-sm text-red-500">{qualityCheckDetailsForm.formState.errors.defects.message}</p>
-          )}
-        </div>
-
-        {/* <div className="space-y-2">
-          <Label htmlFor="event">Event *</Label>
-          <Controller
-            name="event"
-            control={qualityCheckDetailsForm.control}
-            render={({ field }) => (
-              <Textarea
-                id="event"
-                placeholder="Describe any events that occurred"
-                {...field}
-              />
-            )}
-          />
-          {qualityCheckDetailsForm.formState.errors.event && (
-            <p className="text-sm text-red-500">{qualityCheckDetailsForm.formState.errors.event.message}</p>
-          )}
-        </div> */}
-
-        <div className="space-y-2">
-          <Label htmlFor="verified_by">Verified By</Label>
-          <Controller
-            name="verified_by"
-            control={qualityCheckDetailsForm.control}
-            render={({ field }) => (
-              <SearchableSelect
-                options={users.map(user => ({
-                  value: user.id,
-                  label: `${user.first_name} ${user.last_name}`.trim() || user.email,
-                  description: `${user.department} • ${user.email}`
-                }))}
-                value={field.value}
-                onValueChange={field.onChange}
-                onSearch={handleUserSearch}
-                placeholder="Search and select verifier"
-                searchPlaceholder="Search users..."
-                emptyMessage="No users found"
-                loading={loadingUsers}
-              />
-            )}
-          />
-          {qualityCheckDetailsForm.formState.errors.verified_by && (
-            <p className="text-sm text-red-500">{qualityCheckDetailsForm.formState.errors.verified_by.message}</p>
           )}
         </div>
 
@@ -821,8 +751,6 @@ export function UHTQualityCheckDrawer({
                 ph_30_degrees: "" as any,
                 ph_55_degrees: "" as any,
                 defects: "",
-                analyst: "",
-                verified_by: "",
               })
               toast.success("Incubation detail added")
             }}
