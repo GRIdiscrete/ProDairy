@@ -1035,7 +1035,7 @@ export function FilmaticLinesForm1Drawer({
                     <div>
                       <Label className="mb-2 block">Stoppage Time (minutes / hours)</Label>
                       <div className="grid grid-cols-2 gap-2">
-                        {["product_1_hours", "product_2_hours", "filler_1_hours", "filler_2_hours", "product_1", "product_2", "filler_1", "filler_2"].map(key => (
+                        {["product_1_hours", "product_1", "product_2_hours", "product_2", "filler_1_hours", "filler_1", "filler_2_hours", "filler_2"].map(key => (
                           <div key={key} className="flex items-center gap-2">
                             <Label className="text-xs w-28">{key.replace(/_/g, ' ')}</Label>
                             <Controller

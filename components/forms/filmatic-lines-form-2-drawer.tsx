@@ -1157,7 +1157,7 @@ export function FilmaticLinesForm2Drawer({
                       <div>
                         <Label className="mb-2 block">Stoppage Time (hours / minutes)</Label>
                         <div className="grid grid-cols-2 gap-2">
-                          {["capper_1_hours", "capper_2_hours", "sleever_1_hours", "sleever_2_hours", "shrink_1_hours", "shrink_2_hours", "capper_1", "capper_2", "sleever_1", "sleever_2", "shrink_1", "shrink_2"].map(key => (
+                          {["capper_1_hours", "capper_1", "capper_2_hours", "capper_2", "sleever_1_hours", "sleever_1", "sleever_2_hours", "sleever_2", "shrink_1_hours", "shrink_1", "shrink_2_hours", "shrink_2"].map(key => (
                             <div key={key} className="flex items-center gap-2">
                               <Label className="text-xs w-20">{key.replace('_', ' ')}</Label>
                               <Controller

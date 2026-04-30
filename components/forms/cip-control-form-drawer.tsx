@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useForm, Controller, useFieldArray } from "react-hook-form"
 import { yupResolver } from "@hookform/resolvers/yup"
 import * as yup from "yup"
@@ -21,7 +21,7 @@ import { usersApi } from "@/lib/api/users"
 import { rolesApi } from "@/lib/api/roles"
 import { siloApi } from "@/lib/api/silo"
 import { toast } from "sonner"
-import type { CIPControlForm, CIPControlFormStages } from "@/lib/api/data-capture-forms"
+import type { CIPControlForm } from "@/lib/api/data-capture-forms"
 
 const cipControlFormSchema = yup.object({
   status: yup.string().required("Status is required"),
@@ -30,8 +30,6 @@ const cipControlFormSchema = yup.object({
   silo_id: yup.string().nullable(),
   operator_id: yup.string().required("Operator is required"),
   date: yup.string().required("Date is required"),
-  caustic_solution_strength: yup.number().required("Caustic solution strength is required").min(0, "Must be positive"),
-  acid_solution_strength: yup.number().required("Acid solution strength is required").min(0, "Must be positive"),
   rinse_water_test: yup.string().required("Rinse water test result is required"),
   approver: yup.string().required("Approver is required"),
   analyzer: yup.string().required("Analyzer is required"),
@@ -42,6 +40,20 @@ const cipControlFormSchema = yup.object({
       stage: yup.string().required("Stage name is required"),
       start_time: yup.string().required("Start time is required"),
       stop_time: yup.string().required("Stop time is required"),
+      acid: yup.object({
+        id: yup.string().optional(),
+        strength: yup.number().nullable(),
+        temperature: yup.number().nullable(),
+        circulation_time: yup.number().nullable(),
+        flow_rate: yup.number().nullable(),
+      }).optional(),
+      caustic: yup.object({
+        id: yup.string().optional(),
+        strength: yup.number().nullable(),
+        temperature: yup.number().nullable(),
+        circulation_time: yup.number().nullable(),
+        flow_rate: yup.number().nullable(),
+      }).optional(),
     })
   ).optional().default([]),
 })
@@ -120,13 +132,10 @@ export function CIPControlFormDrawer({ open, onOpenChange, form, mode }: CIPCont
     }
   }
 
-  // Handle machine search
-  const handleMachineSearch = async (searchTerm: string) => {
+  const handleMachineSearch = useCallback(async (searchTerm: string) => {
     try {
       setLoadingMachines(true)
-      const response = await machineApi.getMachines({
-        filters: { search: searchTerm }
-      })
+      const response = await machineApi.getMachines({ filters: { search: searchTerm } })
       setMachines(response.data?.map(machine => ({
         value: machine.id,
         label: machine.name,
@@ -137,15 +146,12 @@ export function CIPControlFormDrawer({ open, onOpenChange, form, mode }: CIPCont
     } finally {
       setLoadingMachines(false)
     }
-  }
+  }, [])
 
-  // Handle silo search
-  const handleSiloSearch = async (searchTerm: string) => {
+  const handleSiloSearch = useCallback(async (searchTerm: string) => {
     try {
       setLoadingSilos(true)
-      const response = await siloApi.getSilos({
-        filters: { search: searchTerm }
-      })
+      const response = await siloApi.getSilos({ filters: { search: searchTerm } })
       setSilos(response.data?.map(silo => ({
         value: silo.id,
         label: silo.name,
@@ -156,15 +162,12 @@ export function CIPControlFormDrawer({ open, onOpenChange, form, mode }: CIPCont
     } finally {
       setLoadingSilos(false)
     }
-  }
+  }, [])
 
-  // Handle user search
-  const handleUserSearch = async (searchTerm: string) => {
+  const handleUserSearch = useCallback(async (searchTerm: string) => {
     try {
       setLoadingUsers(true)
-      const response = await usersApi.getUsers({
-        filters: { search: searchTerm }
-      })
+      const response = await usersApi.getUsers({ filters: { search: searchTerm } })
       setUsers(response.data?.map(user => ({
         value: user.id,
         label: `${user.first_name} ${user.last_name}`,
@@ -175,15 +178,12 @@ export function CIPControlFormDrawer({ open, onOpenChange, form, mode }: CIPCont
     } finally {
       setLoadingUsers(false)
     }
-  }
+  }, [])
 
-  // Handle role search
-  const handleRoleSearch = async (searchTerm: string) => {
+  const handleRoleSearch = useCallback(async (searchTerm: string) => {
     try {
       setLoadingRoles(true)
-      const response = await rolesApi.getRoles({
-        filters: { search: searchTerm }
-      })
+      const response = await rolesApi.getRoles({ filters: { search: searchTerm } })
       setRoles(response.data?.map(role => ({
         value: role.id,
         label: role.role_name,
@@ -194,7 +194,7 @@ export function CIPControlFormDrawer({ open, onOpenChange, form, mode }: CIPCont
     } finally {
       setLoadingRoles(false)
     }
-  }
+  }, [])
 
   const {
     control,
@@ -211,8 +211,6 @@ export function CIPControlFormDrawer({ open, onOpenChange, form, mode }: CIPCont
       silo_id: null as any,
       operator_id: user?.id || "",
       date: "",
-      caustic_solution_strength: undefined,
-      acid_solution_strength: undefined,
       rinse_water_test: "",
       approver: "",
       analyzer: user?.id || "",
@@ -236,12 +234,26 @@ export function CIPControlFormDrawer({ open, onOpenChange, form, mode }: CIPCont
         ...data,
         machine_id: cipType === 'machine' ? data.machine_id : null,
         silo_id: cipType === 'silo' ? data.silo_id : null,
-        stages: data.stages?.map((stage) => ({
+        stages: data.stages?.map((stage: any) => ({
           ...(mode === "edit" && stage.id ? { id: stage.id } : {}),
           ...(mode === "edit" && form?.id ? { cip_control_form_id: form.id } : {}),
           stage: stage.stage,
           start_time: stage.start_time,
           stop_time: stage.stop_time,
+          acid: {
+            ...(stage.acid?.id ? { id: stage.acid.id } : {}),
+            strength: stage.acid?.strength ?? null,
+            temperature: stage.acid?.temperature ?? null,
+            circulation_time: stage.acid?.circulation_time ?? null,
+            flow_rate: stage.acid?.flow_rate ?? null,
+          },
+          caustic: {
+            ...(stage.caustic?.id ? { id: stage.caustic.id } : {}),
+            strength: stage.caustic?.strength ?? null,
+            temperature: stage.caustic?.temperature ?? null,
+            circulation_time: stage.caustic?.circulation_time ?? null,
+            flow_rate: stage.caustic?.flow_rate ?? null,
+          },
         })) || [],
       }
 
@@ -314,8 +326,6 @@ export function CIPControlFormDrawer({ open, onOpenChange, form, mode }: CIPCont
         silo_id: siloId || null as any,
         operator_id: form.operator_id || "",
         date: form.date || "",
-        caustic_solution_strength: form.caustic_solution_strength || undefined,
-        acid_solution_strength: form.acid_solution_strength || undefined,
         rinse_water_test: form.rinse_water_test || "",
         approver: form.approver || "",
         analyzer: form.analyzer || "",
@@ -325,6 +335,20 @@ export function CIPControlFormDrawer({ open, onOpenChange, form, mode }: CIPCont
           stage: stage.stage,
           start_time: stage.start_time,
           stop_time: stage.stop_time,
+          acid: {
+            id: stage.acid?.id,
+            strength: stage.acid?.strength ?? undefined,
+            temperature: stage.acid?.temperature ?? undefined,
+            circulation_time: stage.acid?.circulation_time ?? undefined,
+            flow_rate: stage.acid?.flow_rate ?? undefined,
+          },
+          caustic: {
+            id: stage.caustic?.id,
+            strength: stage.caustic?.strength ?? undefined,
+            temperature: stage.caustic?.temperature ?? undefined,
+            circulation_time: stage.caustic?.circulation_time ?? undefined,
+            flow_rate: stage.caustic?.flow_rate ?? undefined,
+          },
         })) || [],
       })
     } else if (open && mode === "create") {
@@ -336,8 +360,6 @@ export function CIPControlFormDrawer({ open, onOpenChange, form, mode }: CIPCont
         silo_id: null as any,
         operator_id: user?.id || "",
         date: "",
-        caustic_solution_strength: undefined,
-        acid_solution_strength: undefined,
         rinse_water_test: "",
         approver: "",
         analyzer: user?.id || "",
@@ -522,46 +544,6 @@ export function CIPControlFormDrawer({ open, onOpenChange, form, mode }: CIPCont
             {/* Solution Concentrations */}
             <div className="space-y-4">
               <h3 className="text-lg font-light text-gray-900 border-b pb-2">Solution Concentrations</h3>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="caustic_solution_strength">Caustic Solution Strength (%) *</Label>
-                  <Controller
-                    name="caustic_solution_strength"
-                    control={control}
-                    render={({ field }) => (
-                      <Input
-                        id="caustic_solution_strength"
-                        type="number"
-                        step="0.1"
-                        placeholder="Enter caustic strength"
-                        className="rounded-full border-gray-200"
-                        {...field}
-                        onChange={(e) => field.onChange(Number(e.target.value))}
-                      />
-                    )}
-                  />
-                  {errors.caustic_solution_strength && <p className="text-sm text-red-500">{errors.caustic_solution_strength.message}</p>}
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="acid_solution_strength">Acid Solution Strength (%) *</Label>
-                  <Controller
-                    name="acid_solution_strength"
-                    control={control}
-                    render={({ field }) => (
-                      <Input
-                        id="acid_solution_strength"
-                        type="number"
-                        step="0.1"
-                        placeholder="Enter acid strength"
-                        className="rounded-full border-gray-200"
-                        {...field}
-                        onChange={(e) => field.onChange(Number(e.target.value))}
-                      />
-                    )}
-                  />
-                  {errors.acid_solution_strength && <p className="text-sm text-red-500">{errors.acid_solution_strength.message}</p>}
-                </div>
-              </div>
               <div className="space-y-2">
                 <Label htmlFor="rinse_water_test">Rinse Water Test Result *</Label>
                 <Controller
@@ -658,7 +640,11 @@ export function CIPControlFormDrawer({ open, onOpenChange, form, mode }: CIPCont
                   type="button"
 
                   size="sm"
-                  onClick={() => append({ stage: "", start_time: "", stop_time: "" })}
+                  onClick={() => append({
+                    stage: "", start_time: "", stop_time: "",
+                    acid: { strength: undefined, temperature: undefined, circulation_time: undefined, flow_rate: undefined },
+                    caustic: { strength: undefined, temperature: undefined, circulation_time: undefined, flow_rate: undefined },
+                  })}
                   className=" bg-[#006BC4] text-white rounded-full"
                 >
                   <Plus className="w-4 h-4 mr-2" />
@@ -743,6 +729,58 @@ export function CIPControlFormDrawer({ open, onOpenChange, form, mode }: CIPCont
                             {errors.stages?.[index]?.stop_time && (
                               <p className="text-sm text-red-500">{errors.stages[index]?.stop_time?.message}</p>
                             )}
+                          </div>
+                        </div>
+
+                        {/* Acid */}
+                        <div>
+                          <Label className="text-sm font-medium text-gray-700 mb-2 block">Acid</Label>
+                          <div className="grid grid-cols-2 gap-3 p-3 bg-red-50 rounded-lg border border-red-100">
+                            {(["strength", "temperature", "circulation_time", "flow_rate"] as const).map((key) => (
+                              <div key={key} className="space-y-1">
+                                <Label className="text-xs text-gray-600 capitalize">{key.replace("_", " ")}</Label>
+                                <Controller
+                                  name={`stages.${index}.acid.${key}` as any}
+                                  control={control}
+                                  render={({ field }) => (
+                                    <Input
+                                      type="number"
+                                      step="0.01"
+                                      placeholder="0"
+                                      className="rounded-full border-gray-200 h-8 text-xs"
+                                      value={field.value ?? ""}
+                                      onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+                                    />
+                                  )}
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Caustic */}
+                        <div>
+                          <Label className="text-sm font-medium text-gray-700 mb-2 block">Caustic</Label>
+                          <div className="grid grid-cols-2 gap-3 p-3 bg-orange-50 rounded-lg border border-orange-100">
+                            {(["strength", "temperature", "circulation_time", "flow_rate"] as const).map((key) => (
+                              <div key={key} className="space-y-1">
+                                <Label className="text-xs text-gray-600 capitalize">{key.replace("_", " ")}</Label>
+                                <Controller
+                                  name={`stages.${index}.caustic.${key}` as any}
+                                  control={control}
+                                  render={({ field }) => (
+                                    <Input
+                                      type="number"
+                                      step="0.01"
+                                      placeholder="0"
+                                      className="rounded-full border-gray-200 h-8 text-xs"
+                                      value={field.value ?? ""}
+                                      onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+                                    />
+                                  )}
+                                />
+                              </div>
+                            ))}
                           </div>
                         </div>
                       </div>

@@ -4,7 +4,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Edit, Droplets, Settings, FlaskConical, Users, Clock, CheckCircle } from "lucide-react"
+import { Edit, Droplets, Settings, FlaskConical, Users, Clock, Cpu, Database } from "lucide-react"
 import { UserAvatar } from "@/components/ui/user-avatar"
 import type { CIPControlForm } from "@/lib/api/data-capture-forms"
 
@@ -117,48 +117,41 @@ export function CIPControlFormViewDrawer({ open, onClose, form, users = [], role
             </div>
           </div>
 
-          {/* Machine/Silo Details */}
+
+          {/* Machine Details */}
           {form.machine_id && (
             <div className="p-6 bg-white border border-gray-200 rounded-lg mb-6">
               <div className="flex items-center space-x-2 mb-4">
                 <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
-                  <Settings className="w-4 h-4 text-blue-600" />
+                  <Cpu className="w-4 h-4 text-blue-600" />
                 </div>
                 <h3 className="text-lg font-light">Machine Details</h3>
               </div>
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-light text-gray-600">Machine Name</span>
-                  <span className="text-sm font-light">{form.machine_id?.name || 'N/A'}</span>
+                  <span className="text-sm font-light text-gray-600">Name</span>
+                  <span className="text-sm font-light">{form.machine_id.name || 'N/A'}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-light text-gray-600">Tag</span>
-                  <span className="text-sm font-light">{form.machine_id?.tag || 'N/A'}</span>
+                  <span className="text-sm font-light">{form.machine_id.tag || 'N/A'}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-light text-gray-600">Serial Number</span>
-                  <span className="text-sm font-light">{form.machine_id?.serial_number || 'N/A'}</span>
+                  <span className="text-sm font-light">{form.machine_id.serial_number || 'N/A'}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-light text-gray-600">Category</span>
-                  <span className="text-sm font-light">{form.machine_id?.category || 'N/A'}</span>
+                  <span className="text-sm font-light">{form.machine_id.category || 'N/A'}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-light text-gray-600">Location</span>
-                  <span className="text-sm font-light">{form.machine_id?.location || 'N/A'}</span>
+                  <span className="text-sm font-light">{form.machine_id.location || 'N/A'}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-light text-gray-600">Machine Status</span>
-                  <Badge className={form.machine_id?.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}>
-                    {form.machine_id?.status || 'N/A'}
-                  </Badge>
+                  <span className="text-sm font-light text-gray-600">Status</span>
+                  <Badge className={form.machine_id.status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}>{form.machine_id.status || 'N/A'}</Badge>
                 </div>
-                {form.machine_id?.cases_packed && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-light text-gray-600">Cases Packed</span>
-                    <span className="text-sm font-light">{form.machine_id.cases_packed}</span>
-                  </div>
-                )}
               </div>
             </div>
           )}
@@ -167,41 +160,35 @@ export function CIPControlFormViewDrawer({ open, onClose, form, users = [], role
           {form.silo_id && (
             <div className="p-6 bg-white border border-gray-200 rounded-lg mb-6">
               <div className="flex items-center space-x-2 mb-4">
-                <div className="w-6 h-6 rounded-full bg-cyan-100 flex items-center justify-center">
-                  <Droplets className="w-4 h-4 text-cyan-600" />
+                <div className="w-6 h-6 rounded-full bg-teal-100 flex items-center justify-center">
+                  <Database className="w-4 h-4 text-teal-600" />
                 </div>
                 <h3 className="text-lg font-light">Silo Details</h3>
               </div>
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-light text-gray-600">Silo Name</span>
-                  <span className="text-sm font-light">{form.silo_id?.name || 'N/A'}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-light text-gray-600">Serial Number</span>
-                  <span className="text-sm font-light">{form.silo_id?.serial_number || 'N/A'}</span>
+                  <span className="text-sm font-light text-gray-600">Name</span>
+                  <span className="text-sm font-light">{form.silo_id.name || 'N/A'}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-light text-gray-600">Category</span>
-                  <span className="text-sm font-light">{form.silo_id?.category || 'N/A'}</span>
+                  <span className="text-sm font-light">{form.silo_id.category || 'N/A'}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-light text-gray-600">Location</span>
-                  <span className="text-sm font-light">{form.silo_id?.location || 'N/A'}</span>
+                  <span className="text-sm font-light">{form.silo_id.location || 'N/A'}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-light text-gray-600">Capacity</span>
-                  <span className="text-sm font-light">{form.silo_id?.capacity ? `${form.silo_id.capacity}L` : 'N/A'}</span>
+                  <span className="text-sm font-light">{form.silo_id.capacity != null ? form.silo_id.capacity : 'N/A'}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-light text-gray-600">Milk Volume</span>
-                  <span className="text-sm font-light">{form.silo_id?.milk_volume ? `${form.silo_id.milk_volume}L` : 'N/A'}</span>
+                  <span className="text-sm font-light">{form.silo_id.milk_volume != null ? form.silo_id.milk_volume : 'N/A'}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-light text-gray-600">Silo Status</span>
-                  <Badge className={form.silo_id?.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}>
-                    {form.silo_id?.status || 'N/A'}
-                  </Badge>
+                  <span className="text-sm font-light text-gray-600">Status</span>
+                  <Badge className={form.silo_id.status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}>{form.silo_id.status || 'N/A'}</Badge>
                 </div>
               </div>
             </div>
@@ -216,14 +203,6 @@ export function CIPControlFormViewDrawer({ open, onClose, form, users = [], role
               <h3 className="text-lg font-light">Solution Concentrations</h3>
             </div>
             <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-light text-gray-600">Caustic Solution</span>
-                <span className="text-sm font-light text-orange-600">{form.caustic_solution_strength}%</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-light text-gray-600">Acid Solution</span>
-                <span className="text-sm font-light text-red-600">{form.acid_solution_strength}%</span>
-              </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm font-light text-gray-600">Rinse Water Test</span>
                 <span className="text-sm font-light text-blue-600">{form.rinse_water_test}</span>
@@ -309,27 +288,53 @@ export function CIPControlFormViewDrawer({ open, onClose, form, users = [], role
               </div>
               <div className="space-y-3">
                 {form.cip_control_form_stages.map((stage, index) => (
-                  <div key={stage.id} className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-                    <div className="flex items-center justify-between mb-2">
+                  <div key={stage.id} className="p-4 bg-gray-50 rounded-lg border border-gray-200 space-y-3">
+                    <div className="flex items-center justify-between">
                       <h4 className="text-sm font-medium text-gray-900">Stage {index + 1}: {stage.stage}</h4>
                       <span className="text-xs text-gray-500">
                         {stage.created_at ? new Date(stage.created_at).toLocaleDateString() : 'N/A'}
                       </span>
                     </div>
-                    <div className="grid grid-cols-2 gap-3 mt-3">
+                    <div className="grid grid-cols-2 gap-3">
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-light text-gray-600">Start Time</span>
                         <span className="text-xs font-light text-blue-600">
-                          {stage.start_time ? new Date(stage.start_time).toLocaleString() : 'N/A'}
+                          {stage.start_time ? new Date(stage.start_time).toLocaleString(undefined, { timeZone: 'UTC' }) : 'N/A'}
                         </span>
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-light text-gray-600">Stop Time</span>
                         <span className="text-xs font-light text-red-600">
-                          {stage.stop_time ? new Date(stage.stop_time).toLocaleString() : 'N/A'}
+                          {stage.stop_time ? new Date(stage.stop_time).toLocaleString(undefined, { timeZone: 'UTC' }) : 'N/A'}
                         </span>
                       </div>
                     </div>
+                    {stage.acid && (
+                      <div className="p-3 bg-red-50 rounded-lg border border-red-100">
+                        <p className="text-xs font-medium text-red-700 mb-2">Acid</p>
+                        <div className="grid grid-cols-2 gap-2">
+                          {(['strength', 'temperature', 'circulation_time', 'flow_rate'] as const).map((key) => (
+                            <div key={key} className="flex items-center justify-between">
+                              <span className="text-xs text-gray-500 capitalize">{key.replace('_', ' ')}</span>
+                              <span className="text-xs text-gray-800">{stage.acid?.[key] ?? 'N/A'}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {stage.caustic && (
+                      <div className="p-3 bg-orange-50 rounded-lg border border-orange-100">
+                        <p className="text-xs font-medium text-orange-700 mb-2">Caustic</p>
+                        <div className="grid grid-cols-2 gap-2">
+                          {(['strength', 'temperature', 'circulation_time', 'flow_rate'] as const).map((key) => (
+                            <div key={key} className="flex items-center justify-between">
+                              <span className="text-xs text-gray-500 capitalize">{key.replace('_', ' ')}</span>
+                              <span className="text-xs text-gray-800">{stage.caustic?.[key] ?? 'N/A'}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

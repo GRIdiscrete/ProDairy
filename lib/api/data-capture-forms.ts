@@ -70,93 +70,65 @@ export interface BMTControlForm {
 }
 
 // CIP Control Form Types
+export interface CIPMachineId {
+  id: string
+  tag?: string | null
+  name: string
+  status: string
+  category: string
+  location: string
+  cip_status?: string | null
+  counter_id?: string | null
+  created_at: string
+  updated_at: string
+  cases_packed?: number | null
+  serial_number: string
+}
+
+export interface CIPSiloId {
+  id: string
+  name: string
+  status?: string | null
+  product?: string | null
+  capacity?: number | null
+  category?: string
+  location?: string
+  cip_status?: string | null
+  created_at?: string
+  updated_at?: string
+  milk_volume?: number | null
+  temperature?: number | null
+  serial_number?: string
+}
+
 export interface CIPControlForm {
   id?: string
   created_at?: string
+  updated_by?: string | null
   status: string
-  machine_id: {
-    id: string
-    tag?: string | null
-    name: string
-    status: string
-    category: string
-    location: string
-    counter_id?: string | null
-    created_at: string
-    updated_at: string
-    cases_packed?: number | null
-    serial_number: string
-  }
+  machine_id?: CIPMachineId | null
+  silo_id?: CIPSiloId | null
   operator_id: string
   date: string
   approver: string
   analyzer: string
-  caustic_solution_strength: number
-  acid_solution_strength: number
+  caustic_solution_strength?: number | null
+  acid_solution_strength?: number | null
   rinse_water_test: string
   checked_by: string
-  updated_at?: string
+  updated_at?: string | null
   stage?: string | null
   tag?: string
-  // Relationship data
+  machine_or_silo?: string
   cip_control_form_stages?: CIPControlFormStages[]
-  cip_control_form_machine_id_fkey?: {
-    id: string
-    name: string
-    status: string
-    category: string
-    location: string
-    created_at: string
-    updated_at: string
-    serial_number: string
-  }
-  cip_control_form_operator_id_fkey?: {
-    id: string
-    email: string
-    role_id: string
-    password: string
-    last_name: string
-    created_at: string
-    department: string
-    first_name: string
-    updated_at: string
-  }
-  cip_control_form_approver_fkey?: {
-    id: string
-    views: string[]
-    role_name: string
-    created_at: string
-    updated_at: string
-    role_operations: string[]
-    user_operations: string[]
-    devices_operations: string[]
-    process_operations: string[]
-    supplier_operations: string[]
-    silo_item_operations: string[]
-    machine_item_operations: string[]
-  }
-  cip_control_form_analyzer_fkey?: {
-    id: string
-    email: string
-    role_id: string
-    password: string
-    last_name: string
-    created_at: string
-    department: string
-    first_name: string
-    updated_at: string
-  }
-  cip_control_form_checked_by_fkey?: {
-    id: string
-    email: string
-    role_id: string
-    password: string
-    last_name: string
-    created_at: string
-    department: string
-    first_name: string
-    updated_at: string
-  }
+}
+
+export interface CIPStageChemical {
+  id?: string
+  strength?: number | null
+  temperature?: number | null
+  circulation_time?: number | null
+  flow_rate?: number | null
 }
 
 // CIP Control Form Stages Types
@@ -168,6 +140,8 @@ export interface CIPControlFormStages {
   start_time: string
   stop_time: string
   updated_at?: string | null
+  acid?: CIPStageChemical | null
+  caustic?: CIPStageChemical | null
 }
 
 // Drivers Form Types
