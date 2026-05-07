@@ -60,8 +60,9 @@ export default function CIPControlFormPage() {
         const searchLower = tableFilters.search.toLowerCase()
         const tag = ((form as any).tag || "").toLowerCase()
         const status = (form.status || "").toLowerCase()
-        const machineName = (typeof form.machine_id === "object" ? form.machine_id?.name : "").toLowerCase()
-        if (!tag.includes(searchLower) && !status.includes(searchLower) && !machineName.includes(searchLower)) return false
+        const machineName = (typeof form.machine_id === "object" ? (form.machine_id as any)?.name : "").toLowerCase()
+        const siloName = (typeof (form as any).silo_id === "object" ? (form as any).silo_id?.name : "").toLowerCase()
+        if (!tag.includes(searchLower) && !status.includes(searchLower) && !machineName.includes(searchLower) && !siloName.includes(searchLower)) return false
       }
 
       if (tableFilters.status && tableFilters.status !== "all") {
@@ -178,17 +179,20 @@ export default function CIPControlFormPage() {
     },
     {
       accessorKey: "machine_id",
-      header: "Machine",
+      header: "Machine / Silo",
       cell: ({ row }: any) => {
         const machine = typeof row.original.machine_id === "object" ? row.original.machine_id : null
+        const silo = typeof row.original.silo_id === "object" ? row.original.silo_id : null
+        const target = machine || silo
+        const isSilo = !machine && !!silo
         return (
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-full bg-blue-50 flex items-center justify-center">
-              <Droplets className="w-3.5 h-3.5 text-blue-600" />
+            <div className={`w-7 h-7 rounded-full flex items-center justify-center ${isSilo ? "bg-green-50" : "bg-blue-50"}`}>
+              <Droplets className={`w-3.5 h-3.5 ${isSilo ? "text-green-600" : "text-blue-600"}`} />
             </div>
             <div>
-              <p className="text-sm font-light">{machine?.name || "N/A"}</p>
-              <p className="text-[10px] text-gray-400">{machine?.serial_number || ""}</p>
+              <p className="text-sm font-light">{target?.name || "N/A"}</p>
+              <p className="text-[10px] text-gray-400">{isSilo ? "Silo" : (target ? "Machine" : "")}{target?.serial_number ? ` · ${target.serial_number}` : ""}</p>
             </div>
           </div>
         )
@@ -258,9 +262,15 @@ export default function CIPControlFormPage() {
               </div>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="bg-gray-50 p-3 rounded-lg">
-                  <p className="text-[10px] font-bold text-gray-400 uppercase">Machine</p>
+                  <p className="text-[10px] font-bold text-gray-400 uppercase">
+                    {typeof (latestForm as any).silo_id === "object" && (latestForm as any).silo_id ? "Silo" : "Machine"}
+                  </p>
                   <p className="text-sm font-light">
-                    {typeof latestForm.machine_id === "object" ? latestForm.machine_id?.name : "N/A"}
+                    {typeof latestForm.machine_id === "object" && latestForm.machine_id
+                      ? (latestForm.machine_id as any).name
+                      : typeof (latestForm as any).silo_id === "object" && (latestForm as any).silo_id
+                        ? (latestForm as any).silo_id.name
+                        : "N/A"}
                   </p>
                 </div>
                 <div className="bg-gray-50 p-3 rounded-lg">
@@ -297,7 +307,7 @@ export default function CIPControlFormPage() {
             <DataTableFilters
               filters={tableFilters}
               onFiltersChange={setTableFilters}
-              searchPlaceholder="Search by tag, status or machine..."
+              searchPlaceholder="Search by tag, status, machine or silo..."
               filterFields={filterFields}
             />
             {loading
