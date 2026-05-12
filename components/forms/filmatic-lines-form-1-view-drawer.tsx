@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { Badge } from "@/components/ui/badge"
@@ -39,9 +39,9 @@ export function FilmaticLinesForm1ViewDrawer({
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <div>
-                <SheetTitle className="text-lg font-light">Filmatic Lines Form 1</SheetTitle>
+                <SheetTitle className="text-lg font-light">Steri Before Autoclave</SheetTitle>
                 <SheetDescription className="text-sm font-light">
-                  Complete information about the Filmatic Lines Form 1 and its production data
+                  Complete information about the Steri Before Autoclave and its production data
                 </SheetDescription>
               </div>
               <Badge className={`${form.approved ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'} font-medium px-3 py-1 rounded-full`}>
@@ -78,7 +78,7 @@ export function FilmaticLinesForm1ViewDrawer({
                   <Factory className="w-4 h-4 text-blue-600" />
                 </div>
                 <div className="flex items-center space-x-2">
-                  <span className="text-sm font-medium text-blue-600">Filmatic Lines Form 1</span>
+                  <span className="text-sm font-medium text-blue-600">Steri Before Autoclave</span>
                   <div className=" bg-gray-100 text-gray-600 px-2 py-1 rounded-full text-xs font-medium shadow-lg">
                     Current Step
                   </div>
@@ -152,15 +152,15 @@ export function FilmaticLinesForm1ViewDrawer({
               {/* Bottles Summary */}
               <div className="mt-2 grid grid-cols-2 gap-4">
                 <div>
-                  <span className="text-xs font-light text-gray-500">Day — Opening / Closing / Waste</span>
+                  <span className="text-xs font-light text-gray-500">Day â€” Opening / Closing / Waste</span>
                   <p className="text-sm font-light mt-1">
-                    {form.day_shift_opening_bottles ?? '—'} / {form.day_shift_closing_bottles ?? '—'} / {form.day_shift_waste_bottles ?? '—'}
+                    {form.day_shift_opening_bottles ?? 'â€”'} / {form.day_shift_closing_bottles ?? 'â€”'} / {form.day_shift_waste_bottles ?? 'â€”'}
                   </p>
                 </div>
                 <div>
-                  <span className="text-xs font-light text-gray-500">Night — Opening / Closing / Waste</span>
+                  <span className="text-xs font-light text-gray-500">Night â€” Opening / Closing / Waste</span>
                   <p className="text-sm font-light mt-1">
-                    {form.night_shift_opening_bottles ?? '—'} / {form.night_shift_closing_bottles ?? '—'} / {form.night_shift_waste_bottles ?? '—'}
+                    {form.night_shift_opening_bottles ?? 'â€”'} / {form.night_shift_closing_bottles ?? 'â€”'} / {form.night_shift_waste_bottles ?? 'â€”'}
                   </p>
                 </div>
               </div>
@@ -387,19 +387,19 @@ export function FilmaticLinesForm1ViewDrawer({
                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
                                   <div className="space-y-1">
                                     <span className="font-medium text-gray-600">Product 1</span>
-                                    <p>{form.day_shift_id.shift_details.stoppage_time_id.product_1 ?? '—'} min</p>
+                                    <p>{form.day_shift_id.shift_details.stoppage_time_id.product_1 ?? 'â€”'} min</p>
                                   </div>
                                   <div className="space-y-1">
                                     <span className="font-medium text-gray-600">Product 2</span>
-                                    <p>{form.day_shift_id.shift_details.stoppage_time_id.product_2 ?? '—'} min</p>
+                                    <p>{form.day_shift_id.shift_details.stoppage_time_id.product_2 ?? 'â€”'} min</p>
                                   </div>
                                   <div className="space-y-1">
                                     <span className="font-medium text-gray-600">Filler 1</span>
-                                    <p>{form.day_shift_id.shift_details.stoppage_time_id.filler_1 ?? '—'} min</p>
+                                    <p>{form.day_shift_id.shift_details.stoppage_time_id.filler_1 ?? 'â€”'} min</p>
                                   </div>
                                   <div className="space-y-1">
                                     <span className="font-medium text-gray-600">Filler 2</span>
-                                    <p>{form.day_shift_id.shift_details.stoppage_time_id.filler_2 ?? '—'} min</p>
+                                    <p>{form.day_shift_id.shift_details.stoppage_time_id.filler_2 ?? 'â€”'} min</p>
                                   </div>
                                 </div>
                                 {(form.day_shift_id.shift_details.stoppage_time_id.product_1_hours ||
@@ -409,19 +409,19 @@ export function FilmaticLinesForm1ViewDrawer({
                                     <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs pt-2 border-t border-gray-200">
                                       <div className="space-y-1">
                                         <span className="font-medium text-gray-600">Product 1 Hours</span>
-                                        <p>{form.day_shift_id.shift_details.stoppage_time_id.product_1_hours ?? '—'}</p>
+                                        <p>{form.day_shift_id.shift_details.stoppage_time_id.product_1_hours ?? 'â€”'}</p>
                                       </div>
                                       <div className="space-y-1">
                                         <span className="font-medium text-gray-600">Product 2 Hours</span>
-                                        <p>{form.day_shift_id.shift_details.stoppage_time_id.product_2_hours ?? '—'}</p>
+                                        <p>{form.day_shift_id.shift_details.stoppage_time_id.product_2_hours ?? 'â€”'}</p>
                                       </div>
                                       <div className="space-y-1">
                                         <span className="font-medium text-gray-600">Filler 1 Hours</span>
-                                        <p>{form.day_shift_id.shift_details.stoppage_time_id.filler_1_hours ?? '—'}</p>
+                                        <p>{form.day_shift_id.shift_details.stoppage_time_id.filler_1_hours ?? 'â€”'}</p>
                                       </div>
                                       <div className="space-y-1">
                                         <span className="font-medium text-gray-600">Filler 2 Hours</span>
-                                        <p>{form.day_shift_id.shift_details.stoppage_time_id.filler_2_hours ?? '—'}</p>
+                                        <p>{form.day_shift_id.shift_details.stoppage_time_id.filler_2_hours ?? 'â€”'}</p>
                                       </div>
                                     </div>
                                   )}
@@ -503,45 +503,45 @@ export function FilmaticLinesForm1ViewDrawer({
                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
                                   <div className="space-y-1">
                                     <span className="font-medium text-gray-600">Product 1</span>
-                                    <p>{form.night_shift_id.shift_details.stoppage_time_id.product_1 ?? '—'} min</p>
+                                    <p>{form.night_shift_id.shift_details.stoppage_time_id.product_1 ?? 'â€”'} min</p>
                                   </div>
                                   <div className="space-y-1">
                                     <span className="font-medium text-gray-600">Product 2</span>
-                                    <p>{form.night_shift_id.shift_details.stoppage_time_id.product_2 ?? '—'} min</p>
+                                    <p>{form.night_shift_id.shift_details.stoppage_time_id.product_2 ?? 'â€”'} min</p>
                                   </div>
                                   <div className="space-y-1">
                                     <span className="font-medium text-gray-600">Filler 1</span>
-                                    <p>{form.night_shift_id.shift_details.stoppage_time_id.filler_1 ?? '—'} min</p>
+                                    <p>{form.night_shift_id.shift_details.stoppage_time_id.filler_1 ?? 'â€”'} min</p>
                                   </div>
                                   <div className="space-y-1">
                                     <span className="font-medium text-gray-600">Filler 2</span>
-                                    <p>{form.night_shift_id.shift_details.stoppage_time_id.filler_2 ?? '—'} min</p>
+                                    <p>{form.night_shift_id.shift_details.stoppage_time_id.filler_2 ?? 'â€”'} min</p>
                                   </div>
                                 </div>
                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs pt-2 border-t border-gray-200">
                                   <div className="space-y-1">
                                     <span className="font-medium text-gray-600">Capper 1</span>
-                                    <p>{form.night_shift_id.shift_details.stoppage_time_id.capper_1 ?? '—'} min</p>
+                                    <p>{form.night_shift_id.shift_details.stoppage_time_id.capper_1 ?? 'â€”'} min</p>
                                   </div>
                                   <div className="space-y-1">
                                     <span className="font-medium text-gray-600">Capper 2</span>
-                                    <p>{form.night_shift_id.shift_details.stoppage_time_id.capper_2 ?? '—'} min</p>
+                                    <p>{form.night_shift_id.shift_details.stoppage_time_id.capper_2 ?? 'â€”'} min</p>
                                   </div>
                                   <div className="space-y-1">
                                     <span className="font-medium text-gray-600">Sleever 1</span>
-                                    <p>{form.night_shift_id.shift_details.stoppage_time_id.sleever_1 ?? '—'} min</p>
+                                    <p>{form.night_shift_id.shift_details.stoppage_time_id.sleever_1 ?? 'â€”'} min</p>
                                   </div>
                                   <div className="space-y-1">
                                     <span className="font-medium text-gray-600">Sleever 2</span>
-                                    <p>{form.night_shift_id.shift_details.stoppage_time_id.sleever_2 ?? '—'} min</p>
+                                    <p>{form.night_shift_id.shift_details.stoppage_time_id.sleever_2 ?? 'â€”'} min</p>
                                   </div>
                                   <div className="space-y-1">
                                     <span className="font-medium text-gray-600">Shrink 1</span>
-                                    <p>{form.night_shift_id.shift_details.stoppage_time_id.shrink_1 ?? '—'} min</p>
+                                    <p>{form.night_shift_id.shift_details.stoppage_time_id.shrink_1 ?? 'â€”'} min</p>
                                   </div>
                                   <div className="space-y-1">
                                     <span className="font-medium text-gray-600">Shrink 2</span>
-                                    <p>{form.night_shift_id.shift_details.stoppage_time_id.shrink_2 ?? '—'} min</p>
+                                    <p>{form.night_shift_id.shift_details.stoppage_time_id.shrink_2 ?? 'â€”'} min</p>
                                   </div>
                                 </div>
                                 {(form.night_shift_id.shift_details.stoppage_time_id.product_1_hours ||
@@ -551,19 +551,19 @@ export function FilmaticLinesForm1ViewDrawer({
                                     <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs pt-2 border-t border-gray-200">
                                       <div className="space-y-1">
                                         <span className="font-medium text-gray-600">Product 1 Hours</span>
-                                        <p>{form.night_shift_id.shift_details.stoppage_time_id.product_1_hours ?? '—'}</p>
+                                        <p>{form.night_shift_id.shift_details.stoppage_time_id.product_1_hours ?? 'â€”'}</p>
                                       </div>
                                       <div className="space-y-1">
                                         <span className="font-medium text-gray-600">Product 2 Hours</span>
-                                        <p>{form.night_shift_id.shift_details.stoppage_time_id.product_2_hours ?? '—'}</p>
+                                        <p>{form.night_shift_id.shift_details.stoppage_time_id.product_2_hours ?? 'â€”'}</p>
                                       </div>
                                       <div className="space-y-1">
                                         <span className="font-medium text-gray-600">Filler 1 Hours</span>
-                                        <p>{form.night_shift_id.shift_details.stoppage_time_id.filler_1_hours ?? '—'}</p>
+                                        <p>{form.night_shift_id.shift_details.stoppage_time_id.filler_1_hours ?? 'â€”'}</p>
                                       </div>
                                       <div className="space-y-1">
                                         <span className="font-medium text-gray-600">Filler 2 Hours</span>
-                                        <p>{form.night_shift_id.shift_details.stoppage_time_id.filler_2_hours ?? '—'}</p>
+                                        <p>{form.night_shift_id.shift_details.stoppage_time_id.filler_2_hours ?? 'â€”'}</p>
                                       </div>
                                     </div>
                                   )}
@@ -616,7 +616,7 @@ export function FilmaticLinesForm1ViewDrawer({
               </div>
               <div className="mt-2 flex items-center space-x-2">
                 <Clock className="h-3 w-3 text-green-600" />
-                <span className="text-xs text-green-600 font-medium">Latest Filmatic Lines Form 1</span>
+                <span className="text-xs text-green-600 font-medium">Latest Steri Before Autoclave</span>
               </div>
             </CardContent>
           </Card>
@@ -639,27 +639,27 @@ export function FilmaticLinesForm1ViewDrawer({
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                     <div className="space-y-1">
                       <p className="text-xs text-gray-600">Opening Bottles</p>
-                      <p className="text-lg font-medium">{form.day_shift_opening_bottles ?? '—'}</p>
+                      <p className="text-lg font-medium">{form.day_shift_opening_bottles ?? 'â€”'}</p>
                     </div>
                     <div className="space-y-1">
                       <p className="text-xs text-gray-600">Closing Bottles</p>
-                      <p className="text-lg font-medium">{form.day_shift_closing_bottles ?? '—'}</p>
+                      <p className="text-lg font-medium">{form.day_shift_closing_bottles ?? 'â€”'}</p>
                     </div>
                     <div className="space-y-1">
                       <p className="text-xs text-gray-600">Waste Bottles</p>
-                      <p className="text-lg font-medium">{form.day_shift_waste_bottles ?? '—'}</p>
+                      <p className="text-lg font-medium">{form.day_shift_waste_bottles ?? 'â€”'}</p>
                     </div>
                     <div className="space-y-1">
                       <p className="text-xs text-gray-600">Received Bottles</p>
-                      <p className="text-lg font-medium">{form.day_shift_received_bottles ?? '—'}</p>
+                      <p className="text-lg font-medium">{form.day_shift_received_bottles ?? 'â€”'}</p>
                     </div>
                     <div className="space-y-1">
                       <p className="text-xs text-gray-600">Damaged Bottles</p>
-                      <p className="text-lg font-medium">{form.day_shift_damaged_bottles ?? '—'}</p>
+                      <p className="text-lg font-medium">{form.day_shift_damaged_bottles ?? 'â€”'}</p>
                     </div>
                     <div className="space-y-1">
                       <p className="text-xs text-gray-600">Foiled Bottles</p>
-                      <p className="text-lg font-medium">{form.day_shift_foiled_bottles ?? '—'}</p>
+                      <p className="text-lg font-medium">{form.day_shift_foiled_bottles ?? 'â€”'}</p>
                     </div>
                   </div>
                 </div>
@@ -672,27 +672,27 @@ export function FilmaticLinesForm1ViewDrawer({
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                     <div className="space-y-1">
                       <p className="text-xs text-gray-600">Opening Bottles</p>
-                      <p className="text-lg font-medium">{form.night_shift_opening_bottles ?? '—'}</p>
+                      <p className="text-lg font-medium">{form.night_shift_opening_bottles ?? 'â€”'}</p>
                     </div>
                     <div className="space-y-1">
                       <p className="text-xs text-gray-600">Closing Bottles</p>
-                      <p className="text-lg font-medium">{form.night_shift_closing_bottles ?? '—'}</p>
+                      <p className="text-lg font-medium">{form.night_shift_closing_bottles ?? 'â€”'}</p>
                     </div>
                     <div className="space-y-1">
                       <p className="text-xs text-gray-600">Waste Bottles</p>
-                      <p className="text-lg font-medium">{form.night_shift_waste_bottles ?? '—'}</p>
+                      <p className="text-lg font-medium">{form.night_shift_waste_bottles ?? 'â€”'}</p>
                     </div>
                     <div className="space-y-1">
                       <p className="text-xs text-gray-600">Received Bottles</p>
-                      <p className="text-lg font-medium">{form.night_shift_received_bottles ?? '—'}</p>
+                      <p className="text-lg font-medium">{form.night_shift_received_bottles ?? 'â€”'}</p>
                     </div>
                     <div className="space-y-1">
                       <p className="text-xs text-gray-600">Damaged Bottles</p>
-                      <p className="text-lg font-medium">{form.night_shift_damaged_bottles ?? '—'}</p>
+                      <p className="text-lg font-medium">{form.night_shift_damaged_bottles ?? 'â€”'}</p>
                     </div>
                     <div className="space-y-1">
                       <p className="text-xs text-gray-600">Foiled Bottles</p>
-                      <p className="text-lg font-medium">{form.night_shift_foiled_bottles ?? '—'}</p>
+                      <p className="text-lg font-medium">{form.night_shift_foiled_bottles ?? 'â€”'}</p>
                     </div>
                   </div>
                 </div>

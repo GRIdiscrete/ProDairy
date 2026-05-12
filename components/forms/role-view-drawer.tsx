@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -14,7 +14,7 @@ interface RoleViewDrawerProps {
   onEdit?: () => void
 }
 
-// ── Feature labels grouped for display ───────────────────────────────────────
+// â”€â”€ Feature labels grouped for display â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const adminFeatureLabels: Record<string, string> = {
   user_operations: "User Management",
   role_operations: "Role Management",
@@ -45,9 +45,9 @@ const processLogFeatureLabels: Record<string, string> = {
   raw_milk_intake: "Raw Milk Intake (Log)",
   standarizing: "Standarizing",
   pasteurizing: "Pasteurizing (Log)",
-  filmatic_1: "Filmatic 1",
-  process_log: "Process Log",
-  filmatic_2: "Filmatic 2",
+  filmatic_1: "Steri Before Autoclave",
+  process_log: "Autoclave",
+  filmatic_2: "Steri After Autoclave",
   palletizer: "Palletizer",
   incubation: "Incubation (Log)",
   qa_check_post_incubation: "QA Check Post Incubation",

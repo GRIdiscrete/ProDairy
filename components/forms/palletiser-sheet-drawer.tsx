@@ -117,7 +117,8 @@ export function PalletiserSheetDrawer({
         if (uRes.status === "fulfilled") setUsers(uRes.value.data || [])
         else setUsers([])
 
-        if (mRes.status === "fulfilled") setMachines(mRes.value.data || [])
+        if (mRes.status === "fulfilled")
+          setMachines((mRes.value.data || []).filter((m: any) => m.name === "Filmatic 1" || m.name === "Filmatic 2"))
         else setMachines([])
 
         if (rRes.status === "fulfilled") setRoles(rRes.value.data || [])
@@ -301,7 +302,9 @@ export function PalletiserSheetDrawer({
     if (!q.trim()) return []
     try {
       const resp = await machineApi.getMachines({ filters: { search: q } })
-      return (resp.data || []).map((m: any) => ({ value: m.id, label: m.name, description: `${m.category} • ${m.location}` }))
+      return (resp.data || [])
+        .filter((m: any) => m.name === "Filmatic 1" || m.name === "Filmatic 2")
+        .map((m: any) => ({ value: m.id, label: m.name, description: `${m.category} • ${m.location}` }))
     } catch {
       return []
     }

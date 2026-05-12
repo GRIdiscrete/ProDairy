@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useState, useEffect } from "react"
 import { useForm, Controller } from "react-hook-form"
@@ -255,7 +255,7 @@ export function SterilisedMilkProcessDrawer({
         .map(user => ({
           value: user.id,
           label: `${user.first_name} ${user.last_name}`.trim() || user.email,
-          description: `${user.department} • ${user.email}`
+          description: `${user.department} â€¢ ${user.email}`
         }))
     } catch (error) {
       console.error("Failed to search users:", error)
@@ -271,7 +271,7 @@ export function SterilisedMilkProcessDrawer({
           <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center">
             <Beaker className="w-4 h-4 text-orange-600" />
           </div>
-          <span className="text-sm font-light">Filmatic Lines 1</span>
+          <span className="text-sm font-light">Steri Before Autoclave</span>
         </div>
         <ArrowRight className="w-4 h-4 text-gray-400" />
         <div className="flex items-center space-x-2">
@@ -290,7 +290,7 @@ export function SterilisedMilkProcessDrawer({
           <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center">
             <Beaker className="w-4 h-4 text-orange-600" />
           </div>
-          <span className="text-sm font-light">Filmatic Lines 2</span>
+          <span className="text-sm font-light">Steri After Autoclave</span>
         </div>
       </div>
     </div>
@@ -315,7 +315,7 @@ export function SterilisedMilkProcessDrawer({
                 options={filmaticForms.map(form => ({
                   value: form.id,
                   label: `Filmatic Form #${form.id.slice(0, 8)}`,
-                  description: `${form.date} • ${form.approved ? 'Approved' : 'Pending'} • ${form.day_shift_opening_bottles + form.night_shift_opening_bottles} bottles`
+                  description: `${form.date} â€¢ ${form.approved ? 'Approved' : 'Pending'} â€¢ ${form.day_shift_opening_bottles + form.night_shift_opening_bottles} bottles`
                 }))}
                 value={field.value}
                 onValueChange={field.onChange}
@@ -340,7 +340,7 @@ export function SterilisedMilkProcessDrawer({
                   options={users.map(user => ({
                     value: user.id,
                     label: `${user.first_name} ${user.last_name}`.trim() || user.email,
-                    description: `${user.department} • ${user.email}`
+                    description: `${user.department} â€¢ ${user.email}`
                   }))}
                   value={field.value}
                   onValueChange={field.onChange}
@@ -400,7 +400,7 @@ export function SterilisedMilkProcessDrawer({
                   options={users.map(user => ({
                     value: user.id,
                     label: `${user.first_name} ${user.last_name}`.trim() || user.email,
-                    description: `${user.department} • ${user.email}`
+                    description: `${user.department} â€¢ ${user.email}`
                   }))}
                   value={field.value}
                   onValueChange={field.onChange}
@@ -464,7 +464,7 @@ export function SterilisedMilkProcessDrawer({
                 options={users.map(user => ({
                   value: user.id,
                   label: `${user.first_name} ${user.last_name}`.trim() || user.email,
-                  description: `${user.department} • ${user.email}`
+                  description: `${user.department} â€¢ ${user.email}`
                 }))}
                 value={field.value}
                 onValueChange={field.onChange}

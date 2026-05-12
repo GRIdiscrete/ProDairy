@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { Badge } from "@/components/ui/badge"
@@ -125,7 +125,7 @@ export function SterilisedMilkProcessViewDrawer({
                 <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center">
                   <Beaker className="w-4 h-4 text-orange-600" />
                 </div>
-                <span className="text-sm font-light">Filmatic Lines 1</span>
+                <span className="text-sm font-light">Steri Before Autoclave</span>
               </div>
               <ArrowRight className="w-4 h-4 text-gray-400" />
               <div className="flex items-center space-x-2">
@@ -144,7 +144,7 @@ export function SterilisedMilkProcessViewDrawer({
                 <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center">
                   <Beaker className="w-4 h-4 text-orange-600" />
                 </div>
-                <span className="text-sm font-light">Filmatic Lines 2</span>
+                <span className="text-sm font-light">Steri After Autoclave</span>
               </div>
             </div>
           </div>
@@ -209,35 +209,35 @@ export function SterilisedMilkProcessViewDrawer({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <span className="text-xs text-gray-500">Batch ID</span>
-                    <p className="text-sm">{batch.id || "—"}</p>
+                    <p className="text-sm">{batch.id || "â€”"}</p>
                   </div>
                   <div>
                     <span className="text-xs text-gray-500">Batch Number</span>
-                    <p className="text-sm">#{batch.batch_number ?? "—"}</p>
+                    <p className="text-sm">#{batch.batch_number ?? "â€”"}</p>
                   </div>
                   <div>
                     <span className="text-xs text-gray-500">Date</span>
-                    <p className="text-sm">{batch.date || "—"}</p>
+                    <p className="text-sm">{batch.date || "â€”"}</p>
                   </div>
                   <div>
                     <span className="text-xs text-gray-500">Filling Start (time)</span>
-                    <p className="text-sm">{batch.filling_start_details?.time ?? batch.filling_start ?? "—"}</p>
+                    <p className="text-sm">{batch.filling_start_details?.time ?? batch.filling_start ?? "â€”"}</p>
                   </div>
                   <div>
-                    <span className="text-xs text-gray-500">Filling Temp (°C)</span>
-                    <p className="text-sm">{batch.filling_start_details?.temperature ?? "—"}</p>
+                    <span className="text-xs text-gray-500">Filling Temp (Â°C)</span>
+                    <p className="text-sm">{batch.filling_start_details?.temperature ?? "â€”"}</p>
                   </div>
                   <div>
                     <span className="text-xs text-gray-500">Sterilization Start (time)</span>
-                    <p className="text-sm">{batch.sterilization_start_details?.time ?? batch.sterilization_start ?? "—"}</p>
+                    <p className="text-sm">{batch.sterilization_start_details?.time ?? batch.sterilization_start ?? "â€”"}</p>
                   </div>
                   <div>
                     <span className="text-xs text-gray-500">Sterilization Finish (time)</span>
-                    <p className="text-sm">{batch.sterilization_finish_details?.time ?? batch.sterilization_finish ?? "—"}</p>
+                    <p className="text-sm">{batch.sterilization_finish_details?.time ?? batch.sterilization_finish ?? "â€”"}</p>
                   </div>
                   <div>
-                    <span className="text-xs text-gray-500">Sterilization Finish Temp (°C)</span>
-                    <p className="text-sm">{batch.sterilization_finish_details?.temperature ?? "—"}</p>
+                    <span className="text-xs text-gray-500">Sterilization Finish Temp (Â°C)</span>
+                    <p className="text-sm">{batch.sterilization_finish_details?.temperature ?? "â€”"}</p>
                   </div>
                 </div>
               ) : (
@@ -328,7 +328,7 @@ export function SterilisedMilkProcessViewDrawer({
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <p className="text-sm font-light"><span className="font-medium">Filling Start:</span> {batch.filling_start?.time || 'N/A'}</p>
-                      <p className="text-sm font-light"><span className="font-medium">Temperature:</span> {batch.filling_start?.temperature ?? 'N/A'}°C</p>
+                      <p className="text-sm font-light"><span className="font-medium">Temperature:</span> {batch.filling_start?.temperature ?? 'N/A'}Â°C</p>
                     </div>
                     <div>
                       <p className="text-sm font-light"><span className="font-medium">Sterilization Start:</span> {batch.sterilization_start?.time || 'N/A'}</p>

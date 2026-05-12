@@ -47,7 +47,7 @@ export interface RawMilkIntakeForm {
 export interface TestedTruck {
   truck: string
   truck_compartment_number: number
-  total_volume: number
+  total_compartment_volume: number
   suppliers: {
     tank: string
     volume: number
@@ -71,7 +71,7 @@ export interface VoucherContribution {
 export interface TruckCompartment {
   truck: string
   truck_compartment_number: number
-  total_volume: number
+  total_compartment_volume: number
   suppliers: {
     tank: string
     volume: number

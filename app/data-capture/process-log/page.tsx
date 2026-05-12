@@ -337,18 +337,18 @@ export default function ProcessLogPage() {
   }, [isInitialized, logs]);
 
   return (
-    <DataCaptureDashboardLayout title="Process Log" subtitle="Steri milk process control and monitoring">
+    <DataCaptureDashboardLayout title="Autoclave" subtitle="Steri milk process control and monitoring">
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-light text-foreground">Process Log</h1>
+            <h1 className="text-3xl font-light text-foreground">Autoclave</h1>
             <p className="text-sm font-light text-muted-foreground">Manage steri milk process logs</p>
           </div>
           <LoadingButton
             onClick={handleAdd}
             className="bg-[#006BC4] text-white rounded-full px-6 py-2 font-light"
           >
-            Add Process Log
+            Add Autoclave
           </LoadingButton>
         </div>
 
@@ -362,7 +362,7 @@ export default function ProcessLogPage() {
                   <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
                     <Workflow className="h-4 w-4 text-gray-600" />
                   </div>
-                  <span>Current Steri Milk Process Log</span>
+                  <span>Current Steri Milk Autoclave</span>
                   <Badge className=" from-blue-100 to-cyan-100 text-white font-light">Latest</Badge>
                 </div>
                 <LoadingButton
@@ -489,7 +489,7 @@ export default function ProcessLogPage() {
         {!loading.fetch && (
           <div className="border border-gray-200 rounded-lg bg-white">
             <div className="p-6 pb-0">
-              <div className="text-lg font-light">Steri Milk Process Logs</div>
+              <div className="text-lg font-light">Steri Milk Autoclaves</div>
             </div>
             <div className="p-6 space-y-4">
               <DataTableFilters
@@ -534,7 +534,7 @@ export default function ProcessLogPage() {
         <DeleteConfirmationDialog
           open={deleteDialogOpen}
           onOpenChange={setDeleteDialogOpen}
-          title="Delete Process Log"
+          title="Delete Autoclave"
           description={`Are you sure you want to delete this process log? This action cannot be undone.`}
           onConfirm={confirmDelete}
           loading={loading.delete}

@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useState, useEffect, useMemo } from "react"
 import { useRouter, usePathname } from "next/navigation"
@@ -119,7 +119,7 @@ export function Header({ title = "Dashboard", subtitle = "Welcome back!", onOpen
           const temp = weatherRes.data.current_weather?.temperature
 
           setWeather({
-            temp: temp !== undefined ? `${Math.round(temp)}°C` : "--",
+            temp: temp !== undefined ? `${Math.round(temp)}Â°C` : "--",
             city,
           })
         } catch (error) {
@@ -158,7 +158,7 @@ export function Header({ title = "Dashboard", subtitle = "Welcome back!", onOpen
       name: "Admin Dashboard",
       icon: Users,
       path: "/admin",
-      emoji: "🧑‍💻",
+      emoji: "ðŸ§‘â€ðŸ’»",
       description: "System administration and management",
       module: "admin"
     },
@@ -167,7 +167,7 @@ export function Header({ title = "Dashboard", subtitle = "Welcome back!", onOpen
       name: "Drivers UI",
       icon: Truck,
       path: "/drivers",
-      emoji: "🚚",
+      emoji: "ðŸšš",
       description: "Driver tools and delivery management",
       module: "drivers"
     },
@@ -176,7 +176,7 @@ export function Header({ title = "Dashboard", subtitle = "Welcome back!", onOpen
       name: "Production Processes",
       icon: ClipboardList,
       path: "/data-capture",
-      emoji: "📋",
+      emoji: "ðŸ“‹",
       description: "Data entry and laboratory management",
       module: "data-capture"
     },
@@ -185,7 +185,7 @@ export function Header({ title = "Dashboard", subtitle = "Welcome back!", onOpen
       name: "Tools",
       icon: Wrench,
       path: "/tools",
-      emoji: "🛠️",
+      emoji: "ðŸ› ï¸",
       description: "Utilities for transfers and cleaning",
       module: "tools"
     }
@@ -217,7 +217,7 @@ export function Header({ title = "Dashboard", subtitle = "Welcome back!", onOpen
           name: sw.label,
           icon: Users,
           path: "/",
-          emoji: "🧑‍💻",
+          emoji: "ðŸ§‘â€ðŸ’»",
           description: "",
           module: sw.key
         }
@@ -247,7 +247,7 @@ export function Header({ title = "Dashboard", subtitle = "Welcome back!", onOpen
     // Data Capture Routes
     { path: "/data-capture", title: "Data Capture Dashboard", category: "Data Capture", icon: ClipboardList, description: "Data entry and laboratory management" },
     { path: "/data-capture/kanban", title: "Process Kanban", category: "Data Capture", icon: ClipboardList, description: "Process workflow management" },
-    { path: "/data-capture/process-log", title: "Process Log", category: "Data Capture", icon: ClipboardList, description: "Process logging and tracking" },
+    { path: "/data-capture/process-log", title: "Autoclave", category: "Data Capture", icon: ClipboardList, description: "Process logging and tracking" },
     { path: "/data-capture/pasteurizing", title: "Pasteurizing", category: "Data Capture", icon: ClipboardList, description: "Pasteurization process management" },
     { path: "/data-capture/sterilised-milk-process", title: "Sterilised Milk Process", category: "Data Capture", icon: ClipboardList, description: "Sterilized milk processing" },
     { path: "/data-capture/standardizing", title: "Standardizing", category: "Data Capture", icon: ClipboardList, description: "Milk standardization process" },
@@ -295,7 +295,7 @@ export function Header({ title = "Dashboard", subtitle = "Welcome back!", onOpen
         name: "Dashboard",
         icon: Users,
         path: "/",
-        emoji: "🧑‍💻",
+        emoji: "ðŸ§‘â€ðŸ’»",
         description: "",
         module: "none"
       }
@@ -346,7 +346,7 @@ export function Header({ title = "Dashboard", subtitle = "Welcome back!", onOpen
                 <div className="flex items-center gap-2">
                   {isClient ? (
                     <>
-                      <span className="text-lg">{currentDashboard.emoji || "🧑‍💻"}</span>
+                      <span className="text-lg">{currentDashboard.emoji || "ðŸ§‘â€ðŸ’»"}</span>
                       <div className="hidden md:block text-left">
                         <p className="text-sm font-medium text-zinc-900">
                           {currentDashboard.name}
@@ -358,7 +358,7 @@ export function Header({ title = "Dashboard", subtitle = "Welcome back!", onOpen
                     </>
                   ) : (
                     <div className="flex items-center gap-2">
-                      <span className="text-lg">🧑‍💻</span>
+                      <span className="text-lg">ðŸ§‘â€ðŸ’»</span>
                       <div className="hidden md:block text-left">
                         <p className="text-sm font-medium text-zinc-900 italic opacity-50">Loading...</p>
                       </div>
@@ -473,7 +473,7 @@ export function Header({ title = "Dashboard", subtitle = "Welcome back!", onOpen
           <div className="hidden items-center gap-2 rounded-full border border-zinc-200 bg-white/70 px-3 py-1 text-xs font-light text-zinc-600 md:flex">
             <MapPin className="h-3.5 w-3.5 text-blue-600" />
             <span className="tabular-nums">{weather?.temp ?? "--"}</span>
-            <span className="text-zinc-400">•</span>
+            <span className="text-zinc-400">â€¢</span>
             <span>{weather?.city ?? "Detecting location..."}</span>
           </div>
 
@@ -510,7 +510,7 @@ export function Header({ title = "Dashboard", subtitle = "Welcome back!", onOpen
                   {notifications.slice(0, 8).map((n, idx) => {
                     const d = typeof n.created_at === 'string' ? parseISO(n.created_at) : new Date(n.created_at)
                     const when = isValid(d) ? formatDistanceToNow(d, { addSuffix: true }) : ''
-                    const label = `${humanizeModule(n.module)} · ${n.action}`
+                    const label = `${humanizeModule(n.module)} Â· ${n.action}`
                     const ActionIcon = (n.action === 'created' ? Plus : n.action === 'updated' ? Pencil : Trash2)
                     const color = n.action === 'created' ? 'text-green-600 bg-green-50' : n.action === 'updated' ? 'text-amber-600 bg-amber-50' : 'text-red-600 bg-red-50'
                     return (

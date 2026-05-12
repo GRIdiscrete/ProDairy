@@ -119,7 +119,7 @@ export default function FilmaticLines2Page() {
   const [selectedForm, setSelectedForm] = useState<FilmaticLinesForm2 | null>(null)
   const [formMode, setFormMode] = useState<"create" | "edit">("create")
 
-  // Filter fields configuration for Filmatic Lines Form 2
+  // Filter fields configuration for Steri After Autoclave
   const filterFields = useMemo(() => [
     {
       key: "created_at",
@@ -173,11 +173,11 @@ export default function FilmaticLines2Page() {
 
     try {
       await dispatch(deleteFilmaticLinesForm2(selectedForm.id!)).unwrap()
-      toast.success('Filmatic Lines Form 2 deleted successfully')
+      toast.success('Steri After Autoclave deleted successfully')
       setDeleteDialogOpen(false)
       setSelectedForm(null)
     } catch (error: any) {
-      toast.error(error || 'Failed to delete Filmatic Lines Form 2')
+      toast.error(error || 'Failed to delete Steri After Autoclave')
     }
   }
 
@@ -206,7 +206,7 @@ export default function FilmaticLines2Page() {
 
   if (loading.fetch) {
     return (
-      <DataCaptureDashboardLayout title="Filmatic Lines Form 2" subtitle="Filmatic lines form 2 production control and monitoring">
+      <DataCaptureDashboardLayout title="Steri After Autoclave" subtitle="Steri after autoclave production control and monitoring">
         <ContentSkeleton sections={1} cardsPerSection={4} />
       </DataCaptureDashboardLayout>
     )
@@ -337,11 +337,11 @@ export default function FilmaticLines2Page() {
   ]
 
   return (
-    <DataCaptureDashboardLayout title="Filmatic Lines Form 2" subtitle="Filmatic lines form 2 production control and monitoring">
+    <DataCaptureDashboardLayout title="Steri After Autoclave" subtitle="Steri after autoclave production control and monitoring">
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-light text-foreground">Filmatic Lines Form 2</h1>
+            <h1 className="text-3xl font-light text-foreground">Steri After Autoclave</h1>
             <p className="text-sm font-light text-muted-foreground">Manage Filmatic lines form 2 production data and process control</p>
           </div>
           <LoadingButton
@@ -349,7 +349,7 @@ export default function FilmaticLines2Page() {
             className="bg-[#006BC4] text-white rounded-full px-6 py-2 font-light"
           >
             <Plus className="mr-2 h-4 w-4" />
-            Add Filmatic Lines Form 2
+            Add Steri After Autoclave
           </LoadingButton>
         </div>
 
@@ -389,7 +389,7 @@ export default function FilmaticLines2Page() {
                   <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
                     <Factory className="h-4 w-4 text-gray-600" />
                   </div>
-                  <span>Current Filmatic Lines Form 2</span>
+                  <span>Current Steri After Autoclave</span>
                   <Badge className="bg-blue-100 text-blue-800 font-light">Latest</Badge>
                 </div>
                 <LoadingButton
@@ -526,7 +526,7 @@ export default function FilmaticLines2Page() {
         {!loading.fetch && (
           <div className="border border-gray-200 rounded-lg bg-white">
             <div className="p-6 pb-0">
-              <div className="text-lg font-light">Filmatic Lines Form 2 Records</div>
+              <div className="text-lg font-light">Steri After Autoclave Records</div>
             </div>
             <div className="p-6 space-y-4">
               <DataTableFilters
@@ -572,7 +572,7 @@ export default function FilmaticLines2Page() {
         <DeleteConfirmationDialog
           open={deleteDialogOpen}
           onOpenChange={setDeleteDialogOpen}
-          title="Delete Filmatic Lines Form 2"
+          title="Delete Steri After Autoclave"
           description={`Are you sure you want to delete this Filmatic lines form 2 record? This action cannot be undone and may affect production tracking.`}
           onConfirm={confirmDelete}
           loading={loading.delete}

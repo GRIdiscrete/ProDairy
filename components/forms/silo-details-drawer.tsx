@@ -25,7 +25,8 @@ interface SiloDetailsDrawerProps {
 export function SiloDetailsDrawer({
   open,
   onOpenChange,
-  silo
+  silo,
+  onTransfer,
 }: SiloDetailsDrawerProps) {
   const dispatch = useAppDispatch()
   const cipStatuses = useAppSelector((state) => state.silo.cipStatuses)

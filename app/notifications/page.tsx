@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useEffect, useMemo, Suspense } from 'react'
 import { humanizeModule, moduleToRoute, type NotificationItem } from '@/lib/api/notifications'
@@ -88,7 +88,7 @@ const moduleLabels: Record<string, string> = {
   "steri_milk_pasteurizing_form": "Pasteurizing",
   "lab_test_mixing_and_pasteurizing": "Lab Test Mixing & Pasteurizing",
   "filmatic_line_form_1": "Filmatic Line 1",
-  "steri_milk_process_log": "Process Log",
+  "steri_milk_process_log": "Autoclave",
   "lab_test_post_process": "Lab Test Post Process",
   "steri_milk_test_report": "Test Report",
   "filmatic_line_form_2": "Filmatic Line 2",

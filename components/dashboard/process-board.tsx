@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import React, { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
@@ -335,7 +335,7 @@ export const defaultProcessColumns: ProcessColumn[] = [
   },
   {
     id: "process-log",
-    title: "Process Log",
+    title: "Autoclave",
     description: "Final documentation and logging",
     icon: FileText,
     color: "bg-gray-500",

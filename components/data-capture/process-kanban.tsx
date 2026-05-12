@@ -114,7 +114,7 @@ export function ProcessKanban({ processId, className }: ProcessKanbanProps) {
     },
     {
       id: "filmatic-lines-1",
-      title: "Filmatic Lines Form 1",
+      title: "Steri Before Autoclave",
       description: "First packaging line preparation",
       icon: Factory,
       color: "bg-purple-500",
@@ -124,7 +124,7 @@ export function ProcessKanban({ processId, className }: ProcessKanbanProps) {
     },
     {
       id: "process-log",
-      title: "Process Log",
+      title: "Autoclave",
       description: "Documentation and process tracking",
       icon: FileText,
       color: "bg-gray-500",
@@ -134,7 +134,7 @@ export function ProcessKanban({ processId, className }: ProcessKanbanProps) {
     },
     {
       id: "filmatic-lines-2",
-      title: "Filmatic Lines 2",
+      title: "Steri After Autoclave",
       description: "Second packaging line processing",
       icon: Factory,
       color: "bg-indigo-500",

@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { Badge } from "@/components/ui/badge"
@@ -38,9 +38,9 @@ export function FilmaticLinesForm2ViewDrawer({
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <div>
-                <SheetTitle className="text-lg font-light">Filmatic Lines Form 2</SheetTitle>
+                <SheetTitle className="text-lg font-light">Steri After Autoclave</SheetTitle>
                 <SheetDescription className="text-sm font-light">
-                  Complete information about the Filmatic Lines Form 2 and its production data
+                  Complete information about the Steri After Autoclave and its production data
                 </SheetDescription>
               </div>
               <Badge className={`${form.approved ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'} font-medium px-3 py-1 rounded-full`}>
@@ -77,7 +77,7 @@ export function FilmaticLinesForm2ViewDrawer({
                   <Factory className="w-4 h-4 text-blue-600" />
                 </div>
                 <div className="flex items-center space-x-2">
-                  <span className="text-sm font-medium text-blue-600">Filmatic Lines Form 2</span>
+                  <span className="text-sm font-medium text-blue-600">Steri After Autoclave</span>
                   <div className=" bg-gray-100 text-gray-600 px-2 py-1 rounded-full text-xs font-medium shadow-lg">
                     Current Step
                   </div>
@@ -146,15 +146,15 @@ export function FilmaticLinesForm2ViewDrawer({
               {/* Bottles Summary */}
               <div className="mt-2 grid grid-cols-2 gap-4">
                 <div>
-                  <span className="text-xs font-light text-gray-500">Day — Opening / Closing / Waste</span>
+                  <span className="text-xs font-light text-gray-500">Day â€” Opening / Closing / Waste</span>
                   <p className="text-sm font-light mt-1">
-                    {form.day_shift_opening_bottles ?? '—'} / {form.day_shift_closing_bottles ?? '—'} / {form.day_shift_waste_bottles ?? '—'}
+                    {form.day_shift_opening_bottles ?? 'â€”'} / {form.day_shift_closing_bottles ?? 'â€”'} / {form.day_shift_waste_bottles ?? 'â€”'}
                   </p>
                 </div>
                 <div>
-                  <span className="text-xs font-light text-gray-500">Night — Opening / Closing / Waste</span>
+                  <span className="text-xs font-light text-gray-500">Night â€” Opening / Closing / Waste</span>
                   <p className="text-sm font-light mt-1">
-                    {form.night_shift_opening_bottles ?? '—'} / {form.night_shift_closing_bottles ?? '—'} / {form.night_shift_waste_bottles ?? '—'}
+                    {form.night_shift_opening_bottles ?? 'â€”'} / {form.night_shift_closing_bottles ?? 'â€”'} / {form.night_shift_waste_bottles ?? 'â€”'}
                   </p>
                 </div>
               </div>
@@ -312,27 +312,27 @@ export function FilmaticLinesForm2ViewDrawer({
                                   <div key={stoppage.id || sIdx} className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-x-4 gap-y-3">
                                     <div className="space-y-1">
                                       <p className="text-gray-500 font-light">Capper 1</p>
-                                      <p className="font-medium">{stoppage.capper_1 ?? '—'} <span className="text-[10px] text-gray-400">({stoppage.capper_1_hours ?? 0}h)</span></p>
+                                      <p className="font-medium">{stoppage.capper_1 ?? 'â€”'} <span className="text-[10px] text-gray-400">({stoppage.capper_1_hours ?? 0}h)</span></p>
                                     </div>
                                     <div className="space-y-1">
                                       <p className="text-gray-500 font-light">Capper 2</p>
-                                      <p className="font-medium">{stoppage.capper_2 ?? '—'} <span className="text-[10px] text-gray-400">({stoppage.capper_2_hours ?? 0}h)</span></p>
+                                      <p className="font-medium">{stoppage.capper_2 ?? 'â€”'} <span className="text-[10px] text-gray-400">({stoppage.capper_2_hours ?? 0}h)</span></p>
                                     </div>
                                     <div className="space-y-1">
                                       <p className="text-gray-500 font-light">Sleever 1</p>
-                                      <p className="font-medium">{stoppage.sleever_1 ?? '—'} <span className="text-[10px] text-gray-400">({stoppage.sleever_1_hours ?? 0}h)</span></p>
+                                      <p className="font-medium">{stoppage.sleever_1 ?? 'â€”'} <span className="text-[10px] text-gray-400">({stoppage.sleever_1_hours ?? 0}h)</span></p>
                                     </div>
                                     <div className="space-y-1">
                                       <p className="text-gray-500 font-light">Sleever 2</p>
-                                      <p className="font-medium">{stoppage.sleever_2 ?? '—'} <span className="text-[10px] text-gray-400">({stoppage.sleever_2_hours ?? 0}h)</span></p>
+                                      <p className="font-medium">{stoppage.sleever_2 ?? 'â€”'} <span className="text-[10px] text-gray-400">({stoppage.sleever_2_hours ?? 0}h)</span></p>
                                     </div>
                                     <div className="space-y-1">
                                       <p className="text-gray-500 font-light">Shrink 1</p>
-                                      <p className="font-medium">{stoppage.shrink_1 ?? '—'} <span className="text-[10px] text-gray-400">({stoppage.shrink_1_hours ?? 0}h)</span></p>
+                                      <p className="font-medium">{stoppage.shrink_1 ?? 'â€”'} <span className="text-[10px] text-gray-400">({stoppage.shrink_1_hours ?? 0}h)</span></p>
                                     </div>
                                     <div className="space-y-1">
                                       <p className="text-gray-500 font-light">Shrink 2</p>
-                                      <p className="font-medium">{stoppage.shrink_2 ?? '—'} <span className="text-[10px] text-gray-400">({stoppage.shrink_2_hours ?? 0}h)</span></p>
+                                      <p className="font-medium">{stoppage.shrink_2 ?? 'â€”'} <span className="text-[10px] text-gray-400">({stoppage.shrink_2_hours ?? 0}h)</span></p>
                                     </div>
                                   </div>
                                 ))}
@@ -411,27 +411,27 @@ export function FilmaticLinesForm2ViewDrawer({
                                   <div key={stoppage.id || sIdx} className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-x-4 gap-y-3">
                                     <div className="space-y-1">
                                       <p className="text-gray-500 font-light">Capper 1</p>
-                                      <p className="font-medium">{stoppage.capper_1 ?? '—'} <span className="text-[10px] text-gray-400">({stoppage.capper_1_hours ?? 0}h)</span></p>
+                                      <p className="font-medium">{stoppage.capper_1 ?? 'â€”'} <span className="text-[10px] text-gray-400">({stoppage.capper_1_hours ?? 0}h)</span></p>
                                     </div>
                                     <div className="space-y-1">
                                       <p className="text-gray-500 font-light">Capper 2</p>
-                                      <p className="font-medium">{stoppage.capper_2 ?? '—'} <span className="text-[10px] text-gray-400">({stoppage.capper_2_hours ?? 0}h)</span></p>
+                                      <p className="font-medium">{stoppage.capper_2 ?? 'â€”'} <span className="text-[10px] text-gray-400">({stoppage.capper_2_hours ?? 0}h)</span></p>
                                     </div>
                                     <div className="space-y-1">
                                       <p className="text-gray-500 font-light">Sleever 1</p>
-                                      <p className="font-medium">{stoppage.sleever_1 ?? '—'} <span className="text-[10px] text-gray-400">({stoppage.sleever_1_hours ?? 0}h)</span></p>
+                                      <p className="font-medium">{stoppage.sleever_1 ?? 'â€”'} <span className="text-[10px] text-gray-400">({stoppage.sleever_1_hours ?? 0}h)</span></p>
                                     </div>
                                     <div className="space-y-1">
                                       <p className="text-gray-500 font-light">Sleever 2</p>
-                                      <p className="font-medium">{stoppage.sleever_2 ?? '—'} <span className="text-[10px] text-gray-400">({stoppage.sleever_2_hours ?? 0}h)</span></p>
+                                      <p className="font-medium">{stoppage.sleever_2 ?? 'â€”'} <span className="text-[10px] text-gray-400">({stoppage.sleever_2_hours ?? 0}h)</span></p>
                                     </div>
                                     <div className="space-y-1">
                                       <p className="text-gray-500 font-light">Shrink 1</p>
-                                      <p className="font-medium">{stoppage.shrink_1 ?? '—'} <span className="text-[10px] text-gray-400">({stoppage.shrink_1_hours ?? 0}h)</span></p>
+                                      <p className="font-medium">{stoppage.shrink_1 ?? 'â€”'} <span className="text-[10px] text-gray-400">({stoppage.shrink_1_hours ?? 0}h)</span></p>
                                     </div>
                                     <div className="space-y-1">
                                       <p className="text-gray-500 font-light">Shrink 2</p>
-                                      <p className="font-medium">{stoppage.shrink_2 ?? '—'} <span className="text-[10px] text-gray-400">({stoppage.shrink_2_hours ?? 0}h)</span></p>
+                                      <p className="font-medium">{stoppage.shrink_2 ?? 'â€”'} <span className="text-[10px] text-gray-400">({stoppage.shrink_2_hours ?? 0}h)</span></p>
                                     </div>
                                   </div>
                                 ))}
@@ -484,7 +484,7 @@ export function FilmaticLinesForm2ViewDrawer({
               </div>
               <div className="mt-2 flex items-center space-x-2">
                 <Clock className="h-3 w-3 text-green-600" />
-                <span className="text-xs text-green-600 font-medium">Latest Filmatic Lines Form 2</span>
+                <span className="text-xs text-green-600 font-medium">Latest Steri After Autoclave</span>
               </div>
             </CardContent>
           </Card>

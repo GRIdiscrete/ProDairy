@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useState, useEffect } from "react"
 import { useForm, Controller } from "react-hook-form"
@@ -15,8 +15,8 @@ import { createRole, updateRole } from "@/lib/store/slices/rolesSlice"
 import { toast } from "sonner"
 import { UserRole, UserRoleResponse, convertApiResponseToUserRole } from "@/lib/types/roles"
 
-// ── Operation groups (all DB columns) ─────────────────────────────────────────
-// Group 1 – System/Admin
+// â”€â”€ Operation groups (all DB columns) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Group 1 â€“ System/Admin
 const adminFeatures = [
   { key: "user_operations", label: "User Management" },
   { key: "role_operations", label: "Role Management" },
@@ -28,7 +28,7 @@ const adminFeatures = [
   { key: "production_plan_operations", label: "Production Plan" },
 ]
 
-// Group 2 – Data Capture operations (all _operations keys)
+// Group 2 â€“ Data Capture operations (all _operations keys)
 const datacaptureFeatures = [
   { key: "raw_product_collection_operations", label: "Raw Product Collection" },
   { key: "raw_milk_intake_operations", label: "Raw Milk Intake" },
@@ -43,15 +43,15 @@ const datacaptureFeatures = [
   { key: "bmt_operations", label: "BMT" },
 ]
 
-// Group 3 – Process-log ARRAY columns (formerly null, still editable)
+// Group 3 â€“ Process-log ARRAY columns (formerly null, still editable)
 const processLogFeatures = [
   { key: "test_before_intake", label: "Test Before Intake" },
   { key: "raw_milk_intake", label: "Raw Milk Intake (Log)" },
   { key: "standarizing", label: "Standarizing" },
   { key: "pasteurizing", label: "Pasteurizing (Log)" },
-  { key: "filmatic_1", label: "Filmatic 1" },
-  { key: "process_log", label: "Process Log" },
-  { key: "filmatic_2", label: "Filmatic 2" },
+  { key: "filmatic_1", label: "Steri Before Autoclave" },
+  { key: "process_log", label: "Autoclave" },
+  { key: "filmatic_2", label: "Steri After Autoclave" },
   { key: "palletizer", label: "Palletizer" },
   { key: "incubation", label: "Incubation (Log)" },
   { key: "qa_check_post_incubation", label: "QA Check Post Incubation" },

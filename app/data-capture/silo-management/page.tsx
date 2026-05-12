@@ -26,6 +26,7 @@ export default function SiloManagementPage() {
   const [transferDrawerOpen, setTransferDrawerOpen] = useState(false)
   const [viewTransferDrawerOpen, setViewTransferDrawerOpen] = useState(false)
   const [transferMode, setTransferMode] = useState<"create" | "edit">("create")
+  const [sourceSilo, setSourceSilo] = useState<any | null>(null)
 
   const hasFetchedRef = useRef(false)
 
@@ -42,8 +43,9 @@ export default function SiloManagementPage() {
     setDetailsDrawerOpen(true)
   }
 
-  const handleAddTransfer = () => {
+  const handleAddTransfer = (silo?: any) => {
     setSelectedTransfer(null)
+    setSourceSilo(silo ?? null)
     setTransferMode("create")
     setTransferDrawerOpen(true)
   }
@@ -188,7 +190,9 @@ export default function SiloManagementPage() {
                  </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                  {silos.map((silo) => (
+                  {silos
+                    .filter((silo) => !["Cream Tank 1", "Cream Tank 2", "Holding Tank 1", "Holding Tank 2", "Holding Tank 3"].includes(silo.name))
+                    .map((silo) => (
                     <SiloGauge
                       key={silo.id}
                       name={silo.name}
@@ -221,9 +225,9 @@ export default function SiloManagementPage() {
         open={detailsDrawerOpen}
         onOpenChange={setDetailsDrawerOpen}
         silo={selectedSilo}
-        onTransfer={() => {
+        onTransfer={(silo) => {
             setDetailsDrawerOpen(false)
-            handleAddTransfer()
+            handleAddTransfer(silo)
         }}
       />
 
@@ -232,6 +236,7 @@ export default function SiloManagementPage() {
         onOpenChange={setTransferDrawerOpen}
         form={selectedTransfer}
         mode={transferMode}
+        sourceSilo={sourceSilo}
       />
 
       <BMTControlFormViewDrawer

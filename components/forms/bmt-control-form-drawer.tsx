@@ -94,6 +94,7 @@ interface BMTControlFormDrawerProps {
   onOpenChange: (open: boolean) => void
   form?: BMTControlForm | null
   mode: "create" | "edit"
+  sourceSilo?: { name: string } | null
 }
 
 // ─── Signature field helper ───────────────────────────────────────────────────
@@ -208,7 +209,7 @@ function OperatorsSection({ control, errors, users }: OperatorsSectionProps) {
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTControlFormDrawerProps) {
+export function BMTControlFormDrawer({ open, onOpenChange, form, mode, sourceSilo }: BMTControlFormDrawerProps) {
   const dispatch = useAppDispatch()
   const { operationLoading } = useAppSelector((state) => state.bmtControlForms)
 
@@ -283,10 +284,12 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode }: BMTCont
         llm_operator_id: "",
         llm_signature: "",
         product: "",
-        source_destination_details: [],
+        source_destination_details: sourceSilo
+          ? [{ source_silo_name: sourceSilo.name, destination_silo_name: null }]
+          : [],
       })
     }
-  }, [open, mode])
+  }, [open, mode, sourceSilo])
 
   const onCreateSubmit = async (data: CreateFormData) => {
     try {

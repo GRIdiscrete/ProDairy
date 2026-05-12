@@ -83,6 +83,7 @@ export interface FilmaticLinesForm2 {
   operator?: string | null
   updated_by?: string | null
   approver?: string | null
+  filmatic_1?: string | null
   // Legacy fields for backward compatibility
   day_shift?: any | null
   night_shift?: any | null
@@ -219,6 +220,7 @@ export interface CreateFilmaticLinesForm2Request {
       }>
     }>
   }
+  filmatic_1?: string | null
 }
 
 // API Functions

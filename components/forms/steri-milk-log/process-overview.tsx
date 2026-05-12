@@ -1,4 +1,4 @@
-import { ArrowRight, Factory, Beaker, Package } from "lucide-react"
+﻿import { ArrowRight, Factory, Beaker, Package } from "lucide-react"
 
 export function ProcessOverview() {
   return (
@@ -9,7 +9,7 @@ export function ProcessOverview() {
           <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center">
             <Beaker className="w-4 h-4 text-orange-600" />
           </div>
-          <span className="text-sm font-light">Process Log</span>
+          <span className="text-sm font-light">Autoclave</span>
         </div>
         <ArrowRight className="w-4 h-4 text-gray-400" />
         <div className="flex items-center space-x-2">
@@ -17,7 +17,7 @@ export function ProcessOverview() {
             <Factory className="w-4 h-4 text-blue-600" />
           </div>
           <div className="flex items-center space-x-2">
-            <span className="text-sm font-medium text-blue-600">Steri Milk Process Log</span>
+            <span className="text-sm font-medium text-blue-600">Steri Milk Autoclave</span>
             <div className=" bg-gray-100 text-gray-600 px-2 py-1 rounded-full text-xs font-medium shadow-lg">
               Current Step
             </div>

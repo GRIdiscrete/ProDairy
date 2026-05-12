@@ -332,9 +332,9 @@ function DataCaptureSidebarComponent({
                 <ul className="space-y-1">
                   {[
                     { key: 'pasteurizing', label: 'Pasteurizing', Icon: FlaskConical, enabled: true },
-                    { key: 'filmatic-lines', label: 'Filmatic Lines Form 1', Icon: Factory, enabled: true },
-                    { key: 'process-log', label: 'Process Log', Icon: Workflow, enabled: true },
-                    { key: 'filmatic-lines-2', label: 'Filmatic Lines 2', Icon: Factory, enabled: true },
+                    { key: 'filmatic-lines', label: 'Steri Before Autoclave', Icon: Factory, enabled: true },
+                    { key: 'process-log', label: 'Autoclave', Icon: Workflow, enabled: true },
+                    { key: 'filmatic-lines-2', label: 'Steri After Autoclave', Icon: Factory, enabled: true },
                     { key: 'palletiser-sheet', label: 'Palletizer', Icon: Grid3X3, enabled: true },
                     { key: 'incubation', label: 'Incubation', Icon: Beaker, enabled: true },
                     { key: 'test', label: 'Test', Icon: TestTube, enabled: true },

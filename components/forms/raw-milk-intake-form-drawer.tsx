@@ -101,7 +101,7 @@ function CompartmentInfoCard({ compartment }: { compartment: TruckCompartment })
     <div className="border border-blue-100 bg-blue-50 rounded-lg p-3 text-xs">
       <div className="flex items-center justify-between">
         <span className="font-medium text-blue-800">
-          Compartment #{compartment?.truck_compartment_number} — {compartment?.total_volume?.toLocaleString()}L
+          Compartment #{compartment?.truck_compartment_number} — {compartment?.total_compartment_volume?.toLocaleString()}L
         </span>
         <button type="button" onClick={() => setExpanded(!expanded)} className="text-blue-600">
           {expanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
@@ -191,6 +191,7 @@ export function RawMilkIntakeFormDrawer({
       createForm.reset({ truck: "", details: [] })
       dispatch(clearTruckCompartments())
     } else if (form) {
+      dispatch(fetchTruckCompartments(form.truck))
       // Populate edit form from existing record
       editForm.reset({
         created_at: form.created_at || "",
@@ -254,7 +255,7 @@ export function RawMilkIntakeFormDrawer({
       if (!form?.id) return
       await dispatch(updateRawMilkIntakeForm({
         id: form.id,
-        created_at: data.created_at,
+        // created_at: data.created_at,
         operator: typeof form.operator === "string"
           ? form.operator
           : (form.operator as any).id || (form.operator as any).first_name,
@@ -301,14 +302,18 @@ export function RawMilkIntakeFormDrawer({
   const renderCompartmentTable = (
     formObj: any,
     namePrefix: string,
-    fieldArray: any[]
+    fieldArray: any[],
+    compartments: TruckCompartment[] = []
   ) => (
     <div className="overflow-x-auto border border-gray-100 rounded-xl bg-white shadow-sm">
       <table className="w-full text-left border-collapse">
         <thead className="bg-gray-50/50">
           <tr>
             <th className="p-3 text-[11px] font-medium text-gray-500 uppercase tracking-wider w-20">Comp #</th>
-            <th className="p-3 text-[11px] font-medium text-gray-500 uppercase tracking-wider min-w-[150px]">Silo</th>
+            {compartments.length > 0 && (
+              <th className="p-3 text-[11px] font-medium text-gray-500 uppercase tracking-wider w-24">Volume</th>
+            )}
+            <th className="p-3 text-[11px] font-medium text-gray-500 uppercase tracking-wider min-w-37.5">Silo</th>
             <th className="p-3 text-[11px] font-medium text-gray-500 uppercase tracking-wider">Start Reading</th>
             {!isCreate && (
               <th className="p-3 text-[11px] font-medium text-gray-500 uppercase tracking-wider">End Reading</th>
@@ -316,11 +321,20 @@ export function RawMilkIntakeFormDrawer({
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-100">
-          {fieldArray.map((field, idx) => (
+          {fieldArray.map((field, idx) => {
+            const compVolume = compartments.find(
+              (c) => c.truck_compartment_number === field.truck_compartment_number
+            )?.total_compartment_volume
+            return (
             <tr key={field.id} className="hover:bg-gray-50/50 transition-colors">
               <td className="p-3 text-sm font-medium text-gray-700">
                 #{field.truck_compartment_number}
               </td>
+              {compartments.length > 0 && (
+                <td className="p-3 text-sm text-blue-700 font-medium tabular-nums">
+                  {compVolume != null ? `${compVolume.toLocaleString()}L` : "—"}
+                </td>
+              )}
               <td className="p-3">
                 <Controller
                   name={`${namePrefix}.${idx}.silo_name` as any}
@@ -363,21 +377,33 @@ export function RawMilkIntakeFormDrawer({
                   <Controller
                     name={`${namePrefix}.${idx}.flow_meter_end_reading` as any}
                     control={formObj.control}
-                    render={({ field }) => (
+                    render={({ field: endField }) => (
                       <Input
                         type="number"
                         step="0.01"
                         placeholder="End"
                         className="h-9 rounded-lg text-sm bg-white border-blue-100 focus:border-blue-300"
-                        value={field.value ?? ""}
-                        onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : null)}
+                        value={endField.value ?? ""}
+                        onChange={(e) => {
+                          const val = e.target.value ? parseFloat(e.target.value) : null
+                          endField.onChange(val)
+                          if (val != null && compVolume != null) {
+                            const startReading = formObj.getValues(`${namePrefix}.${idx}.flow_meter_start_reading`)
+                            if (startReading != null && (val - startReading) > compVolume) {
+                              toast.warning(
+                                `Compartment #${field.truck_compartment_number}: reading difference exceeds compartment volume (${compVolume.toLocaleString()}L) — the whole compartment will be drained.`
+                              )
+                            }
+                          }
+                        }}
                       />
                     )}
                   />
                 </td>
               )}
             </tr>
-          ))}
+          )
+          })}
         </tbody>
       </table>
     </div>
@@ -442,7 +468,7 @@ export function RawMilkIntakeFormDrawer({
                                   <span className="text-[10px] text-gray-400">
                                     Total Truck Vol: {testedTrucks
                                       .filter(item => item.truck === t.truck)
-                                      .reduce((acc, curr) => acc + curr.total_volume, 0)
+                                      .reduce((acc, curr) => acc + curr.total_compartment_volume, 0)
                                       .toLocaleString()}L
                                   </span>
                                 </div>
@@ -479,7 +505,7 @@ export function RawMilkIntakeFormDrawer({
                         <p className="text-xs text-amber-700">No tested compartments found for this truck.</p>
                       </div>
                     ) : (
-                      renderCompartmentTable(createForm, "details", createFields)
+                      renderCompartmentTable(createForm, "details", createFields, truckCompartments)
                     )}
                   </div>
                 )}
@@ -601,7 +627,7 @@ export function RawMilkIntakeFormDrawer({
                 {editFields.length === 0 ? (
                   <p className="text-sm text-gray-400 italic bg-gray-50 rounded-xl p-8 text-center border border-dashed border-gray-200">No compartment details available</p>
                 ) : (
-                  renderCompartmentTable(editForm, "details", editFields)
+                  renderCompartmentTable(editForm, "details", editFields, truckCompartments)
                 )}
               </div>
             </div>

@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useState, useEffect, useMemo } from "react"
 import { useForm, Controller, useFieldArray } from "react-hook-form"
@@ -249,7 +249,7 @@ export function FilmaticLinesForm1Drawer({
           setBmtOptions((bmtFormsResponse || []).map((b: any) => ({
             value: b.id,
             label: b.tag || b.id,
-            description: `${b.product ?? "Unknown product"} • ${b.volume ?? ""}L${b.flow_meter_start ? ` • ${new Date(b.flow_meter_start).toLocaleDateString()}` : ""}`
+            description: `${b.product ?? "Unknown product"} â€¢ ${b.volume ?? ""}L${b.flow_meter_start ? ` â€¢ ${new Date(b.flow_meter_start).toLocaleDateString()}` : ""}`
           })))
         } catch (error) {
           console.error("Failed to load BMT Control forms:", error)
@@ -437,7 +437,7 @@ export function FilmaticLinesForm1Drawer({
         .map((b: any) => ({
           value: b.id,
           label: b.tag || b.id,
-          description: `${b.product ?? "Unknown product"} • ${b.volume ?? ""}L${b.flow_meter_start ? ` • ${new Date(b.flow_meter_start).toLocaleDateString()}` : ""}`
+          description: `${b.product ?? "Unknown product"} â€¢ ${b.volume ?? ""}L${b.flow_meter_start ? ` â€¢ ${new Date(b.flow_meter_start).toLocaleDateString()}` : ""}`
         }))
     } catch (err) {
       console.error("BMT search failed", err)
@@ -562,10 +562,10 @@ export function FilmaticLinesForm1Drawer({
 
       if (mode === "edit" && form?.id) {
         await filmaticLinesForm1Api.updateForm(form.id, payload)
-        toast.success("Filmatic Lines Form 1 updated")
+        toast.success("Steri Before Autoclave updated")
       } else {
         await filmaticLinesForm1Api.createForm(payload)
-        toast.success("Filmatic Lines Form 1 created")
+        toast.success("Steri Before Autoclave created")
       }
 
       // Silently refetch to get complete updated data from backend
@@ -595,7 +595,7 @@ export function FilmaticLinesForm1Drawer({
       <SheetContent className="w-full sm:max-w-4xl overflow-y-auto bg-white">
         <SheetHeader>
           <SheetTitle className="text-2xl font-light">
-            {mode === "edit" ? "Edit" : "Create"} Filmatic Lines Form 1
+            {mode === "edit" ? "Edit" : "Create"} Steri Before Autoclave
           </SheetTitle>
           <SheetDescription className="text-base font-light">
             Step {currentStep} of 4: {

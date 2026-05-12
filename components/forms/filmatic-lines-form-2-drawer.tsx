@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useState, useEffect, useMemo } from "react"
 import { useForm, Controller, useFieldArray } from "react-hook-form"
@@ -7,6 +7,7 @@ import * as yup from "yup"
 import { FilmaticLinesForm2, filmaticLinesForm2Api, CreateFilmaticLinesForm2Request } from "@/lib/api/filmatic-lines-form-2"
 import { BMTControlForm, bmtControlFormApi } from "@/lib/api/bmt-control-form"
 import { FilmaticLinesGroup, filmaticLinesGroupsApi } from "@/lib/api/filmatic-lines-groups"
+import { FilmaticLinesForm1, filmaticLinesForm1Api } from "@/lib/api/filmatic-lines-form-1"
 import { useAuth } from "@/hooks/use-auth"
 import { useAppDispatch } from "@/lib/store"
 import { toast } from "sonner"
@@ -91,6 +92,7 @@ const groupSelectionSchema = yup.object({
 const createBasicInfoSchema = (selectedShift: string) => yup.object({
   date: yup.string().required("Date is required"),
   approved: yup.boolean().default(false),
+  filmatic_1: yup.string().nullable(),
   day_shift_opening_bottles: yup.number().required("Day shift opening bottles is required").min(0, "Must be positive"),
   // closing and waste are optional (no longer required)
   day_shift_closing_bottles: yup.number().min(0, "Must be positive").nullable(),
@@ -118,6 +120,7 @@ const shiftDetailsSchema = yup.object({
 type BasicInfoFormData = {
   date: string
   approved?: boolean
+  filmatic_1?: string | null
   day_shift_opening_bottles?: number
   day_shift_closing_bottles?: number
   night_shift_opening_bottles?: number
@@ -155,10 +158,12 @@ export function FilmaticLinesForm2Drawer({
   const [currentStep, setCurrentStep] = useState(1)
   const [bmtForms, setBmtForms] = useState<BMTControlForm[]>([])
   const [filmaticGroups, setFilmaticGroups] = useState<FilmaticLinesGroup[]>([])
+  const [filmaticForm1s, setFilmaticForm1s] = useState<FilmaticLinesForm1[]>([])
   const [users, setUsers] = useState<any[]>([])
   const [loadingBmtForms, setLoadingBmtForms] = useState(false)
   const [loadingGroups, setLoadingGroups] = useState(false)
   const [loadingUsers, setLoadingUsers] = useState(false)
+  const [loadingFilmatic1s, setLoadingFilmatic1s] = useState(false)
 
   // Step 1: Shift selection form
   const shiftSelectionForm = useForm<ShiftSelectionFormData>({
@@ -207,6 +212,7 @@ export function FilmaticLinesForm2Drawer({
     defaultValues: {
       date: "",
       approved: false,
+      filmatic_1: "",
       day_shift_opening_bottles: undefined,
       day_shift_closing_bottles: undefined,
       night_shift_opening_bottles: undefined,
@@ -258,6 +264,7 @@ export function FilmaticLinesForm2Drawer({
       setLoadingBmtForms(true)
       setLoadingGroups(true)
       setLoadingUsers(true)
+      setLoadingFilmatic1s(true)
 
       try {
         // Load BMT Control forms
@@ -282,12 +289,22 @@ export function FilmaticLinesForm2Drawer({
           setFilmaticGroups([])
         }
 
+        // Load Filmatic Lines Form 1 records
+        try {
+          const flf1Response = await filmaticLinesForm1Api.getForms()
+          setFilmaticForm1s(flf1Response || [])
+        } catch (error) {
+          console.error("Failed to load Filmatic Lines Form 1 records:", error)
+          setFilmaticForm1s([])
+        }
+
         // TODO: Load users from actual API when available
         setUsers([])
       } finally {
         setLoadingBmtForms(false)
         setLoadingGroups(false)
         setLoadingUsers(false)
+        setLoadingFilmatic1s(false)
       }
     }
 
@@ -305,6 +322,7 @@ export function FilmaticLinesForm2Drawer({
         basicInfoForm.reset({
           date: form.date || "",
           approved: !!form.approved,
+          filmatic_1: (form as any).filmatic_1 ?? "",
           day_shift_opening_bottles: (form as any).day_shift_opening_bottles ?? undefined,
           day_shift_closing_bottles: (form as any).day_shift_closing_bottles ?? undefined,
           day_shift_waste_bottles: (form as any).day_shift_waste_bottles ?? undefined,
@@ -473,6 +491,7 @@ export function FilmaticLinesForm2Drawer({
         basicInfoForm.reset({
           date: "",
           approved: false,
+          filmatic_1: "",
           day_shift_opening_bottles: undefined,
           day_shift_closing_bottles: undefined,
           day_shift_waste_bottles: undefined,
@@ -545,6 +564,7 @@ export function FilmaticLinesForm2Drawer({
         approved: !!basicInfo.approved,
         process_id: processId || "",
         date: basicInfo.date,
+        filmatic_1: basicInfo.filmatic_1 || null,
         // Add bottle counts based on selected shift (only include selected shift fields)
         ...(shiftType === "day_shift" && {
           day_shift_opening_bottles: basicInfo.day_shift_opening_bottles ?? 0,
@@ -628,22 +648,22 @@ export function FilmaticLinesForm2Drawer({
         const updatePayload: any = { ...formData }
         if (form.id) updatePayload.id = form.id
         await filmaticLinesForm2Api.updateForm?.(form.id, updatePayload) ?? await filmaticLinesForm2Api.createForm(formData)
-        toast.success("Filmatic Lines Form 2 updated successfully")
+        toast.success("Steri After Autoclave updated successfully")
       } else {
         await filmaticLinesForm2Api.createForm(formData)
-        toast.success("Filmatic Lines Form 2 created successfully")
+        toast.success("Steri After Autoclave created successfully")
       }
 
       // Refresh list so the page updates immediately
       try {
         await dispatch(fetchFilmaticLinesForm2s()).unwrap()
       } catch (e) {
-        console.warn("Failed to refresh Filmatic Lines Form 2 list:", e)
+        console.warn("Failed to refresh Steri After Autoclave list:", e)
       }
 
       onOpenChange(false)
     } catch (error: any) {
-      toast.error(error?.message || "Failed to create Filmatic Lines Form 2")
+      toast.error(error?.message || "Failed to create Steri After Autoclave")
     } finally {
       setLoading({ create: false })
     }
@@ -681,7 +701,7 @@ export function FilmaticLinesForm2Drawer({
         .map(bmtForm => ({
           value: bmtForm.id,
           label: `BMT Form #${bmtForm.id?.slice(0, 8)}`,
-          description: `${bmtForm.product} • Volume: ${bmtForm.volume}L • ${bmtForm.flow_meter_start ? new Date(bmtForm.flow_meter_start).toLocaleDateString() : 'No date'}`
+          description: `${bmtForm.product} â€¢ Volume: ${bmtForm.volume}L â€¢ ${bmtForm.flow_meter_start ? new Date(bmtForm.flow_meter_start).toLocaleDateString() : 'No date'}`
         }))
     } catch (error) {
       console.error("Failed to search BMT Control forms:", error)
@@ -694,7 +714,7 @@ export function FilmaticLinesForm2Drawer({
       <SheetContent className="w-full sm:max-w-4xl overflow-y-auto bg-white">
         <SheetHeader>
           <SheetTitle className="text-2xl font-light">
-            {mode === "edit" ? "Edit" : "Create"} Filmatic Lines Form 2
+            {mode === "edit" ? "Edit" : "Create"} Steri After Autoclave
           </SheetTitle>
           <SheetDescription className="text-base font-light">
             Step {currentStep} of 4: {
@@ -852,6 +872,33 @@ export function FilmaticLinesForm2Drawer({
                   {basicInfoForm.formState.errors.date && (
                     <p className="text-sm text-red-500">{basicInfoForm.formState.errors.date.message}</p>
                   )}
+                </div>
+
+                {/* Filmatic 1 link */}
+                <div className="space-y-2">
+                  <Label htmlFor="filmatic_1">Filmatic Line 1 Tag</Label>
+                  <Controller
+                    name="filmatic_1"
+                    control={basicInfoForm.control}
+                    render={({ field }) => (
+                      <Select
+                        value={field.value ?? ""}
+                        onValueChange={(val) => field.onChange(val === "__none__" ? "" : val)}
+                      >
+                        <SelectTrigger className="rounded-full border-gray-200">
+                          <SelectValue placeholder={loadingFilmatic1s ? "Loading..." : "Select Filmatic 1 tag"} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="__none__">None</SelectItem>
+                          {filmaticForm1s.map((f1) => (
+                            <SelectItem key={f1.id} value={f1.id!}>
+                              {f1.tag || f1.id}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
                 </div>
 
                 {/* Approval toggle (like Filmatic 1) */}

@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useState, useEffect, useCallback } from "react"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
@@ -239,7 +239,7 @@ export function SteriMilkProcessLogViewDrawer({
                     <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
                       <Factory className="w-4 h-4 text-gray-500" />
                     </div>
-                    <span className="text-sm font-light">Filmatic Lines 1</span>
+                    <span className="text-sm font-light">Steri Before Autoclave</span>
                   </div>
                   <ArrowRight className="w-4 h-4 text-gray-400" />
                   <div className="flex items-center space-x-2">
@@ -258,7 +258,7 @@ export function SteriMilkProcessLogViewDrawer({
                     <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
                       <Factory className="h-4 w-4 text-gray-400" />
                     </div>
-                    <span className="text-sm font-light text-gray-400">Filmatic Lines 2</span>
+                    <span className="text-sm font-light text-gray-400">Steri After Autoclave</span>
                   </div>
                 </div>
               </div>
@@ -332,13 +332,13 @@ export function SteriMilkProcessLogViewDrawer({
                       <h4 className="text-sm font-medium">Batch Details</h4>
                       <div className="grid grid-cols-2 gap-4 pl-4">
                         <div>
-                          <p className="text-sm font-light"><span className="font-medium">Batch ID:</span> {batch.id ?? "—"}</p>
+                          <p className="text-sm font-light"><span className="font-medium">Batch ID:</span> {batch.id ?? "â€”"}</p>
                         </div>
                         <div>
-                          <p className="text-sm font-light"><span className="font-medium">Batch Number:</span> #{batch.batch_number ?? "—"}</p>
+                          <p className="text-sm font-light"><span className="font-medium">Batch Number:</span> #{batch.batch_number ?? "â€”"}</p>
                         </div>
                         <div>
-                          <p className="text-sm font-light"><span className="font-medium">Date:</span> {batch.date ?? "—"}</p>
+                          <p className="text-sm font-light"><span className="font-medium">Date:</span> {batch.date ?? "â€”"}</p>
                         </div>
                         <div>
                           <p className="text-sm font-light"><span className="font-medium">Autoclave:</span> {log.autoclave?.name || "N/A"}</p>
@@ -353,7 +353,7 @@ export function SteriMilkProcessLogViewDrawer({
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg">
                         {detailItems.map(item => {
                           const timeVal = item.detail?.time ?? "N/A"
-                          const tempVal = item.detail?.temperature != null ? `${item.detail.temperature}°C` : "N/A"
+                          const tempVal = item.detail?.temperature != null ? `${item.detail.temperature}Â°C` : "N/A"
                           const pressureVal = item.detail?.pressure != null ? `${item.detail.pressure} Bar` : "N/A"
 
                           return (
@@ -511,7 +511,7 @@ export function SteriMilkProcessLogViewDrawer({
                                     </div>
                                     <div>
                                       <span className="text-xs font-light text-gray-500">Temperature</span>
-                                      <p className="text-sm font-light">{silo.temperature ? `${silo.temperature}°C` : 'N/A'}</p>
+                                      <p className="text-sm font-light">{silo.temperature ? `${silo.temperature}Â°C` : 'N/A'}</p>
                                     </div>
                                     <div>
                                       <span className="text-xs font-light text-gray-500">Alcohol</span>
@@ -629,7 +629,7 @@ export function SteriMilkProcessLogViewDrawer({
                                     </div>
                                     <div>
                                       <span className="text-xs font-light text-gray-500">Temperature</span>
-                                      <p className="text-sm font-light">{std.temperature ? `${std.temperature}°C` : 'N/A'}</p>
+                                      <p className="text-sm font-light">{std.temperature ? `${std.temperature}Â°C` : 'N/A'}</p>
                                     </div>
                                     <div>
                                       <span className="text-xs font-light text-gray-500">OT</span>
@@ -702,7 +702,7 @@ export function SteriMilkProcessLogViewDrawer({
                                     </div>
                                     <div>
                                       <span className="text-xs font-light text-gray-500">Temperature</span>
-                                      <p className="text-sm font-light">{uht.temperature ? `${uht.temperature}°C` : 'N/A'}</p>
+                                      <p className="text-sm font-light">{uht.temperature ? `${uht.temperature}Â°C` : 'N/A'}</p>
                                     </div>
                                     <div>
                                       <span className="text-xs font-light text-gray-500">OT</span>
@@ -877,7 +877,7 @@ export function SteriMilkProcessLogViewDrawer({
                                   <span className="text-xs font-light text-gray-500">Temperature</span>
                                   <p className="text-sm font-light flex items-center">
                                     <Thermometer className="h-4 w-4 mr-1 text-orange-500" />
-                                    {test.temperature != null ? `${test.temperature}°C` : 'N/A'}
+                                    {test.temperature != null ? `${test.temperature}Â°C` : 'N/A'}
                                   </p>
                                 </div>
                               </div>
