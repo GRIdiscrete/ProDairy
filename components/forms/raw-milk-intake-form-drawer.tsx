@@ -468,7 +468,7 @@ export function RawMilkIntakeFormDrawer({
                                   <span className="text-[10px] text-gray-400">
                                     Total Truck Vol: {testedTrucks
                                       .filter(item => item.truck === t.truck)
-                                      .reduce((acc, curr) => acc + curr.total_compartment_volume, 0)
+                                      .reduce((acc, curr) => acc + curr.total_volume, 0)
                                       .toLocaleString()}L
                                   </span>
                                 </div>
@@ -501,7 +501,7 @@ export function RawMilkIntakeFormDrawer({
                       </div>
                     ) : createFields.length === 0 ? (
                       <div className="bg-amber-50 border border-amber-100 rounded-xl p-4 flex gap-3 italic">
-                        <Info className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
+                        <Info className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
                         <p className="text-xs text-amber-700">No tested compartments found for this truck.</p>
                       </div>
                     ) : (

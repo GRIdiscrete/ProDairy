@@ -46,6 +46,7 @@ export interface RawMilkIntakeForm {
 /** One truck compartment ready for intake from GET /raw-milk-intake-2/tested-trucks */
 export interface TestedTruck {
   truck: string
+  total_volume: number
   truck_compartment_number: number
   total_compartment_volume: number
   suppliers: {

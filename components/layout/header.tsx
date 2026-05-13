@@ -119,7 +119,7 @@ export function Header({ title = "Dashboard", subtitle = "Welcome back!", onOpen
           const temp = weatherRes.data.current_weather?.temperature
 
           setWeather({
-            temp: temp !== undefined ? `${Math.round(temp)}Â°C` : "--",
+            temp: temp !== undefined ? `${Math.round(temp)}°C` : "--",
             city,
           })
         } catch (error) {
@@ -158,7 +158,7 @@ export function Header({ title = "Dashboard", subtitle = "Welcome back!", onOpen
       name: "Admin Dashboard",
       icon: Users,
       path: "/admin",
-      emoji: "ðŸ§‘â€ðŸ’»",
+      emoji: "🧑‍💻",
       description: "System administration and management",
       module: "admin"
     },
@@ -167,7 +167,7 @@ export function Header({ title = "Dashboard", subtitle = "Welcome back!", onOpen
       name: "Drivers UI",
       icon: Truck,
       path: "/drivers",
-      emoji: "ðŸšš",
+      emoji: "🚚",
       description: "Driver tools and delivery management",
       module: "drivers"
     },
@@ -176,7 +176,7 @@ export function Header({ title = "Dashboard", subtitle = "Welcome back!", onOpen
       name: "Production Processes",
       icon: ClipboardList,
       path: "/data-capture",
-      emoji: "ðŸ“‹",
+      emoji: "📋",
       description: "Data entry and laboratory management",
       module: "data-capture"
     },
@@ -185,7 +185,7 @@ export function Header({ title = "Dashboard", subtitle = "Welcome back!", onOpen
       name: "Tools",
       icon: Wrench,
       path: "/tools",
-      emoji: "ðŸ› ï¸",
+      emoji: "🛠️",
       description: "Utilities for transfers and cleaning",
       module: "tools"
     }
@@ -217,7 +217,7 @@ export function Header({ title = "Dashboard", subtitle = "Welcome back!", onOpen
           name: sw.label,
           icon: Users,
           path: "/",
-          emoji: "ðŸ§‘â€ðŸ’»",
+          emoji: "🧑‍💻",
           description: "",
           module: sw.key
         }
@@ -295,7 +295,7 @@ export function Header({ title = "Dashboard", subtitle = "Welcome back!", onOpen
         name: "Dashboard",
         icon: Users,
         path: "/",
-        emoji: "ðŸ§‘â€ðŸ’»",
+        emoji: "🧑‍💻",
         description: "",
         module: "none"
       }
@@ -346,7 +346,7 @@ export function Header({ title = "Dashboard", subtitle = "Welcome back!", onOpen
                 <div className="flex items-center gap-2">
                   {isClient ? (
                     <>
-                      <span className="text-lg">{currentDashboard.emoji || "ðŸ§‘â€ðŸ’»"}</span>
+                      <span className="text-lg">{currentDashboard.emoji || "🧑‍💻"}</span>
                       <div className="hidden md:block text-left">
                         <p className="text-sm font-medium text-zinc-900">
                           {currentDashboard.name}
@@ -358,7 +358,7 @@ export function Header({ title = "Dashboard", subtitle = "Welcome back!", onOpen
                     </>
                   ) : (
                     <div className="flex items-center gap-2">
-                      <span className="text-lg">ðŸ§‘â€ðŸ’»</span>
+                      <span className="text-lg">🧑‍💻</span>
                       <div className="hidden md:block text-left">
                         <p className="text-sm font-medium text-zinc-900 italic opacity-50">Loading...</p>
                       </div>
@@ -473,7 +473,7 @@ export function Header({ title = "Dashboard", subtitle = "Welcome back!", onOpen
           <div className="hidden items-center gap-2 rounded-full border border-zinc-200 bg-white/70 px-3 py-1 text-xs font-light text-zinc-600 md:flex">
             <MapPin className="h-3.5 w-3.5 text-blue-600" />
             <span className="tabular-nums">{weather?.temp ?? "--"}</span>
-            <span className="text-zinc-400">â€¢</span>
+            <span className="text-zinc-400">•</span>
             <span>{weather?.city ?? "Detecting location..."}</span>
           </div>
 
@@ -510,7 +510,7 @@ export function Header({ title = "Dashboard", subtitle = "Welcome back!", onOpen
                   {notifications.slice(0, 8).map((n, idx) => {
                     const d = typeof n.created_at === 'string' ? parseISO(n.created_at) : new Date(n.created_at)
                     const when = isValid(d) ? formatDistanceToNow(d, { addSuffix: true }) : ''
-                    const label = `${humanizeModule(n.module)} Â· ${n.action}`
+                    const label = `${humanizeModule(n.module)} · ${n.action}`
                     const ActionIcon = (n.action === 'created' ? Plus : n.action === 'updated' ? Pencil : Trash2)
                     const color = n.action === 'created' ? 'text-green-600 bg-green-50' : n.action === 'updated' ? 'text-amber-600 bg-amber-50' : 'text-red-600 bg-red-50'
                     return (

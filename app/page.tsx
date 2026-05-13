@@ -64,7 +64,7 @@ export default function HomePage() {
                   <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[#0068BD] flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                     <Users className="h-8 w-8 text-white" />
                   </div>
-                  <CardTitle className="text-xl">🧑‍💻 Admin Dashboard</CardTitle>
+                  <CardTitle className="text-xl flex items-center justify-center gap-2"><Users className="h-5 w-5" /> Admin Dashboard</CardTitle>
                 </CardHeader>
                 <CardContent className="text-center flex flex-col flex-1">
                   <ul className="text-xs text-gray-500 space-y-1.5 mb-4">
@@ -97,7 +97,7 @@ export default function HomePage() {
                   <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br  to-red-600 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                     <Truck className="h-8 w-8 text-white" />
                   </div>
-                  <CardTitle className="text-xl">🚚 Drivers UI</CardTitle>
+                  <CardTitle className="text-xl flex items-center justify-center gap-2"><Truck className="h-5 w-5" /> Drivers UI</CardTitle>
                 </CardHeader>
                 <CardContent className="text-center flex flex-col flex-1">
                   <ul className="text-xs text-gray-500 space-y-1.5 mb-4">
@@ -130,7 +130,7 @@ export default function HomePage() {
                   <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-green-500 to-lime-600 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                     <ClipboardList className="h-8 w-8 text-white" />
                   </div>
-                  <CardTitle className="text-xl">📋Production Processes</CardTitle>
+                  <CardTitle className="text-xl flex items-center justify-center gap-2"><ClipboardList className="h-5 w-5" /> Production Processes</CardTitle>
                 </CardHeader>
                 <CardContent className="text-center flex flex-col flex-1">
                   <ul className="text-xs text-gray-500 space-y-1.5 mb-4">
@@ -163,7 +163,7 @@ export default function HomePage() {
                   <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                     <Wrench className="h-8 w-8 text-white" />
                   </div>
-                  <CardTitle className="text-xl">🛠️ Tools</CardTitle>
+                  <CardTitle className="text-xl flex items-center justify-center gap-2"><Wrench className="h-5 w-5" /> Tools</CardTitle>
                 </CardHeader>
                 <CardContent className="text-center flex flex-col flex-1">
                   <ul className="text-xs text-gray-500 space-y-1.5 mb-4">
