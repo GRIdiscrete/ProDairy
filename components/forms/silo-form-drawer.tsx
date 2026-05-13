@@ -75,8 +75,12 @@ export function SiloFormDrawer({ open, onOpenChange, silo, mode }: SiloFormDrawe
       onOpenChange(false)
       reset()
     } catch (error: any) {
-      // Backend error message will be used from the thunk
-      toast.error(error || (mode === "create" ? 'Failed to create silo' : 'Failed to update silo'))
+      const errorStr = typeof error === 'string' ? error : JSON.stringify(error)
+      if (errorStr.includes('excess_capacity')) {
+        toast.error('The incoming volume exceeds this silo\'s capacity. Please reduce the volume or increase the silo capacity.')
+      } else {
+        toast.error(error || (mode === "create" ? 'Failed to create silo' : 'Failed to update silo'))
+      }
     }
   }
 
