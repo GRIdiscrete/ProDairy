@@ -468,7 +468,7 @@ export function RawMilkIntakeFormDrawer({
                                   <span className="text-[10px] text-gray-400">
                                     Total Truck Vol: {testedTrucks
                                       .filter(item => item.truck === t.truck)
-                                      .reduce((acc, curr) => acc + curr.total_volume, 0)
+                                      .reduce((acc, curr) => acc + curr.total_compartment_volume, 0)
                                       .toLocaleString()}L
                                   </span>
                                 </div>

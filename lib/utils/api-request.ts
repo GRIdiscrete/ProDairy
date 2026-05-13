@@ -57,8 +57,9 @@ export const apiRequest = async <T>(
   const response = await authenticatedFetch(url, config)
 
   if (!response.ok) {
-    // Handle authentication errors specifically
-    if (response.status === 401 || response.status === 403) {
+    // Handle authentication errors specifically, but not for the login endpoint itself
+    const isLoginEndpoint = endpoint.includes('/auth/login')
+    if (!isLoginEndpoint && (response.status === 401 || response.status === 403)) {
       await handleAuthError(response)
     }
 

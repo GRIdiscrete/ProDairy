@@ -50,7 +50,7 @@ class ApiInterceptor {
   }
 
   async interceptResponse(response: Response, request: Request): Promise<Response> {
-    if (response.status === 401) {
+    if (response.status === 401 && !request.url.includes('/auth/login')) {
       console.log('ApiInterceptor: Received 401 response, logging out user', {
         url: request.url,
         status: response.status,
