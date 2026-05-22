@@ -33,13 +33,14 @@ import { siloApi } from "@/lib/api/silo"
 import { toast } from "sonner"
 import { DatePicker } from "@/components/ui/date-picker"
 import type { RawMilkIntakeForm, TruckCompartment, TestedTruck } from "@/lib/api/raw-milk-intake"
+import type { Silo } from "@/lib/types"
 
 // ── Schemas ───────────────────────────────────────────────────────────────────
 
 const detailSchema = yup.object({
   id: yup.string().nullable().optional(),
   truck_compartment_number: yup.number().required("Compartment number is required"),
-  silo_name: yup.string().required("Destination silo is required"),
+  silo_name: yup.string().nullable().optional(),
   flow_meter_start: yup.string().nullable().optional(),
   flow_meter_end: yup.string().nullable().optional(),
   flow_meter_start_reading: yup.number().nullable().optional(),
@@ -48,11 +49,16 @@ const detailSchema = yup.object({
 
 const createSchema = yup.object({
   truck: yup.string().required("Truck is required"),
+  silo_name: yup.string().required("Destination silo is required"),
+  flow_meter_start_reading: yup.number().nullable().optional(),
   details: yup.array(detailSchema).min(1, "At least one compartment is required").required(),
 })
 
 const editSchema = yup.object({
   created_at: yup.string().required("Date is required"),
+  silo_name: yup.string().required("Destination silo is required"),
+  flow_meter_start_reading: yup.number().nullable().optional(),
+  flow_meter_end_reading: yup.number().nullable().optional(),
   details: yup.array(detailSchema).required(),
 })
 
@@ -134,7 +140,7 @@ export function RawMilkIntakeFormDrawer({
   const { operationLoading, testedTrucks, truckCompartments } = useAppSelector((s) => s.rawMilkIntake)
   const { user } = useAppSelector((s) => s.auth)
 
-  const [silos, setSilos] = useState<{ value: string; label: string }[]>([])
+  const [silos, setSilos] = useState<Silo[]>([])
   const [loadingSilos, setLoadingSilos] = useState(false)
 
   const isCreate = mode === "create"
@@ -154,25 +160,32 @@ export function RawMilkIntakeFormDrawer({
   // ── Create form ────────────────────────────────────────────────────────────
 
   const createForm = useForm<CreateFormData>({
-    resolver: yupResolver(createSchema),
-    defaultValues: { truck: "", details: [] },
+    resolver: yupResolver(createSchema) as any,
+    defaultValues: { truck: "", silo_name: "", flow_meter_start_reading: null, details: [] },
   })
   const { fields: createFields, replace, append: appendCreate } = useFieldArray({
     control: createForm.control,
     name: "details"
   })
-  const selectedTruck = createForm.watch("truck")
 
   // ── Edit form ──────────────────────────────────────────────────────────────
 
   const editForm = useForm<EditFormData>({
-    resolver: yupResolver(editSchema),
-    defaultValues: { created_at: "", details: [] },
+    resolver: yupResolver(editSchema) as any,
+    defaultValues: { created_at: "", silo_name: "", flow_meter_start_reading: null, flow_meter_end_reading: null, details: [] },
   })
   const { fields: editFields, replace: editReplace, append: appendEdit } = useFieldArray({
     control: editForm.control,
     name: "details"
   })
+
+  // ── Watched values ─────────────────────────────────────────────────────────
+
+  const selectedTruck = createForm.watch("truck")
+  const selectedSiloNameCreate = createForm.watch("silo_name")
+  const selectedSiloNameEdit = editForm.watch("silo_name")
+  const selectedSiloCreate = silos.find(s => s.name === selectedSiloNameCreate) ?? null
+  const selectedSiloEdit = silos.find(s => s.name === selectedSiloNameEdit) ?? null
 
   // ── Load data when drawer opens ────────────────────────────────────────────
 
@@ -182,19 +195,22 @@ export function RawMilkIntakeFormDrawer({
     // Load silos
     setLoadingSilos(true)
     siloApi.getSilos()
-      .then((res) => setSilos(res.data?.map((s: any) => ({ value: s.name, label: s.name })) ?? []))
+      .then((res) => setSilos(res.data ?? []))
       .catch(() => toast.error("Failed to load silos"))
       .finally(() => setLoadingSilos(false))
 
     if (isCreate) {
       dispatch(fetchTestedTrucks())
-      createForm.reset({ truck: "", details: [] })
+      createForm.reset({ truck: "", silo_name: "", flow_meter_start_reading: null, details: [] })
       dispatch(clearTruckCompartments())
     } else if (form) {
       dispatch(fetchTruckCompartments(form.truck))
       // Populate edit form from existing record
       editForm.reset({
         created_at: form.created_at || "",
+        silo_name: (form.details ?? [])[0]?.silo_name || "",
+        flow_meter_start_reading: (form.details ?? [])[0]?.flow_meter_start_reading ?? null,
+        flow_meter_end_reading: (form.details ?? [])[0]?.flow_meter_end_reading ?? null,
         details: (form.details ?? []).map((d) => ({
           id: d.id ?? null,
           truck_compartment_number: d.truck_compartment_number,
@@ -238,8 +254,8 @@ export function RawMilkIntakeFormDrawer({
         truck: data.truck,
         details: data.details.map((d) => ({
           truck_compartment_number: d.truck_compartment_number,
-          silo_name: d.silo_name,
-          flow_meter_start_reading: d.flow_meter_start_reading ?? undefined,
+          silo_name: data.silo_name,
+          flow_meter_start_reading: data.flow_meter_start_reading ?? undefined,
         })),
       })).unwrap()
       toast.success("Intake form created successfully")
@@ -263,11 +279,9 @@ export function RawMilkIntakeFormDrawer({
         details: data.details.map((d) => ({
           id: d.id || undefined,
           truck_compartment_number: d.truck_compartment_number,
-          silo_name: d.silo_name,
-          flow_meter_start: d.flow_meter_start || undefined,
-          flow_meter_end: d.flow_meter_end || undefined,
-          flow_meter_start_reading: d.flow_meter_start_reading != null ? d.flow_meter_start_reading : undefined,
-          flow_meter_end_reading: d.flow_meter_end_reading != null ? d.flow_meter_end_reading : undefined,
+          silo_name: data.silo_name,
+          flow_meter_start_reading: data.flow_meter_start_reading != null ? data.flow_meter_start_reading : undefined,
+          flow_meter_end_reading: data.flow_meter_end_reading != null ? data.flow_meter_end_reading : undefined,
         })),
       })).unwrap()
       toast.success("Intake form updated successfully")
@@ -297,11 +311,34 @@ export function RawMilkIntakeFormDrawer({
     })
   }
 
+  // ── Silo volume info ───────────────────────────────────────────────────────
+
+  const renderSiloVolumeCard = (silo: Silo | null) => {
+    if (!silo) return null
+    const available = silo.capacity - silo.milk_volume
+    return (
+      <div className="mt-2 p-3 bg-blue-50 border border-blue-100 rounded-lg grid grid-cols-3 gap-3 text-xs">
+        <div>
+          <p className="text-blue-400 uppercase font-bold tracking-tighter text-[10px]">Current Volume</p>
+          <p className="text-blue-800 font-medium tabular-nums">{silo.milk_volume.toLocaleString()} L</p>
+        </div>
+        <div>
+          <p className="text-blue-400 uppercase font-bold tracking-tighter text-[10px]">Capacity</p>
+          <p className="text-blue-800 font-medium tabular-nums">{silo.capacity.toLocaleString()} L</p>
+        </div>
+        <div>
+          <p className="text-blue-400 uppercase font-bold tracking-tighter text-[10px]">Available</p>
+          <p className={`font-medium tabular-nums ${available < 0 ? "text-red-600" : "text-blue-800"}`}>
+            {available.toLocaleString()} L
+          </p>
+        </div>
+      </div>
+    )
+  }
+
   // ── Detail row renderer ────────────────────────────────────────────────────
 
   const renderCompartmentTable = (
-    formObj: any,
-    namePrefix: string,
     fieldArray: any[],
     compartments: TruckCompartment[] = []
   ) => (
@@ -310,99 +347,24 @@ export function RawMilkIntakeFormDrawer({
         <thead className="bg-gray-50/50">
           <tr>
             <th className="p-3 text-[11px] font-medium text-gray-500 uppercase tracking-wider w-20">Comp #</th>
-            {compartments.length > 0 && (
-              <th className="p-3 text-[11px] font-medium text-gray-500 uppercase tracking-wider w-24">Volume</th>
-            )}
-            <th className="p-3 text-[11px] font-medium text-gray-500 uppercase tracking-wider min-w-37.5">Silo</th>
-            <th className="p-3 text-[11px] font-medium text-gray-500 uppercase tracking-wider">Start Reading</th>
-            {!isCreate && (
-              <th className="p-3 text-[11px] font-medium text-gray-500 uppercase tracking-wider">End Reading</th>
-            )}
+            <th className="p-3 text-[11px] font-medium text-gray-500 uppercase tracking-wider">Volume</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-100">
-          {fieldArray.map((field, idx) => {
+          {fieldArray.map((field) => {
             const compVolume = compartments.find(
               (c) => c.truck_compartment_number === field.truck_compartment_number
             )?.total_compartment_volume
             return (
-            <tr key={field.id} className="hover:bg-gray-50/50 transition-colors">
-              <td className="p-3 text-sm font-medium text-gray-700">
-                #{field.truck_compartment_number}
-              </td>
-              {compartments.length > 0 && (
+              <tr key={field.id} className="hover:bg-gray-50/50 transition-colors">
+                <td className="p-3 text-sm font-medium text-gray-700">
+                  #{field.truck_compartment_number}
+                </td>
                 <td className="p-3 text-sm text-blue-700 font-medium tabular-nums">
-                  {compVolume != null ? `${compVolume.toLocaleString()}L` : "—"}
+                  {compVolume != null ? `${compVolume.toLocaleString()} L` : "—"}
                 </td>
-              )}
-              <td className="p-3">
-                <Controller
-                  name={`${namePrefix}.${idx}.silo_name` as any}
-                  control={formObj.control}
-                  render={({ field }) => (
-                    <Select onValueChange={field.onChange} value={field.value ?? ""} disabled={loadingSilos}>
-                      <SelectTrigger className="h-9 rounded-lg border-gray-200 text-sm bg-white">
-                        <SelectValue placeholder={loadingSilos ? "Loading…" : "Select Silo"} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {silos.map((s) => (
-                          <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-                {formObj.formState.errors?.details?.[idx]?.silo_name && (
-                  <p className="text-[10px] text-red-500 mt-1">{formObj.formState.errors.details[idx]?.silo_name?.message}</p>
-                )}
-              </td>
-              <td className="p-3">
-                <Controller
-                  name={`${namePrefix}.${idx}.flow_meter_start_reading` as any}
-                  control={formObj.control}
-                  render={({ field }) => (
-                    <Input
-                      type="number"
-                      step="0.01"
-                      placeholder="Start"
-                      className="h-9 rounded-lg text-sm bg-white"
-                      value={field.value ?? ""}
-                      onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : null)}
-                    />
-                  )}
-                />
-              </td>
-              {!isCreate && (
-                <td className="p-3">
-                  <Controller
-                    name={`${namePrefix}.${idx}.flow_meter_end_reading` as any}
-                    control={formObj.control}
-                    render={({ field: endField }) => (
-                      <Input
-                        type="number"
-                        step="0.01"
-                        placeholder="End"
-                        className="h-9 rounded-lg text-sm bg-white border-blue-100 focus:border-blue-300"
-                        value={endField.value ?? ""}
-                        onChange={(e) => {
-                          const val = e.target.value ? parseFloat(e.target.value) : null
-                          endField.onChange(val)
-                          if (val != null && compVolume != null) {
-                            const startReading = formObj.getValues(`${namePrefix}.${idx}.flow_meter_start_reading`)
-                            if (startReading != null && (val - startReading) > compVolume) {
-                              toast.warning(
-                                `Compartment #${field.truck_compartment_number}: reading difference exceeds compartment volume (${compVolume.toLocaleString()}L) — the whole compartment will be drained.`
-                              )
-                            }
-                          }
-                        }}
-                      />
-                    )}
-                  />
-                </td>
-              )}
-            </tr>
-          )
+              </tr>
+            )
           })}
         </tbody>
       </table>
@@ -484,11 +446,55 @@ export function RawMilkIntakeFormDrawer({
                   )}
                 </div>
 
-                {/* Compartment Assignments Table */}
+                {/* Destination Silo */}
+                <div className="space-y-2">
+                  <Label className="font-medium text-sm text-gray-700">Destination Silo *</Label>
+                  <Controller
+                    name="silo_name"
+                    control={createForm.control}
+                    render={({ field }) => (
+                      <Select onValueChange={field.onChange} value={field.value ?? ""} disabled={loadingSilos}>
+                        <SelectTrigger className="h-11 rounded-xl border-gray-200 bg-white">
+                          <SelectValue placeholder={loadingSilos ? "Loading silos…" : "Select a silo"} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {silos.map((s) => (
+                            <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                  {createForm.formState.errors.silo_name && (
+                    <p className="text-xs text-red-500">{createForm.formState.errors.silo_name.message}</p>
+                  )}
+                  {renderSiloVolumeCard(selectedSiloCreate)}
+                </div>
+
+                {/* Flow Meter Start Reading */}
+                <div className="space-y-2">
+                  <Label className="font-medium text-sm text-gray-700">Flow Meter Start Reading</Label>
+                  <Controller
+                    name="flow_meter_start_reading"
+                    control={createForm.control}
+                    render={({ field }) => (
+                      <Input
+                        type="number"
+                        step="0.01"
+                        placeholder="Enter start reading"
+                        className="h-11 rounded-xl border-gray-200 bg-white"
+                        value={field.value ?? ""}
+                        onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : null)}
+                      />
+                    )}
+                  />
+                </div>
+
+                {/* Truck Compartments Table */}
                 {selectedTruck && (
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <Label className="font-medium text-sm text-gray-700">Compartment Assignments</Label>
+                      <Label className="font-medium text-sm text-gray-700">Truck Compartments</Label>
                       <Badge variant="outline" className="font-normal text-[10px] uppercase tracking-wider text-gray-400">
                         {createFields.length} Compartments
                       </Badge>
@@ -505,7 +511,7 @@ export function RawMilkIntakeFormDrawer({
                         <p className="text-xs text-amber-700">No tested compartments found for this truck.</p>
                       </div>
                     ) : (
-                      renderCompartmentTable(createForm, "details", createFields, truckCompartments)
+                      renderCompartmentTable(createFields, truckCompartments)
                     )}
                   </div>
                 )}
@@ -616,10 +622,73 @@ export function RawMilkIntakeFormDrawer({
                 </div>
               )}
 
-              {/* Editable compartment details */}
+              {/* Destination Silo */}
+              <div className="space-y-2">
+                <Label className="font-medium text-sm text-gray-700">Destination Silo *</Label>
+                <Controller
+                  name="silo_name"
+                  control={editForm.control}
+                  render={({ field }) => (
+                    <Select onValueChange={field.onChange} value={field.value ?? ""} disabled={loadingSilos}>
+                      <SelectTrigger className="h-11 rounded-xl border-gray-200 bg-white">
+                        <SelectValue placeholder={loadingSilos ? "Loading silos…" : "Select a silo"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {silos.map((s) => (
+                          <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+                {editForm.formState.errors.silo_name && (
+                  <p className="text-xs text-red-500">{editForm.formState.errors.silo_name.message}</p>
+                )}
+                {renderSiloVolumeCard(selectedSiloEdit)}
+              </div>
+
+              {/* Flow Meter Readings */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="font-medium text-sm text-gray-700">Flow Meter Start Reading</Label>
+                  <Controller
+                    name="flow_meter_start_reading"
+                    control={editForm.control}
+                    render={({ field }) => (
+                      <Input
+                        type="number"
+                        step="0.01"
+                        placeholder="Start"
+                        className="h-11 rounded-xl border-gray-200 bg-white"
+                        value={field.value ?? ""}
+                        onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : null)}
+                      />
+                    )}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="font-medium text-sm text-gray-700">Flow Meter End Reading</Label>
+                  <Controller
+                    name="flow_meter_end_reading"
+                    control={editForm.control}
+                    render={({ field }) => (
+                      <Input
+                        type="number"
+                        step="0.01"
+                        placeholder="End"
+                        className="h-11 rounded-xl border-gray-200 bg-white border-blue-100 focus:border-blue-300"
+                        value={field.value ?? ""}
+                        onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : null)}
+                      />
+                    )}
+                  />
+                </div>
+              </div>
+
+              {/* Truck Compartments */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <Label className="font-medium text-sm text-gray-700">Compartment Assignments</Label>
+                  <Label className="font-medium text-sm text-gray-700">Truck Compartments</Label>
                   <Badge variant="outline" className="font-normal text-[10px] uppercase tracking-wider text-gray-400">
                     {editFields.length} Compartments
                   </Badge>
@@ -627,7 +696,7 @@ export function RawMilkIntakeFormDrawer({
                 {editFields.length === 0 ? (
                   <p className="text-sm text-gray-400 italic bg-gray-50 rounded-xl p-8 text-center border border-dashed border-gray-200">No compartment details available</p>
                 ) : (
-                  renderCompartmentTable(editForm, "details", editFields, truckCompartments)
+                  renderCompartmentTable(editFields, truckCompartments)
                 )}
               </div>
             </div>
