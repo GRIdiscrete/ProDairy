@@ -315,16 +315,18 @@ export function RawMilkIntakeFormDrawer({
 
   const renderSiloVolumeCard = (silo: Silo | null) => {
     if (!silo) return null
-    const available = silo.capacity - silo.milk_volume
+    const milkVolume = silo.milk_volume ?? 0
+    const capacity = silo.capacity ?? 0
+    const available = capacity - milkVolume
     return (
       <div className="mt-2 p-3 bg-blue-50 border border-blue-100 rounded-lg grid grid-cols-3 gap-3 text-xs">
         <div>
           <p className="text-blue-400 uppercase font-bold tracking-tighter text-[10px]">Current Volume</p>
-          <p className="text-blue-800 font-medium tabular-nums">{silo.milk_volume.toLocaleString()} L</p>
+          <p className="text-blue-800 font-medium tabular-nums">{milkVolume.toLocaleString()} L</p>
         </div>
         <div>
           <p className="text-blue-400 uppercase font-bold tracking-tighter text-[10px]">Capacity</p>
-          <p className="text-blue-800 font-medium tabular-nums">{silo.capacity.toLocaleString()} L</p>
+          <p className="text-blue-800 font-medium tabular-nums">{capacity.toLocaleString()} L</p>
         </div>
         <div>
           <p className="text-blue-400 uppercase font-bold tracking-tighter text-[10px]">Available</p>
