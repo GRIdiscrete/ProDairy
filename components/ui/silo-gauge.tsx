@@ -5,8 +5,8 @@ import { motion } from "framer-motion"
 
 interface SiloGaugeProps {
   name: string
-  volume: number
-  capacity: number
+  volume: number | null
+  capacity: number | null
   unit?: string
   status?: string | null
   onClick?: () => void
@@ -20,7 +20,9 @@ export function SiloGauge({
   status = "active",
   onClick
 }: SiloGaugeProps) {
-  const percentage = Math.min(Math.max((volume / capacity) * 100, 0), 100)
+  const safeVolume = volume ?? 0
+  const safeCapacity = capacity || 1
+  const percentage = Math.min(Math.max((safeVolume / safeCapacity) * 100, 0), 100)
   const radius = 80
   const strokeWidth = 12
   const normalizedRadius = radius - strokeWidth / 2
@@ -90,7 +92,7 @@ export function SiloGauge({
           {name}
         </h3>
         <p className="text-xs text-gray-400 mt-1">
-          {volume.toLocaleString()} / {capacity.toLocaleString()} {unit}
+          {safeVolume.toLocaleString()} / {safeCapacity.toLocaleString()} {unit}
         </p>
       </div>
 
