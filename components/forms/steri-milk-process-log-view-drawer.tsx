@@ -353,7 +353,7 @@ export function SteriMilkProcessLogViewDrawer({
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg">
                         {detailItems.map(item => {
                           const timeVal = item.detail?.time ?? "N/A"
-                          const tempVal = item.detail?.temperature != null ? `${item.detail.temperature}Â°C` : "N/A"
+                          const tempVal = item.detail?.temperature != null ? `${item.detail.temperature}°C` : "N/A"
                           const pressureVal = item.detail?.pressure != null ? `${item.detail.pressure} Bar` : "N/A"
 
                           return (
@@ -511,7 +511,7 @@ export function SteriMilkProcessLogViewDrawer({
                                     </div>
                                     <div>
                                       <span className="text-xs font-light text-gray-500">Temperature</span>
-                                      <p className="text-sm font-light">{silo.temperature ? `${silo.temperature}Â°C` : 'N/A'}</p>
+                                      <p className="text-sm font-light">{silo.temperature ? `${silo.temperature}°C` : 'N/A'}</p>
                                     </div>
                                     <div>
                                       <span className="text-xs font-light text-gray-500">Alcohol</span>
@@ -629,7 +629,7 @@ export function SteriMilkProcessLogViewDrawer({
                                     </div>
                                     <div>
                                       <span className="text-xs font-light text-gray-500">Temperature</span>
-                                      <p className="text-sm font-light">{std.temperature ? `${std.temperature}Â°C` : 'N/A'}</p>
+                                      <p className="text-sm font-light">{std.temperature ? `${std.temperature}°C` : 'N/A'}</p>
                                     </div>
                                     <div>
                                       <span className="text-xs font-light text-gray-500">OT</span>
@@ -702,7 +702,7 @@ export function SteriMilkProcessLogViewDrawer({
                                     </div>
                                     <div>
                                       <span className="text-xs font-light text-gray-500">Temperature</span>
-                                      <p className="text-sm font-light">{uht.temperature ? `${uht.temperature}Â°C` : 'N/A'}</p>
+                                      <p className="text-sm font-light">{uht.temperature ? `${uht.temperature}°C` : 'N/A'}</p>
                                     </div>
                                     <div>
                                       <span className="text-xs font-light text-gray-500">OT</span>
@@ -877,7 +877,7 @@ export function SteriMilkProcessLogViewDrawer({
                                   <span className="text-xs font-light text-gray-500">Temperature</span>
                                   <p className="text-sm font-light flex items-center">
                                     <Thermometer className="h-4 w-4 mr-1 text-orange-500" />
-                                    {test.temperature != null ? `${test.temperature}Â°C` : 'N/A'}
+                                    {test.temperature != null ? `${test.temperature}°C` : 'N/A'}
                                   </p>
                                 </div>
                               </div>

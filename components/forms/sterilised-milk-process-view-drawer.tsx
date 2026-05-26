@@ -209,35 +209,35 @@ export function SterilisedMilkProcessViewDrawer({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <span className="text-xs text-gray-500">Batch ID</span>
-                    <p className="text-sm">{batch.id || "â€”"}</p>
+                    <p className="text-sm">{batch.id || "N/A"}</p>
                   </div>
                   <div>
                     <span className="text-xs text-gray-500">Batch Number</span>
-                    <p className="text-sm">#{batch.batch_number ?? "â€”"}</p>
+                    <p className="text-sm">#{batch.batch_number ?? "N/A"}</p>
                   </div>
                   <div>
                     <span className="text-xs text-gray-500">Date</span>
-                    <p className="text-sm">{batch.date || "â€”"}</p>
+                    <p className="text-sm">{batch.date || "N/A"}</p>
                   </div>
                   <div>
                     <span className="text-xs text-gray-500">Filling Start (time)</span>
-                    <p className="text-sm">{batch.filling_start_details?.time ?? batch.filling_start ?? "â€”"}</p>
+                    <p className="text-sm">{batch.filling_start_details?.time ?? batch.filling_start ?? "N/A"}</p>
                   </div>
                   <div>
-                    <span className="text-xs text-gray-500">Filling Temp (Â°C)</span>
-                    <p className="text-sm">{batch.filling_start_details?.temperature ?? "â€”"}</p>
+                    <span className="text-xs text-gray-500">Filling Temp (°C)</span>
+                    <p className="text-sm">{batch.filling_start_details?.temperature ?? "N/A"}</p>
                   </div>
                   <div>
                     <span className="text-xs text-gray-500">Sterilization Start (time)</span>
-                    <p className="text-sm">{batch.sterilization_start_details?.time ?? batch.sterilization_start ?? "â€”"}</p>
+                    <p className="text-sm">{batch.sterilization_start_details?.time ?? batch.sterilization_start ?? "N/A"}</p>
                   </div>
                   <div>
                     <span className="text-xs text-gray-500">Sterilization Finish (time)</span>
-                    <p className="text-sm">{batch.sterilization_finish_details?.time ?? batch.sterilization_finish ?? "â€”"}</p>
+                    <p className="text-sm">{batch.sterilization_finish_details?.time ?? batch.sterilization_finish ?? "N/A"}</p>
                   </div>
                   <div>
-                    <span className="text-xs text-gray-500">Sterilization Finish Temp (Â°C)</span>
-                    <p className="text-sm">{batch.sterilization_finish_details?.temperature ?? "â€”"}</p>
+                    <span className="text-xs text-gray-500">Sterilization Finish Temp (°C)</span>
+                    <p className="text-sm">{batch.sterilization_finish_details?.temperature ?? "N/A"}</p>
                   </div>
                 </div>
               ) : (
@@ -328,7 +328,7 @@ export function SterilisedMilkProcessViewDrawer({
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <p className="text-sm font-light"><span className="font-medium">Filling Start:</span> {batch.filling_start?.time || 'N/A'}</p>
-                      <p className="text-sm font-light"><span className="font-medium">Temperature:</span> {batch.filling_start?.temperature ?? 'N/A'}Â°C</p>
+                      <p className="text-sm font-light"><span className="font-medium">Temperature:</span> {batch.filling_start?.temperature ?? 'N/A'}°C</p>
                     </div>
                     <div>
                       <p className="text-sm font-light"><span className="font-medium">Sterilization Start:</span> {batch.sterilization_start?.time || 'N/A'}</p>
