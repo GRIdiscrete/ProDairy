@@ -51,7 +51,7 @@ const createSchema = yup.object({
   truck: yup.string().required("Truck is required"),
   silo_name: yup.string().required("Destination silo is required"),
   flow_meter_start_reading: yup.number().nullable().optional(),
-  details: yup.array(detailSchema).min(1, "At least one compartment is required").required(),
+  details: yup.array(detailSchema).required(),
 })
 
 const editSchema = yup.object({
@@ -205,13 +205,16 @@ export function RawMilkIntakeFormDrawer({
       dispatch(clearTruckCompartments())
     } else if (form) {
       dispatch(fetchTruckCompartments(form.truck))
-      // Populate edit form from existing record
+      const existingDetails = form.details ?? []
+      const detailsToUse = existingDetails.length > 0
+        ? existingDetails
+        : [{ id: null, truck_compartment_number: 1, silo_name: null, flow_meter_start: null, flow_meter_end: null, flow_meter_start_reading: null, flow_meter_end_reading: null }]
       editForm.reset({
         created_at: form.created_at || "",
-        silo_name: (form.details ?? [])[0]?.silo_name || "",
-        flow_meter_start_reading: (form.details ?? [])[0]?.flow_meter_start_reading ?? null,
-        flow_meter_end_reading: (form.details ?? [])[0]?.flow_meter_end_reading ?? null,
-        details: (form.details ?? []).map((d) => ({
+        silo_name: existingDetails[0]?.silo_name || "",
+        flow_meter_start_reading: existingDetails[0]?.flow_meter_start_reading ?? null,
+        flow_meter_end_reading: existingDetails[0]?.flow_meter_end_reading ?? null,
+        details: detailsToUse.map((d) => ({
           id: d.id ?? null,
           truck_compartment_number: d.truck_compartment_number,
           silo_name: d.silo_name,
@@ -233,16 +236,20 @@ export function RawMilkIntakeFormDrawer({
     dispatch(fetchTruckCompartments(selectedTruck))
   }, [selectedTruck, dispatch, replace])
 
-  // Auto-populate details when compartments are fetched
+  // Auto-populate details when compartments are fetched; default to 1 compartment if none returned
   useEffect(() => {
-    if (isCreate && truckCompartments.length > 0) {
+    if (!isCreate || !selectedTruck) return
+    if (operationLoading.fetchCompartments) return
+    if (truckCompartments.length > 0) {
       replace(truckCompartments.map(comp => ({
         truck_compartment_number: comp.truck_compartment_number,
         silo_name: "",
         flow_meter_start_reading: null,
       })))
+    } else {
+      replace([{ truck_compartment_number: 1, silo_name: "", flow_meter_start_reading: null }])
     }
-  }, [truckCompartments, isCreate, replace])
+  }, [truckCompartments, isCreate, replace, operationLoading.fetchCompartments, selectedTruck])
 
   // ── Submit handlers ────────────────────────────────────────────────────────
 
