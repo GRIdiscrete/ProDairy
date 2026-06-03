@@ -259,10 +259,10 @@ export function RawMilkIntakeFormDrawer({
       await dispatch(createRawMilkIntakeForm({
         operator: user.id,
         truck: data.truck,
-        details: data.details.map((d) => ({
+        details: data.details.map((d, index) => ({
           truck_compartment_number: d.truck_compartment_number,
           silo_name: data.silo_name,
-          flow_meter_start_reading: data.flow_meter_start_reading ?? undefined,
+          flow_meter_start_reading: index === 0 ? (data.flow_meter_start_reading ?? undefined) : undefined,
         })),
       })).unwrap()
       toast.success("Intake form created successfully")
@@ -283,12 +283,12 @@ export function RawMilkIntakeFormDrawer({
           ? form.operator
           : (form.operator as any).id || (form.operator as any).first_name,
         truck: form.truck,
-        details: data.details.map((d) => ({
+        details: data.details.map((d, index) => ({
           id: d.id || undefined,
           truck_compartment_number: d.truck_compartment_number,
           silo_name: data.silo_name,
-          flow_meter_start_reading: data.flow_meter_start_reading != null ? data.flow_meter_start_reading : undefined,
-          flow_meter_end_reading: data.flow_meter_end_reading != null ? data.flow_meter_end_reading : undefined,
+          flow_meter_start_reading: index === 0 && data.flow_meter_start_reading != null ? data.flow_meter_start_reading : undefined,
+          flow_meter_end_reading: index === 0 && data.flow_meter_end_reading != null ? data.flow_meter_end_reading : undefined,
         })),
       })).unwrap()
       toast.success("Intake form updated successfully")

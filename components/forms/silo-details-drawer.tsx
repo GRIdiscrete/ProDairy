@@ -11,7 +11,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { useAppDispatch, useAppSelector } from "@/lib/store"
 import { fetchCIPStatus } from "@/lib/store/slices/siloSlice"
-import { Droplets, Thermometer, FlaskConical, History, ShieldCheck, Timer, ArrowRightLeft } from "lucide-react"
+import { Droplets, Thermometer, FlaskConical, History, ShieldCheck, Timer, ArrowRightLeft, Edit } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Separator } from "@/components/ui/separator"
 
@@ -20,6 +20,7 @@ interface SiloDetailsDrawerProps {
   onOpenChange: (open: boolean) => void
   silo: any | null
   onTransfer?: (silo: any) => void
+  onEdit?: (silo: any) => void
 }
 
 export function SiloDetailsDrawer({
@@ -27,6 +28,7 @@ export function SiloDetailsDrawer({
   onOpenChange,
   silo,
   onTransfer,
+  onEdit,
 }: SiloDetailsDrawerProps) {
   const dispatch = useAppDispatch()
   const cipStatuses = useAppSelector((state) => state.silo.cipStatuses)
@@ -46,11 +48,22 @@ export function SiloDetailsDrawer({
             <SheetHeader className="space-y-2">
           <div className="flex items-center justify-between">
             <SheetTitle className="text-2xl font-light">{silo?.name || "Silo Details"}</SheetTitle>
-            {silo?.status && (
-              <Badge variant={silo.status === 'active' ? 'default' : 'secondary'} className="rounded-full px-3">
-                {silo.status}
-              </Badge>
-            )}
+            <div className="flex items-center gap-2">
+              {silo?.status && (
+                <Badge variant={silo.status === 'active' ? 'default' : 'secondary'} className="rounded-full px-3">
+                  {silo.status}
+                </Badge>
+              )}
+              {onEdit && (
+                <button
+                  onClick={() => onEdit(silo)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-[#006BC4] text-white rounded-full hover:bg-[#005ba6] transition-colors"
+                >
+                  <Edit className="w-3 h-3" />
+                  Edit
+                </button>
+              )}
+            </div>
           </div>
           <SheetDescription className="font-light">
             Comprehensive real-time metrics and CIP status
@@ -82,14 +95,18 @@ export function SiloDetailsDrawer({
                   <Thermometer className="w-4 h-4" />
                   <span className="text-[10px] uppercase font-semibold">Temperature</span>
                 </div>
-                <p className="text-xl font-light">4.2 <span className="text-xs">°C</span></p>
+                <p className="text-xl font-light">
+                  {silo.temperature != null ? <>{silo.temperature} <span className="text-xs">°C</span></> : <span className="text-sm text-gray-400">N/A</span>}
+                </p>
               </div>
               <div className="p-4 bg-white border border-gray-100 rounded-xl space-y-3">
                 <div className="flex items-center space-x-2 text-emerald-500">
                   <FlaskConical className="w-4 h-4" />
                   <span className="text-[10px] uppercase font-semibold">Fat Content</span>
                 </div>
-                <p className="text-xl font-light">3.8 <span className="text-xs">%</span></p>
+                <p className="text-xl font-light">
+                  {silo.fat_content != null ? <>{silo.fat_content} <span className="text-xs">%</span></> : <span className="text-sm text-gray-400">N/A</span>}
+                </p>
               </div>
             </div>
 

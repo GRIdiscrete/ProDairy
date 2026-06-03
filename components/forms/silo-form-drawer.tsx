@@ -22,6 +22,8 @@ const siloSchema = yup.object({
   location: yup.string().required("Location is required"),
   milk_volume: yup.number().required("Milk volume is required").min(0, "Milk volume cannot be negative"),
   capacity: yup.number().required("Capacity is required").min(1, "Capacity must be greater than 0"),
+  temperature: yup.number().nullable().optional(),
+  fat_content: yup.number().nullable().optional(),
 })
 
 type SiloFormData = yup.InferType<typeof siloSchema>
@@ -53,6 +55,8 @@ export function SiloFormDrawer({ open, onOpenChange, silo, mode }: SiloFormDrawe
       location: "",
       milk_volume: 0,
       capacity: 0,
+      temperature: null,
+      fat_content: null,
     },
   })
 
@@ -61,14 +65,14 @@ export function SiloFormDrawer({ open, onOpenChange, silo, mode }: SiloFormDrawe
       console.log('Form data submitted:', data)
 
       if (mode === "create") {
-        const result = await dispatch(createSilo(data)).unwrap()
+        const result = await dispatch(createSilo({ ...data, composition: null, temperature: data.temperature ?? null, fat_content: data.fat_content ?? null } as any)).unwrap()
         toast.success('Silo created successfully')
       } else if (silo) {
         const result = await dispatch(updateSilo({
+          ...silo,
           ...data,
-          id: silo.id,
-          created_at: silo.created_at,
-          updated_at: silo.updated_at,
+          temperature: data.temperature ?? null,
+          fat_content: data.fat_content ?? null,
         })).unwrap()
         toast.success('Silo updated successfully')
       }
@@ -94,6 +98,8 @@ export function SiloFormDrawer({ open, onOpenChange, silo, mode }: SiloFormDrawe
         location: silo.location || "",
         milk_volume: silo.milk_volume || 0,
         capacity: silo.capacity || 0,
+        temperature: silo.temperature ?? null,
+        fat_content: silo.fat_content ?? null,
       })
     } else if (open && mode === "create") {
       reset({
@@ -104,6 +110,8 @@ export function SiloFormDrawer({ open, onOpenChange, silo, mode }: SiloFormDrawe
         location: "",
         milk_volume: 0,
         capacity: 0,
+        temperature: null,
+        fat_content: null,
       })
     }
   }, [open, silo, mode, reset])
@@ -186,6 +194,37 @@ export function SiloFormDrawer({ open, onOpenChange, silo, mode }: SiloFormDrawe
                 </div>
               </div>
               
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Temperature (°C)</Label>
+                  <Controller name="temperature" control={control} render={({ field }) => (
+                    <Input
+                      type="number"
+                      step="0.1"
+                      {...field}
+                      value={field.value ?? ""}
+                      onChange={(e) => field.onChange(e.target.value === "" ? null : parseFloat(e.target.value))}
+                      placeholder="e.g., 4.2"
+                    />
+                  )} />
+                  {errors.temperature && <p className="text-sm text-red-500">{errors.temperature.message}</p>}
+                </div>
+                <div className="space-y-2">
+                  <Label>Fat Content (%)</Label>
+                  <Controller name="fat_content" control={control} render={({ field }) => (
+                    <Input
+                      type="number"
+                      step="0.01"
+                      {...field}
+                      value={field.value ?? ""}
+                      onChange={(e) => field.onChange(e.target.value === "" ? null : parseFloat(e.target.value))}
+                      placeholder="e.g., 3.8"
+                    />
+                  )} />
+                  {errors.fat_content && <p className="text-sm text-red-500">{errors.fat_content.message}</p>}
+                </div>
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Total Capacity (L) *</Label>

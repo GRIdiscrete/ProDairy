@@ -6,6 +6,7 @@ import { useAppDispatch, useAppSelector } from "@/lib/store"
 import { fetchSiloManagerSilos, fetchSiloTransfers } from "@/lib/store/slices/siloSlice"
 import { SiloGauge } from "@/components/ui/silo-gauge"
 import { SiloDetailsDrawer } from "@/components/forms/silo-details-drawer"
+import { SiloFormDrawer } from "@/components/forms/silo-form-drawer"
 import { BMTControlFormDrawer } from "@/components/forms/bmt-control-form-drawer"
 import { BMTControlFormViewDrawer } from "@/components/forms/bmt-control-form-view-drawer"
 import { DataTable } from "@/components/ui/data-table"
@@ -21,6 +22,7 @@ export default function SiloManagementPage() {
   
   const [selectedSilo, setSelectedSilo] = useState<any | null>(null)
   const [detailsDrawerOpen, setDetailsDrawerOpen] = useState(false)
+  const [editDrawerOpen, setEditDrawerOpen] = useState(false)
 
   const [selectedTransfer, setSelectedTransfer] = useState<any | null>(null)
   const [transferDrawerOpen, setTransferDrawerOpen] = useState(false)
@@ -41,6 +43,12 @@ export default function SiloManagementPage() {
   const handleSiloClick = (silo: any) => {
     setSelectedSilo(silo)
     setDetailsDrawerOpen(true)
+  }
+
+  const handleEditSilo = (silo: any) => {
+    setSelectedSilo(silo)
+    setDetailsDrawerOpen(false)
+    setEditDrawerOpen(true)
   }
 
   const handleAddTransfer = (silo?: any) => {
@@ -225,10 +233,18 @@ export default function SiloManagementPage() {
         open={detailsDrawerOpen}
         onOpenChange={setDetailsDrawerOpen}
         silo={selectedSilo}
+        onEdit={handleEditSilo}
         onTransfer={(silo) => {
             setDetailsDrawerOpen(false)
             handleAddTransfer(silo)
         }}
+      />
+
+      <SiloFormDrawer
+        open={editDrawerOpen}
+        onOpenChange={setEditDrawerOpen}
+        silo={selectedSilo}
+        mode="edit"
       />
 
       <BMTControlFormDrawer
