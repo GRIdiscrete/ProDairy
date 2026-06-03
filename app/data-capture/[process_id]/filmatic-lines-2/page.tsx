@@ -8,7 +8,7 @@ import { LoadingButton } from "@/components/ui/loading-button"
 import { DataTable } from "@/components/ui/data-table"
 import { DataTableFilters } from "@/components/ui/data-table-filters"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Eye, Edit, Trash2, Factory, TrendingUp, FileText, Clock, Package, ArrowRight, Beaker, Sun, Moon } from "lucide-react"
+import { Plus, Eye, Edit, Trash2, Factory, TrendingUp, FileText, Clock, Package, ArrowRight, Beaker, Sun, Moon, LayoutList, Table2 } from "lucide-react"
 import { FilmaticLinesForm2Drawer } from "@/components/forms/filmatic-lines-form-2-drawer"
 import { FilmaticLinesForm2ViewDrawer } from "@/components/forms/filmatic-lines-form-2-view-drawer"
 import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-dialog"
@@ -181,6 +181,61 @@ export default function FilmaticLines2Page() {
     }
   }
 
+  const [viewMode, setViewMode] = useState<"management" | "sheet">("management")
+
+  const sheetRows = useMemo(() => {
+    const rows: any[] = []
+    filteredForms.forEach(form => {
+      form.day_shift_id?.shift_details?.forEach((detail: any, i: number) => {
+        const st = detail.stoppage_time?.[0]
+        rows.push({
+          date: form.date ? new Date(form.date).toLocaleDateString('en-GB') : '—',
+          tag: form.tag,
+          shift: "Day",
+          time: detail.time ?? '—',
+          pallets: detail.pallets,
+          target: detail.target,
+          variance: detail.pallets != null && detail.target != null ? detail.pallets - detail.target : null,
+          setbacks: detail.setbacks,
+          capper_1: st?.capper_1,
+          capper_2: st?.capper_2,
+          sleever_1: st?.sleever_1,
+          sleever_2: st?.sleever_2,
+          shrink_1: st?.shrink_1,
+          shrink_2: st?.shrink_2,
+          opening: i === 0 ? form.day_shift_opening_bottles : null,
+          closing: i === 0 ? form.day_shift_closing_bottles : null,
+          waste: i === 0 ? form.day_shift_waste_bottles : null,
+          shiftType: "day",
+        })
+      })
+      form.night_shift_id?.shift_details?.forEach((detail: any, i: number) => {
+        const st = detail.stoppage_time?.[0]
+        rows.push({
+          date: form.date ? new Date(form.date).toLocaleDateString('en-GB') : '—',
+          tag: form.tag,
+          shift: "Night",
+          time: detail.time ?? '—',
+          pallets: detail.pallets,
+          target: detail.target,
+          variance: detail.pallets != null && detail.target != null ? detail.pallets - detail.target : null,
+          setbacks: detail.setbacks,
+          capper_1: st?.capper_1,
+          capper_2: st?.capper_2,
+          sleever_1: st?.sleever_1,
+          sleever_2: st?.sleever_2,
+          shrink_1: st?.shrink_1,
+          shrink_2: st?.shrink_2,
+          opening: i === 0 ? form.night_shift_opening_bottles : null,
+          closing: i === 0 ? form.night_shift_closing_bottles : null,
+          waste: i === 0 ? form.night_shift_waste_bottles : null,
+          shiftType: "night",
+        })
+      })
+    })
+    return rows
+  }, [filteredForms])
+
   // Get latest form for display
   const latestForm = Array.isArray(forms) && forms.length > 0 ? forms[0] : null
   // selectors for users and BMT forms
@@ -344,13 +399,29 @@ export default function FilmaticLines2Page() {
             <h1 className="text-3xl font-light text-foreground">Steri After Autoclave</h1>
             <p className="text-sm font-light text-muted-foreground">Manage Filmatic lines form 2 production data and process control</p>
           </div>
-          <LoadingButton
-            onClick={handleAddForm}
-            className="bg-[#006BC4] text-white rounded-full px-6 py-2 font-light"
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Add Steri After Autoclave
-          </LoadingButton>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center bg-gray-100 p-1 rounded-lg gap-0.5">
+              <button
+                onClick={() => setViewMode("management")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${viewMode === "management" ? "bg-white shadow-sm text-gray-900" : "text-gray-500 hover:text-gray-700"}`}
+              >
+                <LayoutList className="w-3.5 h-3.5" /> Records
+              </button>
+              <button
+                onClick={() => setViewMode("sheet")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${viewMode === "sheet" ? "bg-white shadow-sm text-gray-900" : "text-gray-500 hover:text-gray-700"}`}
+              >
+                <Table2 className="w-3.5 h-3.5" /> Sheet View
+              </button>
+            </div>
+            <LoadingButton
+              onClick={handleAddForm}
+              className="bg-[#006BC4] text-white rounded-full px-6 py-2 font-light"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Add Steri After Autoclave
+            </LoadingButton>
+          </div>
         </div>
 
         {/* Current Form Details */}
@@ -539,7 +610,7 @@ export default function FilmaticLines2Page() {
 
               {loading.fetch ? (
                 <ContentSkeleton sections={1} cardsPerSection={4} />
-              ) : (
+              ) : viewMode === "management" ? (
                 <DataTable
                   columns={columns}
                   data={filteredForms}
@@ -547,6 +618,45 @@ export default function FilmaticLines2Page() {
                   showExport={true}
                   exportFilename="filmatic-lines-form-2-data"
                 />
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="min-w-full text-left border-collapse text-[11px]">
+                    <thead>
+                      <tr className="bg-gray-50">
+                        {["Date","Tag","Shift","Time","Pallets","Target","Var","Reason","Capper 1","Capper 2","Sleever 1","Sleever 2","Shrink 1","Shrink 2","Opening","Closing","Waste"].map(h => (
+                          <th key={h} className="px-2 py-2 text-[10px] font-semibold uppercase tracking-wider text-gray-500 border-b border-r border-gray-200 whitespace-nowrap">{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {sheetRows.length === 0 ? (
+                        <tr><td colSpan={17} className="px-4 py-8 text-center text-gray-400 italic">No data</td></tr>
+                      ) : sheetRows.map((row, i) => (
+                        <tr key={i} className={row.shiftType === "day" ? "bg-yellow-50/40 hover:bg-yellow-50/70" : "bg-blue-50/40 hover:bg-blue-50/70"}>
+                          <td className="px-2 py-1.5 border-b border-r border-gray-100 whitespace-nowrap">{row.date}</td>
+                          <td className="px-2 py-1.5 border-b border-r border-gray-100 whitespace-nowrap font-mono text-[10px]">{row.tag}</td>
+                          <td className="px-2 py-1.5 border-b border-r border-gray-100 whitespace-nowrap">
+                            <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${row.shiftType === "day" ? "bg-yellow-100 text-yellow-800" : "bg-blue-100 text-blue-800"}`}>{row.shift}</span>
+                          </td>
+                          <td className="px-2 py-1.5 border-b border-r border-gray-100 whitespace-nowrap">{row.time}</td>
+                          <td className="px-2 py-1.5 border-b border-r border-gray-100 text-center">{row.pallets ?? '—'}</td>
+                          <td className="px-2 py-1.5 border-b border-r border-gray-100 text-center">{row.target ?? '—'}</td>
+                          <td className={`px-2 py-1.5 border-b border-r border-gray-100 text-center font-medium ${row.variance != null && row.variance < 0 ? 'text-red-600' : row.variance != null && row.variance > 0 ? 'text-green-600' : ''}`}>{row.variance ?? '—'}</td>
+                          <td className="px-2 py-1.5 border-b border-r border-gray-100 max-w-[160px] truncate" title={row.setbacks}>{row.setbacks || '—'}</td>
+                          <td className="px-2 py-1.5 border-b border-r border-gray-100 text-center">{row.capper_1 ?? '—'}</td>
+                          <td className="px-2 py-1.5 border-b border-r border-gray-100 text-center">{row.capper_2 ?? '—'}</td>
+                          <td className="px-2 py-1.5 border-b border-r border-gray-100 text-center">{row.sleever_1 ?? '—'}</td>
+                          <td className="px-2 py-1.5 border-b border-r border-gray-100 text-center">{row.sleever_2 ?? '—'}</td>
+                          <td className="px-2 py-1.5 border-b border-r border-gray-100 text-center">{row.shrink_1 ?? '—'}</td>
+                          <td className="px-2 py-1.5 border-b border-r border-gray-100 text-center">{row.shrink_2 ?? '—'}</td>
+                          <td className="px-2 py-1.5 border-b border-r border-gray-100 text-right tabular-nums">{row.opening?.toLocaleString() ?? '—'}</td>
+                          <td className="px-2 py-1.5 border-b border-r border-gray-100 text-right tabular-nums">{row.closing?.toLocaleString() ?? '—'}</td>
+                          <td className="px-2 py-1.5 border-b border-r border-gray-100 text-right tabular-nums text-red-600">{row.waste?.toLocaleString() ?? '—'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </div>
           </div>

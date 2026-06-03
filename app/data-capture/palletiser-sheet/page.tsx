@@ -7,7 +7,7 @@ import { LoadingButton } from "@/components/ui/loading-button"
 import { DataTable } from "@/components/ui/data-table"
 import { DataTableFilters } from "@/components/ui/data-table-filters"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Eye, Edit, Trash2, Package, TrendingUp, FileText, Clock, ArrowRight, Calendar, Grid3X3 } from "lucide-react"
+import { Plus, Eye, Edit, Trash2, Package, TrendingUp, FileText, Clock, ArrowRight, Calendar, Grid3X3, LayoutList, Table2 } from "lucide-react"
 import { PalletiserSheetDrawer } from "@/components/forms/palletiser-sheet-drawer"
 import { PalletiserSheetViewDrawer } from "@/components/forms/palletiser-sheet-view-drawer"
 import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-dialog"
@@ -22,6 +22,7 @@ import {
 import { fetchUsers } from "@/lib/store/slices/usersSlice"
 import { fetchMachines } from "@/lib/store/slices/machineSlice"
 import { fetchRoles } from "@/lib/store/slices/rolesSlice"
+import { apiRequest } from "@/lib/utils/api-request"
 import { toast } from "sonner"
 import { TableFilters } from "@/lib/types"
 import { PalletiserSheet } from "@/lib/api/data-capture-forms"
@@ -51,6 +52,9 @@ export default function PalletiserSheetPage({ processId }: PalletiserSheetPagePr
   const { items: users } = useAppSelector((state: RootState) => state.users)
   const { machines } = useAppSelector((state: RootState) => state.machine)
   const { roles } = useAppSelector((state: RootState) => state.roles)
+
+  const [flatRows, setFlatRows] = useState<any[]>([])
+  const [flatLoading, setFlatLoading] = useState(false)
 
   const [tableFilters, setTableFilters] = useState<TableFilters>({})
   const hasFetchedRef = useRef(false)
@@ -119,6 +123,46 @@ export default function PalletiserSheetPage({ processId }: PalletiserSheetPagePr
       return true
     })
   }, [sheets, tableFilters, machines])
+
+  const [viewMode, setViewMode] = useState<"management" | "sheet">("management")
+
+  // Fetch flat data from the reporting endpoint when sheet view is activated
+  useEffect(() => {
+    if (viewMode !== "sheet" || flatRows.length > 0) return
+    setFlatLoading(true)
+    apiRequest<{ statusCode: number; data: any[] }>('/palletiser-sheet/table')
+      .then(res => setFlatRows(res?.data ?? []))
+      .catch(() => toast.error("Failed to load sheet view data"))
+      .finally(() => setFlatLoading(false))
+  }, [viewMode])
+
+  // Group flat rows by tag+pallet_number, combining start and end times
+  const sheetRows = useMemo(() => {
+    const map = new Map<string, any>()
+    flatRows.forEach(row => {
+      const key = `${row.tag}__${row.pallet_number}`
+      if (!map.has(key)) {
+        map.set(key, {
+          date: row.created_at ? new Date(row.created_at).toLocaleDateString('en-GB') : '—',
+          tag: row.tag,
+          batch: row.batch_number,
+          product: row.product_type,
+          mfg: row.manufacturing_date,
+          exp: row.expiry_date,
+          pallet: row.pallet_number,
+          cases: row.cases_packed,
+          serial: row.pallet_serial_number,
+          counter: row.counter_name ?? '—',
+          start_time: null,
+          end_time: null,
+        })
+      }
+      const entry = map.get(key)!
+      if (row.time_type === 'start_time') entry.start_time = row.time
+      if (row.time_type === 'end_time') entry.end_time = row.time
+    })
+    return Array.from(map.values())
+  }, [flatRows])
 
   // Handle errors with toast notifications
   useEffect(() => {
@@ -365,13 +409,29 @@ export default function PalletiserSheetPage({ processId }: PalletiserSheetPagePr
             <h1 className="text-3xl font-light text-foreground">Palletiser Sheet</h1>
             <p className="text-sm font-light text-muted-foreground">Manage palletising forms and process control</p>
           </div>
-          <LoadingButton
-            onClick={handleAddSheet}
-            className="bg-[#006BC4] text-white rounded-full px-6 font-light"
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Add Palletiser Sheet
-          </LoadingButton>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center bg-gray-100 p-1 rounded-lg gap-0.5">
+              <button
+                onClick={() => setViewMode("management")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${viewMode === "management" ? "bg-white shadow-sm text-gray-900" : "text-gray-500 hover:text-gray-700"}`}
+              >
+                <LayoutList className="w-3.5 h-3.5" /> Records
+              </button>
+              <button
+                onClick={() => setViewMode("sheet")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${viewMode === "sheet" ? "bg-white shadow-sm text-gray-900" : "text-gray-500 hover:text-gray-700"}`}
+              >
+                <Table2 className="w-3.5 h-3.5" /> Sheet View
+              </button>
+            </div>
+            <LoadingButton
+              onClick={handleAddSheet}
+              className="bg-[#006BC4] text-white rounded-full px-6 font-light"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Add Palletiser Sheet
+            </LoadingButton>
+          </div>
         </div>
 
         {/* Current Sheet Details */}
@@ -499,7 +559,7 @@ export default function PalletiserSheetPage({ processId }: PalletiserSheetPagePr
 
               {loading ? (
                 <ContentSkeleton sections={1} cardsPerSection={4} />
-              ) : (
+              ) : viewMode === "management" ? (
                 <DataTable
                   columns={columns}
                   data={filteredSheets}
@@ -507,6 +567,43 @@ export default function PalletiserSheetPage({ processId }: PalletiserSheetPagePr
                   showExport={true}
                   exportFilename="palletiser-sheet-data"
                 />
+              ) : flatLoading ? (
+                <div className="flex items-center justify-center py-12 text-gray-400">
+                  <div className="animate-spin w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full mr-2" />
+                  Loading sheet data…
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="min-w-full text-left border-collapse text-[11px]">
+                    <thead>
+                      <tr className="bg-gray-50">
+                        {["Date","Tag","Batch","Product","Mfg Date","Exp Date","Pallet #","Start Time","End Time","Cases Packed","Serial No.","Counter"].map(h => (
+                          <th key={h} className="px-2 py-2 text-[10px] font-semibold uppercase tracking-wider text-gray-500 border-b border-r border-gray-200 whitespace-nowrap">{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {sheetRows.length === 0 ? (
+                        <tr><td colSpan={12} className="px-4 py-8 text-center text-gray-400 italic">No data</td></tr>
+                      ) : sheetRows.map((row, i) => (
+                        <tr key={i} className="hover:bg-gray-50/50 even:bg-gray-50/20">
+                          <td className="px-2 py-1.5 border-b border-r border-gray-100 whitespace-nowrap">{row.date}</td>
+                          <td className="px-2 py-1.5 border-b border-r border-gray-100 whitespace-nowrap font-mono text-[10px]">{row.tag}</td>
+                          <td className="px-2 py-1.5 border-b border-r border-gray-100 text-center">{row.batch}</td>
+                          <td className="px-2 py-1.5 border-b border-r border-gray-100">{row.product}</td>
+                          <td className="px-2 py-1.5 border-b border-r border-gray-100 whitespace-nowrap">{row.mfg}</td>
+                          <td className="px-2 py-1.5 border-b border-r border-gray-100 whitespace-nowrap">{row.exp}</td>
+                          <td className="px-2 py-1.5 border-b border-r border-gray-100 text-center font-medium">{row.pallet}</td>
+                          <td className="px-2 py-1.5 border-b border-r border-gray-100 whitespace-nowrap tabular-nums">{row.start_time ?? '—'}</td>
+                          <td className="px-2 py-1.5 border-b border-r border-gray-100 whitespace-nowrap tabular-nums">{row.end_time ?? '—'}</td>
+                          <td className="px-2 py-1.5 border-b border-r border-gray-100 text-center font-medium text-blue-700">{row.cases}</td>
+                          <td className="px-2 py-1.5 border-b border-r border-gray-100 whitespace-nowrap font-mono text-[10px]">{row.serial}</td>
+                          <td className="px-2 py-1.5 border-b border-r border-gray-100">{row.counter}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </div>
           </div>

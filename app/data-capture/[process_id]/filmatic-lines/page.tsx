@@ -8,7 +8,7 @@ import { LoadingButton } from "@/components/ui/loading-button"
 import { DataTable } from "@/components/ui/data-table"
 import { DataTableFilters } from "@/components/ui/data-table-filters"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Eye, Edit, Trash2, Factory, TrendingUp, FileText, Clock, Package, ArrowRight, Beaker, Sun, Moon } from "lucide-react"
+import { Plus, Eye, Edit, Trash2, Factory, TrendingUp, FileText, Clock, Package, ArrowRight, Beaker, Sun, Moon, LayoutList, Table2 } from "lucide-react"
 import { FilmaticLinesForm1Drawer } from "@/components/forms/filmatic-lines-form-1-drawer"
 import { FilmaticLinesForm1ViewDrawer } from "@/components/forms/filmatic-lines-form-1-view-drawer"
 import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-dialog"
@@ -180,6 +180,67 @@ export default function FilmaticLines1Page() {
     }
   }
 
+  const [viewMode, setViewMode] = useState<"management" | "sheet">("management")
+
+  const sheetRows = useMemo(() => {
+    const rows: any[] = []
+    filteredForms.forEach(form => {
+      if (form.day_shift_id?.shift_details) {
+        const d = form.day_shift_id.shift_details
+        const st = d.stoppage_time_id
+        rows.push({
+          date: form.date ? new Date(form.date).toLocaleDateString('en-GB') : '—',
+          tag: form.tag,
+          shift: "Day",
+          time: d.time ?? '—',
+          pallets: d.pallets,
+          target: d.target,
+          variance: d.pallets != null && d.target != null ? d.pallets - d.target : null,
+          setbacks: d.setbacks,
+          product_1: st?.product_1,
+          product_2: st?.product_2,
+          filler_1: st?.filler_1,
+          filler_2: st?.filler_2,
+          opening: form.day_shift_opening_bottles,
+          received: form.day_shift_received_bottles,
+          foiled: form.day_shift_foiled_bottles,
+          closing: form.day_shift_closing_bottles,
+          waste: form.day_shift_waste_bottles,
+          damaged: form.day_shift_damaged_bottles,
+          transferrable_milk: form.transferrable_milk,
+          shiftType: "day",
+        })
+      }
+      if (form.night_shift_id?.shift_details) {
+        const d = form.night_shift_id.shift_details
+        const st = d.stoppage_time_id
+        rows.push({
+          date: form.date ? new Date(form.date).toLocaleDateString('en-GB') : '—',
+          tag: form.tag,
+          shift: "Night",
+          time: d.time ?? '—',
+          pallets: d.pallets,
+          target: d.target,
+          variance: d.pallets != null && d.target != null ? d.pallets - d.target : null,
+          setbacks: d.setbacks,
+          product_1: st?.product_1,
+          product_2: st?.product_2,
+          filler_1: st?.filler_1,
+          filler_2: st?.filler_2,
+          opening: form.night_shift_opening_bottles,
+          received: form.night_shift_received_bottles,
+          foiled: form.night_shift_foiled_bottles,
+          closing: form.night_shift_closing_bottles,
+          waste: form.night_shift_waste_bottles,
+          damaged: form.night_shift_damaged_bottles,
+          transferrable_milk: form.transferrable_milk,
+          shiftType: "night",
+        })
+      }
+    })
+    return rows
+  }, [filteredForms])
+
   // Get latest form for display
   const latestForm = Array.isArray(forms) && forms.length > 0 ? forms[0] : null
 
@@ -330,13 +391,29 @@ export default function FilmaticLines1Page() {
             <h1 className="text-3xl font-light text-foreground">Steri Before Autoclave</h1>
             <p className="text-sm font-light text-muted-foreground">Manage Filmatic lines form 1 production data and process control</p>
           </div>
-          <LoadingButton
-            onClick={handleAddForm}
-            className="bg-[#006BC4] text-white rounded-full px-6 py-2 font-light"
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Add Steri Before Autoclave
-          </LoadingButton>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center bg-gray-100 p-1 rounded-lg gap-0.5">
+              <button
+                onClick={() => setViewMode("management")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${viewMode === "management" ? "bg-white shadow-sm text-gray-900" : "text-gray-500 hover:text-gray-700"}`}
+              >
+                <LayoutList className="w-3.5 h-3.5" /> Records
+              </button>
+              <button
+                onClick={() => setViewMode("sheet")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${viewMode === "sheet" ? "bg-white shadow-sm text-gray-900" : "text-gray-500 hover:text-gray-700"}`}
+              >
+                <Table2 className="w-3.5 h-3.5" /> Sheet View
+              </button>
+            </div>
+            <LoadingButton
+              onClick={handleAddForm}
+              className="bg-[#006BC4] text-white rounded-full px-6 py-2 font-light"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Add Steri Before Autoclave
+            </LoadingButton>
+          </div>
         </div>
 
         {/* Current Form Details */}
@@ -557,7 +634,7 @@ export default function FilmaticLines1Page() {
 
               {loading.fetch ? (
                 <ContentSkeleton sections={1} cardsPerSection={4} />
-              ) : (
+              ) : viewMode === "management" ? (
                 <DataTable
                   columns={columns}
                   data={filteredForms}
@@ -565,6 +642,47 @@ export default function FilmaticLines1Page() {
                   showExport={true}
                   exportFilename="filmatic-lines-form-1-data"
                 />
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="min-w-full text-left border-collapse text-[11px]">
+                    <thead>
+                      <tr className="bg-gray-50">
+                        {["Date","Tag","Shift","Time","Pallets","Target","Var","Reason","Prod 1","Prod 2","Filler 1","Filler 2","Opening","Received","Foiled","Closing","Waste","Damaged","Milk Transfer"].map(h => (
+                          <th key={h} className="px-2 py-2 text-[10px] font-semibold uppercase tracking-wider text-gray-500 border-b border-r border-gray-200 whitespace-nowrap">{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {sheetRows.length === 0 ? (
+                        <tr><td colSpan={19} className="px-4 py-8 text-center text-gray-400 italic">No data</td></tr>
+                      ) : sheetRows.map((row, i) => (
+                        <tr key={i} className={row.shiftType === "day" ? "bg-yellow-50/40 hover:bg-yellow-50/70" : "bg-blue-50/40 hover:bg-blue-50/70"}>
+                          <td className="px-2 py-1.5 border-b border-r border-gray-100 whitespace-nowrap">{row.date}</td>
+                          <td className="px-2 py-1.5 border-b border-r border-gray-100 whitespace-nowrap font-mono text-[10px]">{row.tag}</td>
+                          <td className="px-2 py-1.5 border-b border-r border-gray-100 whitespace-nowrap">
+                            <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${row.shiftType === "day" ? "bg-yellow-100 text-yellow-800" : "bg-blue-100 text-blue-800"}`}>{row.shift}</span>
+                          </td>
+                          <td className="px-2 py-1.5 border-b border-r border-gray-100 whitespace-nowrap">{row.time}</td>
+                          <td className="px-2 py-1.5 border-b border-r border-gray-100 text-center">{row.pallets ?? '—'}</td>
+                          <td className="px-2 py-1.5 border-b border-r border-gray-100 text-center">{row.target ?? '—'}</td>
+                          <td className={`px-2 py-1.5 border-b border-r border-gray-100 text-center font-medium ${row.variance != null && row.variance < 0 ? 'text-red-600' : row.variance != null && row.variance > 0 ? 'text-green-600' : ''}`}>{row.variance ?? '—'}</td>
+                          <td className="px-2 py-1.5 border-b border-r border-gray-100 max-w-[160px] truncate" title={row.setbacks}>{row.setbacks || '—'}</td>
+                          <td className="px-2 py-1.5 border-b border-r border-gray-100 text-center">{row.product_1 ?? '—'}</td>
+                          <td className="px-2 py-1.5 border-b border-r border-gray-100 text-center">{row.product_2 ?? '—'}</td>
+                          <td className="px-2 py-1.5 border-b border-r border-gray-100 text-center">{row.filler_1 ?? '—'}</td>
+                          <td className="px-2 py-1.5 border-b border-r border-gray-100 text-center">{row.filler_2 ?? '—'}</td>
+                          <td className="px-2 py-1.5 border-b border-r border-gray-100 text-right tabular-nums">{row.opening?.toLocaleString() ?? '—'}</td>
+                          <td className="px-2 py-1.5 border-b border-r border-gray-100 text-right tabular-nums">{row.received?.toLocaleString() ?? '—'}</td>
+                          <td className="px-2 py-1.5 border-b border-r border-gray-100 text-right tabular-nums">{row.foiled?.toLocaleString() ?? '—'}</td>
+                          <td className="px-2 py-1.5 border-b border-r border-gray-100 text-right tabular-nums">{row.closing?.toLocaleString() ?? '—'}</td>
+                          <td className="px-2 py-1.5 border-b border-r border-gray-100 text-right tabular-nums text-red-600">{row.waste?.toLocaleString() ?? '—'}</td>
+                          <td className="px-2 py-1.5 border-b border-r border-gray-100 text-right tabular-nums text-orange-600">{row.damaged?.toLocaleString() ?? '—'}</td>
+                          <td className="px-2 py-1.5 border-b border-r border-gray-100 text-right tabular-nums text-blue-600 font-medium">{row.transferrable_milk?.toLocaleString() ?? '—'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </div>
           </div>

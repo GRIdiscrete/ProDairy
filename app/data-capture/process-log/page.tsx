@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { CopyButton } from "@/components/ui/copy-button"
-import { Eye, Edit, Trash2, Beaker, FileText, TrendingUp, User, Clock, Thermometer, Gauge, Workflow } from "lucide-react"
+import { Eye, Edit, Trash2, Beaker, FileText, TrendingUp, User, Clock, Thermometer, Gauge, Workflow, LayoutList, Table2, Plus } from "lucide-react"
 import { useAppDispatch, useAppSelector } from "@/lib/store"
 import { fetchSteriMilkProcessLogs, deleteSteriMilkProcessLog, clearError } from "@/lib/store/slices/steriMilkProcessLogSlice"
 import { TableFilters } from "@/lib/types"
@@ -191,6 +191,23 @@ export default function ProcessLogPage() {
     }
   }
 
+  const [viewMode, setViewMode] = useState<"management" | "sheet">("management")
+
+  const sheetRows = useMemo(() => {
+    const rows: any[] = []
+    filteredLogs.forEach(log => {
+      const b = log.batch
+      const label = b?.batch_number ?? '—'
+      const fmtTime = (v: string | null | undefined) => v ? v.replace(/\+.*$/, '').substring(0, 5) : '—'
+      const fmtNum = (v: number | undefined | null) => v != null && v !== 0 ? String(v) : '—'
+
+      rows.push({ rowType: "time",        batchLabel: label, tag: log.tag, date: log.created_at, autoclave: log.autoclave?.name, filling_start: fmtTime(b?.filling_start?.time), autoclave_start: fmtTime(b?.autoclave_start?.time), heating_start: fmtTime(b?.heating_start?.time), heating_finish: fmtTime(b?.heating_finish?.time), steri_start: fmtTime(b?.sterilization_start?.time), steri_after5: fmtTime(b?.sterilization_after_5?.time), steri_finish: fmtTime(b?.sterilization_finish?.time), pre_cool_start: fmtTime(b?.pre_cooling_start?.time), pre_cool_finish: fmtTime(b?.pre_cooling_finish?.time), cool1_start: fmtTime(b?.cooling_1_start?.time), cool1_finish: fmtTime(b?.cooling_1_finish?.time), cool2_start: fmtTime(b?.cooling_2_start?.time), cool2_finish: fmtTime(b?.cooling_2_finish?.time) })
+      rows.push({ rowType: "temperature", batchLabel: label, tag: log.tag, filling_start: fmtNum(b?.filling_start?.temperature), autoclave_start: fmtNum(b?.autoclave_start?.temperature), heating_start: fmtNum(b?.heating_start?.temperature), heating_finish: fmtNum(b?.heating_finish?.temperature), steri_start: fmtNum(b?.sterilization_start?.temperature), steri_after5: fmtNum(b?.sterilization_after_5?.temperature), steri_finish: fmtNum(b?.sterilization_finish?.temperature), pre_cool_start: fmtNum(b?.pre_cooling_start?.temperature), pre_cool_finish: fmtNum(b?.pre_cooling_finish?.temperature), cool1_start: fmtNum(b?.cooling_1_start?.temperature), cool1_finish: fmtNum(b?.cooling_1_finish?.temperature), cool2_start: fmtNum(b?.cooling_2_start?.temperature), cool2_finish: fmtNum(b?.cooling_2_finish?.temperature) })
+      rows.push({ rowType: "pressure",    batchLabel: label, tag: log.tag, filling_start: fmtNum(b?.filling_start?.pressure), autoclave_start: fmtNum(b?.autoclave_start?.pressure), heating_start: fmtNum(b?.heating_start?.pressure), heating_finish: fmtNum(b?.heating_finish?.pressure), steri_start: fmtNum(b?.sterilization_start?.pressure), steri_after5: fmtNum(b?.sterilization_after_5?.pressure), steri_finish: fmtNum(b?.sterilization_finish?.pressure), pre_cool_start: fmtNum(b?.pre_cooling_start?.pressure), pre_cool_finish: fmtNum(b?.pre_cooling_finish?.pressure), cool1_start: fmtNum(b?.cooling_1_start?.pressure), cool1_finish: fmtNum(b?.cooling_1_finish?.pressure), cool2_start: fmtNum(b?.cooling_2_start?.pressure), cool2_finish: fmtNum(b?.cooling_2_finish?.pressure) })
+    })
+    return rows
+  }, [filteredLogs])
+
   const columns = useMemo(() => [
     {
       accessorKey: "log",
@@ -344,12 +361,29 @@ export default function ProcessLogPage() {
             <h1 className="text-3xl font-light text-foreground">Autoclave</h1>
             <p className="text-sm font-light text-muted-foreground">Manage steri milk process logs</p>
           </div>
-          <LoadingButton
-            onClick={handleAdd}
-            className="bg-[#006BC4] text-white rounded-full px-6 py-2 font-light"
-          >
-            Add Autoclave
-          </LoadingButton>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center bg-gray-100 p-1 rounded-lg gap-0.5">
+              <button
+                onClick={() => setViewMode("management")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${viewMode === "management" ? "bg-white shadow-sm text-gray-900" : "text-gray-500 hover:text-gray-700"}`}
+              >
+                <LayoutList className="w-3.5 h-3.5" /> Records
+              </button>
+              <button
+                onClick={() => setViewMode("sheet")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${viewMode === "sheet" ? "bg-white shadow-sm text-gray-900" : "text-gray-500 hover:text-gray-700"}`}
+              >
+                <Table2 className="w-3.5 h-3.5" /> Sheet View
+              </button>
+            </div>
+            <LoadingButton
+              onClick={handleAdd}
+              className="bg-[#006BC4] text-white rounded-full px-6 py-2 font-light"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Add Autoclave
+            </LoadingButton>
+          </div>
         </div>
 
         {loading.fetch ? (
@@ -501,7 +535,7 @@ export default function ProcessLogPage() {
               />
               {loading.fetch ? (
                 <ContentSkeleton sections={1} cardsPerSection={4} />
-              ) : (
+              ) : viewMode === "management" ? (
                 <DataTable
                   columns={columns}
                   data={filteredLogs}
@@ -509,6 +543,58 @@ export default function ProcessLogPage() {
                   showExport={true}
                   exportFilename="process-log-data"
                 />
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="min-w-full text-left border-collapse text-[11px]">
+                    <thead>
+                      <tr className="bg-gray-50">
+                        <th className="px-2 py-2 text-[10px] font-semibold uppercase tracking-wider text-gray-500 border-b border-r border-gray-200 whitespace-nowrap">Batch</th>
+                        <th className="px-2 py-2 text-[10px] font-semibold uppercase tracking-wider text-gray-500 border-b border-r border-gray-200 whitespace-nowrap">Metric</th>
+                        <th className="px-2 py-2 text-[10px] font-semibold uppercase tracking-wider text-gray-500 border-b border-r border-gray-200 whitespace-nowrap">Autoclave</th>
+                        <th colSpan={2} className="px-2 py-2 text-[10px] font-semibold uppercase text-center text-gray-500 border-b border-r border-gray-200">Heating</th>
+                        <th colSpan={3} className="px-2 py-2 text-[10px] font-semibold uppercase text-center text-gray-500 border-b border-r border-gray-200">Sterilisation</th>
+                        <th colSpan={2} className="px-2 py-2 text-[10px] font-semibold uppercase text-center text-gray-500 border-b border-r border-gray-200">Pre-Cooling</th>
+                        <th colSpan={2} className="px-2 py-2 text-[10px] font-semibold uppercase text-center text-gray-500 border-b border-r border-gray-200">Cooling 1</th>
+                        <th colSpan={2} className="px-2 py-2 text-[10px] font-semibold uppercase text-center text-gray-500 border-b border-r border-gray-200">Cooling 2</th>
+                      </tr>
+                      <tr className="bg-gray-50">
+                        <th className="px-2 py-1.5 border-b border-r border-gray-200 text-gray-400 text-[10px]"></th>
+                        <th className="px-2 py-1.5 border-b border-r border-gray-200 text-gray-400 text-[10px]"></th>
+                        <th className="px-2 py-1.5 border-b border-r border-gray-200 text-gray-400 text-[10px]">Fill Start</th>
+                        <th className="px-2 py-1.5 border-b border-r border-gray-200 text-gray-400 text-[10px]">AC Start</th>
+                        {["Start","Finish","Start","After 5","Finish","Start","Finish","Start","Finish","Start","Finish"].map((h, i) => (
+                          <th key={i} className="px-2 py-1.5 border-b border-r border-gray-200 text-gray-400 text-[10px] whitespace-nowrap">{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {sheetRows.length === 0 ? (
+                        <tr><td colSpan={16} className="px-4 py-8 text-center text-gray-400 italic">No data</td></tr>
+                      ) : sheetRows.map((row, i) => (
+                        <tr key={i} className={
+                          row.rowType === "temperature" ? "bg-orange-50/50" :
+                          row.rowType === "pressure" ? "bg-blue-50/50" :
+                          "bg-white hover:bg-gray-50/50"
+                        }>
+                          <td className="px-2 py-1.5 border-b border-r border-gray-100 font-medium whitespace-nowrap">
+                            {row.rowType === "time" ? `#${row.batchLabel}` : ""}
+                          </td>
+                          <td className="px-2 py-1.5 border-b border-r border-gray-100 whitespace-nowrap">
+                            {row.rowType === "time" ? <span className="text-gray-400 text-[10px]">Time</span> :
+                             row.rowType === "temperature" ? <span className="text-orange-600 font-medium">Temp °C</span> :
+                             <span className="text-blue-600 font-medium">Press Bar</span>}
+                          </td>
+                          <td className="px-2 py-1.5 border-b border-r border-gray-100 text-gray-500 text-[10px]">
+                            {row.rowType === "time" ? row.autoclave : ""}
+                          </td>
+                          {["filling_start","autoclave_start","heating_start","heating_finish","steri_start","steri_after5","steri_finish","pre_cool_start","pre_cool_finish","cool1_start","cool1_finish","cool2_start","cool2_finish"].map(key => (
+                            <td key={key} className="px-2 py-1.5 border-b border-r border-gray-100 text-center tabular-nums whitespace-nowrap">{(row as any)[key]}</td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </div>
           </div>
