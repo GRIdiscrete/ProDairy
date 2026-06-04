@@ -14,6 +14,14 @@ import { createSilo, updateSilo } from "@/lib/store/slices/siloSlice"
 import { toast } from "sonner"
 import type { Silo } from "@/lib/types"
 
+const PRODUCT_OPTIONS = [
+  "Raw Milk",
+  "Bulk Skimmed Milk",
+  "Bulk Standardized Milk",
+  "Bulk Standardized Milk 3.4%",
+  "Bulk Lactose Free",
+]
+
 const siloSchema = yup.object({
   name: yup.string().required("Silo name is required"),
   serial_number: yup.string().required("Serial number is required"),
@@ -24,6 +32,7 @@ const siloSchema = yup.object({
   capacity: yup.number().required("Capacity is required").min(1, "Capacity must be greater than 0"),
   temperature: yup.number().nullable().optional(),
   fat_content: yup.number().nullable().optional(),
+  product: yup.string().nullable().optional(),
 })
 
 type SiloFormData = yup.InferType<typeof siloSchema>
@@ -57,6 +66,7 @@ export function SiloFormDrawer({ open, onOpenChange, silo, mode }: SiloFormDrawe
       capacity: 0,
       temperature: null,
       fat_content: null,
+      product: null,
     },
   })
 
@@ -65,7 +75,7 @@ export function SiloFormDrawer({ open, onOpenChange, silo, mode }: SiloFormDrawe
       console.log('Form data submitted:', data)
 
       if (mode === "create") {
-        const result = await dispatch(createSilo({ ...data, composition: null, temperature: data.temperature ?? null, fat_content: data.fat_content ?? null } as any)).unwrap()
+        const result = await dispatch(createSilo({ ...data, composition: null, temperature: data.temperature ?? null, fat_content: data.fat_content ?? null, product: data.product ?? null } as any)).unwrap()
         toast.success('Silo created successfully')
       } else if (silo) {
         const result = await dispatch(updateSilo({
@@ -100,6 +110,7 @@ export function SiloFormDrawer({ open, onOpenChange, silo, mode }: SiloFormDrawe
         capacity: silo.capacity || 0,
         temperature: silo.temperature ?? null,
         fat_content: silo.fat_content ?? null,
+        product: silo.product ?? null,
       })
     } else if (open && mode === "create") {
       reset({
@@ -112,6 +123,7 @@ export function SiloFormDrawer({ open, onOpenChange, silo, mode }: SiloFormDrawe
         capacity: 0,
         temperature: null,
         fat_content: null,
+        product: null,
       })
     }
   }, [open, silo, mode, reset])
@@ -194,6 +206,22 @@ export function SiloFormDrawer({ open, onOpenChange, silo, mode }: SiloFormDrawe
                 </div>
               </div>
               
+              <div className="space-y-2">
+                <Label>Current Product</Label>
+                <Controller name="product" control={control} render={({ field }) => (
+                  <Select onValueChange={field.onChange} value={field.value ?? ""}>
+                    <SelectTrigger className="w-full rounded-full">
+                      <SelectValue placeholder="Select product" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PRODUCT_OPTIONS.map((opt) => (
+                        <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )} />
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Temperature (°C)</Label>
