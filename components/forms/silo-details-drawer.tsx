@@ -10,9 +10,10 @@ import {
 } from "@/components/ui/sheet"
 import { Badge } from "@/components/ui/badge"
 import { useAppDispatch, useAppSelector } from "@/lib/store"
-import { fetchCIPStatus, fetchSiloBMTs, updateSilo } from "@/lib/store/slices/siloSlice"
-import { Droplets, Thermometer, FlaskConical, ShieldCheck, Timer, ArrowRightLeft, Edit, Package, X, History, ExternalLink } from "lucide-react"
+import { fetchCIPStatus, fetchSiloBMTs, updateSilo, deleteSiloByName } from "@/lib/store/slices/siloSlice"
+import { Droplets, Thermometer, FlaskConical, ShieldCheck, Timer, ArrowRightLeft, Edit, Package, X, History, ExternalLink, Trash2 } from "lucide-react"
 import { SiloBMTSheet } from "@/components/forms/silo-bmt-sheet"
+import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-dialog"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Separator } from "@/components/ui/separator"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -49,6 +50,8 @@ export function SiloDetailsDrawer({
   const [editingProduct, setEditingProduct] = useState(false)
   const [productValue, setProductValue] = useState("")
   const [bmtSheetOpen, setBmtSheetOpen] = useState(false)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [deleteLoading, setDeleteLoading] = useState(false)
 
   useEffect(() => {
     if (open && silo) {
@@ -58,6 +61,21 @@ export function SiloDetailsDrawer({
       setEditingProduct(false)
     }
   }, [open, silo, dispatch])
+
+  const handleDelete = async () => {
+    if (!silo) return
+    setDeleteLoading(true)
+    try {
+      await dispatch(deleteSiloByName(silo.name)).unwrap()
+      toast.success(`${silo.name} deleted`)
+      setDeleteDialogOpen(false)
+      onOpenChange(false)
+    } catch {
+      toast.error("Failed to delete silo")
+    } finally {
+      setDeleteLoading(false)
+    }
+  }
 
   const cancelEdit = () => {
     setProductValue(silo?.product ?? "")
@@ -88,6 +106,13 @@ export function SiloDetailsDrawer({
                   Edit
                 </button>
               )}
+              <button
+                onClick={() => setDeleteDialogOpen(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-red-50 text-red-600 rounded-full hover:bg-red-100 transition-colors"
+              >
+                <Trash2 className="w-3 h-3" />
+                Delete
+              </button>
             </div>
           </div>
           <SheetDescription className="font-light">
@@ -278,6 +303,15 @@ export function SiloDetailsDrawer({
         siloName={silo.name}
       />
     )}
+
+    <DeleteConfirmationDialog
+      open={deleteDialogOpen}
+      onOpenChange={setDeleteDialogOpen}
+      title={`Delete ${silo?.name ?? "Silo"}`}
+      description={`Are you sure you want to delete ${silo?.name}? This action cannot be undone.`}
+      onConfirm={handleDelete}
+      loading={deleteLoading}
+    />
   </>
   )
 }

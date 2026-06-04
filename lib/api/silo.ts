@@ -107,6 +107,14 @@ export const siloApi = {
     return apiRequest<ApiEnvelope<any>>(`${API_CONFIG.ENDPOINTS.SILO_MANAGER.CIP_STATUS}/${siloName}`)
   },
 
+  // Delete a silo by name (silo-manager endpoint)
+  async deleteSiloByName(siloName: string): Promise<ApiEnvelope<null>> {
+    return apiRequest<ApiEnvelope<null>>(
+      `/silo-manager/silo?name=${encodeURIComponent(siloName)}`,
+      { method: 'DELETE' }
+    )
+  },
+
   // Get BMT transfers for a specific silo by name
   async getSiloBMTs(siloName: string): Promise<ApiEnvelope<any[]>> {
     return apiRequest<ApiEnvelope<any[]>>(`${API_CONFIG.ENDPOINTS.SILO_MANAGER.BMT}?silo=${encodeURIComponent(siloName)}`)

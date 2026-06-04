@@ -126,6 +126,18 @@ export const fetchCIPStatus = createAsyncThunk(
   }
 )
 
+export const deleteSiloByName = createAsyncThunk(
+  "silo/deleteSiloByName",
+  async (siloName: string, { rejectWithValue }) => {
+    try {
+      await siloApi.deleteSiloByName(siloName)
+      return siloName
+    } catch (error: any) {
+      return rejectWithValue(error?.message || 'Failed to delete silo')
+    }
+  }
+)
+
 export const fetchSiloBMTs = createAsyncThunk(
   "silo/fetchSiloBMTs",
   async (siloName: string, { rejectWithValue }) => {
@@ -259,6 +271,11 @@ const siloSlice = createSlice({
       .addCase(fetchSiloManagerSilos.rejected, (state, action) => {
         state.operationLoading.fetch = false
         state.error = action.payload as string
+      })
+
+      .addCase(deleteSiloByName.fulfilled, (state, action) => {
+        state.silos = state.silos.filter(s => s.name !== action.payload)
+        if (state.selectedSilo?.name === action.payload) state.selectedSilo = null
       })
 
       .addCase(fetchCIPStatus.fulfilled, (state, action) => {
