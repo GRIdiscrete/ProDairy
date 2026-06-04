@@ -5,7 +5,7 @@ import { LoadingButton } from "@/components/ui/loading-button"
 import { DataTable } from "@/components/ui/data-table"
 import { DataTableFilters } from "@/components/ui/data-table-filters"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Eye, Edit, Trash2, Droplets, Clock } from "lucide-react"
+import { Plus, Eye, Edit, Trash2, Droplets, Clock, LayoutList, Table2, Download } from "lucide-react"
 import { FormIdCopy } from "@/components/ui/form-id-copy"
 import { CIPControlFormDrawer } from "@/components/forms/cip-control-form-drawer"
 import { CIPControlFormViewDrawer } from "@/components/forms/cip-control-form-view-drawer"
@@ -20,7 +20,8 @@ import { fetchUsers } from "@/lib/store/slices/usersSlice"
 import { UserAvatar } from "@/components/ui/user-avatar"
 import { toast } from "sonner"
 import { TableFilters } from "@/lib/types"
-import { CIPControlForm } from "@/lib/api/data-capture-forms"
+import { CIPControlForm, CIPTableRow, getCIPTable } from "@/lib/api/data-capture-forms"
+import { exportToExcel } from "@/lib/utils/export-excel"
 import ContentSkeleton from "@/components/ui/content-skeleton"
 import { ToolsDashboardLayout } from "@/components/layout/tools-dashboard-layout"
 import { rolesApi } from "@/lib/api/roles"
@@ -32,6 +33,9 @@ export default function CIPControlFormPage() {
 
   const [tableFilters, setTableFilters] = useState<TableFilters>({})
   const [roles, setRoles] = useState<any[]>([])
+  const [viewMode, setViewMode] = useState<"records" | "table">("records")
+  const [cipTableData, setCipTableData] = useState<CIPTableRow[]>([])
+  const [cipTableLoading, setCipTableLoading] = useState(false)
   const hasFetchedRef = useRef(false)
 
   const getUserById = (userId: string) => {
@@ -97,6 +101,15 @@ export default function CIPControlFormPage() {
       dispatch(clearError())
     }
   }, [error, dispatch])
+
+  useEffect(() => {
+    if (viewMode !== "table" || cipTableData.length > 0) return
+    setCipTableLoading(true)
+    getCIPTable()
+      .then(setCipTableData)
+      .catch(() => toast.error("Failed to load CIP table"))
+      .finally(() => setCipTableLoading(false))
+  }, [viewMode])
 
   const [formDrawerOpen, setFormDrawerOpen] = useState(false)
   const [viewDrawerOpen, setViewDrawerOpen] = useState(false)
@@ -230,6 +243,23 @@ export default function CIPControlFormPage() {
     },
   ]
 
+  const cipTableColumns = [
+    { header: "Equipment",               key: "equipment",               cell: ({ row }: any) => <span className="text-sm font-light">{row.original.equipment ?? "—"}</span> },
+    { header: "Date",                    key: "date",                    cell: ({ row }: any) => <span className="text-sm font-light">{row.original.date ?? "—"}</span> },
+    { header: "Operator",               key: "operator",                cell: ({ row }: any) => <span className="text-sm font-light">{row.original.operator ?? "—"}</span> },
+    { header: "Stage",                  key: "stage",                   cell: ({ row }: any) => <span className="text-sm font-light">{row.original.stage?.trim() ?? "—"}</span> },
+    { header: "Start Time",             key: "start_time",              cell: ({ row }: any) => <span className="text-sm font-light">{row.original.start_time ?? "—"}</span> },
+    { header: "Stop Time",              key: "stop_time",               cell: ({ row }: any) => <span className="text-sm font-light">{row.original.stop_time ?? "—"}</span> },
+    { header: "Duration",               key: "duration",                cell: ({ row }: any) => <span className="text-sm font-light">{row.original.duration ?? "—"}</span> },
+    { header: "Duration (min)",         key: "duration_minutes",        cell: ({ row }: any) => <span className="text-sm font-light">{row.original.duration_minutes ?? "—"}</span> },
+    { header: "Analysed By",            key: "analysed_by",             cell: ({ row }: any) => <span className="text-sm font-light">{row.original.analysed_by ?? "—"}</span> },
+    { header: "Caustic Strength (%)",   key: "caustic_solution_strength", cell: ({ row }: any) => <span className="text-sm font-light">{row.original.caustic_solution_strength ?? "—"}</span> },
+    { header: "Caustic Temp (°C)",      key: "caustic_temperature",     cell: ({ row }: any) => <span className="text-sm font-light">{row.original.caustic_temperature ?? "—"}</span> },
+    { header: "Acid Strength (%)",      key: "acid_solution_strength",  cell: ({ row }: any) => <span className="text-sm font-light">{row.original.acid_solution_strength ?? "—"}</span> },
+    { header: "Acid Temp (°C)",         key: "acid_temperature",        cell: ({ row }: any) => <span className="text-sm font-light">{row.original.acid_temperature ?? "—"}</span> },
+    { header: "Checked By",             key: "checked_by",              cell: ({ row }: any) => <span className="text-sm font-light">{row.original.checked_by?.trim() ?? "—"}</span> },
+  ].map(c => ({ accessorKey: c.key, header: c.header, cell: c.cell, ...c }))
+
   const latestForm = Array.isArray(forms) && forms.length > 0 ? forms[0] : null
 
   return (
@@ -240,9 +270,33 @@ export default function CIPControlFormPage() {
             <h1 className="text-3xl font-light text-foreground">CIP Control Forms</h1>
             <p className="text-sm font-light text-muted-foreground">Manage clean-in-place control forms</p>
           </div>
-          <LoadingButton onClick={handleAddForm} className="bg-[#006BC4] text-white border-0 rounded-full px-6 py-2 font-light">
-            <Plus className="mr-2 h-4 w-4" /> Add CIP Form
-          </LoadingButton>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center bg-gray-100 p-1 rounded-lg gap-0.5">
+              <button
+                onClick={() => setViewMode("records")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${viewMode === "records" ? "bg-white shadow-sm text-gray-900" : "text-gray-500 hover:text-gray-700"}`}
+              >
+                <LayoutList className="w-3.5 h-3.5" /> Records
+              </button>
+              <button
+                onClick={() => setViewMode("table")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${viewMode === "table" ? "bg-white shadow-sm text-gray-900" : "text-gray-500 hover:text-gray-700"}`}
+              >
+                <Table2 className="w-3.5 h-3.5" /> Table View
+              </button>
+            </div>
+            {viewMode === "table" && (
+              <LoadingButton
+                onClick={() => exportToExcel(cipTableColumns.filter((c: any) => c.key).map((c: any) => ({ header: c.header, key: c.key })), cipTableData, "CIP-table")}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white border-0 rounded-full px-4 py-2 font-light"
+              >
+                <Download className="mr-2 h-4 w-4" /> Export Excel
+              </LoadingButton>
+            )}
+            <LoadingButton onClick={handleAddForm} className="bg-[#006BC4] text-white border-0 rounded-full px-6 py-2 font-light">
+              <Plus className="mr-2 h-4 w-4" /> Add CIP Form
+            </LoadingButton>
+          </div>
         </div>
 
         {!loading && latestForm && (
@@ -304,16 +358,24 @@ export default function CIPControlFormPage() {
 
         <div className="border border-gray-200 rounded-xl bg-white shadow-none overflow-hidden">
           <div className="p-6 space-y-4">
-            <DataTableFilters
-              filters={tableFilters}
-              onFiltersChange={setTableFilters}
-              searchPlaceholder="Search by tag, status, machine or silo..."
-              filterFields={filterFields}
-            />
-            {loading
-              ? <ContentSkeleton sections={1} cardsPerSection={5} />
-              : <DataTable columns={columns} data={filteredForms} showSearch={false} />
-            }
+            {viewMode === "records" ? (
+              <>
+                <DataTableFilters
+                  filters={tableFilters}
+                  onFiltersChange={setTableFilters}
+                  searchPlaceholder="Search by tag, status, machine or silo..."
+                  filterFields={filterFields}
+                />
+                {loading
+                  ? <ContentSkeleton sections={1} cardsPerSection={5} />
+                  : <DataTable columns={columns} data={filteredForms} showSearch={false} />
+                }
+              </>
+            ) : cipTableLoading ? (
+              <ContentSkeleton sections={1} cardsPerSection={5} />
+            ) : (
+              <DataTable columns={cipTableColumns} data={cipTableData} searchKey="equipment" />
+            )}
           </div>
         </div>
 

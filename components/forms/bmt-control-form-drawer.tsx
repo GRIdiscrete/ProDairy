@@ -152,57 +152,61 @@ interface OperatorsSectionProps {
   control: any
   errors: any
   users: SearchableSelectOption[]
+  llmUsers: SearchableSelectOption[]
 }
 
-function OperatorsSection({ control, errors, users }: OperatorsSectionProps) {
-  const operatorFields: { id: keyof CreateFormData; sigId: keyof CreateFormData; label: string }[] = [
+function OperatorsSection({ control, errors, users, llmUsers }: OperatorsSectionProps) {
+  const operatorFields: { id: keyof CreateFormData; sigId: keyof CreateFormData; label: string; isLLM?: boolean }[] = [
     { id: "dispatch_operator_id", sigId: "dispatch_operator_signature", label: "Dispatch Operator" },
     { id: "dpp_operator_id", sigId: "dpp_signature", label: "DPP Operator" },
-    { id: "llm_operator_id", sigId: "llm_signature", label: "LLM Operator" },
+    { id: "llm_operator_id", sigId: "llm_signature", label: "LLM Operator", isLLM: true },
   ]
 
   return (
     <div className="space-y-6">
       <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Operators & Signatures</h3>
-      {operatorFields.map(({ id, sigId, label }) => (
-        <div key={id} className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border border-gray-100 rounded-lg bg-gray-50">
-          <div className="space-y-2">
-            <Label htmlFor={id}>{label} <span className="text-xs text-gray-400">(optional)</span></Label>
+      {operatorFields.map(({ id, sigId, label, isLLM }) => {
+        const options = isLLM ? llmUsers : users
+        return (
+          <div key={id} className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border border-gray-100 rounded-lg bg-gray-50">
+            <div className="space-y-2">
+              <Label htmlFor={id}>{label} <span className="text-xs text-gray-400">(optional)</span></Label>
+              <Controller
+                name={id as any}
+                control={control}
+                render={({ field }) => (
+                  <Select onValueChange={field.onChange} value={field.value ?? ""}>
+                    <SelectTrigger className="w-full rounded-full border-gray-200">
+                      <SelectValue placeholder={`Select ${label.toLowerCase()}`} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {options.map((u) => (
+                        <SelectItem key={u.value} value={u.value}>
+                          {u.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+              {errors[id] && <p className="text-sm text-red-500">{errors[id]?.message}</p>}
+            </div>
+
             <Controller
-              name={id as any}
+              name={sigId as any}
               control={control}
               render={({ field }) => (
-                <Select onValueChange={field.onChange} value={field.value ?? ""}>
-                  <SelectTrigger className="w-full rounded-full border-gray-200">
-                    <SelectValue placeholder={`Select ${label.toLowerCase()}`} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {users.map((u) => (
-                      <SelectItem key={u.value} value={u.value}>
-                        {u.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <SignatureField
+                  label={`${label} Signature`}
+                  value={field.value ?? ""}
+                  onChange={field.onChange}
+                  error={errors[sigId]?.message}
+                />
               )}
             />
-            {errors[id] && <p className="text-sm text-red-500">{errors[id]?.message}</p>}
           </div>
-
-          <Controller
-            name={sigId as any}
-            control={control}
-            render={({ field }) => (
-              <SignatureField
-                label={`${label} Signature`}
-                value={field.value ?? ""}
-                onChange={field.onChange}
-                error={errors[sigId]?.message}
-              />
-            )}
-          />
-        </div>
-      ))}
+        )
+      })}
     </div>
   )
 }
@@ -214,6 +218,7 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode, sourceSil
   const { operationLoading } = useAppSelector((state) => state.bmtControlForms)
 
   const [users, setUsers] = useState<SearchableSelectOption[]>([])
+  const [llmUsers, setLlmUsers] = useState<SearchableSelectOption[]>([])
   const [loadingUsers, setLoadingUsers] = useState(false)
   const [silos, setSilos] = useState<{ value: string; label: string }[]>([])
   const [loadingSilos, setLoadingSilos] = useState(false)
@@ -224,17 +229,16 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode, sourceSil
     if (!open) return
 
     setLoadingUsers(true)
-    usersApi
-      .getUsers()
-      .then((res) =>
-        setUsers(
-          res.data?.map((u) => ({
-            value: u.id,
-            label: `${u.first_name} ${u.last_name}`,
-            description: `${u.department} • ${u.email}`,
-          })) ?? []
-        )
-      )
+    Promise.all([usersApi.getUsers(), usersApi.getLLMUsers()])
+      .then(([allRes, llmRes]) => {
+        const toOption = (u: any) => ({
+          value: u.id,
+          label: `${u.first_name} ${u.last_name}`,
+          description: `${u.department} • ${u.email}`,
+        })
+        setUsers(allRes.data?.map(toOption) ?? [])
+        setLlmUsers(llmRes.data?.map(toOption) ?? [])
+      })
       .catch(() => toast.error("Failed to load users"))
       .finally(() => setLoadingUsers(false))
 
@@ -470,10 +474,11 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode, sourceSil
                           <SelectValue placeholder="Select product" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="Raw milk">Raw milk</SelectItem>
-                          <SelectItem value="Skim Milk">Skim Milk</SelectItem>
-                          <SelectItem value="Standardized Milk">Standardized Milk</SelectItem>
-                          <SelectItem value="Pasteurized Milk">Pasteurized Milk</SelectItem>
+                          <SelectItem value="Raw Milk">Raw Milk</SelectItem>
+                          <SelectItem value="Bulk Skimmed Milk">Bulk Skimmed Milk</SelectItem>
+                          <SelectItem value="Bulk Standardized Milk">Bulk Standardized Milk</SelectItem>
+                          <SelectItem value="Bulk Standardized Milk 3.4%">Bulk Standardized Milk 3.4%</SelectItem>
+                          <SelectItem value="Bulk Lactose Free">Bulk Lactose Free</SelectItem>
                         </SelectContent>
                       </Select>
                     )}
@@ -489,6 +494,7 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode, sourceSil
                 control={createForm.control}
                 errors={createForm.formState.errors}
                 users={users}
+                llmUsers={llmUsers}
               />
 
               {/* Source-Destination Pairs (optional on POST) */}

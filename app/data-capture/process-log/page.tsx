@@ -9,7 +9,8 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { CopyButton } from "@/components/ui/copy-button"
-import { Eye, Edit, Trash2, Beaker, FileText, TrendingUp, User, Clock, Thermometer, Gauge, Workflow, LayoutList, Table2, Plus } from "lucide-react"
+import { Eye, Edit, Trash2, Beaker, FileText, TrendingUp, User, Clock, Thermometer, Gauge, Workflow, LayoutList, Table2, Plus, Download } from "lucide-react"
+import { exportToExcel } from "@/lib/utils/export-excel"
 import { useAppDispatch, useAppSelector } from "@/lib/store"
 import { fetchSteriMilkProcessLogs, deleteSteriMilkProcessLog, clearError } from "@/lib/store/slices/steriMilkProcessLogSlice"
 import { TableFilters } from "@/lib/types"
@@ -376,6 +377,19 @@ export default function ProcessLogPage() {
                 <Table2 className="w-3.5 h-3.5" /> Sheet View
               </button>
             </div>
+            {viewMode === "sheet" && (
+              <LoadingButton
+                onClick={() => exportToExcel(
+                  ["batchLabel","rowType","autoclave","filling_start","autoclave_start","heating_start","heating_finish","steri_start","steri_after5","steri_finish","pre_cool_start","pre_cool_finish","cool1_start","cool1_finish","cool2_start","cool2_finish"]
+                    .map(k => ({ header: k.replace(/_/g," ").replace(/\b\w/g,c=>c.toUpperCase()), key: k })),
+                  sheetRows,
+                  "process-log"
+                )}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white border-0 rounded-full px-4 py-2 font-light"
+              >
+                <Download className="mr-2 h-4 w-4" /> Export Excel
+              </LoadingButton>
+            )}
             <LoadingButton
               onClick={handleAdd}
               className="bg-[#006BC4] text-white rounded-full px-6 py-2 font-light"

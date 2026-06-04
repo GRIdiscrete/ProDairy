@@ -585,6 +585,56 @@ export const updateBMTControlForm = (data: BMTControlForm) =>
 export const deleteBMTControlForm = (id: string) =>
   apiRequest<void>(`/bmt-control-form/${id}`, { method: 'DELETE' })
 
+// CIP table row (from SQL view endpoint)
+export interface CIPTableRow {
+  equipment: string | null
+  date: string | null
+  operator: string | null
+  stage: string | null
+  start_time: string | null
+  stop_time: string | null
+  duration: string | null
+  duration_minutes: number | null
+  analysed_by: string | null
+  caustic_solution_strength: number | null
+  caustic_temperature: number | null
+  acid_solution_strength: number | null
+  acid_temperature: number | null
+  checked_by: string | null
+}
+
+export const getCIPTable = async (): Promise<CIPTableRow[]> => {
+  const res = await apiRequest<any>('/cip-control-form/table')
+  return Array.isArray(res) ? res : (res?.data ?? [])
+}
+
+export const getCIPsForSilo = async (siloName: string): Promise<CIPControlForm[]> => {
+  const res = await apiRequest<any>(`/cip-control-form/silo?silo=${encodeURIComponent(siloName)}`)
+  return Array.isArray(res) ? res : (res?.data ?? [])
+}
+
+// Steri Milk Pasteurising table row
+export interface SteriPastoTableRow {
+  row_order: number | null
+  date: string | null
+  production_start: string | null
+  production_end: string | null
+  preheating_start: string | null
+  water_circulation: string | null
+  metric: string | null
+  temp_hot_water: string | null
+  temp_product_pasteurisation: string | null
+  homogenisation_pressure_stage_1: string | null
+  homogenisation_pressure_stage_2: string | null
+  total_homogenisation_pressure: string | null
+  temp_product_out: string | null
+}
+
+export const getSteriPastoTable = async (): Promise<SteriPastoTableRow[]> => {
+  const res = await apiRequest<any>('/steri-milk-pasteurizing-form/table')
+  return Array.isArray(res) ? res : (res?.data ?? [])
+}
+
 // CIP Control Form APIs
 export const getCIPControlForms = async () => {
   const res = await apiRequest<any>('/cip-control-form')

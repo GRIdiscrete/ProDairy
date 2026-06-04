@@ -24,6 +24,7 @@ import { ToolsDashboardLayout } from "@/components/layout/tools-dashboard-layout
 import { siloApi } from "@/lib/api/silo"
 import { bmtControlFormApi, BMTTableRow } from "@/lib/api/bmt-control-form"
 import { bmtTableColumns } from "@/components/forms/silo-bmt-sheet"
+import { exportToExcel } from "@/lib/utils/export-excel"
 import { UserAvatar } from "@/components/ui/user-avatar"
 import { FormIdCopy } from "@/components/ui/form-id-copy"
 
@@ -398,6 +399,21 @@ export default function BMTControlFormPage() {
                 <Table2 className="w-3.5 h-3.5" /> Table View
               </button>
             </div>
+            {viewMode === "table" && (
+              <LoadingButton
+                onClick={() => exportToExcel(
+                  bmtTableColumns
+                    .filter((c: any) => c.accessorKey)
+                    .map((c: any) => ({ header: c.header as string, key: c.accessorKey as string })),
+                  tableData,
+                  "BMT-table"
+                )}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white border-0 rounded-full px-6 py-2 font-light"
+              >
+                <Download className="mr-2 h-4 w-4" />
+                Export Excel
+              </LoadingButton>
+            )}
             <LoadingButton
               onClick={handleExportCSV}
               className="bg-[#A0D001] hover:bg-[#8AB801] text-white border-0 rounded-full px-6 py-2 font-light"

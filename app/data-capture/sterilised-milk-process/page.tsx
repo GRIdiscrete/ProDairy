@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { DataTable } from "@/components/ui/data-table"
 import { DataTableFilters } from "@/components/ui/data-table-filters"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Eye, Edit, Trash2, Milk, TrendingUp, FileText, Thermometer } from "lucide-react"
+import { Plus, Eye, Edit, Trash2, Milk, TrendingUp, FileText, Thermometer, LayoutList, Table2, Download } from "lucide-react"
 import { SterilisedMilkProcessDrawer } from "@/components/forms/sterilised-milk-process-drawer"
 import { SterilisedMilkProcessViewDrawer } from "@/components/forms/sterilised-milk-process-view-drawer"
 import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-dialog"
@@ -20,14 +20,33 @@ import {
 } from "@/lib/store/slices/sterilisedMilkProcessSlice"
 import { toast } from "sonner"
 import { TableFilters } from "@/lib/types"
-import { SterilisedMilkProcess } from "@/lib/api/data-capture-forms"
+import { SterilisedMilkProcess, SteriPastoTableRow, getSteriPastoTable } from "@/lib/api/data-capture-forms"
+import { exportToExcel } from "@/lib/utils/export-excel"
 
 export default function SterilisedMilkProcessPage() {
   const dispatch = useAppDispatch()
   const { processes, processDetails, loading, error, operationLoading, isInitialized } = useAppSelector((state) => state.sterilisedMilkProcesses)
   
   const [tableFilters, setTableFilters] = useState<TableFilters>({})
+  const [viewMode, setViewMode] = useState<"records" | "table">("records")
+  const [pastoTableData, setPastoTableData] = useState<SteriPastoTableRow[]>([])
+  const [pastoTableLoading, setPastoTableLoading] = useState(false)
   const hasFetchedRef = useRef(false)
+
+  const pastoTableColumns = [
+    { header: "Date",                   key: "date",                            accessorKey: "date",                            cell: ({ row }: any) => <span className="text-sm font-light">{row.original.date ?? "—"}</span> },
+    { header: "Metric",                 key: "metric",                          accessorKey: "metric",                          cell: ({ row }: any) => <span className="text-sm font-light capitalize">{row.original.metric ?? "—"}</span> },
+    { header: "Production Start",       key: "production_start",                accessorKey: "production_start",                cell: ({ row }: any) => <span className="text-sm font-light">{row.original.production_start ?? "—"}</span> },
+    { header: "Production End",         key: "production_end",                  accessorKey: "production_end",                  cell: ({ row }: any) => <span className="text-sm font-light">{row.original.production_end ? new Date(row.original.production_end).toLocaleString() : "—"}</span> },
+    { header: "Preheating Start",       key: "preheating_start",                accessorKey: "preheating_start",                cell: ({ row }: any) => <span className="text-sm font-light">{row.original.preheating_start ?? "—"}</span> },
+    { header: "Water Circulation",      key: "water_circulation",               accessorKey: "water_circulation",               cell: ({ row }: any) => <span className="text-sm font-light">{row.original.water_circulation ?? "—"}</span> },
+    { header: "Temp Hot Water",         key: "temp_hot_water",                  accessorKey: "temp_hot_water",                  cell: ({ row }: any) => <span className="text-sm font-light">{row.original.temp_hot_water ?? "—"}</span> },
+    { header: "Temp Product Past.",     key: "temp_product_pasteurisation",     accessorKey: "temp_product_pasteurisation",     cell: ({ row }: any) => <span className="text-sm font-light">{row.original.temp_product_pasteurisation ?? "—"}</span> },
+    { header: "Homo. P Stage 1",        key: "homogenisation_pressure_stage_1", accessorKey: "homogenisation_pressure_stage_1", cell: ({ row }: any) => <span className="text-sm font-light">{row.original.homogenisation_pressure_stage_1 ?? "—"}</span> },
+    { header: "Homo. P Stage 2",        key: "homogenisation_pressure_stage_2", accessorKey: "homogenisation_pressure_stage_2", cell: ({ row }: any) => <span className="text-sm font-light">{row.original.homogenisation_pressure_stage_2 ?? "—"}</span> },
+    { header: "Total Homo. P",          key: "total_homogenisation_pressure",   accessorKey: "total_homogenisation_pressure",   cell: ({ row }: any) => <span className="text-sm font-light">{row.original.total_homogenisation_pressure ?? "—"}</span> },
+    { header: "Temp Product Out",       key: "temp_product_out",                accessorKey: "temp_product_out",                cell: ({ row }: any) => <span className="text-sm font-light">{row.original.temp_product_out ?? "—"}</span> },
+  ]
   
   // Load sterilised milk processes on initial mount
   useEffect(() => {
@@ -44,6 +63,15 @@ export default function SterilisedMilkProcessPage() {
     }
   }, [dispatch, tableFilters, isInitialized])
   
+  useEffect(() => {
+    if (viewMode !== "table" || pastoTableData.length > 0) return
+    setPastoTableLoading(true)
+    getSteriPastoTable()
+      .then(setPastoTableData)
+      .catch(() => toast.error("Failed to load table"))
+      .finally(() => setPastoTableLoading(false))
+  }, [viewMode])
+
   // Handle errors with toast notifications
   useEffect(() => {
     if (error) {
@@ -294,10 +322,33 @@ export default function SterilisedMilkProcessPage() {
             <h1 className="text-3xl font-bold text-foreground">Sterilised Milk Process</h1>
             <p className="text-muted-foreground">Manage sterilised milk processing operations</p>
           </div>
-          <LoadingButton onClick={handleAddProcess}>
-            <Plus className="mr-2 h-4 w-4" />
-            Add Process
-          </LoadingButton>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center bg-gray-100 p-1 rounded-lg gap-0.5">
+              <button
+                onClick={() => setViewMode("records")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${viewMode === "records" ? "bg-white shadow-sm text-gray-900" : "text-gray-500 hover:text-gray-700"}`}
+              >
+                <LayoutList className="w-3.5 h-3.5" /> Records
+              </button>
+              <button
+                onClick={() => setViewMode("table")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${viewMode === "table" ? "bg-white shadow-sm text-gray-900" : "text-gray-500 hover:text-gray-700"}`}
+              >
+                <Table2 className="w-3.5 h-3.5" /> Table View
+              </button>
+            </div>
+            {viewMode === "table" && (
+              <LoadingButton
+                onClick={() => exportToExcel(pastoTableColumns.map(c => ({ header: c.header, key: c.key })), pastoTableData, "steri-pasto-table")}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white border-0 rounded-full px-4 py-2 font-light"
+              >
+                <Download className="mr-2 h-4 w-4" /> Export Excel
+              </LoadingButton>
+            )}
+            <LoadingButton onClick={handleAddProcess} className="bg-[#006BC4] text-white border-0 rounded-full px-6 py-2 font-light">
+              <Plus className="mr-2 h-4 w-4" /> Add Process
+            </LoadingButton>
+          </div>
         </div>
 
         {/* Current Sterilised Milk Process Card */}
@@ -514,35 +565,50 @@ export default function SterilisedMilkProcessPage() {
           </Card>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Sterilised Milk Processes</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <DataTableFilters
-              filters={tableFilters}
-              onFiltersChange={setTableFilters}
-              onSearch={(searchTerm) => setTableFilters(prev => ({ ...prev, search: searchTerm }))}
-              searchPlaceholder="Search processes..."
-              filterFields={filterFields}
-            />
-            
-            {loading ? (
-              <div className="flex items-center justify-center h-64">
-                <div className="flex flex-col items-center space-y-4">
-                  <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-                  <p className="text-muted-foreground">Loading processes...</p>
+        {(() => {
+          if (viewMode === "table") {
+            return (
+              <div className="border border-gray-200 rounded-xl bg-white shadow-none overflow-hidden">
+                <div className="p-6">
+                  {pastoTableLoading ? (
+                    <div className="flex items-center justify-center h-64">
+                      <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                    </div>
+                  ) : (
+                    <DataTable columns={pastoTableColumns} data={pastoTableData} searchKey="date" />
+                  )}
                 </div>
               </div>
-            ) : (
-              <DataTable
-                columns={columns}
-                data={processes || []}
-                showSearch={false}
-              />
-            )}
-          </CardContent>
-        </Card>
+            )
+          }
+
+          return (
+            <Card>
+              <CardHeader>
+                <CardTitle>Sterilised Milk Processes</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <DataTableFilters
+                  filters={tableFilters}
+                  onFiltersChange={setTableFilters}
+                  onSearch={(searchTerm) => setTableFilters(prev => ({ ...prev, search: searchTerm }))}
+                  searchPlaceholder="Search processes..."
+                  filterFields={filterFields}
+                />
+                {loading ? (
+                  <div className="flex items-center justify-center h-64">
+                    <div className="flex flex-col items-center space-y-4">
+                      <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+                      <p className="text-muted-foreground">Loading processes...</p>
+                    </div>
+                  </div>
+                ) : (
+                  <DataTable columns={columns} data={processes || []} showSearch={false} />
+                )}
+              </CardContent>
+            </Card>
+          )
+        })()}
 
         {/* Form Drawer */}
         <SterilisedMilkProcessDrawer 

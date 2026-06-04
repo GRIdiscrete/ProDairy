@@ -131,6 +131,12 @@ export const usersApi = {
 
     return apiRequest<ApiEnvelope<UserEntity[]>>(endpoint)
   },
+  getLLMUsers: async (): Promise<ApiEnvelope<UserEntity[]>> => {
+    return apiRequest<ApiEnvelope<UserEntity[]>>(`${API_CONFIG.ENDPOINTS.USERS}/llm`)
+  },
+  getCIPUsers: async (): Promise<ApiEnvelope<UserEntity[]>> => {
+    return apiRequest<ApiEnvelope<UserEntity[]>>(`${API_CONFIG.ENDPOINTS.USERS}/cip`)
+  },
   getUser: async (id: string): Promise<ApiEnvelope<UserEntity>> => {
     return apiRequest<ApiEnvelope<UserEntity>>(`${API_CONFIG.ENDPOINTS.USERS}/${id}`)
   },

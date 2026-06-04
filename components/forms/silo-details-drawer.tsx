@@ -11,9 +11,12 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { useAppDispatch, useAppSelector } from "@/lib/store"
 import { fetchCIPStatus, fetchSiloBMTs, updateSilo, deleteSiloByName } from "@/lib/store/slices/siloSlice"
-import { Droplets, Thermometer, FlaskConical, ShieldCheck, Timer, ArrowRightLeft, Edit, Package, X, History, ExternalLink, Trash2 } from "lucide-react"
+import { Droplets, Thermometer, FlaskConical, ShieldCheck, Timer, ArrowRightLeft, Edit, Package, X, History, ExternalLink, Trash2, FlaskRound } from "lucide-react"
 import { SiloBMTSheet } from "@/components/forms/silo-bmt-sheet"
 import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-dialog"
+import { CIPControlFormDrawer } from "@/components/forms/cip-control-form-drawer"
+import { getCIPsForSilo } from "@/lib/api/data-capture-forms"
+import type { CIPControlForm } from "@/lib/api/data-capture-forms"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Separator } from "@/components/ui/separator"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -52,6 +55,9 @@ export function SiloDetailsDrawer({
   const [bmtSheetOpen, setBmtSheetOpen] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [deleteLoading, setDeleteLoading] = useState(false)
+  const [cipDrawerOpen, setCipDrawerOpen] = useState(false)
+  const [siloCIPs, setSiloCIPs] = useState<CIPControlForm[]>([])
+  const [cipLoading, setCipLoading] = useState(false)
 
   useEffect(() => {
     if (open && silo) {
@@ -59,6 +65,12 @@ export function SiloDetailsDrawer({
       dispatch(fetchSiloBMTs(silo.name))
       setProductValue(silo.product ?? "")
       setEditingProduct(false)
+      // Fetch CIPs for this silo
+      setCipLoading(true)
+      getCIPsForSilo(silo.name)
+        .then(setSiloCIPs)
+        .catch(() => {})
+        .finally(() => setCipLoading(false))
     }
   }, [open, silo, dispatch])
 
@@ -106,6 +118,13 @@ export function SiloDetailsDrawer({
                   Edit
                 </button>
               )}
+              <button
+                onClick={() => setCipDrawerOpen(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-emerald-50 text-emerald-700 rounded-full hover:bg-emerald-100 transition-colors"
+              >
+                <FlaskRound className="w-3 h-3" />
+                Create CIP
+              </button>
               <button
                 onClick={() => setDeleteDialogOpen(true)}
                 className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-red-50 text-red-600 rounded-full hover:bg-red-100 transition-colors"
@@ -278,6 +297,41 @@ export function SiloDetailsDrawer({
               )}
             </div>
 
+            {/* CIP History */}
+            <div className="space-y-4">
+              <h4 className="text-sm font-medium flex items-center gap-2">
+                <FlaskRound className="w-4 h-4 text-emerald-600" />
+                CIP History
+              </h4>
+              {cipLoading ? (
+                <p className="text-xs text-gray-400 italic">Loading…</p>
+              ) : siloCIPs.length === 0 ? (
+                <p className="text-xs text-gray-400 italic">No CIP records found</p>
+              ) : (
+                <div className="space-y-2">
+                  {[...siloCIPs]
+                    .sort((a, b) => new Date(b.date ?? 0).getTime() - new Date(a.date ?? 0).getTime())
+                    .slice(0, 5)
+                    .map((cip, i) => (
+                      <div key={cip.id ?? i} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-transparent hover:border-gray-200 transition-colors">
+                        <div className="flex flex-col">
+                          <span className="text-xs font-medium text-gray-700">{(cip as any).tag ?? "—"}</span>
+                          <span className="text-[10px] text-gray-400">{cip.date ? new Date(cip.date).toLocaleDateString() : "—"}</span>
+                        </div>
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
+                          cip.status === "Approved" ? "bg-purple-100 text-purple-700" :
+                          cip.status === "Completed" ? "bg-green-100 text-green-700" :
+                          cip.status === "In Progress" ? "bg-blue-100 text-blue-700" :
+                          "bg-gray-100 text-gray-500"
+                        }`}>
+                          {cip.status ?? "Draft"}
+                        </span>
+                      </div>
+                    ))}
+                </div>
+              )}
+            </div>
+
             <Separator className="my-4 text-gray-100" />
 
             <div className="pt-4">
@@ -312,6 +366,26 @@ export function SiloDetailsDrawer({
       onConfirm={handleDelete}
       loading={deleteLoading}
     />
+
+    {silo && (
+      <CIPControlFormDrawer
+        open={cipDrawerOpen}
+        onOpenChange={(v) => {
+          setCipDrawerOpen(v)
+          if (!v) {
+            // Refresh CIP list after closing
+            setCipLoading(true)
+            getCIPsForSilo(silo.name)
+              .then(setSiloCIPs)
+              .catch(() => {})
+              .finally(() => setCipLoading(false))
+          }
+        }}
+        form={null}
+        mode="create"
+        defaultSilo={{ id: silo.id, name: silo.name }}
+      />
+    )}
   </>
   )
 }

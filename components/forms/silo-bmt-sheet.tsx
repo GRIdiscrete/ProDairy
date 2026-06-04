@@ -5,7 +5,8 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { DataTable } from "@/components/ui/data-table"
 import { Skeleton } from "@/components/ui/skeleton"
 import { bmtControlFormApi, BMTControlForm, BMTTableRow } from "@/lib/api/bmt-control-form"
-import { LayoutList, Table2 } from "lucide-react"
+import { LayoutList, Table2, Download } from "lucide-react"
+import { exportToExcel } from "@/lib/utils/export-excel"
 
 interface SiloBMTSheetProps {
   open: boolean
@@ -161,19 +162,35 @@ export function SiloBMTSheet({ open, onOpenChange, siloName }: SiloBMTSheetProps
         <SheetHeader className="px-6 py-4 border-b">
           <div className="flex items-center justify-between">
             <SheetTitle className="text-xl font-light">{siloName} — BMT Forms</SheetTitle>
-            <div className="flex items-center bg-gray-100 p-1 rounded-lg gap-0.5">
-              <button
-                onClick={() => setViewMode("records")}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${viewMode === "records" ? "bg-white shadow-sm text-gray-900" : "text-gray-500 hover:text-gray-700"}`}
-              >
-                <LayoutList className="w-3.5 h-3.5" /> Records
-              </button>
-              <button
-                onClick={() => setViewMode("table")}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${viewMode === "table" ? "bg-white shadow-sm text-gray-900" : "text-gray-500 hover:text-gray-700"}`}
-              >
-                <Table2 className="w-3.5 h-3.5" /> Table View
-              </button>
+            <div className="flex items-center gap-2">
+              {viewMode === "table" && (
+                <button
+                  onClick={() => exportToExcel(
+                    bmtTableColumns
+                      .filter((c: any) => c.accessorKey)
+                      .map((c: any) => ({ header: c.header as string, key: c.accessorKey as string })),
+                    tableRows,
+                    `${siloName}-BMT-table`
+                  )}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
+                >
+                  <Download className="w-3.5 h-3.5" /> Export Excel
+                </button>
+              )}
+              <div className="flex items-center bg-gray-100 p-1 rounded-lg gap-0.5">
+                <button
+                  onClick={() => setViewMode("records")}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${viewMode === "records" ? "bg-white shadow-sm text-gray-900" : "text-gray-500 hover:text-gray-700"}`}
+                >
+                  <LayoutList className="w-3.5 h-3.5" /> Records
+                </button>
+                <button
+                  onClick={() => setViewMode("table")}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${viewMode === "table" ? "bg-white shadow-sm text-gray-900" : "text-gray-500 hover:text-gray-700"}`}
+                >
+                  <Table2 className="w-3.5 h-3.5" /> Table View
+                </button>
+              </div>
             </div>
           </div>
         </SheetHeader>

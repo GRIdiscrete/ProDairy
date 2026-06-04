@@ -7,7 +7,8 @@ import { LoadingButton } from "@/components/ui/loading-button"
 import { DataTable } from "@/components/ui/data-table"
 import { DataTableFilters } from "@/components/ui/data-table-filters"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Eye, Edit, Trash2, Package, TrendingUp, FileText, Clock, ArrowRight, Calendar, Grid3X3, LayoutList, Table2 } from "lucide-react"
+import { Plus, Eye, Edit, Trash2, Package, TrendingUp, FileText, Clock, ArrowRight, Calendar, Grid3X3, LayoutList, Table2, Download } from "lucide-react"
+import { exportToExcel } from "@/lib/utils/export-excel"
 import { PalletiserSheetDrawer } from "@/components/forms/palletiser-sheet-drawer"
 import { PalletiserSheetViewDrawer } from "@/components/forms/palletiser-sheet-view-drawer"
 import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-dialog"
@@ -147,6 +148,7 @@ export default function PalletiserSheetPage({ processId }: PalletiserSheetPagePr
           tag: row.tag,
           batch: row.batch_number,
           product: row.product_type,
+          machine: row.machine_name ?? '—',
           mfg: row.manufacturing_date,
           exp: row.expiry_date,
           pallet: row.pallet_number,
@@ -424,6 +426,19 @@ export default function PalletiserSheetPage({ processId }: PalletiserSheetPagePr
                 <Table2 className="w-3.5 h-3.5" /> Sheet View
               </button>
             </div>
+            {viewMode === "sheet" && (
+              <LoadingButton
+                onClick={() => exportToExcel(
+                  ["date","tag","batch","product","machine","mfg","exp","pallet","start_time","end_time","cases","serial","counter"]
+                    .map(k => ({ header: k.replace(/_/g," ").replace(/\b\w/g,c=>c.toUpperCase()), key: k })),
+                  sheetRows,
+                  "palletiser-sheet"
+                )}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white border-0 rounded-full px-4 py-2 font-light"
+              >
+                <Download className="mr-2 h-4 w-4" /> Export Excel
+              </LoadingButton>
+            )}
             <LoadingButton
               onClick={handleAddSheet}
               className="bg-[#006BC4] text-white rounded-full px-6 font-light"
@@ -577,20 +592,21 @@ export default function PalletiserSheetPage({ processId }: PalletiserSheetPagePr
                   <table className="min-w-full text-left border-collapse text-[11px]">
                     <thead>
                       <tr className="bg-gray-50">
-                        {["Date","Tag","Batch","Product","Mfg Date","Exp Date","Pallet #","Start Time","End Time","Cases Packed","Serial No.","Counter"].map(h => (
+                        {["Date","Tag","Batch","Product","Machine","Mfg Date","Exp Date","Pallet #","Start Time","End Time","Cases Packed","Serial No.","Counter"].map(h => (
                           <th key={h} className="px-2 py-2 text-[10px] font-semibold uppercase tracking-wider text-gray-500 border-b border-r border-gray-200 whitespace-nowrap">{h}</th>
                         ))}
                       </tr>
                     </thead>
                     <tbody>
                       {sheetRows.length === 0 ? (
-                        <tr><td colSpan={12} className="px-4 py-8 text-center text-gray-400 italic">No data</td></tr>
+                        <tr><td colSpan={13} className="px-4 py-8 text-center text-gray-400 italic">No data</td></tr>
                       ) : sheetRows.map((row, i) => (
                         <tr key={i} className="hover:bg-gray-50/50 even:bg-gray-50/20">
-                          <td className="px-2 py-1.5 border-b border-r border-gray-100 whitespace-nowrap">{row.date}</td>
-                          <td className="px-2 py-1.5 border-b border-r border-gray-100 whitespace-nowrap font-mono text-[10px]">{row.tag}</td>
+                          <td className="px-2 py-1.5 border-b border-r border-gray-100 whitespace-nowrap">{row.date ?? '—'}</td>
+                          <td className="px-2 py-1.5 border-b border-r border-gray-100 whitespace-nowrap font-mono text-[10px]">{row.tag ?? '—'}</td>
                           <td className="px-2 py-1.5 border-b border-r border-gray-100 text-center">{row.batch}</td>
                           <td className="px-2 py-1.5 border-b border-r border-gray-100">{row.product}</td>
+                          <td className="px-2 py-1.5 border-b border-r border-gray-100 whitespace-nowrap">{row.machine}</td>
                           <td className="px-2 py-1.5 border-b border-r border-gray-100 whitespace-nowrap">{row.mfg}</td>
                           <td className="px-2 py-1.5 border-b border-r border-gray-100 whitespace-nowrap">{row.exp}</td>
                           <td className="px-2 py-1.5 border-b border-r border-gray-100 text-center font-medium">{row.pallet}</td>

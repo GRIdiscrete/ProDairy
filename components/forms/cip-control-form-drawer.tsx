@@ -65,9 +65,10 @@ interface CIPControlFormDrawerProps {
   onOpenChange: (open: boolean) => void
   form?: CIPControlForm | null
   mode: "create" | "edit"
+  defaultSilo?: { id: string; name: string } | null
 }
 
-export function CIPControlFormDrawer({ open, onOpenChange, form, mode }: CIPControlFormDrawerProps) {
+export function CIPControlFormDrawer({ open, onOpenChange, form, mode, defaultSilo }: CIPControlFormDrawerProps) {
   const dispatch = useAppDispatch()
   const { operationLoading } = useAppSelector((state) => state.cipControlForms)
   const { user } = useAppSelector((state) => state.auth)
@@ -76,6 +77,8 @@ export function CIPControlFormDrawer({ open, onOpenChange, form, mode }: CIPCont
   const [machines, setMachines] = useState<SearchableSelectOption[]>([])
   const [silos, setSilos] = useState<SearchableSelectOption[]>([])
   const [users, setUsers] = useState<SearchableSelectOption[]>([])
+  const [cipUsers, setCipUsers] = useState<SearchableSelectOption[]>([])   // scientists — user/cip
+  const [llmUsers, setLlmUsers] = useState<SearchableSelectOption[]>([])   // production floor — user/llm
   const [roles, setRoles] = useState<SearchableSelectOption[]>([])
   const [loadingMachines, setLoadingMachines] = useState(false)
   const [loadingSilos, setLoadingSilos] = useState(false)
@@ -91,12 +94,20 @@ export function CIPControlFormDrawer({ open, onOpenChange, form, mode }: CIPCont
       setLoadingUsers(true)
       setLoadingRoles(true)
 
-      const [machinesResponse, silosResponse, usersResponse, rolesResponse] = await Promise.all([
+      const [machinesResponse, silosResponse, usersResponse, rolesResponse, cipUsersResponse, llmUsersResponse] = await Promise.all([
         machineApi.getMachines(),
         siloApi.getSilos(),
         usersApi.getUsers(),
-        rolesApi.getRoles()
+        rolesApi.getRoles(),
+        usersApi.getCIPUsers(),
+        usersApi.getLLMUsers(),
       ])
+
+      const toOption = (u: any) => ({
+        value: u.id,
+        label: `${u.first_name} ${u.last_name}`,
+        description: `${u.department} • ${u.email}`,
+      })
 
       setMachines(machinesResponse.data?.map(machine => ({
         value: machine.id,
@@ -110,11 +121,9 @@ export function CIPControlFormDrawer({ open, onOpenChange, form, mode }: CIPCont
         description: `${silo.location} • ${silo.category} • ${silo.capacity}L capacity`
       })) || [])
 
-      setUsers(usersResponse.data?.map(user => ({
-        value: user.id,
-        label: `${user.first_name} ${user.last_name}`,
-        description: `${user.department} • ${user.email}`
-      })) || [])
+      setUsers(usersResponse.data?.map(toOption) || [])
+      setCipUsers(cipUsersResponse.data?.map(toOption) || [])
+      setLlmUsers(llmUsersResponse.data?.map(toOption) || [])
 
       setRoles(rolesResponse.data?.map(role => ({
         value: role.id,
@@ -352,20 +361,37 @@ export function CIPControlFormDrawer({ open, onOpenChange, form, mode }: CIPCont
         })) || [],
       })
     } else if (open && mode === "create") {
-      setCipType('machine')
-      reset({
-        status: "",
-        machine_or_silo: "",
-        machine_id: null as any,
-        silo_id: null as any,
-        operator_id: user?.id || "",
-        date: "",
-        rinse_water_test: "",
-        approver: "",
-        analyzer: user?.id || "",
-        checked_by: "",
-        stages: [],
-      })
+      if (defaultSilo) {
+        setCipType('silo')
+        reset({
+          status: "",
+          machine_or_silo: defaultSilo.name,
+          machine_id: null as any,
+          silo_id: defaultSilo.id,
+          operator_id: user?.id || "",
+          date: "",
+          rinse_water_test: "",
+          approver: "",
+          analyzer: user?.id || "",
+          checked_by: "",
+          stages: [],
+        })
+      } else {
+        setCipType('machine')
+        reset({
+          status: "",
+          machine_or_silo: "",
+          machine_id: null as any,
+          silo_id: null as any,
+          operator_id: user?.id || "",
+          date: "",
+          rinse_water_test: "",
+          approver: "",
+          analyzer: user?.id || "",
+          checked_by: "",
+          stages: [],
+        })
+      }
     }
   }, [open, form, mode, reset, user])
 
@@ -588,20 +614,19 @@ export function CIPControlFormDrawer({ open, onOpenChange, form, mode }: CIPCont
                   {errors.approver && <p className="text-sm text-red-500">{errors.approver.message}</p>}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="analyzer">Analyzer *</Label>
+                  <Label htmlFor="analyzer">Analysed By (Scientist) *</Label>
                   <Controller
                     name="analyzer"
                     control={control}
                     render={({ field }) => (
                       <SearchableSelect
-                        options={users}
+                        options={cipUsers}
                         value={field.value}
                         onValueChange={field.onChange}
-                        placeholder="Select analyzer"
-                        searchPlaceholder="Search users..."
-                        emptyMessage="No users found"
+                        placeholder="Select scientist"
+                        searchPlaceholder="Search scientists..."
+                        emptyMessage="No scientists found"
                         loading={loadingUsers}
-                        onSearch={handleUserSearch}
                         className="w-full rounded-full border-gray-200"
                       />
                     )}
@@ -610,20 +635,19 @@ export function CIPControlFormDrawer({ open, onOpenChange, form, mode }: CIPCont
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="checked_by">Checked By *</Label>
+                <Label htmlFor="checked_by">Checked By (Production) *</Label>
                 <Controller
                   name="checked_by"
                   control={control}
                   render={({ field }) => (
                     <SearchableSelect
-                      options={users}
+                      options={llmUsers}
                       value={field.value}
                       onValueChange={field.onChange}
-                      placeholder="Select checker"
-                      searchPlaceholder="Search users..."
+                      placeholder="Select production floor user"
+                      searchPlaceholder="Search production users..."
                       emptyMessage="No users found"
                       loading={loadingUsers}
-                      onSearch={handleUserSearch}
                       className="w-full rounded-full border-gray-200"
                     />
                   )}

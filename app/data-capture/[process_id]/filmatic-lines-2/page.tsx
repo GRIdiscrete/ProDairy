@@ -8,7 +8,8 @@ import { LoadingButton } from "@/components/ui/loading-button"
 import { DataTable } from "@/components/ui/data-table"
 import { DataTableFilters } from "@/components/ui/data-table-filters"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Eye, Edit, Trash2, Factory, TrendingUp, FileText, Clock, Package, ArrowRight, Beaker, Sun, Moon, LayoutList, Table2 } from "lucide-react"
+import { Plus, Eye, Edit, Trash2, Factory, TrendingUp, FileText, Clock, Package, ArrowRight, Beaker, Sun, Moon, LayoutList, Table2, Download } from "lucide-react"
+import { exportToExcel } from "@/lib/utils/export-excel"
 import { FilmaticLinesForm2Drawer } from "@/components/forms/filmatic-lines-form-2-drawer"
 import { FilmaticLinesForm2ViewDrawer } from "@/components/forms/filmatic-lines-form-2-view-drawer"
 import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-dialog"
@@ -414,6 +415,19 @@ export default function FilmaticLines2Page() {
                 <Table2 className="w-3.5 h-3.5" /> Sheet View
               </button>
             </div>
+            {viewMode === "sheet" && (
+              <LoadingButton
+                onClick={() => exportToExcel(
+                  ["date","tag","shift","time","pallets","target","variance","setbacks","capper_1","capper_2","sleever_1","sleever_2","shrink_1","shrink_2","opening","closing","waste"]
+                    .map(k => ({ header: k.replace(/_/g," ").replace(/\b\w/g,c=>c.toUpperCase()), key: k })),
+                  sheetRows,
+                  "steri-after-autoclave"
+                )}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white border-0 rounded-full px-4 py-2 font-light"
+              >
+                <Download className="mr-2 h-4 w-4" /> Export Excel
+              </LoadingButton>
+            )}
             <LoadingButton
               onClick={handleAddForm}
               className="bg-[#006BC4] text-white rounded-full px-6 py-2 font-light"
