@@ -548,9 +548,11 @@ export default function ProcessLogPage() {
                   <table className="min-w-full text-left border-collapse text-[11px]">
                     <thead>
                       <tr className="bg-gray-50">
-                        <th className="px-2 py-2 text-[10px] font-semibold uppercase tracking-wider text-gray-500 border-b border-r border-gray-200 whitespace-nowrap">Batch</th>
-                        <th className="px-2 py-2 text-[10px] font-semibold uppercase tracking-wider text-gray-500 border-b border-r border-gray-200 whitespace-nowrap">Metric</th>
-                        <th className="px-2 py-2 text-[10px] font-semibold uppercase tracking-wider text-gray-500 border-b border-r border-gray-200 whitespace-nowrap">Autoclave</th>
+                        <th rowSpan={2} className="px-2 py-2 text-[10px] font-semibold uppercase tracking-wider text-gray-500 border-b border-r border-gray-200 whitespace-nowrap align-bottom">Batch</th>
+                        <th rowSpan={2} className="px-2 py-2 text-[10px] font-semibold uppercase tracking-wider text-gray-500 border-b border-r border-gray-200 whitespace-nowrap align-bottom">Metric</th>
+                        <th rowSpan={2} className="px-2 py-2 text-[10px] font-semibold uppercase tracking-wider text-gray-500 border-b border-r border-gray-200 whitespace-nowrap align-bottom">Autoclave</th>
+                        <th rowSpan={2} className="px-2 py-2 text-[10px] font-semibold uppercase tracking-wider text-gray-500 border-b border-r border-gray-200 whitespace-nowrap align-bottom">Fill Start</th>
+                        <th rowSpan={2} className="px-2 py-2 text-[10px] font-semibold uppercase tracking-wider text-gray-500 border-b border-r border-gray-200 whitespace-nowrap align-bottom">AC Start</th>
                         <th colSpan={2} className="px-2 py-2 text-[10px] font-semibold uppercase text-center text-gray-500 border-b border-r border-gray-200">Heating</th>
                         <th colSpan={3} className="px-2 py-2 text-[10px] font-semibold uppercase text-center text-gray-500 border-b border-r border-gray-200">Sterilisation</th>
                         <th colSpan={2} className="px-2 py-2 text-[10px] font-semibold uppercase text-center text-gray-500 border-b border-r border-gray-200">Pre-Cooling</th>
@@ -558,12 +560,8 @@ export default function ProcessLogPage() {
                         <th colSpan={2} className="px-2 py-2 text-[10px] font-semibold uppercase text-center text-gray-500 border-b border-r border-gray-200">Cooling 2</th>
                       </tr>
                       <tr className="bg-gray-50">
-                        <th className="px-2 py-1.5 border-b border-r border-gray-200 text-gray-400 text-[10px]"></th>
-                        <th className="px-2 py-1.5 border-b border-r border-gray-200 text-gray-400 text-[10px]"></th>
-                        <th className="px-2 py-1.5 border-b border-r border-gray-200 text-gray-400 text-[10px]">Fill Start</th>
-                        <th className="px-2 py-1.5 border-b border-r border-gray-200 text-gray-400 text-[10px]">AC Start</th>
                         {["Start","Finish","Start","After 5","Finish","Start","Finish","Start","Finish","Start","Finish"].map((h, i) => (
-                          <th key={i} className="px-2 py-1.5 border-b border-r border-gray-200 text-gray-400 text-[10px] whitespace-nowrap">{h}</th>
+                          <th key={i} className="px-2 py-1.5 border-b border-r border-gray-200 text-gray-400 text-[10px] whitespace-nowrap text-center">{h}</th>
                         ))}
                       </tr>
                     </thead>

@@ -18,6 +18,7 @@ export const API_CONFIG = {
       SILOS: '/silo-manager/silos',
       CIP_STATUS: '/silo-manager/cip-status',
       TRANSFERS: '/silo-manager/transfers',
+      BMT: '/silo-manager/bmt',
     },
     ANALYTICS: {
       COLLECTION_SUMMARY: '/analytics/collection/summary',

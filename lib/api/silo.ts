@@ -107,6 +107,11 @@ export const siloApi = {
     return apiRequest<ApiEnvelope<any>>(`${API_CONFIG.ENDPOINTS.SILO_MANAGER.CIP_STATUS}/${siloName}`)
   },
 
+  // Get BMT transfers for a specific silo by name
+  async getSiloBMTs(siloName: string): Promise<ApiEnvelope<any[]>> {
+    return apiRequest<ApiEnvelope<any[]>>(`${API_CONFIG.ENDPOINTS.SILO_MANAGER.BMT}?silo=${encodeURIComponent(siloName)}`)
+  },
+
   // Get silo transfers (BMT forms)
   async getSiloTransfers(): Promise<ApiEnvelope<any[]>> {
     return apiRequest<ApiEnvelope<any[]>>(API_CONFIG.ENDPOINTS.SILO_MANAGER.TRANSFERS)

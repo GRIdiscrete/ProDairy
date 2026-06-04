@@ -5,7 +5,7 @@ import { LoadingButton } from "@/components/ui/loading-button"
 import { DataTable } from "@/components/ui/data-table"
 import { DataTableFilters } from "@/components/ui/data-table-filters"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Eye, Edit, Trash2, Beaker, TrendingUp, Clock, User, Download } from "lucide-react"
+import { Plus, Eye, Edit, Trash2, Beaker, TrendingUp, Clock, User, Download, LayoutList, Table2, ArrowRight } from "lucide-react"
 import { BMTControlFormDrawer } from "@/components/forms/bmt-control-form-drawer"
 import { BMTControlFormViewDrawer } from "@/components/forms/bmt-control-form-view-drawer"
 import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-dialog"
@@ -22,6 +22,8 @@ import { BMTControlForm } from "@/lib/api/bmt-control-form"
 import ContentSkeleton from "@/components/ui/content-skeleton"
 import { ToolsDashboardLayout } from "@/components/layout/tools-dashboard-layout"
 import { siloApi } from "@/lib/api/silo"
+import { bmtControlFormApi, BMTTableRow } from "@/lib/api/bmt-control-form"
+import { bmtTableColumns } from "@/components/forms/silo-bmt-sheet"
 import { UserAvatar } from "@/components/ui/user-avatar"
 import { FormIdCopy } from "@/components/ui/form-id-copy"
 
@@ -31,6 +33,9 @@ export default function BMTControlFormPage() {
   const { items: users, loading: usersLoading, isInitialized: usersInitialized } = useAppSelector((state) => state.users)
 
   const [tableFilters, setTableFilters] = useState<TableFilters>({})
+  const [viewMode, setViewMode] = useState<"records" | "table">("records")
+  const [tableData, setTableData] = useState<BMTTableRow[]>([])
+  const [tableLoading, setTableLoading] = useState(false)
   const hasFetchedRef = useRef(false)
 
   // State for silos
@@ -76,6 +81,16 @@ export default function BMTControlFormPage() {
       loadInitialData()
     }
   }, [dispatch, isInitialized])
+
+  // Fetch table data when switching to table view
+  useEffect(() => {
+    if (viewMode !== "table" || tableData.length > 0) return
+    setTableLoading(true)
+    bmtControlFormApi.getTable()
+      .then(setTableData)
+      .catch(() => {})
+      .finally(() => setTableLoading(false))
+  }, [viewMode])
 
   // Initialize users on component mount
   useEffect(() => {
@@ -368,7 +383,21 @@ export default function BMTControlFormPage() {
             <h1 className="text-3xl font-light text-foreground">BMT Control Forms</h1>
             <p className="text-sm font-light text-muted-foreground transition-all">Manage bulk milk transfer control forms</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center bg-gray-100 p-1 rounded-lg gap-0.5">
+              <button
+                onClick={() => setViewMode("records")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${viewMode === "records" ? "bg-white shadow-sm text-gray-900" : "text-gray-500 hover:text-gray-700"}`}
+              >
+                <LayoutList className="w-3.5 h-3.5" /> Records
+              </button>
+              <button
+                onClick={() => setViewMode("table")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${viewMode === "table" ? "bg-white shadow-sm text-gray-900" : "text-gray-500 hover:text-gray-700"}`}
+              >
+                <Table2 className="w-3.5 h-3.5" /> Table View
+              </button>
+            </div>
             <LoadingButton
               onClick={handleExportCSV}
               className="bg-[#A0D001] hover:bg-[#8AB801] text-white border-0 rounded-full px-6 py-2 font-light"
@@ -458,28 +487,43 @@ export default function BMTControlFormPage() {
           </div>
         )}
 
-        {/* List Section */}
+        {/* List / Table Section */}
         <div className="border border-gray-200 rounded-xl bg-white shadow-none">
           <div className="p-6 border-b bg-gray-50/30">
-            <h2 className="text-lg font-medium text-gray-800">History & Records</h2>
+            <h2 className="text-lg font-medium text-gray-800">
+              {viewMode === "records" ? "History & Records" : "Table View"}
+            </h2>
           </div>
           <div className="p-6 space-y-4">
-            <DataTableFilters
-              filters={tableFilters}
-              onFiltersChange={setTableFilters}
-              searchPlaceholder="Search by tag (e.g. BMT-001)..."
-              filterFields={filterFields}
-            />
-
-            {loading ? (
-              <ContentSkeleton sections={1} cardsPerSection={5} />
+            {viewMode === "records" ? (
+              <>
+                <DataTableFilters
+                  filters={tableFilters}
+                  onFiltersChange={setTableFilters}
+                  searchPlaceholder="Search by tag (e.g. BMT-001)..."
+                  filterFields={filterFields}
+                />
+                {loading ? (
+                  <ContentSkeleton sections={1} cardsPerSection={5} />
+                ) : (
+                  <DataTable
+                    columns={columns}
+                    data={filteredForms}
+                    showSearch={false}
+                    searchKey="tag"
+                  />
+                )}
+              </>
             ) : (
-              <DataTable
-                columns={columns}
-                data={filteredForms}
-                showSearch={false}
-                searchKey="tag"
-              />
+              tableLoading ? (
+                <ContentSkeleton sections={1} cardsPerSection={5} />
+              ) : (
+                <DataTable
+                  columns={bmtTableColumns}
+                  data={tableData}
+                  searchKey="product"
+                />
+              )
             )}
           </div>
         </div>

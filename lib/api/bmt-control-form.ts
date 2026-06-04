@@ -118,6 +118,22 @@ export interface UpdateBMTControlFormRequest {
   source_destination_details: PatchSourceDestinationPairRequest[]
 }
 
+// ── Flat table row (GET /bmt-control-form-2/table) ───────────────────────────
+
+export interface BMTTableRow {
+  date: string
+  product: string
+  flow_meter_start: number | null
+  flow_meter_end: number | null
+  source: string | null
+  movement_start: string | null
+  movement_end: string | null
+  destination: string | null
+  volume_moved: number | null
+  llm_operator: string | null
+  dispatch_operator: string | null
+}
+
 // ── Response wrappers ─────────────────────────────────────────────────────────
 
 export interface BMTControlFormResponse {
@@ -200,6 +216,45 @@ export const bmtControlFormApi = {
       })
     } catch (error) {
       console.error(`Error deleting BMT control form ${id}:`, error)
+      throw error
+    }
+  },
+
+  getBySilo: async (siloName: string): Promise<BMTControlForm[]> => {
+    try {
+      const response = await apiRequest<BMTControlFormsResponse>(
+        `${BASE}/silo?name=${encodeURIComponent(siloName)}`,
+        { method: "GET", headers: { accept: "application/json" } }
+      )
+      return response.data || []
+    } catch (error) {
+      console.error(`Error fetching BMT forms for silo ${siloName}:`, error)
+      throw error
+    }
+  },
+
+  getTable: async (): Promise<BMTTableRow[]> => {
+    try {
+      const response = await apiRequest<{ statusCode: number; message: string; data: BMTTableRow[] }>(
+        `${BASE}/table`,
+        { method: "GET", headers: { accept: "application/json" } }
+      )
+      return response.data || []
+    } catch (error) {
+      console.error("Error fetching BMT table:", error)
+      throw error
+    }
+  },
+
+  getTableBySilo: async (siloName: string): Promise<BMTTableRow[]> => {
+    try {
+      const response = await apiRequest<{ statusCode: number; message: string; data: BMTTableRow[] }>(
+        `${BASE}/table/silo?name=${encodeURIComponent(siloName)}`,
+        { method: "GET", headers: { accept: "application/json" } }
+      )
+      return response.data || []
+    } catch (error) {
+      console.error(`Error fetching BMT table for silo ${siloName}:`, error)
       throw error
     }
   },

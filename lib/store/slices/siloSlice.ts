@@ -16,6 +16,7 @@ interface SiloState {
   }
   cipStatuses: Record<string, any>
   transfers: any[]
+  siloBMTs: Record<string, any[]>
 }
 
 const initialState: SiloState = {
@@ -32,6 +33,7 @@ const initialState: SiloState = {
   },
   cipStatuses: {},
   transfers: [],
+  siloBMTs: {},
 }
 
 // Async thunks
@@ -120,6 +122,18 @@ export const fetchCIPStatus = createAsyncThunk(
       return { siloName, data: response.data }
     } catch (error: any) {
       return rejectWithValue(error?.message || 'Failed to fetch CIP status')
+    }
+  }
+)
+
+export const fetchSiloBMTs = createAsyncThunk(
+  "silo/fetchSiloBMTs",
+  async (siloName: string, { rejectWithValue }) => {
+    try {
+      const response = await siloApi.getSiloBMTs(siloName)
+      return { siloName, data: response.data }
+    } catch (error: any) {
+      return rejectWithValue(error?.message || 'Failed to fetch silo transfers')
     }
   }
 )
@@ -249,6 +263,10 @@ const siloSlice = createSlice({
 
       .addCase(fetchCIPStatus.fulfilled, (state, action) => {
         state.cipStatuses[action.payload.siloName] = action.payload.data
+      })
+
+      .addCase(fetchSiloBMTs.fulfilled, (state, action) => {
+        state.siloBMTs[action.payload.siloName] = action.payload.data
       })
 
       .addCase(fetchSiloTransfers.fulfilled, (state, action) => {

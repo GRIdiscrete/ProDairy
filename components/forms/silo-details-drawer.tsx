@@ -10,11 +10,21 @@ import {
 } from "@/components/ui/sheet"
 import { Badge } from "@/components/ui/badge"
 import { useAppDispatch, useAppSelector } from "@/lib/store"
-import { fetchCIPStatus, updateSilo } from "@/lib/store/slices/siloSlice"
-import { Droplets, Thermometer, FlaskConical, ShieldCheck, Timer, ArrowRightLeft, Edit, Package, Check, X } from "lucide-react"
+import { fetchCIPStatus, fetchSiloBMTs, updateSilo } from "@/lib/store/slices/siloSlice"
+import { Droplets, Thermometer, FlaskConical, ShieldCheck, Timer, ArrowRightLeft, Edit, Package, X, History, ExternalLink } from "lucide-react"
+import { SiloBMTSheet } from "@/components/forms/silo-bmt-sheet"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Separator } from "@/components/ui/separator"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { toast } from "sonner"
+
+const PRODUCT_OPTIONS = [
+  "Raw Milk",
+  "Bulk Skimmed Milk",
+  "Bulk Standardized Milk",
+  "Bulk Standardized Milk 3.4%",
+  "Bulk Lactose Free",
+]
 
 interface SiloDetailsDrawerProps {
   open: boolean
@@ -33,28 +43,21 @@ export function SiloDetailsDrawer({
 }: SiloDetailsDrawerProps) {
   const dispatch = useAppDispatch()
   const cipStatuses = useAppSelector((state) => state.silo.cipStatuses)
+  const siloBMTs = useAppSelector((state) => state.silo.siloBMTs)
   const cipData = silo ? cipStatuses[silo.name] : null
+  const bmts: any[] = silo ? (siloBMTs[silo.name] ?? []) : []
   const [editingProduct, setEditingProduct] = useState(false)
   const [productValue, setProductValue] = useState("")
+  const [bmtSheetOpen, setBmtSheetOpen] = useState(false)
 
   useEffect(() => {
     if (open && silo) {
       dispatch(fetchCIPStatus(silo.name))
+      dispatch(fetchSiloBMTs(silo.name))
       setProductValue(silo.product ?? "")
       setEditingProduct(false)
     }
   }, [open, silo, dispatch])
-
-  const saveProduct = async () => {
-    if (!silo) return
-    try {
-      await dispatch(updateSilo({ ...silo, product: productValue || null })).unwrap()
-      toast.success("Product updated")
-      setEditingProduct(false)
-    } catch {
-      toast.error("Failed to update product")
-    }
-  }
 
   const cancelEdit = () => {
     setProductValue(silo?.product ?? "")
@@ -62,6 +65,7 @@ export function SiloDetailsDrawer({
   }
 
   return (
+    <>
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="sm:max-w-xl p-0 overflow-hidden flex flex-col border-l-0 shadow-2xl">
         <div className="flex-1 overflow-y-auto custom-scrollbar">
@@ -151,17 +155,16 @@ export function SiloDetailsDrawer({
               </div>
               {editingProduct ? (
                 <div className="flex items-center gap-2">
-                  <input
-                    autoFocus
-                    className="flex-1 text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-400"
-                    value={productValue}
-                    onChange={(e) => setProductValue(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === "Enter") saveProduct(); if (e.key === "Escape") cancelEdit() }}
-                    placeholder="e.g. Whole Milk"
-                  />
-                  <button onClick={saveProduct} className="p-1.5 rounded-full bg-emerald-50 hover:bg-emerald-100 text-emerald-600 transition-colors">
-                    <Check className="w-3.5 h-3.5" />
-                  </button>
+                  <Select value={productValue} onValueChange={(val) => { setProductValue(val); dispatch(updateSilo({ ...silo, product: val })).unwrap().then(() => toast.success("Product updated")).catch(() => toast.error("Failed to update product")); setEditingProduct(false) }}>
+                    <SelectTrigger className="flex-1 rounded-lg text-sm">
+                      <SelectValue placeholder="Select product" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PRODUCT_OPTIONS.map((opt) => (
+                        <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <button onClick={cancelEdit} className="p-1.5 rounded-full bg-red-50 hover:bg-red-100 text-red-500 transition-colors">
                     <X className="w-3.5 h-3.5" />
                   </button>
@@ -203,10 +206,57 @@ export function SiloDetailsDrawer({
               )}
             </div>
 
+            {/* Recent Transfers */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h4 className="text-sm font-medium flex items-center gap-2">
+                  <History className="w-4 h-4 text-blue-600" />
+                  Recent Transfers
+                </h4>
+                {bmts.length > 0 && (
+                  <button
+                    onClick={() => setBmtSheetOpen(true)}
+                    className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 transition-colors"
+                  >
+                    View All <ExternalLink className="w-3 h-3" />
+                  </button>
+                )}
+              </div>
+              {bmts.length === 0 ? (
+                <p className="text-xs text-gray-400 italic">No transfers found</p>
+              ) : (
+                <div className="space-y-2">
+                  {[...bmts].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).map((bmt, i) => {
+                    const isDebit = bmt.source === silo.name
+                    const vol = bmt.volume_moved
+                    const sign = vol == null ? "" : vol === 0 ? "" : isDebit ? "-" : "+"
+                    const color = vol == null || vol === 0 ? "text-gray-500" : isDebit ? "text-red-500" : "text-emerald-600"
+                    return (
+                      <div key={i} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-transparent hover:border-gray-200 transition-colors">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-2 h-2 rounded-full ${vol === 0 || vol == null ? "bg-gray-300" : isDebit ? "bg-red-400" : "bg-emerald-400"}`} />
+                          <div className="flex flex-col">
+                            <span className="text-xs font-medium text-gray-700">{bmt.product}</span>
+                            <span className="text-[10px] text-gray-400">
+                              {isDebit ? `To: ${bmt.destination}` : `From: ${bmt.source}`}
+                            </span>
+                            <span className="text-[10px] text-gray-400">{new Date(bmt.created_at).toLocaleDateString()}</span>
+                          </div>
+                        </div>
+                        <span className={`text-sm font-medium ${color}`}>
+                          {vol != null ? `${sign}${vol.toLocaleString()} L` : "—"}
+                        </span>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+
             <Separator className="my-4 text-gray-100" />
 
             <div className="pt-4">
-                <button 
+                <button
                   onClick={() => onTransfer?.(silo)}
                   className="w-full py-4 bg-[#006BC4] text-white rounded-2xl font-medium shadow-lg shadow-blue-200 hover:bg-blue-700 transition-all flex items-center justify-center gap-2"
                 >
@@ -220,5 +270,14 @@ export function SiloDetailsDrawer({
           </div>
       </SheetContent>
     </Sheet>
+
+    {silo && (
+      <SiloBMTSheet
+        open={bmtSheetOpen}
+        onOpenChange={setBmtSheetOpen}
+        siloName={silo.name}
+      />
+    )}
+  </>
   )
 }

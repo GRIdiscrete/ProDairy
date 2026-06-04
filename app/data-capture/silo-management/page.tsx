@@ -13,8 +13,10 @@ import { DataTable } from "@/components/ui/data-table"
 import { Badge } from "@/components/ui/badge"
 import { LoadingButton } from "@/components/ui/loading-button"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
-import { Droplets, ArrowRightLeft, Clock, History, Package, Plus, Eye, Edit, LayoutGrid, List } from "lucide-react"
+import { Droplets, ArrowRightLeft, Clock, History, Package, Plus, Eye, Edit, LayoutGrid, List, LayoutList, Table2 } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
+import { bmtControlFormApi, BMTTableRow } from "@/lib/api/bmt-control-form"
+import { bmtTableColumns } from "@/components/forms/silo-bmt-sheet"
 
 export default function SiloManagementPage() {
   const dispatch = useAppDispatch()
@@ -29,6 +31,9 @@ export default function SiloManagementPage() {
   const [viewTransferDrawerOpen, setViewTransferDrawerOpen] = useState(false)
   const [transferMode, setTransferMode] = useState<"create" | "edit">("create")
   const [sourceSilo, setSourceSilo] = useState<any | null>(null)
+  const [transferViewMode, setTransferViewMode] = useState<"records" | "table">("records")
+  const [transferTableData, setTransferTableData] = useState<BMTTableRow[]>([])
+  const [transferTableLoading, setTransferTableLoading] = useState(false)
 
   const hasFetchedRef = useRef(false)
 
@@ -39,6 +44,15 @@ export default function SiloManagementPage() {
       dispatch(fetchSiloTransfers())
     }
   }, [dispatch])
+
+  useEffect(() => {
+    if (transferViewMode !== "table" || transferTableData.length > 0) return
+    setTransferTableLoading(true)
+    bmtControlFormApi.getTable()
+      .then(setTransferTableData)
+      .catch(() => {})
+      .finally(() => setTransferTableLoading(false))
+  }, [transferViewMode])
 
   const handleSiloClick = (silo: any) => {
     setSelectedSilo(silo)
@@ -216,14 +230,41 @@ export default function SiloManagementPage() {
           </TabsContent>
 
           <TabsContent value="transfers" className="mt-0">
-            {/* Transfers Section */}
             <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
-                <DataTable 
-                columns={transferColumns} 
-                data={transfers} 
-                showSearch={true}
-                searchPlaceholder="Filter transfers..."
+              <div className="flex items-center justify-between px-4 pt-4">
+                <div className="flex items-center bg-gray-100 p-1 rounded-lg gap-0.5">
+                  <button
+                    onClick={() => setTransferViewMode("records")}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${transferViewMode === "records" ? "bg-white shadow-sm text-gray-900" : "text-gray-500 hover:text-gray-700"}`}
+                  >
+                    <LayoutList className="w-3.5 h-3.5" /> Records
+                  </button>
+                  <button
+                    onClick={() => setTransferViewMode("table")}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${transferViewMode === "table" ? "bg-white shadow-sm text-gray-900" : "text-gray-500 hover:text-gray-700"}`}
+                  >
+                    <Table2 className="w-3.5 h-3.5" /> Table View
+                  </button>
+                </div>
+              </div>
+              {transferViewMode === "records" ? (
+                <DataTable
+                  columns={transferColumns}
+                  data={transfers}
+                  showSearch={true}
+                  searchPlaceholder="Filter transfers..."
                 />
+              ) : transferTableLoading ? (
+                <div className="p-6 space-y-3">
+                  {[1,2,3,4,5].map(i => <Skeleton key={i} className="h-10 w-full" />)}
+                </div>
+              ) : (
+                <DataTable
+                  columns={bmtTableColumns}
+                  data={transferTableData}
+                  searchKey="product"
+                />
+              )}
             </div>
           </TabsContent>
         </Tabs>
