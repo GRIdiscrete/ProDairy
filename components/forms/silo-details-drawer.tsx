@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useEffect } from "react"
+import React, { useEffect, useState } from "react"
 import {
   Sheet,
   SheetContent,
@@ -10,10 +10,11 @@ import {
 } from "@/components/ui/sheet"
 import { Badge } from "@/components/ui/badge"
 import { useAppDispatch, useAppSelector } from "@/lib/store"
-import { fetchCIPStatus } from "@/lib/store/slices/siloSlice"
-import { Droplets, Thermometer, FlaskConical, History, ShieldCheck, Timer, ArrowRightLeft, Edit } from "lucide-react"
+import { fetchCIPStatus, updateSilo } from "@/lib/store/slices/siloSlice"
+import { Droplets, Thermometer, FlaskConical, ShieldCheck, Timer, ArrowRightLeft, Edit, Package, Check, X } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Separator } from "@/components/ui/separator"
+import { toast } from "sonner"
 
 interface SiloDetailsDrawerProps {
   open: boolean
@@ -33,12 +34,32 @@ export function SiloDetailsDrawer({
   const dispatch = useAppDispatch()
   const cipStatuses = useAppSelector((state) => state.silo.cipStatuses)
   const cipData = silo ? cipStatuses[silo.name] : null
+  const [editingProduct, setEditingProduct] = useState(false)
+  const [productValue, setProductValue] = useState("")
 
   useEffect(() => {
     if (open && silo) {
       dispatch(fetchCIPStatus(silo.name))
+      setProductValue(silo.product ?? "")
+      setEditingProduct(false)
     }
   }, [open, silo, dispatch])
+
+  const saveProduct = async () => {
+    if (!silo) return
+    try {
+      await dispatch(updateSilo({ ...silo, product: productValue || null })).unwrap()
+      toast.success("Product updated")
+      setEditingProduct(false)
+    } catch {
+      toast.error("Failed to update product")
+    }
+  }
+
+  const cancelEdit = () => {
+    setProductValue(silo?.product ?? "")
+    setEditingProduct(false)
+  }
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -112,6 +133,46 @@ export function SiloDetailsDrawer({
 
             <Separator className="my-4 text-gray-100" />
 
+            {/* Current Product */}
+            <div className="p-4 bg-white border border-gray-100 rounded-xl space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-violet-500">
+                  <Package className="w-4 h-4" />
+                  <span className="text-[10px] uppercase font-semibold">Current Product</span>
+                </div>
+                {!editingProduct && (
+                  <button
+                    onClick={() => setEditingProduct(true)}
+                    className="p-1 rounded-full hover:bg-gray-100 transition-colors text-gray-400 hover:text-gray-600"
+                  >
+                    <Edit className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+              {editingProduct ? (
+                <div className="flex items-center gap-2">
+                  <input
+                    autoFocus
+                    className="flex-1 text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-400"
+                    value={productValue}
+                    onChange={(e) => setProductValue(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter") saveProduct(); if (e.key === "Escape") cancelEdit() }}
+                    placeholder="e.g. Whole Milk"
+                  />
+                  <button onClick={saveProduct} className="p-1.5 rounded-full bg-emerald-50 hover:bg-emerald-100 text-emerald-600 transition-colors">
+                    <Check className="w-3.5 h-3.5" />
+                  </button>
+                  <button onClick={cancelEdit} className="p-1.5 rounded-full bg-red-50 hover:bg-red-100 text-red-500 transition-colors">
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ) : (
+                <p className="text-xl font-light capitalize">
+                  {productValue || <span className="text-sm text-gray-400">Not set</span>}
+                </p>
+              )}
+            </div>
+
             {/* CIP Status Section */}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
@@ -131,43 +192,15 @@ export function SiloDetailsDrawer({
               </div>
 
               {cipData && (
-                <div className="p-4 bg-emerald-50 bg-opacity-50 border border-emerald-100 rounded-xl space-y-4">
+                <div className="p-4 bg-emerald-50 bg-opacity-50 border border-emerald-100 rounded-xl">
                   <div className="flex justify-between items-center">
                     <span className="text-xs text-gray-500 flex items-center gap-1">
                       <Timer className="w-3 h-3" /> Last Cleaned
                     </span>
                     <span className="text-xs font-medium text-emerald-800">{new Date(cipData.updated_at).toLocaleDateString()}</span>
                   </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs text-gray-500">Current Product</span>
-                    <Badge variant="secondary" className="capitalize text-[10px] font-normal tracking-wide">
-                      {cipData.product || "empty"}
-                    </Badge>
-                  </div>
                 </div>
               )}
-            </div>
-
-            {/* Recent History / Transfers Placeholder */}
-            <div className="space-y-4">
-              <h4 className="text-sm font-medium flex items-center gap-2">
-                <History className="w-4 h-4 text-blue-600" />
-                Recent Activity
-              </h4>
-              <div className="space-y-3">
-                {[1, 2].map((i) => (
-                  <div key={i} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-transparent hover:border-gray-200 transition-colors cursor-pointer group">
-                    <div className="flex items-center gap-3">
-                      <div className="w-2 h-2 rounded-full bg-blue-300 group-hover:bg-blue-500 transition-colors" />
-                      <div className="flex flex-col">
-                        <span className="text-xs font-medium text-gray-700">Volume Intake</span>
-                        <span className="text-[10px] text-gray-400">{i * 2} hours ago</span>
-                      </div>
-                    </div>
-                    <span className="text-xs font-light">+{2400 / i} L</span>
-                  </div>
-                ))}
-              </div>
             </div>
 
             <Separator className="my-4 text-gray-100" />

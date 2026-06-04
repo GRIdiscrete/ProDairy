@@ -138,6 +138,7 @@ export interface Silo {
   fat_content: number | null
   temperature: number | null
   composition: SiloComposition[] | null
+  product?: string | null
 }
 
 export type SiloStatus = "active" | "inactive" | "maintenance" | "offline"
