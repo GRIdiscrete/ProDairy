@@ -59,34 +59,8 @@ export default function PasteurizingPage() {
     { label: "Temp Product Out",        unit: "°C",  getVal: (r: SteriPastoTableRow) => r.temp_product_out,                 isTime: false },
   ]
 
-  const pivotForms = useMemo(() => {
-    if (!pastoTableData.length) return []
-    const formMap = new Map<string, { meta: SteriPastoTableRow; cols: Map<number, { timeRow?: SteriPastoTableRow; tempRow?: SteriPastoTableRow }> }>()
-    pastoTableData.forEach(row => {
-      const key = `${row.date}__${row.production_start}__${row.production_end}`
-      if (!formMap.has(key)) formMap.set(key, { meta: row, cols: new Map() })
-      const f = formMap.get(key)!
-      const ro = row.row_order ?? 0
-      if (!f.cols.has(ro)) f.cols.set(ro, {})
-      const c = f.cols.get(ro)!
-      const m = (row.metric ?? "").toLowerCase()
-      if (m === "time") c.timeRow = row
-      else c.tempRow = row
-    })
-    return Array.from(formMap.values()).map(f => ({
-      meta: f.meta,
-      cols: Array.from(f.cols.entries()).sort((a, b) => a[0] - b[0]).map(([, v]) => v),
-    }))
-  }, [pastoTableData])
-
-  const getBMTFormById = (bmtId: string) => {
-    return bmtForms.find((form: any) => form.id === bmtId)
-  }
-
-  // Helper functions to get names from IDs
   const getMachineName = (form: any) => {
     if (!form) return 'Unknown Machine'
-
     if (form.steri_milk_pasteurizing_form_machine_fkey) {
       return form.steri_milk_pasteurizing_form_machine_fkey.name
     }
@@ -97,6 +71,39 @@ export default function PasteurizingPage() {
     return 'Unknown Machine'
   }
 
+  const pivotForms = useMemo(() => {
+    if (!pastoTableData.length) return []
+    const formMap = new Map<string, {
+      meta: SteriPastoTableRow
+      machineName: string
+      cols: Map<number, { timeRow?: SteriPastoTableRow; tempRow?: SteriPastoTableRow }>
+    }>()
+    pastoTableData.forEach(row => {
+      const key = `${row.date}__${row.production_start}__${row.production_end}`
+      if (!formMap.has(key)) {
+        // cross-reference machine name from the forms slice by date
+        const matchedForm = forms.find((f: any) => f.date && row.date && String(f.date).startsWith(row.date))
+        const machineName = matchedForm ? getMachineName(matchedForm) : "—"
+        formMap.set(key, { meta: row, machineName, cols: new Map() })
+      }
+      const f = formMap.get(key)!
+      const ro = row.row_order ?? 0
+      if (!f.cols.has(ro)) f.cols.set(ro, {})
+      const c = f.cols.get(ro)!
+      const m = (row.metric ?? "").toLowerCase()
+      if (m === "time") c.timeRow = row
+      else c.tempRow = row
+    })
+    return Array.from(formMap.values()).map(f => ({
+      meta: f.meta,
+      machineName: f.machineName,
+      cols: Array.from(f.cols.entries()).sort((a, b) => a[0] - b[0]).map(([, v]) => v),
+    }))
+  }, [pastoTableData, forms, machines])
+
+  const getBMTFormById = (bmtId: string) => {
+    return bmtForms.find((form: any) => form.id === bmtId)
+  }
 
   const getBMTFormInfo = (form: any) => {
     if (!form) return { name: 'Unknown BMT Form', product: 'Unknown', volume: 0 }
@@ -733,11 +740,12 @@ export default function PasteurizingPage() {
                   {pivotForms.map((form, fi) => (
                     <div key={fi}>
                       {/* Form header */}
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3 p-3 bg-gray-50 rounded-lg text-xs">
+                      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-3 p-3 bg-gray-50 rounded-lg text-xs">
                         <div><span className="text-gray-400 uppercase tracking-wide">Date</span><p className="font-medium mt-0.5">{form.meta.date ?? "—"}</p></div>
                         <div><span className="text-gray-400 uppercase tracking-wide">Production Start</span><p className="font-medium mt-0.5">{form.meta.production_start ?? "—"}</p></div>
                         <div><span className="text-gray-400 uppercase tracking-wide">Production End</span><p className="font-medium mt-0.5">{form.meta.production_end ? new Date(form.meta.production_end).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "—"}</p></div>
                         <div><span className="text-gray-400 uppercase tracking-wide">Preheating / Water Circ.</span><p className="font-medium mt-0.5">{form.meta.preheating_start ?? "—"} / {form.meta.water_circulation ?? "—"}</p></div>
+                        <div><span className="text-gray-400 uppercase tracking-wide">Machine</span><p className="font-medium mt-0.5">{form.machineName}</p></div>
                       </div>
 
                       {/* Pivot table */}
