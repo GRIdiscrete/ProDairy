@@ -6,7 +6,7 @@ import { LoadingButton } from "@/components/ui/loading-button"
 import { DataTable } from "@/components/ui/data-table"
 import { DataTableFilters } from "@/components/ui/data-table-filters"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Eye, Edit, Trash2, Beaker, TrendingUp, FileText, Clock, Package, User, Droplets, X } from "lucide-react"
+import { Plus, Eye, Edit, Trash2, Beaker, TrendingUp, FileText, Clock, Package, User, Droplets, X, LayoutList, Table2, Download } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { StandardizingFormDrawer } from "@/components/forms/standardizing-form-drawer"
 import { StandardizingFormViewDrawer } from "@/components/forms/standardizing-form-view-drawer"
@@ -31,6 +31,8 @@ import { generateSkimmingFormId } from "@/lib/utils/form-id-generator"
 import { SkimmingFormDrawer } from "@/components/forms/skimming-form-drawer"
 import { SkimmingFormViewDrawer } from "@/components/forms/skimming-form-view-drawer"
 import { fetchSkimmingForms } from "@/lib/store/slices/skimmingSlice"
+import { skimmingFormApi, SkimmingTableRow } from "@/lib/api/skimming-form"
+import { exportToExcel } from "@/lib/utils/export-excel"
 import { useRouter, useSearchParams } from "next/navigation"
 
 export default function StandardizingPage() {
@@ -76,6 +78,11 @@ export default function StandardizingPage() {
   const [skimmingFormDrawerOpen, setSkimmingFormDrawerOpen] = useState(false)
   const [skimmingViewDrawerOpen, setSkimmingViewDrawerOpen] = useState(false)
   const [skimmingDeleteDialogOpen, setSkimmingDeleteDialogOpen] = useState(false)
+
+  // Skimming view mode toggle
+  const [skimmingViewMode, setSkimmingViewMode] = useState<"records" | "table">("records")
+  const [skimmingTableData, setSkimmingTableData] = useState<SkimmingTableRow[]>([])
+  const [skimmingTableLoading, setSkimmingTableLoading] = useState(false)
 
   // Selected form and mode
   const [selectedForm, setSelectedForm] = useState<StandardizingForm | null>(null)
@@ -279,7 +286,14 @@ export default function StandardizingPage() {
   const latestForm = Array.isArray(forms) && forms.length > 0 ? forms[0] : null
   const latestSkimmingForm = Array.isArray(skimmingForms) && skimmingForms.length > 0 ? skimmingForms[0] : null
 
-
+  useEffect(() => {
+    if (skimmingViewMode !== "table" || skimmingTableData.length > 0) return
+    setSkimmingTableLoading(true)
+    skimmingFormApi.getTable()
+      .then(setSkimmingTableData)
+      .catch(() => toast.error("Failed to load skimming table"))
+      .finally(() => setSkimmingTableLoading(false))
+  }, [skimmingViewMode])
 
   // Skimming form handlers
   const handleAddSkimmingForm = () => {
@@ -513,6 +527,52 @@ export default function StandardizingPage() {
           </div>
         )
       },
+    },
+  ]
+
+  // Flat table columns for the /skimming-form/table endpoint
+  const skimmingTableColumns = [
+    {
+      accessorKey: "source",
+      header: "Source Silo",
+      cell: ({ row }: any) => <span className="text-sm font-light">{row.original.source ?? "—"}</span>,
+    },
+    {
+      accessorKey: "raw_milk",
+      header: "Raw Milk (L)",
+      cell: ({ row }: any) => (
+        <span className="text-sm font-light text-green-700">
+          {row.original.raw_milk != null ? row.original.raw_milk.toLocaleString() : "—"}
+        </span>
+      ),
+    },
+    {
+      accessorKey: "destination",
+      header: "Destination",
+      cell: ({ row }: any) => <span className="text-sm font-light">{row.original.destination ?? "—"}</span>,
+    },
+    {
+      accessorKey: "skim",
+      header: "Skim Milk (L)",
+      cell: ({ row }: any) => (
+        <span className="text-sm font-light text-blue-700">
+          {row.original.skim != null ? row.original.skim.toLocaleString() : "—"}
+        </span>
+      ),
+    },
+    {
+      accessorKey: "cream_quantity",
+      header: "Cream (L)",
+      cell: ({ row }: any) => (
+        <span className="text-sm font-light text-amber-700">
+          {row.original.cream_quantity != null ? row.original.cream_quantity.toLocaleString() : "—"}
+        </span>
+      ),
+    },
+    {
+      accessorKey: "cream_tank",
+      header: "Cream Tank",
+      cell: ({ row }: any) => <span className="text-sm font-light">{row.original.cream_tank ?? "—"}</span>,
     },
   ]
 
@@ -1085,27 +1145,64 @@ export default function StandardizingPage() {
             {/* Skimming Forms Data Table */}
             {!skimmingLoading && (
               <div className="border border-gray-200 rounded-lg bg-white">
-                <div className="p-6 pb-0">
+                <div className="p-6 pb-0 flex items-center justify-between">
                   <div className="text-lg font-light">Skimming Forms</div>
+                  <div className="flex items-center gap-2">
+                    {skimmingViewMode === "table" && (
+                      <button
+                        onClick={() =>
+                          exportToExcel(
+                            skimmingTableColumns.map((c) => ({ header: c.header, key: c.accessorKey })),
+                            skimmingTableData,
+                            "skimming-table"
+                          )
+                        }
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
+                      >
+                        <Download className="w-3.5 h-3.5" /> Export Excel
+                      </button>
+                    )}
+                    <div className="flex items-center bg-gray-100 p-1 rounded-lg gap-0.5">
+                      <button
+                        onClick={() => setSkimmingViewMode("records")}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${skimmingViewMode === "records" ? "bg-white shadow-sm text-gray-900" : "text-gray-500 hover:text-gray-700"}`}
+                      >
+                        <LayoutList className="w-3.5 h-3.5" /> Records
+                      </button>
+                      <button
+                        onClick={() => setSkimmingViewMode("table")}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${skimmingViewMode === "table" ? "bg-white shadow-sm text-gray-900" : "text-gray-500 hover:text-gray-700"}`}
+                      >
+                        <Table2 className="w-3.5 h-3.5" /> Table View
+                      </button>
+                    </div>
+                  </div>
                 </div>
                 <div className="p-6 space-y-4">
-                  <DataTableFilters
-                    filters={tableFilters}
-                    onFiltersChange={setTableFilters}
-                    onSearch={(searchTerm) => setTableFilters(prev => ({ ...prev, search: searchTerm }))}
-                    searchPlaceholder="Search skimming forms..."
-                    filterFields={skimmingFilterFields}
-                  />
-
-                  {skimmingLoading ? (
+                  {skimmingViewMode === "records" ? (
+                    <>
+                      <DataTableFilters
+                        filters={tableFilters}
+                        onFiltersChange={setTableFilters}
+                        onSearch={(searchTerm) => setTableFilters(prev => ({ ...prev, search: searchTerm }))}
+                        searchPlaceholder="Search skimming forms..."
+                        filterFields={skimmingFilterFields}
+                      />
+                      <DataTable
+                        columns={skimmingColumns}
+                        data={filteredSkimmingForms}
+                        showSearch={false}
+                        showExport={true}
+                        exportFilename="skimming-data"
+                      />
+                    </>
+                  ) : skimmingTableLoading ? (
                     <ContentSkeleton sections={1} cardsPerSection={4} />
                   ) : (
                     <DataTable
-                      columns={skimmingColumns}
-                      data={filteredSkimmingForms}
-                      showSearch={false}
-                      showExport={true}
-                      exportFilename="skimming-data"
+                      columns={skimmingTableColumns}
+                      data={skimmingTableData}
+                      searchKey="source"
                     />
                   )}
                 </div>

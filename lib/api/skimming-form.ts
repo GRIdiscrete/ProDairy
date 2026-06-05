@@ -61,6 +61,15 @@ export interface UpdateSkimmingFormRequest {
   cream?: CreamDetails
 }
 
+export interface SkimmingTableRow {
+  raw_milk: number | null
+  source: string | null
+  skim: number | null
+  destination: string | null
+  cream_quantity: number | null
+  cream_tank: string | null
+}
+
 export interface SkimmingFormResponse {
   statusCode: number
   message: string
@@ -138,6 +147,20 @@ export const skimmingFormApi = {
       return response
     } catch (error) {
       console.error("Error updating skimming form:", error)
+      throw error
+    }
+  },
+
+  // Get flat table view
+  getTable: async (): Promise<SkimmingTableRow[]> => {
+    try {
+      const response = await apiRequest<{ statusCode: number; message: string; data: SkimmingTableRow[] }>(
+        "/skimming-form/table",
+        { method: "GET", headers: { accept: "application/json" } }
+      )
+      return response.data || []
+    } catch (error) {
+      console.error("Error fetching skimming table:", error)
       throw error
     }
   },

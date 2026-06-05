@@ -695,6 +695,7 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode, sourceSil
               control={editForm.control}
               errors={editForm.formState.errors}
               users={users}
+              llmUsers={llmUsers}
             />
 
             {/* Milk Movement – flowmeter end readings */}

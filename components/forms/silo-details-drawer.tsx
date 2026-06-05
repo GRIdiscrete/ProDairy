@@ -13,6 +13,7 @@ import { useAppDispatch, useAppSelector } from "@/lib/store"
 import { fetchCIPStatus, fetchSiloBMTs, updateSilo, deleteSiloByName } from "@/lib/store/slices/siloSlice"
 import { Droplets, Thermometer, FlaskConical, ShieldCheck, Timer, ArrowRightLeft, Edit, Package, X, History, ExternalLink, Trash2, FlaskRound } from "lucide-react"
 import { SiloBMTSheet } from "@/components/forms/silo-bmt-sheet"
+import { SiloCIPSheet } from "@/components/forms/silo-cip-sheet"
 import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-dialog"
 import { CIPControlFormDrawer } from "@/components/forms/cip-control-form-drawer"
 import { getCIPsForSilo } from "@/lib/api/data-capture-forms"
@@ -56,6 +57,7 @@ export function SiloDetailsDrawer({
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [deleteLoading, setDeleteLoading] = useState(false)
   const [cipDrawerOpen, setCipDrawerOpen] = useState(false)
+  const [cipSheetOpen, setCipSheetOpen] = useState(false)
   const [siloCIPs, setSiloCIPs] = useState<CIPControlForm[]>([])
   const [cipLoading, setCipLoading] = useState(false)
 
@@ -299,10 +301,18 @@ export function SiloDetailsDrawer({
 
             {/* CIP History */}
             <div className="space-y-4">
-              <h4 className="text-sm font-medium flex items-center gap-2">
-                <FlaskRound className="w-4 h-4 text-emerald-600" />
-                CIP History
-              </h4>
+              <div className="flex items-center justify-between">
+                <h4 className="text-sm font-medium flex items-center gap-2">
+                  <FlaskRound className="w-4 h-4 text-emerald-600" />
+                  CIP History
+                </h4>
+                <button
+                  onClick={() => setCipSheetOpen(true)}
+                  className="flex items-center gap-1 text-xs text-emerald-700 hover:text-emerald-900 transition-colors"
+                >
+                  View All <ExternalLink className="w-3 h-3" />
+                </button>
+              </div>
               {cipLoading ? (
                 <p className="text-xs text-gray-400 italic">Loading…</p>
               ) : siloCIPs.length === 0 ? (
@@ -373,7 +383,6 @@ export function SiloDetailsDrawer({
         onOpenChange={(v) => {
           setCipDrawerOpen(v)
           if (!v) {
-            // Refresh CIP list after closing
             setCipLoading(true)
             getCIPsForSilo(silo.name)
               .then(setSiloCIPs)
@@ -384,6 +393,14 @@ export function SiloDetailsDrawer({
         form={null}
         mode="create"
         defaultSilo={{ id: silo.id, name: silo.name }}
+      />
+    )}
+
+    {silo && (
+      <SiloCIPSheet
+        open={cipSheetOpen}
+        onOpenChange={setCipSheetOpen}
+        siloName={silo.name}
       />
     )}
   </>
