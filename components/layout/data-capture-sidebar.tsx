@@ -10,6 +10,8 @@ import { Button } from "@/components/ui/button";
 import {
   LayoutDashboard,
   ChevronLeft,
+  ChevronDown,
+  ChevronRight,
   ClipboardList,
   User,
   FlaskConical,
@@ -22,6 +24,7 @@ import {
   Wrench,
   Workflow,
   AlertTriangle,
+  FileSpreadsheet,
 } from "lucide-react";
 import { motion, AnimatePresence, Variants } from "framer-motion";
 import { processApi } from "@/lib/api/process";
@@ -126,6 +129,7 @@ function DataCaptureSidebarComponent({
   const [processes, setProcesses] = useState<any[]>([])
   const [processOpen, setProcessOpen] = useState(false)
   const [selectedProcess, setSelectedProcess] = useState<string | null>(null)
+  const [steriExpanded, setSteriExpanded] = useState(true)
 
   const router = useRouter()
 
@@ -330,42 +334,138 @@ function DataCaptureSidebarComponent({
               <div className="relative ml-4">
                 <div className="absolute left-2 top-0 bottom-0 w-px bg-zinc-200" />
                 <ul className="space-y-1">
-                  {[
-                    { key: 'pasteurizing', label: 'Pasteurizing', Icon: FlaskConical, enabled: true },
-                    { key: 'filmatic-lines', label: 'Steri Before Autoclave', Icon: Factory, enabled: true },
-                    { key: 'process-log', label: 'Autoclave', Icon: Workflow, enabled: true },
-                    { key: 'filmatic-lines-2', label: 'Steri After Autoclave', Icon: Factory, enabled: true },
-                    { key: 'palletiser-sheet', label: 'Palletizer', Icon: Grid3X3, enabled: true },
-                    { key: 'incubation', label: 'Incubation', Icon: Beaker, enabled: true },
-                    { key: 'test', label: 'Test', Icon: TestTube, enabled: true },
-                    { key: 'qa-corrective-measures', label: 'QA Corrective Measures', Icon: AlertTriangle, enabled: true },
-                    { key: 'dispatch', label: 'Dispatch', Icon: Package, enabled: true },
-                  ].map((s, idx) => {
-                    const href = s.enabled
-                      ? (s.key === 'filmatic-lines-2'
-                        ? (selectedProcess ? `/data-capture/${selectedProcess}/filmatic-lines-2` : '#')
-                        : (selectedProcess ? `/data-capture/${selectedProcess}/${s.key}` : '#'))
-                      : '#'
-                    const isActive = s.enabled && (pathname === href || pathname.startsWith(href + '/'))
-                    const content = (
-                      <div className={cn("group flex items-center rounded-xl px-2.5 py-2 text-sm transition-all",
-                        isActive ? " from-blue-50 to-lime-50 text-zinc-900 ring-1 ring-inset ring-blue-200/50" : s.enabled ? "text-zinc-700 hover:bg-zinc-50" : "text-zinc-400")}
-                      >
-                        <div className="relative mr-2">
-                          <div className={cn("flex h-5 w-5 items-center justify-center rounded-full border", isActive ? "border-[#006BC4] text-blue-600" : "border-zinc-300 text-zinc-500")}>{idx + 1}</div>
-                        </div>
-                        <s.Icon className={cn("h-5 w-5 flex-shrink-0", isActive ? "text-blue-600" : s.enabled ? "text-zinc-500 group-hover:text-zinc-700" : "text-zinc-400")} />
-                        <span className="ml-3 font-light tracking-wide">{s.label}</span>
-                      </div>
-                    )
+                  {/* ── Pasteurizing (standalone, step 1) ── */}
+                  {(() => {
+                    const href = selectedProcess ? `/data-capture/${selectedProcess}/pasteurizing` : '#'
+                    const isActive = pathname === href || pathname.startsWith(href + '/')
                     return (
-                      <li key={s.label} className="relative pl-2">
-                        <div className="absolute left-1 top-0 bottom-0 w-px bg-transparent" />
-                        {s.enabled ? (
-                          <Link href={href}>{content}</Link>
-                        ) : (
-                          <div>{content}</div>
+                      <li className="relative pl-2">
+                        <Link href={href}>
+                          <div className={cn(
+                            "group flex items-center rounded-xl px-2.5 py-2 text-sm transition-all",
+                            isActive
+                              ? "from-blue-50 to-lime-50 text-zinc-900 ring-1 ring-inset ring-blue-200/50"
+                              : "text-zinc-700 hover:bg-zinc-50"
+                          )}>
+                            <div className="relative mr-2">
+                              <div className={cn("flex h-5 w-5 items-center justify-center rounded-full border text-xs",
+                                isActive ? "border-[#006BC4] text-blue-600" : "border-zinc-300 text-zinc-500"
+                              )}>1</div>
+                            </div>
+                            <FlaskConical className={cn("h-5 w-5 flex-shrink-0",
+                              isActive ? "text-blue-600" : "text-zinc-500 group-hover:text-zinc-700"
+                            )} />
+                            <span className="ml-3 font-light tracking-wide">Pasteurizing</span>
+                          </div>
+                        </Link>
+                      </li>
+                    )
+                  })()}
+
+                  {/* ── Steri group (2 → 2a … 2e) ── */}
+                  {(() => {
+                    const steriSubs = [
+                      { key: 'filmatic-lines',      label: 'Steri Before Autoclave',    Icon: Factory,        sub: 'a' },
+                      { key: 'process-log',         label: 'Autoclave',                 Icon: Workflow,       sub: 'b' },
+                      { key: 'filmatic-lines-2',    label: 'Steri After Autoclave',     Icon: Factory,        sub: 'c' },
+                      { key: 'palletiser-sheet',    label: 'Palletizer',                Icon: Grid3X3,        sub: 'd' },
+                      { key: 'steri-process-log',   label: 'Filmatic Lines Production Sheet', Icon: FileSpreadsheet, sub: 'e' },
+                    ]
+                    const steriHrefs = steriSubs.map(s =>
+                      selectedProcess ? `/data-capture/${selectedProcess}/${s.key}` : '#'
+                    )
+                    const steriActive = steriHrefs.some(h => h !== '#' && (pathname === h || pathname.startsWith(h + '/')))
+                    return (
+                      <li className="relative pl-2">
+                        {/* Group header */}
+                        <button
+                          onClick={() => setSteriExpanded(v => !v)}
+                          className={cn(
+                            "group w-full flex items-center rounded-xl px-2.5 py-2 text-sm transition-all",
+                            steriActive
+                              ? "from-blue-50 to-lime-50 text-zinc-900 ring-1 ring-inset ring-blue-200/50"
+                              : "text-zinc-700 hover:bg-zinc-50"
+                          )}
+                        >
+                          <div className="relative mr-2">
+                            <div className={cn("flex h-5 w-5 items-center justify-center rounded-full border text-xs",
+                              steriActive ? "border-[#006BC4] text-blue-600" : "border-zinc-300 text-zinc-500"
+                            )}>2</div>
+                          </div>
+                          <FlaskConical className={cn("h-5 w-5 flex-shrink-0",
+                            steriActive ? "text-blue-600" : "text-zinc-500 group-hover:text-zinc-700"
+                          )} />
+                          <span className="ml-3 font-light tracking-wide flex-1 text-left">Steri</span>
+                          {steriExpanded
+                            ? <ChevronDown className="h-3.5 w-3.5 text-zinc-400" />
+                            : <ChevronRight className="h-3.5 w-3.5 text-zinc-400" />
+                          }
+                        </button>
+
+                        {/* Sub-items */}
+                        {steriExpanded && (
+                          <ul className="mt-0.5 ml-4 space-y-0.5 border-l border-zinc-200 pl-2">
+                            {steriSubs.map((s, i) => {
+                              const href = steriHrefs[i]
+                              const isActive = href !== '#' && (pathname === href || pathname.startsWith(href + '/'))
+                              return (
+                                <li key={s.key}>
+                                  <Link href={href}>
+                                    <div className={cn(
+                                      "group flex items-center rounded-xl px-2.5 py-2 text-sm transition-all",
+                                      isActive
+                                        ? "from-blue-50 to-lime-50 text-zinc-900 ring-1 ring-inset ring-blue-200/50"
+                                        : "text-zinc-700 hover:bg-zinc-50"
+                                    )}>
+                                      <div className="relative mr-2">
+                                        <div className={cn("flex h-5 w-5 items-center justify-center rounded-full border text-[10px]",
+                                          isActive ? "border-[#006BC4] text-blue-600" : "border-zinc-300 text-zinc-500"
+                                        )}>2{s.sub}</div>
+                                      </div>
+                                      <s.Icon className={cn("h-5 w-5 flex-shrink-0",
+                                        isActive ? "text-blue-600" : "text-zinc-500 group-hover:text-zinc-700"
+                                      )} />
+                                      <span className="ml-3 font-light tracking-wide">{s.label}</span>
+                                    </div>
+                                  </Link>
+                                </li>
+                              )
+                            })}
+                          </ul>
                         )}
+                      </li>
+                    )
+                  })()}
+
+                  {/* ── Outer stages (2 … 5) ── */}
+                  {[
+                    { key: 'incubation',             label: 'Incubation',             Icon: Beaker,         num: 3 },
+                    { key: 'test',                   label: 'Test',                   Icon: TestTube,       num: 4 },
+                    { key: 'qa-corrective-measures', label: 'QA Corrective Measures', Icon: AlertTriangle,  num: 5 },
+                    { key: 'dispatch',               label: 'Dispatch',               Icon: Package,        num: 6 },
+                  ].map(s => {
+                    const href = selectedProcess ? `/data-capture/${selectedProcess}/${s.key}` : '#'
+                    const isActive = pathname === href || pathname.startsWith(href + '/')
+                    return (
+                      <li key={s.key} className="relative pl-2">
+                        <Link href={href}>
+                          <div className={cn(
+                            "group flex items-center rounded-xl px-2.5 py-2 text-sm transition-all",
+                            isActive
+                              ? "from-blue-50 to-lime-50 text-zinc-900 ring-1 ring-inset ring-blue-200/50"
+                              : "text-zinc-700 hover:bg-zinc-50"
+                          )}>
+                            <div className="relative mr-2">
+                              <div className={cn("flex h-5 w-5 items-center justify-center rounded-full border text-xs",
+                                isActive ? "border-[#006BC4] text-blue-600" : "border-zinc-300 text-zinc-500"
+                              )}>{s.num}</div>
+                            </div>
+                            <s.Icon className={cn("h-5 w-5 flex-shrink-0",
+                              isActive ? "text-blue-600" : "text-zinc-500 group-hover:text-zinc-700"
+                            )} />
+                            <span className="ml-3 font-light tracking-wide">{s.label}</span>
+                          </div>
+                        </Link>
                       </li>
                     )
                   })}
