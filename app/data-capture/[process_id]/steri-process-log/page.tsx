@@ -245,12 +245,12 @@ export default function SteriRecordsPage() {
 
   return (
     <DataCaptureDashboardLayout
-      title="Filmatic Lines Production Sheet"
+      title="Steri Records"
       subtitle="Combined sheet view for all steri production stages"
     >
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-light text-foreground">Filmatic Lines Production Sheet</h1>
+          <h1 className="text-3xl font-light text-foreground">Steri Records</h1>
           <p className="text-sm font-light text-muted-foreground">
             Sheet view for Filmatic Lines (Before &amp; After Autoclave), Autoclave, and Palletizer
           </p>
@@ -259,7 +259,7 @@ export default function SteriRecordsPage() {
         <Tabs defaultValue="steri">
           <TabsList className="bg-gray-100 p-1 rounded-lg h-auto flex-wrap gap-0.5">
             <TabsTrigger value="steri" className="rounded-md text-xs font-medium">
-              Filmatic Lines Production Sheet
+              Steri Records
             </TabsTrigger>
             <TabsTrigger value="autoclave" className="rounded-md text-xs font-medium">
               Autoclave
@@ -278,7 +278,7 @@ export default function SteriRecordsPage() {
             <div className="border border-gray-200 rounded-lg bg-white">
               <div className="p-4 pb-0 flex items-center gap-2">
                 <FileSpreadsheet className="h-4 w-4 text-gray-500" />
-                <span className="text-sm font-light text-gray-700">Filmatic Lines Production Sheet — Before &amp; After Autoclave</span>
+                <span className="text-sm font-light text-gray-700">Steri Records — Before &amp; After Autoclave</span>
               </div>
               <div className="p-4">
                 {steriLoading ? (

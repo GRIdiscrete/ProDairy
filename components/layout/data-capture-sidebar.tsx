@@ -369,7 +369,7 @@ function DataCaptureSidebarComponent({
                       { key: 'process-log',         label: 'Autoclave',                 Icon: Workflow,       sub: 'b' },
                       { key: 'filmatic-lines-2',    label: 'Steri After Autoclave',     Icon: Factory,        sub: 'c' },
                       { key: 'palletiser-sheet',    label: 'Palletizer',                Icon: Grid3X3,        sub: 'd' },
-                      { key: 'steri-process-log',   label: 'Filmatic Lines Production Sheet', Icon: FileSpreadsheet, sub: 'e' },
+                      { key: 'steri-process-log',   label: 'Steri Records', Icon: FileSpreadsheet, sub: 'e' },
                     ]
                     const steriHrefs = steriSubs.map(s =>
                       selectedProcess ? `/data-capture/${selectedProcess}/${s.key}` : '#'
