@@ -411,7 +411,7 @@ export default function FilmaticLines1Page() {
               <LoadingButton
                 onClick={() => exportToExcel(
                   ["date","tag","shift","time","pallets","target","variance","setbacks","product_1","product_2","filler_1","filler_2","opening","received","foiled","closing","waste","damaged","transferrable_milk"]
-                    .map(k => ({ header: k.replace(/_/g," ").replace(/\b\w/g,c=>c.toUpperCase()), key: k })),
+                    .map(k => ({ header: k.replace(/_/g," ").replace(/\b\w/g,c=>c.toUpperCase()), key: k, getValue: (row: any) => row[k] ?? "—" })),
                   sheetRows,
                   "steri-before-autoclave"
                 )}

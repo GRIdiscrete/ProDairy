@@ -535,11 +535,13 @@ export default function StandardizingPage() {
     {
       accessorKey: "source",
       header: "Source Silo",
+      getValue: (row: any) => row.source ?? "—",
       cell: ({ row }: any) => <span className="text-sm font-light">{row.original.source ?? "—"}</span>,
     },
     {
       accessorKey: "raw_milk",
       header: "Raw Milk (L)",
+      getValue: (row: any) => row.raw_milk != null ? row.raw_milk.toLocaleString() : "—",
       cell: ({ row }: any) => (
         <span className="text-sm font-light text-green-700">
           {row.original.raw_milk != null ? row.original.raw_milk.toLocaleString() : "—"}
@@ -549,11 +551,13 @@ export default function StandardizingPage() {
     {
       accessorKey: "destination",
       header: "Destination",
+      getValue: (row: any) => row.destination ?? "—",
       cell: ({ row }: any) => <span className="text-sm font-light">{row.original.destination ?? "—"}</span>,
     },
     {
       accessorKey: "skim",
       header: "Skim Milk (L)",
+      getValue: (row: any) => row.skim != null ? row.skim.toLocaleString() : "—",
       cell: ({ row }: any) => (
         <span className="text-sm font-light text-blue-700">
           {row.original.skim != null ? row.original.skim.toLocaleString() : "—"}
@@ -563,6 +567,7 @@ export default function StandardizingPage() {
     {
       accessorKey: "cream_quantity",
       header: "Cream (L)",
+      getValue: (row: any) => row.cream_quantity != null ? row.cream_quantity.toLocaleString() : "—",
       cell: ({ row }: any) => (
         <span className="text-sm font-light text-amber-700">
           {row.original.cream_quantity != null ? row.original.cream_quantity.toLocaleString() : "—"}
@@ -572,6 +577,7 @@ export default function StandardizingPage() {
     {
       accessorKey: "cream_tank",
       header: "Cream Tank",
+      getValue: (row: any) => row.cream_tank ?? "—",
       cell: ({ row }: any) => <span className="text-sm font-light">{row.original.cream_tank ?? "—"}</span>,
     },
   ]
@@ -1152,7 +1158,7 @@ export default function StandardizingPage() {
                       <button
                         onClick={() =>
                           exportToExcel(
-                            skimmingTableColumns.map((c) => ({ header: c.header, key: c.accessorKey })),
+                            skimmingTableColumns.map((c) => ({ header: c.header, key: c.accessorKey, getValue: c.getValue })),
                             skimmingTableData,
                             "skimming-table"
                           )

@@ -381,7 +381,7 @@ export default function ProcessLogPage() {
               <LoadingButton
                 onClick={() => exportToExcel(
                   ["batchLabel","rowType","autoclave","filling_start","autoclave_start","heating_start","heating_finish","steri_start","steri_after5","steri_finish","pre_cool_start","pre_cool_finish","cool1_start","cool1_finish","cool2_start","cool2_finish"]
-                    .map(k => ({ header: k.replace(/_/g," ").replace(/\b\w/g,c=>c.toUpperCase()), key: k })),
+                    .map(k => ({ header: k.replace(/_/g," ").replace(/\b\w/g,c=>c.toUpperCase()), key: k, getValue: (row: any) => row[k] ?? "—" })),
                   sheetRows,
                   "process-log"
                 )}

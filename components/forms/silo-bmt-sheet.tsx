@@ -77,16 +77,19 @@ export const bmtTableColumns = [
   {
     accessorKey: "date",
     header: "Date",
+    getValue: (row: any) => row.date ?? "—",
     cell: ({ row }: any) => <span className="text-sm font-light">{row.original.date}</span>,
   },
   {
     accessorKey: "product",
     header: "Product",
+    getValue: (row: any) => row.product ?? "—",
     cell: ({ row }: any) => <span className="text-sm font-light">{row.original.product}</span>,
   },
   {
     accessorKey: "flow_meter_start",
     header: "FM Start",
+    getValue: (row: any) => row.flow_meter_start?.toLocaleString() ?? "—",
     cell: ({ row }: any) => (
       <span className="text-sm font-light">{row.original.flow_meter_start?.toLocaleString() ?? "—"}</span>
     ),
@@ -94,6 +97,7 @@ export const bmtTableColumns = [
   {
     accessorKey: "flow_meter_end",
     header: "FM End",
+    getValue: (row: any) => row.flow_meter_end?.toLocaleString() ?? "—",
     cell: ({ row }: any) => (
       <span className="text-sm font-light">{row.original.flow_meter_end?.toLocaleString() ?? "—"}</span>
     ),
@@ -101,26 +105,31 @@ export const bmtTableColumns = [
   {
     accessorKey: "source",
     header: "Source",
+    getValue: (row: any) => row.source ?? "—",
     cell: ({ row }: any) => <span className="text-sm font-light">{row.original.source ?? "—"}</span>,
   },
   {
     accessorKey: "movement_start",
     header: "Mov. Start",
+    getValue: (row: any) => row.movement_start ?? "—",
     cell: ({ row }: any) => <span className="text-sm font-light">{row.original.movement_start ?? "—"}</span>,
   },
   {
     accessorKey: "movement_end",
     header: "Mov. End",
+    getValue: (row: any) => row.movement_end ?? "—",
     cell: ({ row }: any) => <span className="text-sm font-light">{row.original.movement_end ?? "—"}</span>,
   },
   {
     accessorKey: "destination",
     header: "Destination",
+    getValue: (row: any) => row.destination ?? "—",
     cell: ({ row }: any) => <span className="text-sm font-light">{row.original.destination ?? "—"}</span>,
   },
   {
     accessorKey: "volume_moved",
     header: "Volume (L)",
+    getValue: (row: any) => row.volume_moved != null ? row.volume_moved.toLocaleString() : "—",
     cell: ({ row }: any) => (
       <span className="text-sm font-light">
         {row.original.volume_moved != null ? row.original.volume_moved.toLocaleString() : "—"}
@@ -130,11 +139,13 @@ export const bmtTableColumns = [
   {
     accessorKey: "llm_operator",
     header: "LLM",
+    getValue: (row: any) => row.llm_operator ?? "—",
     cell: ({ row }: any) => <span className="text-sm font-light">{row.original.llm_operator ?? "—"}</span>,
   },
   {
     accessorKey: "dispatch_operator",
     header: "DPP",
+    getValue: (row: any) => row.dispatch_operator ?? "—",
     cell: ({ row }: any) => <span className="text-sm font-light">{row.original.dispatch_operator ?? "—"}</span>,
   },
 ]
@@ -168,7 +179,7 @@ export function SiloBMTSheet({ open, onOpenChange, siloName }: SiloBMTSheetProps
                   onClick={() => exportToExcel(
                     bmtTableColumns
                       .filter((c: any) => c.accessorKey)
-                      .map((c: any) => ({ header: c.header as string, key: c.accessorKey as string })),
+                      .map((c: any) => ({ header: c.header as string, key: c.accessorKey as string, getValue: c.getValue })),
                     tableRows,
                     `${siloName}-BMT-table`
                   )}

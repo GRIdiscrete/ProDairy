@@ -108,4 +108,11 @@ export const collectionVoucherApi = {
             method: 'DELETE',
         })
     },
+
+    // Get collection voucher by tag
+    async getByTag(tag: string): Promise<ApiEnvelope<CollectionVoucher2>> {
+        return apiRequest<ApiEnvelope<CollectionVoucher2>>(
+            `/raw-milk-collection-voucher-2/tag/${encodeURIComponent(tag)}`
+        )
+    },
 }

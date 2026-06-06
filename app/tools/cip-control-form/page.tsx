@@ -244,21 +244,21 @@ export default function CIPControlFormPage() {
   ]
 
   const cipTableColumns = [
-    { header: "Equipment",               key: "equipment",               cell: ({ row }: any) => <span className="text-sm font-light">{row.original.equipment ?? "—"}</span> },
-    { header: "Date",                    key: "date",                    cell: ({ row }: any) => <span className="text-sm font-light">{row.original.date ?? "—"}</span> },
-    { header: "Operator",               key: "operator",                cell: ({ row }: any) => <span className="text-sm font-light">{row.original.operator ?? "—"}</span> },
-    { header: "Stage",                  key: "stage",                   cell: ({ row }: any) => <span className="text-sm font-light">{row.original.stage?.trim() ?? "—"}</span> },
-    { header: "Start Time",             key: "start_time",              cell: ({ row }: any) => <span className="text-sm font-light">{row.original.start_time ?? "—"}</span> },
-    { header: "Stop Time",              key: "stop_time",               cell: ({ row }: any) => <span className="text-sm font-light">{row.original.stop_time ?? "—"}</span> },
-    { header: "Duration",               key: "duration",                cell: ({ row }: any) => <span className="text-sm font-light">{row.original.duration ?? "—"}</span> },
-    { header: "Duration (min)",         key: "duration_minutes",        cell: ({ row }: any) => <span className="text-sm font-light">{row.original.duration_minutes ?? "—"}</span> },
-    { header: "Analysed By",            key: "analysed_by",             cell: ({ row }: any) => <span className="text-sm font-light">{row.original.analysed_by ?? "—"}</span> },
-    { header: "Caustic Strength (%)",   key: "caustic_solution_strength", cell: ({ row }: any) => <span className="text-sm font-light">{row.original.caustic_solution_strength ?? "—"}</span> },
-    { header: "Caustic Temp (°C)",      key: "caustic_temperature",     cell: ({ row }: any) => <span className="text-sm font-light">{row.original.caustic_temperature ?? "—"}</span> },
-    { header: "Acid Strength (%)",      key: "acid_solution_strength",  cell: ({ row }: any) => <span className="text-sm font-light">{row.original.acid_solution_strength ?? "—"}</span> },
-    { header: "Acid Temp (°C)",         key: "acid_temperature",        cell: ({ row }: any) => <span className="text-sm font-light">{row.original.acid_temperature ?? "—"}</span> },
-    { header: "Checked By",             key: "checked_by",              cell: ({ row }: any) => <span className="text-sm font-light">{row.original.checked_by?.trim() ?? "—"}</span> },
-  ].map(c => ({ accessorKey: c.key, header: c.header, cell: c.cell, ...c }))
+    { header: "Equipment",               key: "equipment",               getValue: (row: any) => row.equipment ?? "—",                          cell: ({ row }: any) => <span className="text-sm font-light">{row.original.equipment ?? "—"}</span> },
+    { header: "Date",                    key: "date",                    getValue: (row: any) => row.date ?? "—",                               cell: ({ row }: any) => <span className="text-sm font-light">{row.original.date ?? "—"}</span> },
+    { header: "Operator",               key: "operator",                getValue: (row: any) => row.operator ?? "—",                           cell: ({ row }: any) => <span className="text-sm font-light">{row.original.operator ?? "—"}</span> },
+    { header: "Stage",                  key: "stage",                   getValue: (row: any) => row.stage?.trim() ?? "—",                      cell: ({ row }: any) => <span className="text-sm font-light">{row.original.stage?.trim() ?? "—"}</span> },
+    { header: "Start Time",             key: "start_time",              getValue: (row: any) => row.start_time ?? "—",                         cell: ({ row }: any) => <span className="text-sm font-light">{row.original.start_time ?? "—"}</span> },
+    { header: "Stop Time",              key: "stop_time",               getValue: (row: any) => row.stop_time ?? "—",                          cell: ({ row }: any) => <span className="text-sm font-light">{row.original.stop_time ?? "—"}</span> },
+    { header: "Duration",               key: "duration",                getValue: (row: any) => row.duration ?? "—",                           cell: ({ row }: any) => <span className="text-sm font-light">{row.original.duration ?? "—"}</span> },
+    { header: "Duration (min)",         key: "duration_minutes",        getValue: (row: any) => row.duration_minutes ?? "—",                   cell: ({ row }: any) => <span className="text-sm font-light">{row.original.duration_minutes ?? "—"}</span> },
+    { header: "Analysed By",            key: "analysed_by",             getValue: (row: any) => row.analysed_by ?? "—",                        cell: ({ row }: any) => <span className="text-sm font-light">{row.original.analysed_by ?? "—"}</span> },
+    { header: "Caustic Strength (%)",   key: "caustic_solution_strength", getValue: (row: any) => row.caustic_solution_strength ?? "—",       cell: ({ row }: any) => <span className="text-sm font-light">{row.original.caustic_solution_strength ?? "—"}</span> },
+    { header: "Caustic Temp (°C)",      key: "caustic_temperature",     getValue: (row: any) => row.caustic_temperature ?? "—",                cell: ({ row }: any) => <span className="text-sm font-light">{row.original.caustic_temperature ?? "—"}</span> },
+    { header: "Acid Strength (%)",      key: "acid_solution_strength",  getValue: (row: any) => row.acid_solution_strength ?? "—",             cell: ({ row }: any) => <span className="text-sm font-light">{row.original.acid_solution_strength ?? "—"}</span> },
+    { header: "Acid Temp (°C)",         key: "acid_temperature",        getValue: (row: any) => row.acid_temperature ?? "—",                   cell: ({ row }: any) => <span className="text-sm font-light">{row.original.acid_temperature ?? "—"}</span> },
+    { header: "Checked By",             key: "checked_by",              getValue: (row: any) => row.checked_by?.trim() ?? "—",                 cell: ({ row }: any) => <span className="text-sm font-light">{row.original.checked_by?.trim() ?? "—"}</span> },
+  ].map(c => ({ accessorKey: c.key, header: c.header, cell: c.cell, getValue: c.getValue, ...c }))
 
   const latestForm = Array.isArray(forms) && forms.length > 0 ? forms[0] : null
 
@@ -287,7 +287,7 @@ export default function CIPControlFormPage() {
             </div>
             {viewMode === "table" && (
               <LoadingButton
-                onClick={() => exportToExcel(cipTableColumns.filter((c: any) => c.key).map((c: any) => ({ header: c.header, key: c.key })), cipTableData, "CIP-table")}
+                onClick={() => exportToExcel(cipTableColumns.filter((c: any) => c.key).map((c: any) => ({ header: c.header, key: c.key, getValue: c.getValue })), cipTableData, "CIP-table")}
                 className="bg-emerald-600 hover:bg-emerald-700 text-white border-0 rounded-full px-4 py-2 font-light"
               >
                 <Download className="mr-2 h-4 w-4" /> Export Excel

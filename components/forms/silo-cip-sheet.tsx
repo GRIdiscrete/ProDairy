@@ -81,61 +81,73 @@ export const cipTableColumnsForSheet = [
   {
     accessorKey: "equipment",
     header: "Equipment",
+    getValue: (row: any) => row.equipment ?? "—",
     cell: ({ row }: any) => <span className="text-sm font-light">{row.original.equipment ?? "—"}</span>,
   },
   {
     accessorKey: "date",
     header: "Date",
+    getValue: (row: any) => row.date ?? "—",
     cell: ({ row }: any) => <span className="text-sm font-light">{row.original.date ?? "—"}</span>,
   },
   {
     accessorKey: "operator",
     header: "Operator",
+    getValue: (row: any) => row.operator ?? "—",
     cell: ({ row }: any) => <span className="text-sm font-light">{row.original.operator ?? "—"}</span>,
   },
   {
     accessorKey: "stage",
     header: "Stage",
+    getValue: (row: any) => row.stage?.trim() ?? "—",
     cell: ({ row }: any) => <span className="text-sm font-light">{row.original.stage?.trim() ?? "—"}</span>,
   },
   {
     accessorKey: "start_time",
     header: "Start Time",
+    getValue: (row: any) => row.start_time ?? "—",
     cell: ({ row }: any) => <span className="text-sm font-light">{row.original.start_time ?? "—"}</span>,
   },
   {
     accessorKey: "stop_time",
     header: "Stop Time",
+    getValue: (row: any) => row.stop_time ?? "—",
     cell: ({ row }: any) => <span className="text-sm font-light">{row.original.stop_time ?? "—"}</span>,
   },
   {
     accessorKey: "duration",
     header: "Duration",
+    getValue: (row: any) => row.duration ?? "—",
     cell: ({ row }: any) => <span className="text-sm font-light">{row.original.duration ?? "—"}</span>,
   },
   {
     accessorKey: "caustic_solution_strength",
     header: "Caustic (%)",
+    getValue: (row: any) => row.caustic_solution_strength ?? "—",
     cell: ({ row }: any) => <span className="text-sm font-light">{row.original.caustic_solution_strength ?? "—"}</span>,
   },
   {
     accessorKey: "caustic_temperature",
     header: "Caustic Temp (°C)",
+    getValue: (row: any) => row.caustic_temperature ?? "—",
     cell: ({ row }: any) => <span className="text-sm font-light">{row.original.caustic_temperature ?? "—"}</span>,
   },
   {
     accessorKey: "acid_solution_strength",
     header: "Acid (%)",
+    getValue: (row: any) => row.acid_solution_strength ?? "—",
     cell: ({ row }: any) => <span className="text-sm font-light">{row.original.acid_solution_strength ?? "—"}</span>,
   },
   {
     accessorKey: "acid_temperature",
     header: "Acid Temp (°C)",
+    getValue: (row: any) => row.acid_temperature ?? "—",
     cell: ({ row }: any) => <span className="text-sm font-light">{row.original.acid_temperature ?? "—"}</span>,
   },
   {
     accessorKey: "checked_by",
     header: "Checked By",
+    getValue: (row: any) => row.checked_by?.trim() ?? "—",
     cell: ({ row }: any) => <span className="text-sm font-light">{row.original.checked_by?.trim() ?? "—"}</span>,
   },
 ]
@@ -195,7 +207,7 @@ export function SiloCIPSheet({ open, onOpenChange, siloName }: SiloCIPSheetProps
                 <button
                   onClick={() =>
                     exportToExcel(
-                      cipTableColumnsForSheet.map((c) => ({ header: c.header, key: c.accessorKey })),
+                      cipTableColumnsForSheet.map((c) => ({ header: c.header, key: c.accessorKey, getValue: c.getValue })),
                       tableRows,
                       `${scope === "silo" ? siloName : "All"}-CIP-table`
                     )

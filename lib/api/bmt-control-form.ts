@@ -65,6 +65,7 @@ export interface BMTControlForm {
 
 export interface CreateSiloDetailRequest {
   silo_name: string
+  flow_meter_start_reading?: number | null
   /** Optional on POST – user may omit to let backend auto-generate */
   flow_meter_end?: string | null
   flow_meter_end_reading?: number | null

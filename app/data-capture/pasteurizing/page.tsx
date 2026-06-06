@@ -549,12 +549,42 @@ export default function PasteurizingPage() {
             </div>
             {viewMode === "table" && (
               <LoadingButton
-                onClick={() => exportToExcel(
-                  ["date","production_start","production_end","preheating_start","water_circulation","metric","temp_hot_water","temp_product_pasteurisation","homogenisation_pressure_stage_1","homogenisation_pressure_stage_2","total_homogenisation_pressure","temp_product_out"]
-                    .map(k => ({ header: k.replace(/_/g," ").replace(/\b\w/g,c=>c.toUpperCase()), key: k })),
-                  pastoTableData,
-                  "steri-milk-pasteurizing-table"
-                )}
+                onClick={() => {
+                  if (!pivotForms.length) return
+                  const maxCols = Math.max(...pivotForms.map(f => f.cols.length), 1)
+                  const columns = [
+                    { header: "Date", key: "date" },
+                    { header: "Production Start", key: "prod_start" },
+                    { header: "Production End", key: "prod_end" },
+                    { header: "Preheating / Water Circ.", key: "preheating" },
+                    { header: "Machine", key: "machine" },
+                    { header: "Metric", key: "metric" },
+                    { header: "Unit", key: "unit" },
+                    ...Array.from({ length: maxCols }, (_, i) => ({ header: `T${i + 1}`, key: `t${i + 1}` })),
+                  ]
+                  const rows: any[] = []
+                  pivotForms.forEach(form => {
+                    PASTO_ROWS.forEach(prow => {
+                      const rowData: any = {
+                        date: form.meta.date ?? "—",
+                        prod_start: form.meta.production_start ?? "—",
+                        prod_end: form.meta.production_end ? new Date(form.meta.production_end).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "—",
+                        preheating: `${form.meta.preheating_start ?? "—"} / ${form.meta.water_circulation ?? "—"}`,
+                        machine: form.machineName,
+                        metric: prow.label,
+                        unit: prow.unit,
+                      }
+                      form.cols.forEach((col, ci) => {
+                        const src = prow.isTime ? col.timeRow : col.tempRow
+                        const val = src ? prow.getVal(src) : null
+                        rowData[`t${ci + 1}`] = val != null && val !== "" ? String(val).substring(0, 5) : "—"
+                      })
+                      for (let i = form.cols.length; i < maxCols; i++) rowData[`t${i + 1}`] = "—"
+                      rows.push(rowData)
+                    })
+                  })
+                  exportToExcel(columns, rows, "steri-milk-pasteurizing-table")
+                }}
                 className="bg-emerald-600 hover:bg-emerald-700 text-white border-0 rounded-full px-4 py-2 font-light"
               >
                 <Download className="mr-2 h-4 w-4" /> Export Excel

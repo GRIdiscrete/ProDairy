@@ -430,7 +430,7 @@ export default function PalletiserSheetPage({ processId }: PalletiserSheetPagePr
               <LoadingButton
                 onClick={() => exportToExcel(
                   ["date","tag","batch","product","machine","mfg","exp","pallet","start_time","end_time","cases","serial","counter"]
-                    .map(k => ({ header: k.replace(/_/g," ").replace(/\b\w/g,c=>c.toUpperCase()), key: k })),
+                    .map(k => ({ header: k.replace(/_/g," ").replace(/\b\w/g,c=>c.toUpperCase()), key: k, getValue: (row: any) => row[k] ?? "—" })),
                   sheetRows,
                   "palletiser-sheet"
                 )}

@@ -139,6 +139,7 @@ export interface Silo {
   temperature: number | null
   composition: SiloComposition[] | null
   product?: string | null
+  intake_log?: string | null
 }
 
 export type SiloStatus = "active" | "inactive" | "maintenance" | "offline"

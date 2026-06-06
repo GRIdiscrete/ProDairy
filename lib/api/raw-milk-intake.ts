@@ -130,6 +130,18 @@ export interface RawMilkIntakePendingVoucher {
   updated_at: string
 }
 
+/** Flat row returned from GET /raw-milk-intake-2/table */
+export interface RawMilkIntakeTableRow {
+  intake_date: string | null
+  operator: string | null
+  truck: string | null
+  silo_name: string | null
+  flow_meter_start_reading: number | null
+  flow_meter_end_reading: number | null
+  quantity: number | null
+  driver: string | null
+}
+
 // ── API client ────────────────────────────────────────────────────────────────
 
 export const rawMilkIntakeApi = {
@@ -185,4 +197,8 @@ export const rawMilkIntakeApi = {
     apiRequest<ApiResponse<RawMilkIntakePendingVoucher[]>>(
       '/raw-milk-intake-form/vouchers-pending-transfer'
     ),
+
+  /** GET /raw-milk-intake-2/table */
+  getTable: async () =>
+    apiRequest<ApiResponse<RawMilkIntakeTableRow[]>>('/raw-milk-intake-2/table'),
 }

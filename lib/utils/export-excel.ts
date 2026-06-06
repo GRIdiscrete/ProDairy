@@ -3,12 +3,13 @@ import * as XLSX from "xlsx"
 export interface ExcelColumn {
   header: string
   key: string
+  getValue?: (row: any) => any
 }
 
 export function exportToExcel(columns: ExcelColumn[], data: any[], filename: string) {
   const rows = data.map((row) =>
     columns.reduce<Record<string, any>>((acc, col) => {
-      acc[col.header] = row[col.key] ?? ""
+      acc[col.header] = col.getValue ? col.getValue(row) : (row[col.key] ?? "")
       return acc
     }, {})
   )

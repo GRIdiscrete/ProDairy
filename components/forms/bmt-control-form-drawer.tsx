@@ -24,11 +24,27 @@ import type { SearchableSelectOption } from "@/components/ui/searchable-select"
 
 // ─── Schemas ──────────────────────────────────────────────────────────────────
 
-/** Silo pair used in CREATE mode – just names */
-const createPairSchema = yup.object({
-  source_silo_name: yup.string().required("Source silo name is required"),
-  destination_silo_name: yup.string().optional().nullable(),
-})
+/** Silo pair used in CREATE mode – names + optional flowmeter start readings */
+const createPairSchema = yup
+  .object({
+    source_silo_name: yup.string().required("Source silo name is required"),
+    destination_silo_name: yup.string().optional().nullable(),
+    source_flow_meter_start: yup
+      .number()
+      .nullable()
+      .optional()
+      .transform((v, o) => (o === "" ? null : v)),
+    destination_flow_meter_start: yup
+      .number()
+      .nullable()
+      .optional()
+      .transform((v, o) => (o === "" ? null : v)),
+  })
+  .test(
+    "at-least-one-flowmeter-start",
+    "At least one flowmeter start reading (source or destination) is required",
+    (val) => val?.source_flow_meter_start != null || val?.destination_flow_meter_start != null
+  )
 
 /** Silo pair used in EDIT mode – names preserved + end reading editable */
 const editPairSchema = yup.object({
@@ -94,7 +110,7 @@ interface BMTControlFormDrawerProps {
   onOpenChange: (open: boolean) => void
   form?: BMTControlForm | null
   mode: "create" | "edit"
-  sourceSilo?: { name: string } | null
+  sourceSilo?: { name: string; product?: string | null } | null
 }
 
 // ─── Signature field helper ───────────────────────────────────────────────────
@@ -287,9 +303,9 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode, sourceSil
         dpp_signature: "",
         llm_operator_id: "",
         llm_signature: "",
-        product: "",
+        product: sourceSilo?.product ?? "",
         source_destination_details: sourceSilo
-          ? [{ source_silo_name: sourceSilo.name, destination_silo_name: null }]
+          ? [{ source_silo_name: sourceSilo.name, destination_silo_name: null, source_flow_meter_start: null, destination_flow_meter_start: null }]
           : [],
       })
     }
@@ -309,9 +325,17 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode, sourceSil
           product: data.product,
           ...(pairs.length > 0 && {
             source_destination_details: pairs.map((p) => ({
-              source_silo_details: { silo_name: p.source_silo_name },
+              source_silo_details: {
+                silo_name: p.source_silo_name,
+                ...(p.source_flow_meter_start != null ? { flow_meter_start_reading: p.source_flow_meter_start } : {}),
+              },
               ...(p.destination_silo_name
-                ? { destination_silo_details: { silo_name: p.destination_silo_name } }
+                ? {
+                    destination_silo_details: {
+                      silo_name: p.destination_silo_name,
+                      ...(p.destination_flow_meter_start != null ? { flow_meter_start_reading: p.destination_flow_meter_start } : {}),
+                    },
+                  }
                 : {}),
             })),
           }),
@@ -510,7 +534,7 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode, sourceSil
                     type="button"
                     size="sm"
                     onClick={() =>
-                      createPairs.append({ source_silo_name: "", destination_silo_name: null })
+                      createPairs.append({ source_silo_name: "", destination_silo_name: null, source_flow_meter_start: null, destination_flow_meter_start: null })
                     }
                   >
                     <Plus className="w-4 h-4 mr-1" />
@@ -623,6 +647,62 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode, sourceSil
                         />
                       </div>
                     </div>
+
+                    {/* Flowmeter start readings */}
+                    {(() => {
+                      const destName = createForm.watch(`source_destination_details.${idx}.destination_silo_name`)
+                      const pairError = (createForm.formState.errors.source_destination_details as any)?.[idx]?.message
+                      return (
+                        <>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+                            <div className="space-y-1">
+                              <Label className="text-sm text-gray-700">
+                                Source FM Start{" "}
+                                <span className="text-xs text-gray-400">(optional)</span>
+                              </Label>
+                              <Controller
+                                name={`source_destination_details.${idx}.source_flow_meter_start` as any}
+                                control={createForm.control}
+                                render={({ field: f }) => (
+                                  <Input
+                                    type="number"
+                                    value={f.value === null || f.value === undefined ? "" : f.value}
+                                    onChange={(e) => f.onChange(e.target.value === "" ? null : Number(e.target.value))}
+                                    placeholder="e.g. 5800"
+                                    className="rounded-full border-gray-200"
+                                  />
+                                )}
+                              />
+                            </div>
+
+                            {destName && (
+                              <div className="space-y-1">
+                                <Label className="text-sm text-gray-700">
+                                  Destination FM Start{" "}
+                                  <span className="text-xs text-gray-400">(optional)</span>
+                                </Label>
+                                <Controller
+                                  name={`source_destination_details.${idx}.destination_flow_meter_start` as any}
+                                  control={createForm.control}
+                                  render={({ field: f }) => (
+                                    <Input
+                                      type="number"
+                                      value={f.value === null || f.value === undefined ? "" : f.value}
+                                      onChange={(e) => f.onChange(e.target.value === "" ? null : Number(e.target.value))}
+                                      placeholder="e.g. 2400"
+                                      className="rounded-full border-gray-200"
+                                    />
+                                  )}
+                                />
+                              </div>
+                            )}
+                          </div>
+                          {pairError && (
+                            <p className="text-sm text-red-500">{pairError}</p>
+                          )}
+                        </>
+                      )
+                    })()}
                   </div>
                 ))}
               </div>

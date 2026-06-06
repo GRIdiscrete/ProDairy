@@ -404,7 +404,7 @@ export default function BMTControlFormPage() {
                 onClick={() => exportToExcel(
                   bmtTableColumns
                     .filter((c: any) => c.accessorKey)
-                    .map((c: any) => ({ header: c.header as string, key: c.accessorKey as string })),
+                    .map((c: any) => ({ header: c.header as string, key: c.accessorKey as string, getValue: c.getValue })),
                   tableData,
                   "BMT-table"
                 )}
