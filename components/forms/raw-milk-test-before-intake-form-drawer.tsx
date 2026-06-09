@@ -313,7 +313,17 @@ export function RawMilkTestBeforeIntakeFormDrawer({ open, onOpenChange, form: ex
                 return `${h.padStart(2, "0")}:${m.padStart(2, "0")}:00.000000+00`
             }
 
-            const labTestPayload = (data.lab_test || []).map((lt) => ({
+            const allLabTests = data.lab_test || []
+            const labTestsToSubmit = allLabTests.length > 1
+                ? allLabTests.filter((lt) =>
+                    [lt.temperature, lt.alcohol, lt.titratable_acidity, lt.ph, lt.fat, lt.protein, lt.total_solids, lt.fpd, lt.scc, lt.density]
+                        .some((v) => v !== null && v !== undefined) ||
+                    [lt.time, lt.ot, lt.resazurin, lt.lr_snf, lt.remark].some((v) => v && v.trim() !== "")
+                )
+                : allLabTests
+            const finalLabTests = labTestsToSubmit.length > 0 ? labTestsToSubmit : allLabTests.slice(0, 1)
+
+            const labTestPayload = finalLabTests.map((lt) => ({
                 id: lt.id,
                 truck_compartment_number: lt.truck_compartment_number,
                 temperature: lt.temperature ? Number(lt.temperature) : null,
@@ -602,7 +612,9 @@ export function RawMilkTestBeforeIntakeFormDrawer({ open, onOpenChange, form: ex
                                                         Parameter
                                                     </th>
                                                     {fields.map((field, idx) => {
-                                                        const compartmentInfo = compartmentsForTruck[idx]
+                                                        const compartmentInfo = compartmentsForTruck.find(
+                                                            (c) => c.truck_compartment_number === field.truck_compartment_number
+                                                        )
                                                         return (
                                                             <th key={field.id} className="border border-gray-300 px-3 py-2 text-center font-semibold text-blue-700 min-w-[130px]">
                                                                 <div>Result {idx + 1}</div>
