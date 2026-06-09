@@ -226,10 +226,10 @@ export function CollectionVoucherFormDrawer({
     useEffect(() => {
         if (open) {
             if (mode === "edit" && collectionVoucher) {
-                setValue("driver", collectionVoucher.driver)
+                setValue("driver", typeof collectionVoucher.driver === "object" ? (collectionVoucher.driver as any)?.id || "" : collectionVoucher.driver || "")
                 setValue("date", collectionVoucher.date.split('T')[0])
                 setValue("route", collectionVoucher.route)
-                setValue("supplier", typeof collectionVoucher.supplier === "object" ? (collectionVoucher.supplier as any).id : collectionVoucher.supplier)
+                setValue("supplier", typeof collectionVoucher.supplier === "object" ? (collectionVoucher.supplier as any)?.id || "" : collectionVoucher.supplier || "")
                 setValue("truck_number", collectionVoucher.truck_number)
                 setValue("time_in", collectionVoucher.time_in)
                 setValue("time_out", collectionVoucher.time_out)
@@ -282,6 +282,29 @@ export function CollectionVoucherFormDrawer({
             }
         }
     }, [open, mode, collectionVoucher, setValue, reset, user?.id])
+
+    // When the users/suppliers lists finish loading, re-resolve driver/supplier IDs
+    // if the backend returned name objects without IDs (fallback: match by name)
+    useEffect(() => {
+        if (!open || mode !== "edit" || !collectionVoucher) return
+        const stripQ = (s: any) => (typeof s === "string" ? s.replace(/^"|"$/g, "") : String(s ?? ""))
+
+        const driverRaw = collectionVoucher.driver as any
+        if (typeof driverRaw === "object" && driverRaw !== null && !driverRaw.id && users.length > 0) {
+            const match = (users as any[]).find(
+                (u) => stripQ(u.first_name) === stripQ(driverRaw.first_name) && stripQ(u.last_name) === stripQ(driverRaw.last_name)
+            )
+            if (match?.id) setValue("driver", match.id)
+        }
+
+        const supplierRaw = collectionVoucher.supplier as any
+        if (typeof supplierRaw === "object" && supplierRaw !== null && !supplierRaw.id && suppliers.length > 0) {
+            const match = (suppliers as any[]).find(
+                (s) => stripQ(s.first_name) === stripQ(supplierRaw.first_name) && stripQ(s.last_name) === stripQ(supplierRaw.last_name)
+            )
+            if (match?.id) setValue("supplier", match.id)
+        }
+    }, [open, mode, collectionVoucher, users, suppliers, setValue])
 
     const onSubmit: SubmitHandler<CollectionVoucherFormData> = async (data) => {
         try {
