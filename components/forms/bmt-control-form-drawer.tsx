@@ -832,63 +832,85 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode, sourceSil
                     </div>
 
                     <div className="p-4 space-y-4">
-                      {/* Source end reading */}
-                      <div className="space-y-1">
-                        <Label className="text-sm font-medium text-gray-700">
-                          Source Flowmeter End Reading *
-                        </Label>
-                        <p className="text-xs text-gray-400">
-                          Current silo volume before the flowmeter stop (auto-set as start reading on
-                          POST). Enter the final reading to close out this milk transfer.
-                        </p>
-                        <Controller
-                          name={`source_destination_details.${idx}.source_flow_meter_end_reading`}
-                          control={editForm.control}
-                          render={({ field: f }) => (
-                            <Input
-                              type="number"
-                              value={f.value === 0 ? "" : (f.value ?? "")}
-                              onChange={(e) =>
-                                f.onChange(e.target.value === "" ? "" : Number(e.target.value))
-                              }
-                              placeholder="Enter flowmeter end reading (e.g. 6200)"
-                              className="rounded-full border-gray-200 max-w-sm"
-                            />
-                          )}
-                        />
-                        {editForm.formState.errors.source_destination_details?.[idx]
-                          ?.source_flow_meter_end_reading && (
-                            <p className="text-sm text-red-500">
-                              {
-                                editForm.formState.errors.source_destination_details[idx]
-                                  ?.source_flow_meter_end_reading?.message
-                              }
-                            </p>
-                          )}
-                      </div>
-
-                      {/* Destination end reading (optional) */}
-                      {hasDest && (
+                      {/* Source readings row */}
+                      <div className="grid grid-cols-2 gap-4">
+                        {/* Source start reading – read-only */}
                         <div className="space-y-1">
                           <Label className="text-sm font-medium text-gray-700">
-                            Destination Flowmeter End Reading{" "}
-                            <span className="text-xs text-gray-400">(optional)</span>
+                            Source FM Start Reading
+                          </Label>
+                          <div className="rounded-full border border-gray-200 bg-gray-50 px-4 py-2 text-sm text-gray-600 max-w-sm">
+                            {form?.source_destination_details?.[idx]?.source_silo_details?.flow_meter_start_reading ?? "—"}
+                          </div>
+                        </div>
+
+                        {/* Source end reading – editable */}
+                        <div className="space-y-1">
+                          <Label className="text-sm font-medium text-gray-700">
+                            Source FM End Reading *
                           </Label>
                           <Controller
-                            name={`source_destination_details.${idx}.destination_flow_meter_end_reading`}
+                            name={`source_destination_details.${idx}.source_flow_meter_end_reading`}
                             control={editForm.control}
                             render={({ field: f }) => (
                               <Input
                                 type="number"
                                 value={f.value === 0 ? "" : (f.value ?? "")}
                                 onChange={(e) =>
-                                  f.onChange(e.target.value === "" ? null : Number(e.target.value))
+                                  f.onChange(e.target.value === "" ? "" : Number(e.target.value))
                                 }
-                                placeholder="Enter flowmeter end reading"
+                                placeholder="e.g. 6200"
                                 className="rounded-full border-gray-200 max-w-sm"
                               />
                             )}
                           />
+                          {editForm.formState.errors.source_destination_details?.[idx]
+                            ?.source_flow_meter_end_reading && (
+                              <p className="text-sm text-red-500">
+                                {
+                                  editForm.formState.errors.source_destination_details[idx]
+                                    ?.source_flow_meter_end_reading?.message
+                                }
+                              </p>
+                            )}
+                        </div>
+                      </div>
+
+                      {/* Destination readings row (only when a destination silo exists) */}
+                      {hasDest && (
+                        <div className="grid grid-cols-2 gap-4">
+                          {/* Destination start reading – read-only */}
+                          <div className="space-y-1">
+                            <Label className="text-sm font-medium text-gray-700">
+                              Destination FM Start Reading
+                            </Label>
+                            <div className="rounded-full border border-gray-200 bg-gray-50 px-4 py-2 text-sm text-gray-600 max-w-sm">
+                              {form?.source_destination_details?.[idx]?.destination_silo_details?.flow_meter_start_reading ?? "—"}
+                            </div>
+                          </div>
+
+                          {/* Destination end reading – editable */}
+                          <div className="space-y-1">
+                            <Label className="text-sm font-medium text-gray-700">
+                              Destination FM End Reading{" "}
+                              <span className="text-xs text-gray-400">(optional)</span>
+                            </Label>
+                            <Controller
+                              name={`source_destination_details.${idx}.destination_flow_meter_end_reading`}
+                              control={editForm.control}
+                              render={({ field: f }) => (
+                                <Input
+                                  type="number"
+                                  value={f.value === 0 ? "" : (f.value ?? "")}
+                                  onChange={(e) =>
+                                    f.onChange(e.target.value === "" ? null : Number(e.target.value))
+                                  }
+                                  placeholder="Enter flowmeter end reading"
+                                  className="rounded-full border-gray-200 max-w-sm"
+                                />
+                              )}
+                            />
+                          </div>
                         </div>
                       )}
                     </div>
