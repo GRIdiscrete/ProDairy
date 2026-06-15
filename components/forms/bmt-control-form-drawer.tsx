@@ -751,15 +751,16 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode, sourceSil
                   name="product"
                   control={editForm.control}
                   render={({ field }) => (
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value ?? ""}>
                       <SelectTrigger className="w-full rounded-full border-gray-200">
                         <SelectValue placeholder="Select product" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Raw milk">Raw milk</SelectItem>
-                        <SelectItem value="Skim Milk">Skim Milk</SelectItem>
-                        <SelectItem value="Standardized Milk">Standardized Milk</SelectItem>
-                        <SelectItem value="Pasteurized Milk">Pasteurized Milk</SelectItem>
+                        <SelectItem value="Raw Milk">Raw Milk</SelectItem>
+                        <SelectItem value="Bulk Skimmed Milk">Bulk Skimmed Milk</SelectItem>
+                        <SelectItem value="Bulk Standardized Milk">Bulk Standardized Milk</SelectItem>
+                        <SelectItem value="Bulk Standardized Milk 3.4%">Bulk Standardized Milk 3.4%</SelectItem>
+                        <SelectItem value="Bulk Lactose Free">Bulk Lactose Free</SelectItem>
                       </SelectContent>
                     </Select>
                   )}

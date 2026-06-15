@@ -11,6 +11,7 @@ import { fetchSteriMilkProcessLogs } from "@/lib/store/slices/steriMilkProcessLo
 import { apiRequest } from "@/lib/utils/api-request"
 import { toast } from "sonner"
 import { FileSpreadsheet } from "lucide-react"
+import { FilmaticLinesForm1ViewDrawer } from "@/components/forms/filmatic-lines-form-1-view-drawer"
 
 export default function SteriRecordsPage() {
   const params = useParams()
@@ -30,6 +31,9 @@ export default function SteriRecordsPage() {
   const [flatRows, setFlatRows] = useState<any[]>([])
   const [flatLoading, setFlatLoading] = useState(false)
   const palletiserRef = useRef(false)
+
+  const [selectedForm1, setSelectedForm1] = useState<any | null>(null)
+  const [form1ViewOpen, setForm1ViewOpen] = useState(false)
 
   useEffect(() => {
     if (!form1Init && !form1Ref.current) {
@@ -322,6 +326,11 @@ export default function SteriRecordsPage() {
                                   ? "bg-yellow-50/40 hover:bg-yellow-50/70"
                                   : "bg-blue-50/40 hover:bg-blue-50/70"
                               }
+                              onClick={row.stage === "Before" ? () => {
+                                const match = form1s.find((f: any) => f.tag === row.tag)
+                                if (match) { setSelectedForm1(match); setForm1ViewOpen(true) }
+                              } : undefined}
+                              style={row.stage === "Before" ? { cursor: "pointer" } : undefined}
                             >
                               {/* Date — merged cell spanning all rows for the same date */}
                               {row.showDate && (
@@ -539,6 +548,12 @@ export default function SteriRecordsPage() {
           </TabsContent>
         </Tabs>
       </div>
+
+      <FilmaticLinesForm1ViewDrawer
+        open={form1ViewOpen}
+        onOpenChange={setForm1ViewOpen}
+        form={selectedForm1}
+      />
     </DataCaptureDashboardLayout>
   )
 }
