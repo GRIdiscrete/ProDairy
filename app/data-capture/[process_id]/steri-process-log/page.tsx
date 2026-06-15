@@ -168,7 +168,7 @@ export default function SteriRecordsPage() {
       return new Date(+year, +month - 1, +day).getTime() || 0
     }
     const sorted = Array.from(map.values()).sort((a, b) => {
-      const diff = parseDate(a.date) - parseDate(b.date)
+      const diff = parseDate(b.date) - parseDate(a.date)
       return diff !== 0 ? diff : (a.shift === "Day" ? -1 : 1)
     })
 

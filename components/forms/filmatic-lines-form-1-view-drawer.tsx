@@ -699,14 +699,14 @@ export function FilmaticLinesForm1ViewDrawer({
               )}
 
               {/* Transferrable Milk */}
-              {form.transferrable_milk != null && (
-                <div className="p-4  from-green-50 to-emerald-50 rounded-lg border border-green-200">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-700">Transferrable Milk</span>
-                    <span className="text-xl font-medium text-green-700">{form.transferrable_milk} L</span>
-                  </div>
+              <div className="p-4 from-green-50 to-emerald-50 rounded-lg border border-green-200">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-gray-700">Transferrable Milk</span>
+                  <span className="text-xl font-medium text-green-700">
+                    {form.transferrable_milk != null ? `${form.transferrable_milk} L` : "—"}
+                  </span>
                 </div>
-              )}
+              </div>
             </CardContent>
           </Card>
         </div>
