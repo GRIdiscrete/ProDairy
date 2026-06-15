@@ -25,7 +25,7 @@ import { fetchUsers } from "@/lib/store/slices/usersSlice"
 import { fetchBMTControlForms } from "@/lib/store/slices/bmtControlFormSlice"
 import { toast } from "sonner"
 import { TableFilters } from "@/lib/types"
-import { FilmaticLinesForm1 } from "@/lib/api/filmatic-lines-form-1"
+import { FilmaticLinesForm1, filmaticLinesForm1Api } from "@/lib/api/filmatic-lines-form-1"
 import ContentSkeleton from "@/components/ui/content-skeleton"
 import { UserAvatar } from "@/components/ui/user-avatar"
 import { FormIdCopy } from "@/components/ui/form-id-copy"
@@ -36,6 +36,10 @@ export default function FilmaticLines1Page() {
 
   const dispatch = useAppDispatch()
   const { forms, loading, error, isInitialized } = useAppSelector((state) => state.filmaticLinesForm1)
+  const profile = useAppSelector((state: any) => state.auth?.profile)
+
+  const RESTRICTED_ROLES = ["E3 Filter Operator", "E3 ST Operator", "Milk Operators", "Pasto Operators"]
+  const isRestrictedRole = RESTRICTED_ROLES.includes(profile?.users_role_id_fkey?.role_name ?? "")
 
   const [tableFilters, setTableFilters] = useState<TableFilters>({})
   const hasFetchedRef = useRef(false)
@@ -158,8 +162,20 @@ export default function FilmaticLines1Page() {
     setFormDrawerOpen(true)
   }
 
-  const handleViewForm = (form: FilmaticLinesForm1) => {
-    setSelectedForm(form)
+  const handleViewForm = async (form: FilmaticLinesForm1) => {
+    if (form.id) {
+      try {
+        const res = await filmaticLinesForm1Api.getForm(form.id)
+        const raw: any = (res as any)?.data ?? res
+        const detail: any = Array.isArray(raw) ? raw[0] : raw
+        const nonNullDetail = Object.fromEntries(Object.entries(detail ?? {}).filter(([, v]) => v != null))
+        setSelectedForm({ ...form, ...nonNullDetail } as FilmaticLinesForm1)
+      } catch {
+        setSelectedForm(form)
+      }
+    } else {
+      setSelectedForm(form)
+    }
     setViewDrawerOpen(true)
   }
 
@@ -338,6 +354,8 @@ export default function FilmaticLines1Page() {
       header: "Actions",
       cell: ({ row }: any) => {
         const form = row.original
+        const isOld = Date.now() - new Date(form.created_at).getTime() > 5 * 60 * 1000
+        const hideEditDelete = isRestrictedRole && isOld
         return (
           <div className="flex space-x-2">
             <LoadingButton
@@ -347,22 +365,26 @@ export default function FilmaticLines1Page() {
             >
               <Eye className="w-4 h-4" />
             </LoadingButton>
-            <LoadingButton
-              size="sm"
-              onClick={() => handleEditForm(form)}
-              className="bg-[#A0CF06] text-[#211D1E] rounded-full"
-            >
-              <Edit className="w-4 h-4" />
-            </LoadingButton>
-            <LoadingButton
-              variant="destructive"
-              size="sm"
-              onClick={() => handleDeleteForm(form)}
-              className="rounded-full"
-              loading={loading.delete}
-            >
-              <Trash2 className="w-4 h-4" />
-            </LoadingButton>
+            {!hideEditDelete && (
+              <LoadingButton
+                size="sm"
+                onClick={() => handleEditForm(form)}
+                className="bg-[#A0CF06] text-[#211D1E] rounded-full"
+              >
+                <Edit className="w-4 h-4" />
+              </LoadingButton>
+            )}
+            {!hideEditDelete && (
+              <LoadingButton
+                variant="destructive"
+                size="sm"
+                onClick={() => handleDeleteForm(form)}
+                className="rounded-full"
+                loading={loading.delete}
+              >
+                <Trash2 className="w-4 h-4" />
+              </LoadingButton>
+            )}
           </div>
         )
       },

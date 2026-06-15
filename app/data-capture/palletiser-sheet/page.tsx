@@ -40,6 +40,10 @@ interface PalletiserSheetPageProps {
 export default function PalletiserSheetPage({ processId }: PalletiserSheetPageProps = {}) {
   const dispatch = useAppDispatch()
   const { sheets, loading, error, operationLoading, isInitialized } = useAppSelector((state) => state.palletiserSheets)
+  const profile = useAppSelector((state: any) => state.auth?.profile)
+
+  const RESTRICTED_ROLES = ["E3 Filter Operator", "E3 ST Operator", "Milk Operators", "Pasto Operators"]
+  const isRestrictedRole = RESTRICTED_ROLES.includes(profile?.users_role_id_fkey?.role_name ?? "")
 
   // helper to format ISO date (YYYY-MM-DD) -> "25 Oct 2025"
   const formatDate = (iso?: string | null) => {
@@ -357,6 +361,8 @@ export default function PalletiserSheetPage({ processId }: PalletiserSheetPagePr
       header: "Actions",
       cell: ({ row }: any) => {
         const sheet = row.original
+        const isOld = Date.now() - new Date(sheet.created_at).getTime() > 5 * 60 * 1000
+        const hideEditDelete = isRestrictedRole && isOld
         return (
           <div className="flex space-x-2">
             <LoadingButton
@@ -366,23 +372,27 @@ export default function PalletiserSheetPage({ processId }: PalletiserSheetPagePr
             >
               <Eye className="w-4 h-4" />
             </LoadingButton>
-            <LoadingButton
-              size="sm"
-              onClick={() => handleEditSheet(sheet)}
-              className="bg-[#A0CF06] text-[#211D1E] rounded-full"
-            >
-              <Edit className="w-4 h-4" />
-            </LoadingButton>
-            <LoadingButton
-              variant="destructive"
-              size="sm"
-              onClick={() => handleDeleteSheet(sheet)}
-              loading={operationLoading.delete}
-              disabled={operationLoading.delete}
-              className="rounded-full"
-            >
-              <Trash2 className="w-4 h-4" />
-            </LoadingButton>
+            {!hideEditDelete && (
+              <LoadingButton
+                size="sm"
+                onClick={() => handleEditSheet(sheet)}
+                className="bg-[#A0CF06] text-[#211D1E] rounded-full"
+              >
+                <Edit className="w-4 h-4" />
+              </LoadingButton>
+            )}
+            {!hideEditDelete && (
+              <LoadingButton
+                variant="destructive"
+                size="sm"
+                onClick={() => handleDeleteSheet(sheet)}
+                loading={operationLoading.delete}
+                disabled={operationLoading.delete}
+                className="rounded-full"
+              >
+                <Trash2 className="w-4 h-4" />
+              </LoadingButton>
+            )}
           </div>
         )
       },
@@ -430,7 +440,7 @@ export default function PalletiserSheetPage({ processId }: PalletiserSheetPagePr
               <LoadingButton
                 onClick={() => exportToExcel(
                   ["date","tag","batch","product","machine","mfg","exp","pallet","start_time","end_time","cases","serial","counter"]
-                    .map(k => ({ header: k.replace(/_/g," ").replace(/\b\w/g,c=>c.toUpperCase()), key: k, getValue: (row: any) => row[k] ?? "—" })),
+                    .map(k => ({ header: k === "counter" ? "Counter (Shift Leader)" : k.replace(/_/g," ").replace(/\b\w/g,c=>c.toUpperCase()), key: k, getValue: (row: any) => row[k] ?? "—" })),
                   sheetRows,
                   "palletiser-sheet"
                 )}
@@ -530,7 +540,7 @@ export default function PalletiserSheetPage({ processId }: PalletiserSheetPagePr
                             <div className="text-sm font-light">{d.serial_number ?? 'N/A'}</div>
                           </div>
                           <div>
-                            <div className="text-xs text-gray-500">Counter</div>
+                            <div className="text-xs text-gray-500">Counter (Shift Leader)</div>
                             <div className="mt-1">
                               {counterUser ? (
                                 <UserAvatar
@@ -592,7 +602,7 @@ export default function PalletiserSheetPage({ processId }: PalletiserSheetPagePr
                   <table className="min-w-full text-left border-collapse text-[11px]">
                     <thead>
                       <tr className="bg-gray-50">
-                        {["Date","Tag","Batch","Product","Machine","Mfg Date","Exp Date","Pallet #","Start Time","End Time","Cases Packed","Serial No.","Counter"].map(h => (
+                        {["Date","Tag","Batch","Product","Machine","Mfg Date","Exp Date","Pallet #","Start Time","End Time","Cases Packed","Serial No.","Counter (Shift Leader)"].map(h => (
                           <th key={h} className="px-2 py-2 text-[10px] font-semibold uppercase tracking-wider text-gray-500 border-b border-r border-gray-200 whitespace-nowrap">{h}</th>
                         ))}
                       </tr>

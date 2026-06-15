@@ -6,6 +6,7 @@ import { yupResolver } from "@hookform/resolvers/yup"
 import * as yup from "yup"
 import { FilmaticLinesForm1, filmaticLinesForm1Api } from "@/lib/api/filmatic-lines-form-1"
 import { BMTControlForm, bmtControlFormApi } from "@/lib/api/bmt-control-form"
+import { siloApi } from "@/lib/api/silo"
 import { FilmaticLinesGroup, filmaticLinesGroupsApi } from "@/lib/api/filmatic-lines-groups"
 import { useAuth } from "@/hooks/use-auth"
 import { useAppDispatch } from "@/lib/store"
@@ -32,15 +33,15 @@ interface FilmaticLinesForm1DrawerProps {
   processId?: string
 }
 
-// Time options for shifts
+// Time options for shifts (Day: 07:00–19:00, Night: 19:00–07:00)
 const DAY_SHIFT_TIMES = [
-  "08:00", "09:00", "10:00", "11:00", "12:00",
-  "13:00", "14:00", "15:00", "16:00", "17:00", "18:00"
+  "07:00", "08:00", "09:00", "10:00", "11:00", "12:00",
+  "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00"
 ]
 
 const NIGHT_SHIFT_TIMES = [
   "19:00", "20:00", "21:00", "22:00", "23:00",
-  "00:00", "01:00", "02:00", "03:00", "04:00", "05:00", "06:00"
+  "00:00", "01:00", "02:00", "03:00", "04:00", "05:00", "06:00", "07:00"
 ]
 
 // Process Overview Component (copied style from Form 2)
@@ -87,13 +88,15 @@ const groupSelectionSchema = yup.object({
   selected_group: yup.string().required("Group selection is required"),
 })
 
-// Step 3: Basic Information Schema (Form 1 includes holding_tank_bmt)
+const TODAY = new Date().toISOString().split("T")[0]
+
+// Step 3: Basic Information Schema
 const createBasicInfoSchema = (selectedShift: string) => yup.object({
-  date: yup.string().required("Date is required"),
-  holding_tank_bmt: yup.string().nullable(),
+  date: yup.string().default(TODAY),
+  source_tank: yup.string().nullable(),
+  remarks: yup.string().nullable(),
   approved: yup.boolean().default(false),
   status: yup.string().default("Ongoing"),
-  transferrable_milk: yup.number().nullable(),
   // Day shift fields
   day_shift_opening_bottles: yup.number().min(0, "Must be positive").nullable(),
   day_shift_closing_bottles: yup.number().min(0, "Must be positive").nullable(),
@@ -157,6 +160,7 @@ export function FilmaticLinesForm1Drawer({
   const [bmtOptions, setBmtOptions] = useState<Array<{ value: string, label: string, description?: string }>>([])
   const [filmaticGroups, setFilmaticGroups] = useState<FilmaticLinesGroup[]>([])
   const [users, setUsers] = useState<any[]>([])
+  const [steriSilos, setSteriSilos] = useState<any[]>([])
   const [loadingBmtForms, setLoadingBmtForms] = useState(false)
   const [loadingGroups, setLoadingGroups] = useState(false)
   const [loadingUsers, setLoadingUsers] = useState(false)
@@ -178,11 +182,11 @@ export function FilmaticLinesForm1Drawer({
   const basicInfoForm = useForm({
     resolver: yupResolver(basicInfoSchema),
     defaultValues: {
-      date: "",
-      holding_tank_bmt: undefined,
+      date: TODAY,
+      source_tank: undefined,
+      remarks: "",
       approved: false,
       status: "Ongoing",
-      transferrable_milk: undefined,
       // Day shift
       day_shift_opening_bottles: undefined,
       day_shift_closing_bottles: undefined,
@@ -190,7 +194,7 @@ export function FilmaticLinesForm1Drawer({
       day_shift_received_bottles: undefined,
       day_shift_damaged_bottles: undefined,
       day_shift_foiled_bottles: undefined,
-      // Night shift  
+      // Night shift
       night_shift_opening_bottles: undefined,
       night_shift_closing_bottles: undefined,
       night_shift_waste_bottles: undefined,
@@ -199,6 +203,8 @@ export function FilmaticLinesForm1Drawer({
       night_shift_foiled_bottles: undefined,
     }
   })
+
+  const selectedSourceTank = basicInfoForm.watch("source_tank")
 
   // Detailed shift form (stoppage_time fields expanded)
   const shiftDetailsForm = useForm<ShiftDetailsFormData>({
@@ -268,6 +274,19 @@ export function FilmaticLinesForm1Drawer({
 
         // keep users empty for now (no users API call here)
         setUsers([])
+
+        try {
+          const siloRes = await siloApi.getSiloManagerSilos()
+          const filtered = (siloRes.data || []).filter((s: any) =>
+            s.name === "Steri Holding Tank 1" || s.name === "Steri Holding Tank 2"
+          )
+          const seen = new Set<string>()
+          setSteriSilos(filtered.filter((s: any) => {
+            if (seen.has(s.name)) return false
+            seen.add(s.name)
+            return true
+          }))
+        } catch { setSteriSilos([]) }
       } finally {
         setLoadingBmtForms(false)
         setLoadingGroups(false)
@@ -285,11 +304,11 @@ export function FilmaticLinesForm1Drawer({
     if (mode === "edit" && form) {
       // populate basic info (bottles and approved exist at top-level)
       basicInfoForm.reset({
-        date: form.date || "",
-        holding_tank_bmt: (form as any).holding_tank_bmt || undefined,
+        date: TODAY,
+        source_tank: (form as any).source_tank || undefined,
+        remarks: (form as any).remarks ?? "",
         approved: !!(form as any).approved,
         status: "Ongoing",
-        transferrable_milk: (form as any).transferrable_milk ?? undefined,
         // Day shift
         day_shift_opening_bottles: (form as any).day_shift_opening_bottles ?? undefined,
         day_shift_closing_bottles: (form as any).day_shift_closing_bottles ?? undefined,
@@ -297,7 +316,7 @@ export function FilmaticLinesForm1Drawer({
         day_shift_received_bottles: (form as any).day_shift_received_bottles ?? undefined,
         day_shift_damaged_bottles: (form as any).day_shift_damaged_bottles ?? undefined,
         day_shift_foiled_bottles: (form as any).day_shift_foiled_bottles ?? undefined,
-        // Night shift  
+        // Night shift
         night_shift_opening_bottles: (form as any).night_shift_opening_bottles ?? undefined,
         night_shift_closing_bottles: (form as any).night_shift_closing_bottles ?? undefined,
         night_shift_waste_bottles: (form as any).night_shift_waste_bottles ?? undefined,
@@ -377,11 +396,11 @@ export function FilmaticLinesForm1Drawer({
     } else {
       // fresh create
       basicInfoForm.reset({
-        date: "",
-        holding_tank_bmt: undefined,
+        date: TODAY,
+        source_tank: undefined,
+        remarks: "",
         approved: false,
         status: "Ongoing",
-        transferrable_milk: undefined,
         // Day shift
         day_shift_opening_bottles: undefined,
         day_shift_closing_bottles: undefined,
@@ -389,7 +408,7 @@ export function FilmaticLinesForm1Drawer({
         day_shift_received_bottles: undefined,
         day_shift_damaged_bottles: undefined,
         day_shift_foiled_bottles: undefined,
-        // Night shift  
+        // Night shift
         night_shift_opening_bottles: undefined,
         night_shift_closing_bottles: undefined,
         night_shift_waste_bottles: undefined,
@@ -457,10 +476,10 @@ export function FilmaticLinesForm1Drawer({
       const payload: any = {
         process_id: processId || "",
         date: basicInfo.date || null,
-        holding_tank_bmt: basicInfo.holding_tank_bmt || null,
+        source_tank: basicInfo.source_tank || null,
+        remarks: basicInfo.remarks || null,
         approved: !!basicInfo.approved,
         status: "Ongoing",
-        transferrable_milk: basicInfo.transferrable_milk || null,
       }
 
       // Add ID if editing
@@ -705,38 +724,55 @@ export function FilmaticLinesForm1Drawer({
               <div className="text-center mb-6">
                 <h3 className="text-xl font-light text-gray-900">Basic Information</h3>
                 <p className="text-sm font-light text-gray-600 mt-2">
-                  Enter date, holding tank BMT and bottle counts
+                  Enter source tank and bottle counts
                 </p>
               </div>
 
               <div className="space-y-4">
+                <div>
+                  <Label className="mb-2">Date</Label>
+                  <Input value={TODAY} readOnly className="bg-gray-50 text-gray-600 cursor-not-allowed" />
+                </div>
+
                 <Controller
-                  name="date"
+                  name="source_tank"
                   control={basicInfoForm.control}
-                  render={({ field }) => (
-                    <DatePicker
-                      label="Date *"
-                      value={field.value}
-                      onChange={field.onChange}
-                      placeholder="Select date"
-                      error={!!basicInfoForm.formState.errors.date}
-                    />
-                  )}
+                  render={({ field }) => {
+                    const selectedSilo = steriSilos.find((s: any) => s.name === field.value)
+                    return (
+                      <div>
+                        <Label className="mb-2">Source Tank</Label>
+                        <Select onValueChange={field.onChange} value={field.value ?? ""}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select source tank..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {steriSilos.map((s: any) => (
+                              <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        {selectedSilo && (
+                          <p className="text-sm text-gray-500 mt-1">
+                            Current volume: {selectedSilo.milk_volume ?? "—"} L
+                          </p>
+                        )}
+                      </div>
+                    )
+                  }}
                 />
+
                 <Controller
-                  name="holding_tank_bmt"
+                  name="remarks"
                   control={basicInfoForm.control}
                   render={({ field }) => (
                     <div>
-                      {/* ensure label is visible and spaced */}
-                      <Label className="mb-2">Holding Tank BMT</Label>
-
-                      <SearchableSelect
-                        value={field.value || ''}
-                        options={bmtOptions}
-                        onSearch={handleBmtFormSearch}
-                        onValueChange={(v) => field.onChange(v)}
-                        placeholder="Search BMT forms..."
+                      <Label className="mb-2">Remarks</Label>
+                      <Textarea
+                        {...field}
+                        value={field.value ?? ""}
+                        placeholder="Add any remarks..."
+                        rows={3}
                       />
                     </div>
                   )}
@@ -812,17 +848,6 @@ export function FilmaticLinesForm1Drawer({
                           )}
                         />
                       </div>
-                    </div>
-                    <div>
-                      <Label className="mb-2">Transferrable Milk (L)</Label>
-                      <Controller
-                        name="transferrable_milk"
-                        control={basicInfoForm.control}
-                        render={({ field }) => (
-                          <Input type="number" {...field} value={field.value ?? ''}
-                            onChange={e => field.onChange(e.target.value ? Number(e.target.value) : undefined)} />
-                        )}
-                      />
                     </div>
                   </>
                 )}

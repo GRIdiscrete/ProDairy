@@ -8,10 +8,12 @@ import { useAppDispatch, useAppSelector } from "@/lib/store"
 import { fetchFilmaticLinesForm1s } from "@/lib/store/slices/filmaticLinesForm1Slice"
 import { fetchFilmaticLinesForm2s } from "@/lib/store/slices/filmaticLinesForm2Slice"
 import { fetchSteriMilkProcessLogs } from "@/lib/store/slices/steriMilkProcessLogSlice"
+import { filmaticLinesForm1Api } from "@/lib/api/filmatic-lines-form-1"
 import { apiRequest } from "@/lib/utils/api-request"
 import { toast } from "sonner"
-import { FileSpreadsheet } from "lucide-react"
+import { FileSpreadsheet, Download } from "lucide-react"
 import { FilmaticLinesForm1ViewDrawer } from "@/components/forms/filmatic-lines-form-1-view-drawer"
+import { exportToExcel } from "@/lib/utils/export-excel"
 
 export default function SteriRecordsPage() {
   const params = useParams()
@@ -74,6 +76,9 @@ export default function SteriRecordsPage() {
           const st = d.stoppage_time_id
           rows.push({
             stage: "Before",
+            _formId: form.id,
+            _updatedAt: form.updated_at,
+            _createdAt: form.created_at,
             date: form.date ? new Date(form.date).toLocaleDateString("en-GB") : "—",
             tag: form.tag,
             shift: isDay ? "Day" : "Night",
@@ -113,6 +118,9 @@ export default function SteriRecordsPage() {
             const st = detail.stoppage_time?.[0]
             rows.push({
               stage: "After",
+              _formId: form.id,
+              _updatedAt: form.updated_at,
+              _createdAt: form.created_at,
               date: form.date ? new Date(form.date).toLocaleDateString("en-GB") : "—",
               tag: form.tag,
               shift: isDay ? "Day" : "Night",
@@ -280,9 +288,49 @@ export default function SteriRecordsPage() {
           {/* ── Tab 1: Steri (Before + After combined) ────────────────────── */}
           <TabsContent value="steri" className="mt-4">
             <div className="border border-gray-200 rounded-lg bg-white">
-              <div className="p-4 pb-0 flex items-center gap-2">
-                <FileSpreadsheet className="h-4 w-4 text-gray-500" />
-                <span className="text-sm font-light text-gray-700">Steri Records — Before &amp; After Autoclave</span>
+              <div className="p-4 pb-0 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <FileSpreadsheet className="h-4 w-4 text-gray-500" />
+                  <span className="text-sm font-light text-gray-700">Steri Records — Before &amp; After Autoclave</span>
+                </div>
+                {steriRows.length > 0 && (
+                  <button
+                    onClick={() => exportToExcel(
+                      [
+                        { header: "Date", key: "date" },
+                        { header: "Tag", key: "tag" },
+                        { header: "Shift", key: "shift" },
+                        { header: "Time", key: "time" },
+                        { header: "Pallets", key: "pallets" },
+                        { header: "Target", key: "target" },
+                        { header: "Variance", key: "variance" },
+                        { header: "Reason", key: "setbacks" },
+                        { header: "Prod 1", key: "product_1" },
+                        { header: "Prod 2", key: "product_2" },
+                        { header: "Filler 1", key: "filler_1" },
+                        { header: "Filler 2", key: "filler_2" },
+                        { header: "Capper 1", key: "capper_1" },
+                        { header: "Capper 2", key: "capper_2" },
+                        { header: "Sleever 1", key: "sleever_1" },
+                        { header: "Sleever 2", key: "sleever_2" },
+                        { header: "Shrink 1", key: "shrink_1" },
+                        { header: "Shrink 2", key: "shrink_2" },
+                        { header: "Opening", key: "opening" },
+                        { header: "Received", key: "received" },
+                        { header: "Foiled", key: "foiled" },
+                        { header: "Closing", key: "closing" },
+                        { header: "Waste", key: "waste" },
+                        { header: "Damaged", key: "damaged" },
+                        { header: "Milk Transfer", key: "transferrable_milk" },
+                      ],
+                      steriRows,
+                      "steri-records"
+                    )}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
+                  >
+                    <Download className="w-3.5 h-3.5" /> Export Excel
+                  </button>
+                )}
               </div>
               <div className="p-4">
                 {steriLoading ? (
@@ -318,17 +366,35 @@ export default function SteriRecordsPage() {
                             </td>
                           </tr>
                         ) : (
-                          steriRows.map((row, i) => (
+                          steriRows.map((row, i) => {
+                            const wasUpdated = row._updatedAt && row._createdAt && row._updatedAt !== row._createdAt
+                            return (
                             <tr
                               key={i}
                               className={
-                                row.shiftType === "day"
+                                wasUpdated
+                                  ? "bg-amber-50 hover:bg-amber-100/80 ring-1 ring-inset ring-amber-200"
+                                  : row.shiftType === "day"
                                   ? "bg-yellow-50/40 hover:bg-yellow-50/70"
                                   : "bg-blue-50/40 hover:bg-blue-50/70"
                               }
-                              onClick={row.stage === "Before" ? () => {
+                              onClick={row.stage === "Before" ? async () => {
                                 const match = form1s.find((f: any) => f.tag === row.tag)
-                                if (match) { setSelectedForm1(match); setForm1ViewOpen(true) }
+                                if (!match) return
+                                if (match.id) {
+                                  try {
+                                    const res = await filmaticLinesForm1Api.getForm(match.id)
+                                    const raw: any = (res as any)?.data ?? res
+                                    const detail: any = Array.isArray(raw) ? raw[0] : raw
+                                    const nonNullDetail = Object.fromEntries(Object.entries(detail ?? {}).filter(([, v]) => v != null))
+                                    setSelectedForm1({ ...match, ...nonNullDetail })
+                                  } catch {
+                                    setSelectedForm1(match)
+                                  }
+                                } else {
+                                  setSelectedForm1(match)
+                                }
+                                setForm1ViewOpen(true)
                               } : undefined}
                               style={row.stage === "Before" ? { cursor: "pointer" } : undefined}
                             >
@@ -396,7 +462,8 @@ export default function SteriRecordsPage() {
                               <td className="px-2 py-1.5 border-b border-r border-gray-100 text-right tabular-nums text-orange-600">{row.damaged?.toLocaleString() ?? "—"}</td>
                               <td className="px-2 py-1.5 border-b border-r border-gray-100 text-right tabular-nums text-blue-600 font-medium">{row.transferrable_milk?.toLocaleString() ?? "—"}</td>
                             </tr>
-                          ))
+                            )
+                          })
                         )}
                       </tbody>
                     </table>
@@ -409,9 +476,41 @@ export default function SteriRecordsPage() {
           {/* ── Tab 2: Autoclave ──────────────────────────────────────────── */}
           <TabsContent value="autoclave" className="mt-4">
             <div className="border border-gray-200 rounded-lg bg-white">
-              <div className="p-4 pb-0 flex items-center gap-2">
-                <FileSpreadsheet className="h-4 w-4 text-gray-500" />
-                <span className="text-sm font-light text-gray-700">Autoclave</span>
+              <div className="p-4 pb-0 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <FileSpreadsheet className="h-4 w-4 text-gray-500" />
+                  <span className="text-sm font-light text-gray-700">Autoclave</span>
+                </div>
+                {sheetRows2.length > 0 && (
+                  <button
+                    onClick={() => exportToExcel(
+                      [
+                        { header: "Date", key: "date" },
+                        { header: "Batch", key: "batchLabel" },
+                        { header: "Metric", key: "rowType" },
+                        { header: "Autoclave", key: "autoclave" },
+                        { header: "Fill Start", key: "filling_start" },
+                        { header: "AC Start", key: "autoclave_start" },
+                        { header: "Heating Start", key: "heating_start" },
+                        { header: "Heating Finish", key: "heating_finish" },
+                        { header: "Steri Start", key: "steri_start" },
+                        { header: "Steri After 5", key: "steri_after5" },
+                        { header: "Steri Finish", key: "steri_finish" },
+                        { header: "Pre-Cool Start", key: "pre_cool_start" },
+                        { header: "Pre-Cool Finish", key: "pre_cool_finish" },
+                        { header: "Cool 1 Start", key: "cool1_start" },
+                        { header: "Cool 1 Finish", key: "cool1_finish" },
+                        { header: "Cool 2 Start", key: "cool2_start" },
+                        { header: "Cool 2 Finish", key: "cool2_finish" },
+                      ],
+                      sheetRows2,
+                      "autoclave-records"
+                    )}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
+                  >
+                    <Download className="w-3.5 h-3.5" /> Export Excel
+                  </button>
+                )}
               </div>
               <div className="p-4">
                 {logLoading?.fetch ? (
@@ -491,9 +590,37 @@ export default function SteriRecordsPage() {
           {/* ── Tab 3: Palletizer ─────────────────────────────────────────── */}
           <TabsContent value="palletizer" className="mt-4">
             <div className="border border-gray-200 rounded-lg bg-white">
-              <div className="p-4 pb-0 flex items-center gap-2">
-                <FileSpreadsheet className="h-4 w-4 text-gray-500" />
-                <span className="text-sm font-light text-gray-700">Palletizer</span>
+              <div className="p-4 pb-0 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <FileSpreadsheet className="h-4 w-4 text-gray-500" />
+                  <span className="text-sm font-light text-gray-700">Palletizer</span>
+                </div>
+                {sheetRows4.length > 0 && (
+                  <button
+                    onClick={() => exportToExcel(
+                      [
+                        { header: "Date", key: "date" },
+                        { header: "Tag", key: "tag" },
+                        { header: "Batch", key: "batch" },
+                        { header: "Product", key: "product" },
+                        { header: "Machine", key: "machine" },
+                        { header: "Mfg Date", key: "mfg" },
+                        { header: "Exp Date", key: "exp" },
+                        { header: "Pallet #", key: "pallet" },
+                        { header: "Start Time", key: "start_time" },
+                        { header: "End Time", key: "end_time" },
+                        { header: "Cases Packed", key: "cases" },
+                        { header: "Serial No.", key: "serial" },
+                        { header: "Counter", key: "counter" },
+                      ],
+                      sheetRows4,
+                      "palletizer-records"
+                    )}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
+                  >
+                    <Download className="w-3.5 h-3.5" /> Export Excel
+                  </button>
+                )}
               </div>
               <div className="p-4">
                 {flatLoading ? (
@@ -509,7 +636,7 @@ export default function SteriRecordsPage() {
                           {[
                             "Date","Tag","Batch","Product","Machine",
                             "Mfg Date","Exp Date","Pallet #",
-                            "Start Time","End Time","Cases Packed","Serial No.","Counter",
+                            "Start Time","End Time","Cases Packed","Serial No.","Counter (Shift Leader)",
                           ].map((h) => (
                             <th key={h} className={thBase}>{h}</th>
                           ))}

@@ -144,6 +144,8 @@ type ShiftDetailsFormData = {
   }>
 }
 
+const TODAY = new Date().toISOString().split("T")[0]
+
 export function FilmaticLinesForm2Drawer({
   open,
   onOpenChange,
@@ -320,7 +322,7 @@ export function FilmaticLinesForm2Drawer({
 
         // Populate basic info form using server values
         basicInfoForm.reset({
-          date: form.date || "",
+          date: TODAY,
           approved: !!form.approved,
           filmatic_1: (form as any).filmatic_1 ?? "",
           day_shift_opening_bottles: (form as any).day_shift_opening_bottles ?? undefined,
@@ -489,7 +491,7 @@ export function FilmaticLinesForm2Drawer({
       } else {
         // Reset all forms to clean defaults
         basicInfoForm.reset({
-          date: "",
+          date: TODAY,
           approved: false,
           filmatic_1: "",
           day_shift_opening_bottles: undefined,
@@ -856,22 +858,8 @@ export function FilmaticLinesForm2Drawer({
                 </div>
 
                 <div className="space-y-2">
-                  <Controller
-                    name="date"
-                    control={basicInfoForm.control}
-                    render={({ field }) => (
-                      <DatePicker
-                        label="Date *"
-                        value={field.value}
-                        onChange={field.onChange}
-                        placeholder="Select date"
-                        error={!!basicInfoForm.formState.errors.date}
-                      />
-                    )}
-                  />
-                  {basicInfoForm.formState.errors.date && (
-                    <p className="text-sm text-red-500">{basicInfoForm.formState.errors.date.message}</p>
-                  )}
+                  <Label>Date</Label>
+                  <Input value={TODAY} readOnly className="bg-gray-50 text-gray-600 cursor-not-allowed" />
                 </div>
 
                 {/* Filmatic 1 link */}

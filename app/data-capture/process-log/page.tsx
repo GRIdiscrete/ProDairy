@@ -28,6 +28,10 @@ import { useRouter, useSearchParams } from "next/navigation"
 export default function ProcessLogPage() {
   const dispatch = useAppDispatch()
   const { logs, loading, error, isInitialized } = useAppSelector((state) => state.steriMilkProcessLog)
+  const profile = useAppSelector((state: any) => state.auth?.profile)
+
+  const RESTRICTED_ROLES = ["E3 Filter Operator", "E3 ST Operator", "Milk Operators", "Pasto Operators"]
+  const isRestrictedRole = RESTRICTED_ROLES.includes(profile?.users_role_id_fkey?.role_name ?? "")
 
   const [tableFilters, setTableFilters] = useState<TableFilters>({})
   const hasFetchedRef = useRef(false)
@@ -301,34 +305,38 @@ export default function ProcessLogPage() {
       header: "Actions",
       cell: ({ row }: any) => {
         const log = row.original
+        const isOld = Date.now() - new Date(log.created_at).getTime() > 5 * 60 * 1000
+        const hideEditDelete = isRestrictedRole && isOld
         return (
           <div className="flex space-x-2">
             <LoadingButton
-
               size="sm"
               onClick={() => handleView(log)}
               className="bg-[#006BC4] text-white border-0 rounded-full"
             >
               <Eye className="w-4 h-4" />
             </LoadingButton>
-            <LoadingButton
-
-              size="sm"
-              onClick={() => handleEdit(log)}
-              className="bg-[#A0CF06] text-[#211D1E] border-0 rounded-full"
-            >
-              <Edit className="w-4 h-4" />
-            </LoadingButton>
-            <LoadingButton
-              className=" text-white rounded-full"
-              variant="destructive"
-              size="sm"
-              onClick={() => handleDelete(log)}
-              loading={loading.delete}
-              disabled={loading.delete}
-            >
-              <Trash2 className="w-4 h-4" />
-            </LoadingButton>
+            {!hideEditDelete && (
+              <LoadingButton
+                size="sm"
+                onClick={() => handleEdit(log)}
+                className="bg-[#A0CF06] text-[#211D1E] border-0 rounded-full"
+              >
+                <Edit className="w-4 h-4" />
+              </LoadingButton>
+            )}
+            {!hideEditDelete && (
+              <LoadingButton
+                className="text-white rounded-full"
+                variant="destructive"
+                size="sm"
+                onClick={() => handleDelete(log)}
+                loading={loading.delete}
+                disabled={loading.delete}
+              >
+                <Trash2 className="w-4 h-4" />
+              </LoadingButton>
+            )}
           </div>
         )
       }
