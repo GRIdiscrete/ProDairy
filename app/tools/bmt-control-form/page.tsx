@@ -93,6 +93,15 @@ export default function BMTControlFormPage() {
       .finally(() => setTableLoading(false))
   }, [viewMode])
 
+  // Re-fetch the table data after a BMT form is created/updated so volumes stay current
+  const refreshTableData = () => {
+    setTableLoading(true)
+    bmtControlFormApi.getTable()
+      .then(setTableData)
+      .catch(() => {})
+      .finally(() => setTableLoading(false))
+  }
+
   // Initialize users on component mount
   useEffect(() => {
     if (!usersInitialized || users.length === 0) {
@@ -550,6 +559,7 @@ export default function BMTControlFormPage() {
           onOpenChange={setFormDrawerOpen}
           form={selectedForm}
           mode={formMode}
+          onSuccess={refreshTableData}
         />
 
         <BMTControlFormViewDrawer

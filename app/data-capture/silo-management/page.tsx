@@ -80,6 +80,15 @@ export default function SiloManagementPage() {
       .finally(() => setTransferTableLoading(false))
   }, [transferViewMode])
 
+  // Re-fetch the transfers table data after a BMT form is created/updated so volumes stay current
+  const refreshTransferTableData = () => {
+    setTransferTableLoading(true)
+    bmtControlFormApi.getTable()
+      .then(setTransferTableData)
+      .catch(() => {})
+      .finally(() => setTransferTableLoading(false))
+  }
+
   // Fetch CIP data once when the CIP tab is first visited
   const handleCipTabOpen = () => {
     if (cipFetchedRef.current) return
@@ -826,6 +835,7 @@ export default function SiloManagementPage() {
         form={selectedTransfer}
         mode={transferMode}
         sourceSilo={sourceSilo}
+        onSuccess={refreshTransferTableData}
       />
 
       <BMTControlFormViewDrawer

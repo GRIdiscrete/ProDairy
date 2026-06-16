@@ -111,6 +111,8 @@ interface BMTControlFormDrawerProps {
   form?: BMTControlForm | null
   mode: "create" | "edit"
   sourceSilo?: { name: string; product?: string | null } | null
+  /** Called after a successful create/update so callers can refresh any locally cached volume data (e.g. table views). */
+  onSuccess?: () => void
 }
 
 // ─── Signature field helper ───────────────────────────────────────────────────
@@ -229,7 +231,7 @@ function OperatorsSection({ control, errors, users, llmUsers }: OperatorsSection
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-export function BMTControlFormDrawer({ open, onOpenChange, form, mode, sourceSilo }: BMTControlFormDrawerProps) {
+export function BMTControlFormDrawer({ open, onOpenChange, form, mode, sourceSilo, onSuccess }: BMTControlFormDrawerProps) {
   const dispatch = useAppDispatch()
   const { operationLoading } = useAppSelector((state) => state.bmtControlForms)
 
@@ -346,6 +348,7 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode, sourceSil
       dispatch(fetchBMTControlForms()).catch(() => { })
       dispatch(fetchSiloTransfers()).catch(() => { })
       dispatch(fetchSiloManagerSilos()).catch(() => { })
+      onSuccess?.()
       onOpenChange(false)
       createForm.reset()
     } catch (error: any) {
@@ -449,6 +452,7 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode, sourceSil
       dispatch(fetchBMTControlForms()).catch(() => { })
       dispatch(fetchSiloTransfers()).catch(() => { })
       dispatch(fetchSiloManagerSilos()).catch(() => { })
+      onSuccess?.()
       onOpenChange(false)
     } catch (error: any) {
       toast.error(typeof error === "string" ? error : error?.message ?? "Failed to update BMT control form")
