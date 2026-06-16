@@ -140,11 +140,17 @@ export function FilmaticLinesForm1ViewDrawer({
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 gap-4">
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <span className="text-xs font-light text-gray-500">Date</span>
                   <p className="text-sm font-light">
                     {form.date ? format(new Date(form.date), "PPP") : "N/A"}
+                  </p>
+                </div>
+                <div>
+                  <span className="text-xs font-light text-gray-500">Transferrable Milk</span>
+                  <p className="text-sm font-light">
+                    {form.transferrable_milk != null ? `${form.transferrable_milk} L` : "N/A"}
                   </p>
                 </div>
               </div>

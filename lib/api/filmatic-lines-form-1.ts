@@ -150,8 +150,23 @@ export interface CreateFilmaticLinesForm1Request {
   } | null
 }
 
+export interface TransferrableMilk {
+  steri_tank_1_volume: number
+  steri_tank_2_volume: number
+  total_volume: number
+  date_processed: string
+}
+
 // API Functions
 export const filmaticLinesForm1Api = {
+  // Get current transferrable milk volume from the steri holding tanks
+  getTransferrableMilk: async () => {
+    const response = await apiRequest<{ statusCode: number, message: string, data: TransferrableMilk }>('/filmatic-lines-form-1/transferrable-milk', {
+      method: 'GET',
+    })
+    return response.data
+  },
+
   // Get all forms
   getForms: async () => {
     const response = await apiRequest<{ statusCode: number, message: string, data: FilmaticLinesForm1[] }>('/filmatic-lines-form-1', {

@@ -462,6 +462,33 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode, sourceSil
     toast.error(`Please fix: ${msgs.join(", ")}`, { style: { background: "#ef4444", color: "white" } })
   }
 
+  // Source silos are drained (end should be < start); destination silos are filled
+  // (end should be > start). Either direction landing on "no movement" (start === end)
+  // is also invalid, since there's nothing to transfer.
+  const watchedEditPairs = editForm.watch("source_destination_details")
+
+  const editPairValidations = (watchedEditPairs ?? []).map((p, idx) => {
+    const sourceStart = form?.source_destination_details?.[idx]?.source_silo_details?.flow_meter_start_reading
+    const sourceEnd: any = p?.source_flow_meter_end_reading
+    const sourceHasValue = sourceEnd !== "" && sourceEnd != null && sourceStart != null
+    const sourceInvalid = sourceHasValue && Number(sourceEnd) >= Number(sourceStart)
+    const sourceMessage = sourceHasValue && Number(sourceEnd) === Number(sourceStart)
+      ? "End reading equals start reading — no volume transferred"
+      : "End reading must be less than the start reading"
+
+    const destStart = form?.source_destination_details?.[idx]?.destination_silo_details?.flow_meter_start_reading
+    const destEnd: any = p?.destination_flow_meter_end_reading
+    const destHasValue = !!p?.destination_silo_id && destEnd !== "" && destEnd != null && destStart != null
+    const destInvalid = destHasValue && Number(destEnd) <= Number(destStart)
+    const destMessage = destHasValue && Number(destEnd) === Number(destStart)
+      ? "End reading equals start reading — no volume transferred"
+      : "End reading must be greater than the start reading"
+
+    return { sourceInvalid, sourceMessage, destInvalid, destMessage }
+  })
+
+  const hasInvalidEditPair = editPairValidations.some((v) => v.sourceInvalid || v.destInvalid)
+
   // ─────────────────────────────────────────────────────────────────────────────
   // Render
   // ─────────────────────────────────────────────────────────────────────────────
@@ -861,19 +888,26 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode, sourceSil
                                   f.onChange(e.target.value === "" ? "" : Number(e.target.value))
                                 }
                                 placeholder="e.g. 6200"
-                                className="rounded-full border-gray-200 max-w-sm"
+                                className={`rounded-full max-w-sm ${editPairValidations[idx]?.sourceInvalid
+                                  ? "border-red-500 bg-red-50 text-red-700 focus-visible:ring-red-500"
+                                  : "border-gray-200"
+                                  }`}
                               />
                             )}
                           />
-                          {editForm.formState.errors.source_destination_details?.[idx]
-                            ?.source_flow_meter_end_reading && (
+                          {editPairValidations[idx]?.sourceInvalid ? (
+                            <p className="text-sm text-red-500">{editPairValidations[idx]?.sourceMessage}</p>
+                          ) : (
+                            editForm.formState.errors.source_destination_details?.[idx]
+                              ?.source_flow_meter_end_reading && (
                               <p className="text-sm text-red-500">
                                 {
                                   editForm.formState.errors.source_destination_details[idx]
                                     ?.source_flow_meter_end_reading?.message
                                 }
                               </p>
-                            )}
+                            )
+                          )}
                         </div>
                       </div>
 
@@ -907,10 +941,16 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode, sourceSil
                                     f.onChange(e.target.value === "" ? null : Number(e.target.value))
                                   }
                                   placeholder="Enter flowmeter end reading"
-                                  className="rounded-full border-gray-200 max-w-sm"
+                                  className={`rounded-full max-w-sm ${editPairValidations[idx]?.destInvalid
+                                    ? "border-red-500 bg-red-50 text-red-700 focus-visible:ring-red-500"
+                                    : "border-gray-200"
+                                    }`}
                                 />
                               )}
                             />
+                            {editPairValidations[idx]?.destInvalid && (
+                              <p className="text-sm text-red-500">{editPairValidations[idx]?.destMessage}</p>
+                            )}
                           </div>
                         </div>
                       )}
@@ -923,7 +963,7 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode, sourceSil
             {/* Submit */}
             <LoadingButton
               loading={isLoading}
-              disabled={isLoading}
+              disabled={isLoading || hasInvalidEditPair}
               className="w-full rounded-full"
               type="submit"
             >

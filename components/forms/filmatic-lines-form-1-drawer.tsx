@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from "react"
 import { useForm, Controller, useFieldArray } from "react-hook-form"
 import { yupResolver } from "@hookform/resolvers/yup"
 import * as yup from "yup"
-import { FilmaticLinesForm1, filmaticLinesForm1Api } from "@/lib/api/filmatic-lines-form-1"
+import { FilmaticLinesForm1, filmaticLinesForm1Api, TransferrableMilk } from "@/lib/api/filmatic-lines-form-1"
 import { BMTControlForm, bmtControlFormApi } from "@/lib/api/bmt-control-form"
 import { siloApi } from "@/lib/api/silo"
 import { FilmaticLinesGroup, filmaticLinesGroupsApi } from "@/lib/api/filmatic-lines-groups"
@@ -19,6 +19,7 @@ import { SearchableSelect } from "@/components/ui/searchable-select"
 import { DatePicker } from "@/components/ui/date-picker"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Switch } from "@/components/ui/switch"
@@ -164,6 +165,7 @@ export function FilmaticLinesForm1Drawer({
   const [loadingBmtForms, setLoadingBmtForms] = useState(false)
   const [loadingGroups, setLoadingGroups] = useState(false)
   const [loadingUsers, setLoadingUsers] = useState(false)
+  const [transferrableMilk, setTransferrableMilk] = useState<TransferrableMilk | null>(null)
 
   // Step forms
   const shiftSelectionForm = useForm<ShiftSelectionFormData>({
@@ -287,6 +289,11 @@ export function FilmaticLinesForm1Drawer({
             return true
           }))
         } catch { setSteriSilos([]) }
+
+        try {
+          const transferrable = await filmaticLinesForm1Api.getTransferrableMilk()
+          setTransferrableMilk(transferrable)
+        } catch { setTransferrableMilk(null) }
       } finally {
         setLoadingBmtForms(false)
         setLoadingGroups(false)
@@ -1076,6 +1083,31 @@ export function FilmaticLinesForm1Drawer({
                     </div>
                   </div>
                 ))}
+
+                <div className="pt-2">
+                  <Label className="mb-2 block">Transferrable Milk</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Input
+                        readOnly
+                        value={transferrableMilk ? `${transferrableMilk.total_volume} L` : "—"}
+                        className="bg-gray-50 text-gray-600 cursor-pointer"
+                      />
+                    </PopoverTrigger>
+                    <PopoverContent className="w-64">
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-gray-500">Steri Holding Tank 1</span>
+                          <span className="font-medium">{transferrableMilk?.steri_tank_1_volume ?? "—"} L</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-500">Steri Holding Tank 2</span>
+                          <span className="font-medium">{transferrableMilk?.steri_tank_2_volume ?? "—"} L</span>
+                        </div>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                </div>
               </div>
             </div>
           )}
