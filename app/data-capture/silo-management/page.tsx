@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect, useRef } from "react"
+import React, { useState, useEffect, useRef, useMemo } from "react"
 import { DataCaptureDashboardLayout } from "@/components/layout/data-capture-dashboard-layout"
 import { useAppDispatch, useAppSelector } from "@/lib/store"
 import { fetchSiloManagerSilos, fetchSiloTransfers } from "@/lib/store/slices/siloSlice"
@@ -61,7 +61,10 @@ export default function SiloManagementPage() {
   const [intakeTableLoading, setIntakeTableLoading] = useState(false)
   const intakeTableFetchedRef = useRef(false)
 
+  const [cipByDate, setCipByDate] = useState<Record<string, string>>({})
+
   const hasFetchedRef = useRef(false)
+  const cipFetchedForGaugesRef = useRef(false)
 
   useEffect(() => {
     if (!hasFetchedRef.current) {
@@ -70,6 +73,38 @@ export default function SiloManagementPage() {
       dispatch(fetchSiloTransfers())
     }
   }, [dispatch])
+
+  // Fetch all CIP records once so gauges can show per-silo CIP freshness
+  useEffect(() => {
+    if (cipFetchedForGaugesRef.current || silos.length === 0) return
+    cipFetchedForGaugesRef.current = true
+    getCIPControlForms()
+      .then((records) => {
+        const latest: Record<string, string> = {}
+        for (const cip of records) {
+          if (cip.status !== "Completed" && cip.status !== "Approved") continue
+          const siloObj = typeof cip.silo_id === "object" ? cip.silo_id : null
+          const siloName = siloObj?.name
+          if (!siloName) continue
+          const cipDate = cip.date ?? cip.created_at
+          if (!cipDate) continue
+          if (!latest[siloName] || new Date(cipDate) > new Date(latest[siloName])) {
+            latest[siloName] = cipDate
+          }
+        }
+        setCipByDate(latest)
+      })
+      .catch(() => {})
+  }, [silos.length])
+
+  const cipHoursMap = useMemo(() => {
+    const now = Date.now()
+    const map: Record<string, number> = {}
+    for (const [name, dateStr] of Object.entries(cipByDate)) {
+      map[name] = (now - new Date(dateStr).getTime()) / (1000 * 60 * 60)
+    }
+    return map
+  }, [cipByDate])
 
   useEffect(() => {
     if (transferViewMode !== "table" || transferTableData.length > 0) return
@@ -403,6 +438,10 @@ export default function SiloManagementPage() {
                       volume={silo.milk_volume}
                       capacity={silo.capacity}
                       status={silo.status}
+                      temperature={silo.temperature}
+                      fatContent={silo.fat_content}
+                      milkAgeHours={(silo as any).milk_age_hours ?? null}
+                      cipHoursAgo={cipHoursMap[silo.name] ?? null}
                       onClick={() => handleSiloClick(silo)}
                     />
                   ))}

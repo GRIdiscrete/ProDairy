@@ -137,6 +137,7 @@ export interface Silo {
   updated_at: string
   fat_content: number | null
   temperature: number | null
+  milk_age_hours: number | null
   composition: SiloComposition[] | null
   product?: string | null
   intake_log?: string | null
