@@ -504,8 +504,8 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode, sourceSil
     // ── CREATE UI ────────────────────────────────────────────────────────────
     return (
       <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent className="tablet-sheet-full p-0 bg-white overflow-y-auto max-h-screen">
-          <div className="p-6">
+        <SheetContent className="tablet-sheet-full p-0 bg-white">
+          <div className="p-6 flex-1 min-h-0 overflow-y-auto">
             <SheetHeader>
               <SheetTitle>New BMT Control Form</SheetTitle>
               <SheetDescription>Create a new bulk milk transfer control record.</SheetDescription>
@@ -757,8 +757,8 @@ export function BMTControlFormDrawer({ open, onOpenChange, form, mode, sourceSil
   // ── EDIT UI ────────────────────────────────────────────────────────────────
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="tablet-sheet-full p-0 bg-white overflow-y-auto max-h-screen">
-        <div className="p-6">
+      <SheetContent className="tablet-sheet-full p-0 bg-white">
+        <div className="p-6 flex-1 min-h-0 overflow-y-auto">
           <SheetHeader>
             <SheetTitle>Update BMT Control Form</SheetTitle>
             <SheetDescription>

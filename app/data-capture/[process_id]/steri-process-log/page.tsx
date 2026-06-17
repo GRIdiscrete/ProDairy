@@ -206,7 +206,7 @@ export default function SteriRecordsPage() {
     const sorted = [...processLogs].sort((a: any, b: any) => {
       const da = a.batch?.date ?? a.created_at
       const db = b.batch?.date ?? b.created_at
-      return new Date(da).getTime() - new Date(db).getTime()
+      return new Date(db).getTime() - new Date(da).getTime()
     })
     const rows: any[] = []
     sorted.forEach((log: any) => {
