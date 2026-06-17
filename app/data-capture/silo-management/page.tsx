@@ -444,7 +444,7 @@ export default function SiloManagementPage() {
                       status={silo.status}
                       temperature={silo.temperature}
                       fatContent={silo.fat_content}
-                      milkAgeHours={(silo as any).milk_age_hours != null ? Math.min((silo as any).milk_age_hours, 12) : null}
+                      milkAgeHours={0}
                       cipHoursAgo={cipHoursMap[silo.name] != null ? Math.min(cipHoursMap[silo.name], 12) : null}
                       onClick={() => handleSiloClick(silo)}
                     />
