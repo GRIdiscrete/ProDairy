@@ -37,6 +37,7 @@ interface SiloDetailsDrawerProps {
   silo: any | null
   onTransfer?: (silo: any) => void
   onEdit?: (silo: any) => void
+  onCipCreated?: () => void
 }
 
 export function SiloDetailsDrawer({
@@ -45,6 +46,7 @@ export function SiloDetailsDrawer({
   silo,
   onTransfer,
   onEdit,
+  onCipCreated,
 }: SiloDetailsDrawerProps) {
   const dispatch = useAppDispatch()
   const cipStatuses = useAppSelector((state) => state.silo.cipStatuses)
@@ -393,6 +395,7 @@ export function SiloDetailsDrawer({
         form={null}
         mode="create"
         defaultSilo={{ id: silo.id, name: silo.name }}
+        onSuccess={onCipCreated}
       />
     )}
 

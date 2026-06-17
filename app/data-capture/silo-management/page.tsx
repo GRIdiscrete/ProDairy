@@ -74,10 +74,7 @@ export default function SiloManagementPage() {
     }
   }, [dispatch])
 
-  // Fetch all CIP records once so gauges can show per-silo CIP freshness
-  useEffect(() => {
-    if (cipFetchedForGaugesRef.current || silos.length === 0) return
-    cipFetchedForGaugesRef.current = true
+  const fetchCipForGauges = () => {
     getCIPControlForms()
       .then((records) => {
         const latest: Record<string, string> = {}
@@ -95,6 +92,13 @@ export default function SiloManagementPage() {
         setCipByDate(latest)
       })
       .catch(() => {})
+  }
+
+  // Fetch all CIP records once so gauges can show per-silo CIP freshness
+  useEffect(() => {
+    if (cipFetchedForGaugesRef.current || silos.length === 0) return
+    cipFetchedForGaugesRef.current = true
+    fetchCipForGauges()
   }, [silos.length])
 
   const cipHoursMap = useMemo(() => {
@@ -859,6 +863,7 @@ export default function SiloManagementPage() {
             setDetailsDrawerOpen(false)
             handleAddTransfer(silo)
         }}
+        onCipCreated={fetchCipForGauges}
       />
 
       <SiloFormDrawer

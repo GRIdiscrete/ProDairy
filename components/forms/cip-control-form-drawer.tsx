@@ -66,9 +66,10 @@ interface CIPControlFormDrawerProps {
   form?: CIPControlForm | null
   mode: "create" | "edit"
   defaultSilo?: { id: string; name: string } | null
+  onSuccess?: () => void
 }
 
-export function CIPControlFormDrawer({ open, onOpenChange, form, mode, defaultSilo }: CIPControlFormDrawerProps) {
+export function CIPControlFormDrawer({ open, onOpenChange, form, mode, defaultSilo, onSuccess }: CIPControlFormDrawerProps) {
   const dispatch = useAppDispatch()
   const { operationLoading } = useAppSelector((state) => state.cipControlForms)
   const { user } = useAppSelector((state) => state.auth)
@@ -292,6 +293,7 @@ export function CIPControlFormDrawer({ open, onOpenChange, form, mode, defaultSi
         toast.error('Form ID is missing. Cannot update form.')
         return
       }
+      onSuccess?.()
       onOpenChange(false)
       reset()
     } catch (error: any) {
